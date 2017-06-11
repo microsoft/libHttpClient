@@ -43,7 +43,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 1. Call HCHttpCallPerform() to perform HTTP call using the HC_CALL_HANDLE.  This call is synchronous, so call it from a task thread
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE
 1. Call HCHttpCallCleanup() to cleanup the HC_CALL_HANDLE
-1. Repeat 3-7 for each new HTTP call
+1. Repeat 4-8 for each new HTTP call
 1. Call HCGlobalCleanup() at shutdown before your memory manager set in step 1 is shutdown
 
 ## Behavior control
