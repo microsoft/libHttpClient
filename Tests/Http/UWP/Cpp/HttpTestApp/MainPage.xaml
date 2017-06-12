@@ -1,0 +1,15 @@
+﻿<Page
+    x:Class="HttpTestApp.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:HttpTestApp"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Button Content="Execute"  Margin="36,40,0,648" Click="Button_Click" />
+        <TextBox x:Name="LogTextBox" HorizontalAlignment="Left" Margin="10,104,0,0" TextWrapping="Wrap" Text="TextBox" Height="606" Width="1260"/>
+
+    </Grid>
+</Page>

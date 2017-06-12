@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="C++ Public Includes">
+      <UniqueIdentifier>{b79b5071-f94f-443a-b903-1b604db21b8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source">
+      <UniqueIdentifier>{e9e0bd97-69fe-4b02-9f7d-b3cfe9ba4124}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Common">
+      <UniqueIdentifier>{5eb1bf88-b7c6-4004-8f89-a51e2a57015b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Logger">
+      <UniqueIdentifier>{7e023b3a-0fdc-4947-96f0-fa3f12b7b1b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP">
+      <UniqueIdentifier>{0d821885-a11e-4b42-a7a7-d2cdc5e948b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\UWP">
+      <UniqueIdentifier>{166e59b0-422c-4d8d-acf2-82e5d3363d91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\XDK">
+      <UniqueIdentifier>{d9b88cd6-883d-4ac0-9de3-6cd39d62b10f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\iOS">
+      <UniqueIdentifier>{53561215-f5b9-43e1-8031-aa0f0cba26a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\Android">
+      <UniqueIdentifier>{5afb5ade-f80f-4785-8485-1914ce873bba}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Source\Common\asyncop.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common\pch.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common\pch_common.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common\singleton.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common\threadpool.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common\mem.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Logger\custom_output.h">
+      <Filter>C++ Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Logger\debug_output.h">
+      <Filter>C++ Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Logger\log.h">
+      <Filter>C++ Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common\utils.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\httpClient\httpClient.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\httpClient\types.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\HTTP\httpcall.h">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\Common\asyncop.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Common\pch.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Common\singleton.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Common\threadpool.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Common\mem.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Logger\custom_output.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Logger\debug_output.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Logger\log.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Logger\log_entry.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Logger\log_output.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Common\utils.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Common\settings.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\UWP\http_uwp.cpp">
+      <Filter>C++ Source\HTTP\UWP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\httpcall.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\httpcallrequest.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\httpcallresponse.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\iOS\http_ios.cpp">
+      <Filter>C++ Source\HTTP\iOS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\Android\http_android.cpp">
+      <Filter>C++ Source\HTTP\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\XDK\http_xdk.cpp">
+      <Filter>C++ Source\HTTP\XDK</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
