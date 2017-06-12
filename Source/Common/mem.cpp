@@ -15,7 +15,7 @@ void* http_memory::mem_alloc(
     _In_ size_t dwSize
     )
 {
-    std::function<_Ret_maybenull_ _Post_writable_byte_size_(dwSize) void*(_In_ size_t dwSize)> pMemAlloc;
+    HC_MEM_ALLOC_FUNC pMemAlloc = g_memAllocFunc;
     if (pMemAlloc == nullptr)
     {
         return new (std::nothrow) int8_t[dwSize];
@@ -24,7 +24,7 @@ void* http_memory::mem_alloc(
     {
         try
         {
-            return pMemAlloc(dwSize);
+            return pMemAlloc(dwSize, 0);
         }
         catch (...)
         {
@@ -38,12 +38,7 @@ void http_memory::mem_free(
     _In_ void* pAddress
     )
 {
-    std::function<void(_In_ void* pAddress)> pMemFree = nullptr;
-    auto singleton = get_http_singleton();
-    if (singleton != nullptr)
-    {
-        pMemFree = singleton->m_pMemFreeHook;
-    }
+    HC_MEM_FREE_FUNC pMemFree = g_memFreeFunc;
     if (pMemFree == nullptr)
     {
         delete[] pAddress;
@@ -52,7 +47,7 @@ void http_memory::mem_free(
     {
         try
         {
-            return pMemFree(pAddress);
+            return pMemFree(pAddress, 0);
         }
         catch (...)
         {

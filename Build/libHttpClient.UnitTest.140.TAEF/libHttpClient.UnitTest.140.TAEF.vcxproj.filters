@@ -1,120 +1,123 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp">
+    <ClCompile Include="..\..\Source\Common\asyncop.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp">
+    <ClCompile Include="..\..\Source\Common\mem.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+    <ClCompile Include="..\..\Source\Common\pch.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp">
+    <ClCompile Include="..\..\Source\Common\settings.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp">
+    <ClCompile Include="..\..\Source\Common\singleton.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.cpp">
+    <ClCompile Include="..\..\Source\Common\threadpool.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp">
+    <ClCompile Include="..\..\Source\Common\utils.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
+    <ClCompile Include="..\..\Source\HTTP\httpcall.cpp">
       <Filter>C++ Source\HTTP</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallrequest.cpp">
+    <ClCompile Include="..\..\Source\HTTP\httpcallrequest.cpp">
       <Filter>C++ Source\HTTP</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallresponse.cpp">
+    <ClCompile Include="..\..\Source\HTTP\httpcallresponse.cpp">
       <Filter>C++ Source\HTTP</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.cpp">
+    <ClCompile Include="..\..\Source\Logger\custom_output.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.cpp">
+    <ClCompile Include="..\..\Source\Logger\debug_output.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.cpp">
+    <ClCompile Include="..\..\Source\Logger\log.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_entry.cpp">
+    <ClCompile Include="..\..\Source\Logger\log_entry.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp">
+    <ClCompile Include="..\..\Source\Logger\log_output.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.cpp">
+    <ClCompile Include="..\..\Tests\UnitTests\Support\iso8601.cpp">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.cpp">
+    <ClCompile Include="..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.cpp">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase_winrt.cpp">
+    <ClCompile Include="..\..\Tests\UnitTests\Support\TAEF\UnitTestBase_winrt.cpp">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp">
+    <ClCompile Include="..\..\Tests\UnitTests\Tests\HttpTests.cpp">
       <Filter>C++ Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\HTTP\UWP\http_uwp.cpp">
+      <Filter>C++ Source\HTTP\UWP</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h">
+    <ClInclude Include="..\..\Include\httpClient\httpClient.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h">
+    <ClInclude Include="..\..\Include\httpClient\types.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h">
+    <ClInclude Include="..\..\Source\Common\asyncop.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.h">
+    <ClInclude Include="..\..\Source\Common\mem.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h">
+    <ClInclude Include="..\..\Source\Common\pch.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h">
+    <ClInclude Include="..\..\Source\Common\pch_common.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.h">
+    <ClInclude Include="..\..\Source\Common\singleton.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.h">
+    <ClInclude Include="..\..\Source\Common\threadpool.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h">
+    <ClInclude Include="..\..\Source\Common\utils.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h">
+    <ClInclude Include="..\..\Source\HTTP\httpcall.h">
       <Filter>C++ Source\HTTP</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.h">
+    <ClInclude Include="..\..\Source\Logger\custom_output.h">
       <Filter>C++ Source\Logger</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.h">
+    <ClInclude Include="..\..\Source\Logger\debug_output.h">
       <Filter>C++ Source\Logger</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.h">
+    <ClInclude Include="..\..\Source\Logger\log.h">
       <Filter>C++ Source\Logger</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h">
+    <ClInclude Include="..\..\Tests\UnitTests\Support\DefineTestMacros.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.h">
+    <ClInclude Include="..\..\Tests\UnitTests\Support\iso8601.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.h">
+    <ClInclude Include="..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase_winrt.h">
+    <ClInclude Include="..\..\Tests\UnitTests\Support\TAEF\UnitTestBase_winrt.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestIncludes_TAEF.h">
+    <ClInclude Include="..\..\Tests\UnitTests\Support\TAEF\UnitTestIncludes_TAEF.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\UnitTestIncludes.h">
+    <ClInclude Include="..\..\Tests\UnitTests\Support\UnitTestIncludes.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
   </ItemGroup>
@@ -142,6 +145,9 @@
     </Filter>
     <Filter Include="C++ Source\UnitTests\Tests">
       <UniqueIdentifier>{689E3565-DCD2-343A-8E06-9C929DDE80EC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\UWP">
+      <UniqueIdentifier>{dcc9e74b-c012-41db-8c7c-5948299f5201}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
