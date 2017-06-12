@@ -75,6 +75,14 @@ typedef char CHAR_T;
 typedef const char* PCSTR_T;
 #endif
 
+#ifndef _T
+    #ifdef _WIN32
+        #define _T(x) L ## x
+    #else
+        #define _T(x) x
+    #endif
+#endif
+
 #define HC_CALLING_CONV __cdecl
 //#define HC_CALLING_CONV __stdcall
 
