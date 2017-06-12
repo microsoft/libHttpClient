@@ -19,7 +19,7 @@ HCHttpCallRequestSetUrl(
     VerifyGlobalInit();
     call->method = method;
     call->url = url;
-    call->requestBody = requestBody;
+    call->requestBody = SetOptionalParam(requestBody);
 }
 
 HC_API void HC_CALLING_CONV
