@@ -119,6 +119,25 @@ set(Logger_Source_Files
     ../../Source/Logger/log_output.cpp
     )
 
+set(UnitTests_Source_Files_Support
+	../../Tests/UnitTests/Support/iso8601.cpp
+	../../Tests/UnitTests/Support/DefineTestMacros.h
+	../../Tests/UnitTests/Support/iso8601.h
+	../../Tests/UnitTests/Support/UnitTestIncludes.h
+    )
+
+set(Taef_UnitTests_Source_Files
+	../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
+	../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
+	../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
+	../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
+	../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
+    )
+
+set(UnitTests_Source_Files_Tests
+	../../Tests/UnitTests/Tests/HttpTests.cpp
+    )
+    
 if( SHIP )
 	message(STATUS "SHIP add_library")
 	# source_group("Build" FILES ${Ship_Source_Files})
@@ -156,6 +175,29 @@ else()
     endif()
         
 endif() # SHIP
+
+    
+if( TAEF )
+	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
+	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
+    source_group("C++ Source\\UnitTests\\Support" FILES ${Taef_UnitTests_Source_Files})
+	list(APPEND
+		SOURCE_FILES
+		${UnitTests_Source_Files_Support}
+        ${UnitTests_Source_Files_Tests}
+        ${Taef_UnitTests_Source_Files}
+		)
+elseif( TE )
+	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
+	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
+    # source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})    
+	list(APPEND
+		SOURCE_FILES
+		${UnitTests_Source_Files_Support}
+        ${UnitTests_Source_Files_Tests}
+        # ${TE_UnitTests_Source_Files}
+		)
+endif()
 
 list( SORT SOURCE_FILES )
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
