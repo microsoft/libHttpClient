@@ -104,8 +104,8 @@ public:
 #define VERIFY_ARE_EQUAL(expected,actual) \
     AssertHelper::AreEqual(expected,actual)
 
-#define VERIFY_ARE_EQUAL_STR(expected,actual) \
-    AssertHelper::AreEqual(expected,actual)
+//#define VERIFY_ARE_EQUAL_STR(expected,actual) \
+//    AssertHelper::AreEqual(expected,actual)
 
 #define VERIFY_ARE_EQUAL_STR_IGNORE_CASE(expected,actual) \
     Assert::AreEqual(expected, actual, true)
