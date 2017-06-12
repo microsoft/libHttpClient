@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -116,41 +116,6 @@
     <OutDir>$(ProjectDir)..\..\Binaries\$(Configuration)\$(Platform)\$(ProjectFolder)\</OutDir>
     <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
   </PropertyGroup>
-  <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
-      <PrecompiledHeader>Create</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\UWP\http_uwp.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallrequest.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallresponse.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_entry.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp"  />
-  </ItemGroup>
-  <ItemGroup>
-  </ItemGroup>
+****INSERTFILES****
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
