@@ -1,0 +1,169 @@
+cmake_minimum_required (VERSION 3.6)
+
+if( SHIP )
+	set (PROJECT_NAME libHttpClient.Ship)
+elseif( UNITTEST )
+	if( TAEF )
+		set (PROJECT_NAME libHttpClient.UnitTest.140.TAEF)
+	elseif( TE )
+		set (PROJECT_NAME libHttpClient.UnitTest.140.TE)
+	endif()
+else()
+	if( XDK )
+		if( WINRT )
+			set (PROJECT_NAME libHttpClient.XDK.WinRT)
+		else()
+			set (PROJECT_NAME libHttpClient.XDK.C)
+		endif()
+	else()
+		if( WINRT )
+			set (PROJECT_NAME libHttpClient.UWP.WinRT)
+		else()
+			set (PROJECT_NAME libHttpClient.UWP.C)
+		endif()
+	endif()
+endif()
+
+
+project (${PROJECT_NAME})
+
+if(MSVC_VERSION GREATER 1909)
+  set(COMPILER_VERSION "15")
+elseif(MSVC_VERSION GREATER 1899)
+  set(COMPILER_VERSION "14")
+elseif(MSVC_VERSION GREATER 1700)
+  set(COMPILER_VERSION "12")
+elseif(MSVC_VERSION GREATER 1600)
+  set(COMPILER_VERSION "11")
+endif()
+
+if(CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_CONFIGURATION_TYPES Debug)
+  set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "Reset the configurations to what we need" FORCE)
+endif()
+
+set(CMAKE_USE_RELATIVE_PATHS TRUE)
+
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore")
+  set(PLATFORM STORE)
+endif()
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+add_compile_options(/Zm300 /bigobj)
+if (WINDOWS_STORE OR WINDOWS_PHONE)
+    add_compile_options(/ZW)
+endif()
+
+add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
+
+set_source_files_properties(../../Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+
+if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
+    set_property(SOURCE ../../Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
+    set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
+endif()
+
+include_directories(
+    $(ProjectDir)
+    $(ProjectDir)../../Source
+    $(ProjectDir)../../Source/Common
+    $(ProjectDir)../../Source/HTTP
+    $(ProjectDir)../../Source/Logger
+    $(ProjectDir)../../include
+    )
+
+set(CMAKE_SUPPRESS_REGENERATION true)
+
+set(Public_Source_Files
+    ../../include/httpClient/httpClient.h
+    ../../include/httpClient/types.h
+    )
+
+set(Common_Source_Files
+    ../../Source/Common/asyncop.cpp
+    ../../Source/Common/asyncop.h
+    ../../Source/Common/mem.cpp
+    ../../Source/Common/mem.h
+    ../../Source/Common/pch.cpp
+    ../../Source/Common/pch.h
+    ../../Source/Common/pch_common.h
+    ../../Source/Common/settings.cpp
+    ../../Source/Common/singleton.cpp
+    ../../Source/Common/singleton.h
+    ../../Source/Common/threadpool.cpp
+    ../../Source/Common/threadpool.h
+    ../../Source/Common/utils.cpp
+    ../../Source/Common/utils.h
+    )
+
+set(HTTP_Source_Files
+    ../../Source/HTTP/httpcall.cpp
+    ../../Source/HTTP/httpcall.h
+    ../../Source/HTTP/httpcallrequest.cpp
+    ../../Source/HTTP/httpcallresponse.cpp
+    )
+
+set(UWP_HTTP_Source_Files
+    ../../Source/HTTP/UWP/http_uwp.cpp
+    )
+
+set(Logger_Source_Files
+    ../../Source/Logger/custom_output.cpp
+    ../../Source/Logger/custom_output.h
+    ../../Source/Logger/debug_output.cpp
+    ../../Source/Logger/debug_output.h
+    ../../Source/Logger/log.cpp
+    ../../Source/Logger/log.h
+    ../../Source/Logger/log_entry.cpp
+    ../../Source/Logger/log_output.cpp
+    )
+
+if( SHIP )
+	message(STATUS "SHIP add_library")
+	# source_group("Build" FILES ${Ship_Source_Files})
+	# set( SOURCE_FILES 
+		# ${Ship_Source_Files}
+		# )
+else()
+	source_group("Header Files" FILES ${Public_Source_Files})
+	source_group("C++ Source\\Common" FILES ${Common_Source_Files})
+	source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
+	source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
+
+	if( XDK OR UNITTEST )
+		message(STATUS "XDK source group")
+	else()
+		source_group("C++ Source\\HTTP\\UWP" FILES ${UWP_HTTP_Source_Files})
+	endif()
+
+	set( SOURCE_FILES 
+		${Common_Source_Files}
+		${Public_Source_Files}
+		${Logger_Source_Files}
+		${HTTP_Source_Files}
+		)
+
+	if( XDK OR UNITTEST )
+	else()
+		list(APPEND
+			SOURCE_FILES
+			${UWP_HTTP_Source_Files}
+			)
+	endif() # XDK
+    
+    if( UNITTEST )
+    endif()
+        
+endif() # SHIP
+
+list( SORT SOURCE_FILES )
+add_library(${PROJECT_NAME} ${SOURCE_FILES})
+
+set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "/INCREMENTAL:NO")
+set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
+
+message(STATUS "CMAKE_SYSTEM_VERSION='${CMAKE_SYSTEM_VERSION}'")
+message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")
+message(STATUS "SHORT_VERSION='${SHORT_VERSION}'")
+
