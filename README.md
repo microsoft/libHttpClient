@@ -52,6 +52,29 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 * Optionally call HCGlobalSetHttpCallPerformCallback() to create do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl how to use this callback plus Curl https://github.com/curl/curl to make an HTTP implementation using Curl.
 
+## TODO
+
+Big things that still need to be done:
+
+APIs:
+* WebSocket APIs
+* API for binary response data 
+* APIs for controling mock layer
+
+Implementation:
+* Retry logic
+* Throttling logic
+* UWP implementation calling UWP platform HTTP / WebSocket APIs
+* XDK project & XDK implementation calling XDK platform HTTP / WebSocket APIs
+* iOS project & iOS implementation calling iOS platform HTTP / WebSocket APIs
+* Android project & Android implementation calling Android platform HTTP / WebSocket APIs
+
+Samples:
+* XDK ERA sample
+* iOS sample
+* Android sample
+* P/Invoke layer and UWP C# sample
+
 ## How to clone repo
 
 This repo contains submodules.  There are two ways to make sure you get submodules.
