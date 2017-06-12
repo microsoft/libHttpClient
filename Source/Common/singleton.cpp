@@ -24,8 +24,6 @@ http_singleton::http_singleton()
 
 http_singleton::~http_singleton()
 {
-    std::lock_guard<std::mutex> guard(g_httpSingletonLock);
-    g_httpSingleton = nullptr;
 }
 
 http_singleton*
@@ -99,6 +97,7 @@ HC_API void HC_CALLING_CONV
 HCGlobalCleanup()
 {
     std::lock_guard<std::mutex> guard(g_httpSingletonLock);
+    g_httpSingleton->m_threadPool->shutdown_active_threads();
     g_httpSingleton = nullptr;
 }
 
@@ -108,6 +107,18 @@ void VerifyGlobalInit()
     {
         LOG_ERROR("Call HCGlobalInitialize() first");
         assert(g_httpSingleton != nullptr);
+    }
+}
+
+http_internal_string SetOptionalParam(_In_opt_ PCSTR_T param)
+{
+    if (param == nullptr)
+    {
+        return _T("");
+    }
+    else
+    {
+        return param;
     }
 }
 

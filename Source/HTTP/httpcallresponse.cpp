@@ -110,7 +110,7 @@ HCHttpCallResponseGetHeader(
 HC_API void HC_CALLING_CONV
 HCHttpCallResponseGetNumHeaders(
     _In_ HC_CALL_HANDLE call,
-    _Out_ int* numHeaders
+    _Out_ uint32_t* numHeaders
     )
 {
     VerifyGlobalInit();
@@ -120,7 +120,7 @@ HCHttpCallResponseGetNumHeaders(
 HC_API void HC_CALLING_CONV
 HCHttpCallResponseGetHeaderAtIndex(
     _In_ HC_CALL_HANDLE call,
-    _In_ int headerIndex,
+    _In_ uint32_t headerIndex,
     _Out_ PCSTR_T* headerName,
     _Out_ PCSTR_T* headerValue
     )

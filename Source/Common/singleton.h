@@ -38,6 +38,9 @@ struct http_singleton
 };
 
 http_singleton* get_http_singleton(_In_ bool createIfRequired = false);
+
 void VerifyGlobalInit();
+http_internal_string SetOptionalParam(_In_opt_ PCSTR_T param);
+
 
 
