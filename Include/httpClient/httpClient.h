@@ -152,16 +152,26 @@ HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetUrl(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR_T method,
-    _In_ PCSTR_T url,
-    _In_opt_ PCSTR_T requestBody
+    _In_ PCSTR_T url
     );
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetUrl(
     _In_ HC_CALL_HANDLE call,
     _Outptr_ PCSTR_T* method,
-    _Outptr_ PCSTR_T* url,
-    _Outptr_opt_ PCSTR_T* requestBody
+    _Outptr_ PCSTR_T* url
+    );
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestSetRequestBodyString(
+    _In_ HC_CALL_HANDLE call,
+    _In_ PCSTR_T requestBodyString
+    );
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestGetRequestBodyString(
+    _In_ HC_CALL_HANDLE call,
+    _Out_ PCSTR_T* requestBodyString
     );
 
 HC_API void HC_CALLING_CONV

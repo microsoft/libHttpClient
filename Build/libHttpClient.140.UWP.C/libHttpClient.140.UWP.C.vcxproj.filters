@@ -22,6 +22,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp">
+      <Filter>C++ Source\Common\UWP</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
       <Filter>C++ Source\HTTP</Filter>
     </ClCompile>
@@ -30,6 +33,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallresponse.cpp">
       <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp">
+      <Filter>C++ Source\HTTP\Mock</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\UWP\http_uwp.cpp">
       <Filter>C++ Source\HTTP\UWP</Filter>
@@ -78,8 +84,14 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.h">
+      <Filter>C++ Source\Common\UWP</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h">
       <Filter>C++ Source\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h">
+      <Filter>C++ Source\HTTP\Mock</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.h">
       <Filter>C++ Source\Logger</Filter>
@@ -101,8 +113,14 @@
     <Filter Include="C++ Source\Common">
       <UniqueIdentifier>{6D290126-3831-3A04-903B-F2ADD104D81C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="C++ Source\Common\UWP">
+      <UniqueIdentifier>{29E1C84C-3235-34FD-A67E-05978FB61262}</UniqueIdentifier>
+    </Filter>
     <Filter Include="C++ Source\HTTP">
       <UniqueIdentifier>{6DAD9E7F-080C-3264-920E-77D0AFFE8CC9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\Mock">
+      <UniqueIdentifier>{866DCF4C-AB9B-3053-BA1C-52DF3408F42C}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP\UWP">
       <UniqueIdentifier>{69F6E324-E5EF-3CE8-8D97-577DE31580C5}</UniqueIdentifier>

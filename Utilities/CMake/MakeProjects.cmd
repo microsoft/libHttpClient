@@ -2,10 +2,11 @@
 if "%1" EQU "" goto help
 echo on
 set ROOT_FOLDER=%1
+if "%1" EQU "1" set ROOT_FOLDER=C:\git\forks\libHttpClient
 set NEW_FOLDER=%ROOT_FOLDER%\Utilities\CMake\output
 set OLD_FOLDER=%ROOT_FOLDER%\Build
 
-call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd 
+call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUWP=TRUE
 rem call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DXDK=TRUE
 rem call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DWIN32=TRUE
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTAEF=TRUE

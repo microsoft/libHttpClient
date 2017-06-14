@@ -12,29 +12,46 @@ HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetUrl(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR_T method,
-    _In_ PCSTR_T url,
-    _In_opt_ PCSTR_T requestBody
+    _In_ PCSTR_T url
     )
 {
     VerifyGlobalInit();
     call->method = method;
     call->url = url;
-    call->requestBody = SetOptionalParam(requestBody);
 }
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetUrl(
     _In_ HC_CALL_HANDLE call,
     _Outptr_ PCSTR_T* method,
-    _Outptr_ PCSTR_T* url,
-    _Outptr_opt_ PCSTR_T* requestBody
+    _Outptr_ PCSTR_T* url
     )
 {
     VerifyGlobalInit();
     *method = call->method.c_str();
     *url = call->url.c_str();
-    *requestBody = call->requestBody.c_str();
 }
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestSetRequestBodyString(
+    _In_ HC_CALL_HANDLE call,
+    _In_ PCSTR_T requestBodyString
+    )
+{
+    VerifyGlobalInit();
+    call->requestBodyString = requestBodyString;
+}
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestGetRequestBodyString(
+    _In_ HC_CALL_HANDLE call,
+    _Out_ PCSTR_T* requestBodyString
+    )
+{
+    VerifyGlobalInit();
+    *requestBodyString = call->requestBodyString.c_str();
+}
+
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetHeader(
