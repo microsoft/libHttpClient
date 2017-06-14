@@ -11,7 +11,7 @@ struct HC_CALL
 {
     http_internal_string method;
     http_internal_string url;
-    http_internal_string requestBody;
+    http_internal_string requestBodyString;
     http_internal_map(http_internal_string, http_internal_string) requestHeaders;
     bool retryAllowed;
     uint32_t timeoutInSeconds;

@@ -26,7 +26,8 @@ void HC_CALLING_CONV PerformCall(_In_ HC_CALL_HANDLE call)
     const WCHAR* method = nullptr;
     const WCHAR* requestBody = nullptr;
     const WCHAR* userAgent = nullptr;
-    HCHttpCallRequestGetUrl(call, &method, &url, &requestBody);
+    HCHttpCallRequestGetUrl(call, &method, &url);
+    HCHttpCallRequestGetRequestBodyString(call, &requestBody);
     HCHttpCallRequestGetHeader(call, L"User-Agent", &userAgent);
 
     // TODO: make call
@@ -48,7 +49,8 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
 
     HC_CALL_HANDLE call = nullptr;
     HCHttpCallCreate(&call);
-    HCHttpCallRequestSetUrl(call, L"GET", L"http://www.bing.com", nullptr);
+    HCHttpCallRequestSetUrl(call, L"GET", L"http://www.bing.com");
+    HCHttpCallRequestSetRequestBodyString(call, L"Test");
     HCHttpCallRequestSetHeader(call, L"User-Agent", L"xsapi");
     HCHttpCallRequestSetRetryAllowed(call, true);
 

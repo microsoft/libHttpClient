@@ -43,7 +43,11 @@ HCHttpCallPerform(
     }
     else
     {
+#if !UNITTEST_API
         Internal_HCHttpCallPerform(call);
+#endif
+
+        //Mock_Internal_HCHttpCallPerform(call);
     }
 }
 

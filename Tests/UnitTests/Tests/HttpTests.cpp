@@ -169,20 +169,16 @@ public:
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
 
-        HCHttpCallRequestSetUrl(call, L"1", L"2", L"3");
+        HCHttpCallRequestSetUrl(call, L"1", L"2");
         const WCHAR* t1 = nullptr;
         const WCHAR* t2 = nullptr;
-        const WCHAR* t3 = nullptr;
-        HCHttpCallRequestGetUrl(call, &t1, &t2, &t3);
+        HCHttpCallRequestGetUrl(call, &t1, &t2);
         VERIFY_ARE_EQUAL_STR(L"1", t1);
         VERIFY_ARE_EQUAL_STR(L"2", t2);
-        VERIFY_ARE_EQUAL_STR(L"3", t3);
 
-        HCHttpCallRequestSetUrl(call, L"4", L"5", nullptr);
-        HCHttpCallRequestGetUrl(call, &t1, &t2, &t3);
+        HCHttpCallRequestSetRequestBodyString(call, L"4");
+        HCHttpCallRequestGetRequestBodyString(call, &t1);
         VERIFY_ARE_EQUAL_STR(L"4", t1);
-        VERIFY_ARE_EQUAL_STR(L"5", t2);
-        VERIFY_ARE_EQUAL_STR(L"", t3);
 
         HCHttpCallRequestSetRetryAllowed(call, true);
         bool retry = false;
