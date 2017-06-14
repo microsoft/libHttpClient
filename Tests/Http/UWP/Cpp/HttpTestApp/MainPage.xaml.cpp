@@ -40,11 +40,8 @@ void HC_CALLING_CONV PerformCall(_In_ HC_CALL_HANDLE call)
 
 void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    double ver = HCGlobalGetLibVersion();
-    LogTextBox->Text = "Version: " + ver.ToString();
-
     HCGlobalInitialize();
-    HCGlobalSetHttpCallPerformCallback(PerformCall);
+    //HCGlobalSetHttpCallPerformCallback(PerformCall);
     HCSettingsSetTimeoutWindow(120);
     uint32_t timeoutWindow = 0;
     HCSettingsGetTimeoutWindow(&timeoutWindow);
@@ -54,7 +51,9 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     HCHttpCallRequestSetUrl(call, L"GET", L"http://www.bing.com", nullptr);
     HCHttpCallRequestSetHeader(call, L"User-Agent", L"xsapi");
     HCHttpCallRequestSetRetryAllowed(call, true);
+
     HCHttpCallPerform(call);
+
     uint32_t errCode = 0;
     HCHttpCallResponseGetErrorCode(call, &errCode);
     uint32_t statusCode = 0;
@@ -63,6 +62,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     std::wstring responseString;
     HCHttpCallResponseGetResponseString(call, &str);
     if( str != nullptr ) responseString = str;
+    LogTextBox->Text = ref new Platform::String(responseString.c_str());
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
     HCHttpCallCleanup(call);
