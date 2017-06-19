@@ -59,6 +59,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 Big things that still need to be done:
 
 APIs:
+* Flushout of async API pattern
 * WebSocket APIs
 * API for binary response data 
 * APIs for controling mock layer
@@ -66,7 +67,7 @@ APIs:
 Implementation:
 * Retry logic
 * Throttling logic
-* UWP implementation calling UWP platform HTTP / WebSocket APIs
+* Flushout of UWP implementation calling UWP platform HTTP / WebSocket APIs
 * XDK project & XDK implementation calling XDK platform HTTP / WebSocket APIs
 * iOS project & iOS implementation calling iOS platform HTTP / WebSocket APIs
 * Android project & Android implementation calling Android platform HTTP / WebSocket APIs
