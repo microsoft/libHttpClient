@@ -15,8 +15,10 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 - Builds for **UWP, XDK ERA, Win32, iOS, and Android**
 - **Similar to the C++ REST SDK** (aka Casablanca) [https://github.com/Microsoft/cpprestsdk] but with key differences
 - Public API is a **flat C API**
+- **Asynchronous** API
 - Public API **supports simple P/Invoke** without needing to use the "C#/.NET P/Invoke Interop SDK" [https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK]
-- **Synchronous** API similar to Curl https://github.com/curl/curl
+- Public APIs to **manage internal threads**
+- **No streams** support
 - **No dependencies** on PPL or Boost
 - **Does not throw exceptions** as a means of non-fatal error reporting
 - Caller controlled **memory allocation** via callback API (similar to XDK's XMemAlloc)
@@ -29,7 +31,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 - Binaries eventually on Nuget.org as **Nuget packages**
 - Unit tests via TAEF
 - End to end samples for UWP C++, UWP C# (with P/Invoke layer), XDK ERA, iOS, and Android
-- [Needed?] Public APIs to **manage internal threads**
+- Support for cancellation?
 
 ## HTTP API Usage
 
@@ -40,7 +42,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 1. Optionally call HCSettingsSet*()
 1. Call HCHttpCallCreate() to create a new HC_CALL_HANDLE
 1. Call HCHttpCallRequestSet*() to prepare the HC_CALL_HANDLE
-1. Call HCHttpCallPerform() to perform HTTP call using the HC_CALL_HANDLE.  This call is synchronous, so call it from a task thread
+1. Call HCHttpCallPerform() to perform HTTP call using the HC_CALL_HANDLE.  This call is asynchronous, so the work will be done on task thread and it will return via the callback.
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE
 1. Call HCHttpCallCleanup() to cleanup the HC_CALL_HANDLE
 1. Repeat 4-8 for each new HTTP call
