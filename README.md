@@ -13,7 +13,6 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 - Designed around the needs of **professional game developers** that use Xbox Live
 - Will be **used by** the Microsoft Xbox Live Service API (XSAPI) [https://github.com/Microsoft/xbox-live-api]
 - Builds for **UWP, XDK ERA, Win32, iOS, and Android**
-- **Similar to the C++ REST SDK** (aka Casablanca) [https://github.com/Microsoft/cpprestsdk] but with key differences
 - Public API is a **flat C API**
 - **Asynchronous** API
 - Public API **supports simple P/Invoke** without needing to use the "C#/.NET P/Invoke Interop SDK" [https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK]
@@ -28,7 +27,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 - Built-in API support to switch to **mock layer**
 - Does **not require C++/CX** to build on UWP or ERA
 - **Open source** project on GitHub
-- Binaries eventually on Nuget.org as **Nuget packages**
+- Binaries eventually on Nuget.org as **Nuget packages**, and maybe VcPkg
 - Unit tests via TAEF
 - End to end samples for UWP C++, UWP C# (with P/Invoke layer), XDK ERA, iOS, and Android
 - Support for cancellation?
