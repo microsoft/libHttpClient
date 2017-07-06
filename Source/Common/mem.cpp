@@ -6,31 +6,44 @@
 #include "singleton.h"
 #include "log.h"
 
-HC_MEM_ALLOC_FUNC g_memAllocFunc = nullptr;
-HC_MEM_FREE_FUNC g_memFreeFunc = nullptr;
+_Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV 
+DefaultMemAllocFunction(
+    _In_ size_t size,
+    _In_ HC_MEMORY_TYPE memoryType
+    )
+{
+    return new (std::nothrow) int8_t[size];
+}
+
+void HC_CALLING_CONV 
+DefaultMemFreeFunction(
+    _In_ _Post_invalid_ void* pointer,
+    _In_ HC_MEMORY_TYPE memoryType
+    )
+{
+    delete[] pointer;
+}
+
+
+HC_MEM_ALLOC_FUNC g_memAllocFunc = DefaultMemAllocFunction;
+HC_MEM_FREE_FUNC g_memFreeFunc = DefaultMemFreeFunction;
 
 NAMESPACE_XBOX_LIBHCBEGIN
 
+
 void* http_memory::mem_alloc(
-    _In_ size_t dwSize
+    _In_ size_t size
     )
 {
     HC_MEM_ALLOC_FUNC pMemAlloc = g_memAllocFunc;
-    if (pMemAlloc == nullptr)
+    try
     {
-        return new (std::nothrow) int8_t[dwSize];
+        return pMemAlloc(size, 0);
     }
-    else
+    catch (...)
     {
-        try
-        {
-            return pMemAlloc(dwSize, 0);
-        }
-        catch (...)
-        {
-            LOG_ERROR("mem_alloc callback failed.");
-            return nullptr;
-        }
+        LOG_ERROR("mem_alloc callback failed.");
+        return nullptr;
     }
 }
 
@@ -39,20 +52,13 @@ void http_memory::mem_free(
     )
 {
     HC_MEM_FREE_FUNC pMemFree = g_memFreeFunc;
-    if (pMemFree == nullptr)
+    try
     {
-        delete[] pAddress;
+        return pMemFree(pAddress, 0);
     }
-    else
+    catch (...)
     {
-        try
-        {
-            return pMemFree(pAddress, 0);
-        }
-        catch (...)
-        {
-            LOG_ERROR("mem_free callback failed.");
-        }
+        LOG_ERROR("mem_free callback failed.");
     }
 }
 
@@ -65,8 +71,8 @@ HCMemSetFunctions(
     _In_opt_ HC_MEM_FREE_FUNC memFreeFunc
     )
 {
-    g_memAllocFunc = memAllocFunc;
-    g_memFreeFunc = memFreeFunc;
+    g_memAllocFunc = (memAllocFunc == nullptr) ? DefaultMemAllocFunction : memAllocFunc;
+    g_memFreeFunc = (memFreeFunc == nullptr) ? DefaultMemFreeFunction : memFreeFunc;
 }
 
 HC_API void HC_CALLING_CONV

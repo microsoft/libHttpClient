@@ -15,7 +15,8 @@ http_thread_pool::http_thread_pool() :
 {
     memset(m_hActiveThreads, 0, sizeof(HANDLE) * MAX_THREADS);
     m_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
-    m_readyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    m_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    m_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
 }
 
 long http_thread_pool::get_num_active_threads()
@@ -42,32 +43,51 @@ HANDLE http_thread_pool::get_stop_handle()
     return m_stopRequestedHandle.get();
 }
 
-HANDLE http_thread_pool::get_ready_handle()
+HANDLE http_thread_pool::get_pending_ready_handle()
 {
-    return m_readyHandle.get();
+    return m_pendingReadyHandle.get();
 }
 
-void http_thread_pool::set_async_op_ready()
+HANDLE http_thread_pool::get_complete_ready_handle()
 {
-    SetEvent(get_ready_handle());
+    return m_completeReadyHandle.get();
+}
+
+void http_thread_pool::set_async_op_complete_ready()
+{
+#if UWP_API
+    SetEvent(get_complete_ready_handle());
+#endif
+}
+
+void http_thread_pool::set_async_op_pending_ready()
+{
+#if UWP_API
+    SetEvent(get_pending_ready_handle());
+#endif
 }
 
 DWORD WINAPI http_thread_proc(LPVOID lpParam)
 {
-    HANDLE hEvents[2] =
+    HANDLE hEvents[3] =
     {
-        get_http_singleton()->m_threadPool->get_ready_handle(),
-        get_http_singleton()->m_threadPool->get_stop_handle()
+        get_http_singleton()->m_threadPool->get_pending_ready_handle(),
+        get_http_singleton()->m_threadPool->get_complete_ready_handle(),
+        get_http_singleton()->m_threadPool->get_stop_handle(),
     };
 
     bool stop = false;
     while (!stop)
     {
-        DWORD dwResult = WaitForMultipleObjectsEx(2, hEvents, false, INFINITE, false);
+        DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
         switch (dwResult)
         {
-        case WAIT_OBJECT_0: // ready
+        case WAIT_OBJECT_0: // pending ready
             HCThreadProcessPendingAsyncOp();
+            break;
+
+        case WAIT_OBJECT_0 + 1: // completed ready
+            HCThreadProcessCompletedAsyncOp();
             break;
 
         default:

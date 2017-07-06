@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "singleton.h"
 #include "log.h"
+#include "../http/httpcall.h"
 
 #define DEFAULT_TIMEOUT_WINDOW_IN_SECONDS 60
 
@@ -15,7 +16,7 @@ http_singleton::http_singleton()
     m_threadPool = std::make_unique<http_thread_pool>();
     m_threadPool->start_threads();
     m_loggingHandlersCounter = 0;
-    m_performFunc = nullptr;
+    m_performFunc = Internal_HCHttpCallPerform;
 
     m_traceLevel = HC_DIAGNOSTICS_TRACE_LEVEL::TRACE_OFF;
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
@@ -123,12 +124,20 @@ http_internal_string SetOptionalParam(_In_opt_ PCSTR_T param)
 }
 
 HC_API void HC_CALLING_CONV
-HCGlobalSetHttpCallPerformCallback(
+HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
     )
 {
     VerifyGlobalInit();
-    get_http_singleton()->m_performFunc = performFunc;
+    get_http_singleton()->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
+HC_API void HC_CALLING_CONV
+HCGlobalGetHttpCallPerformFunction(
+    _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
+    )
+{
+    VerifyGlobalInit();
+    *performFunc = get_http_singleton()->m_performFunc;
+}
 

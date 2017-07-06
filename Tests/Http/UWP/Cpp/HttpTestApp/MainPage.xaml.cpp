@@ -2,6 +2,8 @@
 #include "MainPage.xaml.h"
 #include "httpClient\httpClient.h"
 
+#include <regex>
+
 using namespace HttpTestApp;
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -14,61 +16,131 @@ using namespace Windows::UI::Xaml::Input;
 using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 
+static HttpTestApp::MainPage^ g_MainPage;
+static Windows::UI::Core::CoreDispatcher^ s_dispatcher;
+static bool g_manualThreadingCheckbox = false;
+#define TICKS_PER_SECOND 10000000i64
+
 
 MainPage::MainPage()
 {
-    InitializeComponent();
+	s_dispatcher = this->Dispatcher;
+	g_MainPage = this;
+	InitializeComponent();
+    HCGlobalInitialize();
+
+	TextboxURL->Text = L"http://www.bing.com";
+	TextboxHeaders->Text = L"User-Agent: XboxServicesAPI; x-xbl-contract-version: 1";
+	TextboxMethod->Text = L"GET";
+	TextboxTimeout->Text = L"120";
+	TextboxRequestString->Text = L"";
 }
 
-void HC_CALLING_CONV PerformCall(_In_ HC_CALL_HANDLE call)
+MainPage::~MainPage()
 {
-    const WCHAR* url = nullptr;
-    const WCHAR* method = nullptr;
-    const WCHAR* requestBody = nullptr;
-    const WCHAR* userAgent = nullptr;
-    HCHttpCallRequestGetUrl(call, &method, &url);
-    HCHttpCallRequestGetRequestBodyString(call, &requestBody);
-    HCHttpCallRequestGetHeader(call, L"User-Agent", &userAgent);
-
-    // TODO: make call
-
-    HCHttpCallResponseSetStatusCode(call, 200);
-    HCHttpCallResponseSetHeader(call, L"ContractVersoin", L"Ver1");
-    HCHttpCallResponseSetErrorCode(call, 10);
-    HCHttpCallResponseSetResponseString(call, L"bing.com");
+    HCGlobalCleanup();
 }
 
+std::vector<std::vector<std::wstring>> ExtractHeadersFromHeadersString(std::wstring headersList)
+{
+	std::vector<std::vector<std::wstring>> headers;
+	std::wregex headersListToken(L";+");
+	std::wsregex_token_iterator iterHeadersList(headersList.begin(), headersList.end(), headersListToken, -1);
+	std::wsregex_token_iterator endHeadersList;
+	std::vector<std::wstring> headerList(iterHeadersList, endHeadersList);
+	for (auto header : headerList)
+	{
+		std::wregex headerToken(L":+");
+		std::wsregex_token_iterator iterHeader(header.begin(), header.end(), headerToken, -1);
+		std::wsregex_token_iterator endHeader;
+		std::vector<std::wstring> valueKeyPair(iterHeader, endHeader);
+		if (valueKeyPair.size() == 2)
+		{
+			headers.push_back(valueKeyPair);
+		}
+	}
+
+	return headers;
+}
+
+void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e)
+{
+	HCThreadProcessPendingAsyncOp();
+	HCThreadProcessCompletedAsyncOp();
+}
 
 void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    HCGlobalInitialize();
-    //HCGlobalSetHttpCallPerformCallback(PerformCall);
-    HCSettingsSetTimeoutWindow(120);
-    uint32_t timeoutWindow = 0;
-    HCSettingsGetTimeoutWindow(&timeoutWindow);
+	g_manualThreadingCheckbox = ManualThreadingCheckbox->IsChecked->Value;
+	if (g_manualThreadingCheckbox)
+	{
+		HCThreadSetNumThreads(0);
 
-    HC_CALL_HANDLE call = nullptr;
+		m_timer = ref new DispatcherTimer;
+		m_timer->Tick += ref new EventHandler<Object^>(this, &HttpTestApp::MainPage::DispatcherTimer_Tick);
+
+		TimeSpan ts;
+		ts.Duration = TICKS_PER_SECOND / 60;
+		m_timer->Interval = ts;
+
+		m_timer->Start(); 
+	}
+	else
+	{
+		HCThreadSetNumThreads(1);
+	}
+
+	HC_CALL_HANDLE call = nullptr;
     HCHttpCallCreate(&call);
-    HCHttpCallRequestSetUrl(call, L"GET", L"http://www.bing.com");
-    HCHttpCallRequestSetRequestBodyString(call, L"Test");
-    HCHttpCallRequestSetHeader(call, L"User-Agent", L"xsapi");
-    HCHttpCallRequestSetRetryAllowed(call, true);
+	HCHttpCallRequestSetUrl(call, TextboxMethod->Text->Data(), TextboxURL->Text->Data());
+    HCHttpCallRequestSetRequestBodyString(call, TextboxRequestString->Text->Data());
+	HCHttpCallRequestSetRetryAllowed(call, RetryAllowedCheckbox->IsChecked->Value);
+	auto headers = ExtractHeadersFromHeadersString(TextboxHeaders->Text->Data());
+	for (auto header : headers)
+	{
+		std::wstring headerName = header[0];
+		std::wstring headerValue = header[1];
+		HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
+	}
 
-    HCHttpCallPerform(call);
+    HCHttpCallPerform(call, nullptr, 
+        [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
+        {
+            uint32_t errCode = 0;
+			uint32_t statusCode = 0;
+			std::wstring responseString;
 
-    uint32_t errCode = 0;
-    HCHttpCallResponseGetErrorCode(call, &errCode);
-    uint32_t statusCode = 0;
-    HCHttpCallResponseGetStatusCode(call, &statusCode);
-    const WCHAR* str;
-    std::wstring responseString;
-    HCHttpCallResponseGetResponseString(call, &str);
-    if( str != nullptr ) responseString = str;
-    LogTextBox->Text = ref new Platform::String(responseString.c_str());
-    uint32_t numHeaders = 0;
-    HCHttpCallResponseGetNumHeaders(call, &numHeaders);
-    HCHttpCallCleanup(call);
+			HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetStatusCode(call, &statusCode);
+            const WCHAR* str;
+            HCHttpCallResponseGetResponseString(call, &str);
+            if (str != nullptr) responseString = str;
 
-    HCGlobalCleanup();
+            uint32_t numHeaders = 0;
+            HCHttpCallResponseGetNumHeaders(call, &numHeaders);
+
+			HCHttpCallCleanup(call);
+
+			if (!g_manualThreadingCheckbox)
+			{
+				// If !g_manualThreadingCheckbox, then this callback is called from background thread
+				// and we must set the XAML text on the UI thread, so use CoreDispatcher to get it there
+				s_dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+					ref new Windows::UI::Core::DispatchedHandler([responseString]()
+				{
+					g_MainPage->LogTextBox->Text = ref new Platform::String(responseString.c_str());
+				}));
+			}
+			else
+			{
+				// If g_manualThreadingCheckbox, then this callback is called from thread 
+				// that called HCThreadProcessCompletedAsyncOp() which in this sample 
+				// is the UI thread
+
+				// We must set the XAML text on the UI thread, so no need to use CoreDispatcher here
+				g_MainPage->LogTextBox->Text = ref new Platform::String(responseString.c_str());
+			}
+        });
+
 }
 

@@ -14,7 +14,7 @@
   <mp:PhoneIdentity PhoneProductId="ca00ca5b-dae9-42f8-bc52-5290fb962b15" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>HttpTestApp</DisplayName>
+    <DisplayName>libHttpClient Sample App</DisplayName>
     <PublisherDisplayName>Jason</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -32,10 +32,10 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="HttpTestApp.App">
       <uap:VisualElements
-        DisplayName="HttpTestApp"
+        DisplayName="libHttpClient Sample App"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="HttpTestApp"
+        Description="libHttpClient Sample App"
         BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />

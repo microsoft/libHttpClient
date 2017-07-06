@@ -7,11 +7,16 @@
 #include "asyncop.h"
 #include "http_mock.h"
 
+#if UNITTEST_API
+
 using namespace Windows::Foundation;
 using namespace Windows::Web::Http;
 
-void Mock_Internal_HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE call
-    )
+void Internal_HCHttpCallPerform(
+	_In_ HC_CALL_HANDLE call,
+	_In_ HC_ASYNC_TASK_HANDLE taskHandle
+	)
 {
 }
+
+#endif

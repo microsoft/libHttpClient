@@ -88,4 +88,5 @@ typedef const char* PCSTR_T;
 
 typedef uint32_t HC_MEMORY_TYPE;
 typedef struct HC_CALL* HC_CALL_HANDLE;
+typedef struct HC_ASYNC_INFO* HC_ASYNC_TASK_HANDLE;
 typedef const struct HC_USER* USER_HANDLE;

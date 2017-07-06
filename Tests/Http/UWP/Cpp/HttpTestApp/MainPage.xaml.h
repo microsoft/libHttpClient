@@ -7,8 +7,12 @@ namespace HttpTestApp
     {
     public:
         MainPage();
+        virtual ~MainPage();
 
     private:
-        void Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		Windows::UI::Xaml::DispatcherTimer^ m_timer;
+
+		void Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e);
     };
 }

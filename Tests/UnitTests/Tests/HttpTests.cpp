@@ -42,8 +42,9 @@ static void HC_CALLING_CONV MemFree(
 
 static bool g_PerformCallbackCalled = false;
 static void HC_CALLING_CONV PerformCallback(
-    _In_ HC_CALL_HANDLE call
-    )
+    _In_ HC_CALL_HANDLE call,
+	_In_ HC_ASYNC_TASK_HANDLE taskHandle
+	)
 {
     g_PerformCallbackCalled = true;
 }
@@ -111,11 +112,18 @@ public:
     {
         HCGlobalInitialize();
         g_PerformCallbackCalled = false;
-        HCGlobalSetHttpCallPerformCallback(&PerformCallback);
+		HCGlobalSetHttpCallPerformFunction(&PerformCallback);
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
-        HCHttpCallPerform(call);
+        HCHttpCallPerform(call, nullptr, 
+			[](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
+			{
+				uint32_t errCode = 0;
+				HCHttpCallResponseGetErrorCode(call, &errCode);
+				uint32_t statusCode = 0;
+				HCHttpCallResponseGetStatusCode(call, &statusCode);
+			});
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
         HCHttpCallCleanup(call);
         HCGlobalCleanup();

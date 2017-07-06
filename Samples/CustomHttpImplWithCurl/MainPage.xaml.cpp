@@ -18,10 +18,14 @@ using namespace Windows::UI::Xaml::Input;
 using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 
+static Windows::UI::Core::CoreDispatcher^ s_dispatcher;
+static MainPage^ g_MainPage;
 
 MainPage::MainPage()
 {
-    InitializeComponent();
+	s_dispatcher = this->Dispatcher;
+	g_MainPage = this;
+	InitializeComponent();
     curl_global_init(CURL_GLOBAL_ALL);
 }
 
@@ -63,7 +67,10 @@ std::wstring to_utf16string(const std::string &value)
     return conversion.from_bytes(value);
 }
 
-void HC_CALLING_CONV PerformCall(_In_ HC_CALL_HANDLE call)
+void HC_CALLING_CONV PerformCall(
+	_In_ HC_CALL_HANDLE call,
+	_In_ HC_ASYNC_TASK_HANDLE taskHandle
+	)
 {
     const WCHAR* url = nullptr;
     const WCHAR* method = nullptr;
@@ -100,6 +107,7 @@ void HC_CALLING_CONV PerformCall(_In_ HC_CALL_HANDLE call)
         HCHttpCallResponseSetResponseString(call, wstr.c_str());
     }
     HCHttpCallResponseSetErrorCode(call, res);
+	HCThreadSetResultsReady(taskHandle);
 
     curl_easy_cleanup(curl);
 }
@@ -110,7 +118,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     double ver = HCGlobalGetLibVersion();
 
     HCGlobalInitialize();
-    HCGlobalSetHttpCallPerformCallback(PerformCall);
+    HCGlobalSetHttpCallPerformFunction(PerformCall);
     HCSettingsSetTimeoutWindow(120);
     uint32_t timeoutWindow = 0;
     HCSettingsGetTimeoutWindow(&timeoutWindow);
@@ -121,20 +129,31 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     HCHttpCallRequestSetHeader(call, L"User-Agent", L"xsapi");
     HCHttpCallRequestSetRetryAllowed(call, true);
 
-    HCHttpCallPerform(call);
+    HCHttpCallPerform(call, nullptr, 
+		[](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
+		{
+			uint32_t errCode = 0;
+			HCHttpCallResponseGetErrorCode(call, &errCode);
+			uint32_t statusCode = 0;
+			HCHttpCallResponseGetStatusCode(call, &statusCode);
+			const WCHAR* str;
+			std::wstring responseString;
+			HCHttpCallResponseGetResponseString(call, &str);
+			if (str != nullptr) responseString = str;
+			uint32_t numHeaders = 0;
+			HCHttpCallResponseGetNumHeaders(call, &numHeaders);
+			HCHttpCallCleanup(call);
 
-    uint32_t errCode = 0;
-    HCHttpCallResponseGetErrorCode(call, &errCode);
-    uint32_t statusCode = 0;
-    HCHttpCallResponseGetStatusCode(call, &statusCode);
-    const WCHAR* str;
-    std::wstring responseString;
-    HCHttpCallResponseGetResponseString(call, &str);
-    if( str != nullptr ) responseString = str;
-    LogTextBox->Text = ref new Platform::String(responseString.c_str());
-    uint32_t numHeaders = 0;
-    HCHttpCallResponseGetNumHeaders(call, &numHeaders);
-    HCHttpCallCleanup(call);
+			// If !g_manualThreadingCheckbox, then this callback is called from background thread
+			// and we must set the XAML text on the UI thread, so use CoreDispatcher to get it there
+			s_dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+				ref new Windows::UI::Core::DispatchedHandler([responseString]()
+			{
+				g_MainPage->LogTextBox->Text = ref new Platform::String(responseString.c_str());
+			}));
+
+	});
+
 
     HCGlobalCleanup();
 }

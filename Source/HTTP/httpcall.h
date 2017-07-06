@@ -7,6 +7,14 @@
 #include "mem.h"
 #include "utils.h"
 
+class hc_task
+{
+public:
+    hc_task() {}
+
+    virtual ~hc_task() {}
+};
+
 struct HC_CALL
 {
     http_internal_string method;
@@ -21,6 +29,12 @@ struct HC_CALL
     uint32_t statusCode;
     uint32_t errorCode;
     http_internal_string errorMessage;
+    std::shared_ptr<hc_task> task;
 };
 
-void Internal_HCHttpCallPerform(_In_ HC_CALL_HANDLE call);
+void Internal_HCHttpCallPerform(
+    _In_ HC_CALL_HANDLE call, 
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    );
+
+
