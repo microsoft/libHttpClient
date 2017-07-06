@@ -101,6 +101,14 @@ HCThreadSetResultsReady(
 HC_API bool HC_CALLING_CONV
 HCThreadIsAsyncOpPending();
 
+#if UWP_API
+HC_API HANDLE HC_CALLING_CONV
+HCThreadGetAsyncOpPendingHandle();
+
+HC_API HANDLE HC_CALLING_CONV
+HCThreadGetAsyncOpCompletedHandle();
+#endif
+
 HC_API void HC_CALLING_CONV
 HCThreadProcessPendingAsyncOp();
 

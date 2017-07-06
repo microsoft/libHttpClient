@@ -49,7 +49,7 @@ void http_asyncop_push_pending_asyncop(
 }
 
 bool HC_CALLING_CONV
-HttpClientIsAsyncOpPending()
+HCThreadIsAsyncOpPending()
 {
     auto& map = get_http_singleton()->m_asyncPendingQueue;
     return !map.empty();
@@ -67,11 +67,11 @@ void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info)
 {
     info->state = http_async_state::processing;
 
-	{
-		std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-		auto& asyncProcessingQueue = get_http_singleton()->m_asyncProcessingQueue;
-		asyncProcessingQueue.push_back(info);
-	}
+    {
+        std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
+        auto& asyncProcessingQueue = get_http_singleton()->m_asyncProcessingQueue;
+        asyncProcessingQueue.push_back(info);
+    }
 
     info->executionRoutine(
         info->executionRoutineContext,
@@ -84,22 +84,22 @@ void queue_completed_async_op(_In_ HC_ASYNC_TASK_HANDLE taskHandle)
     taskHandle->state = http_async_state::completed;
 
     std::shared_ptr<HC_ASYNC_INFO> info = nullptr;
-	{
-		std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-		auto& asyncProcessingQueue = get_http_singleton()->m_asyncProcessingQueue;
-		for (auto& it : asyncProcessingQueue)
-		{
-			if (it.get() == taskHandle)
-			{
-				info = it;
-			}
-		}
+    {
+        std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
+        auto& asyncProcessingQueue = get_http_singleton()->m_asyncProcessingQueue;
+        for (auto& it : asyncProcessingQueue)
+        {
+            if (it.get() == taskHandle)
+            {
+                info = it;
+            }
+        }
 
-		asyncProcessingQueue.erase(std::remove(asyncProcessingQueue.begin(), asyncProcessingQueue.end(), info), asyncProcessingQueue.end());
+        asyncProcessingQueue.erase(std::remove(asyncProcessingQueue.begin(), asyncProcessingQueue.end(), info), asyncProcessingQueue.end());
 
-		auto& completeQueue = get_http_singleton()->m_asyncCompleteQueue;
-		completeQueue.push(info);
-	}
+        auto& completeQueue = get_http_singleton()->m_asyncCompleteQueue;
+        completeQueue.push(info);
+    }
 
     get_http_singleton()->m_threadPool->set_async_op_complete_ready();
 }
@@ -121,6 +121,20 @@ HCThreadProcessCompletedAsyncOp()
 
     process_completed_async_op(info);
 }
+
+#if UWP_API
+HANDLE HC_CALLING_CONV
+HCThreadGetAsyncOpPendingHandle()
+{
+    return get_http_singleton()->m_threadPool->get_pending_ready_handle();
+}
+
+HANDLE HC_CALLING_CONV
+HCThreadGetAsyncOpCompletedHandle()
+{
+    return get_http_singleton()->m_threadPool->get_complete_ready_handle();
+}
+#endif
 
 void HC_CALLING_CONV
 HCThreadProcessPendingAsyncOp()

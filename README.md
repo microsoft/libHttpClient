@@ -51,7 +51,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 ## Behavior control
 
 * On UWP, XDK ERA, iOS, and Android, HCHttpCallPerform() will call native platform APIs
-* Optionally call HCGlobalSetHttpCallPerformCallback() to create do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
+* Optionally call HCGlobalSetHttpCallPerformFunction() to create do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl how to use this callback plus Curl https://github.com/curl/curl to make an HTTP implementation using Curl.
 
 ## TODO
@@ -59,7 +59,6 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 Big things that still need to be done:
 
 APIs:
-* [In progress] Flushout of async API pattern
 * [In progress] APIs for controling mock layer
 * API for binary response data 
 * WebSocket APIs
@@ -67,10 +66,10 @@ APIs:
 Implementation:
 * Retry logic
 * Throttling logic
-* [In progress] Flushout of UWP implementation calling UWP platform HTTP / WebSocket APIs
 * XDK project & XDK implementation calling XDK platform HTTP / WebSocket APIs
 * iOS project & iOS implementation calling iOS platform HTTP / WebSocket APIs
 * Android project & Android implementation calling Android platform HTTP / WebSocket APIs
+* Flushout of UWP implementation calling UWP platform WebSocket APIs
 
 Samples:
 * XDK ERA sample
