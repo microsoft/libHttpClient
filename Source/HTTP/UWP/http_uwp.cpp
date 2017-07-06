@@ -55,19 +55,34 @@ void uwp_http_task::perform_async(
 {
     try
     {
+        std::wstring headerName;
+        std::wstring headerValue;
         const WCHAR* url = nullptr;
         const WCHAR* method = nullptr;
         const WCHAR* requestBody = nullptr;
         const WCHAR* userAgent = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
         HCHttpCallRequestGetRequestBodyString(call, &requestBody);
-        HCHttpCallRequestGetHeader(call, L"User-Agent", &userAgent);
+
+        uint32_t numHeaders = 0;
+        HCHttpCallRequestGetNumHeaders(call, &numHeaders);
 
         HttpClient^ httpClient = ref new HttpClient();
-        auto headers = httpClient->DefaultRequestHeaders;
         Uri^ requestUri = ref new Uri(ref new Platform::String(url));
+        HttpRequestMessage^ requestMsg = ref new HttpRequestMessage(ref new HttpMethod(ref new Platform::String(method)), requestUri);
 
-        m_getHttpAsyncOp = httpClient->GetAsync(requestUri);
+        for (uint32_t i = 0; i < numHeaders; i++)
+        {
+            const WCHAR* headerName;
+            const WCHAR* headerValue;
+            HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
+            if (headerName != nullptr && headerValue != nullptr)
+            {
+                requestMsg->Headers->TryAppendWithoutValidation(ref new Platform::String(headerName), ref new Platform::String(headerValue));
+            }
+        }
+
+        m_getHttpAsyncOp = httpClient->SendRequestAsync(requestMsg, HttpCompletionOption::ResponseContentRead);
         m_getHttpAsyncOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(
             [call, taskHandle](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ asyncOp, AsyncStatus status)
         {
@@ -77,6 +92,19 @@ void uwp_http_task::perform_async(
                 uwpHttpTask->m_getHttpAsyncOpStatus = status;
                 HttpResponseMessage^ httpResponse = asyncOp->GetResults();
 
+                uint32_t statusCode = (uint32_t)httpResponse->StatusCode;
+                HCHttpCallResponseSetStatusCode(call, statusCode);
+
+                auto view = httpResponse->Headers->GetView();
+                auto iter = view->First();
+                while (iter->MoveNext())
+                {
+                    auto cur = iter->Current;
+                    auto headerName = cur->Key;
+                    auto headerValue = cur->Value;
+                    HCHttpCallResponseSetHeader(call, headerName->Data(), headerValue->Data());
+                }
+
                 uwpHttpTask->m_readAsStringAsyncOp = httpResponse->Content->ReadAsStringAsync();
                 uwpHttpTask->m_readAsStringAsyncOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<Platform::String^, unsigned long long>(
                     [call, taskHandle](IAsyncOperationWithProgress<Platform::String^, unsigned long long>^ asyncOp, AsyncStatus status)
@@ -84,12 +112,12 @@ void uwp_http_task::perform_async(
                     try
                     {
                         Platform::String^ httpResponseBody = asyncOp->GetResults();
-						HCHttpCallResponseSetResponseString(call, httpResponseBody->Data());
+                        HCHttpCallResponseSetResponseString(call, httpResponseBody->Data());
                         HCThreadSetResultsReady(taskHandle);
                     }
                     catch (Platform::Exception^ ex)
                     {
-						HCHttpCallResponseSetErrorCode(call, ex->HResult);
+                        HCHttpCallResponseSetErrorCode(call, ex->HResult);
                         HCThreadSetResultsReady(taskHandle);
                     }
                 });
@@ -97,14 +125,14 @@ void uwp_http_task::perform_async(
             catch (Platform::Exception^ ex)
             {
                 HCHttpCallResponseSetErrorCode(call, ex->HResult);
-				HCThreadSetResultsReady(taskHandle);
+                HCThreadSetResultsReady(taskHandle);
             }
         });
     }
     catch (Platform::Exception^ ex)
     {
-		HCHttpCallResponseSetErrorCode(call, ex->HResult);
-		HCThreadSetResultsReady(taskHandle);
+        HCHttpCallResponseSetErrorCode(call, ex->HResult);
+        HCThreadSetResultsReady(taskHandle);
     }
 }
 

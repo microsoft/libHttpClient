@@ -13,9 +13,9 @@ using namespace Windows::Foundation;
 using namespace Windows::Web::Http;
 
 void Internal_HCHttpCallPerform(
-	_In_ HC_CALL_HANDLE call,
-	_In_ HC_ASYNC_TASK_HANDLE taskHandle
-	)
+    _In_ HC_CALL_HANDLE call,
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    )
 {
 }
 
