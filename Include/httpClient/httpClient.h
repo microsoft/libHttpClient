@@ -41,6 +41,10 @@ HCMemGetFunctions(
 // 
 // HCGlobal APIs
 // 
+typedef void(*HCHttpCallPerformCompletionRoutine)(
+    _In_ void* completionRoutineContext,
+    _In_ HC_CALL_HANDLE call
+    );
 
 HC_API void HC_CALLING_CONV
 HCGlobalInitialize();
@@ -53,12 +57,18 @@ HCGlobalGetLibVersion();
 
 typedef void
 (HC_CALLING_CONV* HC_HTTP_CALL_PERFORM_FUNC)(
-    _In_ HC_CALL_HANDLE call
+    _In_ HC_CALL_HANDLE call,
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
     );
 
 HC_API void HC_CALLING_CONV
-HCGlobalSetHttpCallPerformCallback(
+HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
+    );
+
+HC_API void HC_CALLING_CONV
+HCGlobalGetHttpCallPerformFunction(
+    _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
     );
 
 
@@ -66,11 +76,36 @@ HCGlobalSetHttpCallPerformCallback(
 // HCThead APIs
 // 
 
+typedef void
+(HC_CALLING_CONV* HC_ASYNC_OP_FUNC)(
+    _In_opt_ void* executionRoutineContext,
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    );
+
 HC_API void HC_CALLING_CONV
-HCThreadProcessPendingAsyncOp();
+HCThreadQueueAsyncOp(
+    _In_ HC_ASYNC_OP_FUNC executionRoutine,
+    _In_opt_ void* executionRoutineContext,
+    _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,
+    _In_opt_ void* writeResultsRoutineContext,
+    _In_ void* completionRoutine,
+    _In_opt_ void* completionRoutineContext,
+    _In_ bool executeNow
+    );
+
+HC_API void HC_CALLING_CONV
+HCThreadSetResultsReady(
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    );
 
 HC_API bool HC_CALLING_CONV
 HCThreadIsAsyncOpPending();
+
+HC_API void HC_CALLING_CONV
+HCThreadProcessPendingAsyncOp();
+
+HC_API void HC_CALLING_CONV
+HCThreadProcessCompletedAsyncOp();
 
 /// Set to 0 to disable
 /// Defaults to 2
@@ -127,7 +162,6 @@ HCSettingsGetAssertsForThrottling(
 //
 // HCHttpCall APIs
 //
-
 HC_API void HC_CALLING_CONV
 HCHttpCallCreate(
     _Out_ HC_CALL_HANDLE* call
@@ -135,7 +169,9 @@ HCHttpCallCreate(
 
 HC_API void HC_CALLING_CONV
 HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE call
+    _In_ HC_CALL_HANDLE call,
+    _In_ void* completionRoutineContext,
+    _In_ HCHttpCallPerformCompletionRoutine completionRoutine
     );
 
 HC_API void HC_CALLING_CONV

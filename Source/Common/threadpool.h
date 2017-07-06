@@ -40,13 +40,16 @@ public:
     void set_thread_ideal_processor(_In_ int threadIndex, _In_ DWORD dwIdealProcessor);
 
     HANDLE get_stop_handle();
-    HANDLE get_ready_handle();
-    void set_async_op_ready();
+    HANDLE get_pending_ready_handle();
+    HANDLE get_complete_ready_handle();
+    void set_async_op_pending_ready();
+    void set_async_op_complete_ready();
 
 private:
     uint32_t m_targetNumThreads;
     win32_handle m_stopRequestedHandle;
-    win32_handle m_readyHandle;
+    win32_handle m_pendingReadyHandle;
+    win32_handle m_completeReadyHandle;
 
     long m_numActiveThreads;
     HANDLE m_hActiveThreads[64];

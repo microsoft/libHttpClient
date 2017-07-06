@@ -7,7 +7,6 @@
 #include "mem.h"
 #include "utils.h"
 
-
 struct http_singleton
 {
     http_singleton();
@@ -16,7 +15,9 @@ struct http_singleton
     std::mutex m_singletonLock;
 
     std::mutex m_asyncLock;
-    http_internal_queue(std::shared_ptr<http_async_info>) m_asyncPendingQueue;
+    http_internal_queue(std::shared_ptr<HC_ASYNC_INFO>) m_asyncPendingQueue;
+    http_internal_vector(std::shared_ptr<HC_ASYNC_INFO>) m_asyncProcessingQueue;
+    http_internal_queue(std::shared_ptr<HC_ASYNC_INFO>) m_asyncCompleteQueue;
 
     std::unique_ptr<http_thread_pool> m_threadPool;
 

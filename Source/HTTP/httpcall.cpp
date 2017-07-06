@@ -29,26 +29,52 @@ HCHttpCallCleanup(
     delete call;
 }
 
-HC_API void HC_CALLING_CONV
-HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE call
+void HttpCallPerformExecute(
+    _In_opt_ void* executionRoutineContext,
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
     )
 {
-    VerifyGlobalInit();
+    HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
 
     HC_HTTP_CALL_PERFORM_FUNC performFunc = get_http_singleton()->m_performFunc;
     if (performFunc != nullptr)
     {
-        performFunc(call);
+        try
+        {
+            performFunc(call, taskHandle);
+        }
+        catch (...)
+        {
+            LOG_ERROR("HCHttpCallPerform failed");
+        }
     }
-    else
-    {
-#if !UNITTEST_API
-        Internal_HCHttpCallPerform(call);
-#endif
+}
 
-        //Mock_Internal_HCHttpCallPerform(call);
-    }
+void HttpCallPerformWriteResults(
+    _In_opt_ void* writeResultsRoutineContext,
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    )
+{
+    HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
+    HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)taskHandle->completionRoutine;
+    completeFn(taskHandle->completionRoutineContext, call);
+}
+
+HC_API void HC_CALLING_CONV
+HCHttpCallPerform(
+    _In_ HC_CALL_HANDLE call,
+    _In_ void* completionRoutineContext,
+    _In_ HCHttpCallPerformCompletionRoutine completionRoutine
+    )
+{
+    VerifyGlobalInit();
+
+    HCThreadQueueAsyncOp(
+        HttpCallPerformExecute, (void*)call,
+        HttpCallPerformWriteResults, (void*)call,
+        completionRoutine, completionRoutineContext,
+        true
+        );
 }
 
 

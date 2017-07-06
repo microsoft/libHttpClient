@@ -9,11 +9,7 @@ struct http_args
     virtual ~http_args() {}
 };
 
-struct http_async_info;
-
-typedef void(* http_async_op_execute_routine)(
-    _In_ const std::shared_ptr<http_async_info>& info
-    );
+struct HC_ASYNC_INFO;
 
 enum http_async_state
 {
@@ -22,19 +18,22 @@ enum http_async_state
     completed
 };
 
-struct http_async_info
+struct HC_ASYNC_INFO
 {
-    void* completionRoutineContext;
     std::shared_ptr<http_args> args;
     http_async_state state;
+    HC_ASYNC_OP_FUNC executionRoutine;
+    void* executionRoutineContext;
+    HC_ASYNC_OP_FUNC writeResultsRoutine;
+    void* writeResultsRoutineContext;
     void* completionRoutine;
-    http_async_op_execute_routine executeRoutine;
+    void* completionRoutineContext;
+
+#if UWP_API
+    HANDLE resultsReady;
+#endif
 };
 
-void http_asyncop_set_info_in_new_handle( 
-    _In_ std::shared_ptr<http_async_info> info,
-    _In_ void* completionRoutineContext,
-    _In_ void* completionRoutine
-    );
+void http_asyncop_push_pending_asyncop(_In_ std::shared_ptr<HC_ASYNC_INFO> info);
 
-std::shared_ptr<http_async_info> http_asyncop_get_next_async_op();
+std::shared_ptr<HC_ASYNC_INFO> http_asyncop_get_next_pending_async_op();
