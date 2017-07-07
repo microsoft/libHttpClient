@@ -60,3 +60,31 @@ HCSettingsGetAssertsForThrottling(
     *enableAssertsForThrottling = get_http_singleton()->m_enableAssertsForThrottling;
 }
 
+HC_API void HC_CALLING_CONV
+HCSettingsAddMockCall(
+    _In_ HC_CALL_HANDLE call
+    )
+{
+    VerifyGlobalInit();
+
+    std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
+    get_http_singleton()->m_mocks.push_back(call);
+    get_http_singleton()->m_mocksEnabled = true;
+}
+
+HC_API void HC_CALLING_CONV
+HCSettingsClearMockCalls()
+{
+    VerifyGlobalInit();
+
+    std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
+
+    for (auto& mockCall : get_http_singleton()->m_mocks)
+    {
+        HCHttpCallCleanup(mockCall);
+    }
+
+    get_http_singleton()->m_mocks.clear();
+    get_http_singleton()->m_mocksEnabled = false;
+}
+

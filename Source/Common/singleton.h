@@ -36,6 +36,11 @@ struct http_singleton
     HC_DIAGNOSTICS_TRACE_LEVEL m_traceLevel;
     uint32_t m_timeoutWindowInSeconds;
     bool m_enableAssertsForThrottling;
+
+    std::mutex m_mocksLock;
+    std::vector<HC_CALL*> m_mocks;
+    HC_CALL* m_lastMatchingMock;
+    bool m_mocksEnabled;
 };
 
 http_singleton* get_http_singleton(_In_ bool createIfRequired = false);

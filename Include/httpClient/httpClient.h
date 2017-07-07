@@ -167,6 +167,25 @@ HCSettingsGetAssertsForThrottling(
     _Out_ bool* enableAssertsForThrottling
     );
 
+/// <summary>
+/// To define a mock, create a HC_CALL_HANDLE with HCHttpCallCreate() and use HCHttpCallResponseSet*() to set the mock response.
+/// By default, this mock response will be returned for all HTTP calls.
+/// If you want the mock to only apply to a specific URL, also call HCHttpCallRequestSetUrl().
+/// If you want the mock to only apply to a specific URL & request string, also call HCHttpCallRequestSetUrl() and HCHttpCallRequestSetRequestBodyString().
+/// Add the mock to the system with HCSettingsAddMockCall().
+/// The system supports multiple active mocks to allow for customizing mocks responses based on URL or request strings.
+/// </summary>
+HC_API void HC_CALLING_CONV
+HCSettingsAddMockCall(
+    _In_ HC_CALL_HANDLE call
+    );
+
+/// <summary>
+/// Removes and cleans up all mock calls added by HCSettingsAddMockCall
+/// </summary>
+HC_API void HC_CALLING_CONV
+HCSettingsClearMockCalls();
+
 //
 // HCHttpCall APIs
 //

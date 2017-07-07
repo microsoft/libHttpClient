@@ -81,6 +81,11 @@ void uwp_http_task::perform_async(
                 requestMsg->Headers->TryAppendWithoutValidation(ref new Platform::String(headerName), ref new Platform::String(headerValue));
             }
         }
+        
+        if (requestBody != nullptr)
+        {
+            requestMsg->Content = ref new HttpStringContent(ref new Platform::String(requestBody));
+        }
 
         m_getHttpAsyncOp = httpClient->SendRequestAsync(requestMsg, HttpCompletionOption::ResponseContentRead);
         m_getHttpAsyncOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(

@@ -21,6 +21,7 @@ http_singleton::http_singleton()
     m_traceLevel = HC_DIAGNOSTICS_TRACE_LEVEL::TRACE_OFF;
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_enableAssertsForThrottling = true;
+    m_mocksEnabled = false;
 }
 
 http_singleton::~http_singleton()

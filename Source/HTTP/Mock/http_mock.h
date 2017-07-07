@@ -7,3 +7,4 @@
 #include "mem.h"
 #include "utils.h"
 
+bool Mock_Internal_HCHttpCallPerform(_In_ HC_CALL_HANDLE originalCall);

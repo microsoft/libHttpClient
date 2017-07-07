@@ -114,6 +114,10 @@ set(Mock_HTTP_Source_Files
     ../../Source/HTTP/Mock/http_mock.h
     )
 
+set(Unittest_HTTP_Source_Files
+    ../../Source/HTTP/Unittest/http_unittest.cpp
+    )
+
 set(UWP_HTTP_Source_Files
     ../../Source/HTTP/UWP/http_uwp.cpp
     )
@@ -146,6 +150,7 @@ set(Taef_UnitTests_Source_Files
 
 set(UnitTests_Source_Files_Tests
 	../../Tests/UnitTests/Tests/HttpTests.cpp
+	../../Tests/UnitTests/Tests/MockTests.cpp
     )
     
 if( SHIP )
@@ -177,6 +182,11 @@ endif()
 
 if( UNITTEST )
     message(STATUS "Unittest source group")
+    source_group("C++ Source\\HTTP\\Unittest" FILES ${Unittest_HTTP_Source_Files})
+    list(APPEND
+        SOURCE_FILES 
+        ${Unittest_HTTP_Source_Files}
+        )    
 endif()
 
 if( UWP )
