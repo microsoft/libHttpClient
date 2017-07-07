@@ -34,6 +34,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp">
       <Filter>C++ Source\HTTP\Mock</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Unittest\http_unittest.cpp">
+      <Filter>C++ Source\HTTP\Unittest</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
@@ -59,6 +62,9 @@
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp">
+      <Filter>C++ Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp">
       <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClCompile>
   </ItemGroup>
@@ -139,6 +145,9 @@
     </Filter>
     <Filter Include="C++ Source\HTTP\Mock">
       <UniqueIdentifier>{866DCF4C-AB9B-3053-BA1C-52DF3408F42C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\Unittest">
+      <UniqueIdentifier>{3D55D9E0-BEF4-3C3C-B39C-4576352B5D36}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>

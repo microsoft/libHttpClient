@@ -6,6 +6,7 @@
 #include "singleton.h"
 #include "log.h"
 #include "httpcall.h"
+#include "Mock/http_mock.h"
 
 HC_API void HC_CALLING_CONV
 HCHttpCallCreate(
@@ -36,16 +37,25 @@ void HttpCallPerformExecute(
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
 
-    HC_HTTP_CALL_PERFORM_FUNC performFunc = get_http_singleton()->m_performFunc;
-    if (performFunc != nullptr)
+    bool matchedMocks = false;
+    if (get_http_singleton()->m_mocksEnabled)
     {
-        try
+        matchedMocks = Mock_Internal_HCHttpCallPerform(call);
+    }
+   
+    if (!matchedMocks) // if there wasn't a matched mock, then real call
+    {
+        HC_HTTP_CALL_PERFORM_FUNC performFunc = get_http_singleton()->m_performFunc;
+        if (performFunc != nullptr)
         {
-            performFunc(call, taskHandle);
-        }
-        catch (...)
-        {
-            LOG_ERROR("HCHttpCallPerform failed");
+            try
+            {
+                performFunc(call, taskHandle);
+            }
+            catch (...)
+            {
+                LOG_ERROR("HCHttpCallPerform failed");
+            }
         }
     }
 }
