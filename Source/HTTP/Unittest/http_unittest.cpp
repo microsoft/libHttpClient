@@ -12,5 +12,6 @@ void Internal_HCHttpCallPerform(
     _In_ HC_ASYNC_TASK_HANDLE taskHandle
     )
 {
+    HCThreadSetResultsReady(taskHandle);
 }
 #endif
