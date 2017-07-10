@@ -56,26 +56,27 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 
 ## TODO
 
-Big things that still need to be done:
+Big things that still need to be done in rough priorty order:
 
-APIs:
-* [In progress] APIs for controling mock layer
-* API for binary response data 
-* WebSocket APIs
-
-Implementation:
+* Prototype XSAPI on top of libHttpClient HTTP stack
+* P/Invoke layer and UWP C# sample
+* libHttpClient Unity sample (using P/Invoke layer)
+* XDK project & XDK implementation calling XDK platform HTTP APIs
+* XDK ERA sample
 * Retry logic
 * Throttling logic
-* XDK project & XDK implementation calling XDK platform HTTP / WebSocket APIs
-* iOS project & iOS implementation calling iOS platform HTTP / WebSocket APIs
-* Android project & Android implementation calling Android platform HTTP / WebSocket APIs
+* API for binary request & response data 
+* Design WebSocket APIs
 * Flushout of UWP implementation calling UWP platform WebSocket APIs
-
-Samples:
-* XDK ERA sample
+* XDK project & XDK implementation calling XDK platform WebSocket APIs
+* Prototype XSAPI on top of libHttpClient WebSocket stack
+* iOS project & iOS implementation calling iOS platform HTTP APIs
+* iOS implementation calling iOS platform WebSocket APIs
 * iOS sample
+* Android project & Android implementation calling Android platform HTTP APIs
+* Android implementation calling Android platform WebSocket APIs
 * Android sample
-* P/Invoke layer and UWP C# sample
+* libHttpClient Unity iOS/Android sample (using P/Invoke layer)
 
 ## How to clone repo
 
