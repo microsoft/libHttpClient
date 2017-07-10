@@ -15,9 +15,9 @@ struct http_singleton
     std::mutex m_singletonLock;
 
     std::mutex m_asyncLock;
-    http_internal_queue(std::shared_ptr<HC_ASYNC_INFO>) m_asyncPendingQueue;
-    http_internal_vector(std::shared_ptr<HC_ASYNC_INFO>) m_asyncProcessingQueue;
-    http_internal_queue(std::shared_ptr<HC_ASYNC_INFO>) m_asyncCompleteQueue;
+    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncPendingQueue;
+    http_internal_vector<std::shared_ptr<HC_ASYNC_INFO>> m_asyncProcessingQueue;
+    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncCompleteQueue;
 
     std::unique_ptr<http_thread_pool> m_threadPool;
 
@@ -29,7 +29,7 @@ struct http_singleton
     void _Raise_logging_event(_In_ xbox_services_diagnostics_trace_level level, _In_ const std::string& category, _In_ const std::string& message);
 
     std::mutex m_loggingWriteLock;
-    std::unordered_map<function_context, std::function<void(xbox_services_diagnostics_trace_level, const std::string&, const std::string&)>> m_loggingHandlers;
+    http_internal_unordered_map<function_context, std::function<void(xbox_services_diagnostics_trace_level, const std::string&, const std::string&)>> m_loggingHandlers;
     function_context m_loggingHandlersCounter;
 
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;

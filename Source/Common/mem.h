@@ -18,10 +18,9 @@ public:
         _In_ void* pAddress
         );
 
-private:
-    http_memory();
-    http_memory(const http_memory&);
-    http_memory& operator=(const http_memory&);
+    http_memory() = delete;
+    http_memory(const http_memory&) = delete;
+    http_memory& operator=(const http_memory&) = delete;
 };
 
 class http_memory_buffer
@@ -53,66 +52,26 @@ template<typename T>
 class http_stl_allocator
 {
 public:
-    http_stl_allocator() { }
+    typedef T value_type;
 
-    template<typename Other> http_stl_allocator(const http_stl_allocator<Other> &) { }
+    http_stl_allocator() = default;
+    template<class U>
+    http_stl_allocator(http_stl_allocator<U> const&) {}
 
-    template<typename Other>
-    struct rebind
+    T* allocate(size_t n)
     {
-        typedef http_stl_allocator<Other> other;
-    };
+        T* p = static_cast<T*>(xbox::livehttpclient::http_memory::mem_alloc(n * sizeof(T)));
 
-    typedef size_t      size_type;
-    typedef ptrdiff_t   difference_type;
-    typedef T*          pointer;
-    typedef const T*    const_pointer;
-    typedef T&          reference;
-    typedef const T&    const_reference;
-    typedef T           value_type;
-
-    pointer allocate(size_type n, const void * = 0)
-    {
-        pointer p = reinterpret_cast<pointer>(xbox::livehttpclient::http_memory::mem_alloc(n * sizeof(T)));
-
-        if (p == NULL)
+        if (p == nullptr)
         {
             throw std::bad_alloc();
         }
         return p;
     }
 
-    void deallocate(_In_opt_ void* p, size_type)
+    void deallocate(_In_opt_ void* p, size_t)
     {
         xbox::livehttpclient::http_memory::mem_free(p);
-    }
-
-    char* _Charalloc(size_type n)
-    {
-        char* p = reinterpret_cast<char*>(xbox::livehttpclient::http_memory::mem_alloc(n));
-
-        if (p == NULL)
-        {
-            throw std::bad_alloc();
-        }
-        return p;
-    }
-
-    void construct(_In_ pointer p, const_reference t)
-    {
-        new ((void*)p) T(t);
-    }
-
-    void destroy(_In_ pointer p)
-    {
-        p; // Needed to avoid unreferenced param on VS2012
-        p->~T();
-    }
-
-    size_t max_size() const
-    {
-        size_t n = (size_t)(-1) / sizeof(T);
-        return (0 < n ? n : 1);
     }
 };
 
@@ -128,10 +87,22 @@ bool operator!=(const http_stl_allocator<T1>&, const http_stl_allocator<T2>&)
     return false;
 }
 
-#define http_internal_vector(T) std::vector<T, http_stl_allocator<T> >
-#define http_internal_unordered_map(Key, T) std::unordered_map<Key, T, std::hash<Key>, std::equal_to<Key>, http_stl_allocator< std::pair< const Key, T > > >
-#define http_internal_string std::basic_string<char_t, std::char_traits<char_t>, http_stl_allocator<char_t> >
-#define http_internal_dequeue(T) std::deque<T, http_stl_allocator<T> >
-#define http_internal_map(T1, T2) std::map<T1, T2, std::less<T1>, http_stl_allocator<std::pair<T1,T2>> >
-#define http_internal_queue(T) std::queue<T,std::deque<T, http_stl_allocator<T>>>
+template<class T>
+using http_internal_vector = std::vector<T, http_stl_allocator<T>>;
 
+template<class K, class V, class LESS = std::less<K>>
+using http_internal_map = std::map<K, V, LESS, http_stl_allocator<std::pair<K const, V>>>;
+
+template<class K, class V, class HASH = std::hash<K>, class EQUAL = std::equal_to<K>>
+using http_internal_unordered_map = std::unordered_map<K, V, HASH, EQUAL, http_stl_allocator<std::pair<K const, V>>>;
+
+template<class C, class TRAITS = std::char_traits<C>>
+using http_internal_basic_string = std::basic_string<C, TRAITS, http_stl_allocator<C>>;
+
+using http_internal_string = http_internal_basic_string<char_t>;
+
+template<class T>
+using http_internal_dequeue = std::deque<T, http_stl_allocator<T>>;
+
+template<class T>
+using http_internal_queue = std::queue<T, http_internal_dequeue<T>>;
