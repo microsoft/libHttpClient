@@ -22,6 +22,7 @@ http_singleton::http_singleton()
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_enableAssertsForThrottling = true;
     m_mocksEnabled = false;
+    m_lastMatchingMock = nullptr;
 }
 
 http_singleton::~http_singleton()

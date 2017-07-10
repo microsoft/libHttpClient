@@ -122,7 +122,7 @@ HCThreadProcessCompletedAsyncOp()
     process_completed_async_op(info);
 }
 
-#if UWP_API
+#if UWP_API || UNITTEST_API
 HANDLE HC_CALLING_CONV
 HCThreadGetAsyncOpPendingHandle()
 {

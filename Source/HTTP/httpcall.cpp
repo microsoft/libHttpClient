@@ -41,6 +41,10 @@ void HttpCallPerformExecute(
     if (get_http_singleton()->m_mocksEnabled)
     {
         matchedMocks = Mock_Internal_HCHttpCallPerform(call);
+        if (matchedMocks)
+        {
+            HCThreadSetResultsReady(taskHandle);
+        }
     }
    
     if (!matchedMocks) // if there wasn't a matched mock, then real call
