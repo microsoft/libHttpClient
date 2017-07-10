@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.140.UWP.C", "libHttpClient.140.UWP.C.vcxproj", "{8F96710E-5169-4917-8874-7DE248F4D243}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HttpTestApp", "..\..\Tests\Http\UWP\Cpp\HttpTestApp\HttpTestApp.vcxproj", "{0F732C67-ED0C-46E1-A2FF-DECF26D51538}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,24 +27,6 @@ Global
 		{8F96710E-5169-4917-8874-7DE248F4D243}.Release|x64.Build.0 = Release|x64
 		{8F96710E-5169-4917-8874-7DE248F4D243}.Release|x86.ActiveCfg = Release|Win32
 		{8F96710E-5169-4917-8874-7DE248F4D243}.Release|x86.Build.0 = Release|Win32
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|ARM.ActiveCfg = Debug|ARM
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|ARM.Build.0 = Debug|ARM
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|ARM.Deploy.0 = Debug|ARM
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|x64.ActiveCfg = Debug|x64
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|x64.Build.0 = Debug|x64
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|x64.Deploy.0 = Debug|x64
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|x86.ActiveCfg = Debug|Win32
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|x86.Build.0 = Debug|Win32
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Debug|x86.Deploy.0 = Debug|Win32
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|ARM.ActiveCfg = Release|ARM
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|ARM.Build.0 = Release|ARM
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|ARM.Deploy.0 = Release|ARM
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|x64.ActiveCfg = Release|x64
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|x64.Build.0 = Release|x64
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|x64.Deploy.0 = Release|x64
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|x86.ActiveCfg = Release|Win32
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|x86.Build.0 = Release|Win32
-		{0F732C67-ED0C-46E1-A2FF-DECF26D51538}.Release|x86.Deploy.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
