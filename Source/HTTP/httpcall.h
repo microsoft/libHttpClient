@@ -20,12 +20,12 @@ struct HC_CALL
     http_internal_string method;
     http_internal_string url;
     http_internal_string requestBodyString;
-    http_internal_map(http_internal_string, http_internal_string) requestHeaders;
+    http_internal_map<http_internal_string, http_internal_string> requestHeaders;
     bool retryAllowed;
     uint32_t timeoutInSeconds;
 
     http_internal_string responseString;
-    http_internal_map(http_internal_string, http_internal_string) responseHeaders;
+    http_internal_map<http_internal_string, http_internal_string> responseHeaders;
     uint32_t statusCode;
     uint32_t errorCode;
     http_internal_string errorMessage;

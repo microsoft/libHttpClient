@@ -25,20 +25,18 @@
 #endif
 
 // STL includes
-#include <string>
-#include <regex>
-#include <chrono>
-#include <map>
-#include <queue>
-#include <vector>
-#include <memory>
-#include <stdint.h>
-#include <thread>
-#include <mutex>
 #include <atomic>
+#include <cassert>
+#include <chrono>
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
 #include <unordered_map>
-#include <assert.h>
+#include <vector>
 
 #if UWP_API
 #include <collection.h>
@@ -64,16 +62,8 @@
 
 #ifdef _WIN32
 typedef wchar_t char_t;
-typedef std::wstring string_t;
-typedef std::wstringstream stringstream_t;
-typedef std::wregex regex_t;
-typedef std::wsmatch smatch_t;
 #else
 typedef char char_t;
-typedef std::string string_t;
-typedef std::stringstream stringstream_t;
-typedef std::regex regex_t;
-typedef std::smatch smatch_t;
 #endif
 
 #if _MSC_VER <= 1800
