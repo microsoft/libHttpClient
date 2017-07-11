@@ -113,8 +113,8 @@ HCGlobalCleanup();
 /// Returns the version of the library
 /// </summary>
 /// <returns>The version of the library in the format of release_year.release_month.date.rev.  For example, 2017.07.20170710.01</returns>
-HC_API double HC_CALLING_CONV
-HCGlobalGetLibVersion();
+HC_API void HC_CALLING_CONV
+HCGlobalGetVersion(_Outptr_ PCSTR_T* version);
 
 /// <summary>
 /// </summary>
