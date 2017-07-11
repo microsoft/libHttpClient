@@ -65,7 +65,7 @@ public:
         HCMemSetFunctions(&MemAlloc, &MemFree);
 
         {
-            http_internal_vector(int) v;
+            http_internal_vector<int> v;
             v.reserve(10000);
 
             VERIFY_ARE_EQUAL(true, g_memAllocCalled);
@@ -87,7 +87,7 @@ public:
         g_memAllocCalled = false;
         g_memFreeCalled = false;
         {
-            http_internal_vector(int) v;
+            http_internal_vector<int> v;
             v.reserve(10000);
 
             VERIFY_ARE_EQUAL(false, g_memAllocCalled);
