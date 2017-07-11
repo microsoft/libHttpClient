@@ -101,6 +101,12 @@ HCGlobalCleanup()
 {
     std::lock_guard<std::mutex> guard(g_httpSingletonLock);
     g_httpSingleton->m_threadPool->shutdown_active_threads();
+	for (auto& mockCall : g_httpSingleton->m_mocks)
+	{
+		HCHttpCallCleanup(mockCall);
+	}
+	g_httpSingleton->m_mocks.clear();
+
     g_httpSingleton = nullptr;
 }
 

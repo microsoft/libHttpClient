@@ -1,10 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
 #pragma once
 
-//#pragma warning(disable: 4265)
-//#pragma warning(disable: 4266)
 #pragma warning(disable: 4062)
 
 #ifdef _WIN32
