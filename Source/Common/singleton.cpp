@@ -5,6 +5,7 @@
 #include "singleton.h"
 #include "log.h"
 #include "../http/httpcall.h"
+#include "buildver.h"
 
 #define DEFAULT_TIMEOUT_WINDOW_IN_SECONDS 60
 
@@ -84,10 +85,10 @@ void http_singleton::remove_logging_handler(_In_ function_context context)
     m_loggingHandlers.erase(context);
 }
 
-HC_API double HC_CALLING_CONV
-HCGlobalGetLibVersion()
+HC_API void HC_CALLING_CONV
+HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version)
 {
-    return 6.0f;
+	*version = LIBHTTPCLIENT_VERSION;
 }
 
 HC_API void HC_CALLING_CONV

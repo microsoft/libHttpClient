@@ -95,6 +95,7 @@ set(Common_Source_Files
     ../../Source/Common/threadpool.h
     ../../Source/Common/utils.cpp
     ../../Source/Common/utils.h
+    ../../Source/Common/buildver.h
     )
 
 set(Common_UWP_Source_Files

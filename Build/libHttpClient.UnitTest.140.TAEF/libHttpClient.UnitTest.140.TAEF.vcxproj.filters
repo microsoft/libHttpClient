@@ -78,6 +78,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>

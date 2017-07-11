@@ -115,8 +115,6 @@ void HC_CALLING_CONV PerformCall(
 
 void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    double ver = HCGlobalGetLibVersion();
-
     HCGlobalInitialize();
     HCGlobalSetHttpCallPerformFunction(PerformCall);
     HCSettingsSetTimeoutWindow(120);
