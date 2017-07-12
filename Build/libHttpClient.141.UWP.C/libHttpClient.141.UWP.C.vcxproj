@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8F96710E-5169-4917-8874-7DE248F4D243}</ProjectGuid>
+    <ProjectGuid>{CF37BEB2-A66A-42BA-B348-1F07566F4865}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
@@ -133,27 +133,27 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp"  />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\UWP\http_uwp.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallrequest.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallresponse.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_entry.cpp"  />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp"  />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\UWP\http_uwp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallrequest.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallresponse.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_entry.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
