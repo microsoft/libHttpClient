@@ -12,7 +12,7 @@ DefaultMemAllocFunction(
     _In_ HC_MEMORY_TYPE memoryType
     )
 {
-    return new (std::nothrow) int8_t[size];
+    return malloc(size);
 }
 
 void HC_CALLING_CONV 
@@ -21,7 +21,7 @@ DefaultMemFreeFunction(
     _In_ HC_MEMORY_TYPE memoryType
     )
 {
-    delete[] pointer;
+    free(pointer);
 }
 
 
