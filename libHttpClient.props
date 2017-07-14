@@ -4,6 +4,7 @@
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
     <libHttpClientLib>$(libHttpClientRoot)lib\</libHttpClientLib>
+    <libHttpClientLib2>$(libHttpClientRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.141.UWP.C</libHttpClientLib2>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -12,17 +13,17 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='ARM'">
     <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib)\ARM;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+	  <AdditionalLibraryDirectories>$(libHttpClientLib2);$(libHttpClientLib)\ARM;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
     <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib)\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+	  <AdditionalLibraryDirectories>$(libHttpClientLib2);$(libHttpClientLib)\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
     <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib)\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+	  <AdditionalLibraryDirectories>$(libHttpClientLib2);$(libHttpClientLib)\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(PlatformToolset)'=='v141'">
