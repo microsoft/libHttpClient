@@ -71,19 +71,22 @@ void HttpCallPerformWriteResults(
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
     HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)taskHandle->completionRoutine;
-    completeFn(taskHandle->completionRoutineContext, call);
+    if (completeFn != nullptr)
+    {
+        completeFn(taskHandle->completionRoutineContext, call);
+    }
 }
 
-HC_API void HC_CALLING_CONV
+HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
 HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _In_ void* completionRoutineContext,
-    _In_ HCHttpCallPerformCompletionRoutine completionRoutine
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     )
 {
     VerifyGlobalInit();
 
-    HCThreadQueueAsyncOp(
+    return HCThreadQueueAsyncOp(
         HttpCallPerformExecute, (void*)call,
         HttpCallPerformWriteResults, (void*)call,
         completionRoutine, completionRoutineContext,

@@ -71,6 +71,8 @@ void uwp_http_task::perform_async(
         Uri^ requestUri = ref new Uri(ref new Platform::String(url));
         HttpRequestMessage^ requestMsg = ref new HttpRequestMessage(ref new HttpMethod(ref new Platform::String(method)), requestUri);
 
+        requestMsg->Headers->TryAppendWithoutValidation(L"User-Agent", L"libHttpClient/1.0.0.0");
+
         for (uint32_t i = 0; i < numHeaders; i++)
         {
             const WCHAR* headerName;
@@ -81,10 +83,16 @@ void uwp_http_task::perform_async(
                 requestMsg->Headers->TryAppendWithoutValidation(ref new Platform::String(headerName), ref new Platform::String(headerValue));
             }
         }
-        
+
+        requestMsg->Headers->AcceptEncoding->TryParseAdd(ref new Platform::String(L"gzip"));
+        requestMsg->Headers->AcceptEncoding->TryParseAdd(ref new Platform::String(L"deflate"));
+        requestMsg->Headers->AcceptEncoding->TryParseAdd(ref new Platform::String(L"br"));
+        requestMsg->Headers->Accept->TryParseAdd(ref new Platform::String(L"*/*"));
+
         if (requestBody != nullptr)
         {
             requestMsg->Content = ref new HttpStringContent(ref new Platform::String(requestBody));
+            requestMsg->Content->Headers->ContentType = Windows::Web::Http::Headers::HttpMediaTypeHeaderValue::Parse(L"application/json; charset=utf-8");
         }
 
         m_getHttpAsyncOp = httpClient->SendRequestAsync(requestMsg, HttpCompletionOption::ResponseContentRead);

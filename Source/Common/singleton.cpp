@@ -88,7 +88,7 @@ void http_singleton::remove_logging_handler(_In_ function_context context)
 HC_API void HC_CALLING_CONV
 HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version)
 {
-	*version = LIBHTTPCLIENT_VERSION;
+    *version = LIBHTTPCLIENT_VERSION;
 }
 
 HC_API void HC_CALLING_CONV
@@ -102,11 +102,11 @@ HCGlobalCleanup()
 {
     std::lock_guard<std::mutex> guard(g_httpSingletonLock);
     g_httpSingleton->m_threadPool->shutdown_active_threads();
-	for (auto& mockCall : g_httpSingleton->m_mocks)
-	{
-		HCHttpCallCleanup(mockCall);
-	}
-	g_httpSingleton->m_mocks.clear();
+    for (auto& mockCall : g_httpSingleton->m_mocks)
+    {
+        HCHttpCallCleanup(mockCall);
+    }
+    g_httpSingleton->m_mocks.clear();
 
     g_httpSingleton = nullptr;
 }

@@ -82,6 +82,9 @@ void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info)
 void queue_completed_async_op(_In_ HC_ASYNC_TASK_HANDLE taskHandle)
 {
     taskHandle->state = http_async_state::completed;
+#if UWP_API || UNITTEST_API
+    SetEvent(taskHandle->resultsReady.get());
+#endif
 
     std::shared_ptr<HC_ASYNC_INFO> info = nullptr;
     {
@@ -112,6 +115,14 @@ HCThreadSetResultsReady(
     queue_completed_async_op(taskHandle);
 }
 
+HC_API bool HC_CALLING_CONV
+HCThreadAreResultsReady(
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    )
+{
+    return taskHandle->state == http_async_state::completed;
+}
+
 void HC_CALLING_CONV
 HCThreadProcessCompletedAsyncOp()
 {
@@ -123,6 +134,16 @@ HCThreadProcessCompletedAsyncOp()
 }
 
 #if UWP_API || UNITTEST_API
+HC_API void HC_CALLING_CONV
+HCThreadWaitForResultsReady(
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle,
+    _In_ uint32_t timeoutInMilliseconds
+)
+{
+    WaitForSingleObject(taskHandle->resultsReady.get(), timeoutInMilliseconds);
+}
+
+
 HANDLE HC_CALLING_CONV
 HCThreadGetAsyncOpPendingHandle()
 {
@@ -146,18 +167,21 @@ HCThreadProcessPendingAsyncOp()
     process_pending_async_op(info);
 }
 
-HC_API void HC_CALLING_CONV
+HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
 HCThreadQueueAsyncOp(
     _In_ HC_ASYNC_OP_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
     _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
-    _In_ void* completionRoutine,
+    _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext,
     _In_ bool executeNow
     )
 {
     std::shared_ptr<HC_ASYNC_INFO> info = std::make_shared<HC_ASYNC_INFO>();
+#if UWP_API || UNITTEST_API
+    info->resultsReady.set(CreateEvent(NULL, FALSE, FALSE, NULL));
+#endif
     info->executionRoutine = executionRoutine;
     info->executionRoutineContext = executionRoutineContext;
     info->writeResultsRoutine = writeResultsRoutine;
@@ -172,5 +196,7 @@ HCThreadQueueAsyncOp(
     {
         http_asyncop_push_pending_asyncop(info);
     }
+
+    return info.get();
 }
 

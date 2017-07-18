@@ -30,7 +30,7 @@ struct HC_ASYNC_INFO
     void* completionRoutineContext;
 
 #if UWP_API || UNITTEST_API
-    HANDLE resultsReady;
+    win32_handle resultsReady;
 #endif
 };
 
