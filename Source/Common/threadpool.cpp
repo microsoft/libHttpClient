@@ -53,19 +53,17 @@ HANDLE http_thread_pool::get_complete_ready_handle()
     return m_completeReadyHandle.get();
 }
 
+#if UWP_API || UNITTEST_API
 void http_thread_pool::set_async_op_complete_ready()
 {
-#if UWP_API || UNITTEST_API
     SetEvent(get_complete_ready_handle());
-#endif
 }
 
 void http_thread_pool::set_async_op_pending_ready()
 {
-#if UWP_API || UNITTEST_API
     SetEvent(get_pending_ready_handle());
-#endif
 }
+#endif
 
 DWORD WINAPI http_thread_proc(LPVOID lpParam)
 {

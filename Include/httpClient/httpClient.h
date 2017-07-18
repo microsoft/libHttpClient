@@ -173,13 +173,13 @@ typedef void
 /// <param name="completionRoutine"></param>
 /// <param name="completionRoutineContext"></param>
 /// <param name="executeNow"></param>
-HC_API void HC_CALLING_CONV
+HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
 HCThreadQueueAsyncOp(
     _In_ HC_ASYNC_OP_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
     _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
-    _In_ void* completionRoutine,
+    _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext,
     _In_ bool executeNow
     );
@@ -194,19 +194,36 @@ HCThreadSetResultsReady(
 
 /// <summary>
 /// </summary>
+/// <param name="taskHandle"></param>
+HC_API bool HC_CALLING_CONV
+HCThreadAreResultsReady(
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    );
+
+/// <summary>
+/// </summary>
+/// <param name="taskHandle"></param>
+HC_API void HC_CALLING_CONV
+HCThreadWaitForResultsReady(
+    _In_ HC_ASYNC_TASK_HANDLE taskHandle,
+    _In_ uint32_t timeoutInMilliseconds
+    );
+
+/// <summary>
+/// </summary>
 HC_API bool HC_CALLING_CONV
 HCThreadIsAsyncOpPending();
 
 #if UWP_API
-	/// <summary>
-	/// </summary>
-	HC_API HANDLE HC_CALLING_CONV
-	HCThreadGetAsyncOpPendingHandle();
+    /// <summary>
+    /// </summary>
+    HC_API HANDLE HC_CALLING_CONV
+    HCThreadGetAsyncOpPendingHandle();
 
-	/// <summary>
-	/// </summary>
-	HC_API HANDLE HC_CALLING_CONV
-	HCThreadGetAsyncOpCompletedHandle();
+    /// <summary>
+    /// </summary>
+    HC_API HANDLE HC_CALLING_CONV
+    HCThreadGetAsyncOpCompletedHandle();
 #endif
 
 /// <summary>
@@ -305,42 +322,6 @@ HCSettingsGetAssertsForThrottling(
     _Out_ bool* enableAssertsForThrottling
     );
 
-/// <summary>
-/// Configures libHttpClient to return mock response instead of making a network call 
-/// when HCHttpCallPerform() is called. To define a mock response, create a new 
-/// HC_CALL_HANDLE with HCHttpCallCreate() that represents the mock.
-/// Then use HCHttpCallResponseSet*() to set the mock response.
-/// 
-/// By default, the mock response will be returned for all HTTP calls.
-/// If you want the mock to only apply to a specific URL, call 
-/// HCHttpCallRequestSetUrl() with the HC_CALL_HANDLE that represents the mock.
-/// If you want the mock to only apply to a specific URL & request string, call 
-/// HCHttpCallRequestSetUrl() and HCHttpCallRequestSetRequestBodyString() with the 
-/// HC_CALL_HANDLE that represents the mock.
-///
-/// Once the HC_CALL_HANDLE is configured as desired, add the mock to the system by 
-/// calling HCSettingsAddMockCall(). You do not need to call HCHttpCallCleanup() for 
-/// the HC_CALL_HANDLEs passed to HCSettingsAddMockCall().
-/// 
-/// You can set multiple active mock responses by calling HCSettingsAddMockCall() multiple 
-/// times with a set of mock responses. If the HTTP call matches against a set mock responses, 
-/// they will be executed in order for each subsequent call to HCHttpCallPerform(). When the 
-/// last matching mock response is hit, the last matching mock response will be repeated on 
-/// each subsequent call to HCHttpCallPerform().
-/// </summary>
-/// <param name="call">This HC_CALL_HANDLE that represents the mock that has been configured accordingly 
-/// using HCHttpCallResponseSet*(), and optionally HCHttpCallRequestSetUrl() and HCHttpCallRequestSetRequestBodyString().</param>
-HC_API void HC_CALLING_CONV
-HCSettingsAddMockCall(
-    _In_ HC_CALL_HANDLE call
-    );
-
-/// <summary>
-/// Removes and cleans up all mock calls added by HCSettingsAddMockCall
-/// </summary>
-HC_API void HC_CALLING_CONV
-HCSettingsClearMockCalls();
-
 //
 // HCHttpCall APIs
 //
@@ -358,11 +339,11 @@ HCHttpCallCreate(
 /// <param name="call"></param>
 /// <param name="completionRoutineContext"></param>
 /// <param name="completionRoutine"></param>
-HC_API void HC_CALLING_CONV
+HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
 HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _In_ void* completionRoutineContext,
-    _In_ HCHttpCallPerformCompletionRoutine completionRoutine
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     );
 
 /// <summary>
@@ -642,6 +623,47 @@ HCHttpCallResponseSetHeader(
     _In_ PCSTR_T headerName,
     _Out_ PCSTR_T headerValue
     );
+
+// 
+// Mock APIs
+// 
+
+/// <summary>
+/// Configures libHttpClient to return mock response instead of making a network call 
+/// when HCHttpCallPerform() is called. To define a mock response, create a new 
+/// HC_CALL_HANDLE with HCHttpCallCreate() that represents the mock.
+/// Then use HCHttpCallResponseSet*() to set the mock response.
+/// 
+/// By default, the mock response will be returned for all HTTP calls.
+/// If you want the mock to only apply to a specific URL, call 
+/// HCHttpCallRequestSetUrl() with the HC_CALL_HANDLE that represents the mock.
+/// If you want the mock to only apply to a specific URL & request string, call 
+/// HCHttpCallRequestSetUrl() and HCHttpCallRequestSetRequestBodyString() with the 
+/// HC_CALL_HANDLE that represents the mock.
+///
+/// Once the HC_CALL_HANDLE is configured as desired, add the mock to the system by 
+/// calling HCSettingsAddMockCall(). You do not need to call HCHttpCallCleanup() for 
+/// the HC_CALL_HANDLEs passed to HCSettingsAddMockCall().
+/// 
+/// You can set multiple active mock responses by calling HCSettingsAddMockCall() multiple 
+/// times with a set of mock responses. If the HTTP call matches against a set mock responses, 
+/// they will be executed in order for each subsequent call to HCHttpCallPerform(). When the 
+/// last matching mock response is hit, the last matching mock response will be repeated on 
+/// each subsequent call to HCHttpCallPerform().
+/// </summary>
+/// <param name="call">This HC_CALL_HANDLE that represents the mock that has been configured accordingly 
+/// using HCHttpCallResponseSet*(), and optionally HCHttpCallRequestSetUrl() and HCHttpCallRequestSetRequestBodyString().</param>
+HC_API void HC_CALLING_CONV
+HCSettingsAddMockCall(
+    _In_ HC_CALL_HANDLE call
+    );
+
+/// <summary>
+/// Removes and cleans up all mock calls added by HCSettingsAddMockCall
+/// </summary>
+HC_API void HC_CALLING_CONV
+HCSettingsClearMockCalls();
+
 
 #if defined(__cplusplus)
 } // end extern "C"

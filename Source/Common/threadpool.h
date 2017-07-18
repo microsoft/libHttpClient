@@ -45,6 +45,7 @@ public:
     void set_async_op_pending_ready();
     void set_async_op_complete_ready();
 
+
 private:
     uint32_t m_targetNumThreads;
     win32_handle m_stopRequestedHandle;
