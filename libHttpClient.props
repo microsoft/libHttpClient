@@ -1,39 +1,43 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Condition="'$(Platform)'=='ARM'">
+    <HCLibPlatform>$(Platform)</HCLibPlatform>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='Win32'">
+    <HCLibPlatform>x86</HCLibPlatform>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <HCLibPlatform>$(Platform)</HCLibPlatform>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">
+    <HCLibToolset>141</HCLibToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(PlatformToolset)'=='v140'">
+    <HCLibToolset>140</HCLibToolset>
+  </PropertyGroup>
+  
   <PropertyGroup>
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
-    <libHttpClientLib>$(libHttpClientRoot)lib\</libHttpClientLib>
-    <libHttpClientLib2>$(libHttpClientRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.141.UWP.C</libHttpClientLib2>
+    <libHttpClientLib>$(libHttpClientRoot)\Binaries\$(Configuration)\$(HCLibPlatform)\libHttpClient.$(HCLibToolset).UWP.C</libHttpClientLib>
+	<libHttpClientLibName>libHttpClient.$(HCLibToolset).UWP.C.lib</libHttpClientLibName>
   </PropertyGroup>
+  
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(libHttpClientInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Platform)'=='ARM'">
+  <ItemDefinitionGroup>
     <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib2);$(libHttpClientLib)\ARM;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+	  <AdditionalLibraryDirectories>$(libHttpClientLib)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
+  <ItemDefinitionGroup>
     <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib2);$(libHttpClientLib)\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
-    <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib2);$(libHttpClientLib)\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(PlatformToolset)'=='v141'">
-    <Link>
-      <AdditionalDependencies>libHttpClient.141.UWP.C.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(PlatformToolset)'=='v140'">
-    <Link>
-      <AdditionalDependencies>libHttpClient.140.UWP.C.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(libHttpClientLibName);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 </Project>
