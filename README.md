@@ -58,7 +58,8 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 
 Big things that still need to be done in rough priorty order:
 
-* Prototype XSAPI on top of libHttpClient HTTP stack
+* [Done] Prototype XSAPI on top of libHttpClient HTTP stack
+* Prototype XSAPI on top of libHttpClient async task stack
 * P/Invoke layer and UWP C# sample
 * libHttpClient Unity sample (using P/Invoke layer)
 * XDK project & XDK implementation calling XDK platform HTTP APIs
