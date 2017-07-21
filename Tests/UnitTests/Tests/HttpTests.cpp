@@ -43,7 +43,7 @@ static void HC_CALLING_CONV MemFree(
 static bool g_PerformCallbackCalled = false;
 static void HC_CALLING_CONV PerformCallback(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     g_PerformCallbackCalled = true;
@@ -116,7 +116,7 @@ public:
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
-        HCHttpCallPerform(call, nullptr, 
+        HCHttpCallPerform(0, call, nullptr, 
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -129,21 +129,15 @@ public:
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(TestThread)
-    {
-        DEFINE_TEST_CASE_PROPERTIES(TestThread);
-        // TODO
-    }
-
     TEST_METHOD(TestSettings)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
         HCGlobalInitialize();
 
-        HCSettingsSetDiagnosticsTraceLevel(HC_DIAGNOSTICS_TRACE_LEVEL::TRACE_ERROR);
-        HC_DIAGNOSTICS_TRACE_LEVEL level;
-        HCSettingsGetDiagnosticsTraceLevel(&level);
-        VERIFY_ARE_EQUAL(HC_DIAGNOSTICS_TRACE_LEVEL::TRACE_ERROR, level);
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_ERROR);
+        HC_LOG_LEVEL level;
+        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_ERROR, level);
 
         HCSettingsSetTimeoutWindow(1000);
         uint32_t timeout = 0;

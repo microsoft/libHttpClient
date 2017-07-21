@@ -21,7 +21,8 @@
   <PropertyGroup>
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
-    <libHttpClientLib>$(libHttpClientRoot)\Binaries\$(Configuration)\$(HCLibPlatform)\libHttpClient.$(HCLibToolset).UWP.C</libHttpClientLib>
+    <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(HCLibPlatform)\libHttpClient.$(HCLibToolset).UWP.C\</libHttpClientLib>
+    <libHttpClientLib2>$(libHttpClientRoot)lib\$(HCLibPlatform)\</libHttpClientLib2>
 	<libHttpClientLibName>libHttpClient.$(HCLibToolset).UWP.C.lib</libHttpClientLibName>
   </PropertyGroup>
   
@@ -32,7 +33,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+	  <AdditionalLibraryDirectories>$(libHttpClientLib2);$(libHttpClientLib)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>

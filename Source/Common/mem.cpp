@@ -2,9 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "mem.h"
-#include "singleton.h"
-#include "log.h"
 
 _Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV 
 DefaultMemAllocFunction(

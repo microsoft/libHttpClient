@@ -2,10 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "httpClient/types.h"
-#include "httpClient/httpClient.h"
-#include "singleton.h"
-#include "mem.h"
 
 void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info);
 
@@ -45,11 +41,11 @@ void http_asyncop_push_pending_asyncop(
     std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
     auto& asyncPendingQueue = get_http_singleton()->m_asyncPendingQueue;
     asyncPendingQueue.push(info);
-    get_http_singleton()->m_threadPool->set_async_op_pending_ready();
+    get_http_singleton()->set_async_op_pending_ready();
 }
 
 bool HC_CALLING_CONV
-HCThreadIsAsyncOpPending()
+HCTaskIsTaskPending()
 {
     auto& map = get_http_singleton()->m_asyncPendingQueue;
     return !map.empty();
@@ -79,7 +75,7 @@ void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info)
         );
 }
 
-void queue_completed_async_op(_In_ HC_ASYNC_TASK_HANDLE taskHandle)
+void queue_completed_async_op(_In_ HC_TASK_HANDLE taskHandle)
 {
     taskHandle->state = http_async_state::completed;
 #if UWP_API || UNITTEST_API
@@ -104,27 +100,27 @@ void queue_completed_async_op(_In_ HC_ASYNC_TASK_HANDLE taskHandle)
         completeQueue.push(info);
     }
 
-    get_http_singleton()->m_threadPool->set_async_op_complete_ready();
+    get_http_singleton()->set_async_op_complete_ready();
 }
 
 HC_API void HC_CALLING_CONV
-HCThreadSetResultsReady(
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+HCTaskSetResultReady(
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     queue_completed_async_op(taskHandle);
 }
 
 HC_API bool HC_CALLING_CONV
-HCThreadAreResultsReady(
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+HCTaskIsResultReady(
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     return taskHandle->state == http_async_state::completed;
 }
 
 void HC_CALLING_CONV
-HCThreadProcessCompletedAsyncOp()
+HCTaskProcessNextResultReadyTask(_In_ uint32_t taskGroupId)
 {
     std::shared_ptr<HC_ASYNC_INFO> info = http_asyncop_get_next_completed_async_op();
     if (info == nullptr)
@@ -135,8 +131,8 @@ HCThreadProcessCompletedAsyncOp()
 
 #if UWP_API || UNITTEST_API
 HC_API void HC_CALLING_CONV
-HCThreadWaitForResultsReady(
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle,
+HCTaskWaitForResultReady(
+    _In_ HC_TASK_HANDLE taskHandle,
     _In_ uint32_t timeoutInMilliseconds
 )
 {
@@ -145,20 +141,20 @@ HCThreadWaitForResultsReady(
 
 
 HANDLE HC_CALLING_CONV
-HCThreadGetAsyncOpPendingHandle()
+HCTaskGetPendingHandle()
 {
-    return get_http_singleton()->m_threadPool->get_pending_ready_handle();
+    return get_http_singleton()->get_pending_ready_handle();
 }
 
 HANDLE HC_CALLING_CONV
-HCThreadGetAsyncOpCompletedHandle()
+HCTaskGetCompletedHandle()
 {
-    return get_http_singleton()->m_threadPool->get_complete_ready_handle();
+    return get_http_singleton()->get_complete_ready_handle();
 }
 #endif
 
 void HC_CALLING_CONV
-HCThreadProcessPendingAsyncOp()
+HCTaskProcessNextPendingTask()
 {
     std::shared_ptr<HC_ASYNC_INFO> info = http_asyncop_get_next_pending_async_op();
     if (info == nullptr)
@@ -167,8 +163,9 @@ HCThreadProcessPendingAsyncOp()
     process_pending_async_op(info);
 }
 
-HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
-HCThreadQueueAsyncOp(
+HC_API HC_TASK_HANDLE HC_CALLING_CONV
+HCTaskCreate(
+    _In_ uint32_t taskGroupId,
     _In_ HC_ASYNC_OP_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
     _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,

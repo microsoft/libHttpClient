@@ -46,11 +46,11 @@ public:
         HCHttpCallCreate(&call);
 
         HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", false, false);
-        HCSettingsAddMockCall(mockCall);
+        HCMockAddMock(mockCall);
 
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -68,6 +68,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         HCGlobalCleanup();
@@ -80,14 +81,14 @@ public:
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", true, false);
-        HCSettingsAddMockCall(mockCall);
+        HCMockAddMock(mockCall);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
         g_gotCall = false;
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -105,6 +106,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -112,7 +114,7 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"10", L"20");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -130,6 +132,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -144,14 +147,14 @@ public:
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", true, true);
-        HCSettingsAddMockCall(mockCall);
+        HCMockAddMock(mockCall);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -169,6 +172,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -176,7 +180,7 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -194,6 +198,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -210,15 +215,15 @@ public:
 
         HC_CALL_HANDLE mockCall1 = CreateMockCall(L"Mock1", true, true);
         HC_CALL_HANDLE mockCall2 = CreateMockCall(L"Mock2", true, true);
-        HCSettingsAddMockCall(mockCall1);
-        HCSettingsAddMockCall(mockCall2);
+        HCMockAddMock(mockCall1);
+        HCMockAddMock(mockCall2);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -236,6 +241,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -243,7 +249,7 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -261,6 +267,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -269,7 +276,7 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -287,6 +294,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextResultReadyTask(0);
             Sleep(50);
         }
         g_gotCall = false;

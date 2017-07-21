@@ -2,9 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "mem.h"
-#include "singleton.h"
-#include "log.h"
 #include "httpcall.h"
 #include "Mock/http_mock.h"
 
@@ -32,7 +29,7 @@ HCHttpCallCleanup(
 
 void HttpCallPerformExecute(
     _In_opt_ void* executionRoutineContext,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
@@ -43,7 +40,7 @@ void HttpCallPerformExecute(
         matchedMocks = Mock_Internal_HCHttpCallPerform(call);
         if (matchedMocks)
         {
-            HCThreadSetResultsReady(taskHandle);
+            HCTaskSetResultReady(taskHandle);
         }
     }
    
@@ -66,7 +63,7 @@ void HttpCallPerformExecute(
 
 void HttpCallPerformWriteResults(
     _In_opt_ void* writeResultsRoutineContext,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
@@ -77,8 +74,9 @@ void HttpCallPerformWriteResults(
     }
 }
 
-HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
+HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCHttpCallPerform(
+    _In_ uint32_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
     _In_opt_ void* completionRoutineContext,
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
@@ -86,7 +84,8 @@ HCHttpCallPerform(
 {
     VerifyGlobalInit();
 
-    return HCThreadQueueAsyncOp(
+    return HCTaskCreate(
+        taskGroupId,
         HttpCallPerformExecute, (void*)call,
         HttpCallPerformWriteResults, (void*)call,
         completionRoutine, completionRoutineContext,

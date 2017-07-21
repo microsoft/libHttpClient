@@ -2,13 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "mem.h"
-#include "singleton.h"
-#include "log.h"
 
 HC_API void HC_CALLING_CONV
-HCSettingsSetDiagnosticsTraceLevel(
-    _In_ HC_DIAGNOSTICS_TRACE_LEVEL traceLevel
+HCSettingsSetLogLevel(
+    _In_ HC_LOG_LEVEL traceLevel
     )
 {
     VerifyGlobalInit();
@@ -16,8 +13,8 @@ HCSettingsSetDiagnosticsTraceLevel(
 }
 
 HC_API void HC_CALLING_CONV
-HCSettingsGetDiagnosticsTraceLevel(
-    _Out_ HC_DIAGNOSTICS_TRACE_LEVEL* traceLevel
+HCSettingsGetLogLevel(
+    _Out_ HC_LOG_LEVEL* traceLevel
     )
 {
     VerifyGlobalInit();
@@ -61,7 +58,7 @@ HCSettingsGetAssertsForThrottling(
 }
 
 HC_API void HC_CALLING_CONV
-HCSettingsAddMockCall(
+HCMockAddMock(
     _In_ HC_CALL_HANDLE call
     )
 {
@@ -73,7 +70,7 @@ HCSettingsAddMockCall(
 }
 
 HC_API void HC_CALLING_CONV
-HCSettingsClearMockCalls()
+HCMockClearMocks()
 {
     VerifyGlobalInit();
 

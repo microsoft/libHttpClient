@@ -2,10 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
 #if UWP_API
-#include "httpClient/types.h"
-#include "httpClient/httpClient.h"
-#include "singleton.h"
-#include "asyncop.h"
 #include "../httpcall.h"
 #include "UWP/utils_uwp.h"
 
@@ -31,14 +27,14 @@ public:
 
     void perform_async(
         _In_ HC_CALL_HANDLE call,
-        _In_ HC_ASYNC_TASK_HANDLE taskHandle
+        _In_ HC_TASK_HANDLE taskHandle
         );
 };
 
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     std::shared_ptr<uwp_http_task> uwpHttpTask = std::make_shared<uwp_http_task>();
@@ -50,7 +46,7 @@ void Internal_HCHttpCallPerform(
 
 void uwp_http_task::perform_async(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     try
@@ -126,26 +122,26 @@ void uwp_http_task::perform_async(
                     {
                         Platform::String^ httpResponseBody = asyncOp->GetResults();
                         HCHttpCallResponseSetResponseString(call, httpResponseBody->Data());
-                        HCThreadSetResultsReady(taskHandle);
+                        HCTaskSetResultReady(taskHandle);
                     }
                     catch (Platform::Exception^ ex)
                     {
                         HCHttpCallResponseSetErrorCode(call, ex->HResult);
-                        HCThreadSetResultsReady(taskHandle);
+                        HCTaskSetResultReady(taskHandle);
                     }
                 });
             }
             catch (Platform::Exception^ ex)
             {
                 HCHttpCallResponseSetErrorCode(call, ex->HResult);
-                HCThreadSetResultsReady(taskHandle);
+                HCTaskSetResultReady(taskHandle);
             }
         });
     }
     catch (Platform::Exception^ ex)
     {
         HCHttpCallResponseSetErrorCode(call, ex->HResult);
-        HCThreadSetResultsReady(taskHandle);
+        HCTaskSetResultReady(taskHandle);
     }
 }
 

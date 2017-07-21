@@ -9,4 +9,3 @@
 #include <ppltasks.h>
 #include "App.xaml.h"
 #include "httpClient\httpClient.h"
-

@@ -9,9 +9,9 @@
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    HCThreadSetResultsReady(taskHandle);
+    HCTaskSetResultReady(taskHandle);
 }
 #endif
