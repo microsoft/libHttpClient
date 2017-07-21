@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{A6349408-5BA8-47DB-9A74-E9F9CF1F7958}</ProjectGuid>
+    <ProjectGuid>{8F96710E-5169-4917-8874-7DE248F4D243}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v140</PlatformToolset>
@@ -124,7 +124,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
@@ -136,13 +135,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\UWP\http_uwp.cpp" />

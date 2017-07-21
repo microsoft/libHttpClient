@@ -9,23 +9,26 @@ extern "C" {
 #endif
 
 
-//
-// HCMem APIs
+/////////////////////////////////////////////////////////////////////////////////////////
+// Memory APIs
 //
 
 /// <summary>
 /// A callback invoked every time a new memory buffer must be dynamically allocated by the library.
 /// This callback is optionally installed by calling HCMemSetFunctions()
 /// 
-/// The callback must allocate and return a pointer to a contiguous block of memory of the specified size that will
-/// remain valid until the app's corresponding HC_MEM_FREE_FUNC callback is invoked to release it.
+/// The callback must allocate and return a pointer to a contiguous block of memory of the 
+/// specified size that will remain valid until the app's corresponding HC_MEM_FREE_FUNC 
+/// callback is invoked to release it.
 /// 
 /// Every non-null pointer returned by this method will be subsequently passed to the corresponding
 /// HC_MEM_FREE_FUNC callback once the memory is no longer needed.
 /// </summary>
-/// <returns>A pointer to an allocated block of memory of the specified size, or a null pointer if allocation failed.</returns>
+/// <returns>A pointer to an allocated block of memory of the specified size, or a null 
+/// pointer if allocation failed.</returns>
 /// <param name="size">The size of the allocation to be made. This value will never be zero.</param>
-/// <param name="memoryTypeId">An opaque identifier representing the internal category of memory being allocated.</param>
+/// <param name="memoryTypeId">An opaque identifier representing the internal category of 
+/// memory being allocated.</param>
 typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
 (HC_CALLING_CONV* HC_MEM_ALLOC_FUNC)(
     _In_ size_t size,
@@ -33,15 +36,17 @@ typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
     );
 
 /// <summary>
-/// A callback invoked every time a previously allocated memory buffer is no longer needed by the library and can be freed.
-/// This callback is optionally installed by calling HCMemSetFunctions()
+/// A callback invoked every time a previously allocated memory buffer is no longer needed by 
+/// the library and can be freed. This callback is optionally installed by calling HCMemSetFunctions()
 ///
-/// The callback is invoked whenever the library has finished using a memory buffer previously returned by the
-/// app's corresponding HC_MEM_ALLOC_FUNC such that the application can free the
+/// The callback is invoked whenever the library has finished using a memory buffer previously 
+/// returned by the app's corresponding HC_MEM_ALLOC_FUNC such that the application can free the
 /// memory buffer.
 /// </summary>
-/// <param name="pointer">The pointer to the memory buffer previously allocated. This value will never be a null pointer.</param>
-/// <param name="memoryTypeId">An opaque identifier representing the internal category of memory being allocated.</param>
+/// <param name="pointer">The pointer to the memory buffer previously allocated. This value will
+/// never be a null pointer.</param>
+/// <param name="memoryTypeId">An opaque identifier representing the internal category of 
+/// memory being allocated.</param>
 typedef void
 (HC_CALLING_CONV* HC_MEM_FREE_FUNC)(
     _In_ _Post_invalid_ void* pointer,
@@ -49,18 +54,21 @@ typedef void
     );
 
 /// <summary>
-/// Optionally sets the memory hook functions to allow callers to control route memory allocations to thier own memory manager
-/// This must be called before HCGlobalInitialize() and can not be called again until HCGlobalCleanup()
+/// Optionally sets the memory hook functions to allow callers to control route memory 
+/// allocations to thier own memory manager. This must be called before HCGlobalInitialize() 
+/// and can not be called again until HCGlobalCleanup()
 ///
-/// This method allows the application to install custom memory allocation routines in order to service all requests
-/// for new memory buffers instead of using default allocation routines.
+/// This method allows the application to install custom memory allocation routines in order 
+/// to service all requests for new memory buffers instead of using default allocation routines.
 ///
 /// The <paramref name="memAllocFunc" /> and <paramref name="memFreeFunc" /> parameters can be null
-/// pointers to restore the default routines. Both callback pointers must be null or both must be non-null. Mixing
-/// custom and default routines is not permitted.
+/// pointers to restore the default routines. Both callback pointers must be null or both must 
+/// be non-null. Mixing custom and default routines is not permitted.
 /// </summary>
-/// <param name="memAllocFunc">A pointer to the custom allocation callback to use, or a null pointer to restore the default.</param>
-/// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null pointer to restore the default.</param>
+/// <param name="memAllocFunc">A pointer to the custom allocation callback to use, or a null 
+/// pointer to restore the default.</param>
+/// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null 
+/// pointer to restore the default.</param>
 HC_API void HC_CALLING_CONV
 HCMemSetFunctions(
     _In_opt_ HC_MEM_ALLOC_FUNC memAllocFunc,
@@ -68,12 +76,14 @@ HCMemSetFunctions(
     );
 
 /// <summary>
-/// Gets the memory hook functions to allow callers to control route memory allocations to their own memory manager
-/// This method allows the application get the default memory allocation routines.
+/// Gets the memory hook functions to allow callers to control route memory allocations to their 
+/// own memory manager.  This method allows the application get the default memory allocation routines.
 /// This can be used along with HCMemSetFunctions() to monitor all memory allocations.
 /// </summary>
-/// <param name="memAllocFunc">Set to the current allocation callback.  Returns the default routine if not previously set</param>
-/// <param name="memFreeFunc">Set to the to the current memory free callback.  Returns the default routine if not previously set</param>
+/// <param name="memAllocFunc">Set to the current allocation callback.  Returns the default routine 
+/// if not previously set</param>
+/// <param name="memFreeFunc">Set to the to the current memory free callback.  Returns the default 
+/// routine if not previously set</param>
 HC_API void HC_CALLING_CONV
 HCMemGetFunctions(
     _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
@@ -81,8 +91,8 @@ HCMemGetFunctions(
     );
 
 
-// 
-// HCGlobal APIs
+/////////////////////////////////////////////////////////////////////////////////////////
+// Global APIs
 // 
 
 /// <summary>
@@ -112,7 +122,8 @@ HCGlobalCleanup();
 /// <summary>
 /// Returns the version of the library
 /// </summary>
-/// <returns>The version of the library in the format of release_year.release_month.date.rev.  For example, 2017.07.20170710.01</returns>
+/// <returns>The version of the library in the format of release_year.release_month.date.rev.  
+/// For example, 2017.07.20170710.01</returns>
 HC_API void HC_CALLING_CONV
 HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version);
 
@@ -123,7 +134,7 @@ HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version);
 typedef void
 (HC_CALLING_CONV* HC_HTTP_CALL_PERFORM_FUNC)(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     );
 
 /// <summary>
@@ -140,41 +151,105 @@ HCGlobalSetHttpCallPerformFunction(
     );
 
 /// <summary>
-/// Returns the current HC_HTTP_CALL_PERFORM_FUNC callback which implements the HTTP perform function on the current platform.
-/// This can be used along with HCGlobalSetHttpCallPerformFunction() to monitor all HTTP calls.
+/// Returns the current HC_HTTP_CALL_PERFORM_FUNC callback which implements the HTTP 
+/// perform function on the current platform. This can be used along with 
+/// HCGlobalSetHttpCallPerformFunction() to monitor all HTTP calls.
 /// </summary>
-/// <param name="performFunc">Set to the current HTTP perform function. Returns the default routine if not previously set</param>
+/// <param name="performFunc">Set to the current HTTP perform function. Returns the default 
+/// routine if not previously set</param>
 HC_API void HC_CALLING_CONV
 HCGlobalGetHttpCallPerformFunction(
     _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
     );
 
 
-// 
-// HCThead APIs
+/////////////////////////////////////////////////////////////////////////////////////////
+// Task APIs
 // 
 
 /// <summary>
+/// The callback definition used by HCTaskCreate.
 /// </summary>
-/// <param name="executionRoutineContext"></param>
-/// <param name="taskHandle"></param>
+/// <param name="context">The context passed to this callback</param>
+/// <param name="taskHandle">The handle to the task</param>
 typedef void
 (HC_CALLING_CONV* HC_ASYNC_OP_FUNC)(
-    _In_opt_ void* executionRoutineContext,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_opt_ void* context,
+    _In_ HC_TASK_HANDLE taskHandle
     );
 
 /// <summary>
+/// Create a new async task by passing in 3 callbacks and their associated contexts which
+/// are passed to each corresponding callback.
+///
+/// The executionRoutine callback performs the task itself and may take time to complete.
+/// The writeResultsRoutine callback has the knowledge to cast and call the 'void* completionRoutine'
+/// callback based on a task specific callback definition.
+///
+/// If executeNow is true, the executionRoutine callback will be called immediately 
+/// inside HCTaskCreate().  This is useful if the execution of the async task is quick and just
+/// needs to kick off other async tasks such as an HTTP call.
+/// 
+/// If executeNow is false, then the executionRoutine callback is called when
+/// HCTaskProcessNextPendingTask() is called. Setting executeNow to false is useful for 
+/// tasks that are long running. It is recommended the app calls HCTaskProcessNextPendingTask()
+/// in a background thread.
+///
+/// Right before the executionRoutine callback is finished, the executionRoutine should
+/// call HCTaskSetResultReady() to mark the task as ready to return results.
+///
+/// When the task is ready to return results, the completionRoutine is called on the
+/// thread that calls HCTaskProcessNextResultReadyTask().  This enables the caller to execute
+/// the callback on a specific thread to avoid the need to marshal data to a app thread
+/// from a background thread.
+///
+/// HCTaskProcessNextResultReadyTask(taskGroupId) will only process ready tasks that have a
+/// matching taskGroupId.  This enables the caller to split the where results are
+/// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </summary>
-/// <param name="executionRoutine"></param>
-/// <param name="executionRoutineContext"></param>
-/// <param name="writeResultsRoutine"></param>
-/// <param name="writeResultsRoutineContext"></param>
-/// <param name="completionRoutine"></param>
-/// <param name="completionRoutineContext"></param>
-/// <param name="executeNow"></param>
-HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
-HCThreadQueueAsyncOp(
+/// <param name="taskGroupId">
+/// The task group ID to assign to this task.
+/// HCTaskProcessNextResultReadyTask(taskGroupId) will only process ready tasks that have a
+/// matching taskGroupId.  This enables the caller to split the where results are
+/// returned between between a set of app threads.  If this isn't needed, just pass in 0.
+/// </param>
+/// <param name="executionRoutine">
+/// The executionRoutine callback performs the task itself and may take time to complete.
+/// Right before the executionRoutine callback is finished, the executionRoutine should
+/// call HCTaskSetResultReady() to mark the task as ready to return results.
+/// </param>
+/// <param name="executionRoutineContext">
+/// The context passed to the executionRoutine callback
+/// </param>
+/// <param name="writeResultsRoutine">
+/// The writeResultsRoutine callback has the knowledge to cast and call the 'void* completionRoutine'
+/// callback based on a task specific callback definition.
+/// </param>
+/// <param name="writeResultsRoutineContext">
+/// The context passed to the writeResultsRoutine callback
+/// </param>
+/// <param name="completionRoutine">
+/// A task specific callback that return results to the caller.
+/// This is called on the app thread that calls HCTaskProcessNextResultReadyTask().
+/// This enables the caller to execute the callback on a specific thread to avoid the
+/// need to marshal data to a app thread from a background thread.
+/// </param>
+/// <param name="completionRoutineContext">
+/// The context passed to the completionRoutine callback
+/// </param>
+/// <param name="executeNow">
+/// If executeNow is true, the executionRoutine callback will be called immediately
+/// inside HCTaskCreate().  This is useful if the execution of the async task is quick and just
+/// needs to kick off other async tasks such as an HTTP call.
+/// 
+/// If executeNow is false, then the executionRoutine callback is called when
+/// HCTaskProcessNextPendingTask() is called. Setting executeNow to false is useful for
+/// tasks that are long running. It is recommended the app calls HCTaskProcessNextPendingTask()
+/// in a background thread.
+/// </param>
+HC_API HC_TASK_HANDLE HC_CALLING_CONV
+HCTaskCreate(
+    _In_ uint32_t taskGroupId,
     _In_ HC_ASYNC_OP_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
     _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,
@@ -185,109 +260,126 @@ HCThreadQueueAsyncOp(
     );
 
 /// <summary>
+/// Returns if there is any async task that is in a pending state that hasn't yet been executed.
+/// HCTaskProcessNextPendingTask() will execute the next pending task.
 /// </summary>
-/// <param name="taskHandle"></param>
-HC_API void HC_CALLING_CONV
-HCThreadSetResultsReady(
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
-    );
-
-/// <summary>
-/// </summary>
-/// <param name="taskHandle"></param>
+/// <returns>Returns true if the async op is pending</returns>
 HC_API bool HC_CALLING_CONV
-HCThreadAreResultsReady(
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+HCTaskIsTaskPending();
+
+#if UWP_API
+/// <summary>
+/// Returns a handle that can be used to wait until there is a pending task that hasn't yet be executed.
+/// HCTaskProcessNextPendingTask() will execute the next pending task.
+/// </summary>
+HC_API HANDLE HC_CALLING_CONV
+HCTaskGetPendingHandle();
+
+/// <summary>
+/// Returns a handle that can be used to wait until there is a completed task that hasn't 
+/// yet be returned results to the caller. HCTaskProcessNextResultReadyTask() will execute the 
+/// next completed task 
+/// </summary>
+HC_API HANDLE HC_CALLING_CONV
+HCTaskGetCompletedHandle();
+#endif
+
+/// <summary>
+/// Calls the executionRoutine callback for the next pending task. It is recommended 
+/// the app calls HCTaskProcessNextPendingTask() in a background thread.
+/// </summary>
+HC_API void HC_CALLING_CONV
+HCTaskProcessNextPendingTask();
+
+/// <summary>
+/// Called by async task when the results are ready.  This will mark the task as
+/// completed so the app can call HCTaskProcessNextResultReadyTask() to get the results in
+/// the completionRoutine callback.
+/// </summary>
+/// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
+HC_API void HC_CALLING_CONV
+HCTaskSetResultReady(
+    _In_ HC_TASK_HANDLE taskHandle
     );
 
 /// <summary>
 /// </summary>
-/// <param name="taskHandle"></param>
+/// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
+HC_API bool HC_CALLING_CONV
+HCTaskIsResultReady(
+    _In_ HC_TASK_HANDLE taskHandle
+    );
+
+/// <summary>
+/// Wait until the results are ready
+/// When the async task is done, it should call HCTaskSetResultReady() which will 
+/// mark the task as ready
+/// </summary>
+/// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
+/// <param name="timeoutInMilliseconds">Timeout in milliseconds.</param>
 HC_API void HC_CALLING_CONV
-HCThreadWaitForResultsReady(
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle,
+HCTaskWaitForResultReady(
+    _In_ HC_TASK_HANDLE taskHandle,
     _In_ uint32_t timeoutInMilliseconds
     );
 
 /// <summary>
+/// Calls the completionRoutine callback for the next task that is ready.  
+/// This enables the caller to execute the callback on a specific thread to 
+/// avoid the need to marshal data to a app thread from a background thread.
+/// 
+/// HCTaskProcessNextResultReadyTask will only process ready tasks that have a
+/// matching taskGroupId.  This enables the caller to split the where results are
+/// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </summary>
-HC_API bool HC_CALLING_CONV
-HCThreadIsAsyncOpPending();
-
-#if UWP_API
-    /// <summary>
-    /// </summary>
-    HC_API HANDLE HC_CALLING_CONV
-    HCThreadGetAsyncOpPendingHandle();
-
-    /// <summary>
-    /// </summary>
-    HC_API HANDLE HC_CALLING_CONV
-    HCThreadGetAsyncOpCompletedHandle();
-#endif
-
-/// <summary>
-/// </summary>
+/// <param name="taskGroupId">
+/// HCTaskProcessNextResultReadyTask will only process ready tasks that have a
+/// matching taskGroupId.  This enables the caller to split the where results are
+/// returned between between a set of app threads.  If this isn't needed, just pass in 0.
+/// </param>
 HC_API void HC_CALLING_CONV
-HCThreadProcessPendingAsyncOp();
-
-/// <summary>
-/// </summary>
-HC_API void HC_CALLING_CONV
-HCThreadProcessCompletedAsyncOp();
-
-/// <summary>
-/// Set to 0 to disable
-/// Defaults to 2
-/// </summary>
-/// <param name="targetNumThreads"></param>
-HC_API void HC_CALLING_CONV
-HCThreadSetNumThreads(_In_ uint32_t targetNumThreads);
-
-/// <summary>
-/// Optionally configures the processor on which internal threads will run.
-///
-/// For exclusive resource applications, the threads are guaranteed to run on the specified processor. For universal
-/// Windows applications, the specified processor is used as the thread's ideal processor and is only a hint for the
-/// scheduler.
-///
-/// This method may be called at any time before or after chat_manager::initialize() and will take effect
-/// immediately. 
-/// </summary>
-/// <param name="threadIndex">Zero based index of the thread.  Pass -1 to apply for all threads</param>
-/// <param name="processorNumber">The zero-based processor number on which the internal threads should run. 
-/// Pass 0xFFFFFFFF to specify any processors</param>
-HC_API void HC_CALLING_CONV
-HCThreadSetProcessor(_In_ int threadIndex, _In_ uint32_t processorNumber);
+HCTaskProcessNextResultReadyTask(_In_ uint32_t taskGroupId);
 
 
-//
-// HCSettings APIs
+/////////////////////////////////////////////////////////////////////////////////////////
+// Settings APIs
 //
 
 /// <summary>
+/// Diagnostic level used by logging
 /// </summary>
-typedef enum HC_DIAGNOSTICS_TRACE_LEVEL
+typedef enum HC_LOG_LEVEL
 {
-    TRACE_OFF,
-    TRACE_ERROR,
-    TRACE_VERBOSE
-} HC_DIAGNOSTICS_TRACE_LEVEL;
+    /// <summary>
+    /// No logging
+    /// </summary>
+    LOG_OFF,
+
+    /// <summary>
+    /// Log only errors
+    /// </summary>
+    LOG_ERROR,
+
+    /// <summary>
+    /// Log everything
+    /// </summary>
+    LOG_VERBOSE
+} HC_LOG_LEVEL;
 
 /// <summary>
 /// </summary>
-/// <param name="traceLevel"></param>
+/// <param name="logLevel"></param>
 HC_API void HC_CALLING_CONV
-HCSettingsSetDiagnosticsTraceLevel(
-    _In_ HC_DIAGNOSTICS_TRACE_LEVEL traceLevel
+HCSettingsSetLogLevel(
+    _In_ HC_LOG_LEVEL logLevel
     );
 
 /// <summary>
 /// </summary>
-/// <param name="traceLevel"></param>
+/// <param name="logLevel"></param>
 HC_API void HC_CALLING_CONV
-HCSettingsGetDiagnosticsTraceLevel(
-    _Out_ HC_DIAGNOSTICS_TRACE_LEVEL* traceLevel
+HCSettingsGetLogLevel(
+    _Out_ HC_LOG_LEVEL* logLevel
     );
 
 /// <summary>
@@ -322,8 +414,8 @@ HCSettingsGetAssertsForThrottling(
     _Out_ bool* enableAssertsForThrottling
     );
 
-//
-// HCHttpCall APIs
+/////////////////////////////////////////////////////////////////////////////////////////
+// HttpCall APIs
 //
 
 /// <summary>
@@ -336,11 +428,13 @@ HCHttpCallCreate(
 
 /// <summary>
 /// </summary>
+/// <param name="taskGroupId"></param>
 /// <param name="call"></param>
 /// <param name="completionRoutineContext"></param>
 /// <param name="completionRoutine"></param>
-HC_API HC_ASYNC_TASK_HANDLE HC_CALLING_CONV
+HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCHttpCallPerform(
+    _In_ uint32_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
     _In_opt_ void* completionRoutineContext,
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
@@ -355,8 +449,8 @@ HCHttpCallCleanup(
     );
 
 
-//
-// HCHttpCallRequest APIs
+/////////////////////////////////////////////////////////////////////////////////////////
+// HttpCallRequest APIs
 //
 
 /// <summary>
@@ -492,8 +586,8 @@ HCHttpCallRequestGetTimeout(
     );
 
 
-// 
-// HCHttpCallResponse APIs
+/////////////////////////////////////////////////////////////////////////////////////////
+// HttpCallResponse APIs
 // 
 
 /// <summary>
@@ -624,7 +718,7 @@ HCHttpCallResponseSetHeader(
     _Out_ PCSTR_T headerValue
     );
 
-// 
+/////////////////////////////////////////////////////////////////////////////////////////
 // Mock APIs
 // 
 
@@ -642,27 +736,28 @@ HCHttpCallResponseSetHeader(
 /// HC_CALL_HANDLE that represents the mock.
 ///
 /// Once the HC_CALL_HANDLE is configured as desired, add the mock to the system by 
-/// calling HCSettingsAddMockCall(). You do not need to call HCHttpCallCleanup() for 
-/// the HC_CALL_HANDLEs passed to HCSettingsAddMockCall().
+/// calling HCMockAddMock(). You do not need to call HCHttpCallCleanup() for 
+/// the HC_CALL_HANDLEs passed to HCMockAddMock().
 /// 
-/// You can set multiple active mock responses by calling HCSettingsAddMockCall() multiple 
+/// You can set multiple active mock responses by calling HCMockAddMock() multiple 
 /// times with a set of mock responses. If the HTTP call matches against a set mock responses, 
 /// they will be executed in order for each subsequent call to HCHttpCallPerform(). When the 
 /// last matching mock response is hit, the last matching mock response will be repeated on 
 /// each subsequent call to HCHttpCallPerform().
 /// </summary>
-/// <param name="call">This HC_CALL_HANDLE that represents the mock that has been configured accordingly 
-/// using HCHttpCallResponseSet*(), and optionally HCHttpCallRequestSetUrl() and HCHttpCallRequestSetRequestBodyString().</param>
+/// <param name="call">This HC_CALL_HANDLE that represents the mock that has been configured 
+/// accordingly using HCHttpCallResponseSet*(), and optionally HCHttpCallRequestSetUrl() 
+/// and HCHttpCallRequestSetRequestBodyString().</param>
 HC_API void HC_CALLING_CONV
-HCSettingsAddMockCall(
+HCMockAddMock(
     _In_ HC_CALL_HANDLE call
     );
 
 /// <summary>
-/// Removes and cleans up all mock calls added by HCSettingsAddMockCall
+/// Removes and cleans up all mock calls added by HCMockAddMock
 /// </summary>
 HC_API void HC_CALLING_CONV
-HCSettingsClearMockCalls();
+HCMockClearMocks();
 
 
 #if defined(__cplusplus)

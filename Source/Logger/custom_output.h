@@ -9,7 +9,7 @@ NAMESPACE_XBOX_LIBHCBEGIN
 class custom_output: public log_output
 {
 public:
-    custom_output() : log_output(log_output_level_setting::use_logger_setting, log_level::off) {}
+    custom_output() : log_output(log_output_level_setting::use_logger_setting, HC_LOG_LEVEL::LOG_OFF) {}
 
     void add_log(_In_ const log_entry& entry) override;
 };

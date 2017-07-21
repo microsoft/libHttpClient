@@ -9,7 +9,7 @@ NAMESPACE_XBOX_LIBHCBEGIN
 class debug_output : public log_output
 {
 public:
-    debug_output() : log_output(log_output_level_setting::use_logger_setting, log_level::off) {}
+    debug_output() : log_output(log_output_level_setting::use_logger_setting, HC_LOG_LEVEL::LOG_OFF) {}
 
     void write(_In_ const std::string& msg) override;
 };

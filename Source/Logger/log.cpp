@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "log.h"
 
 NAMESPACE_XBOX_LIBHCBEGIN
 
@@ -17,7 +16,7 @@ void logger::add_log_output(std::shared_ptr<log_output> output)
     }
 };
 
-void logger::set_log_level(log_level level)
+void logger::set_log_level(HC_LOG_LEVEL level)
 {
     m_logLevel = level;
 

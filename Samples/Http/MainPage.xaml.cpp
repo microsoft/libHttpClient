@@ -33,6 +33,7 @@ MainPage::MainPage()
     g_stopHandle = CreateEvent(nullptr, false, false, nullptr);
     InitializeComponent();
     HCGlobalInitialize();
+    StartBackgroundThread();
 
     TextboxURL->Text = L"http://www.bing.com";
     TextboxHeaders->Text = L"User-Agent: XboxServicesAPI; x-xbl-contract-version: 1";
@@ -70,7 +71,8 @@ std::vector<std::vector<std::wstring>> ExtractHeadersFromHeadersString(std::wstr
 
 void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e)
 {
-    HCThreadProcessCompletedAsyncOp();
+    uint32_t taskGroupId = 0;
+    HCTaskProcessNextResultReadyTask(taskGroupId);
 }
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
@@ -88,7 +90,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         switch (dwResult)
         {
         case WAIT_OBJECT_0: // pending async op ready
-            HCThreadProcessPendingAsyncOp();
+            HCTaskProcessNextPendingTask();
             break;
 
         default:
@@ -100,21 +102,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
     return 0;
 }
 
-void HttpTestApp::MainPage::ReadManualThreadingCheckbox()
-{
-    g_manualThreadingCheckbox = ManualThreadingCheckbox->IsChecked->Value;
-    if (g_manualThreadingCheckbox)
-    {
-        EnableManualThreading();
-    }
-    else
-    {
-        DisableManualThreading();
-        HCThreadSetNumThreads(1);
-    }
-}
-
-void HttpTestApp::MainPage::DisableManualThreading()
+void HttpTestApp::MainPage::StopBackgroundThread()
 {
     if (m_hBackgroundThread != nullptr)
     {
@@ -126,13 +114,12 @@ void HttpTestApp::MainPage::DisableManualThreading()
     }
 }
 
-void HttpTestApp::MainPage::EnableManualThreading()
+void HttpTestApp::MainPage::StartBackgroundThread()
 {
     if (m_hBackgroundThread == nullptr)
     {
-        g_pendingHandle = HCThreadGetAsyncOpPendingHandle();
+        g_pendingHandle = HCTaskGetPendingHandle();
         m_hBackgroundThread = CreateThread(nullptr, 0, background_thread_proc, nullptr, 0, nullptr);
-        HCThreadSetNumThreads(0);
 
         m_timer = ref new DispatcherTimer;
         m_timer->Tick += ref new EventHandler<Object^>(this, &HttpTestApp::MainPage::DispatcherTimer_Tick);
@@ -212,8 +199,6 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 
 void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    ReadManualThreadingCheckbox();
-
     HC_CALL_HANDLE call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, TextboxMethod->Text->Data(), TextboxURL->Text->Data());
@@ -227,7 +212,8 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
-    HCHttpCallPerform(call, nullptr, 
+    uint32_t taskGroupId = 0;
+    HCHttpCallPerform(taskGroupId, call, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             const WCHAR* str;

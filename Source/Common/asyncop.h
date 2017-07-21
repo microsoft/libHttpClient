@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 #include "pch.h"
-#include "httpClient/httpClient.h"
+#include "uwp/utils_uwp.h"
 
 struct http_args
 {

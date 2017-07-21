@@ -16,7 +16,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 - Public API is a **flat C API**
 - **Asynchronous** API
 - Public API **supports simple P/Invoke** without needing to use the "C#/.NET P/Invoke Interop SDK" [https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK]
-- Public APIs to **manage internal threads** 
+- Public APIs to **manage async tasks** 
 - Async data can be returned to a specific game thread so the **game doesn't need to marshal the data between threads**
 - **No streams** support
 - **No dependencies** on PPL or Boost

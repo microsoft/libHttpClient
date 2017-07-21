@@ -91,8 +91,6 @@ set(Common_Source_Files
     ../../Source/Common/settings.cpp
     ../../Source/Common/singleton.cpp
     ../../Source/Common/singleton.h
-    ../../Source/Common/threadpool.cpp
-    ../../Source/Common/threadpool.h
     ../../Source/Common/utils.cpp
     ../../Source/Common/utils.h
     ../../Source/Common/buildver.h

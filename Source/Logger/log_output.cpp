@@ -2,12 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "log.h"
-#include <iomanip>
 
 NAMESPACE_XBOX_LIBHCBEGIN
 
-log_output::log_output(log_output_level_setting setting, log_level level):
+log_output::log_output(log_output_level_setting setting, HC_LOG_LEVEL level):
     m_levelSetting(setting),
     m_logLevel(level)
 {

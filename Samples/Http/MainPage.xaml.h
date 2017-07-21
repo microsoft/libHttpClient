@@ -24,8 +24,7 @@ namespace HttpTestApp
             _In_ std::vector<std::vector<std::wstring>> headers
             );
 
-        void ReadManualThreadingCheckbox();
-        void EnableManualThreading();
-        void DisableManualThreading();
+        void StartBackgroundThread();
+        void StopBackgroundThread();
     };
 }

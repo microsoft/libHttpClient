@@ -37,6 +37,8 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <codecvt>
+#include <iomanip>
 
 #if UWP_API
 #include <collection.h>
@@ -78,4 +80,9 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 typedef int32_t function_context;
 #include "httpClient/types.h"
-
+#include "httpClient/httpClient.h"
+#include "mem.h"
+#include "log.h"
+#include "utils.h"
+#include "asyncop.h"
+#include "singleton.h"
