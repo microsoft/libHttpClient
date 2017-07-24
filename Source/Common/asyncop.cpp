@@ -6,10 +6,10 @@
 void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info);
 
 std::shared_ptr<HC_ASYNC_INFO>
-http_asyncop_get_next_completed_async_op()
+http_asyncop_get_next_completed_async_op(_In_ uint64_t taskGroupId)
 {
     std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-    auto& completeQueue = get_http_singleton()->m_asyncCompleteQueue;
+    auto& completeQueue = get_http_singleton()->get_task_queue_for_id(taskGroupId)->get_queue();
     if (!completeQueue.empty())
     {
         auto it = completeQueue.front();
@@ -96,11 +96,11 @@ void queue_completed_async_op(_In_ HC_TASK_HANDLE taskHandle)
 
         asyncProcessingQueue.erase(std::remove(asyncProcessingQueue.begin(), asyncProcessingQueue.end(), info), asyncProcessingQueue.end());
 
-        auto& completeQueue = get_http_singleton()->m_asyncCompleteQueue;
+        auto& completeQueue = get_http_singleton()->get_task_queue_for_id(taskHandle->taskGroupId)->get_queue();
         completeQueue.push(info);
     }
 
-    get_http_singleton()->set_async_op_complete_ready();
+    get_http_singleton()->get_task_queue_for_id(taskHandle->taskGroupId)->set_async_op_complete_ready();
 }
 
 HC_API void HC_CALLING_CONV
@@ -120,9 +120,9 @@ HCTaskIsResultReady(
 }
 
 void HC_CALLING_CONV
-HCTaskProcessNextResultReadyTask(_In_ uint32_t taskGroupId)
+HCTaskProcessNextResultReadyTask(_In_ uint64_t taskGroupId)
 {
-    std::shared_ptr<HC_ASYNC_INFO> info = http_asyncop_get_next_completed_async_op();
+    std::shared_ptr<HC_ASYNC_INFO> info = http_asyncop_get_next_completed_async_op(taskGroupId);
     if (info == nullptr)
         return;
 
@@ -147,9 +147,9 @@ HCTaskGetPendingHandle()
 }
 
 HANDLE HC_CALLING_CONV
-HCTaskGetCompletedHandle()
+HCTaskGetCompletedHandle(_In_ uint64_t taskGroupId)
 {
-    return get_http_singleton()->get_complete_ready_handle();
+    return get_http_singleton()->m_taskCompletedQueue[taskGroupId]->get_complete_ready_handle();
 }
 #endif
 
@@ -165,7 +165,7 @@ HCTaskProcessNextPendingTask()
 
 HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCTaskCreate(
-    _In_ uint32_t taskGroupId,
+    _In_ uint64_t taskGroupId,
     _In_ HC_ASYNC_OP_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
     _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,
@@ -185,6 +185,7 @@ HCTaskCreate(
     info->writeResultsRoutineContext = writeResultsRoutineContext;
     info->completionRoutine = completionRoutine;
     info->completionRoutineContext = completionRoutineContext;
+    info->taskGroupId = taskGroupId;
     if (executeNow)
     {
         process_pending_async_op(info);

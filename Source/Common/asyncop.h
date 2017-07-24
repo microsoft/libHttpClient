@@ -28,6 +28,7 @@ struct HC_ASYNC_INFO
     void* writeResultsRoutineContext;
     void* completionRoutine;
     void* completionRoutineContext;
+    uint64_t taskGroupId;
 
 #if UWP_API || UNITTEST_API
     win32_handle resultsReady;

@@ -31,6 +31,24 @@ HCSettingsSetTimeoutWindow(
 }
 
 HC_API void HC_CALLING_CONV
+HCSettingsGetRetryDelay(
+    _In_ uint32_t* retryDelayInSeconds
+    )
+{
+    VerifyGlobalInit();
+    *retryDelayInSeconds = get_http_singleton()->m_retryDelayInSeconds;
+}
+
+HC_API void HC_CALLING_CONV
+HCSettingsSetRetryDelay(
+    _In_ uint32_t retryDelayInSeconds
+    )
+{
+    VerifyGlobalInit();
+    get_http_singleton()->m_retryDelayInSeconds = retryDelayInSeconds;
+}
+
+HC_API void HC_CALLING_CONV
 HCSettingsGetTimeoutWindow(
     _Out_ uint32_t* timeoutWindowInSeconds
     )
