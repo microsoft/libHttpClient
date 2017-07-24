@@ -71,7 +71,7 @@ std::vector<std::vector<std::wstring>> ExtractHeadersFromHeadersString(std::wstr
 
 void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e)
 {
-    uint32_t taskGroupId = 0;
+    uint64_t taskGroupId = 0;
     HCTaskProcessNextResultReadyTask(taskGroupId);
 }
 
@@ -212,7 +212,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
-    uint32_t taskGroupId = 0;
+    uint64_t taskGroupId = 0;
     HCHttpCallPerform(taskGroupId, call, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {

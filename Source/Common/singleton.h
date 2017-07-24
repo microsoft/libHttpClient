@@ -3,6 +3,22 @@
 #pragma once
 #include "pch.h"
 
+class http_task_completed_queue
+{
+private:
+#if UWP_API || UNITTEST_API
+    win32_handle m_completeReadyHandle;
+#endif
+    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncCompleteQueue;
+
+public:
+    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> get_queue();
+#if UWP_API || UNITTEST_API
+    HANDLE get_complete_ready_handle();
+    void set_async_op_complete_ready();
+#endif
+};
+
 struct http_singleton
 {
     http_singleton();
@@ -13,7 +29,10 @@ struct http_singleton
     std::mutex m_asyncLock;
     http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncPendingQueue;
     http_internal_vector<std::shared_ptr<HC_ASYNC_INFO>> m_asyncProcessingQueue;
-    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncCompleteQueue;
+
+    std::mutex m_taskCompletedQueueLock;
+    std::shared_ptr<http_task_completed_queue> get_task_queue_for_id(_In_ uint64_t taskGroupId);
+    std::map<uint64_t, std::shared_ptr<http_task_completed_queue>> m_taskCompletedQueue;
 
     std::function<_Ret_maybenull_ _Post_writable_byte_size_(dwSize) void*(_In_ size_t dwSize)> m_pMemAllocHook;
     std::function<void(_In_ void* pAddress)> m_pMemFreeHook;
@@ -29,6 +48,7 @@ struct http_singleton
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;
     HC_LOG_LEVEL m_traceLevel;
     uint32_t m_timeoutWindowInSeconds;
+    uint32_t m_retryDelayInSeconds;
     bool m_enableAssertsForThrottling;
 
     std::mutex m_mocksLock;
@@ -36,13 +56,11 @@ struct http_singleton
     HC_CALL* m_lastMatchingMock;
     bool m_mocksEnabled;
 
+#if UWP_API || UNITTEST_API
     HANDLE get_pending_ready_handle();
-    HANDLE get_complete_ready_handle();
-    void set_async_op_pending_ready();
-    void set_async_op_complete_ready();
     win32_handle m_pendingReadyHandle;
-    win32_handle m_completeReadyHandle;
-
+#endif
+    void set_async_op_pending_ready();
 };
 
 http_singleton* get_http_singleton(_In_ bool createIfRequired = false);

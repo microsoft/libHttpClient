@@ -4,8 +4,10 @@
 #include "pch.h"
 #include "../http/httpcall.h"
 #include "buildver.h"
+#include "singleton.h"
 
-#define DEFAULT_TIMEOUT_WINDOW_IN_SECONDS 60
+static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
+static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 
 static std::mutex g_httpSingletonLock;
 static std::unique_ptr<http_singleton> g_httpSingleton;
@@ -17,6 +19,7 @@ http_singleton::http_singleton()
 
     m_traceLevel = HC_LOG_LEVEL::LOG_OFF;
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
+    m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
     m_enableAssertsForThrottling = true;
     m_mocksEnabled = false;
     m_lastMatchingMock = nullptr;
@@ -59,6 +62,20 @@ void http_singleton::_Raise_logging_event(_In_ HC_LOG_LEVEL level, _In_ const st
             }
         }
     }
+}
+
+std::shared_ptr<http_task_completed_queue> http_singleton::get_task_queue_for_id(_In_ uint64_t taskGroupId)
+{
+    std::lock_guard<std::mutex> lock(m_taskCompletedQueueLock);
+    auto it = m_taskCompletedQueue.find(taskGroupId);
+    if (it != m_taskCompletedQueue.end())
+    {
+        return it->second;
+    }
+
+    std::shared_ptr<http_task_completed_queue> taskQueue = std::make_shared<http_task_completed_queue>();
+    m_taskCompletedQueue[taskGroupId] = taskQueue;
+    return taskQueue;
 }
 
 function_context http_singleton::add_logging_handler(_In_ std::function<void(HC_LOG_LEVEL, const std::string&, const std::string&)> handler)
@@ -145,22 +162,10 @@ HCGlobalGetHttpCallPerformFunction(
     *performFunc = get_http_singleton()->m_performFunc;
 }
 
-
-
+#if UWP_API || UNITTEST_API
 HANDLE http_singleton::get_pending_ready_handle()
 {
     return m_pendingReadyHandle.get();
-}
-
-HANDLE http_singleton::get_complete_ready_handle()
-{
-    return m_completeReadyHandle.get();
-}
-
-#if UWP_API || UNITTEST_API
-void http_singleton::set_async_op_complete_ready()
-{
-    SetEvent(get_complete_ready_handle());
 }
 
 void http_singleton::set_async_op_pending_ready()
@@ -168,3 +173,21 @@ void http_singleton::set_async_op_pending_ready()
     SetEvent(get_pending_ready_handle());
 }
 #endif
+
+#if UWP_API || UNITTEST_API
+HANDLE http_task_completed_queue::get_complete_ready_handle()
+{
+    return m_completeReadyHandle.get();
+}
+
+void http_task_completed_queue::set_async_op_complete_ready()
+{
+    SetEvent(get_complete_ready_handle());
+}
+#endif
+
+http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> http_task_completed_queue::get_queue()
+{
+    return m_asyncCompleteQueue;
+}
+

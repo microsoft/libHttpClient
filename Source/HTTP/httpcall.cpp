@@ -76,7 +76,7 @@ void HttpCallPerformWriteResults(
 
 HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCHttpCallPerform(
-    _In_ uint32_t taskGroupId,
+    _In_ uint64_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
     _In_opt_ void* completionRoutineContext,
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
