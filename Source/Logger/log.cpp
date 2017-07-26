@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 std::shared_ptr<logger> logger::s_logger = nullptr;
 
@@ -45,4 +45,4 @@ void logger::operator+=(const log_entry& logEntry)
     add_log(logEntry);
 }
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END

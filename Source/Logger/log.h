@@ -7,11 +7,11 @@
 
 #pragma once
 
-#define DEFAULT_LOGGER xbox::livehttpclient::logger::get_logger()
+#define DEFAULT_LOGGER xbox::httpclient::logger::get_logger()
 #define IF_LOGGER_ENABLED(logger) if(logger != nullptr)
 
-#define LOG(logger, level, category, msg) IF_LOGGER_ENABLED(logger) logger->add_log(xbox::livehttpclient::log_entry(level, category, msg))
-#define LOGS(logger, level, category) IF_LOGGER_ENABLED(logger) *logger += xbox::livehttpclient::log_entry(level, category)
+#define LOG(logger, level, category, msg) IF_LOGGER_ENABLED(logger) logger->add_log(xbox::httpclient::log_entry(level, category, msg))
+#define LOGS(logger, level, category) IF_LOGGER_ENABLED(logger) *logger += xbox::httpclient::log_entry(level, category)
 
 const char defaultCategory[] = "";
 #define IF_LOG_ERROR() IF_LOG_LEVEL_ENABLED(DEFAULT_LOGGER, HC_LOG_LEVEL::LOG_ERROR)
@@ -26,7 +26,7 @@ const char defaultCategory[] = "";
 #define LOGS_INFO LOGS(DEFAULT_LOGGER, HC_LOG_LEVEL::LOG_VERBOSE, defaultCategory)
 #define LOGS_INFO_IF(boolean_expression) if(boolean_expression) LOGS_INFO
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 
 class log_entry
@@ -138,4 +138,4 @@ private:
     HC_LOG_LEVEL m_logLevel;
 };
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END

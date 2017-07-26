@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 log_output::log_output(log_output_level_setting setting, HC_LOG_LEVEL level):
     m_levelSetting(setting),
@@ -48,4 +48,4 @@ log_output::format_log(_In_ const log_entry& entry)
 
 }
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END
