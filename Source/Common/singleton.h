@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
-#include "pch.h"
+#include "uwp/utils_uwp.h"
 
 class http_task_completed_queue
 {

@@ -25,7 +25,7 @@ DefaultMemFreeFunction(
 HC_MEM_ALLOC_FUNC g_memAllocFunc = DefaultMemAllocFunction;
 HC_MEM_FREE_FUNC g_memFreeFunc = DefaultMemFreeFunction;
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 
 void* http_memory::mem_alloc(
@@ -59,7 +59,7 @@ void http_memory::mem_free(
     }
 }
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END
 
 
 HC_API void HC_CALLING_CONV

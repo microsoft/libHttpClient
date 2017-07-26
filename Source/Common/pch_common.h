@@ -74,8 +74,8 @@ typedef std::chrono::system_clock chrono_clock_t;
 typedef std::chrono::steady_clock chrono_clock_t;
 #endif
 
-#define NAMESPACE_XBOX_LIBHCBEGIN                     namespace xbox { namespace livehttpclient {
-#define NAMESPACE_XBOX_LIBHCEND                       }}
+#define NAMESPACE_XBOX_HTTP_CLIENT_BEGIN                     namespace xbox { namespace httpclient {
+#define NAMESPACE_XBOX_HTTP_CLIENT_END                       }}
 
 
 typedef int32_t function_context;

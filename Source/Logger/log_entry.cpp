@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 log_entry::log_entry(HC_LOG_LEVEL level, std::string category) :
     m_logLevel(level),
@@ -32,4 +32,4 @@ std::string log_entry::level_to_string() const
 }
 
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END

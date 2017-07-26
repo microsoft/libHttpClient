@@ -2,9 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include "log.h"
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 class debug_output : public log_output
 {
@@ -14,4 +13,4 @@ public:
     void write(_In_ const std::string& msg) override;
 };
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END

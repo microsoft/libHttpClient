@@ -5,7 +5,7 @@
 #include <new>
 #include <stddef.h>
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 class http_memory
 {
@@ -46,7 +46,7 @@ private:
     void* m_pBuffer;
 };
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END
 
 template<typename T>
 class http_stl_allocator
@@ -60,7 +60,7 @@ public:
 
     T* allocate(size_t n)
     {
-        T* p = static_cast<T*>(xbox::livehttpclient::http_memory::mem_alloc(n * sizeof(T)));
+        T* p = static_cast<T*>(xbox::httpclient::http_memory::mem_alloc(n * sizeof(T)));
 
         if (p == nullptr)
         {
@@ -71,7 +71,7 @@ public:
 
     void deallocate(_In_opt_ void* p, size_t)
     {
-        xbox::livehttpclient::http_memory::mem_free(p);
+        xbox::httpclient::http_memory::mem_free(p);
     }
 };
 
