@@ -5,18 +5,17 @@
 
 class http_task_completed_queue
 {
-private:
-#if UWP_API || UNITTEST_API
-    win32_handle m_completeReadyHandle;
-#endif
-    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncCompleteQueue;
-
 public:
-    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> get_queue();
+    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>>& get_queue();
 #if UWP_API || UNITTEST_API
     HANDLE get_complete_ready_handle();
     void set_async_op_complete_ready();
 #endif
+
+#if UWP_API || UNITTEST_API
+    win32_handle m_completeReadyHandle;
+#endif
+    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncCompleteQueue;
 };
 
 struct http_singleton

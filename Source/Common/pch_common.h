@@ -57,9 +57,9 @@
 #endif
 
 #ifndef UNIT_TEST_SERVICES
-#define http_ASSERT(x) assert(x);
+#define HC_ASSERT(x) assert(x);
 #else
-#define http_ASSERT(x) if(!(x)) throw std::invalid_argument("");
+#define HC_ASSERT(x) if(!(x)) throw std::invalid_argument("");
 #endif
 
 #ifdef _WIN32
