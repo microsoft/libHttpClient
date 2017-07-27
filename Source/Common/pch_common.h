@@ -57,9 +57,9 @@
 #endif
 
 #ifndef UNIT_TEST_SERVICES
-#define http_ASSERT(x) assert(x);
+#define HC_ASSERT(x) assert(x);
 #else
-#define http_ASSERT(x) if(!(x)) throw std::invalid_argument("");
+#define HC_ASSERT(x) if(!(x)) throw std::invalid_argument("");
 #endif
 
 #ifdef _WIN32
@@ -74,8 +74,8 @@ typedef std::chrono::system_clock chrono_clock_t;
 typedef std::chrono::steady_clock chrono_clock_t;
 #endif
 
-#define NAMESPACE_XBOX_LIBHCBEGIN                     namespace xbox { namespace livehttpclient {
-#define NAMESPACE_XBOX_LIBHCEND                       }}
+#define NAMESPACE_XBOX_HTTP_CLIENT_BEGIN                     namespace xbox { namespace httpclient {
+#define NAMESPACE_XBOX_HTTP_CLIENT_END                       }}
 
 
 typedef int32_t function_context;

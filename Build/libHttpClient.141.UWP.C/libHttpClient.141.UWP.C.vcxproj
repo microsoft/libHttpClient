@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -117,6 +117,7 @@
     <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\Logger\console_output.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
@@ -135,7 +136,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -152,6 +153,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_entry.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp" />
+    <ClInclude Include="..\..\Source\Logger\console_output.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

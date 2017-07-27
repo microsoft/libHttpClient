@@ -23,6 +23,7 @@ http_singleton::http_singleton()
     m_enableAssertsForThrottling = true;
     m_mocksEnabled = false;
     m_lastMatchingMock = nullptr;
+    m_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
 }
 
 http_singleton::~http_singleton()
@@ -50,7 +51,7 @@ void http_singleton::_Raise_logging_event(_In_ HC_LOG_LEVEL level, _In_ const st
 
     for (auto& handler : m_loggingHandlers)
     {
-        http_ASSERT(handler.second != nullptr);
+        HC_ASSERT(handler.second != nullptr);
         if (handler.second != nullptr)
         {
             try
@@ -74,6 +75,8 @@ std::shared_ptr<http_task_completed_queue> http_singleton::get_task_queue_for_id
     }
 
     std::shared_ptr<http_task_completed_queue> taskQueue = std::make_shared<http_task_completed_queue>();
+    taskQueue->m_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+
     m_taskCompletedQueue[taskGroupId] = taskQueue;
     return taskQueue;
 }
@@ -186,7 +189,7 @@ void http_task_completed_queue::set_async_op_complete_ready()
 }
 #endif
 
-http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> http_task_completed_queue::get_queue()
+http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>>& http_task_completed_queue::get_queue()
 {
     return m_asyncCompleteQueue;
 }

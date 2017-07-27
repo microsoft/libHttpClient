@@ -78,9 +78,6 @@ void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info)
 void queue_completed_async_op(_In_ HC_TASK_HANDLE taskHandle)
 {
     taskHandle->state = http_async_state::completed;
-#if UWP_API || UNITTEST_API
-    SetEvent(taskHandle->resultsReady.get());
-#endif
 
     std::shared_ptr<HC_ASYNC_INFO> info = nullptr;
     {
@@ -100,6 +97,9 @@ void queue_completed_async_op(_In_ HC_TASK_HANDLE taskHandle)
         completeQueue.push(info);
     }
 
+#if UWP_API || UNITTEST_API
+    SetEvent(taskHandle->resultsReady.get());
+#endif
     get_http_singleton()->get_task_queue_for_id(taskHandle->taskGroupId)->set_async_op_complete_ready();
 }
 
@@ -149,7 +149,7 @@ HCTaskGetPendingHandle()
 HANDLE HC_CALLING_CONV
 HCTaskGetCompletedHandle(_In_ uint64_t taskGroupId)
 {
-    return get_http_singleton()->m_taskCompletedQueue[taskGroupId]->get_complete_ready_handle();
+    return get_http_singleton()->get_task_queue_for_id(taskGroupId)->get_complete_ready_handle();
 }
 #endif
 
