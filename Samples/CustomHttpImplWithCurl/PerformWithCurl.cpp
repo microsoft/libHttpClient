@@ -87,7 +87,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
         HCHttpCallResponseSetResponseString(call, wstr.c_str());
     }
     HCHttpCallResponseSetErrorCode(call, res);
-    HCTaskSetResultReady(taskHandle);
+    HCTaskSetCompleted(taskHandle);
 
     curl_easy_cleanup(curl);
 }
