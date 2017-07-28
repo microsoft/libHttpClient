@@ -83,7 +83,7 @@ std::vector<std::vector<std::wstring>> ExtractHeadersFromHeadersString(std::wstr
 void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e)
 {
     uint32_t taskGroupId = 0;
-    HCTaskProcessNextResultReadyTask(taskGroupId);
+    HCTaskProcessNextCompletedTask(taskGroupId);
 }
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
