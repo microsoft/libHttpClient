@@ -26,6 +26,7 @@ struct HC_CALL
     uint32_t errorCode;
     http_internal_string errorMessage;
     std::shared_ptr<hc_task> task;
+    uint64_t id;
 };
 
 void Internal_HCHttpCallPerform(

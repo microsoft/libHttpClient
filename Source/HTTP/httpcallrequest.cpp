@@ -15,6 +15,8 @@ HCHttpCallRequestSetUrl(
     VerifyGlobalInit();
     call->method = method;
     call->url = url;
+
+    LOGS_INFO << "HCHttpCallRequestSetUrl [ID " << call->id << "]: method=" << method << " url=" << url; 
 }
 
 HC_API void HC_CALLING_CONV
@@ -37,6 +39,7 @@ HCHttpCallRequestSetRequestBodyString(
 {
     VerifyGlobalInit();
     call->requestBodyString = requestBodyString;
+    LOGS_INFO << "HCHttpCallRequestSetRequestBodyString [ID " << call->id << "]: requestBodyString=" << requestBodyString;
 }
 
 HC_API void HC_CALLING_CONV
@@ -59,6 +62,7 @@ HCHttpCallRequestSetHeader(
 {
     VerifyGlobalInit();
     call->requestHeaders[headerName] = headerValue;
+    LOGS_INFO << "HCHttpCallRequestSetHeader [ID " << call->id << "]: " << headerName << "=" << headerValue;
 }
 
 HC_API void HC_CALLING_CONV
@@ -126,6 +130,7 @@ HCHttpCallRequestSetRetryAllowed(
 {
     VerifyGlobalInit();
     call->retryAllowed = retryAllowed;
+    LOGS_INFO << "HCHttpCallRequestSetRetryAllowed [ID " << call->id << "]: retryAllowed=" << retryAllowed;
 }
 
 HC_API void HC_CALLING_CONV
@@ -146,6 +151,7 @@ HCHttpCallRequestSetTimeout(
 {
     VerifyGlobalInit();
     call->timeoutInSeconds = timeoutInSeconds;
+    LOGS_INFO << "HCHttpCallRequestSetTimeout [ID " << call->id << "]: timeoutInSeconds=" << timeoutInSeconds;
 }
 
 HC_API void HC_CALLING_CONV

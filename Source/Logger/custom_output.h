@@ -8,7 +8,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 class custom_output: public log_output
 {
 public:
-    custom_output() : log_output(log_output_level_setting::use_logger_setting, HC_LOG_LEVEL::LOG_OFF) {}
+    custom_output() : log_output() {}
 
     void add_log(_In_ const log_entry& entry) override;
 };

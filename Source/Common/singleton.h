@@ -6,17 +6,21 @@
 class http_task_completed_queue
 {
 public:
-    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>>& get_queue();
+    http_internal_queue<std::shared_ptr<HC_TASK>>& get_completed_queue();
 #if UWP_API || UNITTEST_API
     HANDLE get_complete_ready_handle();
-    void set_async_op_complete_ready();
+    void set_task_completed_event();
 #endif
 
 #if UWP_API || UNITTEST_API
     win32_handle m_completeReadyHandle;
 #endif
-    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncCompleteQueue;
+    http_internal_queue<std::shared_ptr<HC_TASK>> m_completedQueue;
 };
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+class logger;
+NAMESPACE_XBOX_HTTP_CLIENT_END
 
 struct http_singleton
 {
@@ -25,16 +29,13 @@ struct http_singleton
 
     std::mutex m_singletonLock;
 
-    std::mutex m_asyncLock;
-    http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>> m_asyncPendingQueue;
-    http_internal_vector<std::shared_ptr<HC_ASYNC_INFO>> m_asyncProcessingQueue;
+    std::mutex m_taskLock;
+    http_internal_queue<std::shared_ptr<HC_TASK>> m_taskPendingQueue;
+    http_internal_vector<std::shared_ptr<HC_TASK>> m_taskExecutingQueue;
 
     std::mutex m_taskCompletedQueueLock;
-    std::shared_ptr<http_task_completed_queue> get_task_queue_for_id(_In_ uint64_t taskGroupId);
+    std::shared_ptr<http_task_completed_queue> get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId);
     std::map<uint64_t, std::shared_ptr<http_task_completed_queue>> m_taskCompletedQueue;
-
-    std::function<_Ret_maybenull_ _Post_writable_byte_size_(dwSize) void*(_In_ size_t dwSize)> m_pMemAllocHook;
-    std::function<void(_In_ void* pAddress)> m_pMemFreeHook;
 
     function_context add_logging_handler(_In_ std::function<void(HC_LOG_LEVEL, const std::string&, const std::string&)> handler);
     void remove_logging_handler(_In_ function_context context);
@@ -44,8 +45,8 @@ struct http_singleton
     http_internal_unordered_map<function_context, std::function<void(HC_LOG_LEVEL, const std::string&, const std::string&)>> m_loggingHandlers;
     function_context m_loggingHandlersCounter;
 
+    uint64_t m_lastHttpCallId;
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;
-    HC_LOG_LEVEL m_traceLevel;
     uint32_t m_timeoutWindowInSeconds;
     uint32_t m_retryDelayInSeconds;
     bool m_enableAssertsForThrottling;
@@ -59,7 +60,9 @@ struct http_singleton
     HANDLE get_pending_ready_handle();
     win32_handle m_pendingReadyHandle;
 #endif
-    void set_async_op_pending_ready();
+    void set_task_pending_ready();
+
+    std::shared_ptr<xbox::httpclient::logger> m_logger;
 };
 
 http_singleton* get_http_singleton(_In_ bool createIfRequired = false);

@@ -5,14 +5,14 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-log_entry::log_entry(HC_LOG_LEVEL level, std::string category) :
+log_entry::log_entry(_In_ HC_LOG_LEVEL level, _In_ std::string category) :
     m_logLevel(level),
     m_category(std::move(category))
 {
 
 }
 
-log_entry::log_entry(HC_LOG_LEVEL level, std::string category, std::string msg) :
+log_entry::log_entry(_In_ HC_LOG_LEVEL level, _In_ std::string category, _In_ std::string msg) :
     m_logLevel(level),
     m_category(std::move(category))
 {

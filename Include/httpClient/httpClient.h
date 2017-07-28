@@ -113,8 +113,8 @@ HCGlobalCleanup();
 /// <summary>
 /// Returns the version of the library
 /// </summary>
-/// <returns>The version of the library in the format of release_year.release_month.date.rev.  
-/// For example, 2017.07.20170710.01</returns>
+/// <param name="version">The version of the library in the format of release_year.release_month.date.rev.  
+/// For example, 2017.07.20170710.01</param>
 HC_API void HC_CALLING_CONV
 HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version);
 
@@ -165,7 +165,7 @@ HCGlobalGetHttpCallPerformFunction(
 /// <param name="context">The context passed to this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
 typedef void
-(HC_CALLING_CONV* HC_ASYNC_OP_FUNC)(
+(HC_CALLING_CONV* HC_TASK_FUNC)(
     _In_opt_ void* context,
     _In_ HC_TASK_HANDLE taskHandle
     );
@@ -188,27 +188,27 @@ typedef void
 /// in a background thread.
 ///
 /// Right before the executionRoutine callback is finished, the executionRoutine should
-/// call HCTaskSetResultReady() to mark the task as ready to return results.
+/// call HCTaskSetCompleted() to mark the task as completed and ready to return results.
 ///
-/// When the task is ready to return results, the completionRoutine is called on the
-/// thread that calls HCTaskProcessNextResultReadyTask().  This enables the caller to execute
+/// When the task is completed, the completionRoutine is called on the
+/// thread that calls HCTaskProcessNextCompletedTask().  This enables the caller to execute
 /// the callback on a specific thread to avoid the need to marshal data to a app thread
 /// from a background thread.
 ///
-/// HCTaskProcessNextResultReadyTask(taskGroupId) will only process ready tasks that have a
+/// HCTaskProcessNextCompletedTask(taskGroupId) will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </summary>
 /// <param name="taskGroupId">
 /// The task group ID to assign to this task.  The ID is defined by the caller and can be any number.
-/// HCTaskProcessNextResultReadyTask(taskGroupId) will only process ready tasks that have a
+/// HCTaskProcessNextCompletedTask(taskGroupId) will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </param>
 /// <param name="executionRoutine">
 /// The executionRoutine callback performs the task itself and may take time to complete.
 /// Right before the executionRoutine callback is finished, the executionRoutine should
-/// call HCTaskSetResultReady() to mark the task as ready to return results.
+/// call HCTaskSetCompleted() to mark the task as completed to return results.
 /// </param>
 /// <param name="executionRoutineContext">
 /// The context passed to the executionRoutine callback
@@ -222,7 +222,7 @@ typedef void
 /// </param>
 /// <param name="completionRoutine">
 /// A task specific callback that return results to the caller.
-/// This is called on the app thread that calls HCTaskProcessNextResultReadyTask().
+/// This is called on the app thread that calls HCTaskProcessNextCompletedTask().
 /// This enables the caller to execute the callback on a specific thread to avoid the
 /// need to marshal data to a app thread from a background thread.
 /// </param>
@@ -242,9 +242,9 @@ typedef void
 HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCTaskCreate(
     _In_ uint64_t taskGroupId,
-    _In_ HC_ASYNC_OP_FUNC executionRoutine,
+    _In_ HC_TASK_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
-    _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,
+    _In_ HC_TASK_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
     _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext,
@@ -276,23 +276,23 @@ HC_API void HC_CALLING_CONV
 HCTaskProcessNextPendingTask();
 
 /// <summary>
-/// Called by async task's executionRoutine when the results are ready.  This will mark the task as
-/// completed so the app can call HCTaskProcessNextResultReadyTask() to get the results in
+/// Called by async task's executionRoutine when the results are completed.  This will mark the task as
+/// completed so the app can call HCTaskProcessNextCompletedTask() to get the results in
 /// the completionRoutine callback.
 /// </summary>
 /// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
 HC_API void HC_CALLING_CONV
-HCTaskSetResultReady(
+HCTaskSetCompleted(
     _In_ HC_TASK_HANDLE taskHandle
     );
 
 /// <summary>
-/// Returns if the task's result is ready
+/// Returns if the task's result is completed and ready to return results
 /// </summary>
 /// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
-/// <returns>Returns true if the task's result is ready</returns>
+/// <returns>Returns true if the task's result is completed</returns>
 HC_API bool HC_CALLING_CONV
-HCTaskIsResultReady(
+HCTaskIsCompleted(
     _In_ HC_TASK_HANDLE taskHandle
     );
 
@@ -300,7 +300,7 @@ HCTaskIsResultReady(
 /// <summary>
 /// Returns a handle for a the specified taskGroupId that can be used to wait until there is a 
 /// completed task for that task group that hasn't yet be returned results to the caller. 
-/// HCTaskProcessNextResultReadyTask(taskGroupId) will execute the next completed task in that task group
+/// HCTaskProcessNextCompletedTask(taskGroupId) will execute the next completed task in that task group
 /// </summary>
 /// <param name="taskGroupId">
 /// The task group ID to get the handle for.  If this isn't needed, just pass in 0.
@@ -314,34 +314,34 @@ HCTaskGetCompletedHandle(_In_ uint64_t taskGroupId);
 #endif
 
 /// <summary>
-/// Wait until the results are ready for a specific task.
-/// When the async task's executionRoutine has finished the task, it should call HCTaskSetResultReady() which will
-/// mark the task as ready
+/// Wait until a specific task is completed.
+/// When the async task's executionRoutine has finished the task, it should call HCTaskSetCompleted() which will
+/// mark the task as completed
 /// </summary>
 /// <param name="taskHandle">Handle to task returned by HCTaskCreate()</param>
 /// <param name="timeoutInMilliseconds">Timeout in milliseconds</param>
 HC_API void HC_CALLING_CONV
-HCTaskWaitForResultReady(
+HCTaskWaitForCompleted(
     _In_ HC_TASK_HANDLE taskHandle,
     _In_ uint32_t timeoutInMilliseconds
     );
 
 /// <summary>
-/// Calls the completionRoutine callback for the next task that is ready.  
+/// Calls the completionRoutine callback for the next task that is completed.  
 /// This enables the caller to execute the callback on a specific thread to 
 /// avoid the need to marshal data to a app thread from a background thread.
 /// 
-/// HCTaskProcessNextResultReadyTask will only process ready tasks that have a
+/// HCTaskProcessNextCompletedTask will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </summary>
 /// <param name="taskGroupId">
-/// HCTaskProcessNextResultReadyTask will only process ready tasks that have a
+/// HCTaskProcessNextCompletedTask will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </param>
 HC_API void HC_CALLING_CONV
-HCTaskProcessNextResultReadyTask(_In_ uint64_t taskGroupId);
+HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId);
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -531,11 +531,11 @@ HCSettingsGetAssertsForThrottling(
 /// Then call HCHttpCallPerform() to perform HTTP call using the HC_CALL_HANDLE.
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 /// This task executes immediately so no need to call HCTaskProcessNextPendingTask().
-/// Call HCTaskProcessNextResultReadyTask(taskGroupId) on the thread where you want the 
+/// Call HCTaskProcessNextCompletedTask(taskGroupId) on the thread where you want the 
 /// callback execute, using the same taskGroupId as passed to HCHttpCallPerform().
 /// 
-/// Inside the callback or after the task is done using HCTaskIsResultReady() or 
-/// HCTaskWaitForResultReady(), then get the result of the HTTP call by calling 
+/// Inside the callback or after the task is done using HCTaskIsCompleted() or 
+/// HCTaskWaitForCompleted(), then get the result of the HTTP call by calling 
 /// HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE.
 /// 
 /// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCleanup() to free the 
@@ -565,11 +565,11 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 /// Then call HCHttpCallPerform() to perform HTTP call using the HC_CALL_HANDLE.
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 /// This task executes immediately so no need to call HCTaskProcessNextPendingTask().
-/// Call HCTaskProcessNextResultReadyTask(taskGroupId) on the thread where you want the 
+/// Call HCTaskProcessNextCompletedTask(taskGroupId) on the thread where you want the 
 /// callback execute, using the same taskGroupId as passed to HCHttpCallPerform().
 /// 
-/// Inside the callback or after the task is done using HCTaskIsResultReady() or 
-/// HCTaskWaitForResultReady(), then get the result of the HTTP call by calling 
+/// Inside the callback or after the task is done using HCTaskIsCompleted() or 
+/// HCTaskWaitForCompleted(), then get the result of the HTTP call by calling 
 /// HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE.
 /// 
 /// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCleanup() to free the 
@@ -577,7 +577,7 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 /// </summary>
 /// <param name="taskGroupId">
 /// The task group ID to assign to this task.  The ID is defined by the caller and can be any number.
-/// HCTaskProcessNextResultReadyTask(taskGroupId) will only process ready tasks that have a
+/// HCTaskProcessNextCompletedTask(taskGroupId) will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </param>

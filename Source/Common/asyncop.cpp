@@ -3,135 +3,138 @@
 
 #include "pch.h"
 
-void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info);
-
-std::shared_ptr<HC_ASYNC_INFO>
-http_asyncop_get_next_completed_async_op(_In_ uint64_t taskGroupId)
+std::shared_ptr<HC_TASK>
+http_task_get_next_completed(_In_ uint64_t taskGroupId)
 {
-    std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-    auto& completeQueue = get_http_singleton()->get_task_queue_for_id(taskGroupId)->get_queue();
-    if (!completeQueue.empty())
+    std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
+    auto& completedQueue = get_http_singleton()->get_task_completed_queue_for_taskgroup(taskGroupId)->get_completed_queue();
+    if (!completedQueue.empty())
     {
-        auto it = completeQueue.front();
-        completeQueue.pop();
+        auto it = completedQueue.front();
+        completedQueue.pop();
         return it;
     }
     return nullptr;
 }
 
-std::shared_ptr<HC_ASYNC_INFO>
-http_asyncop_get_next_pending_async_op()
+std::shared_ptr<HC_TASK>
+http_task_get_next_pending()
 {
-    std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-    auto& pendingQueue = get_http_singleton()->m_asyncPendingQueue;
-    if (!pendingQueue.empty())
+    std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
+    auto& taskPendingQueue = get_http_singleton()->m_taskPendingQueue;
+    if (!taskPendingQueue.empty())
     {
-        auto it = pendingQueue.front();
-        pendingQueue.pop();
+        auto it = taskPendingQueue.front();
+        taskPendingQueue.pop();
         return it;
     }
     return nullptr;
 }
 
-void http_asyncop_push_pending_asyncop(
-    _In_ std::shared_ptr<HC_ASYNC_INFO> info
+void http_task_queue_pending(
+    _In_ std::shared_ptr<HC_TASK> task
     )
 {
-    info->state = http_async_state::pending;
-    std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-    auto& asyncPendingQueue = get_http_singleton()->m_asyncPendingQueue;
-    asyncPendingQueue.push(info);
-    get_http_singleton()->set_async_op_pending_ready();
+    task->state = http_task_state::pending;
+    std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
+    auto& taskPendingQueue = get_http_singleton()->m_taskPendingQueue;
+    taskPendingQueue.push(task);
+    LOGS_INFO << L"Task queue pending: queueSize=" << taskPendingQueue.size() << " taskId=" << task->id;
+
+    get_http_singleton()->set_task_pending_ready();
 }
 
 bool HC_CALLING_CONV
 HCTaskIsTaskPending()
 {
-    auto& map = get_http_singleton()->m_asyncPendingQueue;
+    auto& map = get_http_singleton()->m_taskPendingQueue;
     return !map.empty();
 }
 
-void process_completed_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info)
+void http_task_process_completed(_In_ std::shared_ptr<HC_TASK> task)
 {
-    info->writeResultsRoutine(
-        info->writeResultsRoutineContext,
-        info.get()
+    task->writeResultsRoutine(
+        task->writeResultsRoutineContext,
+        task.get()
         );
 }
 
-void process_pending_async_op(_In_ std::shared_ptr<HC_ASYNC_INFO> info)
+void http_task_process_pending(_In_ std::shared_ptr<HC_TASK> task)
 {
-    info->state = http_async_state::processing;
+    task->state = http_task_state::processing;
 
     {
-        std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-        auto& asyncProcessingQueue = get_http_singleton()->m_asyncProcessingQueue;
-        asyncProcessingQueue.push_back(info);
+        std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
+        auto& taskExecutingQueue = get_http_singleton()->m_taskExecutingQueue;
+        taskExecutingQueue.push_back(task);
+        LOGS_INFO << L"Task execute: executeQueueSize=" << taskExecutingQueue.size() << " taskId=" << task->id;
     }
 
-    info->executionRoutine(
-        info->executionRoutineContext,
-        info.get()
+    task->executionRoutine(
+        task->executionRoutineContext,
+        task.get()
         );
 }
 
-void queue_completed_async_op(_In_ HC_TASK_HANDLE taskHandle)
+void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandle)
 {
-    taskHandle->state = http_async_state::completed;
+    taskHandle->state = http_task_state::completed;
 
-    std::shared_ptr<HC_ASYNC_INFO> info = nullptr;
+    std::shared_ptr<HC_TASK> task = nullptr;
     {
-        std::lock_guard<std::mutex> guard(get_http_singleton()->m_asyncLock);
-        auto& asyncProcessingQueue = get_http_singleton()->m_asyncProcessingQueue;
-        for (auto& it : asyncProcessingQueue)
+        std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
+        auto& taskProcessingQueue = get_http_singleton()->m_taskExecutingQueue;
+        for (auto& it : taskProcessingQueue)
         {
             if (it.get() == taskHandle)
             {
-                info = it;
+                task = it;
             }
         }
 
-        asyncProcessingQueue.erase(std::remove(asyncProcessingQueue.begin(), asyncProcessingQueue.end(), info), asyncProcessingQueue.end());
+        taskProcessingQueue.erase(std::remove(taskProcessingQueue.begin(), taskProcessingQueue.end(), task), taskProcessingQueue.end());
 
-        auto& completeQueue = get_http_singleton()->get_task_queue_for_id(taskHandle->taskGroupId)->get_queue();
-        completeQueue.push(info);
+        auto& taskCompletedQueue = get_http_singleton()->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->get_completed_queue();
+        taskCompletedQueue.push(task);
+        LOGS_INFO << L"Task queue completed: queueSize=" << taskCompletedQueue.size() << " taskGroupId=" << taskHandle->taskGroupId;
     }
 
 #if UWP_API || UNITTEST_API
     SetEvent(taskHandle->resultsReady.get());
 #endif
-    get_http_singleton()->get_task_queue_for_id(taskHandle->taskGroupId)->set_async_op_complete_ready();
+    get_http_singleton()->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->set_task_completed_event();
 }
 
 HC_API void HC_CALLING_CONV
-HCTaskSetResultReady(
+HCTaskSetCompleted(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    queue_completed_async_op(taskHandle);
+    http_task_queue_completed(taskHandle);
 }
 
 HC_API bool HC_CALLING_CONV
-HCTaskIsResultReady(
+HCTaskIsCompleted(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    return taskHandle->state == http_async_state::completed;
+    return taskHandle->state == http_task_state::completed;
 }
 
 void HC_CALLING_CONV
-HCTaskProcessNextResultReadyTask(_In_ uint64_t taskGroupId)
+HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId)
 {
-    std::shared_ptr<HC_ASYNC_INFO> info = http_asyncop_get_next_completed_async_op(taskGroupId);
-    if (info == nullptr)
+    std::shared_ptr<HC_TASK> task = http_task_get_next_completed(taskGroupId);
+    if (task == nullptr)
         return;
 
-    process_completed_async_op(info);
+    LOGS_INFO << L"HCTaskProcessNextCompletedTask: taskGroupId=" << taskGroupId << " taskId=" << task->id;
+    http_task_process_completed(task);
 }
 
 #if UWP_API || UNITTEST_API
 HC_API void HC_CALLING_CONV
-HCTaskWaitForResultReady(
+HCTaskWaitForCompleted(
     _In_ HC_TASK_HANDLE taskHandle,
     _In_ uint32_t timeoutInMilliseconds
 )
@@ -149,52 +152,55 @@ HCTaskGetPendingHandle()
 HANDLE HC_CALLING_CONV
 HCTaskGetCompletedHandle(_In_ uint64_t taskGroupId)
 {
-    return get_http_singleton()->get_task_queue_for_id(taskGroupId)->get_complete_ready_handle();
+    return get_http_singleton()->get_task_completed_queue_for_taskgroup(taskGroupId)->get_complete_ready_handle();
 }
 #endif
 
 void HC_CALLING_CONV
 HCTaskProcessNextPendingTask()
 {
-    std::shared_ptr<HC_ASYNC_INFO> info = http_asyncop_get_next_pending_async_op();
-    if (info == nullptr)
+    std::shared_ptr<HC_TASK> task = http_task_get_next_pending();
+    if (task == nullptr)
         return;
 
-    process_pending_async_op(info);
+    http_task_process_pending(task);
 }
 
 HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCTaskCreate(
     _In_ uint64_t taskGroupId,
-    _In_ HC_ASYNC_OP_FUNC executionRoutine,
+    _In_ HC_TASK_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
-    _In_ HC_ASYNC_OP_FUNC writeResultsRoutine,
+    _In_ HC_TASK_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
     _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext,
     _In_ bool executeNow
     )
 {
-    std::shared_ptr<HC_ASYNC_INFO> info = std::make_shared<HC_ASYNC_INFO>();
+    std::shared_ptr<HC_TASK> task = std::make_shared<HC_TASK>();
 #if UWP_API || UNITTEST_API
-    info->resultsReady.set(CreateEvent(NULL, FALSE, FALSE, NULL));
+    task->resultsReady.set(CreateEvent(NULL, FALSE, FALSE, NULL));
 #endif
-    info->executionRoutine = executionRoutine;
-    info->executionRoutineContext = executionRoutineContext;
-    info->writeResultsRoutine = writeResultsRoutine;
-    info->writeResultsRoutineContext = writeResultsRoutineContext;
-    info->completionRoutine = completionRoutine;
-    info->completionRoutineContext = completionRoutineContext;
-    info->taskGroupId = taskGroupId;
+    task->executionRoutine = executionRoutine;
+    task->executionRoutineContext = executionRoutineContext;
+    task->writeResultsRoutine = writeResultsRoutine;
+    task->writeResultsRoutineContext = writeResultsRoutineContext;
+    task->completionRoutine = completionRoutine;
+    task->completionRoutineContext = completionRoutineContext;
+    task->taskGroupId = taskGroupId;
+    task->id = get_http_singleton()->m_lastHttpCallId++;
+    LOGS_INFO << L"HCTaskCreate: taskGroupId=" << taskGroupId << " taskId=" << task->id;
     if (executeNow)
     {
-        process_pending_async_op(info);
+        http_task_process_pending(task);
     }
     else
     {
-        http_asyncop_push_pending_asyncop(info);
+        http_task_queue_pending(task);
     }
 
-    return info.get();
+
+    return task.get();
 }
 

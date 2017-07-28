@@ -122,26 +122,26 @@ void uwp_http_task::perform_async(
                     {
                         Platform::String^ httpResponseBody = asyncOp->GetResults();
                         HCHttpCallResponseSetResponseString(call, httpResponseBody->Data());
-                        HCTaskSetResultReady(taskHandle);
+                        HCTaskSetCompleted(taskHandle);
                     }
                     catch (Platform::Exception^ ex)
                     {
                         HCHttpCallResponseSetErrorCode(call, ex->HResult);
-                        HCTaskSetResultReady(taskHandle);
+                        HCTaskSetCompleted(taskHandle);
                     }
                 });
             }
             catch (Platform::Exception^ ex)
             {
                 HCHttpCallResponseSetErrorCode(call, ex->HResult);
-                HCTaskSetResultReady(taskHandle);
+                HCTaskSetCompleted(taskHandle);
             }
         });
     }
     catch (Platform::Exception^ ex)
     {
         HCHttpCallResponseSetErrorCode(call, ex->HResult);
-        HCTaskSetResultReady(taskHandle);
+        HCTaskSetCompleted(taskHandle);
     }
 }
 

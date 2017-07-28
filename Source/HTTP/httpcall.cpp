@@ -7,15 +7,20 @@
 
 HC_API void HC_CALLING_CONV
 HCHttpCallCreate(
-    _Out_ HC_CALL_HANDLE* call
+    _Out_ HC_CALL_HANDLE* callHandle
     )
 {
     VerifyGlobalInit();
 
-    HC_CALL* hcCall = new HC_CALL();
-    hcCall->retryAllowed = true;
+    HC_CALL* call = new HC_CALL();
+    call->retryAllowed = true;
 
-    *call = hcCall;
+    call->id = get_http_singleton()->m_lastHttpCallId;
+    get_http_singleton()->m_lastHttpCallId++;
+
+    LOGS_INFO << "HCHttpCallCreate [ID " << call->id << "]";
+
+    *callHandle = call;
 }
 
 HC_API void HC_CALLING_CONV
@@ -23,6 +28,7 @@ HCHttpCallCleanup(
     _In_ HC_CALL_HANDLE call
     )
 {
+    LOGS_INFO << "HCHttpCallCleanup [ID " << call->id << "]";
     VerifyGlobalInit();
     delete call;
 }
@@ -33,6 +39,7 @@ void HttpCallPerformExecute(
     )
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
+    LOGS_INFO << "HttpCallPerformExecute [ID " << call->id << "]";
 
     bool matchedMocks = false;
     if (get_http_singleton()->m_mocksEnabled)
@@ -40,7 +47,7 @@ void HttpCallPerformExecute(
         matchedMocks = Mock_Internal_HCHttpCallPerform(call);
         if (matchedMocks)
         {
-            HCTaskSetResultReady(taskHandle);
+            HCTaskSetCompleted(taskHandle);
         }
     }
    
@@ -67,6 +74,7 @@ void HttpCallPerformWriteResults(
     )
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
+    LOGS_INFO << "HttpCallPerformWriteResults [ID " << call->id << "]";
     HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)taskHandle->completionRoutine;
     if (completeFn != nullptr)
     {
@@ -83,6 +91,7 @@ HCHttpCallPerform(
     )
 {
     VerifyGlobalInit();
+    LOGS_INFO << "HCHttpCallPerform [ID " << call->id << "]";
 
     return HCTaskCreate(
         taskGroupId,

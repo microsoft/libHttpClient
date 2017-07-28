@@ -68,7 +68,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         HCGlobalCleanup();
@@ -106,7 +106,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -132,7 +132,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -172,7 +172,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -198,7 +198,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -241,7 +241,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -267,7 +267,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -294,7 +294,7 @@ public:
 
         while (!g_gotCall)
         {
-            HCTaskProcessNextResultReadyTask(0);
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
