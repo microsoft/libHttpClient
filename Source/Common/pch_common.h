@@ -82,7 +82,7 @@ typedef int32_t function_context;
 #include "httpClient/types.h"
 #include "httpClient/httpClient.h"
 #include "mem.h"
-#include "log.h"
 #include "utils.h"
 #include "asyncop.h"
 #include "singleton.h"
+#include "log.h"

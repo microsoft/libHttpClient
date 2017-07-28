@@ -12,6 +12,6 @@ void Internal_HCHttpCallPerform(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    HCTaskSetResultReady(taskHandle);
+    HCTaskSetCompleted(taskHandle);
 }
 #endif

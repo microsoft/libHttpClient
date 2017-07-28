@@ -5,6 +5,8 @@
 #include "../http/httpcall.h"
 #include "buildver.h"
 #include "singleton.h"
+#include "log.h"
+#include "debug_output.h"
 
 static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
 static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
@@ -14,10 +16,12 @@ static std::unique_ptr<http_singleton> g_httpSingleton;
 
 http_singleton::http_singleton() 
 {
+    m_lastHttpCallId = 0;
     m_loggingHandlersCounter = 0;
     m_performFunc = Internal_HCHttpCallPerform;
-
-    m_traceLevel = HC_LOG_LEVEL::LOG_OFF;
+    m_logger = std::make_shared<xbox::httpclient::logger>();
+    m_logger->add_log_output(std::make_shared<xbox::httpclient::debug_output>());
+    m_logger->set_log_level(HC_LOG_LEVEL::LOG_OFF);
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
     m_enableAssertsForThrottling = true;
@@ -65,7 +69,7 @@ void http_singleton::_Raise_logging_event(_In_ HC_LOG_LEVEL level, _In_ const st
     }
 }
 
-std::shared_ptr<http_task_completed_queue> http_singleton::get_task_queue_for_id(_In_ uint64_t taskGroupId)
+std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId)
 {
     std::lock_guard<std::mutex> lock(m_taskCompletedQueueLock);
     auto it = m_taskCompletedQueue.find(taskGroupId);
@@ -171,7 +175,7 @@ HANDLE http_singleton::get_pending_ready_handle()
     return m_pendingReadyHandle.get();
 }
 
-void http_singleton::set_async_op_pending_ready()
+void http_singleton::set_task_pending_ready()
 {
     SetEvent(get_pending_ready_handle());
 }
@@ -183,14 +187,14 @@ HANDLE http_task_completed_queue::get_complete_ready_handle()
     return m_completeReadyHandle.get();
 }
 
-void http_task_completed_queue::set_async_op_complete_ready()
+void http_task_completed_queue::set_task_completed_event()
 {
     SetEvent(get_complete_ready_handle());
 }
 #endif
 
-http_internal_queue<std::shared_ptr<HC_ASYNC_INFO>>& http_task_completed_queue::get_queue()
+http_internal_queue<std::shared_ptr<HC_TASK>>& http_task_completed_queue::get_completed_queue()
 {
-    return m_asyncCompleteQueue;
+    return m_completedQueue;
 }
 

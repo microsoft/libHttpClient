@@ -5,9 +5,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-log_output::log_output(log_output_level_setting setting, HC_LOG_LEVEL level):
-    m_levelSetting(setting),
-    m_logLevel(level)
+log_output::log_output()
 {
 }
 
@@ -38,10 +36,10 @@ log_output::format_log(_In_ const log_entry& entry)
 #endif
 
     // format : "<time> [<thread id>] <level> <category> - <msg>"
-#if !http_A 
+#if !HTTP_A 
     stream << std::put_time(&tm_snapshot, "%c") << " [" << std::this_thread::get_id() << "] ";
 #endif
-    stream << entry.level_to_string() << " " << entry.category() << " - ";
+    if(!entry.category().empty()) stream << entry.category() << " ";
     stream << entry.msg_stream().str() << std::endl;
 
     return stream.str();

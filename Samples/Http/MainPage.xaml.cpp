@@ -33,6 +33,7 @@ MainPage::MainPage()
     g_stopHandle = CreateEvent(nullptr, false, false, nullptr);
     InitializeComponent();
     HCGlobalInitialize();
+    HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
     StartBackgroundThread();
 
     TextboxURL->Text = L"http://www.bing.com";
@@ -72,7 +73,7 @@ std::vector<std::vector<std::wstring>> ExtractHeadersFromHeadersString(std::wstr
 void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e)
 {
     uint64_t taskGroupId = 0;
-    HCTaskProcessNextResultReadyTask(taskGroupId);
+    HCTaskProcessNextCompletedTask(taskGroupId);
 }
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)

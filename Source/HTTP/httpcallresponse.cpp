@@ -23,6 +23,7 @@ HCHttpCallResponseSetResponseString(
 {
     VerifyGlobalInit();
     call->responseString = responseString;
+    LOGS_INFO << "HCHttpCallResponseSetResponseString [ID " << call->id << "]: responseString:" << responseString;
 }
 
 HC_API void HC_CALLING_CONV
@@ -43,6 +44,7 @@ HCHttpCallResponseSetStatusCode(
 {
     VerifyGlobalInit();
     call->statusCode = statusCode;
+    LOGS_INFO << "HCHttpCallResponseSetStatusCode [ID " << call->id << "]: statusCode=" << statusCode;
 }
 
 HC_API void HC_CALLING_CONV
@@ -63,6 +65,7 @@ HCHttpCallResponseSetErrorCode(
 {
     VerifyGlobalInit();
     call->errorCode = errorCode;
+    LOGS_INFO << "HCHttpCallResponseSetErrorCode [ID " << call->id << "]: errorCode=" << errorCode;
 }
 
 HC_API void HC_CALLING_CONV
@@ -83,6 +86,7 @@ HCHttpCallResponseSetErrorMessage(
 {
     VerifyGlobalInit();
     call->errorMessage = errorMessage;
+    LOGS_INFO << "HCHttpCallResponseSetErrorMessage [ID " << call->id << "]: errorMessage=" << errorMessage;
 }
 
 HC_API void HC_CALLING_CONV
@@ -150,6 +154,7 @@ HCHttpCallResponseSetHeader(
     )
 {
     call->responseHeaders[headerName] = headerValue;
+    LOGS_INFO << "HCHttpCallResponseSetHeader [ID " << call->id << "]: " << headerName << "=" << headerValue;
 }
 
 

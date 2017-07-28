@@ -9,7 +9,9 @@ HCSettingsSetLogLevel(
     )
 {
     VerifyGlobalInit();
-    get_http_singleton()->m_traceLevel = traceLevel;
+    get_http_singleton()->m_logger->set_log_level(traceLevel);
+
+    LOGS_INFO << L"HCSettingsSetLogLevel: " << traceLevel;
 }
 
 HC_API void HC_CALLING_CONV
@@ -18,7 +20,7 @@ HCSettingsGetLogLevel(
     )
 {
     VerifyGlobalInit();
-    *traceLevel = get_http_singleton()->m_traceLevel;
+    *traceLevel = get_http_singleton()->m_logger->get_log_level();
 }
 
 HC_API void HC_CALLING_CONV
@@ -28,6 +30,8 @@ HCSettingsSetTimeoutWindow(
 {
     VerifyGlobalInit();
     get_http_singleton()->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
+
+    LOGS_INFO << L"HCSettingsSetTimeoutWindow: " << timeoutWindowInSeconds;
 }
 
 HC_API void HC_CALLING_CONV

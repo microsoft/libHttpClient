@@ -8,7 +8,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 class debug_output : public log_output
 {
 public:
-    debug_output() : log_output(log_output_level_setting::use_logger_setting, HC_LOG_LEVEL::LOG_OFF) {}
+    debug_output() : log_output() {}
 
     void write(_In_ const std::string& msg) override;
 };
