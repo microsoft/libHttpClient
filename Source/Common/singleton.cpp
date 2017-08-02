@@ -8,11 +8,15 @@
 #include "log.h"
 #include "debug_output.h"
 
+using namespace xbox::httpclient;
+
 static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
 static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 
 static std::mutex g_httpSingletonLock;
 static std::unique_ptr<http_singleton> g_httpSingleton;
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 http_singleton::http_singleton() 
 {
@@ -47,6 +51,18 @@ get_http_singleton(_In_ bool createIfRequired)
     }
 
     return g_httpSingleton.get();
+}
+
+void cleanup_http_singleton()
+{
+    std::lock_guard<std::mutex> guard(g_httpSingletonLock);
+    for (auto& mockCall : g_httpSingleton->m_mocks)
+    {
+        HCHttpCallCleanup(mockCall);
+    }
+    g_httpSingleton->m_mocks.clear();
+
+    g_httpSingleton = nullptr;
 }
 
 void http_singleton::_Raise_logging_event(_In_ HC_LOG_LEVEL level, _In_ const std::string& category, _In_ const std::string& message)
@@ -105,68 +121,13 @@ void http_singleton::remove_logging_handler(_In_ function_context context)
     m_loggingHandlers.erase(context);
 }
 
-HC_API void HC_CALLING_CONV
-HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version)
-{
-    *version = LIBHTTPCLIENT_VERSION;
-}
-
-HC_API void HC_CALLING_CONV
-HCGlobalInitialize()
-{
-    get_http_singleton(true);
-}
-
-HC_API void HC_CALLING_CONV
-HCGlobalCleanup()
-{
-    std::lock_guard<std::mutex> guard(g_httpSingletonLock);
-    for (auto& mockCall : g_httpSingleton->m_mocks)
-    {
-        HCHttpCallCleanup(mockCall);
-    }
-    g_httpSingleton->m_mocks.clear();
-
-    g_httpSingleton = nullptr;
-}
-
-void VerifyGlobalInit()
+void verify_http_singleton()
 {
     if (g_httpSingleton == nullptr)
     {
         LOG_ERROR("Call HCGlobalInitialize() first");
         assert(g_httpSingleton != nullptr);
     }
-}
-
-http_internal_string SetOptionalParam(_In_opt_ PCSTR_T param)
-{
-    if (param == nullptr)
-    {
-        return _T("");
-    }
-    else
-    {
-        return param;
-    }
-}
-
-HC_API void HC_CALLING_CONV
-HCGlobalSetHttpCallPerformFunction(
-    _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
-    )
-{
-    VerifyGlobalInit();
-    get_http_singleton()->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
-}
-
-HC_API void HC_CALLING_CONV
-HCGlobalGetHttpCallPerformFunction(
-    _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
-    )
-{
-    VerifyGlobalInit();
-    *performFunc = get_http_singleton()->m_performFunc;
 }
 
 #if UWP_API || UNITTEST_API
@@ -198,3 +159,4 @@ http_internal_queue<std::shared_ptr<HC_TASK>>& http_task_completed_queue::get_co
     return m_completedQueue;
 }
 
+NAMESPACE_XBOX_HTTP_CLIENT_END

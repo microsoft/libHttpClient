@@ -3,6 +3,10 @@
 #pragma once
 #include "uwp/utils_uwp.h"
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+class logger;
+
 class http_task_completed_queue
 {
 public:
@@ -17,10 +21,6 @@ public:
 #endif
     http_internal_queue<std::shared_ptr<HC_TASK>> m_completedQueue;
 };
-
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
-class logger;
-NAMESPACE_XBOX_HTTP_CLIENT_END
 
 struct http_singleton
 {
@@ -66,9 +66,10 @@ struct http_singleton
 };
 
 http_singleton* get_http_singleton(_In_ bool createIfRequired = false);
+void verify_http_singleton();
+void cleanup_http_singleton();
 
-void VerifyGlobalInit();
-http_internal_string SetOptionalParam(_In_opt_ PCSTR_T param);
+NAMESPACE_XBOX_HTTP_CLIENT_END
 
 
 

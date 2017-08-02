@@ -67,7 +67,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>USING_TAEF;DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;UNITTEST_API;HC_API_NONE;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;USING_STOCK_CASABLANCA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USING_TAEF;DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;UNITTEST_API;HC_API_NONE;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAsWinRT>true</CompileAsWinRT>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -105,9 +105,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CasablancaBinaries Include="$(SolutionDir)..\..\..\Binaries\$(Configuration)\$(Platform)\casablanca\*.*" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.h" />
@@ -134,7 +131,9 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_global_fns.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_settings_fns.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_task_fns.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp" />
@@ -163,8 +162,5 @@
     <LocalDebuggerCommandArguments>$(TargetPath) /inproc</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
-  <Target Name="CopyCasablancaBinaries" AfterTargets="Build">
-    <Copy SourceFiles="@(CasablancaBinaries)" DestinationFolder="$(OutDir)" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

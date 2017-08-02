@@ -59,9 +59,9 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 Big things that still need to be done in rough priorty order:
 
 * [Done] Prototype XSAPI on top of libHttpClient HTTP stack
-* Prototype XSAPI on top of libHttpClient async task stack
-* P/Invoke layer and UWP C# sample
-* libHttpClient Unity sample (using P/Invoke layer)
+* [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin
+* [Done] Flush out XML doc comments in header 
+* [In progress] Prototype XSAPI on top of libHttpClient async task stack
 * XDK project & XDK implementation calling XDK platform HTTP APIs
 * XDK ERA sample
 * Retry logic
@@ -71,6 +71,8 @@ Big things that still need to be done in rough priorty order:
 * Flushout of UWP implementation calling UWP platform WebSocket APIs
 * XDK project & XDK implementation calling XDK platform WebSocket APIs
 * Prototype XSAPI on top of libHttpClient WebSocket stack
+* P/Invoke layer and UWP C# sample
+* libHttpClient Unity sample (using P/Invoke layer)
 * iOS project & iOS implementation calling iOS platform HTTP APIs
 * iOS implementation calling iOS platform WebSocket APIs
 * iOS sample
@@ -111,5 +113,6 @@ We'd love to get your review score, whether good or bad, but even more than that
 *   [Xbox Live Resiliency Fiddler Plugin](https://github.com/Microsoft/xbox-live-resiliency-fiddler-plugin)
 *   [Xbox Live Trace Analyzer](https://github.com/Microsoft/xbox-live-trace-analyzer)
 *   [Xbox Live Powershell Cmdlets](https://github.com/Microsoft/xbox-live-powershell-module)
+*   [libHttpClient](https://github.com/Microsoft/libHttpClient)
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

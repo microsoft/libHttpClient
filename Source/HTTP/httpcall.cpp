@@ -5,12 +5,14 @@
 #include "httpcall.h"
 #include "Mock/http_mock.h"
 
+using namespace xbox::httpclient;
+
 HC_API void HC_CALLING_CONV
 HCHttpCallCreate(
     _Out_ HC_CALL_HANDLE* callHandle
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     HC_CALL* call = new HC_CALL();
     call->retryAllowed = true;
@@ -29,7 +31,7 @@ HCHttpCallCleanup(
     )
 {
     LOGS_INFO << "HCHttpCallCleanup [ID " << call->id << "]";
-    VerifyGlobalInit();
+    verify_http_singleton();
     delete call;
 }
 
@@ -90,7 +92,7 @@ HCHttpCallPerform(
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     LOGS_INFO << "HCHttpCallPerform [ID " << call->id << "]";
 
     return HCTaskCreate(

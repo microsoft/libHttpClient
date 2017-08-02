@@ -3,12 +3,14 @@
 
 #include "pch.h"
 
+using namespace xbox::httpclient;
+
 HC_API void HC_CALLING_CONV
 HCSettingsSetLogLevel(
     _In_ HC_LOG_LEVEL traceLevel
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     get_http_singleton()->m_logger->set_log_level(traceLevel);
 
     LOGS_INFO << L"HCSettingsSetLogLevel: " << traceLevel;
@@ -19,7 +21,7 @@ HCSettingsGetLogLevel(
     _Out_ HC_LOG_LEVEL* traceLevel
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *traceLevel = get_http_singleton()->m_logger->get_log_level();
 }
 
@@ -28,7 +30,7 @@ HCSettingsSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     get_http_singleton()->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
 
     LOGS_INFO << L"HCSettingsSetTimeoutWindow: " << timeoutWindowInSeconds;
@@ -39,7 +41,7 @@ HCSettingsGetRetryDelay(
     _In_ uint32_t* retryDelayInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *retryDelayInSeconds = get_http_singleton()->m_retryDelayInSeconds;
 }
 
@@ -48,7 +50,7 @@ HCSettingsSetRetryDelay(
     _In_ uint32_t retryDelayInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     get_http_singleton()->m_retryDelayInSeconds = retryDelayInSeconds;
 }
 
@@ -57,7 +59,7 @@ HCSettingsGetTimeoutWindow(
     _Out_ uint32_t* timeoutWindowInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *timeoutWindowInSeconds = get_http_singleton()->m_timeoutWindowInSeconds;
 }
 
@@ -66,7 +68,7 @@ HCSettingsSetAssertsForThrottling(
     _In_ bool enableAssertsForThrottling
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     get_http_singleton()->m_enableAssertsForThrottling = enableAssertsForThrottling;
 }
 
@@ -75,7 +77,7 @@ HCSettingsGetAssertsForThrottling(
     _Out_ bool* enableAssertsForThrottling
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *enableAssertsForThrottling = get_http_singleton()->m_enableAssertsForThrottling;
 }
 
@@ -84,7 +86,7 @@ HCMockAddMock(
     _In_ HC_CALL_HANDLE call
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
     get_http_singleton()->m_mocks.push_back(call);
@@ -94,7 +96,7 @@ HCMockAddMock(
 HC_API void HC_CALLING_CONV
 HCMockClearMocks()
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
 

@@ -11,11 +11,10 @@
 
 static bool g_gotCall = false;
 
-class MockTests : public UnitTestBase
+DEFINE_TEST_CLASS(MockTests)
 {
 public:
-    TEST_CLASS(MockTests);
-    DEFINE_TEST_CLASS_SETUP();
+    DEFINE_TEST_CLASS_PROPS(MockTests);
 
     HC_CALL_HANDLE CreateMockCall(WCHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
@@ -37,7 +36,7 @@ public:
         return mockCall;
     }
 
-    TEST_METHOD(ExampleSingleGenericMock)
+    DEFINE_TEST_CASE(ExampleSingleGenericMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleGenericMock);
 
@@ -74,7 +73,7 @@ public:
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(ExampleSingleSpecificUrlMock)
+    DEFINE_TEST_CASE(ExampleSingleSpecificUrlMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlMock);
 
@@ -140,7 +139,7 @@ public:
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(ExampleSingleSpecificUrlBodyMock)
+    DEFINE_TEST_CASE(ExampleSingleSpecificUrlBodyMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlBodyMock);
 
@@ -207,7 +206,7 @@ public:
     }
 
 
-    TEST_METHOD(ExampleMultiSpecificUrlBodyMock)
+    DEFINE_TEST_CASE(ExampleMultiSpecificUrlBodyMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleMultiSpecificUrlBodyMock);
 

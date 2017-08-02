@@ -10,7 +10,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_global_fns.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_settings_fns.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_task_fns.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp">

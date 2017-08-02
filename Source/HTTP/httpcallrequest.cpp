@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "httpcall.h"
 
+using namespace xbox::httpclient;
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetUrl(
@@ -12,7 +13,7 @@ HCHttpCallRequestSetUrl(
     _In_ PCSTR_T url
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->method = method;
     call->url = url;
 
@@ -26,7 +27,7 @@ HCHttpCallRequestGetUrl(
     _Outptr_ PCSTR_T* url
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *method = call->method.c_str();
     *url = call->url.c_str();
 }
@@ -37,7 +38,7 @@ HCHttpCallRequestSetRequestBodyString(
     _In_ PCSTR_T requestBodyString
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->requestBodyString = requestBodyString;
     LOGS_INFO << "HCHttpCallRequestSetRequestBodyString [ID " << call->id << "]: requestBodyString=" << requestBodyString;
 }
@@ -48,7 +49,7 @@ HCHttpCallRequestGetRequestBodyString(
     _Out_ PCSTR_T* requestBodyString
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *requestBodyString = call->requestBodyString.c_str();
 }
 
@@ -60,7 +61,7 @@ HCHttpCallRequestSetHeader(
     _In_ PCSTR_T headerValue
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->requestHeaders[headerName] = headerValue;
     LOGS_INFO << "HCHttpCallRequestSetHeader [ID " << call->id << "]: " << headerName << "=" << headerValue;
 }
@@ -72,7 +73,7 @@ HCHttpCallRequestGetHeader(
     _Out_ PCSTR_T* headerValue
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     auto it = call->requestHeaders.find(headerName);
     if (it != call->requestHeaders.end())
     {
@@ -90,7 +91,7 @@ HCHttpCallRequestGetNumHeaders(
     _Out_ uint32_t* numHeaders
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *numHeaders = static_cast<uint32_t>(call->requestHeaders.size());
 }
 
@@ -102,7 +103,7 @@ HCHttpCallRequestGetHeaderAtIndex(
     _Out_ PCSTR_T* headerValue
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     uint32_t index = 0;
     for (auto it = call->requestHeaders.cbegin(); it != call->requestHeaders.cend(); ++it)
@@ -128,7 +129,7 @@ HCHttpCallRequestSetRetryAllowed(
     _In_ bool retryAllowed
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->retryAllowed = retryAllowed;
     LOGS_INFO << "HCHttpCallRequestSetRetryAllowed [ID " << call->id << "]: retryAllowed=" << retryAllowed;
 }
@@ -139,7 +140,7 @@ HCHttpCallRequestGetRetryAllowed(
     _Out_ bool* retryAllowed
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *retryAllowed = call->retryAllowed;
 }
 
@@ -149,7 +150,7 @@ HCHttpCallRequestSetTimeout(
     _In_ uint32_t timeoutInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->timeoutInSeconds = timeoutInSeconds;
     LOGS_INFO << "HCHttpCallRequestSetTimeout [ID " << call->id << "]: timeoutInSeconds=" << timeoutInSeconds;
 }
@@ -160,7 +161,7 @@ HCHttpCallRequestGetTimeout(
     _Out_ uint32_t* timeoutInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *timeoutInSeconds = call->timeoutInSeconds;
 }
 

@@ -3,6 +3,8 @@
 
 #include "pch.h"
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
 std::string to_utf8string(std::string value) 
 { 
     return value; 
@@ -25,3 +27,4 @@ std::wstring to_utf16string(std::wstring value)
     return value; 
 }
 
+NAMESPACE_XBOX_HTTP_CLIENT_END

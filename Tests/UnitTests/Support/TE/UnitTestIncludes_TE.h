@@ -5,10 +5,9 @@
 #include "UnitTestHelpers.h"
 #include "CppUnitTest.h"
 #include <strsafe.h>
-#include "StockMocks.h"
 
+#define TEST_CLASS_AREA L"libHttpClient"
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-using namespace pplx;
 
 #define DEFINE_TEST_CASE(TestCaseMethodName)  \
     BEGIN_TEST_METHOD_ATTRIBUTE(TestCaseMethodName) \
@@ -17,8 +16,7 @@ using namespace pplx;
     END_TEST_METHOD_ATTRIBUTE() \
     TEST_METHOD(TestCaseMethodName)
 
-#define DEFINE_TEST_CASE_PROPERTIES_TE() \
-    UnitTestHelpers::SetupFactoryHelper(m_mockXboxSystemFactory);
+#define DEFINE_TEST_CASE_PROPERTIES_TE() ;
 
 #define DEFINE_TEST_CASE_OWNER2(TestCaseMethodName)  \
     BEGIN_TEST_METHOD_ATTRIBUTE(TestCaseMethodName) \
@@ -102,10 +100,10 @@ public:
     Assert::IsTrue(static_cast<int64_t>(expected) == static_cast<int64_t>(actual))
 
 #define VERIFY_ARE_EQUAL(expected,actual) \
-    AssertHelper::AreEqual(expected,actual)
+    AssertHelper::AreEqual((double)expected,(double)actual)
 
-//#define VERIFY_ARE_EQUAL_STR(expected,actual) \
-//    AssertHelper::AreEqual(expected,actual)
+#define VERIFY_ARE_EQUAL_STR(expected,actual) \
+    AssertHelper::AreEqual(expected,actual)
 
 #define VERIFY_ARE_EQUAL_STR_IGNORE_CASE(expected,actual) \
     Assert::AreEqual(expected, actual, true)
@@ -190,59 +188,6 @@ public:
     }                                                                                                                                \
 }        
 
-inline void VERIFY_IS_EQUAL_JSON_RECURSION_HELPER(web::json::value expected, web::json::value actual, bool& jsonMatches)
-{
-    if (expected.is_object())
-    {
-        for (auto jsonValue : expected.as_object())
-        {
-            web::json::value actualValue = actual[jsonValue.first];
-            if (actualValue.is_null() && !jsonValue.second.is_null())
-            {
-                jsonMatches = false;
-                Assert::Fail(FormatString(L"JSON Key Not Present %s", jsonValue.first.c_str()).c_str());
-                return;
-            }
-
-            Logger::WriteMessage(FormatString(L"Testing JSON Key %s", jsonValue.first.c_str()).c_str());
-            VERIFY_IS_EQUAL_JSON_RECURSION_HELPER(jsonValue.second, actualValue, jsonMatches);
-        }
-    }
-    else
-    {
-        VERIFY_ARE_EQUAL(expected.serialize().c_str(), actual.serialize());
-    }
-}
-
-inline void VERIFY_IS_EQUAL_JSON_HELPER(web::json::value expected, web::json::value actual, const wchar_t* pszParamName)
-{
-    bool jsonMatches1 = true;
-    bool jsonMatches2 = true;
-    VERIFY_IS_EQUAL_JSON_RECURSION_HELPER(expected, actual, jsonMatches1);
-    VERIFY_IS_EQUAL_JSON_RECURSION_HELPER(actual, expected, jsonMatches2);
-
-    if (jsonMatches1 && jsonMatches2)
-    {
-        Logger::WriteMessage(FormatString(L"Verify: AreEqual(%s,\"%s\")", expected.serialize().c_str(), actual.serialize().c_str()).c_str());
-    }
-    else
-    {
-        Assert::Fail(FormatString(L"EXPECTED: %s = \"%s\"", pszParamName, expected.serialize().c_str()).c_str());
-        Assert::Fail(FormatString(L"ACTUAL: %s = \"%s\"", pszParamName, actual.serialize().c_str()).c_str());
-    }
-}
-
-inline void VERIFY_IS_EQUAL_JSON_HELPER_FROM_STRINGS(std::wstring expected, std::wstring actual, const wchar_t* pszParamName)
-{
-    web::json::value expectedJson = web::json::value::parse(expected);
-    web::json::value actualJson = web::json::value::parse(actual);
-    return VERIFY_IS_EQUAL_JSON_HELPER(expectedJson, actualJson, pszParamName);
-}
-
-#define VERIFY_IS_EQUAL_JSON_FROM_STRINGS(__expected, __actual, ...) VERIFY_IS_EQUAL_JSON_HELPER_FROM_STRINGS((__expected), (__actual), (L#__actual))
-
-#define VERIFY_IS_EQUAL_JSON(__expected, __actual, ...) VERIFY_IS_EQUAL_JSON_HELPER((__expected), (__actual), (L#__actual))
-
-using namespace Platform::Collections;
+//using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;

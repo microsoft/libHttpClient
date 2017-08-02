@@ -139,7 +139,9 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_global_fns.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_settings_fns.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_task_fns.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp" />
