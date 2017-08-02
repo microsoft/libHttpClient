@@ -10,6 +10,8 @@
 
 using namespace xbox::httpclient;
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
+
 #define VERIFY_EXCEPTION_TO_HR(x,hrVerify) \
         try \
         { \
@@ -325,3 +327,4 @@ public:
     }
 };
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

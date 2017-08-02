@@ -49,6 +49,8 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
         return true; \
     }
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
+
 class AssertHelper
 {
 public:
@@ -92,6 +94,8 @@ public:
         Assert::IsTrue(expected == actual);
     }
 };
+
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
 
 #define VERIFY_ARE_EQUAL_UINT(expected, actual) \
     Assert::IsTrue(static_cast<uint64_t>(expected) == static_cast<uint64_t>(actual))

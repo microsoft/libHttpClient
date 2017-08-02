@@ -55,11 +55,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.cpp">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.cpp">
       <Filter>C++ Source\UnitTests\Support</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp">
+      <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp">
       <Filter>C++ Source\UnitTests\Tests</Filter>
@@ -112,9 +112,6 @@
       <Filter>C++ Source\Logger</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h">

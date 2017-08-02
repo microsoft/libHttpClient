@@ -59,7 +59,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 Big things that still need to be done in rough priorty order:
 
 * [Done] Prototype XSAPI on top of libHttpClient HTTP stack
-* [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin
+* [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin/tree/libHttpClient
 * [Done] Flush out XML doc comments in header 
 * [In progress] Prototype XSAPI on top of libHttpClient async task stack
 * XDK project & XDK implementation calling XDK platform HTTP APIs

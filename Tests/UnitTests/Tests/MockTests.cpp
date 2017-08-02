@@ -11,6 +11,8 @@
 
 static bool g_gotCall = false;
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
+
 DEFINE_TEST_CLASS(MockTests)
 {
 public:
@@ -202,6 +204,34 @@ public:
         }
         g_gotCall = false;
 
+        HCMockClearMocks();
+
+        HCHttpCallCreate(&call);
+        HCHttpCallRequestSetUrl(call, L"1", L"2");
+        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallPerform(0, call, nullptr,
+            [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
+        {
+            uint32_t errCode = 0;
+            uint32_t statusCode = 0;
+            PCSTR_T responseStr;
+            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetStatusCode(call, &statusCode);
+            HCHttpCallResponseGetResponseString(call, &responseStr);
+            VERIFY_ARE_EQUAL(0, errCode);
+            VERIFY_ARE_EQUAL(0, statusCode);
+            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            HCHttpCallCleanup(call);
+            g_gotCall = true;
+        });
+
+        while (!g_gotCall)
+        {
+            HCTaskProcessNextCompletedTask(0);
+            Sleep(50);
+        }
+        g_gotCall = false;
+
         HCGlobalCleanup();
     }
 
@@ -303,3 +333,4 @@ public:
 
 };
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

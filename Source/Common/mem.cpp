@@ -21,12 +21,33 @@ DefaultMemFreeFunction(
     free(pointer);
 }
 
-
 HC_MEM_ALLOC_FUNC g_memAllocFunc = DefaultMemAllocFunction;
 HC_MEM_FREE_FUNC g_memFreeFunc = DefaultMemFreeFunction;
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+HC_API void HC_CALLING_CONV
+HCMemSetFunctions(
+    _In_opt_ HC_MEM_ALLOC_FUNC memAllocFunc,
+    _In_opt_ HC_MEM_FREE_FUNC memFreeFunc
+)
+{
+    g_memAllocFunc = (memAllocFunc == nullptr) ? DefaultMemAllocFunction : memAllocFunc;
+    g_memFreeFunc = (memFreeFunc == nullptr) ? DefaultMemFreeFunction : memFreeFunc;
+}
 
+HC_API void HC_CALLING_CONV
+HCMemGetFunctions(
+    _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
+    _Out_ HC_MEM_FREE_FUNC* memFreeFunc
+)
+{
+    assert(memAllocFunc != nullptr);
+    assert(memFreeFunc != nullptr);
+    *memAllocFunc = g_memAllocFunc;
+    *memFreeFunc = g_memFreeFunc;
+}
+
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 void* http_memory::mem_alloc(
     _In_ size_t size
@@ -61,25 +82,3 @@ void http_memory::mem_free(
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-
-HC_API void HC_CALLING_CONV
-HCMemSetFunctions(
-    _In_opt_ HC_MEM_ALLOC_FUNC memAllocFunc,
-    _In_opt_ HC_MEM_FREE_FUNC memFreeFunc
-    )
-{
-    g_memAllocFunc = (memAllocFunc == nullptr) ? DefaultMemAllocFunction : memAllocFunc;
-    g_memFreeFunc = (memFreeFunc == nullptr) ? DefaultMemFreeFunction : memFreeFunc;
-}
-
-HC_API void HC_CALLING_CONV
-HCMemGetFunctions(
-    _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
-    _Out_ HC_MEM_FREE_FUNC* memFreeFunc
-    )
-{
-    assert(memAllocFunc != nullptr);
-    assert(memFreeFunc != nullptr);
-    *memAllocFunc = g_memAllocFunc;
-    *memFreeFunc = g_memFreeFunc;
-}
