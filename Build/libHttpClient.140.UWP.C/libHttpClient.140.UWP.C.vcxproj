@@ -118,12 +118,12 @@
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
@@ -133,7 +133,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -143,6 +142,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_settings_fns.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_task_fns.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\UWP\http_uwp.cpp" />
