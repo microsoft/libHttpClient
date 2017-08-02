@@ -88,7 +88,9 @@ set(Common_Source_Files
     ../../Source/Common/pch.cpp
     ../../Source/Common/pch.h
     ../../Source/Common/pch_common.h
-    ../../Source/Common/settings.cpp
+    ../../Source/Common/public_settings_fns.cpp
+    ../../Source/Common/public_task_fns.cpp
+    ../../Source/Common/public_global_fns.cpp
     ../../Source/Common/singleton.cpp
     ../../Source/Common/singleton.h
     ../../Source/Common/utils.cpp
@@ -147,6 +149,12 @@ set(Taef_UnitTests_Source_Files
 	../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
     )
 
+set(TE_UnitTests_Source_Files    
+    ../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
+    ../../Tests/UnitTests/Support/TE/unittesthelpers.h
+    ../../Tests/UnitTests/Support/TE/unittestincludes_te.h
+    )
+    
 set(UnitTests_Source_Files_Tests
 	../../Tests/UnitTests/Tests/HttpTests.cpp
 	../../Tests/UnitTests/Tests/MockTests.cpp
@@ -217,12 +225,12 @@ if( TE )
     message(STATUS "TE source group")
 	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
 	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
-    # source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})    
+    source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})    
 	list(APPEND
 		SOURCE_FILES
 		${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
-        # ${TE_UnitTests_Source_Files}
+        ${TE_UnitTests_Source_Files}
 		)
 endif()
 

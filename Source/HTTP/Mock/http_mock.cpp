@@ -4,6 +4,8 @@
 #include "http_mock.h"
 #include "../httpcall.h"
 
+using namespace xbox::httpclient;
+
 bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* originalCall)
 {
     if (mockCall->url.empty())

@@ -4,6 +4,8 @@
 #include "pch.h"
 #include "httpcall.h"
 
+using namespace xbox::httpclient;
+
 
 HC_API void HC_CALLING_CONV
 HCHttpCallResponseGetResponseString(
@@ -11,7 +13,7 @@ HCHttpCallResponseGetResponseString(
     _Out_ PCSTR_T* responseString
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *responseString = call->responseString.c_str();
 }
 
@@ -21,7 +23,7 @@ HCHttpCallResponseSetResponseString(
     _In_ PCSTR_T responseString
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->responseString = responseString;
     LOGS_INFO << "HCHttpCallResponseSetResponseString [ID " << call->id << "]: responseString:" << responseString;
 }
@@ -32,7 +34,7 @@ HCHttpCallResponseGetStatusCode(
     _Out_ uint32_t* statusCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *statusCode = call->statusCode;
 }
 
@@ -42,7 +44,7 @@ HCHttpCallResponseSetStatusCode(
     _In_ uint32_t statusCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->statusCode = statusCode;
     LOGS_INFO << "HCHttpCallResponseSetStatusCode [ID " << call->id << "]: statusCode=" << statusCode;
 }
@@ -53,7 +55,7 @@ HCHttpCallResponseGetErrorCode(
     _Out_ uint32_t* errorCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *errorCode = call->errorCode;
 }
 
@@ -63,7 +65,7 @@ HCHttpCallResponseSetErrorCode(
     _In_ uint32_t errorCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->errorCode = errorCode;
     LOGS_INFO << "HCHttpCallResponseSetErrorCode [ID " << call->id << "]: errorCode=" << errorCode;
 }
@@ -74,7 +76,7 @@ HCHttpCallResponseGetErrorMessage(
     _Out_ PCSTR_T* errorMessage
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *errorMessage = call->errorMessage.c_str();
 }
 
@@ -84,7 +86,7 @@ HCHttpCallResponseSetErrorMessage(
     _In_ PCSTR_T errorMessage
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->errorMessage = errorMessage;
     LOGS_INFO << "HCHttpCallResponseSetErrorMessage [ID " << call->id << "]: errorMessage=" << errorMessage;
 }
@@ -96,7 +98,7 @@ HCHttpCallResponseGetHeader(
     _Out_ PCSTR_T* headerValue
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     auto it = call->responseHeaders.find(headerName);
     if (it != call->responseHeaders.end())
     {
@@ -114,7 +116,7 @@ HCHttpCallResponseGetNumHeaders(
     _Out_ uint32_t* numHeaders
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *numHeaders = static_cast<uint32_t>(call->responseHeaders.size());
 }
 
@@ -126,7 +128,7 @@ HCHttpCallResponseGetHeaderAtIndex(
     _Out_ PCSTR_T* headerValue
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     uint32_t index = 0;
     for (auto it = call->responseHeaders.cbegin(); it != call->responseHeaders.cend(); ++it)
