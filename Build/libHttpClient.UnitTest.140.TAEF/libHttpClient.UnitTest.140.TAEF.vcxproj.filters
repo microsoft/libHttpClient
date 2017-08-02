@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp">
-      <Filter>C++ Source\Common</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
@@ -20,6 +17,9 @@
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp">
@@ -78,9 +78,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h">
-      <Filter>C++ Source\Common</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
@@ -94,6 +91,9 @@
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h">

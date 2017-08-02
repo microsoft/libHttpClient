@@ -81,8 +81,8 @@ set(Public_Source_Files
     )
 
 set(Common_Source_Files
-    ../../Source/Common/asyncop.cpp
-    ../../Source/Common/asyncop.h
+    ../../Source/Common/task.cpp
+    ../../Source/Common/task.h
     ../../Source/Common/mem.cpp
     ../../Source/Common/mem.h
     ../../Source/Common/pch.cpp
