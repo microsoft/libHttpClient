@@ -7,37 +7,7 @@ using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-std::shared_ptr<HC_TASK>
-http_task_get_next_completed(_In_ uint64_t taskGroupId)
-{
-    std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
-    auto& completedQueue = get_http_singleton()->get_task_completed_queue_for_taskgroup(taskGroupId)->get_completed_queue();
-    if (!completedQueue.empty())
-    {
-        auto it = completedQueue.front();
-        completedQueue.pop();
-        return it;
-    }
-    return nullptr;
-}
-
-std::shared_ptr<HC_TASK>
-http_task_get_next_pending()
-{
-    std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
-    auto& taskPendingQueue = get_http_singleton()->m_taskPendingQueue;
-    if (!taskPendingQueue.empty())
-    {
-        auto it = taskPendingQueue.front();
-        taskPendingQueue.pop();
-        return it;
-    }
-    return nullptr;
-}
-
-void http_task_queue_pending(
-    _In_ std::shared_ptr<HC_TASK> task
-    )
+void http_task_queue_pending(_In_ std::shared_ptr<HC_TASK> task)
 {
     task->state = http_task_state::pending;
     std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
@@ -48,12 +18,17 @@ void http_task_queue_pending(
     get_http_singleton()->set_task_pending_ready();
 }
 
-void http_task_process_completed(_In_ std::shared_ptr<HC_TASK> task)
+std::shared_ptr<HC_TASK> http_task_get_next_pending()
 {
-    task->writeResultsRoutine(
-        task->writeResultsRoutineContext,
-        task.get()
-        );
+    std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
+    auto& taskPendingQueue = get_http_singleton()->m_taskPendingQueue;
+    if (!taskPendingQueue.empty())
+    {
+        auto it = taskPendingQueue.front();
+        taskPendingQueue.pop();
+        return it;
+    }
+    return nullptr;
 }
 
 void http_task_process_pending(_In_ std::shared_ptr<HC_TASK> task)
@@ -70,7 +45,7 @@ void http_task_process_pending(_In_ std::shared_ptr<HC_TASK> task)
     task->executionRoutine(
         task->executionRoutineContext,
         task.get()
-        );
+    );
 }
 
 void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandle)
@@ -101,5 +76,27 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandle)
 #endif
     get_http_singleton()->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->set_task_completed_event();
 }
+
+std::shared_ptr<HC_TASK> http_task_get_next_completed(_In_ uint64_t taskGroupId)
+{
+    std::lock_guard<std::mutex> guard(get_http_singleton()->m_taskLock);
+    auto& completedQueue = get_http_singleton()->get_task_completed_queue_for_taskgroup(taskGroupId)->get_completed_queue();
+    if (!completedQueue.empty())
+    {
+        auto it = completedQueue.front();
+        completedQueue.pop();
+        return it;
+    }
+    return nullptr;
+}
+
+void http_task_process_completed(_In_ std::shared_ptr<HC_TASK> task)
+{
+    task->writeResultsRoutine(
+        task->writeResultsRoutineContext,
+        task.get()
+        );
+}
+
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

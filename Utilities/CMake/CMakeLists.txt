@@ -135,9 +135,9 @@ set(Logger_Source_Files
     )
 
 set(UnitTests_Source_Files_Support
-	../../Tests/UnitTests/Support/iso8601.cpp
+#	../../Tests/UnitTests/Support/iso8601.cpp
+#	../../Tests/UnitTests/Support/iso8601.h
 	../../Tests/UnitTests/Support/DefineTestMacros.h
-	../../Tests/UnitTests/Support/iso8601.h
 	../../Tests/UnitTests/Support/UnitTestIncludes.h
     )
 
@@ -158,6 +158,7 @@ set(TE_UnitTests_Source_Files
 set(UnitTests_Source_Files_Tests
 	../../Tests/UnitTests/Tests/HttpTests.cpp
 	../../Tests/UnitTests/Tests/MockTests.cpp
+    ../../Tests/UnitTests/Tests/GlobalTests.cpp
     )
     
 if( SHIP )

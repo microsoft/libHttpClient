@@ -7,6 +7,8 @@
 #include <iomanip>
 #include "iso8601.h"
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
+
 TEST_MODULE_INITIALIZE(ModuleInitialize)
 {
     Logger::WriteMessage("Started unit test");
@@ -30,3 +32,5 @@ std::wstring FormatString(LPCWSTR strMsg, ...)
 
     return std::wstring(strBuffer);
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

@@ -76,6 +76,8 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #define NAMESPACE_XBOX_HTTP_CLIENT_BEGIN                     namespace xbox { namespace httpclient {
 #define NAMESPACE_XBOX_HTTP_CLIENT_END                       }}
+#define NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN                namespace xbox { namespace httpclienttest {
+#define NAMESPACE_XBOX_HTTP_CLIENT_TEST_END                  }}
 
 
 typedef int32_t function_context;

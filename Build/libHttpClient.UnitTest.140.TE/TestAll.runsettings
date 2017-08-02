@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <RunConfiguration>
-    <TargetPlatform>x86</TargetPlatform>
+    <TargetPlatform>x64</TargetPlatform>
   </RunConfiguration>
   <DataCollectionRunSettings>
     <DataCollectors>
@@ -11,18 +11,22 @@
               <Functions>
                 <Include>
                   <!-- Include methods in the Fabrikam namespace: -->
-                  <Function>.*Microsoft::Xbox.*</Function>
-                  <Function>.*xbox::services.*</Function>
+                  <Function>.*xbox::httpclient::.*</Function>
+                  <Function>HC.*</Function>
                 </Include>
                 <Exclude>
                   <!-- Exclude methods in a class or namespace named UnitTest: -->
                   <Function>^Platform::.*</Function>
                   <Function>^Windows::Foundation::.*</Function>
                   <Function>^std::.*</Function>
+                  <Function>^xbox::httpclienttest::.*</Function>
                   <Function>.*_abi_.*</Function>
                   <Function>Platform</Function>
                   <Function>Microsoft::VisualStudio::.*</Function>
                   <Function>Concurrency.*</Function>
+                  <Function>StringVPrintfWorkerW</Function>
+                  <Function>StringCchVPrintfW</Function>
+                  <Function>StringValidateDestW</Function>
                 </Exclude>
               </Functions>          
             <ModulePaths>
