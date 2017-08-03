@@ -17,7 +17,9 @@ HCHttpCallRequestSetUrl(
     call->method = method;
     call->url = url;
 
-    LOGS_INFO << "HCHttpCallRequestSetUrl [ID " << call->id << "]: method=" << method << " url=" << url; 
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallRequestSetUrl [ID " << call->id << "]: method=" << method << " url=" << url;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -40,7 +42,9 @@ HCHttpCallRequestSetRequestBodyString(
 {
     verify_http_singleton();
     call->requestBodyString = requestBodyString;
+#if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallRequestSetRequestBodyString [ID " << call->id << "]: requestBodyString=" << requestBodyString;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -63,7 +67,9 @@ HCHttpCallRequestSetHeader(
 {
     verify_http_singleton();
     call->requestHeaders[headerName] = headerValue;
+#if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallRequestSetHeader [ID " << call->id << "]: " << headerName << "=" << headerValue;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -131,7 +137,9 @@ HCHttpCallRequestSetRetryAllowed(
 {
     verify_http_singleton();
     call->retryAllowed = retryAllowed;
+#if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallRequestSetRetryAllowed [ID " << call->id << "]: retryAllowed=" << retryAllowed;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -152,7 +160,9 @@ HCHttpCallRequestSetTimeout(
 {
     verify_http_singleton();
     call->timeoutInSeconds = timeoutInSeconds;
+#if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallRequestSetTimeout [ID " << call->id << "]: timeoutInSeconds=" << timeoutInSeconds;
+#endif
 }
 
 HC_API void HC_CALLING_CONV

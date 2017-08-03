@@ -88,9 +88,9 @@ set(Common_Source_Files
     ../../Source/Common/pch.cpp
     ../../Source/Common/pch.h
     ../../Source/Common/pch_common.h
-    ../../Source/Common/public_settings_fns.cpp
-    ../../Source/Common/public_task_fns.cpp
-    ../../Source/Common/public_global_fns.cpp
+    ../../Source/Common/settings_publics.cpp
+    ../../Source/Common/task_publics.cpp
+    ../../Source/Common/global_publics.cpp
     ../../Source/Common/singleton.cpp
     ../../Source/Common/singleton.h
     ../../Source/Common/utils.cpp
@@ -159,6 +159,7 @@ set(UnitTests_Source_Files_Tests
 	../../Tests/UnitTests/Tests/HttpTests.cpp
 	../../Tests/UnitTests/Tests/MockTests.cpp
     ../../Tests/UnitTests/Tests/GlobalTests.cpp
+    ../../Tests/UnitTests/Tests/TaskTests.cpp
     )
     
 if( SHIP )

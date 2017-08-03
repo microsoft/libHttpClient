@@ -18,7 +18,13 @@
     #ifndef UWP_API
     #define UWP_API (WINAPI_FAMILY == WINAPI_FAMILY_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10)
     #endif
+
 #endif //#ifdef _WIN32
+
+#if UNITTEST_API
+#undef UWP_API
+#define UWP_API 1
+#endif 
 
 #ifndef _WIN32
     #ifdef _In_
@@ -85,5 +91,5 @@ typedef const char* PCSTR_T;
 
 typedef uint32_t HC_MEMORY_TYPE;
 typedef struct HC_CALL* HC_CALL_HANDLE;
-typedef struct HC_TASK* HC_TASK_HANDLE;
+typedef uint64_t HC_TASK_HANDLE;
 typedef const struct HC_USER* USER_HANDLE;

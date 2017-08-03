@@ -23,8 +23,8 @@ http_singleton::http_singleton()
     m_lastHttpCallId = 0;
     m_loggingHandlersCounter = 0;
     m_performFunc = Internal_HCHttpCallPerform;
-    m_logger = std::make_shared<xbox::httpclient::logger>();
-    m_logger->add_log_output(std::make_shared<xbox::httpclient::debug_output>());
+    m_logger = std::make_shared<xbox::httpclient::log::logger>();
+    m_logger->add_log_output(std::make_shared<xbox::httpclient::log::debug_output>());
     m_logger->set_log_level(HC_LOG_LEVEL::LOG_OFF);
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
@@ -65,26 +65,6 @@ void cleanup_http_singleton()
     g_httpSingleton = nullptr;
 }
 
-void http_singleton::_Raise_logging_event(_In_ HC_LOG_LEVEL level, _In_ const std::string& category, _In_ const std::string& message)
-{
-    std::lock_guard<std::mutex> lock(m_loggingWriteLock);
-
-    for (auto& handler : m_loggingHandlers)
-    {
-        HC_ASSERT(handler.second != nullptr);
-        if (handler.second != nullptr)
-        {
-            try
-            {
-                handler.second(level, category, message);
-            }
-            catch (...)
-            {
-            }
-        }
-    }
-}
-
 std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId)
 {
     std::lock_guard<std::mutex> lock(m_taskCompletedQueueLock);
@@ -121,16 +101,40 @@ void http_singleton::remove_logging_handler(_In_ function_context context)
     m_loggingHandlers.erase(context);
 }
 
-void verify_http_singleton()
+void http_singleton::raise_logging_event(_In_ HC_LOG_LEVEL level, _In_ const std::string& category, _In_ const std::string& message)
 {
-    if (g_httpSingleton == nullptr)
+    std::lock_guard<std::mutex> lock(m_loggingWriteLock);
+
+    for (auto& handler : m_loggingHandlers)
     {
-        LOG_ERROR("Call HCGlobalInitialize() first");
-        assert(g_httpSingleton != nullptr);
+        HC_ASSERT(handler.second != nullptr);
+        if (handler.second != nullptr)
+        {
+            try
+            {
+                handler.second(level, category, message);
+            }
+            catch (...)
+            {
+            }
+        }
     }
 }
 
-#if UWP_API || UNITTEST_API
+void verify_http_singleton()
+{
+#if ENABLE_ASSERTS
+    if (g_httpSingleton == nullptr)
+    {
+#if ENABLE_LOGS
+        LOG_ERROR("Call HCGlobalInitialize() first");
+#endif
+        assert(g_httpSingleton != nullptr);
+    }
+#endif
+}
+
+#if UWP_API
 HANDLE http_singleton::get_pending_ready_handle()
 {
     return m_pendingReadyHandle.get();
@@ -142,7 +146,7 @@ void http_singleton::set_task_pending_ready()
 }
 #endif
 
-#if UWP_API || UNITTEST_API
+#if UWP_API
 HANDLE http_task_completed_queue::get_complete_ready_handle()
 {
     return m_completeReadyHandle.get();
@@ -154,7 +158,7 @@ void http_task_completed_queue::set_task_completed_event()
 }
 #endif
 
-http_internal_queue<std::shared_ptr<HC_TASK>>& http_task_completed_queue::get_completed_queue()
+http_internal_queue<HC_TASK*>& http_task_completed_queue::get_completed_queue()
 {
     return m_completedQueue;
 }

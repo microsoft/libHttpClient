@@ -38,10 +38,12 @@ HC_API void HC_CALLING_CONV
 HCMemGetFunctions(
     _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
     _Out_ HC_MEM_FREE_FUNC* memFreeFunc
-)
+    )
 {
+#if ENABLE_ASSERTS
     assert(memAllocFunc != nullptr);
     assert(memFreeFunc != nullptr);
+#endif
     *memAllocFunc = g_memAllocFunc;
     *memFreeFunc = g_memFreeFunc;
 }
@@ -60,7 +62,9 @@ void* http_memory::mem_alloc(
     }
     catch (...)
     {
+#if ENABLE_LOGS
         LOG_ERROR("mem_alloc callback failed.");
+#endif
         return nullptr;
     }
 }
@@ -76,7 +80,9 @@ void http_memory::mem_free(
     }
     catch (...)
     {
+#if ENABLE_LOGS
         LOG_ERROR("mem_free callback failed.");
+#endif
     }
 }
 

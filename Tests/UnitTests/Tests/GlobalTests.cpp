@@ -8,7 +8,7 @@
 #include "Utils.h"
 #include "singleton.h"
 
-
+using namespace xbox::httpclient;
 static bool g_gotCall = false;
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
@@ -18,19 +18,6 @@ DEFINE_TEST_CLASS(GlobalTests)
 public:
     DEFINE_TEST_CLASS_PROPS(GlobalTests);
 
-    //void FormatFn(WCHAR* format, ...)
-    //{
-    //    va_list args;
-    //    va_start(args, format);
-
-    //    WCHAR sz[256];
-    //    StringCchVPrintfW(sz, 256, format, args);
-    //    va_end(args);
-
-    //    size_t dest = 256;
-    //    StringVPrintfWorkerW(sz, 256, &dest, format, args);
-    //}
-
     DEFINE_TEST_CASE(TestGlobalFns)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestGlobalFns);
@@ -38,6 +25,16 @@ public:
         PCSTR_T ver;
         HCGlobalGetLibVersion(&ver);
         VERIFY_ARE_EQUAL_STR(_T("1.0.0.0"), ver);
+
+#pragma warning(disable: 4800)
+        std::wstring test1 = to_utf16string(L"test");
+        VERIFY_ARE_EQUAL_STR(L"test", test1.c_str());
+        std::wstring test2 = to_utf16string("test");
+        VERIFY_ARE_EQUAL_STR(L"test", test2.c_str());
+        std::string test3 = to_utf8string(L"test");
+        VERIFY_ARE_EQUAL_STR("test", test3.c_str());
+        std::string test4 = to_utf8string("test");
+        VERIFY_ARE_EQUAL_STR("test", test4.c_str());
     }
 
 };

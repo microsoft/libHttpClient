@@ -165,10 +165,24 @@ HCGlobalGetHttpCallPerformFunction(
 /// <param name="context">The context passed to this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
 typedef void
-(HC_CALLING_CONV* HC_TASK_FUNC)(
+(HC_CALLING_CONV* HC_TASK_EXECUTE_FUNC)(
     _In_opt_ void* context,
     _In_ HC_TASK_HANDLE taskHandle
     );
+
+/// <summary>
+/// The callback definition used by HCTaskCreate.
+/// </summary>
+/// <param name="context">The context passed to this callback</param>
+/// <param name="taskHandle">The handle to the task</param>
+typedef void
+(HC_CALLING_CONV* HC_TASK_WRITE_RESULTS_FUNC)(
+    _In_opt_ void* writeContext,
+    _In_ HC_TASK_HANDLE taskHandle,
+    _In_opt_ void* completionRoutine,
+    _In_opt_ void* completionRoutineContext
+    );
+
 
 /// <summary>
 /// Create a new async task by passing in 3 callbacks and their associated contexts which
@@ -242,9 +256,9 @@ typedef void
 HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCTaskCreate(
     _In_ uint64_t taskGroupId,
-    _In_ HC_TASK_FUNC executionRoutine,
+    _In_ HC_TASK_EXECUTE_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
-    _In_ HC_TASK_FUNC writeResultsRoutine,
+    _In_ HC_TASK_WRITE_RESULTS_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
     _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext,
@@ -320,7 +334,8 @@ HCTaskGetCompletedHandle(_In_ uint64_t taskGroupId);
 /// </summary>
 /// <param name="taskHandle">Handle to task returned by HCTaskCreate()</param>
 /// <param name="timeoutInMilliseconds">Timeout in milliseconds</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Returns true if completed, false if timed out.</returns>
+HC_API bool HC_CALLING_CONV
 HCTaskWaitForCompleted(
     _In_ HC_TASK_HANDLE taskHandle,
     _In_ uint32_t timeoutInMilliseconds
