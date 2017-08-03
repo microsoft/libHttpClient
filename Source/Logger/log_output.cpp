@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 log_output::log_output()
 {
@@ -46,4 +46,4 @@ log_output::format_log(_In_ const log_entry& entry)
 
 }
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

@@ -20,7 +20,9 @@ HCHttpCallCreate(
     call->id = get_http_singleton()->m_lastHttpCallId;
     get_http_singleton()->m_lastHttpCallId++;
 
+#if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallCreate [ID " << call->id << "]";
+#endif
 
     *callHandle = call;
 }
@@ -30,7 +32,9 @@ HCHttpCallCleanup(
     _In_ HC_CALL_HANDLE call
     )
 {
+#if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallCleanup [ID " << call->id << "]";
+#endif
     verify_http_singleton();
     delete call;
 }
@@ -72,15 +76,17 @@ void HttpCallPerformExecute(
 
 void HttpCallPerformWriteResults(
     _In_opt_ void* writeResultsRoutineContext,
-    _In_ HC_TASK_HANDLE taskHandle
-    )
+    _In_ HC_TASK_HANDLE taskHandleId,
+    _In_opt_ void* completionRoutine,
+    _In_opt_ void* completionRoutineContext
+)
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
     LOGS_INFO << "HttpCallPerformWriteResults [ID " << call->id << "]";
-    HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)taskHandle->completionRoutine;
+    HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
     if (completeFn != nullptr)
     {
-        completeFn(taskHandle->completionRoutineContext, call);
+        completeFn(completionRoutineContext, call);
     }
 }
 
@@ -93,7 +99,9 @@ HCHttpCallPerform(
     )
 {
     verify_http_singleton();
+#if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallPerform [ID " << call->id << "]";
+#endif
 
     return HCTaskCreate(
         taskGroupId,

@@ -25,7 +25,7 @@ struct HC_CALL
     uint32_t statusCode;
     uint32_t errorCode;
     http_internal_string errorMessage;
-    std::shared_ptr<hc_task> task;
+    HC_TASK* task;
     uint64_t id;
 };
 

@@ -3,7 +3,7 @@
 
 #pragma once
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 class custom_output: public log_output
 {
@@ -13,4 +13,4 @@ public:
     void add_log(_In_ const log_entry& entry) override;
 };
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

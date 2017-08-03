@@ -4,6 +4,7 @@
 #include "pch.h"
 
 using namespace xbox::httpclient;
+using namespace xbox::httpclient::log;
 
 HC_API void HC_CALLING_CONV
 HCSettingsSetLogLevel(
@@ -13,7 +14,9 @@ HCSettingsSetLogLevel(
     verify_http_singleton();
     get_http_singleton()->m_logger->set_log_level(traceLevel);
 
+#if ENABLE_LOGS
     LOGS_INFO << L"HCSettingsSetLogLevel: " << traceLevel;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -33,7 +36,9 @@ HCSettingsSetTimeoutWindow(
     verify_http_singleton();
     get_http_singleton()->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
 
+#if ENABLE_LOGS
     LOGS_INFO << L"HCSettingsSetTimeoutWindow: " << timeoutWindowInSeconds;
+#endif
 }
 
 HC_API void HC_CALLING_CONV

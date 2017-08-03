@@ -8,12 +8,12 @@
 
 #pragma once
 
-#define DEFAULT_LOGGER xbox::httpclient::logger::get_logger()
+#define DEFAULT_LOGGER xbox::httpclient::log::logger::get_logger()
 #define IF_LOGGER_ENABLED(logger) if(logger != nullptr)
 #define IF_LOG_LEVEL_ENABLED(logger, level) if(logger != nullptr && logger->log_level_enabled(level))
 
-#define LOG(logger, level, category, msg) IF_LOGGER_ENABLED(logger) logger->add_log(xbox::httpclient::log_entry(level, category, msg))
-#define LOGS(logger, level, category) IF_LOGGER_ENABLED(logger) *logger += xbox::httpclient::log_entry(level, category)
+#define LOG(logger, level, category, msg) IF_LOGGER_ENABLED(logger) logger->add_log(xbox::httpclient::log::log_entry(level, category, msg))
+#define LOGS(logger, level, category) IF_LOGGER_ENABLED(logger) *logger += xbox::httpclient::log::log_entry(level, category)
 
 
 const char defaultCategory[] = "";
@@ -29,7 +29,7 @@ const char defaultCategory[] = "";
 #define LOGS_INFO IF_LOG_INFO() LOGS(DEFAULT_LOGGER, HC_LOG_LEVEL::LOG_VERBOSE, defaultCategory)
 #define LOGS_INFO_IF(boolean_expression) if(boolean_expression) LOGS_INFO
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 
 class log_entry
@@ -113,7 +113,7 @@ class logger
 {
 public:
     logger() : m_logLevel(HC_LOG_LEVEL::LOG_ERROR) {}
-    static std::shared_ptr<xbox::httpclient::logger> get_logger() { return get_http_singleton()->m_logger; }
+    static std::shared_ptr<xbox::httpclient::log::logger> get_logger() { return get_http_singleton()->m_logger; }
 
     void set_log_level(_In_ HC_LOG_LEVEL level);
     HC_LOG_LEVEL get_log_level();
@@ -129,4 +129,4 @@ private:
     HC_LOG_LEVEL m_logLevel;
 };
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

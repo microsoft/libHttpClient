@@ -19,6 +19,8 @@
                   <Function>^Platform::.*</Function>
                   <Function>^Windows::Foundation::.*</Function>
                   <Function>^std::.*</Function>
+                  <Function>^xbox::httpclient::log::.*</Function>
+                  <Function>^xbox::httpclient::.*logging.*</Function>
                   <Function>^xbox::httpclienttest::.*</Function>
                   <Function>.*_abi_.*</Function>
                   <Function>Platform</Function>

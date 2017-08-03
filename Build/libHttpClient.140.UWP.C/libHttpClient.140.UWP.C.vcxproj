@@ -133,16 +133,16 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\global_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_global_fns.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_settings_fns.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\public_task_fns.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\UWP\http_uwp.cpp" />

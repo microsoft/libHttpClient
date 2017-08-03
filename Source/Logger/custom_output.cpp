@@ -5,11 +5,11 @@
 #include "singleton.h"
 #include "custom_output.h"
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 void custom_output::add_log(_In_ const log_entry& entry)
 {
-    get_http_singleton()->_Raise_logging_event(entry.get_log_level(), entry.category(), entry.msg_stream().str());
+    get_http_singleton()->raise_logging_event(entry.get_log_level(), entry.category(), entry.msg_stream().str());
 }
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

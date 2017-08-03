@@ -67,11 +67,8 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         HCGlobalCleanup();
     }
 
@@ -105,11 +102,9 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
@@ -131,11 +126,9 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCGlobalCleanup();
@@ -171,11 +164,9 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
@@ -197,11 +188,35 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
+        g_gotCall = false;
+
+        HCMockClearMocks();
+
+        HCHttpCallCreate(&call);
+        HCHttpCallRequestSetUrl(call, L"1", L"2");
+        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallPerform(0, call, nullptr,
+            [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+            uint32_t errCode = 0;
+            uint32_t statusCode = 0;
+            PCSTR_T responseStr;
+            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetStatusCode(call, &statusCode);
+            HCHttpCallResponseGetResponseString(call, &responseStr);
+            VERIFY_ARE_EQUAL(0, errCode);
+            VERIFY_ARE_EQUAL(0, statusCode);
+            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            HCHttpCallCleanup(call);
+            g_gotCall = true;
+        });
+
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCMockClearMocks();
@@ -268,11 +283,9 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
@@ -294,11 +307,9 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         // Call 3 should repeat mock 2
@@ -321,11 +332,9 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCGlobalCleanup();

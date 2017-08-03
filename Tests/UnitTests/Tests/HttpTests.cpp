@@ -115,6 +115,10 @@ public:
     {
         HCGlobalInitialize();
         g_PerformCallbackCalled = false;
+        HC_HTTP_CALL_PERFORM_FUNC func = nullptr;
+        HCGlobalGetHttpCallPerformFunction(&func);
+        VERIFY_IS_NOT_NULL(func);
+
         HCGlobalSetHttpCallPerformFunction(&PerformCallback);
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
@@ -151,6 +155,10 @@ public:
         bool enabled = false;
         HCSettingsGetAssertsForThrottling(&enabled);
         VERIFY_ARE_EQUAL(true, enabled);
+
+        HCSettingsSetRetryDelay(500);
+        uint32_t retryDelayInSeconds = 0;
+        HCSettingsGetRetryDelay(&retryDelayInSeconds);
 
         HCGlobalCleanup();
     }
