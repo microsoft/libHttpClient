@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 #include "uwp/utils_uwp.h"
+#include "task.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 

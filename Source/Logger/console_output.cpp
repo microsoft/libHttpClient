@@ -6,11 +6,11 @@
 #include "console_output.h"
 
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 void console_output::write(_In_ const std::string& msg)
 {
     std::cout << msg;
 }
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END
