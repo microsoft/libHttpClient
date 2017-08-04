@@ -3,7 +3,7 @@
 
 #pragma once
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 class console_output : public log_output
 {
@@ -13,4 +13,4 @@ public:
     void write(_In_ const std::string& msg) override;
 };
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END
