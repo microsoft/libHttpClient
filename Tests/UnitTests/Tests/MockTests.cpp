@@ -11,11 +11,12 @@
 
 static bool g_gotCall = false;
 
-class MockTests : public UnitTestBase
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
+
+DEFINE_TEST_CLASS(MockTests)
 {
 public:
-    TEST_CLASS(MockTests);
-    DEFINE_TEST_CLASS_SETUP();
+    DEFINE_TEST_CLASS_PROPS(MockTests);
 
     HC_CALL_HANDLE CreateMockCall(WCHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
@@ -37,7 +38,7 @@ public:
         return mockCall;
     }
 
-    TEST_METHOD(ExampleSingleGenericMock)
+    DEFINE_TEST_CASE(ExampleSingleGenericMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleGenericMock);
 
@@ -46,11 +47,11 @@ public:
         HCHttpCallCreate(&call);
 
         HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", false, false);
-        HCSettingsAddMockCall(mockCall);
+        HCMockAddMock(mockCall);
 
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -66,28 +67,26 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            Sleep(50);
-        }
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(ExampleSingleSpecificUrlMock)
+    DEFINE_TEST_CASE(ExampleSingleSpecificUrlMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlMock);
 
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", true, false);
-        HCSettingsAddMockCall(mockCall);
+        HCMockAddMock(mockCall);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
         g_gotCall = false;
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -103,16 +102,15 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"10", L"20");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -128,30 +126,29 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
-        {
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(ExampleSingleSpecificUrlBodyMock)
+    DEFINE_TEST_CASE(ExampleSingleSpecificUrlBodyMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlBodyMock);
 
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", true, true);
-        HCSettingsAddMockCall(mockCall);
+        HCMockAddMock(mockCall);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -167,16 +164,67 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"3");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
+            [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
+        {
+            uint32_t errCode = 0;
+            uint32_t statusCode = 0;
+            PCSTR_T responseStr;
+            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetStatusCode(call, &statusCode);
+            HCHttpCallResponseGetResponseString(call, &responseStr);
+            VERIFY_ARE_EQUAL(0, errCode);
+            VERIFY_ARE_EQUAL(0, statusCode);
+            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            HCHttpCallCleanup(call);
+            g_gotCall = true;
+        });
+
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
+        g_gotCall = false;
+
+        HCMockClearMocks();
+
+        HCHttpCallCreate(&call);
+        HCHttpCallRequestSetUrl(call, L"1", L"2");
+        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallPerform(0, call, nullptr,
+            [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
+        {
+            uint32_t errCode = 0;
+            uint32_t statusCode = 0;
+            PCSTR_T responseStr;
+            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetStatusCode(call, &statusCode);
+            HCHttpCallResponseGetResponseString(call, &responseStr);
+            VERIFY_ARE_EQUAL(0, errCode);
+            VERIFY_ARE_EQUAL(0, statusCode);
+            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            HCHttpCallCleanup(call);
+            g_gotCall = true;
+        });
+
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
+        g_gotCall = false;
+
+        HCMockClearMocks();
+
+        HCHttpCallCreate(&call);
+        HCHttpCallRequestSetUrl(call, L"1", L"2");
+        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -194,6 +242,7 @@ public:
 
         while (!g_gotCall)
         {
+            HCTaskProcessNextCompletedTask(0);
             Sleep(50);
         }
         g_gotCall = false;
@@ -202,7 +251,7 @@ public:
     }
 
 
-    TEST_METHOD(ExampleMultiSpecificUrlBodyMock)
+    DEFINE_TEST_CASE(ExampleMultiSpecificUrlBodyMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleMultiSpecificUrlBodyMock);
 
@@ -210,15 +259,15 @@ public:
 
         HC_CALL_HANDLE mockCall1 = CreateMockCall(L"Mock1", true, true);
         HC_CALL_HANDLE mockCall2 = CreateMockCall(L"Mock2", true, true);
-        HCSettingsAddMockCall(mockCall1);
-        HCSettingsAddMockCall(mockCall2);
+        HCMockAddMock(mockCall1);
+        HCMockAddMock(mockCall2);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -234,16 +283,15 @@ public:
                 g_gotCall = true;
             });
 
-        while (!g_gotCall)
-        {
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -259,17 +307,16 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
-        {
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         // Call 3 should repeat mock 2
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, L"1", L"2");
         HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
-        HCHttpCallPerform(call, nullptr,
+        HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
@@ -285,10 +332,9 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
-        {
-            Sleep(50);
-        }
+        VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextCompletedTask(0);
+        VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCGlobalCleanup();
@@ -296,3 +342,4 @@ public:
 
 };
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

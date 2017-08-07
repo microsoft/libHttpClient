@@ -16,7 +16,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 - Public API is a **flat C API**
 - **Asynchronous** API
 - Public API **supports simple P/Invoke** without needing to use the "C#/.NET P/Invoke Interop SDK" [https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK]
-- Public APIs to **manage internal threads** 
+- Public APIs to **manage async tasks** 
 - Async data can be returned to a specific game thread so the **game doesn't need to marshal the data between threads**
 - **No streams** support
 - **No dependencies** on PPL or Boost
@@ -58,9 +58,10 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 
 Big things that still need to be done in rough priorty order:
 
-* Prototype XSAPI on top of libHttpClient HTTP stack
-* P/Invoke layer and UWP C# sample
-* libHttpClient Unity sample (using P/Invoke layer)
+* [Done] Prototype XSAPI on top of libHttpClient HTTP stack
+* [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin/tree/libHttpClient
+* [Done] Flush out XML doc comments in header 
+* [In progress] Prototype XSAPI on top of libHttpClient async task stack
 * XDK project & XDK implementation calling XDK platform HTTP APIs
 * XDK ERA sample
 * Retry logic
@@ -70,6 +71,8 @@ Big things that still need to be done in rough priorty order:
 * Flushout of UWP implementation calling UWP platform WebSocket APIs
 * XDK project & XDK implementation calling XDK platform WebSocket APIs
 * Prototype XSAPI on top of libHttpClient WebSocket stack
+* P/Invoke layer and UWP C# sample
+* libHttpClient Unity sample (using P/Invoke layer)
 * iOS project & iOS implementation calling iOS platform HTTP APIs
 * iOS implementation calling iOS platform WebSocket APIs
 * iOS sample
@@ -110,5 +113,6 @@ We'd love to get your review score, whether good or bad, but even more than that
 *   [Xbox Live Resiliency Fiddler Plugin](https://github.com/Microsoft/xbox-live-resiliency-fiddler-plugin)
 *   [Xbox Live Trace Analyzer](https://github.com/Microsoft/xbox-live-trace-analyzer)
 *   [Xbox Live Powershell Cmdlets](https://github.com/Microsoft/xbox-live-powershell-module)
+*   [libHttpClient](https://github.com/Microsoft/libHttpClient)
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

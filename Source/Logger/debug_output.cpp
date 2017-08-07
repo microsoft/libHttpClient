@@ -5,11 +5,11 @@
 #include "debug_output.h"
 
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 void debug_output::write(_In_ const std::string& msg)
 {
     OutputDebugStringA(msg.c_str());
 }
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

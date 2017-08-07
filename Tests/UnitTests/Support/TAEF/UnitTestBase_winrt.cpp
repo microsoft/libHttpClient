@@ -7,6 +7,7 @@
 #include "iso8601.h"
 #include <sstream>
 #include <iomanip>
+#include "mem.h"
 
 
 using namespace Platform;
@@ -189,7 +190,7 @@ TimeSpanToString(
     int min = (int)(totalSeconds % 3600) / 60;
     int sec = (int)(totalSeconds % 3600) % 60;
 
-    stringstream_t ss;
+    std::wstringstream ss;
     ss << std::setw(2) << std::setfill(L'0') << hour;
     ss << ":";
     ss << std::setw(2) << std::setfill(L'0') << min;

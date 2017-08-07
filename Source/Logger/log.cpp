@@ -2,48 +2,40 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "log.h"
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
-std::shared_ptr<logger> logger::s_logger = nullptr;
-
-void logger::add_log_output(std::shared_ptr<log_output> output)
+void logger::add_log_output(_In_ std::shared_ptr<log_output> output)
 {
     m_log_outputs.emplace_back(output); 
-    if (output->level_setting() == log_output_level_setting::use_logger_setting)
-    {
-        output->set_log_level(m_logLevel);
-    }
 };
 
-void logger::set_log_level(log_level level)
+HC_LOG_LEVEL logger::get_log_level()
 {
-    m_logLevel = level;
-
-    for (const auto& output : m_log_outputs)
-    {
-        if (output->level_setting() == log_output_level_setting::use_logger_setting)
-        {
-            output->set_log_level(level);
-        }
-    }
+    return m_logLevel;
 }
 
-void logger::add_log(const log_entry& logEntry)
+
+void logger::set_log_level(_In_ HC_LOG_LEVEL level)
 {
-    for(const auto& output : m_log_outputs)
+    m_logLevel = level;
+}
+
+void logger::add_log(_In_ const log_entry& logEntry)
+{
+    HC_LOG_LEVEL level = logEntry.get_log_level();
+    if (log_level_enabled(level))
     {
-        if (output->log_level_enabled(logEntry.get_log_level()))
+        for (const auto& output : m_log_outputs)
         {
             output->add_log(logEntry);
         }
     }
 }
 
-void logger::operator+=(const log_entry& logEntry)
+void logger::operator+=(_In_ const log_entry& logEntry)
 {
     add_log(logEntry);
 }
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

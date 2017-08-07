@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "utils.h"
-#include <codecvt>
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 std::string to_utf8string(std::string value) 
 { 
@@ -27,3 +27,4 @@ std::wstring to_utf16string(std::wstring value)
     return value; 
 }
 
+NAMESPACE_XBOX_HTTP_CLIENT_END

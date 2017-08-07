@@ -8,6 +8,10 @@
 #include "Utils.h"
 #include "singleton.h"
 
+using namespace xbox::httpclient;
+
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
+
 #define VERIFY_EXCEPTION_TO_HR(x,hrVerify) \
         try \
         { \
@@ -43,20 +47,19 @@ static void HC_CALLING_CONV MemFree(
 static bool g_PerformCallbackCalled = false;
 static void HC_CALLING_CONV PerformCallback(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     g_PerformCallbackCalled = true;
 }
 
 
-class HttpTests : public UnitTestBase
+DEFINE_TEST_CLASS(HttpTests)
 {
 public:
-    TEST_CLASS(HttpTests);
-    DEFINE_TEST_CLASS_SETUP();
+    DEFINE_TEST_CLASS_PROPS(HttpTests);
 
-    TEST_METHOD(TestMem)
+    DEFINE_TEST_CASE(TestMem)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestMem);
         g_memAllocCalled = false;
@@ -65,7 +68,7 @@ public:
         HCMemSetFunctions(&MemAlloc, &MemFree);
 
         {
-            http_internal_vector(int) v;
+            http_internal_vector<int> v;
             v.reserve(10000);
 
             VERIFY_ARE_EQUAL(true, g_memAllocCalled);
@@ -79,15 +82,15 @@ public:
         HC_MEM_ALLOC_FUNC memAllocFunc = nullptr;
         HC_MEM_FREE_FUNC memFreeFunc = nullptr;
         HCMemGetFunctions(&memAllocFunc, &memFreeFunc);
-        VERIFY_ARE_NOT_EQUAL(nullptr, memAllocFunc);
-        VERIFY_ARE_NOT_EQUAL(nullptr, memFreeFunc);
+        VERIFY_IS_NOT_NULL(memAllocFunc);
+        VERIFY_IS_NOT_NULL(memFreeFunc);
 
         HCMemSetFunctions(nullptr, nullptr);
 
         g_memAllocCalled = false;
         g_memFreeCalled = false;
         {
-            http_internal_vector(int) v;
+            http_internal_vector<int> v;
             v.reserve(10000);
 
             VERIFY_ARE_EQUAL(false, g_memAllocCalled);
@@ -97,26 +100,30 @@ public:
         VERIFY_ARE_EQUAL(false, g_memFreeCalled);
     }
 
-    TEST_METHOD(TestGlobalInit)
+    DEFINE_TEST_CASE(TestGlobalInit)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestGlobalInit);
 
-        VERIFY_ARE_EQUAL(nullptr, get_http_singleton());
+        VERIFY_IS_NULL(get_http_singleton());
         HCGlobalInitialize();
-        VERIFY_ARE_NOT_EQUAL(nullptr, get_http_singleton());
+        VERIFY_IS_NOT_NULL(get_http_singleton());
         HCGlobalCleanup();
-        VERIFY_ARE_EQUAL(nullptr, get_http_singleton());
+        VERIFY_IS_NULL(get_http_singleton());
     }
 
-    TEST_METHOD(TestGlobalPerformCallback)
+    DEFINE_TEST_CASE(TestGlobalPerformCallback)
     {
         HCGlobalInitialize();
         g_PerformCallbackCalled = false;
+        HC_HTTP_CALL_PERFORM_FUNC func = nullptr;
+        HCGlobalGetHttpCallPerformFunction(&func);
+        VERIFY_IS_NOT_NULL(func);
+
         HCGlobalSetHttpCallPerformFunction(&PerformCallback);
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
-        HCHttpCallPerform(call, nullptr, 
+        HCHttpCallPerform(0, call, nullptr, 
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
@@ -129,21 +136,15 @@ public:
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(TestThread)
-    {
-        DEFINE_TEST_CASE_PROPERTIES(TestThread);
-        // TODO
-    }
-
-    TEST_METHOD(TestSettings)
+    DEFINE_TEST_CASE(TestSettings)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
         HCGlobalInitialize();
 
-        HCSettingsSetDiagnosticsTraceLevel(HC_DIAGNOSTICS_TRACE_LEVEL::TRACE_ERROR);
-        HC_DIAGNOSTICS_TRACE_LEVEL level;
-        HCSettingsGetDiagnosticsTraceLevel(&level);
-        VERIFY_ARE_EQUAL(HC_DIAGNOSTICS_TRACE_LEVEL::TRACE_ERROR, level);
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_ERROR);
+        HC_LOG_LEVEL level;
+        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_ERROR, level);
 
         HCSettingsSetTimeoutWindow(1000);
         uint32_t timeout = 0;
@@ -155,22 +156,26 @@ public:
         HCSettingsGetAssertsForThrottling(&enabled);
         VERIFY_ARE_EQUAL(true, enabled);
 
+        HCSettingsSetRetryDelay(500);
+        uint32_t retryDelayInSeconds = 0;
+        HCSettingsGetRetryDelay(&retryDelayInSeconds);
+
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(TestCall)
+    DEFINE_TEST_CASE(TestCall)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestCall);
 
         HCGlobalInitialize();
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
-        VERIFY_ARE_NOT_EQUAL(nullptr, call);
+        VERIFY_IS_NOT_NULL(call);
         HCHttpCallCleanup(call);
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(TestRequest)
+    DEFINE_TEST_CASE(TestRequest)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequest);
         HCGlobalInitialize();
@@ -203,7 +208,7 @@ public:
     }
 
 
-    TEST_METHOD(TestRequestHeaders)
+    DEFINE_TEST_CASE(TestRequestHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
         HCGlobalInitialize();
@@ -226,7 +231,7 @@ public:
         HCHttpCallRequestGetHeader(call, L"testHeader", &t1);
         VERIFY_ARE_EQUAL_STR(L"testValue2", t1);
         HCHttpCallRequestGetHeader(call, L"testHeader2", &t1);
-        VERIFY_ARE_EQUAL(nullptr, t1);
+        VERIFY_IS_NULL(t1);
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
@@ -250,7 +255,7 @@ public:
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(TestResponse)
+    DEFINE_TEST_CASE(TestResponse)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponse);
 
@@ -281,7 +286,7 @@ public:
         HCGlobalCleanup();
     }
 
-    TEST_METHOD(TestResponseHeaders)
+    DEFINE_TEST_CASE(TestResponseHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
 
@@ -305,7 +310,7 @@ public:
         HCHttpCallResponseGetHeader(call, L"testHeader", &t1);
         VERIFY_ARE_EQUAL_STR(L"testValue2", t1);
         HCHttpCallResponseGetHeader(call, L"testHeader2", &t1);
-        VERIFY_ARE_EQUAL(nullptr, t1);
+        VERIFY_IS_NULL(t1);
         HCHttpCallResponseGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
@@ -330,3 +335,4 @@ public:
     }
 };
 
+NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

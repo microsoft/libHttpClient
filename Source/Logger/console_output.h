@@ -3,16 +3,14 @@
 
 #pragma once
 
-#include "log.h"
-
-NAMESPACE_XBOX_LIBHTTPCLIENT_BEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 class console_output : public log_output
 {
 public:
-    console_output() : log_output(log_output_level_setting::use_logger_setting, log_level::off) {}
+    console_output() : log_output() {}
 
     void write(_In_ const std::string& msg) override;
 };
 
-NAMESPACE_XBOX_LIBHTTPCLIENT_END
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

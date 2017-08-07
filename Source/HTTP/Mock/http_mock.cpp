@@ -1,12 +1,10 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
-#include "httpClient/types.h"
-#include "httpClient/httpClient.h"
-#include "singleton.h"
-#include "asyncop.h"
 #include "http_mock.h"
 #include "../httpcall.h"
+
+using namespace xbox::httpclient;
 
 bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* originalCall)
 {
@@ -35,14 +33,14 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     return false;
 }
 
-int GetIndexOfMock(const std::vector<HC_CALL*>& mocks, HC_CALL* lastMatchingMock)
+size_t GetIndexOfMock(const std::vector<HC_CALL*>& mocks, HC_CALL* lastMatchingMock)
 {
     if (lastMatchingMock == nullptr)
     {
         return -1;
     }
 
-    for (int i = 0; i < mocks.size(); i++)
+    for (size_t i = 0; i < mocks.size(); i++)
     {
         if (mocks[i] == lastMatchingMock)
         {
@@ -73,7 +71,7 @@ HC_CALL* GetMatchingMock(
         lastMatchingMock = nullptr;
     }
 
-    int lastMockIndex = GetIndexOfMock(mocks, lastMatchingMock);
+    auto lastMockIndex = GetIndexOfMock(mocks, lastMatchingMock);
     if (lastMockIndex == -1)
     {
         // if there was no last matching call, then look through all mocks for first match
@@ -89,7 +87,7 @@ HC_CALL* GetMatchingMock(
     else
     {
         // if there was last matching call, looking through the rest of the mocks to see if there's more that match
-        for (int j = lastMockIndex + 1; j < mocks.size(); j++)
+        for (auto j = lastMockIndex + 1; j < mocks.size(); j++)
         {
             if (DoesMockCallMatch(mocks[j], originalCall))
             {

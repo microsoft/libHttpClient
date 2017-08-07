@@ -2,10 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "mem.h"
-#include "singleton.h"
-#include "log.h"
 #include "httpcall.h"
+
+using namespace xbox::httpclient;
 
 
 HC_API void HC_CALLING_CONV
@@ -14,7 +13,7 @@ HCHttpCallResponseGetResponseString(
     _Out_ PCSTR_T* responseString
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *responseString = call->responseString.c_str();
 }
 
@@ -24,8 +23,11 @@ HCHttpCallResponseSetResponseString(
     _In_ PCSTR_T responseString
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->responseString = responseString;
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallResponseSetResponseString [ID " << call->id << "]: responseString:" << responseString;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -34,7 +36,7 @@ HCHttpCallResponseGetStatusCode(
     _Out_ uint32_t* statusCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *statusCode = call->statusCode;
 }
 
@@ -44,8 +46,11 @@ HCHttpCallResponseSetStatusCode(
     _In_ uint32_t statusCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->statusCode = statusCode;
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallResponseSetStatusCode [ID " << call->id << "]: statusCode=" << statusCode;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -54,7 +59,7 @@ HCHttpCallResponseGetErrorCode(
     _Out_ uint32_t* errorCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *errorCode = call->errorCode;
 }
 
@@ -64,8 +69,11 @@ HCHttpCallResponseSetErrorCode(
     _In_ uint32_t errorCode
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->errorCode = errorCode;
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallResponseSetErrorCode [ID " << call->id << "]: errorCode=" << errorCode;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -74,7 +82,7 @@ HCHttpCallResponseGetErrorMessage(
     _Out_ PCSTR_T* errorMessage
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *errorMessage = call->errorMessage.c_str();
 }
 
@@ -84,8 +92,11 @@ HCHttpCallResponseSetErrorMessage(
     _In_ PCSTR_T errorMessage
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     call->errorMessage = errorMessage;
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallResponseSetErrorMessage [ID " << call->id << "]: errorMessage=" << errorMessage;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -95,7 +106,7 @@ HCHttpCallResponseGetHeader(
     _Out_ PCSTR_T* headerValue
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     auto it = call->responseHeaders.find(headerName);
     if (it != call->responseHeaders.end())
     {
@@ -113,7 +124,7 @@ HCHttpCallResponseGetNumHeaders(
     _Out_ uint32_t* numHeaders
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *numHeaders = static_cast<uint32_t>(call->responseHeaders.size());
 }
 
@@ -125,7 +136,7 @@ HCHttpCallResponseGetHeaderAtIndex(
     _Out_ PCSTR_T* headerValue
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     uint32_t index = 0;
     for (auto it = call->responseHeaders.cbegin(); it != call->responseHeaders.cend(); ++it)
@@ -153,6 +164,9 @@ HCHttpCallResponseSetHeader(
     )
 {
     call->responseHeaders[headerName] = headerValue;
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallResponseSetHeader [ID " << call->id << "]: " << headerName << "=" << headerValue;
+#endif
 }
 
 

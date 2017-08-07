@@ -2,23 +2,29 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "mem.h"
-#include "singleton.h"
-#include "log.h"
 #include "httpcall.h"
 #include "Mock/http_mock.h"
 
+using namespace xbox::httpclient;
+
 HC_API void HC_CALLING_CONV
 HCHttpCallCreate(
-    _Out_ HC_CALL_HANDLE* call
+    _Out_ HC_CALL_HANDLE* callHandle
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
-    HC_CALL* hcCall = new HC_CALL();
-    hcCall->retryAllowed = true;
+    HC_CALL* call = new HC_CALL();
+    call->retryAllowed = true;
 
-    *call = hcCall;
+    call->id = get_http_singleton()->m_lastHttpCallId;
+    get_http_singleton()->m_lastHttpCallId++;
+
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallCreate [ID " << call->id << "]";
+#endif
+
+    *callHandle = call;
 }
 
 HC_API void HC_CALLING_CONV
@@ -26,16 +32,20 @@ HCHttpCallCleanup(
     _In_ HC_CALL_HANDLE call
     )
 {
-    VerifyGlobalInit();
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallCleanup [ID " << call->id << "]";
+#endif
+    verify_http_singleton();
     delete call;
 }
 
 void HttpCallPerformExecute(
     _In_opt_ void* executionRoutineContext,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
+    LOGS_INFO << "HttpCallPerformExecute [ID " << call->id << "]";
 
     bool matchedMocks = false;
     if (get_http_singleton()->m_mocksEnabled)
@@ -43,7 +53,7 @@ void HttpCallPerformExecute(
         matchedMocks = Mock_Internal_HCHttpCallPerform(call);
         if (matchedMocks)
         {
-            HCThreadSetResultsReady(taskHandle);
+            HCTaskSetCompleted(taskHandle);
         }
     }
    
@@ -66,24 +76,35 @@ void HttpCallPerformExecute(
 
 void HttpCallPerformWriteResults(
     _In_opt_ void* writeResultsRoutineContext,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
-    )
+    _In_ HC_TASK_HANDLE taskHandleId,
+    _In_opt_ void* completionRoutine,
+    _In_opt_ void* completionRoutineContext
+)
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
-    HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)taskHandle->completionRoutine;
-    completeFn(taskHandle->completionRoutineContext, call);
+    LOGS_INFO << "HttpCallPerformWriteResults [ID " << call->id << "]";
+    HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
+    if (completeFn != nullptr)
+    {
+        completeFn(completionRoutineContext, call);
+    }
 }
 
-HC_API void HC_CALLING_CONV
+HC_API HC_TASK_HANDLE HC_CALLING_CONV
 HCHttpCallPerform(
+    _In_ uint64_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
-    _In_ void* completionRoutineContext,
-    _In_ HCHttpCallPerformCompletionRoutine completionRoutine
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
+#if ENABLE_LOGS
+    LOGS_INFO << "HCHttpCallPerform [ID " << call->id << "]";
+#endif
 
-    HCThreadQueueAsyncOp(
+    return HCTaskCreate(
+        taskGroupId,
         HttpCallPerformExecute, (void*)call,
         HttpCallPerformWriteResults, (void*)call,
         completionRoutine, completionRoutineContext,

@@ -2,10 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 #include "pch.h"
-#include "threadpool.h"
-#include "asyncop.h"
-#include "mem.h"
-#include "utils.h"
 
 class hc_task
 {
@@ -30,11 +26,12 @@ struct HC_CALL
     uint32_t errorCode;
     http_internal_string errorMessage;
     std::shared_ptr<hc_task> task;
+    uint64_t id;
 };
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call, 
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     );
 
 

@@ -2,10 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
 #if UWP_API
-#include "httpClient/types.h"
-#include "httpClient/httpClient.h"
-#include "singleton.h"
-#include "asyncop.h"
 #include "../httpcall.h"
 #include "UWP/utils_uwp.h"
 
@@ -31,14 +27,14 @@ public:
 
     void perform_async(
         _In_ HC_CALL_HANDLE call,
-        _In_ HC_ASYNC_TASK_HANDLE taskHandle
+        _In_ HC_TASK_HANDLE taskHandle
         );
 };
 
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     std::shared_ptr<uwp_http_task> uwpHttpTask = std::make_shared<uwp_http_task>();
@@ -50,7 +46,7 @@ void Internal_HCHttpCallPerform(
 
 void uwp_http_task::perform_async(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_ASYNC_TASK_HANDLE taskHandle
+    _In_ HC_TASK_HANDLE taskHandle
     )
 {
     try
@@ -71,6 +67,8 @@ void uwp_http_task::perform_async(
         Uri^ requestUri = ref new Uri(ref new Platform::String(url));
         HttpRequestMessage^ requestMsg = ref new HttpRequestMessage(ref new HttpMethod(ref new Platform::String(method)), requestUri);
 
+        requestMsg->Headers->TryAppendWithoutValidation(L"User-Agent", L"libHttpClient/1.0.0.0");
+
         for (uint32_t i = 0; i < numHeaders; i++)
         {
             const WCHAR* headerName;
@@ -81,10 +79,16 @@ void uwp_http_task::perform_async(
                 requestMsg->Headers->TryAppendWithoutValidation(ref new Platform::String(headerName), ref new Platform::String(headerValue));
             }
         }
-        
+
+        requestMsg->Headers->AcceptEncoding->TryParseAdd(ref new Platform::String(L"gzip"));
+        requestMsg->Headers->AcceptEncoding->TryParseAdd(ref new Platform::String(L"deflate"));
+        requestMsg->Headers->AcceptEncoding->TryParseAdd(ref new Platform::String(L"br"));
+        requestMsg->Headers->Accept->TryParseAdd(ref new Platform::String(L"*/*"));
+
         if (requestBody != nullptr)
         {
             requestMsg->Content = ref new HttpStringContent(ref new Platform::String(requestBody));
+            requestMsg->Content->Headers->ContentType = Windows::Web::Http::Headers::HttpMediaTypeHeaderValue::Parse(L"application/json; charset=utf-8");
         }
 
         m_getHttpAsyncOp = httpClient->SendRequestAsync(requestMsg, HttpCompletionOption::ResponseContentRead);
@@ -118,26 +122,26 @@ void uwp_http_task::perform_async(
                     {
                         Platform::String^ httpResponseBody = asyncOp->GetResults();
                         HCHttpCallResponseSetResponseString(call, httpResponseBody->Data());
-                        HCThreadSetResultsReady(taskHandle);
+                        HCTaskSetCompleted(taskHandle);
                     }
                     catch (Platform::Exception^ ex)
                     {
                         HCHttpCallResponseSetErrorCode(call, ex->HResult);
-                        HCThreadSetResultsReady(taskHandle);
+                        HCTaskSetCompleted(taskHandle);
                     }
                 });
             }
             catch (Platform::Exception^ ex)
             {
                 HCHttpCallResponseSetErrorCode(call, ex->HResult);
-                HCThreadSetResultsReady(taskHandle);
+                HCTaskSetCompleted(taskHandle);
             }
         });
     }
     catch (Platform::Exception^ ex)
     {
         HCHttpCallResponseSetErrorCode(call, ex->HResult);
-        HCThreadSetResultsReady(taskHandle);
+        HCTaskSetCompleted(taskHandle);
     }
 }
 

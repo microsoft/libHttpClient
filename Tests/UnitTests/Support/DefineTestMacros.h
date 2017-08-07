@@ -51,16 +51,6 @@
     TEST_CLASS_SETUP(TestClassSetup) { UnitTestBase::StartResponseLogging(); return true; } \
     TEST_CLASS_CLEANUP(TestClassCleanup) { UnitTestBase::RemoveResponseLogging(); return true; }  \
 
-#define DEFINE_MOCK_FACTORY() \
-    TEST_METHOD_SETUP(SetupFactory) \
-    {  \
-        return SetupFactoryHelper(); \
-    }\
-    TEST_METHOD_CLEANUP(CleanupTest) \
-    { \
-        return true; \
-    }\
-
 #ifdef USING_TAEF
     //void VERIFY_ARE_EQUAL_STR(Platform::String^ expected, std::wstring actual);
     //void VERIFY_ARE_EQUAL_STR(Platform::String^ expected, Platform::String^ actual);
@@ -68,8 +58,7 @@
 
     #define DEFINE_TEST_CLASS(x) class x : public UnitTestBase
     #define DEFINE_TEST_CLASS_PROPS(x) TEST_CLASS(x);\
-        DEFINE_TEST_CLASS_SETUP();\
-        DEFINE_MOCK_FACTORY();
+        DEFINE_TEST_CLASS_SETUP();
     #define DEFINE_TEST_CASE(x) TEST_METHOD(x)
     #define DEFINE_TEST_CASE_PROPERTIES(x) DEFINE_TEST_CASE_PROPERTIES_TAEF(x)
     #define DEFINE_TEST_CASE_PROPERTIES_IGNORE(x) DEFINE_TEST_CASE_PROPERTIES_TAEF_IGNORE()
@@ -88,7 +77,7 @@
     //#define VERIFY_ARE_EQUAL_STR(__expected, __actual) VerifyEqualStr((__expected), (__actual), (L#__actual), PRIVATE_VERIFY_ERROR_INFO)
 #else 
     #define DEFINE_TEST_CLASS(x) TEST_CLASS(x)
-    #define DEFINE_TEST_CLASS_PROPS(x) std::shared_ptr<xbox::services::system::MockXboxSystemFactory> m_mockXboxSystemFactory;
+    #define DEFINE_TEST_CLASS_PROPS(x) ;
     //#define DEFINE_TEST_CASE(x) DEFINE_TEST_CASE_TE(x)
     #define DEFINE_TEST_CASE_PROPERTIES(x) DEFINE_TEST_CASE_PROPERTIES_TE()
     #define DEFINE_TEST_CASE_PROPERTIES_IGNORE(x) DEFINE_TEST_CASE_PROPERTIES_TE()

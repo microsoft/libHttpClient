@@ -81,20 +81,21 @@ set(Public_Source_Files
     )
 
 set(Common_Source_Files
-    ../../Source/Common/asyncop.cpp
-    ../../Source/Common/asyncop.h
+    ../../Source/Common/task.cpp
+    ../../Source/Common/task.h
     ../../Source/Common/mem.cpp
     ../../Source/Common/mem.h
     ../../Source/Common/pch.cpp
     ../../Source/Common/pch.h
     ../../Source/Common/pch_common.h
-    ../../Source/Common/settings.cpp
+    ../../Source/Common/settings_publics.cpp
+    ../../Source/Common/task_publics.cpp
+    ../../Source/Common/global_publics.cpp
     ../../Source/Common/singleton.cpp
     ../../Source/Common/singleton.h
-    ../../Source/Common/threadpool.cpp
-    ../../Source/Common/threadpool.h
     ../../Source/Common/utils.cpp
     ../../Source/Common/utils.h
+    ../../Source/Common/buildver.h
     )
 
 set(Common_UWP_Source_Files
@@ -134,9 +135,9 @@ set(Logger_Source_Files
     )
 
 set(UnitTests_Source_Files_Support
-	../../Tests/UnitTests/Support/iso8601.cpp
+#	../../Tests/UnitTests/Support/iso8601.cpp
+#	../../Tests/UnitTests/Support/iso8601.h
 	../../Tests/UnitTests/Support/DefineTestMacros.h
-	../../Tests/UnitTests/Support/iso8601.h
 	../../Tests/UnitTests/Support/UnitTestIncludes.h
     )
 
@@ -148,9 +149,17 @@ set(Taef_UnitTests_Source_Files
 	../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
     )
 
+set(TE_UnitTests_Source_Files    
+    ../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
+    ../../Tests/UnitTests/Support/TE/unittesthelpers.h
+    ../../Tests/UnitTests/Support/TE/unittestincludes_te.h
+    )
+    
 set(UnitTests_Source_Files_Tests
 	../../Tests/UnitTests/Tests/HttpTests.cpp
 	../../Tests/UnitTests/Tests/MockTests.cpp
+    ../../Tests/UnitTests/Tests/GlobalTests.cpp
+    ../../Tests/UnitTests/Tests/TaskTests.cpp
     )
     
 if( SHIP )
@@ -218,12 +227,12 @@ if( TE )
     message(STATUS "TE source group")
 	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
 	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
-    # source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})    
+    source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})    
 	list(APPEND
 		SOURCE_FILES
 		${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
-        # ${TE_UnitTests_Source_Files}
+        ${TE_UnitTests_Source_Files}
 		)
 endif()
 

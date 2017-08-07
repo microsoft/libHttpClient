@@ -5,7 +5,7 @@
 #include <new>
 #include <stddef.h>
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 class http_memory
 {
@@ -46,7 +46,7 @@ private:
     void* m_pBuffer;
 };
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_END
 
 template<typename T>
 class http_stl_allocator
@@ -60,7 +60,7 @@ public:
 
     T* allocate(size_t n)
     {
-        T* p = static_cast<T*>(xbox::livehttpclient::http_memory::mem_alloc(n * sizeof(T)));
+        T* p = static_cast<T*>(xbox::httpclient::http_memory::mem_alloc(n * sizeof(T)));
 
         if (p == nullptr)
         {
@@ -71,7 +71,7 @@ public:
 
     void deallocate(_In_opt_ void* p, size_t)
     {
-        xbox::livehttpclient::http_memory::mem_free(p);
+        xbox::httpclient::http_memory::mem_free(p);
     }
 };
 
@@ -101,8 +101,14 @@ using http_internal_basic_string = std::basic_string<C, TRAITS, http_stl_allocat
 
 using http_internal_string = http_internal_basic_string<char_t>;
 
+template<class C, class TRAITS = std::char_traits<C>>
+using http_internal_basic_stringstream = std::basic_stringstream<C, TRAITS, http_stl_allocator<C>>;
+
+using http_internal_stringstream = http_internal_basic_string<char_t>;
+
 template<class T>
 using http_internal_dequeue = std::deque<T, http_stl_allocator<T>>;
 
 template<class T>
 using http_internal_queue = std::queue<T, http_internal_dequeue<T>>;
+

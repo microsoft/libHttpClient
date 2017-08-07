@@ -37,6 +37,8 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <codecvt>
+#include <iomanip>
 
 #if UWP_API
 #include <collection.h>
@@ -55,9 +57,9 @@
 #endif
 
 #ifndef UNIT_TEST_SERVICES
-#define http_ASSERT(x) assert(x);
+#define HC_ASSERT(x) assert(x);
 #else
-#define http_ASSERT(x) if(!(x)) throw std::invalid_argument("");
+#define HC_ASSERT(x) if(!(x)) throw std::invalid_argument("");
 #endif
 
 #ifdef _WIN32
@@ -72,10 +74,24 @@ typedef std::chrono::system_clock chrono_clock_t;
 typedef std::chrono::steady_clock chrono_clock_t;
 #endif
 
-#define NAMESPACE_XBOX_LIBHCBEGIN                     namespace xbox { namespace livehttpclient {
-#define NAMESPACE_XBOX_LIBHCEND                       }}
+#define NAMESPACE_XBOX_HTTP_CLIENT_BEGIN                     namespace xbox { namespace httpclient {
+#define NAMESPACE_XBOX_HTTP_CLIENT_END                       }}
+#define NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN                 namespace xbox { namespace httpclient { namespace log {
+#define NAMESPACE_XBOX_HTTP_CLIENT_LOG_END                   }}}
+#define NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN                namespace xbox { namespace httpclienttest {
+#define NAMESPACE_XBOX_HTTP_CLIENT_TEST_END                  }}
 
+#if !UNITTEST_TE
+#define ENABLE_LOGS 1
+#define ENABLE_ASSERTS 1
+#endif
 
 typedef int32_t function_context;
 #include "httpClient/types.h"
-
+#include "httpClient/httpClient.h"
+#include "mem.h"
+#include "uwp/utils_uwp.h"
+#include "utils.h"
+#include "task.h"
+#include "singleton.h"
+#include "log.h"

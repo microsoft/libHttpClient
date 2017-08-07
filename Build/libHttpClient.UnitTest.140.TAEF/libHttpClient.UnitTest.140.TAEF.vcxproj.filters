@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\global_publics.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp">
@@ -10,13 +10,16 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings_publics.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task_publics.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp">
@@ -52,19 +55,22 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.cpp">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.cpp">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase_winrt.cpp">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp">
+      <Filter>C++ Source\UnitTests\Tests</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp">
       <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp">
+      <Filter>C++ Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskTests.cpp">
       <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,7 +81,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\asyncop.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.h">
@@ -90,7 +96,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\threadpool.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h">
@@ -112,9 +118,6 @@
       <Filter>C++ Source\Logger</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.h">

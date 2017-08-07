@@ -47,8 +47,6 @@
 
                 <CheckBox Margin="0,5,5,0" x:Name="RetryAllowedCheckbox" Content="Retry Allowed" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" />
 
-                <CheckBox Margin="0,5,5,0" x:Name="ManualThreadingCheckbox" Content="Manual Threading" HorizontalAlignment="Left" VerticalAlignment="Top" HorizontalContentAlignment="Left" VerticalContentAlignment="Top" RequestedTheme="Dark" />
-
                 <Button Margin="0,5,5,0" Content="Execute" Click="Button_Click" Height="30" Width="152" HorizontalAlignment="Left" VerticalAlignment="Top" RequestedTheme="Dark" />
 
             </StackPanel>

@@ -2,16 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include "log.h"
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 class custom_output: public log_output
 {
 public:
-    custom_output() : log_output(log_output_level_setting::use_logger_setting, log_level::off) {}
+    custom_output() : log_output() {}
 
     void add_log(_In_ const log_entry& entry) override;
 };
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

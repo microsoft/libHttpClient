@@ -93,6 +93,20 @@ inline void VERIFY_ARE_EQUAL_STR_HELPER(std::wstring expected, std::wstring actu
     }
 }
 
+inline void VERIFY_ARE_EQUAL_STR_HELPER(std::string expected, std::string actual, const wchar_t* pszParamName, const WEX::TestExecution::ErrorInfo& errorInfo)
+{
+    if (expected != actual)
+    {
+        WEX::Logging::Log::Error(FormatString(L"EXPECTED: %s = \"%s\"", pszParamName, expected.c_str()).c_str());
+        WEX::Logging::Log::Error(FormatString(L"ACTUAL: %s = \"%s\"", pszParamName, actual.c_str()).c_str());
+        WEX::TestExecution::Private::MacroVerify::IsTrue(false, L"false", errorInfo, nullptr);
+    }
+    else
+    {
+        WEX::Logging::Log::Comment(FormatString(L"Verify: AreEqual(%s,\"%s\")", pszParamName, expected.c_str()).c_str());
+    }
+}
+
 #define VERIFY_THROWS_HR(__operation, __hr)                                                                                                                                     \
 {                                                                                                                                                                               \
     bool __exceptionHit = false;                                                                                                                                                \

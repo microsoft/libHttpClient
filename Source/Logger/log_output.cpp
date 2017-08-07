@@ -2,14 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "log.h"
-#include <iomanip>
 
-NAMESPACE_XBOX_LIBHCBEGIN
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
-log_output::log_output(log_output_level_setting setting, log_level level):
-    m_levelSetting(setting),
-    m_logLevel(level)
+log_output::log_output()
 {
 }
 
@@ -40,14 +36,14 @@ log_output::format_log(_In_ const log_entry& entry)
 #endif
 
     // format : "<time> [<thread id>] <level> <category> - <msg>"
-#if !http_A 
+#if !HTTP_A 
     stream << std::put_time(&tm_snapshot, "%c") << " [" << std::this_thread::get_id() << "] ";
 #endif
-    stream << entry.level_to_string() << " " << entry.category() << " - ";
+    if(!entry.category().empty()) stream << entry.category() << " ";
     stream << entry.msg_stream().str() << std::endl;
 
     return stream.str();
 
 }
 
-NAMESPACE_XBOX_LIBHCEND
+NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

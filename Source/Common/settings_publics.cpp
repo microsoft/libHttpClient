@@ -2,26 +2,30 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "mem.h"
-#include "singleton.h"
-#include "log.h"
+
+using namespace xbox::httpclient;
+using namespace xbox::httpclient::log;
 
 HC_API void HC_CALLING_CONV
-HCSettingsSetDiagnosticsTraceLevel(
-    _In_ HC_DIAGNOSTICS_TRACE_LEVEL traceLevel
+HCSettingsSetLogLevel(
+    _In_ HC_LOG_LEVEL traceLevel
     )
 {
-    VerifyGlobalInit();
-    get_http_singleton()->m_traceLevel = traceLevel;
+    verify_http_singleton();
+    get_http_singleton()->m_logger->set_log_level(traceLevel);
+
+#if ENABLE_LOGS
+    LOGS_INFO << L"HCSettingsSetLogLevel: " << traceLevel;
+#endif
 }
 
 HC_API void HC_CALLING_CONV
-HCSettingsGetDiagnosticsTraceLevel(
-    _Out_ HC_DIAGNOSTICS_TRACE_LEVEL* traceLevel
+HCSettingsGetLogLevel(
+    _Out_ HC_LOG_LEVEL* traceLevel
     )
 {
-    VerifyGlobalInit();
-    *traceLevel = get_http_singleton()->m_traceLevel;
+    verify_http_singleton();
+    *traceLevel = get_http_singleton()->m_logger->get_log_level();
 }
 
 HC_API void HC_CALLING_CONV
@@ -29,8 +33,30 @@ HCSettingsSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     get_http_singleton()->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
+
+#if ENABLE_LOGS
+    LOGS_INFO << L"HCSettingsSetTimeoutWindow: " << timeoutWindowInSeconds;
+#endif
+}
+
+HC_API void HC_CALLING_CONV
+HCSettingsGetRetryDelay(
+    _In_ uint32_t* retryDelayInSeconds
+    )
+{
+    verify_http_singleton();
+    *retryDelayInSeconds = get_http_singleton()->m_retryDelayInSeconds;
+}
+
+HC_API void HC_CALLING_CONV
+HCSettingsSetRetryDelay(
+    _In_ uint32_t retryDelayInSeconds
+    )
+{
+    verify_http_singleton();
+    get_http_singleton()->m_retryDelayInSeconds = retryDelayInSeconds;
 }
 
 HC_API void HC_CALLING_CONV
@@ -38,7 +64,7 @@ HCSettingsGetTimeoutWindow(
     _Out_ uint32_t* timeoutWindowInSeconds
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *timeoutWindowInSeconds = get_http_singleton()->m_timeoutWindowInSeconds;
 }
 
@@ -47,7 +73,7 @@ HCSettingsSetAssertsForThrottling(
     _In_ bool enableAssertsForThrottling
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     get_http_singleton()->m_enableAssertsForThrottling = enableAssertsForThrottling;
 }
 
@@ -56,16 +82,16 @@ HCSettingsGetAssertsForThrottling(
     _Out_ bool* enableAssertsForThrottling
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
     *enableAssertsForThrottling = get_http_singleton()->m_enableAssertsForThrottling;
 }
 
 HC_API void HC_CALLING_CONV
-HCSettingsAddMockCall(
+HCMockAddMock(
     _In_ HC_CALL_HANDLE call
     )
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
     get_http_singleton()->m_mocks.push_back(call);
@@ -73,9 +99,9 @@ HCSettingsAddMockCall(
 }
 
 HC_API void HC_CALLING_CONV
-HCSettingsClearMockCalls()
+HCMockClearMocks()
 {
-    VerifyGlobalInit();
+    verify_http_singleton();
 
     std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
 
