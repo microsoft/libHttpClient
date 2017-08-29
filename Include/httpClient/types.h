@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-#pragma once
 
+#pragma once
 #pragma warning(disable: 4062)
 
 #ifdef _WIN32
@@ -71,11 +71,11 @@
 #endif
 
 #ifdef _WIN32
-typedef wchar_t CHAR_T;
-typedef LPCWSTR PCSTR_T;
+    typedef wchar_t CHAR_T;
+    typedef LPCWSTR PCSTR_T;
 #else
-typedef char CHAR_T;
-typedef const char* PCSTR_T;
+    typedef char CHAR_T;
+    typedef const char* PCSTR_T;
 #endif
 
 #ifndef _T
@@ -87,9 +87,6 @@ typedef const char* PCSTR_T;
 #endif
 
 #define HC_CALLING_CONV __cdecl
-//#define HC_CALLING_CONV __stdcall
-
 typedef uint32_t HC_MEMORY_TYPE;
 typedef struct HC_CALL* HC_CALL_HANDLE;
 typedef uint64_t HC_TASK_HANDLE;
-typedef const struct HC_USER* USER_HANDLE;

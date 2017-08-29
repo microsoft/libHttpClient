@@ -5,16 +5,15 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
-void logger::add_log_output(_In_ std::shared_ptr<log_output> output)
+void logger::add_log_output(_In_ std::unique_ptr<log_output> output)
 {
-    m_log_outputs.emplace_back(output); 
+    m_log_outputs.emplace_back(std::move(output)); 
 };
 
 HC_LOG_LEVEL logger::get_log_level()
 {
     return m_logLevel;
 }
-
 
 void logger::set_log_level(_In_ HC_LOG_LEVEL level)
 {

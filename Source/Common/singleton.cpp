@@ -20,11 +20,11 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 http_singleton::http_singleton() 
 {
-    m_lastHttpCallId = 0;
+    m_lastId = 0;
     m_loggingHandlersCounter = 0;
     m_performFunc = Internal_HCHttpCallPerform;
-    m_logger = std::make_shared<xbox::httpclient::log::logger>();
-    m_logger->add_log_output(std::make_shared<xbox::httpclient::log::debug_output>());
+    m_logger = std::make_unique<xbox::httpclient::log::logger>();
+    m_logger->add_log_output(std::make_unique<xbox::httpclient::log::debug_output>());
     m_logger->set_log_level(HC_LOG_LEVEL::LOG_OFF);
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
