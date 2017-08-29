@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "debug_output.h"
 
-
 NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
 void debug_output::write(_In_ const std::string& msg)

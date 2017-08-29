@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #include "utils.h"
 #include <string>
 #include <sstream>
@@ -8,13 +9,12 @@
 
 #pragma once
 
-#define DEFAULT_LOGGER xbox::httpclient::log::logger::get_logger()
+#define DEFAULT_LOGGER get_http_singleton()->m_logger
 #define IF_LOGGER_ENABLED(logger) if(logger != nullptr)
 #define IF_LOG_LEVEL_ENABLED(logger, level) if(logger != nullptr && logger->log_level_enabled(level))
 
 #define LOG(logger, level, category, msg) IF_LOGGER_ENABLED(logger) logger->add_log(xbox::httpclient::log::log_entry(level, category, msg))
 #define LOGS(logger, level, category) IF_LOGGER_ENABLED(logger) *logger += xbox::httpclient::log::log_entry(level, category)
-
 
 const char defaultCategory[] = "";
 #define IF_LOG_ERROR() IF_LOG_LEVEL_ENABLED(DEFAULT_LOGGER, HC_LOG_LEVEL::LOG_ERROR)
@@ -31,20 +31,16 @@ const char defaultCategory[] = "";
 
 NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN
 
-
 class log_entry
 {
 public:
     log_entry(_In_ HC_LOG_LEVEL level, _In_ std::string category);
-
     log_entry(_In_ HC_LOG_LEVEL level, _In_ std::string category, _In_ std::string msg);
 
     std::string level_to_string() const;
-
     const std::stringstream& msg_stream() const { return m_message; }
-
     const std::string& category() const { return m_category; }
-    HC_LOG_LEVEL get_log_level() const { return m_logLevel;  }
+    HC_LOG_LEVEL get_log_level() const { return m_logLevel; }
 
     log_entry& operator<<(const char* data)
     {
@@ -96,13 +92,11 @@ class log_output
 public:
     // When log_output_type is set to use_logger_setting, the level parameter will be ignored.
     log_output();
-
     virtual void add_log(_In_ const log_entry& entry);
 
 protected:
     // This function is to write the string to the final output, don't need to be thread safe.
     virtual void write(_In_ const std::string& msg);
-
     virtual std::string format_log(_In_ const log_entry& entry);
 
 private:
@@ -113,20 +107,18 @@ class logger
 {
 public:
     logger() : m_logLevel(HC_LOG_LEVEL::LOG_ERROR) {}
-    static std::shared_ptr<xbox::httpclient::log::logger> get_logger() { return get_http_singleton()->m_logger; }
 
     void set_log_level(_In_ HC_LOG_LEVEL level);
     HC_LOG_LEVEL get_log_level();
     bool log_level_enabled(_In_ HC_LOG_LEVEL level) const { return level <= m_logLevel; }
-
-    void add_log_output(_In_ std::shared_ptr<log_output> output);
-
+    void add_log_output(_In_ std::unique_ptr<log_output> output);
     void add_log(_In_ const log_entry& entry);
     void operator+=(_In_ const log_entry& record);
 
 private:
-    std::vector<std::shared_ptr<log_output>> m_log_outputs;
+    std::vector<std::unique_ptr<log_output>> m_log_outputs;
     HC_LOG_LEVEL m_logLevel;
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_LOG_END
+
