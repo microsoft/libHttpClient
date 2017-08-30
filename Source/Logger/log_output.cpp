@@ -32,7 +32,7 @@ log_output::format_log(_In_ const log_entry& entry)
 #if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__))
     localtime_s(&tm_snapshot, &t);
 #else
-    localtime_r(&t, &tm_snapshot); // POSIX  
+    localtime_r(&t, &tm_snapshot); // POSIX
 #endif
 
     // format : "<time> [<thread id>] <level> <category> - <msg>"
@@ -43,7 +43,6 @@ log_output::format_log(_In_ const log_entry& entry)
     stream << entry.msg_stream().str() << std::endl;
 
     return stream.str();
-
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_LOG_END

@@ -17,8 +17,8 @@ HCHttpCallCreate(
     HC_CALL* call = new HC_CALL();
     call->retryAllowed = true;
 
-    call->id = get_http_singleton()->m_lastHttpCallId;
-    get_http_singleton()->m_lastHttpCallId++;
+    call->id = get_http_singleton()->m_lastId;
+    get_http_singleton()->m_lastId++;
 
 #if ENABLE_LOGS
     LOGS_INFO << "HCHttpCallCreate [ID " << call->id << "]";
