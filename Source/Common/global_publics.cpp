@@ -5,8 +5,6 @@
 #include "../http/httpcall.h"
 #include "buildver.h"
 #include "singleton.h"
-#include "log.h"
-#include "debug_output.h"
 
 using namespace xbox::httpclient;
 

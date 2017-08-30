@@ -68,8 +68,6 @@ struct http_singleton
     win32_handle m_pendingReadyHandle;
 #endif
     void set_task_pending_ready();
-
-    std::shared_ptr<xbox::httpclient::log::logger> m_logger;
 };
 
 http_singleton* get_http_singleton(_In_ bool createIfRequired = false);

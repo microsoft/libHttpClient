@@ -20,9 +20,7 @@ HCHttpCallCreate(
     call->id = get_http_singleton()->m_lastHttpCallId;
     get_http_singleton()->m_lastHttpCallId++;
 
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallCreate [ID " << call->id << "]";
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
 
     *callHandle = call;
 }
@@ -32,9 +30,8 @@ HCHttpCallCleanup(
     _In_ HC_CALL_HANDLE call
     )
 {
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallCleanup [ID " << call->id << "]";
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCleanup [ID %llu]", call->id);
+
     verify_http_singleton();
     delete call;
 }
@@ -45,7 +42,7 @@ void HttpCallPerformExecute(
     )
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
-    LOGS_INFO << "HttpCallPerformExecute [ID " << call->id << "]";
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu]", call->id);
 
     bool matchedMocks = false;
     if (get_http_singleton()->m_mocksEnabled)
@@ -68,7 +65,7 @@ void HttpCallPerformExecute(
             }
             catch (...)
             {
-                LOG_ERROR("HCHttpCallPerform failed");
+                HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", call->id);
             }
         }
     }
@@ -82,7 +79,9 @@ void HttpCallPerformWriteResults(
 )
 {
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
-    LOGS_INFO << "HttpCallPerformWriteResults [ID " << call->id << "]";
+
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformWriteResults [ID %llu]", call->id);
+
     HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
     if (completeFn != nullptr)
     {
@@ -99,9 +98,8 @@ HCHttpCallPerform(
     )
 {
     verify_http_singleton();
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallPerform [ID " << call->id << "]";
-#endif
+
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
 
     return HCTaskCreate(
         taskGroupId,

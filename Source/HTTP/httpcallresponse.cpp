@@ -25,9 +25,8 @@ HCHttpCallResponseSetResponseString(
 {
     verify_http_singleton();
     call->responseString = responseString;
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallResponseSetResponseString [ID " << call->id << "]: responseString:" << responseString;
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%ws",
+        call->id, responseString);
 }
 
 HC_API void HC_CALLING_CONV
@@ -48,9 +47,8 @@ HCHttpCallResponseSetStatusCode(
 {
     verify_http_singleton();
     call->statusCode = statusCode;
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallResponseSetStatusCode [ID " << call->id << "]: statusCode=" << statusCode;
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetStatusCode [ID %llu]: statusCode=%u",
+        call->id, statusCode);
 }
 
 HC_API void HC_CALLING_CONV
@@ -71,9 +69,8 @@ HCHttpCallResponseSetErrorCode(
 {
     verify_http_singleton();
     call->errorCode = errorCode;
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallResponseSetErrorCode [ID " << call->id << "]: errorCode=" << errorCode;
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorCode [ID %llu]: errorCode=%08X",
+        call->id, errorCode);
 }
 
 HC_API void HC_CALLING_CONV
@@ -94,9 +91,8 @@ HCHttpCallResponseSetErrorMessage(
 {
     verify_http_singleton();
     call->errorMessage = errorMessage;
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallResponseSetErrorMessage [ID " << call->id << "]: errorMessage=" << errorMessage;
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorMessage [ID %llu]: errorMessage=%ws",
+        call->id, errorMessage);
 }
 
 HC_API void HC_CALLING_CONV
@@ -164,9 +160,8 @@ HCHttpCallResponseSetHeader(
     )
 {
     call->responseHeaders[headerName] = headerValue;
-#if ENABLE_LOGS
-    LOGS_INFO << "HCHttpCallResponseSetHeader [ID " << call->id << "]: " << headerName << "=" << headerValue;
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %ws=%ws",
+        call->id, headerName, headerValue);
 }
 
 

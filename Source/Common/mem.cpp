@@ -62,9 +62,7 @@ void* http_memory::mem_alloc(
     }
     catch (...)
     {
-#if ENABLE_LOGS
-        LOG_ERROR("mem_alloc callback failed.");
-#endif
+        HC_TRACE_ERROR(HTTPCLIENT, "mem_alloc callback failed");
         return nullptr;
     }
 }
@@ -80,9 +78,7 @@ void http_memory::mem_free(
     }
     catch (...)
     {
-#if ENABLE_LOGS
-        LOG_ERROR("mem_free callback failed.");
-#endif
+        HC_TRACE_ERROR(HTTPCLIENT, "mem_free callback failed");
     }
 }
 

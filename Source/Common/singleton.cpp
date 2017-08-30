@@ -5,8 +5,6 @@
 #include "../http/httpcall.h"
 #include "buildver.h"
 #include "singleton.h"
-#include "log.h"
-#include "debug_output.h"
 
 using namespace xbox::httpclient;
 
@@ -23,9 +21,6 @@ http_singleton::http_singleton()
     m_lastHttpCallId = 0;
     m_loggingHandlersCounter = 0;
     m_performFunc = Internal_HCHttpCallPerform;
-    m_logger = std::make_shared<xbox::httpclient::log::logger>();
-    m_logger->add_log_output(std::make_shared<xbox::httpclient::log::debug_output>());
-    m_logger->set_log_level(HC_LOG_LEVEL::LOG_OFF);
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
     m_enableAssertsForThrottling = true;
@@ -126,9 +121,7 @@ void verify_http_singleton()
 #if ENABLE_ASSERTS
     if (g_httpSingleton == nullptr)
     {
-#if ENABLE_LOGS
-        LOG_ERROR("Call HCGlobalInitialize() first");
-#endif
+        HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
         assert(g_httpSingleton != nullptr);
     }
 #endif
