@@ -122,7 +122,7 @@ HCTaskCreate(
         task->completionRoutine = completionRoutine;
         task->completionRoutineContext = completionRoutineContext;
         task->taskGroupId = taskGroupId;
-        task->id = get_http_singleton()->m_lastHttpCallId++;
+        task->id = get_http_singleton()->m_lastId++;
 
         HC_TRACE_INFORMATION(HTTPCLIENT, "HCTaskCreate: taskGroupId=%llu taskId=%llu", taskGroupId, task->id);
 

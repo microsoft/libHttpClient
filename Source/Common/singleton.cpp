@@ -18,7 +18,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 http_singleton::http_singleton() 
 {
-    m_lastHttpCallId = 0;
+    m_lastId = 0;
     m_loggingHandlersCounter = 0;
     m_performFunc = Internal_HCHttpCallPerform;
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
