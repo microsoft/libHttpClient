@@ -41,7 +41,7 @@ std::string to_utf8string(const std::wstring &value)
     return conversion.to_bytes(value);
 }
 
-std::wstring to_utf16string(const std::string &value)
+std::wstring to_wstring(const std::string &value)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> conversion;
     return conversion.from_bytes(value);
@@ -83,7 +83,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
         char *ct;
         res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
         std::string responseStr = chunk.memory;
-        std::wstring wstr = to_utf16string(responseStr);
+        std::wstring wstr = to_wstring(responseStr);
         HCHttpCallResponseSetResponseString(call, wstr.c_str());
     }
     HCHttpCallResponseSetErrorCode(call, res);
