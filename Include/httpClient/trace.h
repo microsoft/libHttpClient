@@ -159,8 +159,10 @@ typedef void (HCTraceCallback)(
 #define HC_DECLARE_TRACE_AREA(area) \
     extern struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area)
 
-#define HC_TRACE_SET_VERBOSITY(area, verbosity) \
-    HC_PRIVATE_TRACE_AREA_NAME(area).Verbosity = (verbosity)
+// Access to the verbosity property of the area for runtime control
+#define HC_TRACE_VERBOSITY(area) \
+    HC_PRIVATE_TRACE_AREA_NAME(area).Verbosity
+
 #else
 #define HC_DEFINE_TRACE_AREA(name, verbosity)
 #define HC_DECLARE_TRACE_AREA(name)
