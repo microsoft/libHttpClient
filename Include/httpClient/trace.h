@@ -45,7 +45,7 @@ enum HCTraceLevel
 //     controls if trace will output using OutputDebugString
 //     only has an effect when building trace.cpp
 //
-// HC_TRACE_TO_TRACELOGGING [0,1]
+// HC_TRACE_TO_CLIENT [0,1]
 //     controls if trace will output using the TraceLoggingProvider
 //     only has an effect when building trace.cpp
 
