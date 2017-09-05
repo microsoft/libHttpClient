@@ -21,7 +21,7 @@ HCSettingsSetLogLevel(
     case LOG_VERBOSE: internalTraceLevel = HC_TRACELEVEL_INFORMATION; break;
     };
 
-    HC_PRIVATE_TRACE_AREA_NAME(HTTPCLIENT).Verbosity = internalTraceLevel;
+    HC_TRACE_VERBOSITY(HTTPCLIENT) = internalTraceLevel;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsSetLogLevel: %d", traceLevel);
 }

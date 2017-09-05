@@ -65,52 +65,55 @@ enum HCTraceLevel
 // level enabled macros
 //------------------------------------------------------------------------------
 // these macros can be used to easily check if a given trace level will be
-// included in the build (for example to avoid compiling helper code for a trace)
+// included in the build (for example to avoid compiling helper code for a
+// trace).
+// These macros are always defined
 //
-// HC_TRACE_ENABLE
-// HC_TRACE_ERROR_ENABLE
-// HC_TRACE_WARNING_ENABLE
-// HC_TRACE_IMPORTANT_ENABLE
-// HC_TRACE_INFORMATION_ENABLE
-// HC_TRACE_VERBOSE_ENABLE
+// HC_TRACE_ENABLE [0,1]
+// HC_TRACE_ERROR_ENABLE [0,1]
+// HC_TRACE_WARNING_ENABLE [0,1]
+// HC_TRACE_IMPORTANT_ENABLE [0,1]
+// HC_TRACE_INFORMATION_ENABLE [0,1]
+// HC_TRACE_VERBOSE_ENABLE [0,1]
 //
 // these should not be manually modified, they are automatically set based on
 // the values of HC_TRACE_BUILD_LEVEL
+
 #if HC_TRACE_BUILD_LEVEL > HC_PRIVATE_TRACE_LEVEL_OFF
 #define HC_TRACE_ENABLE 1
 #else
 #define HC_TRACE_ENABLE 0
 #endif
 
-#if HC_TRACE_ENABLE && HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_ERROR
+#if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_ERROR
 #define HC_TRACE_ERROR_ENABLE 1
 #else
 #define HC_TRACE_ERROR_ENABLE 0
 #endif
 
 
-#if HC_TRACE_ENABLE && HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_WARNING
+#if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_WARNING
 #define HC_TRACE_WARNING_ENABLE 1
 #else
 #define HC_TRACE_WARNING_ENABLE 0
 #endif
 
 
-#if HC_TRACE_ENABLE && HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_IMPORTANT
+#if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_IMPORTANT
 #define HC_TRACE_IMPORTANT_ENABLE 1
 #else
 #define HC_TRACE_IMPORTANT_ENABLE 0
 #endif
 
 
-#if HC_TRACE_ENABLE && HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_INFORMATION
+#if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_INFORMATION
 #define HC_TRACE_INFORMATION_ENABLE 1
 #else
 #define HC_TRACE_INFORMATION_ENABLE 0
 #endif
 
 
-#if HC_TRACE_ENABLE && HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_VERBOSE
+#if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_VERBOSE
 #define HC_TRACE_VERBOSE_ENABLE 1
 #else
 #define HC_TRACE_VERBOSE_ENABLE 0
@@ -120,6 +123,8 @@ enum HCTraceLevel
 // Global init macros
 //------------------------------------------------------------------------------
 // Initialize, cleanup and register callback for tracing
+// These macros are always defined but will compile to nothing if trace is
+// disabled
 
 typedef void (HCTraceCallback)(
     char const* areaName,
@@ -143,6 +148,9 @@ typedef void (HCTraceCallback)(
 // Trace area macros
 //------------------------------------------------------------------------------
 // these macros are used to set up areas for tracing
+// These macros are always defined but will compile to nothing if trace is
+// disabled
+
 #if HC_TRACE_ENABLE
 // Defines an area for tracing:
 // name is used as a prefix for all traces in the area
@@ -172,6 +180,9 @@ typedef void (HCTraceCallback)(
 // Trace macros
 //------------------------------------------------------------------------------
 // these are the macros to be used to log
+// These macros are always defined but will compile to nothing if
+// HC_TRACE_BUILD_LEVEL is not high enough
+
 #if HC_TRACE_ENABLE
 #define HC_TRACE_MESSAGE(area, level, ...) \
     HCTraceImplMessage(&HC_PRIVATE_TRACE_AREA_NAME(area), (level), ##__VA_ARGS__)
@@ -252,6 +263,15 @@ typedef void (HCTraceCallback)(
 //------------------------------------------------------------------------------
 // Implementation
 //------------------------------------------------------------------------------
+// these symbols are always built even if trace is disabled, but note that no
+// trace areas will be defined so they should never be used directly
+// the reason why they are always built is to avoid issues with different
+// compilation units setting different values for HC_TRACE_BUILD_LEVEL
+// the linker will discard everything if tracing is disabled because there will
+// be no references
+
+// DO NOT USE THESE SYMBOLS DIRECTLY
+
 #define HC_PRIVATE_TRACE_AREA_NAME(area) g_trace##area
 
 struct HCTraceImplArea
