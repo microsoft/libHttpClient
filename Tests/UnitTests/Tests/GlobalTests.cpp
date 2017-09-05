@@ -27,9 +27,9 @@ public:
         VERIFY_ARE_EQUAL_STR(_T("1.0.0.0"), ver);
 
 #pragma warning(disable: 4800)
-        std::wstring test1 = to_utf16string(L"test");
+        std::wstring test1 = to_wstring(L"test");
         VERIFY_ARE_EQUAL_STR(L"test", test1.c_str());
-        std::wstring test2 = to_utf16string("test");
+        std::wstring test2 = to_wstring("test");
         VERIFY_ARE_EQUAL_STR(L"test", test2.c_str());
         std::string test3 = to_utf8string(L"test");
         VERIFY_ARE_EQUAL_STR("test", test3.c_str());
