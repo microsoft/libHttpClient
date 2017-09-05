@@ -2,11 +2,11 @@
 
 libHttpClient is still under construction and is not ready to use.  
 You can review the goals below to see what shape the project will have in its final form.
-If you want to contribute on the project, please talk to us to avoid overlap.
+If you want to contribute to the project, please talk to us to avoid overlap.
 
 ## Goals
 
-- libHttpClient provides an **platform abstraction layer** for **HTTP** and **WebSocket**
+- libHttpClient provides a **platform abstraction layer** for **HTTP** and **WebSocket**
 - Stock implementations that call **native platform HTTP / WebSocket APIs** on UWP, XDK ERA, iOS, Android 
 - Caller can add support for **other platforms via callback** API
 - Sample showing off an **HTTP implementation via Curl** https://github.com/curl/curl via this callback
@@ -42,7 +42,7 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 1. Optionally call HCSettingsSet*()
 1. Call HCHttpCallCreate() to create a new HC_CALL_HANDLE
 1. Call HCHttpCallRequestSet*() to prepare the HC_CALL_HANDLE
-1. Call HCHttpCallPerform() to perform HTTP call using the HC_CALL_HANDLE.  This call is asynchronous, so the work will be done on task thread and it will return via the callback.
+1. Call HCHttpCallPerform() to perform an HTTP call using the HC_CALL_HANDLE.  This call is asynchronous, so the work will be done on task thread and it will return via the callback.
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE
 1. Call HCHttpCallCleanup() to cleanup the HC_CALL_HANDLE
 1. Repeat 4-8 for each new HTTP call
@@ -51,12 +51,12 @@ If you want to contribute on the project, please talk to us to avoid overlap.
 ## Behavior control
 
 * On UWP, XDK ERA, iOS, and Android, HCHttpCallPerform() will call native platform APIs
-* Optionally call HCGlobalSetHttpCallPerformFunction() to create do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
+* Optionally call HCGlobalSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl how to use this callback plus Curl https://github.com/curl/curl to make an HTTP implementation using Curl.
 
 ## TODO
 
-Big things that still need to be done in rough priorty order:
+Big things that still need to be done in rough priority order:
 
 * [Done] Prototype XSAPI on top of libHttpClient HTTP stack
 * [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin/tree/libHttpClient
@@ -88,7 +88,7 @@ Big things that still need to be done in rough priorty order:
 
 This repo contains submodules.  There are two ways to make sure you get submodules.
 
-When initially cloning, make sure you use the "--recursive" option. IE:
+When initially cloning, make sure you use the "--recursive" option. i.e.:
 
     git clone --recursive https://github.com/Microsoft/libHttpClient.git
 
@@ -101,7 +101,7 @@ Note that using GitHub's feature to "Download Zip" does not contain the submodul
 
 ## Contribute Back!
 
-Is there a feature missing that you'd like to see, or found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](../../issues).  
+Is there a feature missing that you'd like to see, or have you found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](../../issues).  
 
 Big or small we'd like to take your contributions back to help improve the Xbox Live Service API for everyone.
 
