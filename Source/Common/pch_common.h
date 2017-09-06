@@ -12,9 +12,9 @@
 #include <SDKDDKVer.h>
 
 // Windows
-#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-#endif
+#define NOMINMAX
+
 #include <windows.h>
 //#include <winapifamily.h>
 #else

@@ -11,8 +11,6 @@
 #include <cstdio>
 #include <ctime>
 
-#undef min
-
 namespace
 {
 

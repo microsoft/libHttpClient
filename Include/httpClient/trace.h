@@ -170,12 +170,16 @@ typedef void (HCTraceCallback)(
     extern struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area)
 
 // Access to the verbosity property of the area for runtime control
-#define HC_TRACE_VERBOSITY(area) \
-    HC_PRIVATE_TRACE_AREA_NAME(area).Verbosity
+#define HC_TRACE_SET_VERBOSITY(area, level) \
+    HCTraceImplSetAreaVerbosity(&HC_PRIVATE_TRACE_AREA_NAME(area), level)
 
+#define HC_TRACE_GET_VERBOSITY(area) \
+    HCTraceImplGetAreaVerbosity(&HC_PRIVATE_TRACE_AREA_NAME(area))
 #else
 #define HC_DEFINE_TRACE_AREA(name, verbosity)
 #define HC_DECLARE_TRACE_AREA(name)
+#define HC_TRACE_SET_VERBOSITY(area, level)
+#define HC_TRACE_GET_VERBOSITY(area) HC_TRACELEVEL_OFF
 #endif
 
 //------------------------------------------------------------------------------
@@ -189,12 +193,9 @@ typedef void (HCTraceCallback)(
 #define HC_TRACE_MESSAGE(area, level, format, ...) \
     HCTraceImplMessage(&HC_PRIVATE_TRACE_AREA_NAME(area), (level), _T(format), ##__VA_ARGS__)
 
-#define HC_TRACE_MESSAGE_WITH_LOCATION(area, level, format, ...) \
-    HC_TRACE_MESSAGE(HC_PRIVATE_TRACE_AREA_NAME(area), (level), format "\n    %s(%d): %s()" , ##__VA_ARGS__,  __FILE__, __LINE__, __FUNCTION__)
-
 #ifdef __cplusplus
 #define HC_TRACE_SCOPE(area, level) \
-        auto tsh = HCTraceImplScopeHelper{ HC_PRIVATE_TRACE_AREA_NAME(area), level, __FUNCTION__ }
+        auto tsh = HCTraceImplScopeHelper{ &HC_PRIVATE_TRACE_AREA_NAME(area), level, HC_FUNCTION }
 #else
 #define HC_TRACE_SCOPE(area, level)
 #endif
@@ -205,16 +206,12 @@ typedef void (HCTraceCallback)(
 #endif
 
 #if HC_TRACE_ERROR_ENABLE
-#define HC_TRACE_ERROR_WITH_LOCATION(area, msg, ...)  \
-    HC_TRACE_MESSAGE_WITH_LOCATION(area, HC_TRACELEVEL_ERROR, msg, ##__VA_ARGS__)
-
 #define HC_TRACE_ERROR(area, msg, ...)  \
     HC_TRACE_MESSAGE(area, HC_TRACELEVEL_ERROR, msg, ##__VA_ARGS__)
 
 #define HC_TRACE_ERROR_HR(area, failedHr, msg)  \
     HC_TRACE_ERROR(area, "%hs (hr=0x%08x)", msg, failedHr)
 #else
-#define HC_TRACE_ERROR_WITH_LOCATION(area, msg, ...)
 #define HC_TRACE_ERROR(area, msg, ...)
 #define HC_TRACE_ERROR_HR(area, failedHr, msg)
 #endif
@@ -222,6 +219,7 @@ typedef void (HCTraceCallback)(
 #if HC_TRACE_WARNING_ENABLE
 #define HC_TRACE_WARNING(area, msg, ...) \
     HC_TRACE_MESSAGE(area, HC_TRACELEVEL_WARNING, msg, ##__VA_ARGS__)
+
 #define HC_TRACE_WARNING_HR(area, failedHr, msg)  \
     HC_TRACE_WARNING(area, "%hs (hr=0x%08x)", msg, failedHr)
 #else
@@ -276,11 +274,29 @@ typedef void (HCTraceCallback)(
 
 #define HC_PRIVATE_TRACE_AREA_NAME(area) g_trace##area
 
+#if HC_CHAR_T_IS_WIDE
+#define HC_FUNCTION __FUNCTIONW__
+#else
+#define HC_FUNCTION __FUNCTION__
+#endif
+
 struct HCTraceImplArea
 {
     CHAR_T const* const Name;
     enum HCTraceLevel Verbosity;
 };
+
+inline
+void HCTraceImplSetAreaVerbosity(HCTraceImplArea* area, HCTraceLevel verbosity)
+{
+    area->Verbosity = verbosity;
+}
+
+inline
+HCTraceLevel HCTraceImplGetAreaVerbosity(HCTraceImplArea* area)
+{
+    return area->Verbosity;
+}
 
 void HCTraceImplGlobalInit();
 void HCTraceImplGlobalCleanup();

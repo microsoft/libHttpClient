@@ -21,7 +21,7 @@ HCSettingsSetLogLevel(
     case LOG_VERBOSE: internalTraceLevel = HC_TRACELEVEL_INFORMATION; break;
     };
 
-    HC_TRACE_VERBOSITY(HTTPCLIENT) = internalTraceLevel;
+    HC_TRACE_SET_VERBOSITY(HTTPCLIENT, internalTraceLevel);
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsSetLogLevel: %d", traceLevel);
 }
@@ -32,7 +32,7 @@ HCSettingsGetLogLevel(
     )
 {
     verify_http_singleton();
-    *traceLevel = LOG_VERBOSE; // TODO fix
+    *traceLevel = static_cast<HC_LOG_LEVEL>(HC_TRACE_GET_VERBOSITY(HTTPCLIENT)); // TODO fix
 }
 
 HC_API void HC_CALLING_CONV
