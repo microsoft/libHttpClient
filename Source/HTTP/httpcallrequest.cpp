@@ -17,7 +17,7 @@ HCHttpCallRequestSetUrl(
     call->method = method;
     call->url = url;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetUrl [ID %llu]: method=%ws url=%ws",
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetUrl [ID %llu]: method=%s url=%s",
         call->id, method, url);
 }
 
@@ -42,7 +42,7 @@ HCHttpCallRequestSetRequestBodyString(
     verify_http_singleton();
     call->requestBodyString = requestBodyString;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetBodyString [ID %llu]: requestBodyString=%ws",
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetBodyString [ID %llu]: requestBodyString=%s",
         call->id, requestBodyString);
 }
 
@@ -67,7 +67,7 @@ HCHttpCallRequestSetHeader(
     verify_http_singleton();
     call->requestHeaders[headerName] = headerValue;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetHeader [ID %llu]: %ws=%ws",
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetHeader [ID %llu]: %s=%s",
         call->id, headerName, headerValue);
 }
 

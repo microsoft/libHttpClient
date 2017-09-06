@@ -25,7 +25,7 @@ HCHttpCallResponseSetResponseString(
 {
     verify_http_singleton();
     call->responseString = responseString;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%ws",
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%s",
         call->id, responseString);
 }
 
@@ -91,7 +91,7 @@ HCHttpCallResponseSetErrorMessage(
 {
     verify_http_singleton();
     call->errorMessage = errorMessage;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorMessage [ID %llu]: errorMessage=%ws",
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorMessage [ID %llu]: errorMessage=%s",
         call->id, errorMessage);
 }
 
@@ -156,11 +156,11 @@ HC_API void HC_CALLING_CONV
 HCHttpCallResponseSetHeader(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR_T headerName,
-    _Out_ PCSTR_T headerValue
+    _In_ PCSTR_T headerValue
     )
 {
     call->responseHeaders[headerName] = headerValue;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %ws=%ws",
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %s=%s",
         call->id, headerName, headerValue);
 }
 
