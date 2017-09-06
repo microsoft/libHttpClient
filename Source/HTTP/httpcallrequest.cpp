@@ -138,7 +138,7 @@ HCHttpCallRequestSetRetryAllowed(
     call->retryAllowed = retryAllowed;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",
-        call->id, retryAllowed ? "true" : "false");
+        call->id, retryAllowed ? _T("true") : _T("false"));
 }
 
 HC_API void HC_CALLING_CONV

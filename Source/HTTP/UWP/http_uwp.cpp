@@ -52,8 +52,6 @@ void uwp_http_task::perform_async(
 {
     try
     {
-        std::wstring headerName;
-        std::wstring headerValue;
         const WCHAR* url = nullptr;
         const WCHAR* method = nullptr;
         const WCHAR* requestBody = nullptr;

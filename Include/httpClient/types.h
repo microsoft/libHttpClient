@@ -70,7 +70,7 @@
   #endif
 #endif
 
-#ifdef _WIN32BLAH
+#ifdef _WIN32
     #ifdef __cplusplus
         #pragma detect_mismatch("HC_CHAR_T_IS_WIDE", "1")
     #endif
