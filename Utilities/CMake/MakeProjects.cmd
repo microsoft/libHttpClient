@@ -2,7 +2,11 @@
 if "%1" EQU "" goto help
 echo on
 set ROOT_FOLDER=%1
-if "%1" EQU "1" set ROOT_FOLDER=C:\git\forks\libHttpClient
+if "%1" EQU "1" set ROOT_FOLDER=%~dp0\..\..
+rem force root folder to an absolute path
+pushd %ROOT_FOLDER%
+set ROOT_FOLDER=%CD%
+popd
 set NEW_FOLDER=%ROOT_FOLDER%\Utilities\CMake\output
 set OLD_FOLDER=%ROOT_FOLDER%\Build
 

@@ -43,9 +43,9 @@ HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId)
     if (task == nullptr)
         return;
 
-#if ENABLE_LOGS
-    LOGS_INFO << L"HCTaskProcessNextCompletedTask: taskGroupId=" << taskGroupId << " taskId=" << task->id;
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCTaskProcessNextCompletedTask: taskGroupId=%llu taskId=%llu",
+        taskGroupId, task->id);
+
     http_task_process_completed(task);
 
     http_task_clear_task_from_handle_id(task->id);
@@ -123,9 +123,8 @@ HCTaskCreate(
         task->completionRoutineContext = completionRoutineContext;
         task->taskGroupId = taskGroupId;
         task->id = get_http_singleton()->m_lastId++;
-#if ENABLE_LOGS
-        LOGS_INFO << L"HCTaskCreate: taskGroupId=" << taskGroupId << " taskId=" << task->id;
-#endif
+
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCTaskCreate: taskGroupId=%llu taskId=%llu", taskGroupId, task->id);
 
         http_task_store_task_from_handle_id(std::move(task));
     }

@@ -127,10 +127,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\UWP\utils_uwp.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\global_publics.cpp" />
@@ -149,11 +148,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallrequest.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallresponse.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\custom_output.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\debug_output.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_entry.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_output.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

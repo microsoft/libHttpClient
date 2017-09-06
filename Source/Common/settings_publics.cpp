@@ -12,11 +12,18 @@ HCSettingsSetLogLevel(
     )
 {
     verify_http_singleton();
-    get_http_singleton()->m_logger->set_log_level(traceLevel);
 
-#if ENABLE_LOGS
-    LOGS_INFO << L"HCSettingsSetLogLevel: " << traceLevel;
-#endif
+    HCTraceLevel internalTraceLevel = HC_TRACELEVEL_OFF;
+    switch (traceLevel)
+    {
+    case LOG_OFF: internalTraceLevel = HC_TRACELEVEL_OFF; break;
+    case LOG_ERROR: internalTraceLevel = HC_TRACELEVEL_WARNING; break;
+    case LOG_VERBOSE: internalTraceLevel = HC_TRACELEVEL_INFORMATION; break;
+    };
+
+    HC_TRACE_SET_VERBOSITY(HTTPCLIENT, internalTraceLevel);
+
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsSetLogLevel: %d", traceLevel);
 }
 
 HC_API void HC_CALLING_CONV
@@ -25,7 +32,7 @@ HCSettingsGetLogLevel(
     )
 {
     verify_http_singleton();
-    *traceLevel = get_http_singleton()->m_logger->get_log_level();
+    *traceLevel = static_cast<HC_LOG_LEVEL>(HC_TRACE_GET_VERBOSITY(HTTPCLIENT)); // TODO fix
 }
 
 HC_API void HC_CALLING_CONV
@@ -36,9 +43,7 @@ HCSettingsSetTimeoutWindow(
     verify_http_singleton();
     get_http_singleton()->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
 
-#if ENABLE_LOGS
-    LOGS_INFO << L"HCSettingsSetTimeoutWindow: " << timeoutWindowInSeconds;
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsTimeoutWindow: %u", timeoutWindowInSeconds);
 }
 
 HC_API void HC_CALLING_CONV

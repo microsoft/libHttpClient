@@ -51,6 +51,7 @@ HCMemGetFunctions(
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+_Ret_maybenull_ _Post_writable_byte_size_(size)
 void* http_memory::mem_alloc(
     _In_ size_t size
     )
@@ -62,27 +63,26 @@ void* http_memory::mem_alloc(
     }
     catch (...)
     {
-#if ENABLE_LOGS
-        LOG_ERROR("mem_alloc callback failed.");
-#endif
+        HC_TRACE_ERROR(HTTPCLIENT, "mem_alloc callback failed");
         return nullptr;
     }
 }
 
 void http_memory::mem_free(
-    _In_ void* pAddress
+    _In_opt_ void* pAddress
     )
 {
     HC_MEM_FREE_FUNC pMemFree = g_memFreeFunc;
     try
     {
-        return pMemFree(pAddress, 0);
+        if (pAddress)
+        {
+            return pMemFree(pAddress, 0);
+        }
     }
     catch (...)
     {
-#if ENABLE_LOGS
-        LOG_ERROR("mem_free callback failed.");
-#endif
+        HC_TRACE_ERROR(HTTPCLIENT, "mem_free callback failed");
     }
 }
 
