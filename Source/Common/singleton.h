@@ -46,13 +46,6 @@ struct http_singleton
     http_internal_map<uint64_t, std::shared_ptr<http_task_completed_queue>> m_taskCompletedQueue;
     std::shared_ptr<http_task_completed_queue> get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId);
 
-    function_context add_logging_handler(_In_ std::function<void(HC_LOG_LEVEL, const std::string&, const std::string&)> handler);
-    void remove_logging_handler(_In_ function_context context);
-    void raise_logging_event(_In_ HC_LOG_LEVEL level, _In_ const std::string& category, _In_ const std::string& message);
-    std::mutex m_loggingWriteLock;
-    http_internal_unordered_map<function_context, std::function<void(HC_LOG_LEVEL, const std::string&, const std::string&)>> m_loggingHandlers;
-    function_context m_loggingHandlersCounter;
-
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;
     uint32_t m_timeoutWindowInSeconds;
     uint32_t m_retryDelayInSeconds;
@@ -68,8 +61,6 @@ struct http_singleton
     win32_handle m_pendingReadyHandle;
 #endif
     void set_task_pending_ready();
-
-    std::unique_ptr<xbox::httpclient::log::logger> m_logger;
 };
 
 http_singleton* get_http_singleton(_In_ bool createIfRequired = false);

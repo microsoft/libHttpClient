@@ -914,7 +914,7 @@ HC_API void HC_CALLING_CONV
 HCHttpCallResponseSetHeader(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR_T headerName,
-    _Out_ PCSTR_T headerValue
+    _In_ PCSTR_T headerValue
     );
 
 /////////////////////////////////////////////////////////////////////////////////////////
