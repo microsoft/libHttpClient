@@ -131,6 +131,14 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.141.XDK.C.vcxproj",
             });
 
+            //libHttpClient.141.Win32.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.Win32.C.vcxproj",
+                template = @"template-libHttpClient.141.Win32.C.vcxproj",
+                output = @"libHttpClient.141.Win32.C.vcxproj",
+            });
+
             //libHttpClient.140.XDK.Cpp
             fileNodes.Add(new FileNode
             {

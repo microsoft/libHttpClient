@@ -1,14 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <PropertyGroup Condition="'$(ApplicationType)'!='Windows Store'">
+    <HCLibPlatformType>Win32</HCLibPlatformType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
+    <HCLibPlatformType>UWP</HCLibPlatformType>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Platform)'=='ARM'">
     <HCLibPlatform>$(Platform)</HCLibPlatform>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Platform)'=='Win32'">
+  <PropertyGroup Condition="'$(Platform)|$(ApplicationType)'=='Win32|Windows Store'">
     <HCLibPlatform>x86</HCLibPlatform>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)|$(ApplicationType)'=='Win32|'">
+    <HCLibPlatform>Win32</HCLibPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <HCLibPlatform>$(Platform)</HCLibPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
+    <libHttpClientDefine>HC_WIN32_API</libHttpClientDefine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ApplicationType)'==''">
+    <libHttpClientDefine>HC_UWP_API</libHttpClientDefine>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">
@@ -21,13 +38,14 @@
   <PropertyGroup>
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
-    <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(HCLibPlatform)\libHttpClient.$(HCLibToolset).UWP.C\</libHttpClientLib>
+    <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(HCLibPlatform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib>
     <libHttpClientLib2>$(libHttpClientRoot)lib\$(HCLibPlatform)\</libHttpClientLib2>
-	<libHttpClientLibName>libHttpClient.$(HCLibToolset).UWP.C.lib</libHttpClientLibName>
+	<libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
   </PropertyGroup>
   
   <ItemDefinitionGroup>
     <ClCompile>
+      <PreprocessorDefinitions>$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(libHttpClientInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>

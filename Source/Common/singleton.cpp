@@ -86,7 +86,7 @@ void verify_http_singleton()
 #endif
 }
 
-#if UWP_API
+#if HC_USE_HANDLES
 HANDLE http_singleton::get_pending_ready_handle()
 {
     return m_pendingReadyHandle.get();
@@ -98,7 +98,7 @@ void http_singleton::set_task_pending_ready()
 }
 #endif
 
-#if UWP_API
+#if HC_USE_HANDLES
 HANDLE http_task_completed_queue::get_complete_ready_handle()
 {
     return m_completeReadyHandle.get();

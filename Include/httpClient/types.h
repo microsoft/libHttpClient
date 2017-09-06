@@ -4,6 +4,8 @@
 #pragma once
 #pragma warning(disable: 4062)
 
+#include <stdint.h>
+
 #ifdef _WIN32
     #include <windows.h>
 
@@ -15,16 +17,21 @@
     #define XDK_API (WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE) 
     #endif
 
-    #ifndef UWP_API
-    #define UWP_API (WINAPI_FAMILY == WINAPI_FAMILY_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10)
+    #ifndef HC_UWP_API
+    #define HC_UWP_API (WINAPI_FAMILY == WINAPI_FAMILY_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10)
     #endif
 
 #endif //#ifdef _WIN32
 
-#if UNITTEST_API
-#undef UWP_API
-#define UWP_API 1
+#if HC_UNITTEST_API
+#undef HC_UWP_API
+#define HC_UWP_API 1
 #endif 
+
+#if HC_UWP_API || HC_WIN32_API || HC_XDK_API
+#undef HC_USE_HANDLES
+#define HC_USE_HANDLES 1
+#endif
 
 #ifndef _WIN32
     #ifdef _In_

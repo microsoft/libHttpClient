@@ -15,6 +15,8 @@ else()
 		else()
 			set (PROJECT_NAME libHttpClient.XDK.C)
 		endif()
+    elseif( BUILDWIN32 )
+        set (PROJECT_NAME libHttpClient.Win32.C)
 	else()
 		if( WINRT )
 			set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -57,104 +59,109 @@ endif()
 
 add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
 
-set_source_files_properties(../../Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+set_source_files_properties(../../../Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
-    set_property(SOURCE ../../Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
+    set_property(SOURCE ../../../Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
     set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
 endif()
 
 include_directories(
     $(ProjectDir)
-    $(ProjectDir)../../Source
-    $(ProjectDir)../../Source/Common
-    $(ProjectDir)../../Source/HTTP
-    $(ProjectDir)../../Source/Logger
-    $(ProjectDir)../../include
+    $(ProjectDir)../../../Source
+    $(ProjectDir)../../../Source/Common
+    $(ProjectDir)../../../Source/HTTP
+    $(ProjectDir)../../../Source/Logger
+    $(ProjectDir)../../../include
     )
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Public_Source_Files
-    ../../include/httpClient/httpClient.h
-    ../../include/httpClient/trace.h
-    ../../include/httpClient/types.h
+    ../../../include/httpClient/httpClient.h
+    ../../../include/httpClient/trace.h
+    ../../../include/httpClient/types.h
     )
 
 set(Common_Source_Files
-    ../../Source/Common/task.cpp
-    ../../Source/Common/task.h
-    ../../Source/Common/mem.cpp
-    ../../Source/Common/mem.h
-    ../../Source/Common/pch.cpp
-    ../../Source/Common/pch.h
-    ../../Source/Common/pch_common.h
-    ../../Source/Common/settings_publics.cpp
-    ../../Source/Common/task_publics.cpp
-    ../../Source/Common/global_publics.cpp
-    ../../Source/Common/singleton.cpp
-    ../../Source/Common/singleton.h
-    ../../Source/Common/utils.cpp
-    ../../Source/Common/utils.h
-    ../../Source/Common/buildver.h
+    ../../../Source/Common/task.cpp
+    ../../../Source/Common/task.h
+    ../../../Source/Common/mem.cpp
+    ../../../Source/Common/mem.h
+    ../../../Source/Common/pch.cpp
+    ../../../Source/Common/pch.h
+    ../../../Source/Common/pch_common.h
+    ../../../Source/Common/settings_publics.cpp
+    ../../../Source/Common/task_publics.cpp
+    ../../../Source/Common/global_publics.cpp
+    ../../../Source/Common/singleton.cpp
+    ../../../Source/Common/singleton.h
+    ../../../Source/Common/utils.cpp
+    ../../../Source/Common/utils.h
+    ../../../Source/Common/buildver.h
     )
 
-set(Common_UWP_Source_Files
-    ../../Source/Common/UWP/utils_uwp.cpp
-    ../../Source/Common/UWP/utils_uwp.h
+set(Common_Windows_Source_Files
+    ../../../Source/Common/Win/utils_win.cpp
+    ../../../Source/Common/Win/utils_win.h
     )
 
 set(HTTP_Source_Files
-    ../../Source/HTTP/httpcall.cpp
-    ../../Source/HTTP/httpcall.h
-    ../../Source/HTTP/httpcallrequest.cpp
-    ../../Source/HTTP/httpcallresponse.cpp
+    ../../../Source/HTTP/httpcall.cpp
+    ../../../Source/HTTP/httpcall.h
+    ../../../Source/HTTP/httpcallrequest.cpp
+    ../../../Source/HTTP/httpcallresponse.cpp
     )
 
 set(Mock_HTTP_Source_Files
-    ../../Source/HTTP/Mock/http_mock.cpp
-    ../../Source/HTTP/Mock/http_mock.h
+    ../../../Source/HTTP/Mock/http_mock.cpp
+    ../../../Source/HTTP/Mock/http_mock.h
     )
 
 set(Unittest_HTTP_Source_Files
-    ../../Source/HTTP/Unittest/http_unittest.cpp
+    ../../../Source/HTTP/Unittest/http_unittest.cpp
     )
 
-set(UWP_HTTP_Source_Files
-    ../../Source/HTTP/UWP/http_uwp.cpp
+set(WinRTHttpClient_HTTP_Source_Files
+    ../../../Source/HTTP/WinRTHttpClient/http_winrthttpclient.cpp
     )
-
+    
+set(XMLHttp_HTTP_Source_Files
+    ../../../Source/HTTP/XMLHttp/http_xmlhttp.cpp
+    )
+    
 set(Logger_Source_Files
-    ../../Source/Logger/trace.cpp
-    ../../Source/Logger/trace_internal.h
+    ../../../Source/Logger/trace.cpp
+    ../../../Source/Logger/trace_internal.h
     )
+
 
 set(UnitTests_Source_Files_Support
-#	../../Tests/UnitTests/Support/iso8601.cpp
-#	../../Tests/UnitTests/Support/iso8601.h
-	../../Tests/UnitTests/Support/DefineTestMacros.h
-	../../Tests/UnitTests/Support/UnitTestIncludes.h
+#	../../../Tests/UnitTests/Support/iso8601.cpp
+#	../../../Tests/UnitTests/Support/iso8601.h
+	../../../Tests/UnitTests/Support/DefineTestMacros.h
+	../../../Tests/UnitTests/Support/UnitTestIncludes.h
     )
 
 set(Taef_UnitTests_Source_Files
-	../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
-	../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
-	../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
-	../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
-	../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
+	../../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
+	../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
+	../../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
+	../../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
+	../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
     )
 
 set(TE_UnitTests_Source_Files
-    ../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
-    ../../Tests/UnitTests/Support/TE/unittesthelpers.h
-    ../../Tests/UnitTests/Support/TE/unittestincludes_te.h
+    ../../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
+    ../../../Tests/UnitTests/Support/TE/unittesthelpers.h
+    ../../../Tests/UnitTests/Support/TE/unittestincludes_te.h
     )
 
 set(UnitTests_Source_Files_Tests
-	../../Tests/UnitTests/Tests/HttpTests.cpp
-	../../Tests/UnitTests/Tests/MockTests.cpp
-    ../../Tests/UnitTests/Tests/GlobalTests.cpp
-    ../../Tests/UnitTests/Tests/TaskTests.cpp
+	../../../Tests/UnitTests/Tests/HttpTests.cpp
+	../../../Tests/UnitTests/Tests/MockTests.cpp
+    ../../../Tests/UnitTests/Tests/GlobalTests.cpp
+    ../../../Tests/UnitTests/Tests/TaskTests.cpp
     )
 
 if( SHIP )
@@ -195,13 +202,25 @@ endif()
 
 if( UWP )
     message(STATUS "UWP source group")
-    source_group("C++ Source\\HTTP\\UWP" FILES ${UWP_HTTP_Source_Files})
-    source_group("C++ Source\\Common\\UWP" FILES ${Common_UWP_Source_Files})
+    source_group("C++ Source\\HTTP\\WinRTHttpClient" FILES ${WinRTHttpClient_HTTP_Source_Files})
+    source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
 
     list(APPEND
         SOURCE_FILES
-        ${UWP_HTTP_Source_Files}
-        ${Common_UWP_Source_Files}
+        ${WinRTHttpClient_HTTP_Source_Files}
+        ${Common_Windows_Source_Files}
+        )
+endif()
+    
+if( BUILDWIN32 )
+    message(STATUS "Win32 source group")
+    source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
+    source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
+
+    list(APPEND
+        SOURCE_FILES
+        ${XMLHttp_HTTP_Source_Files}
+        ${Common_Windows_Source_Files}
         )
 endif()
 
@@ -222,7 +241,7 @@ if( TE )
     message(STATUS "TE source group")
 	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
 	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
-    source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
+        source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
 	list(APPEND
 		SOURCE_FILES
 		${UnitTests_Source_Files_Support}

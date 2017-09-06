@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include "uwp/utils_uwp.h"
+#include "win/utils_win.h"
 #include "task.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
@@ -16,12 +16,12 @@ class http_task_completed_queue
 {
 public:
     http_internal_queue<HC_TASK*>& get_completed_queue();
-#if UWP_API
+#if HC_USE_HANDLES
     HANDLE get_complete_ready_handle();
     void set_task_completed_event();
 #endif
 
-#if UWP_API
+#if HC_USE_HANDLES
     win32_handle m_completeReadyHandle;
 #endif
     http_internal_queue<HC_TASK*> m_completedQueue;
@@ -56,7 +56,7 @@ struct http_singleton
     HC_CALL* m_lastMatchingMock;
     bool m_mocksEnabled;
 
-#if UWP_API
+#if HC_USE_HANDLES
     HANDLE get_pending_ready_handle();
     win32_handle m_pendingReadyHandle;
 #endif
