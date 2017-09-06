@@ -99,12 +99,12 @@ using http_internal_unordered_map = std::unordered_map<K, V, HASH, EQUAL, http_s
 template<class C, class TRAITS = std::char_traits<C>>
 using http_internal_basic_string = std::basic_string<C, TRAITS, http_stl_allocator<C>>;
 
-using http_internal_string = http_internal_basic_string<char_t>;
+using http_internal_string = http_internal_basic_string<CHAR_T>;
 
 template<class C, class TRAITS = std::char_traits<C>>
 using http_internal_basic_stringstream = std::basic_stringstream<C, TRAITS, http_stl_allocator<C>>;
 
-using http_internal_stringstream = http_internal_basic_string<char_t>;
+using http_internal_stringstream = http_internal_basic_string<CHAR_T>;
 
 template<class T>
 using http_internal_dequeue = std::deque<T, http_stl_allocator<T>>;

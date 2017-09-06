@@ -62,12 +62,6 @@
 #define HC_ASSERT(x) if(!(x)) throw std::invalid_argument("");
 #endif
 
-#ifdef _WIN32
-typedef wchar_t char_t;
-#else
-typedef char char_t;
-#endif
-
 #if _MSC_VER <= 1800
 typedef std::chrono::system_clock chrono_clock_t;
 #else

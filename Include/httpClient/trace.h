@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+#include <httpClient/types.h>
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -127,11 +129,11 @@ enum HCTraceLevel
 // disabled
 
 typedef void (HCTraceCallback)(
-    char const* areaName,
+    CHAR_T const* areaName,
     enum HCTraceLevel level,
     unsigned int threadId,
     uint64_t timestamp,
-    char const* message
+    CHAR_T const* message
 );
 
 #if HC_TRACE_ENABLE
@@ -160,7 +162,7 @@ typedef void (HCTraceCallback)(
 // since this defines a global variable, it should be only used from a .cpp file
 // and each area should be defined only once
 #define HC_DEFINE_TRACE_AREA(area, verbosity) \
-    struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area) = { #area, (verbosity) }
+    struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area) = { _T(#area), (verbosity) }
 
 // Declares a trace area. Since DEFINE_TRACE_AREA can only be used once and in a
 // .cpp, this allows to trace in an already defined area from another file
@@ -184,8 +186,8 @@ typedef void (HCTraceCallback)(
 // HC_TRACE_BUILD_LEVEL is not high enough
 
 #if HC_TRACE_ENABLE
-#define HC_TRACE_MESSAGE(area, level, ...) \
-    HCTraceImplMessage(&HC_PRIVATE_TRACE_AREA_NAME(area), (level), ##__VA_ARGS__)
+#define HC_TRACE_MESSAGE(area, level, format, ...) \
+    HCTraceImplMessage(&HC_PRIVATE_TRACE_AREA_NAME(area), (level), _T(format), ##__VA_ARGS__)
 
 #define HC_TRACE_MESSAGE_WITH_LOCATION(area, level, format, ...) \
     HC_TRACE_MESSAGE(HC_PRIVATE_TRACE_AREA_NAME(area), (level), format "\n    %s(%d): %s()" , ##__VA_ARGS__,  __FILE__, __LINE__, __FUNCTION__)
@@ -276,7 +278,7 @@ typedef void (HCTraceCallback)(
 
 struct HCTraceImplArea
 {
-    char const* const Name;
+    CHAR_T const* const Name;
     enum HCTraceLevel Verbosity;
 };
 
@@ -288,7 +290,7 @@ void HCTraceImplSetClientCallback(HCTraceCallback* callback);
 void HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     enum HCTraceLevel level,
-    _Printf_format_string_ char const* format,
+    _Printf_format_string_ CHAR_T const* format,
     ...
 );
 
@@ -296,13 +298,13 @@ void HCTraceImplMessage(
 class HCTraceImplScopeHelper
 {
 public:
-    HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, char const* scope);
+    HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, CHAR_T const* scope);
     ~HCTraceImplScopeHelper();
 
 private:
     HCTraceImplArea const* m_area;
     HCTraceLevel const m_level;
-    char const* const m_scope;
+    CHAR_T const* const m_scope;
     unsigned long long const m_id;
 };
 #endif
