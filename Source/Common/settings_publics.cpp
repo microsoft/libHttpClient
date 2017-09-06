@@ -43,7 +43,7 @@ HCSettingsSetTimeoutWindow(
     verify_http_singleton();
     get_http_singleton()->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsTimeoutWindow: %d", timeoutWindowInSeconds);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsTimeoutWindow: %u", timeoutWindowInSeconds);
 }
 
 HC_API void HC_CALLING_CONV

@@ -10,12 +10,12 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 class http_memory
 {
 public:
-    static _Ret_maybenull_ _Post_writable_byte_size_(dwSize) void* mem_alloc(
-        _In_ size_t dwSize
+    static _Ret_maybenull_ _Post_writable_byte_size_(size) void* mem_alloc(
+        _In_ size_t size
         );
 
     static void mem_free(
-        _In_ void* pAddress
+        _In_opt_ void* pAddress
         );
 
     http_memory() = delete;

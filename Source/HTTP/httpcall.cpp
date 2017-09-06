@@ -41,6 +41,8 @@ void HttpCallPerformExecute(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
+    // TODO check for null executionRoutineContext?
+
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu]", call->id);
 
@@ -78,6 +80,8 @@ void HttpCallPerformWriteResults(
     _In_opt_ void* completionRoutineContext
 )
 {
+    // TODO writeResultsRoutineContext and completionRoutineContext marked optional here but not on HCHttpCallPerformCompletionRoutine
+
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformWriteResults [ID %llu]", call->id);

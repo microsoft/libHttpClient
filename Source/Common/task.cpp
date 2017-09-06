@@ -71,6 +71,7 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
                 task = it;
             }
         }
+        // TODO what happens if task is not found?
 
         taskProcessingQueue.erase(std::remove(taskProcessingQueue.begin(), taskProcessingQueue.end(), task), taskProcessingQueue.end());
 

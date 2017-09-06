@@ -66,7 +66,7 @@
       <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='StaticLibrary'">UWP_API;HC_API_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='DynamicLibrary'">UWP_API;HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/bigobj /Zm300 /analyze %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories> 
