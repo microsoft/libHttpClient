@@ -96,6 +96,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h">
       <Filter>C++ Source\HTTP\Mock</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h">
+      <Filter>C++ Source\Logger</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h">
       <Filter>C++ Source\UnitTests\Support</Filter>
     </ClInclude>

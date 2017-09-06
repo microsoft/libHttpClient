@@ -122,9 +122,10 @@ enum HCTraceLevel
 #endif
 
 //------------------------------------------------------------------------------
-// Global init macros
+// Client callback
 //------------------------------------------------------------------------------
-// Initialize, cleanup and register callback for tracing
+// Register callback for tracing so that the client can merge tracing into their
+// own logs
 // These macros are always defined but will compile to nothing if trace is
 // disabled
 
@@ -136,15 +137,7 @@ typedef void (HCTraceCallback)(
     CHAR_T const* message
 );
 
-#if HC_TRACE_ENABLE
-#define HC_TRACE_GLOBAL_INIT() HCTraceImplGlobalInit()
-#define HC_TRACE_GLOBAL_CLEANUP() HCTraceImplGlobalCleanup()
-#define HC_TRACE_SET_CLIENT_CALLBACK(c) HCTraceImplSetClientCallback(c)
-#else
-#define HC_TRACE_GLOBAL_INIT()
-#define HC_TRACE_GLOBAL_CLEANUP()
-#define HC_TRACE_SET_CLIENT_CALLBACK(c)
-#endif
+void HCTraceSetClientCallback(HCTraceCallback* callback);
 
 //------------------------------------------------------------------------------
 // Trace area macros
@@ -297,11 +290,6 @@ HCTraceLevel HCTraceImplGetAreaVerbosity(HCTraceImplArea* area)
 {
     return area->Verbosity;
 }
-
-void HCTraceImplGlobalInit();
-void HCTraceImplGlobalCleanup();
-
-void HCTraceImplSetClientCallback(HCTraceCallback* callback);
 
 void HCTraceImplMessage(
     struct HCTraceImplArea const* area,

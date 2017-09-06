@@ -132,7 +132,11 @@ private:
     std::atomic<HCTraceCallback*> m_clientCallback = nullptr;
 };
 
-TraceState g_traceState;
+TraceState& GetTraceState()
+{
+    static TraceState state;
+    return state;
+}
 
 void TraceMessageToDebugger(
     CHAR_T const* areaName,
@@ -208,7 +212,7 @@ void TraceMessageToClient(
 )
 {
 #if HC_TRACE_TO_CLIENT
-    auto callback = g_traceState.GetClientCallback();
+    auto callback = GetTraceState().GetClientCallback();
     if (callback)
     {
         callback(areaName, level, threadId, timestamp, message);
@@ -231,19 +235,19 @@ unsigned long long GetScopeId()
 
 }
 
+void HCTraceSetClientCallback(HCTraceCallback* callback)
+{
+    GetTraceState().SetClientCallback(callback);
+}
+
 void HCTraceImplGlobalInit()
 {
-    g_traceState.Init();
+    GetTraceState().Init();
 }
 
 void HCTraceImplGlobalCleanup()
 {
-    g_traceState.Cleanup();
-}
-
-void HCTraceImplSetClientCallback(HCTraceCallback* callback)
-{
-    g_traceState.SetClientCallback(callback);
+    GetTraceState().Cleanup();
 }
 
 void HCTraceImplMessage(
@@ -263,7 +267,7 @@ void HCTraceImplMessage(
         return;
     }
 
-    if (!g_traceState.IsSetup())
+    if (!GetTraceState().IsSetup())
     {
         return;
     }
@@ -273,7 +277,7 @@ void HCTraceImplMessage(
         return;
     }
 
-    auto timestamp = g_traceState.GetTimestamp();
+    auto timestamp = GetTraceState().GetTimestamp();
     auto threadId = GetCurrentThreadId();
 
     CHAR_T message[4096] = {};

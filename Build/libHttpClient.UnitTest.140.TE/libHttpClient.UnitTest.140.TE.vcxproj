@@ -191,6 +191,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestIncludes_TE.h" />

@@ -126,6 +126,7 @@ set(UWP_HTTP_Source_Files
 
 set(Logger_Source_Files
     ../../Source/Logger/trace.cpp
+    ../../Source/Logger/trace_internal.h
     )
 
 set(UnitTests_Source_Files_Support

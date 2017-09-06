@@ -127,6 +127,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />

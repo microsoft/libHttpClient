@@ -17,6 +17,7 @@ HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version)
 HC_API void HC_CALLING_CONV
 HCGlobalInitialize()
 {
+    HCTraceImplGlobalInit();
     xbox::httpclient::get_http_singleton(true);
 }
 
@@ -24,6 +25,7 @@ HC_API void HC_CALLING_CONV
 HCGlobalCleanup()
 {
     xbox::httpclient::cleanup_http_singleton();
+    HCTraceImplGlobalCleanup();
 }
 
 HC_API void HC_CALLING_CONV
