@@ -40,7 +40,7 @@
 #include <codecvt>
 #include <iomanip>
 
-#if UWP_API
+#if HC_UWP_API
 #include <collection.h>
 #endif
 
@@ -84,7 +84,7 @@ typedef int32_t function_context;
 #include "httpClient/types.h"
 #include "httpClient/httpClient.h"
 #include "mem.h"
-#include "uwp/utils_uwp.h"
+#include "win/utils_win.h"
 #include "utils.h"
 #include "task.h"
 #include "singleton.h"

@@ -40,8 +40,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp">
       <Filter>C++ Source\HTTP\Mock</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinRTHttpClient\http_winrthttpclient.cpp">
-      <Filter>C++ Source\HTTP\WinRTHttpClient</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_xmlhttp.cpp">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp">
       <Filter>C++ Source\Logger</Filter>
@@ -110,8 +110,8 @@
     <Filter Include="C++ Source\HTTP\Mock">
       <UniqueIdentifier>{866DCF4C-AB9B-3053-BA1C-52DF3408F42C}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\HTTP\WinRTHttpClient">
-      <UniqueIdentifier>{A2C2ED20-B5C7-300F-9483-8321E3E2DA14}</UniqueIdentifier>
+    <Filter Include="C++ Source\HTTP\XMLHttp">
+      <UniqueIdentifier>{9E2AE52A-298B-33E8-90DA-A2C8709C836F}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>

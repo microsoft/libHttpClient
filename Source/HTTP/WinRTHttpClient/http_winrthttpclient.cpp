@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#if UWP_API
+#if HC_UWP_API
 #include "../httpcall.h"
-#include "UWP/utils_uwp.h"
+#include "win/utils_win.h"
 
 using namespace Windows::Foundation;
 using namespace Windows::Web::Http;

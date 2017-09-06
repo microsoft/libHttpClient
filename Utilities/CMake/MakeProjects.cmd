@@ -12,7 +12,7 @@ set OLD_FOLDER=%ROOT_FOLDER%\Build
 
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUWP=TRUE
 rem call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DXDK=TRUE
-rem call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DWIN32=TRUE
+call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DBUILDWIN32=TRUE
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTAEF=TRUE
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTE=TRUE
 
@@ -24,8 +24,10 @@ copy %NEW_FOLDER%\libHttpClient.110.XDK.WinRT.vcxproj* %OLD_FOLDER%\libHttpClien
 copy %NEW_FOLDER%\libHttpClient.140.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.140.UWP.C
 copy %NEW_FOLDER%\libHttpClient.140.UWP.WinRT.vcxproj* %OLD_FOLDER%\libHttpClient.140.UWP.WinRT
 copy %NEW_FOLDER%\libHttpClient.140.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.140.XDK.C
+copy %NEW_FOLDER%\libHttpClient.140.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.140.Win32.C
 copy %NEW_FOLDER%\libHttpClient.141.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.UWP.C
 copy %NEW_FOLDER%\libHttpClient.141.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.XDK.C
+copy %NEW_FOLDER%\libHttpClient.141.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.Win32.C
 copy %NEW_FOLDER%\libHttpClient.UnitTest.140.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.140.TAEF
 copy %NEW_FOLDER%\libHttpClient.UnitTest.140.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.140.TE
 
