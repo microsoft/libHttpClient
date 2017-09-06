@@ -77,6 +77,7 @@ set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Public_Source_Files
     ../../include/httpClient/httpClient.h
+    ../../include/httpClient/trace.h
     ../../include/httpClient/types.h
     )
 
@@ -102,7 +103,7 @@ set(Common_UWP_Source_Files
     ../../Source/Common/UWP/utils_uwp.cpp
     ../../Source/Common/UWP/utils_uwp.h
     )
-    
+
 set(HTTP_Source_Files
     ../../Source/HTTP/httpcall.cpp
     ../../Source/HTTP/httpcall.h
@@ -122,16 +123,9 @@ set(Unittest_HTTP_Source_Files
 set(UWP_HTTP_Source_Files
     ../../Source/HTTP/UWP/http_uwp.cpp
     )
-    
+
 set(Logger_Source_Files
-    ../../Source/Logger/custom_output.cpp
-    ../../Source/Logger/custom_output.h
-    ../../Source/Logger/debug_output.cpp
-    ../../Source/Logger/debug_output.h
-    ../../Source/Logger/log.cpp
-    ../../Source/Logger/log.h
-    ../../Source/Logger/log_entry.cpp
-    ../../Source/Logger/log_output.cpp
+    ../../Source/Logger/trace.cpp
     )
 
 set(UnitTests_Source_Files_Support
@@ -149,23 +143,23 @@ set(Taef_UnitTests_Source_Files
 	../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
     )
 
-set(TE_UnitTests_Source_Files    
+set(TE_UnitTests_Source_Files
     ../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
     ../../Tests/UnitTests/Support/TE/unittesthelpers.h
     ../../Tests/UnitTests/Support/TE/unittestincludes_te.h
     )
-    
+
 set(UnitTests_Source_Files_Tests
 	../../Tests/UnitTests/Tests/HttpTests.cpp
 	../../Tests/UnitTests/Tests/MockTests.cpp
     ../../Tests/UnitTests/Tests/GlobalTests.cpp
     ../../Tests/UnitTests/Tests/TaskTests.cpp
     )
-    
+
 if( SHIP )
 	message(STATUS "SHIP add_library")
 	# source_group("Build" FILES ${Ship_Source_Files})
-	# set( SOURCE_FILES 
+	# set( SOURCE_FILES
 		# ${Ship_Source_Files}
 		# )
 endif() # SHIP
@@ -177,14 +171,14 @@ source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
 source_group("C++ Source\\HTTP\\Mock" FILES ${Mock_HTTP_Source_Files})
 source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
 
-set( SOURCE_FILES 
+set( SOURCE_FILES
     ${Common_Source_Files}
     ${Public_Source_Files}
     ${Logger_Source_Files}
     ${HTTP_Source_Files}
     ${Mock_HTTP_Source_Files}
     )
-    
+
 if( XDK )
     message(STATUS "XDK source group")
 endif()
@@ -193,9 +187,9 @@ if( UNITTEST )
     message(STATUS "Unittest source group")
     source_group("C++ Source\\HTTP\\Unittest" FILES ${Unittest_HTTP_Source_Files})
     list(APPEND
-        SOURCE_FILES 
+        SOURCE_FILES
         ${Unittest_HTTP_Source_Files}
-        )    
+        )
 endif()
 
 if( UWP )
@@ -209,7 +203,7 @@ if( UWP )
         ${Common_UWP_Source_Files}
         )
 endif()
-    
+
 if( TAEF )
     message(STATUS "TAEF source group")
 	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
@@ -222,12 +216,12 @@ if( TAEF )
         ${Taef_UnitTests_Source_Files}
 		)
 endif()
-        
+
 if( TE )
     message(STATUS "TE source group")
 	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
 	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
-    source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})    
+    source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
 	list(APPEND
 		SOURCE_FILES
 		${UnitTests_Source_Files_Support}
