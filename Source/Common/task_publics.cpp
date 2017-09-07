@@ -51,7 +51,7 @@ HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId)
     http_task_clear_task_from_handle_id(task->id);
 }
 
-#if UWP_API
+#if HC_USE_HANDLES
 HC_API bool HC_CALLING_CONV
 HCTaskWaitForCompleted(
     _In_ HC_TASK_HANDLE taskHandleId,
@@ -112,7 +112,7 @@ HCTaskCreate(
     {
         std::unique_ptr<HC_TASK> task = std::make_unique<HC_TASK>();
         pTask = task.get();
-#if UWP_API
+#if HC_USE_HANDLES
         task->resultsReady.set(CreateEvent(NULL, FALSE, FALSE, NULL));
 #endif
         task->executionRoutine = executionRoutine;

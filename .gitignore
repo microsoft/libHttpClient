@@ -103,6 +103,7 @@ Casablanca/Intermediate/
 Obj/
 Binaries/
 Win32/
+!Source/**/Win32/
 Debug/
 Release/
 ARM/

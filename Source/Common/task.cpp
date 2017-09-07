@@ -82,7 +82,7 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
             taskCompletedQueue.size(), task->id);
     }
 
-#if UWP_API
+#if HC_USE_HANDLES
     SetEvent(taskHandle->resultsReady.get());
 #endif
     get_http_singleton()->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->set_task_completed_event();

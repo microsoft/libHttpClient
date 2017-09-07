@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
-#if UNITTEST_API
+#if HC_UNITTEST_API
 #include "httpClient/types.h"
 #include "httpClient/httpClient.h"
 #include "singleton.h"

@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include "uwp/utils_uwp.h"
+#include "win/utils_win.h"
 
 enum http_task_state
 {
@@ -23,7 +23,7 @@ struct HC_TASK
     uint64_t taskGroupId;
     uint64_t id;
 
-#if UWP_API
+#if HC_USE_HANDLES
     win32_handle resultsReady;
 #endif
 };

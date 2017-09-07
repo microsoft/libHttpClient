@@ -4,7 +4,7 @@
 #pragma once
 #include "pch.h"
 
-class hc_task
+class hc_task : public std::enable_shared_from_this<hc_task>
 {
 public:
     hc_task() {}

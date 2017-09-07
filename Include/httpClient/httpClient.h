@@ -273,7 +273,7 @@ HCTaskCreate(
 HC_API bool HC_CALLING_CONV
 HCTaskIsTaskPending();
 
-#if UWP_API
+#if HC_USE_HANDLES
 /// <summary>
 /// Returns a handle that can be used to wait until there is a pending task that hasn't yet be executed.
 /// HCTaskProcessNextPendingTask() will execute the next pending task.
@@ -310,7 +310,7 @@ HCTaskIsCompleted(
     _In_ HC_TASK_HANDLE taskHandle
     );
 
-#if UWP_API
+#if HC_USE_HANDLES
 /// <summary>
 /// Returns a handle for a the specified taskGroupId that can be used to wait until there is a 
 /// completed task for that task group that hasn't yet be returned results to the caller. 
