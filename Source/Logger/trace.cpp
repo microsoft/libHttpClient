@@ -240,16 +240,6 @@ void HCTraceSetClientCallback(HCTraceCallback* callback)
     GetTraceState().SetClientCallback(callback);
 }
 
-void HCTraceImplGlobalInit()
-{
-    GetTraceState().Init();
-}
-
-void HCTraceImplGlobalCleanup()
-{
-    GetTraceState().Cleanup();
-}
-
 void HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     enum HCTraceLevel level,
@@ -305,4 +295,16 @@ HCTraceImplScopeHelper::HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTr
 HCTraceImplScopeHelper::~HCTraceImplScopeHelper()
 {
     HCTraceImplMessage(m_area, m_level, _T("<<< %s (%016llX)"), m_scope, m_id);
+}
+
+// trace_internal.h
+
+void HCTraceImplGlobalInit()
+{
+    GetTraceState().Init();
+}
+
+void HCTraceImplGlobalCleanup()
+{
+    GetTraceState().Cleanup();
 }
