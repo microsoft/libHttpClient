@@ -137,7 +137,7 @@ typedef void (HCTraceCallback)(
     CHAR_T const* message
 );
 
-void HCTraceSetClientCallback(HCTraceCallback* callback);
+HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
 
 //------------------------------------------------------------------------------
 // Trace area macros
@@ -280,23 +280,27 @@ struct HCTraceImplArea
 };
 
 inline
-void HCTraceImplSetAreaVerbosity(HCTraceImplArea* area, HCTraceLevel verbosity)
+void HC_CALLING_CONV HCTraceImplSetAreaVerbosity(struct HCTraceImplArea* area, enum HCTraceLevel verbosity)
 {
     area->Verbosity = verbosity;
 }
 
 inline
-HCTraceLevel HCTraceImplGetAreaVerbosity(HCTraceImplArea* area)
+enum HCTraceLevel HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area)
 {
     return area->Verbosity;
 }
 
-void HCTraceImplMessage(
+HC_API void HC_CALLING_CONV HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     enum HCTraceLevel level,
     _Printf_format_string_ CHAR_T const* format,
     ...
 );
+
+#if defined(__cplusplus)
+} // end extern "C"
+#endif // defined(__cplusplus)
 
 #if defined(__cplusplus)
 class HCTraceImplScopeHelper
@@ -311,8 +315,4 @@ private:
     CHAR_T const* const m_scope;
     unsigned long long const m_id;
 };
-#endif
-
-#if defined(__cplusplus)
-} // end extern "C"
 #endif // defined(__cplusplus)
