@@ -18,7 +18,7 @@ HC_API void HC_CALLING_CONV
 HCGlobalInitialize()
 {
     HCTraceImplGlobalInit();
-    xbox::httpclient::get_http_singleton(true);
+    xbox::httpclient::init_http_singleton();
 }
 
 HC_API void HC_CALLING_CONV
@@ -33,8 +33,8 @@ HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
     )
 {
-    xbox::httpclient::verify_http_singleton();
-    get_http_singleton()->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
+    auto httpSingleton = get_http_singleton();
+    httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
 HC_API void HC_CALLING_CONV
@@ -42,7 +42,7 @@ HCGlobalGetHttpCallPerformFunction(
     _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
     )
 {
-    xbox::httpclient::verify_http_singleton();
-    *performFunc = get_http_singleton()->m_performFunc;
+    auto httpSingleton = get_http_singleton();
+    *performFunc = httpSingleton->m_performFunc;
 }
 

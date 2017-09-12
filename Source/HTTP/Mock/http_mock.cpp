@@ -56,14 +56,16 @@ HC_CALL* GetMatchingMock(
     _In_ HC_CALL_HANDLE originalCall
     )
 {
+    auto httpSingleton = get_http_singleton();
+
     std::vector<HC_CALL*> mocks;
     HC_CALL* lastMatchingMock = nullptr;
     HC_CALL* matchingMock = nullptr;
 
     {
-        std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
-        mocks = get_http_singleton()->m_mocks;
-        lastMatchingMock = get_http_singleton()->m_lastMatchingMock;
+        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+        mocks = httpSingleton->m_mocks;
+        lastMatchingMock = httpSingleton->m_lastMatchingMock;
     }
 
     // ignore last matching call if it doesn't match the current call
@@ -105,8 +107,8 @@ HC_CALL* GetMatchingMock(
     }
 
     {
-        std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
-        get_http_singleton()->m_lastMatchingMock = matchingMock;
+        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+        httpSingleton->m_lastMatchingMock = matchingMock;
     }
 
     return matchingMock;

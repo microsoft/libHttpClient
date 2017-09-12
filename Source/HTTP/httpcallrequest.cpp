@@ -13,7 +13,8 @@ HCHttpCallRequestSetUrl(
     _In_ PCSTR_T url
     )
 {
-    verify_http_singleton();
+    auto httpSingleton = get_http_singleton();
+
     call->method = method;
     call->url = url;
 
@@ -28,7 +29,8 @@ HCHttpCallRequestGetUrl(
     _Outptr_ PCSTR_T* url
     )
 {
-    verify_http_singleton();
+    auto httpSingleton = get_http_singleton();
+
     *method = call->method.c_str();
     *url = call->url.c_str();
 }
@@ -39,7 +41,8 @@ HCHttpCallRequestSetRequestBodyString(
     _In_ PCSTR_T requestBodyString
     )
 {
-    verify_http_singleton();
+    auto httpSingleton = get_http_singleton();
+
     call->requestBodyString = requestBodyString;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetBodyString [ID %llu]: requestBodyString=%s",
@@ -52,7 +55,6 @@ HCHttpCallRequestGetRequestBodyString(
     _Out_ PCSTR_T* requestBodyString
     )
 {
-    verify_http_singleton();
     *requestBodyString = call->requestBodyString.c_str();
 }
 
@@ -64,7 +66,6 @@ HCHttpCallRequestSetHeader(
     _In_ PCSTR_T headerValue
     )
 {
-    verify_http_singleton();
     call->requestHeaders[headerName] = headerValue;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetHeader [ID %llu]: %s=%s",
@@ -78,7 +79,6 @@ HCHttpCallRequestGetHeader(
     _Out_ PCSTR_T* headerValue
     )
 {
-    verify_http_singleton();
     auto it = call->requestHeaders.find(headerName);
     if (it != call->requestHeaders.end())
     {
@@ -96,7 +96,6 @@ HCHttpCallRequestGetNumHeaders(
     _Out_ uint32_t* numHeaders
     )
 {
-    verify_http_singleton();
     *numHeaders = static_cast<uint32_t>(call->requestHeaders.size());
 }
 
@@ -108,8 +107,6 @@ HCHttpCallRequestGetHeaderAtIndex(
     _Out_ PCSTR_T* headerValue
     )
 {
-    verify_http_singleton();
-
     uint32_t index = 0;
     for (auto it = call->requestHeaders.cbegin(); it != call->requestHeaders.cend(); ++it)
     {
@@ -134,7 +131,7 @@ HCHttpCallRequestSetRetryAllowed(
     _In_ bool retryAllowed
     )
 {
-    verify_http_singleton();
+    auto httpSingleton = get_http_singleton();
     call->retryAllowed = retryAllowed;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",
@@ -147,7 +144,6 @@ HCHttpCallRequestGetRetryAllowed(
     _Out_ bool* retryAllowed
     )
 {
-    verify_http_singleton();
     *retryAllowed = call->retryAllowed;
 }
 
@@ -157,7 +153,6 @@ HCHttpCallRequestSetTimeout(
     _In_ uint32_t timeoutInSeconds
     )
 {
-    verify_http_singleton();
     call->timeoutInSeconds = timeoutInSeconds;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetTimeout [ID %llu]: timeoutInSeconds=%u",
@@ -170,7 +165,6 @@ HCHttpCallRequestGetTimeout(
     _Out_ uint32_t* timeoutInSeconds
     )
 {
-    verify_http_singleton();
     *timeoutInSeconds = call->timeoutInSeconds;
 }
 
