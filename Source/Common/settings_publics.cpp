@@ -11,18 +11,15 @@ HCSettingsSetLogLevel(
     _In_ HC_LOG_LEVEL traceLevel
     )
 {
-    verify_http_singleton();
-
     HCTraceLevel internalTraceLevel = HC_TRACELEVEL_OFF;
     switch (traceLevel)
     {
-    case LOG_OFF: internalTraceLevel = HC_TRACELEVEL_OFF; break;
-    case LOG_ERROR: internalTraceLevel = HC_TRACELEVEL_WARNING; break;
-    case LOG_VERBOSE: internalTraceLevel = HC_TRACELEVEL_INFORMATION; break;
+        case LOG_OFF: internalTraceLevel = HC_TRACELEVEL_OFF; break;
+        case LOG_ERROR: internalTraceLevel = HC_TRACELEVEL_WARNING; break;
+        case LOG_VERBOSE: internalTraceLevel = HC_TRACELEVEL_INFORMATION; break;
     };
 
     HC_TRACE_SET_VERBOSITY(HTTPCLIENT, internalTraceLevel);
-
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsSetLogLevel: %d", traceLevel);
 }
 
@@ -31,7 +28,6 @@ HCSettingsGetLogLevel(
     _Out_ HC_LOG_LEVEL* traceLevel
     )
 {
-    verify_http_singleton();
     *traceLevel = static_cast<HC_LOG_LEVEL>(HC_TRACE_GET_VERBOSITY(HTTPCLIENT)); // TODO fix
 }
 
@@ -40,8 +36,9 @@ HCSettingsSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     )
 {
-    verify_http_singleton();
-    get_http_singleton()->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
+    httpSingleton->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsTimeoutWindow: %u", timeoutWindowInSeconds);
 }
@@ -51,8 +48,9 @@ HCSettingsGetRetryDelay(
     _In_ uint32_t* retryDelayInSeconds
     )
 {
-    verify_http_singleton();
-    *retryDelayInSeconds = get_http_singleton()->m_retryDelayInSeconds;
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
+    *retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
 }
 
 HC_API void HC_CALLING_CONV
@@ -60,8 +58,9 @@ HCSettingsSetRetryDelay(
     _In_ uint32_t retryDelayInSeconds
     )
 {
-    verify_http_singleton();
-    get_http_singleton()->m_retryDelayInSeconds = retryDelayInSeconds;
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
+    httpSingleton->m_retryDelayInSeconds = retryDelayInSeconds;
 }
 
 HC_API void HC_CALLING_CONV
@@ -69,8 +68,9 @@ HCSettingsGetTimeoutWindow(
     _Out_ uint32_t* timeoutWindowInSeconds
     )
 {
-    verify_http_singleton();
-    *timeoutWindowInSeconds = get_http_singleton()->m_timeoutWindowInSeconds;
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
+    *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
 }
 
 HC_API void HC_CALLING_CONV
@@ -78,8 +78,9 @@ HCSettingsSetAssertsForThrottling(
     _In_ bool enableAssertsForThrottling
     )
 {
-    verify_http_singleton();
-    get_http_singleton()->m_enableAssertsForThrottling = enableAssertsForThrottling;
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
+    httpSingleton->m_enableAssertsForThrottling = enableAssertsForThrottling;
 }
 
 HC_API void HC_CALLING_CONV
@@ -87,8 +88,9 @@ HCSettingsGetAssertsForThrottling(
     _Out_ bool* enableAssertsForThrottling
     )
 {
-    verify_http_singleton();
-    *enableAssertsForThrottling = get_http_singleton()->m_enableAssertsForThrottling;
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
+    *enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
 }
 
 HC_API void HC_CALLING_CONV
@@ -96,26 +98,28 @@ HCMockAddMock(
     _In_ HC_CALL_HANDLE call
     )
 {
-    verify_http_singleton();
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
 
-    std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
-    get_http_singleton()->m_mocks.push_back(call);
-    get_http_singleton()->m_mocksEnabled = true;
+    std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+    httpSingleton->m_mocks.push_back(call);
+    httpSingleton->m_mocksEnabled = true;
 }
 
 HC_API void HC_CALLING_CONV
 HCMockClearMocks()
 {
-    verify_http_singleton();
+    auto httpSingleton = get_http_singleton();
+    xbox::httpclient::verify_http_singleton(httpSingleton);
 
-    std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
+    std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
 
-    for (auto& mockCall : get_http_singleton()->m_mocks)
+    for (auto& mockCall : httpSingleton->m_mocks)
     {
         HCHttpCallCleanup(mockCall);
     }
 
-    get_http_singleton()->m_mocks.clear();
-    get_http_singleton()->m_mocksEnabled = false;
+    httpSingleton->m_mocks.clear();
+    httpSingleton->m_mocksEnabled = false;
 }
 

@@ -13,7 +13,6 @@ HCHttpCallResponseGetResponseString(
     _Out_ PCSTR_T* responseString
     )
 {
-    verify_http_singleton();
     *responseString = call->responseString.c_str();
 }
 
@@ -23,10 +22,26 @@ HCHttpCallResponseSetResponseString(
     _In_ PCSTR_T responseString
     )
 {
-    verify_http_singleton();
     call->responseString = responseString;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%s",
-        call->id, responseString);
+
+#if HC_TRACE_ENABLE
+
+#if HC_CHAR_T_IS_WIDE
+    size_t len = wcslen(responseString);
+#else
+    size_t len = strlen(responseString);
+#endif
+    if (len > 2048)
+    {
+        http_internal_string sLog;
+        sLog.assign(responseString, 0, 2048);
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%s", call->id, sLog.c_str());
+    }
+    else
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%s", call->id, responseString);
+    }
+#endif
 }
 
 HC_API void HC_CALLING_CONV
@@ -35,7 +50,6 @@ HCHttpCallResponseGetStatusCode(
     _Out_ uint32_t* statusCode
     )
 {
-    verify_http_singleton();
     *statusCode = call->statusCode;
 }
 
@@ -45,7 +59,6 @@ HCHttpCallResponseSetStatusCode(
     _In_ uint32_t statusCode
     )
 {
-    verify_http_singleton();
     call->statusCode = statusCode;
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetStatusCode [ID %llu]: statusCode=%u",
         call->id, statusCode);
@@ -57,7 +70,6 @@ HCHttpCallResponseGetErrorCode(
     _Out_ uint32_t* errorCode
     )
 {
-    verify_http_singleton();
     *errorCode = call->errorCode;
 }
 
@@ -67,7 +79,6 @@ HCHttpCallResponseSetErrorCode(
     _In_ uint32_t errorCode
     )
 {
-    verify_http_singleton();
     call->errorCode = errorCode;
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorCode [ID %llu]: errorCode=%08X",
         call->id, errorCode);
@@ -79,7 +90,6 @@ HCHttpCallResponseGetErrorMessage(
     _Out_ PCSTR_T* errorMessage
     )
 {
-    verify_http_singleton();
     *errorMessage = call->errorMessage.c_str();
 }
 
@@ -89,7 +99,6 @@ HCHttpCallResponseSetErrorMessage(
     _In_ PCSTR_T errorMessage
     )
 {
-    verify_http_singleton();
     call->errorMessage = errorMessage;
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorMessage [ID %llu]: errorMessage=%s",
         call->id, errorMessage);
@@ -102,7 +111,6 @@ HCHttpCallResponseGetHeader(
     _Out_ PCSTR_T* headerValue
     )
 {
-    verify_http_singleton();
     auto it = call->responseHeaders.find(headerName);
     if (it != call->responseHeaders.end())
     {
@@ -120,7 +128,6 @@ HCHttpCallResponseGetNumHeaders(
     _Out_ uint32_t* numHeaders
     )
 {
-    verify_http_singleton();
     *numHeaders = static_cast<uint32_t>(call->responseHeaders.size());
 }
 
@@ -132,8 +139,6 @@ HCHttpCallResponseGetHeaderAtIndex(
     _Out_ PCSTR_T* headerValue
     )
 {
-    verify_http_singleton();
-
     uint32_t index = 0;
     for (auto it = call->responseHeaders.cbegin(); it != call->responseHeaders.cend(); ++it)
     {

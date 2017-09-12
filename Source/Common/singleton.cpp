@@ -11,8 +11,7 @@ using namespace xbox::httpclient;
 static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
 static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 
-static std::mutex g_httpSingletonLock;
-static std::unique_ptr<http_singleton> g_httpSingleton;
+static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -30,33 +29,59 @@ http_singleton::http_singleton()
 
 http_singleton::~http_singleton()
 {
+    for (auto& mockCall : m_mocks)
+    {
+        HCHttpCallCleanup(mockCall);
+    }
+    m_mocks.clear();
 }
 
-http_singleton*
-get_http_singleton(_In_ bool createIfRequired)
+std::shared_ptr<http_singleton> get_http_singleton()
 {
-    if (createIfRequired)
-    {
-        std::lock_guard<std::mutex> guard(g_httpSingletonLock);
-        if (g_httpSingleton == nullptr)
-        {
-            g_httpSingleton = std::make_unique<http_singleton>();
-        }
-    }
+    auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
 
-    return g_httpSingleton.get();
+#if ENABLE_ASSERTS
+    if (httpSingleton == nullptr)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
+        assert(httpSingleton != nullptr);
+    }
+#endif
+
+    return httpSingleton;
+}
+
+void init_http_singleton()
+{
+    // TODO still need to figure out the best way to support multiple clients
+    auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
+    if (!httpSingleton)
+    {
+        auto newSingleton = std::make_shared<http_singleton>();
+        std::atomic_compare_exchange_strong(
+            &g_httpSingleton_atomicReadsOnly,
+            &httpSingleton,
+            newSingleton
+        );
+        // At this point there is a singleton (ours or someone else's)
+    }
 }
 
 void cleanup_http_singleton()
 {
-    std::lock_guard<std::mutex> guard(g_httpSingletonLock);
-    for (auto& mockCall : g_httpSingleton->m_mocks)
-    {
-        HCHttpCallCleanup(mockCall);
-    }
-    g_httpSingleton->m_mocks.clear();
+    std::shared_ptr<http_singleton> httpSingleton;
+    httpSingleton = std::atomic_exchange(&g_httpSingleton_atomicReadsOnly, httpSingleton);
 
-    g_httpSingleton = nullptr;
+    // Wait for all other references to the singleton to go away
+    // Note that the use count check here is only valid because we never create
+    // a weak_ptr to the singleton. If we did that could cause the use count
+    // to increase even though we are the only strong reference
+    while (httpSingleton.use_count() > 1)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds{ 10 });
+    }
+
+    // httpSingleton will be destroyed on this thread now
 }
 
 std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId)
@@ -75,13 +100,13 @@ std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_qu
     return taskQueue;
 }
 
-void verify_http_singleton()
+void verify_http_singleton(_In_ std::shared_ptr<http_singleton>& httpSingleton)
 {
 #if ENABLE_ASSERTS
-    if (g_httpSingleton == nullptr)
+    if (httpSingleton == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
-        assert(g_httpSingleton != nullptr);
+        assert(httpSingleton != nullptr);
     }
 #endif
 }
