@@ -14,7 +14,6 @@ HCHttpCallRequestSetUrl(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     call->method = method;
     call->url = url;
@@ -31,7 +30,6 @@ HCHttpCallRequestGetUrl(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     *method = call->method.c_str();
     *url = call->url.c_str();
@@ -44,7 +42,6 @@ HCHttpCallRequestSetRequestBodyString(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     call->requestBodyString = requestBodyString;
 
@@ -135,7 +132,6 @@ HCHttpCallRequestSetRetryAllowed(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     call->retryAllowed = retryAllowed;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",

@@ -64,7 +64,6 @@ struct http_singleton
 };
 
 std::shared_ptr<http_singleton> get_http_singleton();
-void verify_http_singleton(_In_ std::shared_ptr<http_singleton>& httpSingleton);
 void init_http_singleton();
 void cleanup_http_singleton();
 

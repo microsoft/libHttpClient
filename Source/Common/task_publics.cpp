@@ -10,7 +10,6 @@ bool HC_CALLING_CONV
 HCTaskIsTaskPending()
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     auto& map = httpSingleton->m_taskPendingQueue;
     return !map.empty();
 }
@@ -21,7 +20,6 @@ HCTaskSetCompleted(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     http_task_queue_completed(taskHandle);
 }
 
@@ -41,7 +39,6 @@ void HC_CALLING_CONV
 HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId)
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     HC_TASK* task = http_task_get_next_completed(taskGroupId);
     if (task == nullptr)
@@ -75,7 +72,6 @@ HANDLE HC_CALLING_CONV
 HCTaskGetPendingHandle()
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     return httpSingleton->get_pending_ready_handle();
 }
 
@@ -83,7 +79,6 @@ HANDLE HC_CALLING_CONV
 HCTaskGetCompletedHandle(_In_ uint64_t taskGroupId)
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     return httpSingleton->get_task_completed_queue_for_taskgroup(taskGroupId)->get_complete_ready_handle();
 }
 #endif
@@ -92,7 +87,6 @@ void HC_CALLING_CONV
 HCTaskProcessNextPendingTask()
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     HC_TASK* task = http_task_get_next_pending();
     if (task == nullptr)
         return;
@@ -113,7 +107,6 @@ HCTaskCreate(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     HC_TASK* pTask = nullptr;
 

@@ -13,7 +13,6 @@ HCHttpCallCreate(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     HC_CALL* call = new HC_CALL();
     call->retryAllowed = true;
@@ -41,7 +40,6 @@ void HttpCallPerformExecute(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     // TODO check for null executionRoutineContext?
 

@@ -37,7 +37,6 @@ HCSettingsSetTimeoutWindow(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     httpSingleton->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsTimeoutWindow: %u", timeoutWindowInSeconds);
@@ -49,7 +48,6 @@ HCSettingsGetRetryDelay(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     *retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
 }
 
@@ -59,7 +57,6 @@ HCSettingsSetRetryDelay(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     httpSingleton->m_retryDelayInSeconds = retryDelayInSeconds;
 }
 
@@ -69,7 +66,6 @@ HCSettingsGetTimeoutWindow(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
 }
 
@@ -79,7 +75,6 @@ HCSettingsSetAssertsForThrottling(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     httpSingleton->m_enableAssertsForThrottling = enableAssertsForThrottling;
 }
 
@@ -89,7 +84,6 @@ HCSettingsGetAssertsForThrottling(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     *enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
 }
 
@@ -99,7 +93,6 @@ HCMockAddMock(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
     httpSingleton->m_mocks.push_back(call);
@@ -110,7 +103,6 @@ HC_API void HC_CALLING_CONV
 HCMockClearMocks()
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
 

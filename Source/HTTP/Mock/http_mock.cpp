@@ -57,7 +57,6 @@ HC_CALL* GetMatchingMock(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
 
     std::vector<HC_CALL*> mocks;
     HC_CALL* lastMatchingMock = nullptr;

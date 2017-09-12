@@ -100,17 +100,6 @@ std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_qu
     return taskQueue;
 }
 
-void verify_http_singleton(_In_ std::shared_ptr<http_singleton>& httpSingleton)
-{
-#if ENABLE_ASSERTS
-    if (httpSingleton == nullptr)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
-        assert(httpSingleton != nullptr);
-    }
-#endif
-}
-
 #if HC_USE_HANDLES
 HANDLE http_singleton::get_pending_ready_handle()
 {

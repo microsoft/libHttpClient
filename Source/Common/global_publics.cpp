@@ -34,7 +34,6 @@ HCGlobalSetHttpCallPerformFunction(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
@@ -44,7 +43,6 @@ HCGlobalGetHttpCallPerformFunction(
     )
 {
     auto httpSingleton = get_http_singleton();
-    xbox::httpclient::verify_http_singleton(httpSingleton);
     *performFunc = httpSingleton->m_performFunc;
 }
 

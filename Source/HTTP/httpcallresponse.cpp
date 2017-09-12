@@ -23,25 +23,7 @@ HCHttpCallResponseSetResponseString(
     )
 {
     call->responseString = responseString;
-
-#if HC_TRACE_ENABLE
-
-#if HC_CHAR_T_IS_WIDE
-    size_t len = wcslen(responseString);
-#else
-    size_t len = strlen(responseString);
-#endif
-    if (len > 2048)
-    {
-        http_internal_string sLog;
-        sLog.assign(responseString, 0, 2048);
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%s", call->id, sLog.c_str());
-    }
-    else
-    {
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%s", call->id, responseString);
-    }
-#endif
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%.2048s", call->id, responseString);
 }
 
 HC_API void HC_CALLING_CONV
