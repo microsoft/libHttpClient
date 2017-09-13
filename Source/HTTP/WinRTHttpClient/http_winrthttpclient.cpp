@@ -52,10 +52,10 @@ void uwp_http_task::perform_async(
 {
     try
     {
-        const WCHAR* url = nullptr;
-        const WCHAR* method = nullptr;
-        const WCHAR* requestBody = nullptr;
-        const WCHAR* userAgent = nullptr;
+        const CHAR* url = nullptr;
+        const CHAR* method = nullptr;
+        const CHAR* requestBody = nullptr;
+        const CHAR* userAgent = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
         HCHttpCallRequestGetRequestBodyString(call, &requestBody);
 
@@ -63,19 +63,24 @@ void uwp_http_task::perform_async(
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
 
         HttpClient^ httpClient = ref new HttpClient();
-        Uri^ requestUri = ref new Uri(ref new Platform::String(url));
-        HttpRequestMessage^ requestMsg = ref new HttpRequestMessage(ref new HttpMethod(ref new Platform::String(method)), requestUri);
+        std::wstring wUrl = xbox::httpclient::to_wstring(url);
+        std::wstring wMethod = xbox::httpclient::to_wstring(method);
+        Uri^ requestUri = ref new Uri(ref new Platform::String(wUrl.c_str()));
+        HttpRequestMessage^ requestMsg = ref new HttpRequestMessage(ref new HttpMethod(ref new Platform::String(wMethod.c_str())), requestUri);
 
         requestMsg->Headers->TryAppendWithoutValidation(L"User-Agent", L"libHttpClient/1.0.0.0");
 
         for (uint32_t i = 0; i < numHeaders; i++)
         {
-            const WCHAR* headerName;
-            const WCHAR* headerValue;
+            const CHAR* headerName;
+            const CHAR* headerValue;
             HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
             if (headerName != nullptr && headerValue != nullptr)
             {
-                requestMsg->Headers->TryAppendWithoutValidation(ref new Platform::String(headerName), ref new Platform::String(headerValue));
+                std::wstring wHeaderName = xbox::httpclient::to_wstring(headerName);
+                std::wstring wHeaderValue = xbox::httpclient::to_wstring(headerValue);
+                requestMsg->Headers->TryAppendWithoutValidation(ref new Platform::String(wHeaderName.c_str()), ref new Platform::String(wHeaderValue.c_str()
+                ));
             }
         }
 
@@ -86,7 +91,9 @@ void uwp_http_task::perform_async(
 
         if (requestBody != nullptr)
         {
-            requestMsg->Content = ref new HttpStringContent(ref new Platform::String(requestBody));
+            std::wstring wRequestBody = xbox::httpclient::to_wstring(requestBody);
+            requestMsg->Content = ref new HttpStringContent(ref new Platform::String(wRequestBody.c_str()
+            ));
             requestMsg->Content->Headers->ContentType = Windows::Web::Http::Headers::HttpMediaTypeHeaderValue::Parse(L"application/json; charset=utf-8");
         }
 
@@ -110,7 +117,9 @@ void uwp_http_task::perform_async(
                     auto cur = iter->Current;
                     auto headerName = cur->Key;
                     auto headerValue = cur->Value;
-                    HCHttpCallResponseSetHeader(call, headerName->Data(), headerValue->Data());
+                    std::string aHeaderName = xbox::httpclient::to_utf8string(headerName->Data());
+                    std::string aHeaderValue = xbox::httpclient::to_utf8string(headerValue->Data());
+                    HCHttpCallResponseSetHeader(call, aHeaderName.c_str(), aHeaderValue.c_str());
                 }
 
                 uwpHttpTask->m_readAsStringAsyncOp = httpResponse->Content->ReadAsStringAsync();
@@ -120,7 +129,8 @@ void uwp_http_task::perform_async(
                     try
                     {
                         Platform::String^ httpResponseBody = asyncOp->GetResults();
-                        HCHttpCallResponseSetResponseString(call, httpResponseBody->Data());
+                        std::string aHttpResponseBody = xbox::httpclient::to_utf8string(httpResponseBody->Data());
+                        HCHttpCallResponseSetResponseString(call, aHttpResponseBody.c_str());
                         HCTaskSetCompleted(taskHandle);
                     }
                     catch (Platform::Exception^ ex)

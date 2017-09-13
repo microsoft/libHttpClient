@@ -24,7 +24,6 @@ using namespace Windows::UI::Xaml::Navigation;
 static HttpTestApp::MainPage^ g_MainPage;
 static Windows::UI::Core::CoreDispatcher^ s_dispatcher;
 static bool g_manualThreadingCheckbox = false;
-HANDLE g_pendingHandle = nullptr;
 HANDLE g_stopHandle = nullptr;
 
 #define TICKS_PER_SECOND 10000000i64
@@ -34,6 +33,18 @@ void HC_CALLING_CONV PerformCallWithCurl(
     _In_ HC_TASK_HANDLE taskHandle
     );
 
+
+static std::string to_utf8string(const std::wstring& input)
+{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> utfConverter;
+    return utfConverter.to_bytes(input);
+}
+
+static std::wstring to_utf16string(const std::string& input)
+{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> utfConverter;
+    return utfConverter.from_bytes(input);
+}
 
 MainPage::MainPage()
 {
@@ -58,19 +69,19 @@ MainPage::~MainPage()
     HCGlobalCleanup();
 }
 
-std::vector<std::vector<std::wstring>> ExtractHeadersFromHeadersString(std::wstring headersList)
+std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::string headersList)
 {
-    std::vector<std::vector<std::wstring>> headers;
-    std::wregex headersListToken(L"; ");
-    std::wsregex_token_iterator iterHeadersList(headersList.begin(), headersList.end(), headersListToken, -1);
-    std::wsregex_token_iterator endHeadersList;
-    std::vector<std::wstring> headerList(iterHeadersList, endHeadersList);
+    std::vector<std::vector<std::string>> headers;
+    std::regex headersListToken("; ");
+    std::sregex_token_iterator iterHeadersList(headersList.begin(), headersList.end(), headersListToken, -1);
+    std::sregex_token_iterator endHeadersList;
+    std::vector<std::string> headerList(iterHeadersList, endHeadersList);
     for (auto header : headerList)
     {
-        std::wregex headerToken(L": ");
-        std::wsregex_token_iterator iterHeader(header.begin(), header.end(), headerToken, -1);
-        std::wsregex_token_iterator endHeader;
-        std::vector<std::wstring> valueKeyPair(iterHeader, endHeader);
+        std::regex headerToken(": ");
+        std::sregex_token_iterator iterHeader(header.begin(), header.end(), headerToken, -1);
+        std::sregex_token_iterator endHeader;
+        std::vector<std::string> valueKeyPair(iterHeader, endHeader);
         if (valueKeyPair.size() == 2)
         {
             headers.push_back(valueKeyPair);
@@ -88,19 +99,13 @@ void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platf
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
-    HANDLE hEvents[2] =
-    {
-        g_pendingHandle,
-        g_stopHandle
-    };
-
     bool stop = false;
     while (!stop)
     {
-        DWORD dwResult = WaitForMultipleObjectsEx(2, hEvents, false, INFINITE, false);
+        DWORD dwResult = WaitForSingleObject(g_stopHandle, 20);
         switch (dwResult)
         {
-        case WAIT_OBJECT_0: // pending async op ready
+        case WAIT_TIMEOUT: 
             HCTaskProcessNextPendingTask();
             break;
 
@@ -129,7 +134,6 @@ void HttpTestApp::MainPage::StartBackgroundThread()
 {
     if (m_hBackgroundThread == nullptr)
     {
-        g_pendingHandle = HCTaskGetPendingHandle();
         m_hBackgroundThread = CreateThread(nullptr, 0, background_thread_proc, nullptr, 0, nullptr);
 
         m_timer = ref new DispatcherTimer;
@@ -143,22 +147,22 @@ void HttpTestApp::MainPage::StartBackgroundThread()
     }
 }
 
-std::vector<std::vector<std::wstring>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
 
-    std::vector< std::vector<std::wstring> > headers;
+    std::vector< std::vector<std::string> > headers;
     for (uint32_t i = 0; i < numHeaders; i++)
     {
-        const WCHAR* str;
-        const WCHAR* str2;
-        std::wstring headerName;
-        std::wstring headerValue;
+        const char* str;
+        const char* str2;
+        std::string headerName;
+        std::string headerValue;
         HCHttpCallResponseGetHeaderAtIndex(call, i, &str, &str2);
         if (str != nullptr) headerName = str;
         if (str2 != nullptr) headerValue = str2;
-        std::vector<std::wstring> header;
+        std::vector<std::string> header;
         header.push_back(headerName);
         header.push_back(headerValue);
 
@@ -170,13 +174,13 @@ std::vector<std::vector<std::wstring>> ExtractAllHeaders(_In_ HC_CALL_HANDLE cal
 
 void HttpTestApp::MainPage::UpdateXamlUI(
     _In_ uint32_t errCode,
-    _In_ std::wstring errMessage,
+    _In_ std::string errMessage,
     _In_ uint32_t statusCode,
-    _In_ std::wstring responseString,
-    _In_ std::vector<std::vector<std::wstring>> headers
+    _In_ std::string responseString,
+    _In_ std::vector<std::vector<std::string>> headers
     )
 {
-    std::wstringstream ss;
+    std::stringstream ss;
     ss << L"Network Error: " << errMessage << L" [Code: " << errCode << L"]\r\n";
     ss << L"StatusCode: " << statusCode << L"\r\n";
     for (int i = 0; i < headers.size(); i++)
@@ -184,8 +188,8 @@ void HttpTestApp::MainPage::UpdateXamlUI(
         ss << L"Header[" << i << L"]: " << headers[i][0] << L": " << headers[i][1] << L"\r\n";
     }
     ss << L"Response: " << responseString << L"\r\n";
-
-    std::wstring strText = ss.str();
+   
+    std::wstring strText = to_utf16string(ss.str());
 
     if (!g_manualThreadingCheckbox)
     {
@@ -210,16 +214,21 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 
 void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
+    std::string requestBody = to_utf8string(TextboxRequestString->Text->Data());
+    std::string requestHeaders = to_utf8string(TextboxHeaders->Text->Data());
+    std::string requestMethod = to_utf8string(TextboxMethod->Text->Data());
+    std::string requestUrl = to_utf8string(TextboxURL->Text->Data());
+
     HC_CALL_HANDLE call = nullptr;
     HCHttpCallCreate(&call);
-    HCHttpCallRequestSetUrl(call, TextboxMethod->Text->Data(), TextboxURL->Text->Data());
-    HCHttpCallRequestSetRequestBodyString(call, TextboxRequestString->Text->Data());
+    HCHttpCallRequestSetUrl(call, requestMethod.c_str(), requestUrl.c_str());
+    HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, RetryAllowedCheckbox->IsChecked->Value);
-    auto headers = ExtractHeadersFromHeadersString(TextboxHeaders->Text->Data());
+    auto headers = ExtractHeadersFromHeadersString(requestHeaders.c_str());
     for (auto header : headers)
     {
-        std::wstring headerName = header[0];
-        std::wstring headerValue = header[1];
+        std::string headerName = header[0];
+        std::string headerValue = header[1];
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
@@ -227,19 +236,17 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     HCHttpCallPerform(taskGroupId, call, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            const WCHAR* str;
+            const char* str;
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            std::wstring responseString;
-            std::wstring errMessage;
+            std::string responseString;
+            std::string errMessage;
 
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &str);
             if (str != nullptr) responseString = str;
-            HCHttpCallResponseGetErrorMessage(call, &str);
-            if (str != nullptr) errMessage = str;
-            std::vector<std::vector<std::wstring>> headers = ExtractAllHeaders(call);
+            std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
             HCHttpCallCleanup(call);
 

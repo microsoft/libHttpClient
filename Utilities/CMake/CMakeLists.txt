@@ -79,13 +79,16 @@ set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Public_Source_Files
     ../../../include/httpClient/httpClient.h
+    ../../../include/httpClient/httpProvider.h
+    ../../../include/httpClient/mock.h
+    ../../../include/httpClient/task.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/types.h
     )
 
 set(Common_Source_Files
-    ../../../Source/Common/task.cpp
-    ../../../Source/Common/task.h
+    ../../../Source/Common/taskImpl.cpp
+    ../../../Source/Common/taskImpl.h
     ../../../Source/Common/mem.cpp
     ../../../Source/Common/mem.h
     ../../../Source/Common/pch.cpp

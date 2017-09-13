@@ -54,6 +54,11 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 class AssertHelper
 {
 public:
+    static void AreEqual(const char* expected, const char* actual)
+    {
+        Assert::AreEqual(expected, actual, false, nullptr, LINE_INFO());
+    }
+
     static void AreEqual(const wchar_t* expected, const wchar_t* actual)
     {
         Assert::AreEqual(expected, actual, false, nullptr, LINE_INFO());
@@ -119,10 +124,10 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
     Assert::IsFalse(x, L#x)
 
 #define VERIFY_IS_NULL(x) \
-    Assert::IsNull(x, L#x)
+    Assert::IsTrue(x == nullptr, L#x)
 
 #define VERIFY_IS_NOT_NULL(x) \
-    Assert::IsNotNull(x)
+    Assert::IsTrue(x != nullptr, L#x)
 
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_SECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::seconds(__seconds))
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_MILLISECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::milliseconds(__seconds))

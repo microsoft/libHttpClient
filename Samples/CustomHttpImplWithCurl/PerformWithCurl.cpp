@@ -52,13 +52,13 @@ void HC_CALLING_CONV PerformCallWithCurl(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    const WCHAR* url = nullptr;
-    const WCHAR* method = nullptr;
-    const WCHAR* requestBody = nullptr;
-    const WCHAR* userAgent = nullptr;
+    const char* url = nullptr;
+    const char* method = nullptr;
+    const char* requestBody = nullptr;
+    const char* userAgent = nullptr;
     HCHttpCallRequestGetUrl(call, &method, &url);
     HCHttpCallRequestGetRequestBodyString(call, &requestBody);
-    HCHttpCallRequestGetHeader(call, L"User-Agent", &userAgent);
+    HCHttpCallRequestGetHeader(call, "User-Agent", &userAgent);
     // TODO: get/set headers for Curl to use
 
     CURL *curl;
@@ -70,7 +70,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
     chunk.memory = (char*)malloc(1);  /* will be grown as needed by realloc above */
     chunk.size = 0;    /* no data at this point */
 
-    curl_easy_setopt(curl, CURLOPT_URL, to_utf8string(url).c_str());
+    curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
 
@@ -82,9 +82,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
         HCHttpCallResponseSetStatusCode(call, response_code);
         char *ct;
         res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
-        std::string responseStr = chunk.memory;
-        std::wstring wstr = to_wstring(responseStr);
-        HCHttpCallResponseSetResponseString(call, wstr.c_str());
+        HCHttpCallResponseSetResponseString(call, chunk.memory);
     }
     HCHttpCallResponseSetErrorCode(call, res);
     HCTaskSetCompleted(taskHandle);

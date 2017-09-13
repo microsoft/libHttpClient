@@ -59,50 +59,6 @@ DEFINE_TEST_CLASS(TaskTests)
 public:
     DEFINE_TEST_CLASS_PROPS(TaskTests);
 
-    DEFINE_TEST_CASE(TestHCTaskCreateExecuteNow)
-    {
-        DEFINE_TEST_CASE_PROPERTIES(TestHCTaskCreateExecuteNow);
-
-        HCGlobalInitialize();
-        uint64_t taskGroupId = 1;
-        HC_TASK_HANDLE taskHandle = HCTaskCreate(
-            taskGroupId,
-            TestTaskExecute, (void*)1,
-            TestTaskWriteResults, (void*)2,
-            TestTaskCompleteRoutine, (void*)3,
-            true
-            );
-
-        // Verify only execute was called
-        VERIFY_ARE_EQUAL(true, g_calledTestTaskExecute);
-        VERIFY_ARE_EQUAL(false, g_calledTestTaskWriteResults);
-        VERIFY_ARE_EQUAL(false, g_calledTestTaskCompleteRoutine);
-        g_calledTestTaskExecute = false;
-        g_calledTestTaskWriteResults = false;
-        g_calledTestTaskCompleteRoutine = false;
-        VERIFY_ARE_EQUAL(false, HCTaskIsTaskPending());
-
-        // Nothing should happen if we do task group 0
-        HCTaskProcessNextCompletedTask(0);
-        VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
-        VERIFY_ARE_EQUAL(false, g_calledTestTaskWriteResults);
-        VERIFY_ARE_EQUAL(false, g_calledTestTaskCompleteRoutine);
-
-        // Verify write & complete were called after 
-        HCTaskProcessNextCompletedTask(taskGroupId);
-        VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
-        VERIFY_ARE_EQUAL(true, g_calledTestTaskWriteResults);
-        VERIFY_ARE_EQUAL(true, g_calledTestTaskCompleteRoutine);
-        VERIFY_ARE_EQUAL(true, HCTaskIsCompleted(taskHandle));
-
-        VERIFY_IS_NOT_NULL(HCTaskGetPendingHandle());
-        VERIFY_IS_NOT_NULL(HCTaskGetCompletedHandle(taskGroupId));
-
-        HCGlobalCleanup();
-
-        //HCTaskWaitForCompleted
-    }
-
     DEFINE_TEST_CASE(TestHCTaskCreateExecuteDelayed)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestHCTaskCreateExecuteDelayed);
@@ -117,11 +73,10 @@ public:
             taskGroupId,
             TestTaskExecute, (void*)1,
             TestTaskWriteResults, (void*)2,
-            TestTaskCompleteRoutine, (void*)3,
-            false
+            TestTaskCompleteRoutine, (void*)3
             );
 
-        VERIFY_ARE_EQUAL(true, HCTaskIsTaskPending());
+        //VERIFY_ARE_EQUAL(true, HCTaskIsTaskPending());
         VERIFY_ARE_EQUAL(false, HCTaskIsCompleted(taskHandle));
 
         // Verify no called

@@ -146,19 +146,19 @@ public:
         HCSettingsGetLogLevel(&level);
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_ERROR, level);
 
-        HCSettingsSetTimeoutWindow(1000);
+        HCHttpCallRequestSetTimeoutWindow(nullptr, 1000);
         uint32_t timeout = 0;
-        HCSettingsGetTimeoutWindow(&timeout);
+        HCHttpCallRequestGetTimeoutWindow(nullptr, &timeout);
         VERIFY_ARE_EQUAL(1000, timeout);
 
-        HCSettingsSetAssertsForThrottling(true);
+        HCHttpCallRequestSetAssertsForThrottling(nullptr, true);
         bool enabled = false;
-        HCSettingsGetAssertsForThrottling(&enabled);
+        HCHttpCallRequestGetAssertsForThrottling(nullptr, &enabled);
         VERIFY_ARE_EQUAL(true, enabled);
 
-        HCSettingsSetRetryDelay(500);
+        HCHttpCallRequestSetRetryDelay(nullptr, 500);
         uint32_t retryDelayInSeconds = 0;
-        HCSettingsGetRetryDelay(&retryDelayInSeconds);
+        HCHttpCallRequestGetRetryDelay(nullptr, &retryDelayInSeconds);
 
         HCGlobalCleanup();
     }
@@ -182,26 +182,39 @@ public:
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
 
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        const WCHAR* t1 = nullptr;
-        const WCHAR* t2 = nullptr;
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        const CHAR* t1 = nullptr;
+        const CHAR* t2 = nullptr;
         HCHttpCallRequestGetUrl(call, &t1, &t2);
-        VERIFY_ARE_EQUAL_STR(L"1", t1);
-        VERIFY_ARE_EQUAL_STR(L"2", t2);
+        VERIFY_ARE_EQUAL_STR("1", t1);
+        VERIFY_ARE_EQUAL_STR("2", t2);
 
-        HCHttpCallRequestSetRequestBodyString(call, L"4");
+        HCHttpCallRequestSetRequestBodyString(call, "4");
         HCHttpCallRequestGetRequestBodyString(call, &t1);
-        VERIFY_ARE_EQUAL_STR(L"4", t1);
+        VERIFY_ARE_EQUAL_STR("4", t1);
 
         HCHttpCallRequestSetRetryAllowed(call, true);
         bool retry = false;
         HCHttpCallRequestGetRetryAllowed(call, &retry);
         VERIFY_ARE_EQUAL(true, retry);
 
-        HCHttpCallRequestSetTimeout(call, 1000);
+        HCHttpCallRequestSetTimeout(call, 2000);
         uint32_t timeout = 0;
         HCHttpCallRequestGetTimeout(call, &timeout);
+        VERIFY_ARE_EQUAL(2000, timeout);
+                
+        HCHttpCallRequestSetTimeoutWindow(call, 1000);
+        HCHttpCallRequestGetTimeoutWindow(call, &timeout);
         VERIFY_ARE_EQUAL(1000, timeout);
+
+        HCHttpCallRequestSetAssertsForThrottling(call, true);
+        bool enabled = false;
+        HCHttpCallRequestGetAssertsForThrottling(call, &enabled);
+        VERIFY_ARE_EQUAL(true, enabled);
+
+        HCHttpCallRequestSetRetryDelay(call, 500);
+        uint32_t retryDelayInSeconds = 0;
+        HCHttpCallRequestGetRetryDelay(call, &retryDelayInSeconds);
 
         HCHttpCallCleanup(call);
         HCGlobalCleanup();
@@ -219,37 +232,37 @@ public:
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(0, numHeaders);
 
-        HCHttpCallRequestSetHeader(call, L"testHeader", L"testValue");
+        HCHttpCallRequestSetHeader(call, "testHeader", "testValue");
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallRequestSetHeader(call, L"testHeader", L"testValue2");
+        HCHttpCallRequestSetHeader(call, "testHeader", "testValue2");
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        const WCHAR* t1 = nullptr;
-        HCHttpCallRequestGetHeader(call, L"testHeader", &t1);
-        VERIFY_ARE_EQUAL_STR(L"testValue2", t1);
-        HCHttpCallRequestGetHeader(call, L"testHeader2", &t1);
+        const CHAR* t1 = nullptr;
+        HCHttpCallRequestGetHeader(call, "testHeader", &t1);
+        VERIFY_ARE_EQUAL_STR("testValue2", t1);
+        HCHttpCallRequestGetHeader(call, "testHeader2", &t1);
         VERIFY_IS_NULL(t1);
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallRequestSetHeader(call, L"testHeader", L"testValue");
-        HCHttpCallRequestSetHeader(call, L"testHeader2", L"testValue2");
+        HCHttpCallRequestSetHeader(call, "testHeader", "testValue");
+        HCHttpCallRequestSetHeader(call, "testHeader2", "testValue2");
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(2, numHeaders);
 
-        const WCHAR* hn0 = nullptr;
-        const WCHAR* hv0 = nullptr;
-        const WCHAR* hn1 = nullptr;
-        const WCHAR* hv1 = nullptr;
+        const CHAR* hn0 = nullptr;
+        const CHAR* hv0 = nullptr;
+        const CHAR* hn1 = nullptr;
+        const CHAR* hv1 = nullptr;
         HCHttpCallRequestGetHeaderAtIndex(call, 0, &hn0, &hv0);
         HCHttpCallRequestGetHeaderAtIndex(call, 1, &hn1, &hv1);
-        VERIFY_ARE_EQUAL_STR(L"testHeader", hn0);
-        VERIFY_ARE_EQUAL_STR(L"testValue", hv0);
-        VERIFY_ARE_EQUAL_STR(L"testHeader2", hn1);
-        VERIFY_ARE_EQUAL_STR(L"testValue2", hv1);
+        VERIFY_ARE_EQUAL_STR("testHeader", hn0);
+        VERIFY_ARE_EQUAL_STR("testValue", hv0);
+        VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
+        VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
         HCHttpCallCleanup(call);
         HCGlobalCleanup();
@@ -263,10 +276,10 @@ public:
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
 
-        HCHttpCallResponseSetResponseString(call, L"test1");
-        const WCHAR* t1 = nullptr;
+        HCHttpCallResponseSetResponseString(call, "test1");
+        const CHAR* t1 = nullptr;
         HCHttpCallResponseGetResponseString(call, &t1);
-        VERIFY_ARE_EQUAL_STR(L"test1", t1);
+        VERIFY_ARE_EQUAL_STR("test1", t1);
 
         HCHttpCallResponseSetStatusCode(call, 200);
         uint32_t statusCode = 0;
@@ -277,10 +290,6 @@ public:
         uint32_t errorCode = 0;
         HCHttpCallResponseGetErrorCode(call, &errorCode);
         VERIFY_ARE_EQUAL(101, errorCode);
-
-        HCHttpCallResponseSetErrorMessage(call, L"test2");
-        HCHttpCallResponseGetErrorMessage(call, &t1);
-        VERIFY_ARE_EQUAL_STR(L"test2", t1);
 
         HCHttpCallCleanup(call);
         HCGlobalCleanup();
@@ -298,37 +307,37 @@ public:
         HCHttpCallResponseGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(0, numHeaders);
 
-        HCHttpCallResponseSetHeader(call, L"testHeader", L"testValue");
+        HCHttpCallResponseSetHeader(call, "testHeader", "testValue");
         HCHttpCallResponseGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallResponseSetHeader(call, L"testHeader", L"testValue2");
+        HCHttpCallResponseSetHeader(call, "testHeader", "testValue2");
         HCHttpCallResponseGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        const WCHAR* t1 = nullptr;
-        HCHttpCallResponseGetHeader(call, L"testHeader", &t1);
-        VERIFY_ARE_EQUAL_STR(L"testValue2", t1);
-        HCHttpCallResponseGetHeader(call, L"testHeader2", &t1);
+        const CHAR* t1 = nullptr;
+        HCHttpCallResponseGetHeader(call, "testHeader", &t1);
+        VERIFY_ARE_EQUAL_STR("testValue2", t1);
+        HCHttpCallResponseGetHeader(call, "testHeader2", &t1);
         VERIFY_IS_NULL(t1);
         HCHttpCallResponseGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallResponseSetHeader(call, L"testHeader", L"testValue");
-        HCHttpCallResponseSetHeader(call, L"testHeader2", L"testValue2");
+        HCHttpCallResponseSetHeader(call, "testHeader", "testValue");
+        HCHttpCallResponseSetHeader(call, "testHeader2", "testValue2");
         HCHttpCallResponseGetNumHeaders(call, &numHeaders);
         VERIFY_ARE_EQUAL(2, numHeaders);
 
-        const WCHAR* hn0 = nullptr;
-        const WCHAR* hv0 = nullptr;
-        const WCHAR* hn1 = nullptr;
-        const WCHAR* hv1 = nullptr;
+        const CHAR* hn0 = nullptr;
+        const CHAR* hv0 = nullptr;
+        const CHAR* hn1 = nullptr;
+        const CHAR* hv1 = nullptr;
         HCHttpCallResponseGetHeaderAtIndex(call, 0, &hn0, &hv0);
         HCHttpCallResponseGetHeaderAtIndex(call, 1, &hn1, &hv1);
-        VERIFY_ARE_EQUAL_STR(L"testHeader", hn0);
-        VERIFY_ARE_EQUAL_STR(L"testValue", hv0);
-        VERIFY_ARE_EQUAL_STR(L"testHeader2", hn1);
-        VERIFY_ARE_EQUAL_STR(L"testValue2", hv1);
+        VERIFY_ARE_EQUAL_STR("testHeader", hn0);
+        VERIFY_ARE_EQUAL_STR("testValue", hv0);
+        VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
+        VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
         HCHttpCallCleanup(call);
         HCGlobalCleanup();
