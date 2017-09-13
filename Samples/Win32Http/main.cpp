@@ -3,22 +3,22 @@
 #include "stdafx.h"
 #include "httpClient\httpClient.h"
 
-std::vector<std::vector<std::wstring>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
 
-    std::vector< std::vector<std::wstring> > headers;
+    std::vector< std::vector<std::string> > headers;
     for (uint32_t i = 0; i < numHeaders; i++)
     {
-        const WCHAR* str;
-        const WCHAR* str2;
-        std::wstring headerName;
-        std::wstring headerValue;
+        const CHAR* str;
+        const CHAR* str2;
+        std::string headerName;
+        std::string headerValue;
         HCHttpCallResponseGetHeaderAtIndex(call, i, &str, &str2);
         if (str != nullptr) headerName = str;
         if (str2 != nullptr) headerValue = str2;
-        std::vector<std::wstring> header;
+        std::vector<std::string> header;
         header.push_back(headerName);
         header.push_back(headerValue);
 
@@ -60,19 +60,18 @@ DWORD g_numActiveThreads = 0;
 
 DWORD WINAPI http_thread_proc(LPVOID lpParam)
 {
-    HANDLE hEvents[2] =
+    HANDLE hEvents[1] =
     {
-        HCTaskGetPendingHandle(),
         g_stopRequestedHandle.get()
     };
 
     bool stop = false;
     while (!stop)
     {
-        DWORD dwResult = WaitForMultipleObjectsEx(2, hEvents, false, INFINITE, false);
+        DWORD dwResult = WaitForMultipleObjectsEx(1, hEvents, false, 20, false);
         switch (dwResult)
         {
-        case WAIT_OBJECT_0: // pending ready
+        case WAIT_TIMEOUT: // pending ready
             HCTaskProcessNextPendingTask();
             break;
 
@@ -117,16 +116,16 @@ void ShutdownActiveThreads()
 
 int main()
 {
-    std::wstring method = L"GET";
-    std::wstring url = L"http://www.bing.com";
-    std::wstring requestBody = L"";
+    std::string method = "GET";
+    std::string url = "http://www.bing.com";
+    std::string requestBody = "";
     bool retryAllowed = true;
-    std::vector<std::vector<std::wstring>> headers;
-    std::vector< std::wstring > header;
+    std::vector<std::vector<std::string>> headers;
+    std::vector< std::string > header;
 
     header.clear();
-    header.push_back(L"User-Agent");
-    header.push_back(L"libHttpClient");
+    header.push_back("User-Agent");
+    header.push_back("libHttpClient");
     headers.push_back(header);
 
     HCGlobalInitialize();
@@ -140,35 +139,33 @@ int main()
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
     for (auto& header : headers)
     {
-        std::wstring headerName = header[0];
-        std::wstring headerValue = header[1];
+        std::string headerName = header[0];
+        std::string headerValue = header[1];
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
-    wprintf_s(L"Calling %s %s\r\n", method.c_str(), url.c_str());
+    printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
     uint64_t taskGroupId = 0;
     auto taskHandle = HCHttpCallPerform(taskGroupId, call, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            const WCHAR* str;
+            const CHAR* str;
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            std::wstring responseString;
-            std::wstring errMessage;
+            std::string responseString;
+            std::string errMessage;
 
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &str);
             if (str != nullptr) responseString = str;
-            HCHttpCallResponseGetErrorMessage(call, &str);
-            if (str != nullptr) errMessage = str;
-            std::vector<std::vector<std::wstring>> headers = ExtractAllHeaders(call);
+            std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
             HCHttpCallCleanup(call);
 
-            wprintf_s(L"Got ErrorCode:%d HttpStatus:%d\r\n", errCode, statusCode);
-            wprintf_s(L"responseString:%s\r\n", responseString.c_str());
+            printf_s("Got ErrorCode:%d HttpStatus:%d\r\n", errCode, statusCode);
+            printf_s("responseString:%s\r\n", responseString.c_str());
         });
 
     HCTaskWaitForCompleted(taskHandle, 1000*1000);

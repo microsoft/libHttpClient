@@ -9,8 +9,8 @@ using namespace xbox::httpclient;
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetUrl(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T method,
-    _In_ PCSTR_T url
+    _In_ PCSTR method,
+    _In_ PCSTR url
     )
 {
     auto httpSingleton = get_http_singleton();
@@ -25,8 +25,8 @@ HCHttpCallRequestSetUrl(
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetUrl(
     _In_ HC_CALL_HANDLE call,
-    _Outptr_ PCSTR_T* method,
-    _Outptr_ PCSTR_T* url
+    _Outptr_ PCSTR* method,
+    _Outptr_ PCSTR* url
     )
 {
     auto httpSingleton = get_http_singleton();
@@ -38,7 +38,7 @@ HCHttpCallRequestGetUrl(
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetRequestBodyString(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T requestBodyString
+    _In_ PCSTR requestBodyString
     )
 {
     auto httpSingleton = get_http_singleton();
@@ -52,7 +52,7 @@ HCHttpCallRequestSetRequestBodyString(
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetRequestBodyString(
     _In_ HC_CALL_HANDLE call,
-    _Out_ PCSTR_T* requestBodyString
+    _Out_ PCSTR* requestBodyString
     )
 {
     *requestBodyString = call->requestBodyString.c_str();
@@ -62,8 +62,8 @@ HCHttpCallRequestGetRequestBodyString(
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetHeader(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T headerName,
-    _In_ PCSTR_T headerValue
+    _In_ PCSTR headerName,
+    _In_ PCSTR headerValue
     )
 {
     call->requestHeaders[headerName] = headerValue;
@@ -75,8 +75,8 @@ HCHttpCallRequestSetHeader(
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetHeader(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T headerName,
-    _Out_ PCSTR_T* headerValue
+    _In_ PCSTR headerName,
+    _Out_ PCSTR* headerValue
     )
 {
     auto it = call->requestHeaders.find(headerName);
@@ -103,8 +103,8 @@ HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetHeaderAtIndex(
     _In_ HC_CALL_HANDLE call,
     _In_ uint32_t headerIndex,
-    _Out_ PCSTR_T* headerName,
-    _Out_ PCSTR_T* headerValue
+    _Out_ PCSTR* headerName,
+    _Out_ PCSTR* headerValue
     )
 {
     uint32_t index = 0;
@@ -127,33 +127,56 @@ HCHttpCallRequestGetHeaderAtIndex(
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetRetryAllowed(
-    _In_ HC_CALL_HANDLE call,
+    _In_opt_ HC_CALL_HANDLE call,
     _In_ bool retryAllowed
     )
 {
-    auto httpSingleton = get_http_singleton();
-    call->retryAllowed = retryAllowed;
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        httpSingleton->m_retryAllowed = retryAllowed;
+    }
+    else
+    {
+        call->retryAllowed = retryAllowed;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",
-        call->id, retryAllowed ? _T("true") : _T("false"));
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",
+            call->id, retryAllowed ? "true" : "false");
+    }
 }
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetRetryAllowed(
-    _In_ HC_CALL_HANDLE call,
+    _In_opt_ HC_CALL_HANDLE call,
     _Out_ bool* retryAllowed
     )
 {
-    *retryAllowed = call->retryAllowed;
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        *retryAllowed = httpSingleton->m_retryAllowed;
+    }
+    else
+    {
+        *retryAllowed = call->retryAllowed;
+    }
 }
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestSetTimeout(
-    _In_ HC_CALL_HANDLE call,
+    _In_opt_ HC_CALL_HANDLE call,
     _In_ uint32_t timeoutInSeconds
     )
 {
-    call->timeoutInSeconds = timeoutInSeconds;
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        httpSingleton->m_timeoutInSeconds = timeoutInSeconds;
+    }
+    else
+    {
+        call->timeoutInSeconds = timeoutInSeconds;
+    }
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetTimeout [ID %llu]: timeoutInSeconds=%u",
         call->id, timeoutInSeconds);
@@ -161,11 +184,123 @@ HCHttpCallRequestSetTimeout(
 
 HC_API void HC_CALLING_CONV
 HCHttpCallRequestGetTimeout(
-    _In_ HC_CALL_HANDLE call,
+    _In_opt_ HC_CALL_HANDLE call,
     _Out_ uint32_t* timeoutInSeconds
     )
 {
-    *timeoutInSeconds = call->timeoutInSeconds;
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        *timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
+    }
+    else
+    {
+        *timeoutInSeconds = call->timeoutInSeconds;
+    }
 }
 
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestSetTimeoutWindow(
+    _In_opt_ HC_CALL_HANDLE call,
+    _In_ uint32_t timeoutWindowInSeconds
+    )
+{
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        httpSingleton->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
+    }
+    else
+    {
+        call->timeoutWindowInSeconds = timeoutWindowInSeconds;
+    }
+
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestTimeoutWindow: %u", timeoutWindowInSeconds);
+}
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestGetRetryDelay(
+    _In_opt_ HC_CALL_HANDLE call,
+    _In_ uint32_t* retryDelayInSeconds
+    )
+{
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        *retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
+    }
+    else
+    {
+        *retryDelayInSeconds = call->retryDelayInSeconds;
+    }
+}
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestSetRetryDelay(
+    _In_opt_ HC_CALL_HANDLE call,
+    _In_ uint32_t retryDelayInSeconds
+    )
+{
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        httpSingleton->m_retryDelayInSeconds = retryDelayInSeconds;
+    }
+    else
+    {
+        call->retryDelayInSeconds = retryDelayInSeconds;
+    }
+}
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestGetTimeoutWindow(
+    _In_opt_ HC_CALL_HANDLE call,
+    _Out_ uint32_t* timeoutWindowInSeconds
+    )
+{
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
+    }
+    else
+    {
+        *timeoutWindowInSeconds = call->timeoutWindowInSeconds;
+    }
+}
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestSetAssertsForThrottling(
+    _In_opt_ HC_CALL_HANDLE call,
+    _In_ bool enableAssertsForThrottling
+    )
+{
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        httpSingleton->m_enableAssertsForThrottling = enableAssertsForThrottling;
+    }
+    else
+    {
+        call->enableAssertsForThrottling = enableAssertsForThrottling;
+    }
+}
+
+HC_API void HC_CALLING_CONV
+HCHttpCallRequestGetAssertsForThrottling(
+    _In_opt_ HC_CALL_HANDLE call,
+    _Out_ bool* enableAssertsForThrottling
+    )
+{
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton();
+        *enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
+    }
+    else
+    {
+        *enableAssertsForThrottling = call->enableAssertsForThrottling;
+    }
+}
 

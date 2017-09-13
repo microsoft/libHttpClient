@@ -9,7 +9,7 @@
 using namespace xbox::httpclient;
 
 HC_API void HC_CALLING_CONV
-HCGlobalGetLibVersion(_Outptr_ PCSTR_T* version)
+HCGlobalGetLibVersion(_Outptr_ PCSTR* version)
 {
     *version = LIBHTTPCLIENT_VERSION;
 }

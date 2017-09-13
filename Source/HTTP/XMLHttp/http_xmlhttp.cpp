@@ -362,12 +362,12 @@ void xmlhttp_http_task::perform_async(
 {
     try
     {
-        std::wstring headerName;
-        std::wstring headerValue;
-        const WCHAR* url = nullptr;
-        const WCHAR* method = nullptr;
-        const WCHAR* requestBody = nullptr;
-        const WCHAR* userAgent = nullptr;
+        std::string headerName;
+        std::string headerValue;
+        const CHAR* url = nullptr;
+        const CHAR* method = nullptr;
+        const CHAR* requestBody = nullptr;
+        const CHAR* userAgent = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
         HCHttpCallRequestGetRequestBodyString(call, &requestBody);
 
@@ -396,14 +396,16 @@ void xmlhttp_http_task::perform_async(
         std::shared_ptr<hc_task> httpTask2 = shared_from_this();
         std::shared_ptr<xmlhttp_http_task> httpTask = std::dynamic_pointer_cast<xmlhttp_http_task>(httpTask2);
 
-        hr = m_hRequest->Open(
-            method,
-            url,
-            Microsoft::WRL::Make<HttpRequestCallback>(httpTask).Get(),
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr);
+        // TODO: convert to wide
+        hr = S_OK;
+        //hr = m_hRequest->Open(
+        //    method,
+        //    url,
+        //    Microsoft::WRL::Make<HttpRequestCallback>(httpTask).Get(),
+        //    nullptr,
+        //    nullptr,
+        //    nullptr,
+        //    nullptr);
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to open HTTP request %llu", hr);
@@ -422,12 +424,13 @@ void xmlhttp_http_task::perform_async(
         hr = m_hRequest->SetRequestHeader(L"User-Agent", L"libHttpClient/1.0.0.0");
         for (uint32_t i = 0; i < numHeaders; i++)
         {
-            const WCHAR* headerName;
-            const WCHAR* headerValue;
+            const CHAR* headerName;
+            const CHAR* headerValue;
             HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
             if (headerName != nullptr && headerValue != nullptr)
             {
-                hr = m_hRequest->SetRequestHeader(headerName, headerValue);
+                // TODO convert to wide
+                //hr = m_hRequest->SetRequestHeader(headerName, headerValue);
             }
         }
 

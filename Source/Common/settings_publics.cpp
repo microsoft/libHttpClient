@@ -32,62 +32,6 @@ HCSettingsGetLogLevel(
 }
 
 HC_API void HC_CALLING_CONV
-HCSettingsSetTimeoutWindow(
-    _In_ uint32_t timeoutWindowInSeconds
-    )
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
-
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsTimeoutWindow: %u", timeoutWindowInSeconds);
-}
-
-HC_API void HC_CALLING_CONV
-HCSettingsGetRetryDelay(
-    _In_ uint32_t* retryDelayInSeconds
-    )
-{
-    auto httpSingleton = get_http_singleton();
-    *retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
-}
-
-HC_API void HC_CALLING_CONV
-HCSettingsSetRetryDelay(
-    _In_ uint32_t retryDelayInSeconds
-    )
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_retryDelayInSeconds = retryDelayInSeconds;
-}
-
-HC_API void HC_CALLING_CONV
-HCSettingsGetTimeoutWindow(
-    _Out_ uint32_t* timeoutWindowInSeconds
-    )
-{
-    auto httpSingleton = get_http_singleton();
-    *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
-}
-
-HC_API void HC_CALLING_CONV
-HCSettingsSetAssertsForThrottling(
-    _In_ bool enableAssertsForThrottling
-    )
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_enableAssertsForThrottling = enableAssertsForThrottling;
-}
-
-HC_API void HC_CALLING_CONV
-HCSettingsGetAssertsForThrottling(
-    _Out_ bool* enableAssertsForThrottling
-    )
-{
-    auto httpSingleton = get_http_singleton();
-    *enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
-}
-
-HC_API void HC_CALLING_CONV
 HCMockAddMock(
     _In_ HC_CALL_HANDLE call
     )

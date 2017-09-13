@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "task.h"
+#include "taskImpl.h"
 
 using namespace xbox::httpclient;
 
@@ -102,8 +102,7 @@ HCTaskCreate(
     _In_ HC_TASK_WRITE_RESULTS_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
     _In_opt_ void* completionRoutine,
-    _In_opt_ void* completionRoutineContext,
-    _In_ bool executeNow
+    _In_opt_ void* completionRoutineContext
     )
 {
     auto httpSingleton = get_http_singleton();
@@ -130,15 +129,7 @@ HCTaskCreate(
         http_task_store_task_from_handle_id(std::move(task));
     }
 
-
-    if (executeNow)
-    {
-        http_task_process_pending(pTask);
-    }
-    else
-    {
-        http_task_queue_pending(pTask);
-    }
+    http_task_queue_pending(pTask);
 
     return pTask->id;
 }

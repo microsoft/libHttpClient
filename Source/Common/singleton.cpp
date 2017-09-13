@@ -24,6 +24,8 @@ http_singleton::http_singleton()
     m_enableAssertsForThrottling = true;
     m_mocksEnabled = false;
     m_lastMatchingMock = nullptr;
+    m_retryAllowed = true;
+    m_timeoutInSeconds = 0;
     m_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
 }
 

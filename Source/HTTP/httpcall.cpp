@@ -15,9 +15,14 @@ HCHttpCallCreate(
     auto httpSingleton = get_http_singleton();
 
     HC_CALL* call = new HC_CALL();
-    call->retryAllowed = true;
 
-    call->id = httpSingleton->m_lastId;
+    call->retryAllowed = httpSingleton->m_retryAllowed;
+    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
+    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
+    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
+    call->enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
+
+    call->id = httpSingleton->m_lastId.load();
     httpSingleton->m_lastId++;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
@@ -107,8 +112,7 @@ HCHttpCallPerform(
         taskGroupId,
         HttpCallPerformExecute, (void*)call,
         HttpCallPerformWriteResults, (void*)call,
-        completionRoutine, completionRoutineContext,
-        true
+        completionRoutine, completionRoutineContext
         );
 }
 

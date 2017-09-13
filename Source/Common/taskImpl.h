@@ -3,6 +3,7 @@
 
 #pragma once
 #include "win/utils_win.h"
+#include "taskImpl.h"
 
 enum http_task_state
 {

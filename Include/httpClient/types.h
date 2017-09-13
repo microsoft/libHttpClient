@@ -77,32 +77,6 @@
   #endif
 #endif
 
-#ifdef _WIN32
-    #ifdef __cplusplus
-        #pragma detect_mismatch("HC_CHAR_T_IS_WIDE", "1")
-    #endif
-    #define HC_CHAR_T_IS_WIDE 1
-#else
-    #ifdef __cplusplus
-        #pragma detect_mismatch("HC_CHAR_T_IS_WIDE", "0")
-    #endif
-    #define HC_CHAR_T_IS_WIDE 0
-#endif
-
-#if HC_CHAR_T_IS_WIDE
-    typedef wchar_t CHAR_T;
-    typedef LPCWSTR PCSTR_T;
-    #ifndef _T
-        #define _T(x) L ## x
-    #endif
-#else
-    typedef char CHAR_T;
-    typedef const char* PCSTR_T;
-    #ifndef _T
-        #define _T(x) x
-    #endif
-#endif
-
 #define HC_CALLING_CONV __cdecl
 typedef uint32_t HC_MEMORY_TYPE;
 typedef struct HC_CALL* HC_CALL_HANDLE;

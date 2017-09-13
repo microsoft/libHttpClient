@@ -10,7 +10,7 @@ using namespace xbox::httpclient;
 HC_API void HC_CALLING_CONV
 HCHttpCallResponseGetResponseString(
     _In_ HC_CALL_HANDLE call,
-    _Out_ PCSTR_T* responseString
+    _Out_ PCSTR* responseString
     )
 {
     *responseString = call->responseString.c_str();
@@ -19,7 +19,7 @@ HCHttpCallResponseGetResponseString(
 HC_API void HC_CALLING_CONV
 HCHttpCallResponseSetResponseString(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T responseString
+    _In_ PCSTR responseString
     )
 {
     call->responseString = responseString;
@@ -67,30 +67,10 @@ HCHttpCallResponseSetErrorCode(
 }
 
 HC_API void HC_CALLING_CONV
-HCHttpCallResponseGetErrorMessage(
-    _In_ HC_CALL_HANDLE call,
-    _Out_ PCSTR_T* errorMessage
-    )
-{
-    *errorMessage = call->errorMessage.c_str();
-}
-
-HC_API void HC_CALLING_CONV
-HCHttpCallResponseSetErrorMessage(
-    _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T errorMessage
-    )
-{
-    call->errorMessage = errorMessage;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorMessage [ID %llu]: errorMessage=%s",
-        call->id, errorMessage);
-}
-
-HC_API void HC_CALLING_CONV
 HCHttpCallResponseGetHeader(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T headerName,
-    _Out_ PCSTR_T* headerValue
+    _In_ PCSTR headerName,
+    _Out_ PCSTR* headerValue
     )
 {
     auto it = call->responseHeaders.find(headerName);
@@ -117,8 +97,8 @@ HC_API void HC_CALLING_CONV
 HCHttpCallResponseGetHeaderAtIndex(
     _In_ HC_CALL_HANDLE call,
     _In_ uint32_t headerIndex,
-    _Out_ PCSTR_T* headerName,
-    _Out_ PCSTR_T* headerValue
+    _Out_ PCSTR* headerName,
+    _Out_ PCSTR* headerValue
     )
 {
     uint32_t index = 0;
@@ -142,8 +122,8 @@ HCHttpCallResponseGetHeaderAtIndex(
 HC_API void HC_CALLING_CONV
 HCHttpCallResponseSetHeader(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR_T headerName,
-    _In_ PCSTR_T headerValue
+    _In_ PCSTR headerName,
+    _In_ PCSTR headerValue
     )
 {
     call->responseHeaders[headerName] = headerValue;
