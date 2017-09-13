@@ -85,7 +85,6 @@
     #define DEFINE_TEST_CASE_PROPERTIES_FAILING(x) DEFINE_TEST_CASE_PROPERTIES_TE()
     #define TEST_LOG(x) Logger::WriteMessage(x)
     #define VERIFY_ARE_NOT_EQUAL(expected, actual) Assert::AreNotEqual(expected, actual)
-    #define VERIFY_IS_NOT_NULL(x) Assert::IsNotNull(x)
 #endif
 
 

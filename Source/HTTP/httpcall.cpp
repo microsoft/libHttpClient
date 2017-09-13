@@ -12,13 +12,18 @@ HCHttpCallCreate(
     _Out_ HC_CALL_HANDLE* callHandle
     )
 {
-    verify_http_singleton();
+    auto httpSingleton = get_http_singleton();
 
     HC_CALL* call = new HC_CALL();
-    call->retryAllowed = true;
 
-    call->id = get_http_singleton()->m_lastId;
-    get_http_singleton()->m_lastId++;
+    call->retryAllowed = httpSingleton->m_retryAllowed;
+    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
+    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
+    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
+    call->enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
+
+    call->id = httpSingleton->m_lastId.load();
+    httpSingleton->m_lastId++;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
 
@@ -31,8 +36,6 @@ HCHttpCallCleanup(
     )
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCleanup [ID %llu]", call->id);
-
-    verify_http_singleton();
     delete call;
 }
 
@@ -41,13 +44,15 @@ void HttpCallPerformExecute(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
+    auto httpSingleton = get_http_singleton();
+
     // TODO check for null executionRoutineContext?
 
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu]", call->id);
 
     bool matchedMocks = false;
-    if (get_http_singleton()->m_mocksEnabled)
+    if (httpSingleton->m_mocksEnabled)
     {
         matchedMocks = Mock_Internal_HCHttpCallPerform(call);
         if (matchedMocks)
@@ -58,7 +63,7 @@ void HttpCallPerformExecute(
    
     if (!matchedMocks) // if there wasn't a matched mock, then real call
     {
-        HC_HTTP_CALL_PERFORM_FUNC performFunc = get_http_singleton()->m_performFunc;
+        HC_HTTP_CALL_PERFORM_FUNC performFunc = httpSingleton->m_performFunc;
         if (performFunc != nullptr)
         {
             try
@@ -101,16 +106,13 @@ HCHttpCallPerform(
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     )
 {
-    verify_http_singleton();
-
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
 
     return HCTaskCreate(
         taskGroupId,
         HttpCallPerformExecute, (void*)call,
         HttpCallPerformWriteResults, (void*)call,
-        completionRoutine, completionRoutineContext,
-        true
+        completionRoutine, completionRoutineContext
         );
 }
 

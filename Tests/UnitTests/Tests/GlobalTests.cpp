@@ -22,9 +22,9 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestGlobalFns);
 
-        PCSTR_T ver;
+        PCSTR ver;
         HCGlobalGetLibVersion(&ver);
-        VERIFY_ARE_EQUAL_STR(_T("1.0.0.0"), ver);
+        VERIFY_ARE_EQUAL_STR("1.0.0.0", ver);
 
 #pragma warning(disable: 4800)
         std::wstring test1 = to_wstring(L"test");

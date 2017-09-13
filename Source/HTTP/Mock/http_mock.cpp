@@ -56,14 +56,16 @@ HC_CALL* GetMatchingMock(
     _In_ HC_CALL_HANDLE originalCall
     )
 {
+    auto httpSingleton = get_http_singleton();
+
     std::vector<HC_CALL*> mocks;
     HC_CALL* lastMatchingMock = nullptr;
     HC_CALL* matchingMock = nullptr;
 
     {
-        std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
-        mocks = get_http_singleton()->m_mocks;
-        lastMatchingMock = get_http_singleton()->m_lastMatchingMock;
+        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+        mocks = httpSingleton->m_mocks;
+        lastMatchingMock = httpSingleton->m_lastMatchingMock;
     }
 
     // ignore last matching call if it doesn't match the current call
@@ -105,8 +107,8 @@ HC_CALL* GetMatchingMock(
     }
 
     {
-        std::lock_guard<std::mutex> guard(get_http_singleton()->m_mocksLock);
-        get_http_singleton()->m_lastMatchingMock = matchingMock;
+        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+        httpSingleton->m_lastMatchingMock = matchingMock;
     }
 
     return matchingMock;
@@ -122,7 +124,7 @@ bool Mock_Internal_HCHttpCallPerform(
         return false;
     }
 
-    PCSTR_T str;
+    PCSTR str;
     HCHttpCallResponseGetResponseString(matchingMock, &str);
     HCHttpCallResponseSetResponseString(originalCall, str);
 
@@ -133,14 +135,11 @@ bool Mock_Internal_HCHttpCallPerform(
     HCHttpCallResponseGetErrorCode(matchingMock, &code);
     HCHttpCallResponseSetErrorCode(originalCall, code);
 
-    HCHttpCallResponseGetErrorMessage(matchingMock, &str);
-    HCHttpCallResponseSetErrorMessage(originalCall, str);
-
     uint32_t numheaders;
     HCHttpCallResponseGetNumHeaders(matchingMock, &numheaders);
 
-    PCSTR_T str1;
-    PCSTR_T str2;
+    PCSTR str1;
+    PCSTR str2;
     for (uint32_t i = 0; i < numheaders; i++)
     {
         HCHttpCallResponseGetHeaderAtIndex(matchingMock, i, &str1, &str2);

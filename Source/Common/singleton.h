@@ -3,7 +3,7 @@
 
 #pragma once
 #include "win/utils_win.h"
-#include "task.h"
+#include "taskImpl.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -47,6 +47,8 @@ struct http_singleton
     std::shared_ptr<http_task_completed_queue> get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId);
 
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;
+    bool m_retryAllowed;
+    uint32_t m_timeoutInSeconds;
     uint32_t m_timeoutWindowInSeconds;
     uint32_t m_retryDelayInSeconds;
     bool m_enableAssertsForThrottling;
@@ -63,8 +65,8 @@ struct http_singleton
     void set_task_pending_ready();
 };
 
-http_singleton* get_http_singleton(_In_ bool createIfRequired = false);
-void verify_http_singleton();
+std::shared_ptr<http_singleton> get_http_singleton();
+void init_http_singleton();
 void cleanup_http_singleton();
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

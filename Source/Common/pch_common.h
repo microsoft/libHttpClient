@@ -81,12 +81,11 @@ typedef std::chrono::steady_clock chrono_clock_t;
 #endif
 
 typedef int32_t function_context;
-#include "httpClient/types.h"
 #include "httpClient/httpClient.h"
 #include "mem.h"
 #include "win/utils_win.h"
 #include "utils.h"
-#include "task.h"
+#include "taskImpl.h"
 #include "singleton.h"
 #include "trace_internal.h"
 

@@ -5,7 +5,7 @@
 #include "httpClient/types.h"
 #include "httpClient/httpClient.h"
 #include "singleton.h"
-#include "task.h"
+#include "taskImpl.h"
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,

@@ -18,23 +18,22 @@ DEFINE_TEST_CLASS(MockTests)
 public:
     DEFINE_TEST_CLASS_PROPS(MockTests);
 
-    HC_CALL_HANDLE CreateMockCall(WCHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
+    HC_CALL_HANDLE CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
         HC_CALL_HANDLE mockCall;
         HCHttpCallCreate(&mockCall);
         if (makeSpecificUrl)
         {
-            HCHttpCallRequestSetUrl(mockCall, L"1", L"2");
+            HCHttpCallRequestSetUrl(mockCall, "1", "2");
         }
         if (makeSpecificBody)
         {
-            HCHttpCallRequestSetRequestBodyString(mockCall, L"requestBody");
+            HCHttpCallRequestSetRequestBodyString(mockCall, "requestBody");
         }
         HCHttpCallResponseSetErrorCode(mockCall, 300);
         HCHttpCallResponseSetStatusCode(mockCall, 400);
         HCHttpCallResponseSetResponseString(mockCall, strResponse);
-        HCHttpCallResponseSetErrorMessage(mockCall, L"mockErrorMessage");
-        HCHttpCallResponseSetHeader(mockCall, L"mockHeader", L"mockValue");
+        HCHttpCallResponseSetHeader(mockCall, "mockHeader", "mockValue");
         return mockCall;
     }
 
@@ -46,23 +45,23 @@ public:
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
 
-        HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", false, false);
+        HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", false, false);
         HCMockAddMock(mockCall);
 
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"3");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "3");
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
                 uint32_t statusCode = 0;
-                PCSTR_T responseStr;
+                PCSTR responseStr;
                 HCHttpCallResponseGetErrorCode(call, &errCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
                 VERIFY_ARE_EQUAL(300, errCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
-                VERIFY_ARE_EQUAL_STR(L"Mock1", responseStr);
+                VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
                 g_gotCall = true;
             });
@@ -78,26 +77,26 @@ public:
 
         HCGlobalInitialize();
 
-        HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", true, false);
+        HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", true, false);
         HCMockAddMock(mockCall);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"3");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "3");
         g_gotCall = false;
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
                 uint32_t statusCode = 0;
-                PCSTR_T responseStr;
+                PCSTR responseStr;
                 HCHttpCallResponseGetErrorCode(call, &errCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
                 VERIFY_ARE_EQUAL(300, errCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
-                VERIFY_ARE_EQUAL_STR(L"Mock1", responseStr);
+                VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
                 g_gotCall = true;
             });
@@ -108,20 +107,20 @@ public:
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"10", L"20");
-        HCHttpCallRequestSetRequestBodyString(call, L"3");
+        HCHttpCallRequestSetUrl(call, "10", "20");
+        HCHttpCallRequestSetRequestBodyString(call, "3");
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            PCSTR_T responseStr;
+            PCSTR responseStr;
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
-            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            VERIFY_ARE_EQUAL_STR("", responseStr);
             HCHttpCallCleanup(call);
             g_gotCall = true;
         });
@@ -140,26 +139,26 @@ public:
 
         HCGlobalInitialize();
 
-        HC_CALL_HANDLE mockCall = CreateMockCall(L"Mock1", true, true);
+        HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", true, true);
         HCMockAddMock(mockCall);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         g_gotCall = false;
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
                 uint32_t statusCode = 0;
-                PCSTR_T responseStr;
+                PCSTR responseStr;
                 HCHttpCallResponseGetErrorCode(call, &errCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
                 VERIFY_ARE_EQUAL(300, errCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
-                VERIFY_ARE_EQUAL_STR(L"Mock1", responseStr);
+                VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
                 g_gotCall = true;
             });
@@ -170,20 +169,20 @@ public:
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"3");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "3");
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            PCSTR_T responseStr;
+            PCSTR responseStr;
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
-            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            VERIFY_ARE_EQUAL_STR("", responseStr);
             HCHttpCallCleanup(call);
             g_gotCall = true;
         });
@@ -196,20 +195,20 @@ public:
         HCMockClearMocks();
 
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            PCSTR_T responseStr;
+            PCSTR responseStr;
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
-            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            VERIFY_ARE_EQUAL_STR("", responseStr);
             HCHttpCallCleanup(call);
             g_gotCall = true;
         });
@@ -222,20 +221,20 @@ public:
         HCMockClearMocks();
 
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            PCSTR_T responseStr;
+            PCSTR responseStr;
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
-            VERIFY_ARE_EQUAL_STR(L"", responseStr);
+            VERIFY_ARE_EQUAL_STR("", responseStr);
             HCHttpCallCleanup(call);
             g_gotCall = true;
         });
@@ -257,28 +256,28 @@ public:
 
         HCGlobalInitialize();
 
-        HC_CALL_HANDLE mockCall1 = CreateMockCall(L"Mock1", true, true);
-        HC_CALL_HANDLE mockCall2 = CreateMockCall(L"Mock2", true, true);
+        HC_CALL_HANDLE mockCall1 = CreateMockCall("Mock1", true, true);
+        HC_CALL_HANDLE mockCall2 = CreateMockCall("Mock2", true, true);
         HCMockAddMock(mockCall1);
         HCMockAddMock(mockCall2);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         g_gotCall = false;
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 uint32_t errCode = 0;
                 uint32_t statusCode = 0;
-                PCSTR_T responseStr;
+                PCSTR responseStr;
                 HCHttpCallResponseGetErrorCode(call, &errCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
                 VERIFY_ARE_EQUAL(300, errCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
-                VERIFY_ARE_EQUAL_STR(L"Mock1", responseStr);
+                VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
                 g_gotCall = true;
             });
@@ -289,20 +288,20 @@ public:
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            PCSTR_T responseStr;
+            PCSTR responseStr;
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(300, errCode);
             VERIFY_ARE_EQUAL(400, statusCode);
-            VERIFY_ARE_EQUAL_STR(L"Mock2", responseStr);
+            VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
             HCHttpCallCleanup(call);
             g_gotCall = true;
         });
@@ -314,20 +313,20 @@ public:
 
         // Call 3 should repeat mock 2
         HCHttpCallCreate(&call);
-        HCHttpCallRequestSetUrl(call, L"1", L"2");
-        HCHttpCallRequestSetRequestBodyString(call, L"requestBody");
+        HCHttpCallRequestSetUrl(call, "1", "2");
+        HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         HCHttpCallPerform(0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
-            PCSTR_T responseStr;
+            PCSTR responseStr;
             HCHttpCallResponseGetErrorCode(call, &errCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(300, errCode);
             VERIFY_ARE_EQUAL(400, statusCode);
-            VERIFY_ARE_EQUAL_STR(L"Mock2", responseStr);
+            VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
             HCHttpCallCleanup(call);
             g_gotCall = true;
         });
