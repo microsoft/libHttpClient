@@ -14,42 +14,6 @@
 namespace
 {
 
-//------------------------------------------------------------------------------
-// CHAR overloads for printf style functions used in tracing
-//------------------------------------------------------------------------------
-#if HC_CHAR_IS_WIDE
-
-template<size_t SIZE>
-int stprintf_s(wCHAR(&buffer)[SIZE], _Printf_format_string_ wCHAR const* format, ...)
-{
-    va_list varArgs = nullptr;
-    va_start(varArgs, format);
-    auto result = vswprintf_s(buffer, format, varArgs);
-    va_end(varArgs);
-    return result;
-}
-
-int stprintf_s(wCHAR* buffer, size_t size, _Printf_format_string_ wCHAR const* format, ...)
-{
-    va_list varArgs = nullptr;
-    va_start(varArgs, format);
-    auto result = vswprintf_s(buffer, size, format, varArgs);
-    va_end(varArgs);
-    return result;
-}
-
-template<size_t SIZE>
-int vstprintf_s(wCHAR(&buffer)[SIZE], _Printf_format_string_ wCHAR const* format, va_list varArgs)
-{
-    return vswprintf_s(buffer, format, varArgs);
-}
-
-void OutputDebugStringT(wCHAR const* string)
-{
-    OutputDebugStringW(string);
-}
-
-#else
 
 template<size_t SIZE>
 int stprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format ...)
@@ -81,7 +45,6 @@ void OutputDebugStringT(char const* string)
     OutputDebugStringA(string);
 }
 
-#endif
 
 //------------------------------------------------------------------------------
 // Trace implementation
@@ -165,7 +128,7 @@ void TraceMessageToDebugger(
     std::tm      fmtTime = {};
     localtime_s(&fmtTime, &timeTInSec);
 
-    CHAR outputBuffer[BUFFER_SIZE] = {};
+    char outputBuffer[BUFFER_SIZE] = {};
     // [threadId][level][time][area] message
     auto written = stprintf_s(outputBuffer, "[%04X][%s][%02d:%02d:%02d.%03u][%s] %s",
         threadId,
@@ -204,11 +167,11 @@ void TraceMessageToDebugger(
 }
 
 void TraceMessageToClient(
-    CHAR const* areaName,
+    char const* areaName,
     HCTraceLevel level,
     unsigned int threadId,
     uint64_t timestamp,
-    CHAR const* message
+    char const* message
 )
 {
 #if HC_TRACE_TO_CLIENT
@@ -243,7 +206,7 @@ void HCTraceSetClientCallback(HCTraceCallback* callback)
 void HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     enum HCTraceLevel level,
-    _Printf_format_string_ CHAR const* format,
+    _Printf_format_string_ char const* format,
     ...
 )
 {
@@ -286,7 +249,7 @@ void HCTraceImplMessage(
     TraceMessageToClient(area->Name, level, threadId, timestamp, message);
 }
 
-HCTraceImplScopeHelper::HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, CHAR const* scope)
+HCTraceImplScopeHelper::HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, char const* scope)
     : m_area{ area }, m_level{ level }, m_scope{ scope }, m_id{ GetScopeId() }
 {
     HCTraceImplMessage(m_area, m_level, ">>> %s (%016llX)", m_scope, m_id);

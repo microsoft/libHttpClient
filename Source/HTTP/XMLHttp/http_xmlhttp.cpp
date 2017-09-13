@@ -364,10 +364,10 @@ void xmlhttp_http_task::perform_async(
     {
         std::string headerName;
         std::string headerValue;
-        const CHAR* url = nullptr;
-        const CHAR* method = nullptr;
-        const CHAR* requestBody = nullptr;
-        const CHAR* userAgent = nullptr;
+        const char* url = nullptr;
+        const char* method = nullptr;
+        const char* requestBody = nullptr;
+        const char* userAgent = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
         HCHttpCallRequestGetRequestBodyString(call, &requestBody);
 
@@ -424,8 +424,8 @@ void xmlhttp_http_task::perform_async(
         hr = m_hRequest->SetRequestHeader(L"User-Agent", L"libHttpClient/1.0.0.0");
         for (uint32_t i = 0; i < numHeaders; i++)
         {
-            const CHAR* headerName;
-            const CHAR* headerValue;
+            const char* headerName;
+            const char* headerValue;
             HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
             if (headerName != nullptr && headerValue != nullptr)
             {

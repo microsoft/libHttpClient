@@ -11,8 +11,8 @@ std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call
     std::vector< std::vector<std::string> > headers;
     for (uint32_t i = 0; i < numHeaders; i++)
     {
-        const CHAR* str;
-        const CHAR* str2;
+        const char* str;
+        const char* str2;
         std::string headerName;
         std::string headerValue;
         HCHttpCallResponseGetHeaderAtIndex(call, i, &str, &str2);
@@ -150,7 +150,7 @@ int main()
     auto taskHandle = HCHttpCallPerform(taskGroupId, call, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            const CHAR* str;
+            const char* str;
             uint32_t errCode = 0;
             uint32_t statusCode = 0;
             std::string responseString;

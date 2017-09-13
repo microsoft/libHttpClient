@@ -266,12 +266,7 @@ HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
 // DO NOT USE THESE SYMBOLS DIRECTLY
 
 #define HC_PRIVATE_TRACE_AREA_NAME(area) g_trace##area
-
-#if HC_PCSTR_IS_WIDE
-#define HC_FUNCTION __FUNCTIONW__
-#else
 #define HC_FUNCTION __FUNCTION__
-#endif
 
 struct HCTraceImplArea
 {
