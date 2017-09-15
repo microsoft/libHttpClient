@@ -46,9 +46,13 @@ void HttpCallPerformExecute(
 {
     auto httpSingleton = get_http_singleton();
 
-    // TODO check for null executionRoutineContext?
-
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
+    if (call == nullptr)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerformExecute null call");
+        return;
+    }
+
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu]", call->id);
 
     bool matchedMocks = false;
@@ -83,18 +87,19 @@ void HttpCallPerformWriteResults(
     _In_ HC_TASK_HANDLE taskHandleId,
     _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext
-)
+    )
 {
-    // TODO writeResultsRoutineContext and completionRoutineContext marked optional here but not on HCHttpCallPerformCompletionRoutine
-
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformWriteResults [ID %llu]", call->id);
-
-    HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
-    if (completeFn != nullptr)
+    if (call != nullptr)
     {
-        completeFn(completionRoutineContext, call);
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformWriteResults [ID %llu]", call->id);
+
+        HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
+        if (completeFn != nullptr)
+        {
+            completeFn(completionRoutineContext, call);
+        }
     }
 }
 

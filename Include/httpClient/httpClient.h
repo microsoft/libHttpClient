@@ -199,7 +199,7 @@ HCHttpCallCreate(
 /// <param name="completionRoutineContext">The context passed to the completion routine</param>
 /// <param name="call">The handle of the HTTP call</param>
 typedef void(* HCHttpCallPerformCompletionRoutine)(
-    _In_ void* completionRoutineContext,
+    _In_opt_ void* completionRoutineContext,
     _In_ HC_CALL_HANDLE call
     );
 
