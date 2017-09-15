@@ -317,7 +317,8 @@ void xmlhttp_http_task::perform_async(
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to create IXMLHTTPRequest2 instance %lu", hr);
-            HCHttpCallResponseSetErrorCode(call, hr);
+            HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
+            HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
             HCTaskSetCompleted(taskHandle);
             return;
         }
@@ -325,20 +326,21 @@ void xmlhttp_http_task::perform_async(
         std::shared_ptr<hc_task> httpTask2 = shared_from_this();
         std::shared_ptr<xmlhttp_http_task> httpTask = std::dynamic_pointer_cast<xmlhttp_http_task>(httpTask2);
 
-        // TODO: convert to wide
-        hr = S_OK;
-        //hr = m_hRequest->Open(
-        //    method,
-        //    url,
-        //    Microsoft::WRL::Make<HttpRequestCallback>(httpTask).Get(),
-        //    nullptr,
-        //    nullptr,
-        //    nullptr,
-        //    nullptr);
+        std::wstring wMethod = to_wstring(method);
+        std::wstring wUrl = to_wstring(url);
+        hr = m_hRequest->Open(
+            wMethod.c_str(),
+            wUrl.c_str(),
+            Microsoft::WRL::Make<HttpRequestCallback>(httpTask).Get(),
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to open HTTP request %lu", hr);
-            HCHttpCallResponseSetErrorCode(call, hr);
+            HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
+            HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
             HCTaskSetCompleted(taskHandle);
             return;
         }
@@ -368,7 +370,8 @@ void xmlhttp_http_task::perform_async(
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to set HTTP response stream %lu", hr);
-            HCHttpCallResponseSetErrorCode(call, hr);
+            HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
+            HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
             HCTaskSetCompleted(taskHandle);
             return;
         }
@@ -377,14 +380,17 @@ void xmlhttp_http_task::perform_async(
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
-            HCHttpCallResponseSetErrorCode(call, hr);
+            HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
+            HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
             HCTaskSetCompleted(taskHandle);
             return;
         }
     }
     catch (std::exception ex)
     {
-        HCHttpCallResponseSetErrorCode(call, E_FAIL); // TODO
+        HRESULT hr = E_FAIL; // TODO
+        HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
+        HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
         HCTaskSetCompleted(taskHandle);
     }
 }

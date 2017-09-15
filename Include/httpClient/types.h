@@ -81,3 +81,50 @@
 typedef uint32_t HC_MEMORY_TYPE;
 typedef struct HC_CALL* HC_CALL_HANDLE;
 typedef uint64_t HC_TASK_HANDLE;
+
+typedef enum HC_RESULT
+{
+    HC_OK = 0,
+    HC_E_FAIL = -1,
+    HC_E_POINTER = -2,
+    HC_E_INVALIDARG = -3,
+    HC_E_OUTOFMEMORY = -4,
+    HC_E_BUFFERTOOSMALL = -5,
+    HC_E_NOTINITIALISED = -6,
+    HC_E_FEATURENOTPRESENT = -7,
+} HC_RESULT;
+
+
+#define CONVERT_STD_EXCEPTION(operation) \
+{                                               \
+    try                                         \
+    {                                           \
+        operation;                              \
+    }                                           \
+    catch(const std::bad_alloc&)                \
+    {                                           \
+        return HC_E_OUTOFMEMORY;                \
+    }                                           \
+    catch(...)                                  \
+    {                                           \
+        return HC_E_FAIL;                       \
+    }                                           \
+                                                \
+    return HC_OK;                               \
+}
+
+#define CONVERT_STD_EXCEPTION_RETURN(errCode, operation) \
+{                                               \
+    try                                         \
+    {                                           \
+        operation;                              \
+    }                                           \
+    catch(const std::bad_alloc&)                \
+    {                                           \
+        return errCode;                         \
+    }                                           \
+    catch(...)                                  \
+    {                                           \
+        return errCode;                         \
+    }                                           \
+}

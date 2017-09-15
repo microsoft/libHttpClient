@@ -34,6 +34,7 @@ struct http_singleton
 
     std::mutex m_singletonLock;
 
+    // Task state
     std::atomic<std::uint64_t> m_lastId;
     std::mutex m_taskHandleIdMapLock;
     http_internal_map<uint64_t, std::unique_ptr<HC_TASK>> m_taskHandleIdMap;
@@ -46,6 +47,7 @@ struct http_singleton
     http_internal_map<uint64_t, std::shared_ptr<http_task_completed_queue>> m_taskCompletedQueue;
     std::shared_ptr<http_task_completed_queue> get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId);
 
+    // HTTP state
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;
     bool m_retryAllowed;
     uint32_t m_timeoutInSeconds;
@@ -53,6 +55,7 @@ struct http_singleton
     uint32_t m_retryDelayInSeconds;
     bool m_enableAssertsForThrottling;
 
+    // Mock state
     std::mutex m_mocksLock;
     std::vector<HC_CALL*> m_mocks;
     HC_CALL* m_lastMatchingMock;
@@ -66,7 +69,7 @@ struct http_singleton
 };
 
 std::shared_ptr<http_singleton> get_http_singleton();
-void init_http_singleton();
+HC_RESULT init_http_singleton();
 void cleanup_http_singleton();
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

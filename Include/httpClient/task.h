@@ -17,7 +17,7 @@ extern "C" {
 /// </summary>
 /// <param name="context">The context passed to this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
-typedef void
+typedef HC_RESULT
 (HC_CALLING_CONV* HC_TASK_EXECUTE_FUNC)(
     _In_opt_ void* context,
     _In_ HC_TASK_HANDLE taskHandle
@@ -28,7 +28,7 @@ typedef void
 /// </summary>
 /// <param name="context">The context passed to this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
-typedef void
+typedef HC_RESULT
 (HC_CALLING_CONV* HC_TASK_WRITE_RESULTS_FUNC)(
     _In_opt_ void* writeContext,
     _In_ HC_TASK_HANDLE taskHandle,
@@ -91,7 +91,10 @@ typedef void
 /// <param name="completionRoutineContext">
 /// The context passed to the completionRoutine callback
 /// </param>
-HC_API HC_TASK_HANDLE HC_CALLING_CONV
+/// <param name="taskHandle">
+/// Optionally will return the handle of the task which can be passed to other APIs such as HCTaskIsCompleted()
+/// </param>
+HC_API HC_RESULT HC_CALLING_CONV
 HCTaskCreate(
     _In_ uint64_t taskGroupId,
     _In_ HC_TASK_EXECUTE_FUNC executionRoutine,
@@ -99,14 +102,15 @@ HCTaskCreate(
     _In_ HC_TASK_WRITE_RESULTS_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
     _In_opt_ void* completionRoutine,
-    _In_opt_ void* completionRoutineContext
+    _In_opt_ void* completionRoutineContext,
+    _Out_opt_ HC_TASK_HANDLE* taskHandle
     );
 
 /// <summary>
 /// Calls the executionRoutine callback for the next pending task. It is recommended 
 /// the app calls HCTaskProcessNextPendingTask() in a background thread.
 /// </summary>
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCTaskProcessNextPendingTask();
 
 /// <summary>
@@ -123,7 +127,7 @@ HCTaskProcessNextPendingTask();
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </param>
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId);
 
 /// <summary>
@@ -132,7 +136,7 @@ HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId);
 /// the completionRoutine callback.
 /// </summary>
 /// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCTaskSetCompleted(
     _In_ HC_TASK_HANDLE taskHandle
     );

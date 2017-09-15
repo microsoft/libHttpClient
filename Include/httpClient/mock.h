@@ -14,6 +14,7 @@ extern "C" {
 // Mock APIs
 // 
 
+// TODO: define mock api set
 /// <summary>
 /// Configures libHttpClient to return mock response instead of making a network call 
 /// when HCHttpCallPerform() is called. To define a mock response, create a new 
@@ -40,7 +41,8 @@ extern "C" {
 /// <param name="call">This HC_CALL_HANDLE that represents the mock that has been configured 
 /// accordingly using HCHttpCallResponseSet*(), and optionally HCHttpCallRequestSetUrl() 
 /// and HCHttpCallRequestSetRequestBodyString().</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCMockAddMock(
     _In_ HC_CALL_HANDLE call
     );
@@ -48,7 +50,8 @@ HCMockAddMock(
 /// <summary>
 /// Removes and cleans up all mock calls added by HCMockAddMock
 /// </summary>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCMockClearMocks();
 
 #if defined(__cplusplus)
