@@ -287,29 +287,6 @@ void xmlhttp_http_task::perform_async(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    char buf[10];
-    for (int i = 0; i < 10; i++)
-    {
-        buf[i] = i;
-    }
-
-    http_buffer test;
-    test.append(buf, 10);
-
-    for (int i = 0; i < 10; i++)
-    {
-        buf[i] = i + 100;
-    }
-
-    test.append(buf, 10);
-
-    for (int i = 0; i < 10; i++)
-    {
-        buf[i] = i + 200;
-    }
-
-    test.append(buf, 10);
-
     try
     {
         std::string headerName;
