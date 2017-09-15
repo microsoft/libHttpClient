@@ -3,7 +3,7 @@
 
 #pragma once
 
-#if HC_UWP_API || HC_WIN32_API || HC_UNITTEST_API
+#if HC_USE_HANDLES
 
 class win32_handle
 {

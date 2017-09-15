@@ -91,7 +91,10 @@ void InitBackgroundThread()
         g_hActiveThreads[i] = CreateThread(nullptr, 0, http_thread_proc, nullptr, 0, nullptr);
         if (g_defaultIdealProcessor != MAXIMUM_PROCESSORS)
         {
-            SetThreadIdealProcessor(g_hActiveThreads[i], g_defaultIdealProcessor);
+            if (g_hActiveThreads[i] != nullptr)
+            {
+                SetThreadIdealProcessor(g_hActiveThreads[i], g_defaultIdealProcessor);
+            }
         }
     }
 
