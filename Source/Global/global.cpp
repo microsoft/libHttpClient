@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "../http/httpcall.h"
 #include "buildver.h"
-#include "singleton.h"
+#include "global.h"
 
 using namespace xbox::httpclient;
 

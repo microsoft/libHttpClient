@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "httpcall.h"
-#include "Mock/http_mock.h"
+#include "../mock/mock.h"
 
 using namespace xbox::httpclient;
 

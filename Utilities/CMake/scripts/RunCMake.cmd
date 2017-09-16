@@ -10,6 +10,7 @@ if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual 
  
 copy ..\CMakeLists.txt .
 %CMAKE_EXE% -G "Visual Studio 15 2017" %* CMakeLists.txt %CMAKE_FOLDER%\build
+if %ERRORLEVEL% NEQ 0 goto ignore
 call :subCopy
 goto done
 
@@ -35,4 +36,4 @@ del %CMAKE_FOLDER%\build\build.cpp
 cd %CMAKE_FOLDER%
 rmdir /q /s %CMAKE_FOLDER%\build
 
-
+:ignore

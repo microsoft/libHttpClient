@@ -82,11 +82,11 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 typedef int32_t function_context;
 #include "httpClient/httpClient.h"
-#include "mem.h"
+#include "../global/mem.h"
 #include "win/utils_win.h"
 #include "utils.h"
-#include "taskImpl.h"
-#include "singleton.h"
+#include "../task/task_impl.h"
+#include "../global/global.h"
 #include "trace_internal.h"
 
 HC_DECLARE_TRACE_AREA(HTTPCLIENT);
