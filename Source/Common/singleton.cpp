@@ -53,9 +53,10 @@ std::shared_ptr<http_singleton> get_http_singleton()
     return httpSingleton;
 }
 
-void init_http_singleton()
+HC_RESULT init_http_singleton()
 {
     // TODO still need to figure out the best way to support multiple clients
+    HC_RESULT hr = HC_OK;
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
@@ -65,8 +66,15 @@ void init_http_singleton()
             &httpSingleton,
             newSingleton
         );
+
+        if (newSingleton == nullptr)
+        {
+            hr = HC_E_OUTOFMEMORY;
+        }
         // At this point there is a singleton (ours or someone else's)
     }
+
+    return hr;
 }
 
 void cleanup_http_singleton()

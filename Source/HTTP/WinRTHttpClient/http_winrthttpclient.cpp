@@ -135,21 +135,24 @@ void uwp_http_task::perform_async(
                     }
                     catch (Platform::Exception^ ex)
                     {
-                        HCHttpCallResponseSetErrorCode(call, ex->HResult);
+                        HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
+                        HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
                         HCTaskSetCompleted(taskHandle);
                     }
                 });
             }
             catch (Platform::Exception^ ex)
             {
-                HCHttpCallResponseSetErrorCode(call, ex->HResult);
+                HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
+                HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
                 HCTaskSetCompleted(taskHandle);
             }
         });
     }
     catch (Platform::Exception^ ex)
     {
-        HCHttpCallResponseSetErrorCode(call, ex->HResult);
+        HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
+        HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
         HCTaskSetCompleted(taskHandle);
     }
 }

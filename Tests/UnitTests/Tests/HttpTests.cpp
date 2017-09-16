@@ -123,14 +123,16 @@ public:
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
-        HCHttpCallPerform(0, call, nullptr, 
+        HCHttpCallPerform(nullptr, 0, call, nullptr, 
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
-                uint32_t errCode = 0;
-                HCHttpCallResponseGetErrorCode(call, &errCode);
+                HC_RESULT errCode = HC_OK;
+                uint32_t platErrCode = 0;
+                HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
                 uint32_t statusCode = 0;
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
             });
+        HCTaskProcessNextPendingTask();
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
         HCHttpCallCleanup(call);
         HCGlobalCleanup();
@@ -141,10 +143,31 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
         HCGlobalInitialize();
 
-        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_ERROR);
         HC_LOG_LEVEL level;
+
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_OFF);
+        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_OFF, level);
+
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_ERROR);
         HCSettingsGetLogLevel(&level);
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_ERROR, level);
+
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_WARNING);
+        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_WARNING, level);
+
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_IMPORTANT);
+        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_IMPORTANT, level);
+
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_INFORMATION);
+        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_INFORMATION, level);
+
+        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
+        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_VERBOSE, level);
 
         HCHttpCallRequestSetTimeoutWindow(nullptr, 1000);
         uint32_t timeout = 0;
@@ -286,10 +309,13 @@ public:
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         VERIFY_ARE_EQUAL(200, statusCode);
 
-        HCHttpCallResponseSetErrorCode(call, 101);
+        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, 101);
+        HC_RESULT errCode = HC_OK;
         uint32_t errorCode = 0;
-        HCHttpCallResponseGetErrorCode(call, &errorCode);
-        VERIFY_ARE_EQUAL(101, errorCode);
+        uint32_t platErrorCode = 0;
+        HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrorCode);
+        VERIFY_ARE_EQUAL(101, platErrorCode);
+        VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
 
         HCHttpCallCleanup(call);
         HCGlobalCleanup();

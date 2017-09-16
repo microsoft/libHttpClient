@@ -16,7 +16,7 @@ bool g_calledTestTaskCompleteRoutine = false;
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
 
-void TestTaskExecute(
+HC_RESULT TestTaskExecute(
     _In_opt_ void* context,
     _In_ HC_TASK_HANDLE taskHandle
     )
@@ -24,9 +24,10 @@ void TestTaskExecute(
     g_calledTestTaskExecute = true;
     VERIFY_ARE_EQUAL(1, (uint64_t)context);
     HCTaskSetCompleted(taskHandle);
+    return HC_OK;
 }
 
-void TestTaskWriteResults(
+HC_RESULT TestTaskWriteResults(
     _In_opt_ void* context,
     _In_ HC_TASK_HANDLE taskHandleId,
     _In_opt_ void* completionRoutine,
@@ -42,6 +43,7 @@ void TestTaskWriteResults(
         completeFn(completionRoutineContext, taskHandleId);
     }
 
+    return HC_OK;
 }
 
 void TestTaskCompleteRoutine(
@@ -69,11 +71,13 @@ public:
         g_calledTestTaskCompleteRoutine = false;
 
         uint64_t taskGroupId = 1;
-        HC_TASK_HANDLE taskHandle = HCTaskCreate(
+        HC_TASK_HANDLE taskHandle;
+        HCTaskCreate(
             taskGroupId,
             TestTaskExecute, (void*)1,
             TestTaskWriteResults, (void*)2,
-            TestTaskCompleteRoutine, (void*)3
+            TestTaskCompleteRoutine, (void*)3,
+            &taskHandle
             );
 
         //VERIFY_ARE_EQUAL(true, HCTaskIsTaskPending());

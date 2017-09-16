@@ -14,6 +14,22 @@ enum http_task_state
 
 struct HC_TASK
 {
+    HC_TASK() :
+        state(http_task_state::pending),
+        executionRoutine(nullptr),
+        executionRoutineContext(nullptr),
+        writeResultsRoutine(nullptr),
+        writeResultsRoutineContext(nullptr),
+        completionRoutine(nullptr),
+        completionRoutineContext(nullptr),
+        taskGroupId(0),
+        id(0)
+    {
+#if HC_USE_HANDLES
+        resultsReady.set(CreateEvent(NULL, FALSE, FALSE, NULL));
+#endif
+    }
+
     http_task_state state;
     HC_TASK_EXECUTE_FUNC executionRoutine;
     void* executionRoutineContext;

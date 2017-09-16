@@ -34,18 +34,20 @@ HCMemSetFunctions(
     g_memFreeFunc = (memFreeFunc == nullptr) ? DefaultMemFreeFunction : memFreeFunc;
 }
 
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCMemGetFunctions(
     _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
     _Out_ HC_MEM_FREE_FUNC* memFreeFunc
     )
 {
-#if ENABLE_ASSERTS
-    assert(memAllocFunc != nullptr);
-    assert(memFreeFunc != nullptr);
-#endif
+    if (memAllocFunc == nullptr || memFreeFunc == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
     *memAllocFunc = g_memAllocFunc;
     *memFreeFunc = g_memFreeFunc;
+    return HC_OK;
 }
 
 

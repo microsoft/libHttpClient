@@ -231,16 +231,17 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     }
 
     uint64_t taskGroupId = 0;
-    HCHttpCallPerform(taskGroupId, call, nullptr,
+    HCHttpCallPerform(nullptr, taskGroupId, call, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             const CHAR* str;
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             std::string responseString;
             std::string errMessage;
 
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &str);
             if (str != nullptr) responseString = str;

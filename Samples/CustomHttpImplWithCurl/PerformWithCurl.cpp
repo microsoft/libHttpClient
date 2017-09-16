@@ -75,6 +75,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
 
     res = curl_easy_perform(curl);
+    HC_RESULT errCode = HC_E_FAIL;
     if (res == CURLE_OK)
     {
         long response_code;
@@ -83,8 +84,10 @@ void HC_CALLING_CONV PerformCallWithCurl(
         char *ct;
         res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
         HCHttpCallResponseSetResponseString(call, chunk.memory);
+
+        errCode = HC_OK;
     }
-    HCHttpCallResponseSetErrorCode(call, res);
+    HCHttpCallResponseSetNetworkErrorCode(call, errCode, res);
     HCTaskSetCompleted(taskHandle);
 
     curl_easy_cleanup(curl);
