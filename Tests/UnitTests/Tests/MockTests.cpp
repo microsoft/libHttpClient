@@ -30,7 +30,7 @@ public:
         {
             HCHttpCallRequestSetRequestBodyString(mockCall, "requestBody");
         }
-        HCHttpCallResponseSetErrorCode(mockCall, 300);
+        HCHttpCallResponseSetNetworkErrorCode(mockCall, HC_E_OUTOFMEMORY, 300);
         HCHttpCallResponseSetStatusCode(mockCall, 400);
         HCHttpCallResponseSetResponseString(mockCall, strResponse);
         HCHttpCallResponseSetHeader(mockCall, "mockHeader", "mockValue");
@@ -50,22 +50,25 @@ public:
 
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "3");
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
-                uint32_t errCode = 0;
+                HC_RESULT errCode = HC_OK;
+                uint32_t platErrCode = 0;
                 uint32_t statusCode = 0;
                 PCSTR responseStr;
-                HCHttpCallResponseGetErrorCode(call, &errCode);
+                HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
-                VERIFY_ARE_EQUAL(300, errCode);
+                VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode); 
+                VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
                 g_gotCall = true;
             });
 
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         HCGlobalCleanup();
@@ -85,16 +88,18 @@ public:
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "3");
         g_gotCall = false;
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
-                uint32_t errCode = 0;
+                HC_RESULT errCode = HC_OK;
+                uint32_t platErrCode = 0;
                 uint32_t statusCode = 0;
                 PCSTR responseStr;
-                HCHttpCallResponseGetErrorCode(call, &errCode);
+                HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
-                VERIFY_ARE_EQUAL(300, errCode);
+                VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
+                VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
@@ -102,6 +107,7 @@ public:
             });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
@@ -109,13 +115,14 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "10", "20");
         HCHttpCallRequestSetRequestBodyString(call, "3");
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
@@ -126,6 +133,7 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
@@ -147,16 +155,18 @@ public:
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
-                uint32_t errCode = 0;
+                HC_RESULT errCode = HC_OK;
+                uint32_t platErrCode = 0;
                 uint32_t statusCode = 0;
                 PCSTR responseStr;
-                HCHttpCallResponseGetErrorCode(call, &errCode);
+                HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
-                VERIFY_ARE_EQUAL(300, errCode);
+                VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
+                VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
@@ -164,6 +174,7 @@ public:
             });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
@@ -171,13 +182,14 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "3");
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
@@ -188,6 +200,7 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
@@ -197,13 +210,14 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
@@ -214,6 +228,7 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
@@ -223,13 +238,14 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
             VERIFY_ARE_EQUAL(0, errCode);
@@ -239,11 +255,8 @@ public:
             g_gotCall = true;
         });
 
-        while (!g_gotCall)
-        {
-            HCTaskProcessNextCompletedTask(0);
-            Sleep(50);
-        }
+        HCTaskProcessNextPendingTask();
+        HCTaskProcessNextCompletedTask(0);
         g_gotCall = false;
 
         HCGlobalCleanup();
@@ -266,16 +279,18 @@ public:
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
-                uint32_t errCode = 0;
+                HC_RESULT errCode = HC_OK;
+                uint32_t platErrCode = 0;
                 uint32_t statusCode = 0;
                 PCSTR responseStr;
-                HCHttpCallResponseGetErrorCode(call, &errCode);
+                HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
                 HCHttpCallResponseGetResponseString(call, &responseStr);
-                VERIFY_ARE_EQUAL(300, errCode);
+                VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
+                VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
                 HCHttpCallCleanup(call);
@@ -283,6 +298,7 @@ public:
             });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
@@ -290,16 +306,18 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
-            VERIFY_ARE_EQUAL(300, errCode);
+            VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
+            VERIFY_ARE_EQUAL(300, platErrCode);
             VERIFY_ARE_EQUAL(400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
             HCHttpCallCleanup(call);
@@ -307,6 +325,7 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
@@ -315,16 +334,18 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(0, call, nullptr,
+        HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &responseStr);
-            VERIFY_ARE_EQUAL(300, errCode);
+            VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
+            VERIFY_ARE_EQUAL(300, platErrCode);
             VERIFY_ARE_EQUAL(400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
             HCHttpCallCleanup(call);
@@ -332,6 +353,7 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
+        HCTaskProcessNextPendingTask();
         HCTaskProcessNextCompletedTask(0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;

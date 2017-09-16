@@ -7,112 +7,142 @@
 
 using namespace xbox::httpclient;
 
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallCreate(
     _Out_ HC_CALL_HANDLE* callHandle
     )
 {
-    auto httpSingleton = get_http_singleton();
+    if (callHandle == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
 
-    HC_CALL* call = new HC_CALL();
+    CONVERT_STD_EXCEPTION(
+        auto httpSingleton = get_http_singleton();
 
-    call->retryAllowed = httpSingleton->m_retryAllowed;
-    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
-    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
-    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
-    call->enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
+        HC_CALL* call = new HC_CALL();
 
-    call->id = httpSingleton->m_lastId.load();
-    httpSingleton->m_lastId++;
+        call->retryAllowed = httpSingleton->m_retryAllowed;
+        call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
+        call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
+        call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
+        call->enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
+        call->id = httpSingleton->m_lastId.load();
+        httpSingleton->m_lastId++;
 
-    *callHandle = call;
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
+
+        *callHandle = call;
+    );
 }
 
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallCleanup(
     _In_ HC_CALL_HANDLE call
     )
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCleanup [ID %llu]", call->id);
-    delete call;
+    if (call == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    CONVERT_STD_EXCEPTION(
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCleanup [ID %llu]", call->id);
+        delete call;
+    );
 }
 
-void HttpCallPerformExecute(
+HC_RESULT HttpCallPerformExecute(
     _In_opt_ void* executionRoutineContext,
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    auto httpSingleton = get_http_singleton();
+    CONVERT_STD_EXCEPTION(
+        auto httpSingleton = get_http_singleton();
 
-    // TODO check for null executionRoutineContext?
-
-    HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu]", call->id);
-
-    bool matchedMocks = false;
-    if (httpSingleton->m_mocksEnabled)
-    {
-        matchedMocks = Mock_Internal_HCHttpCallPerform(call);
-        if (matchedMocks)
+        HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
+        if (call == nullptr)
         {
-            HCTaskSetCompleted(taskHandle);
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerformExecute null call");
+            return HC_E_INVALIDARG;
         }
-    }
+
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu]", call->id);
+
+        bool matchedMocks = false;
+        if (httpSingleton->m_mocksEnabled)
+        {
+            matchedMocks = Mock_Internal_HCHttpCallPerform(call);
+            if (matchedMocks)
+            {
+                HCTaskSetCompleted(taskHandle);
+            }
+        }
    
-    if (!matchedMocks) // if there wasn't a matched mock, then real call
-    {
-        HC_HTTP_CALL_PERFORM_FUNC performFunc = httpSingleton->m_performFunc;
-        if (performFunc != nullptr)
+        if (!matchedMocks) // if there wasn't a matched mock, then real call
         {
-            try
+            HC_HTTP_CALL_PERFORM_FUNC performFunc = httpSingleton->m_performFunc;
+            if (performFunc != nullptr)
             {
-                performFunc(call, taskHandle);
-            }
-            catch (...)
-            {
-                HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", call->id);
+                try
+                {
+                    performFunc(call, taskHandle);
+                }
+                catch (...)
+                {
+                    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", call->id);
+                }
             }
         }
-    }
+    );
 }
 
-void HttpCallPerformWriteResults(
+HC_RESULT HttpCallPerformWriteResults(
     _In_opt_ void* writeResultsRoutineContext,
     _In_ HC_TASK_HANDLE taskHandleId,
     _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext
-)
+    )
 {
-    // TODO writeResultsRoutineContext and completionRoutineContext marked optional here but not on HCHttpCallPerformCompletionRoutine
+    CONVERT_STD_EXCEPTION(
+        HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
 
-    HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
+        if (call != nullptr)
+        {
+            HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformWriteResults [ID %llu]", call->id);
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformWriteResults [ID %llu]", call->id);
-
-    HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
-    if (completeFn != nullptr)
-    {
-        completeFn(completionRoutineContext, call);
-    }
+            HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
+            if (completeFn != nullptr)
+            {
+                completeFn(completionRoutineContext, call);
+            }
+        }
+    );
 }
 
-HC_API HC_TASK_HANDLE HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallPerform(
+    _Out_ HC_TASK_HANDLE* taskHandle,
     _In_ uint64_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
     _In_opt_ void* completionRoutineContext,
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     )
 {
+    if (call == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
 
     return HCTaskCreate(
         taskGroupId,
         HttpCallPerformExecute, (void*)call,
         HttpCallPerformWriteResults, (void*)call,
-        completionRoutine, completionRoutineContext
+        completionRoutine, completionRoutineContext,
+        taskHandle
         );
 }
 

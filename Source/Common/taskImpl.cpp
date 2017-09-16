@@ -78,15 +78,19 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
                 task = it;
             }
         }
-        // TODO what happens if task is not found?
 
-        taskProcessingQueue.erase(std::remove(taskProcessingQueue.begin(), taskProcessingQueue.end(), task), taskProcessingQueue.end());
+        if (task != nullptr)
+        {
+            taskProcessingQueue.erase(std::remove(taskProcessingQueue.begin(), taskProcessingQueue.end(), task), taskProcessingQueue.end());
+            auto& taskCompletedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->get_completed_queue();
+            taskCompletedQueue.push(task);
 
-        auto& taskCompletedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->get_completed_queue();
-        taskCompletedQueue.push(task);
-
-        HC_TRACE_INFORMATION(HTTPCLIENT, "Task queue completed: queueSize=%zu taskId=%llu",
-            taskCompletedQueue.size(), task->id);
+            HC_TRACE_INFORMATION(HTTPCLIENT, "Task queue completed: queueSize=%zu taskId=%llu", taskCompletedQueue.size(), task->id);
+        }
+        else
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "Task not found: taskHandleId=%llu", taskHandleId);
+        }
     }
 
 #if HC_USE_HANDLES

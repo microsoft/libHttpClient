@@ -22,10 +22,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
-    <libHttpClientDefine>HC_WIN32_API</libHttpClientDefine>
+    <libHttpClientDefine>HC_UWP_API</libHttpClientDefine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'==''">
-    <libHttpClientDefine>HC_UWP_API</libHttpClientDefine>
+    <libHttpClientDefine>HC_WIN32_API</libHttpClientDefine>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">

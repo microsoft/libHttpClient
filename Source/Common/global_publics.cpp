@@ -8,17 +8,24 @@
 
 using namespace xbox::httpclient;
 
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalGetLibVersion(_Outptr_ PCSTR* version)
 {
-    *version = LIBHTTPCLIENT_VERSION;
+    if (version == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    CONVERT_STD_EXCEPTION(
+        *version = LIBHTTPCLIENT_VERSION;
+    );
 }
 
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalInitialize()
 {
     HCTraceImplGlobalInit();
-    xbox::httpclient::init_http_singleton();
+    return xbox::httpclient::init_http_singleton();
 }
 
 HC_API void HC_CALLING_CONV
@@ -37,12 +44,19 @@ HCGlobalSetHttpCallPerformFunction(
     httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalGetHttpCallPerformFunction(
     _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
     )
 {
-    auto httpSingleton = get_http_singleton();
-    *performFunc = httpSingleton->m_performFunc;
+    if (performFunc == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    CONVERT_STD_EXCEPTION(
+        auto httpSingleton = get_http_singleton();
+        *performFunc = httpSingleton->m_performFunc;
+    );
 }
 

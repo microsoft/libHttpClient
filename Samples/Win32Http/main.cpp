@@ -91,7 +91,10 @@ void InitBackgroundThread()
         g_hActiveThreads[i] = CreateThread(nullptr, 0, http_thread_proc, nullptr, 0, nullptr);
         if (g_defaultIdealProcessor != MAXIMUM_PROCESSORS)
         {
-            SetThreadIdealProcessor(g_hActiveThreads[i], g_defaultIdealProcessor);
+            if (g_hActiveThreads[i] != nullptr)
+            {
+                SetThreadIdealProcessor(g_hActiveThreads[i], g_defaultIdealProcessor);
+            }
         }
     }
 
@@ -147,16 +150,18 @@ int main()
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
     uint64_t taskGroupId = 0;
-    auto taskHandle = HCHttpCallPerform(taskGroupId, call, nullptr,
+    HC_TASK_HANDLE taskHandle;
+    HCHttpCallPerform(&taskHandle, taskGroupId, call, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             const char* str;
-            uint32_t errCode = 0;
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             std::string responseString;
             std::string errMessage;
 
-            HCHttpCallResponseGetErrorCode(call, &errCode);
+            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
             HCHttpCallResponseGetStatusCode(call, &statusCode);
             HCHttpCallResponseGetResponseString(call, &str);
             if (str != nullptr) responseString = str;

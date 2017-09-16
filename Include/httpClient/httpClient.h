@@ -4,8 +4,8 @@
 #pragma once
 #include "types.h"
 #include "task.h"
-#include "httpProvider.h"
 #include "mock.h"
+#include "trace.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -86,7 +86,8 @@ HCMemSetFunctions(
 /// if not previously set</param>
 /// <param name="memFreeFunc">Set to the to the current memory free callback.  Returns the default 
 /// routine if not previously set</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCMemGetFunctions(
     _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
     _Out_ HC_MEM_FREE_FUNC* memFreeFunc
@@ -102,7 +103,8 @@ HCMemGetFunctions(
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions()
 /// Should have a corresponding call to HCGlobalCleanup().
 /// </summary>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalInitialize();
 
 /// <summary>
@@ -117,7 +119,8 @@ HCGlobalCleanup();
 /// </summary>
 /// <param name="version">The version of the library in the format of release_year.release_month.date.rev.  
 /// For example, 2017.07.20170710.01</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalGetLibVersion(_Outptr_ PCSTR* version);
 
 
@@ -141,6 +144,21 @@ typedef enum HC_LOG_LEVEL
     LOG_ERROR,
 
     /// <summary>
+    /// Log warnings and errors
+    /// </summary>
+    LOG_WARNING,
+
+    /// <summary>
+    /// Log important, warnings and errors
+    /// </summary>
+    LOG_IMPORTANT,
+
+    /// <summary>
+    /// Log info, important, warnings and errors
+    /// </summary>
+    LOG_INFORMATION,
+
+    /// <summary>
     /// Log everything
     /// </summary>
     LOG_VERBOSE
@@ -150,7 +168,8 @@ typedef enum HC_LOG_LEVEL
 /// Sets the log level for the library.  Logs are sent the debug output
 /// </summary>
 /// <param name="logLevel">Log level</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCSettingsSetLogLevel(
     _In_ HC_LOG_LEVEL logLevel
     );
@@ -159,7 +178,8 @@ HCSettingsSetLogLevel(
 /// Gets the log level for the library
 /// </summary>
 /// <param name="logLevel">Log level</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCSettingsGetLogLevel(
     _Out_ HC_LOG_LEVEL* logLevel
     );
@@ -188,7 +208,8 @@ HCSettingsGetLogLevel(
 /// memory associated with the HC_CALL_HANDLE
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallCreate(
     _Out_ HC_CALL_HANDLE* call
     );
@@ -199,7 +220,7 @@ HCHttpCallCreate(
 /// <param name="completionRoutineContext">The context passed to the completion routine</param>
 /// <param name="call">The handle of the HTTP call</param>
 typedef void(* HCHttpCallPerformCompletionRoutine)(
-    _In_ void* completionRoutineContext,
+    _In_opt_ void* completionRoutineContext,
     _In_ HC_CALL_HANDLE call
     );
 
@@ -221,6 +242,7 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 /// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCleanup() to free the 
 /// memory associated with the HC_CALL_HANDLE
 /// </summary>
+/// <param name="taskHandle">The task handle returned by the operation. If the API fails, HC_TASK_HANDLE will be 0</param>
 /// <param name="taskGroupId">
 /// The task group ID to assign to this task.  The ID is defined by the caller and can be any number.
 /// HCTaskProcessNextCompletedTask(taskGroupId) will only process completed tasks that have a
@@ -230,8 +252,10 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="completionRoutineContext">The context to pass in to the completionRoutine callback</param>
 /// <param name="completionRoutine">A callback that's called when the HTTP call completes</param>
-HC_API HC_TASK_HANDLE HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallPerform(
+    _Out_opt_ HC_TASK_HANDLE* taskHandle,
     _In_ uint64_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
     _In_opt_ void* completionRoutineContext,
@@ -243,7 +267,8 @@ HCHttpCallPerform(
 /// memory associated with the HC_CALL_HANDLE
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallCleanup(
     _In_ HC_CALL_HANDLE call
     );
@@ -255,11 +280,13 @@ HCHttpCallCleanup(
 
 /// <summary>
 /// Sets the url and method for the HTTP call
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="method">Method for the HTTP call</param>
 /// <param name="url">URL for the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetUrl(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR method,
@@ -268,10 +295,12 @@ HCHttpCallRequestSetUrl(
 
 /// <summary>
 /// Set the request body string of the HTTP call
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="requestBodyString">the request body string of the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <param name="requestBodyString">The request body string of the HTTP call.</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetRequestBodyString(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR requestBodyString
@@ -279,11 +308,13 @@ HCHttpCallRequestSetRequestBodyString(
 
 /// <summary>
 /// Set a request header for the HTTP call
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerName">request header name for the HTTP call</param>
 /// <param name="headerValue">request header value for the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetHeader(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR headerName,
@@ -293,10 +324,12 @@ HCHttpCallRequestSetHeader(
 /// <summary>
 /// Sets if retry is allowed for this HTTP call
 /// Defaults to true 
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="retryAllowed">If retry is allowed for this HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetRetryAllowed(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ bool retryAllowed
@@ -305,10 +338,12 @@ HCHttpCallRequestSetRetryAllowed(
 /// <summary>
 /// Sets the timeout for this HTTP call.
 /// Defaults to 30 seconds
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="timeoutInSeconds">The timeout for this HTTP call.</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetTimeout(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ uint32_t timeoutInSeconds
@@ -335,10 +370,13 @@ HCHttpCallRequestSetTimeout(
 /// 502 (Bad Gateway)
 /// 503 (Service Unavailable)
 /// 504 (Gateway Timeout)
+///
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="retryDelayInSeconds">The retry delay in seconds</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetRetryDelay(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ uint32_t retryDelayInSeconds
@@ -358,10 +396,13 @@ HCHttpCallRequestSetRetryDelay(
 /// 502 (Bad Gateway)
 /// 503 (Service Unavailable)
 /// 504 (Gateway Timeout)
+///
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="timeoutWindowInSeconds">The timeout window in seconds</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetTimeoutWindow(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ uint32_t timeoutWindowInSeconds
@@ -369,7 +410,6 @@ HCHttpCallRequestSetTimeoutWindow(
 
 /// <summary>
 /// Sets if assert are enabled if throttled.
-/// TODO: The asserts will not fire in RETAIL sandbox, and this setting has has no affect in RETAIL sandboxes.
 /// This means if HTTP status 429 is returned, a debug assert is triggered.
 /// This causes caller to immediately notice that their calling pattern is too fast and should be corrected.
 ///
@@ -377,10 +417,13 @@ HCHttpCallRequestSetTimeoutWindow(
 /// as a temporary way to get unblocked while in early stages of game development.
 ///
 /// Default is true.
+///
+/// This must be called prior to calling HCHttpCallPerform.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="enableAssertsForThrottling">True if assert are enabled if throttled</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetAssertsForThrottling(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ bool enableAssertsForThrottling
@@ -393,44 +436,61 @@ HCHttpCallRequestSetAssertsForThrottling(
 
 /// <summary>
 /// Get the response body string of the HTTP call
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="responseString">the response body string of the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <param name="responseString">
+/// The response body string of the HTTP call
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// </param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseGetResponseString(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_ HC_CALL_HANDLE call,
     _Out_ PCSTR* responseString
     );
 
 /// <summary>
 /// Get the HTTP status code of the HTTP call response
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="statusCode">the HTTP status code of the HTTP call response</param>
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseGetStatusCode(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_ HC_CALL_HANDLE call,
     _Out_ uint32_t* statusCode
     );
 
 /// <summary>
 /// Get the network error code of the HTTP call
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="errorCode">the network error code of the HTTP call</param>
-HC_API void HC_CALLING_CONV
-HCHttpCallResponseGetErrorCode(
-    _In_opt_ HC_CALL_HANDLE call,
-    _Out_ uint32_t* errorCode
-    );
+/// <param name="networkErrorCode">The network error code of the HTTP call. Possible values are HC_OK, or HC_E_FAIL.</param>
+/// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallResponseGetNetworkErrorCode(
+    _In_ HC_CALL_HANDLE call,
+    _Out_ HC_RESULT* networkErrorCode,
+    _Out_ uint32_t* platformNetworkErrorCode
+    ); 
 
 /// <summary>
 /// Get a response header for the HTTP call for a given header name
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerName">Response header name for the HTTP call</param>
-/// <param name="headerValue">Response header value for the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <param name="headerName">Response header name for the HTTP call
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// </param>
+/// <param name="headerValue">Response header value for the HTTP call.
+/// Returns nullptr if the header doesn't exist.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// </param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseGetHeader(
     _In_ HC_CALL_HANDLE call,
     _In_ PCSTR headerName,
@@ -439,10 +499,12 @@ HCHttpCallResponseGetHeader(
 
 /// <summary>
 /// Gets the number of response headers in the the HTTP call
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="numHeaders">The number of response headers in the the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseGetNumHeaders(
     _In_ HC_CALL_HANDLE call,
     _Out_ uint32_t* numHeaders
@@ -451,12 +513,18 @@ HCHttpCallResponseGetNumHeaders(
 /// <summary>
 /// Gets the response headers at specific zero based index in the the HTTP call.
 /// Use HCHttpCallResponseGetNumHeaders() to know how many response headers there are in the HTTP call.
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerIndex">Specific zero based index of the response header</param>
-/// <param name="headerName">Response header name for the HTTP call</param>
-/// <param name="headerValue">Response header value for the HTTP call</param>
-HC_API void HC_CALLING_CONV
+/// <param name="headerName">Response header name for the HTTP call.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// </param>
+/// <param name="headerValue">Response header value for the HTTP call.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// </param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseGetHeaderAtIndex(
     _In_ HC_CALL_HANDLE call,
     _In_ uint32_t headerIndex,

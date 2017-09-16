@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-// these defines are not meant to be used by clients at runtime, the
+// These defines are not meant to be used by clients at runtime, the
 // HCTraceLevel enum should be used instead
 #define HC_PRIVATE_TRACE_LEVEL_OFF 0
 #define HC_PRIVATE_TRACE_LEVEL_ERROR 1
@@ -20,7 +20,7 @@ extern "C" {
 #define HC_PRIVATE_TRACE_LEVEL_VERBOSE 5
 
 //------------------------------------------------------------------------------
-// trace level enum
+// Trace level enum
 //------------------------------------------------------------------------------
 enum HCTraceLevel
 {
@@ -64,9 +64,9 @@ enum HCTraceLevel
 #endif
 
 //------------------------------------------------------------------------------
-// level enabled macros
+// Level enabled macros
 //------------------------------------------------------------------------------
-// these macros can be used to easily check if a given trace level will be
+// These macros can be used to easily check if a given trace level will be
 // included in the build (for example to avoid compiling helper code for a
 // trace).
 // These macros are always defined
@@ -142,7 +142,7 @@ HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
 //------------------------------------------------------------------------------
 // Trace area macros
 //------------------------------------------------------------------------------
-// these macros are used to set up areas for tracing
+// These macros are used to set up areas for tracing
 // These macros are always defined but will compile to nothing if trace is
 // disabled
 
@@ -150,7 +150,7 @@ HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
 // Defines an area for tracing:
 // name is used as a prefix for all traces in the area
 // verbosity sets the maximum verbosity that will be traced within this area
-// vebosity can be tweaked at runtime by calling HC_TRACE_SET_VERBOSITY(area,
+// verbosity can be tweaked at runtime by calling HC_TRACE_SET_VERBOSITY(area,
 // level)
 // since this defines a global variable, it should be only used from a .cpp file
 // and each area should be defined only once
@@ -178,7 +178,7 @@ HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
 //------------------------------------------------------------------------------
 // Trace macros
 //------------------------------------------------------------------------------
-// these are the macros to be used to log
+// These are the macros to be used to log
 // These macros are always defined but will compile to nothing if
 // HC_TRACE_BUILD_LEVEL is not high enough
 
@@ -256,7 +256,7 @@ HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
 //------------------------------------------------------------------------------
 // Implementation
 //------------------------------------------------------------------------------
-// these symbols are always built even if trace is disabled, but note that no
+// These symbols are always built even if trace is disabled, but note that no
 // trace areas will be defined so they should never be used directly
 // the reason why they are always built is to avoid issues with different
 // compilation units setting different values for HC_TRACE_BUILD_LEVEL

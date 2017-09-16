@@ -132,8 +132,9 @@ bool Mock_Internal_HCHttpCallPerform(
     HCHttpCallResponseGetStatusCode(matchingMock, &code);
     HCHttpCallResponseSetStatusCode(originalCall, code);
 
-    HCHttpCallResponseGetErrorCode(matchingMock, &code);
-    HCHttpCallResponseSetErrorCode(originalCall, code);
+    HC_RESULT genCode;
+    HCHttpCallResponseGetNetworkErrorCode(matchingMock, &genCode, &code);
+    HCHttpCallResponseSetNetworkErrorCode(originalCall, genCode, code);
 
     uint32_t numheaders;
     HCHttpCallResponseGetNumHeaders(matchingMock, &numheaders);
