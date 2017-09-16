@@ -109,15 +109,15 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\taskImpl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
@@ -125,23 +125,24 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\global_publics.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\mem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\settings_publics.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\singleton.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\taskImpl.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\task_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Mock\http_mock.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_xmlhttp.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallrequest.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcallresponse.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

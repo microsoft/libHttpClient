@@ -86,22 +86,33 @@ set(Public_Source_Files
     ../../../include/httpClient/types.h
     )
 
+set(Task_Source_Files    
+    ../../../Source/Task/task_impl.cpp
+    ../../../Source/Task/task_impl.h
+    ../../../Source/Task/task_publics.cpp
+    )
+    
+set(Global_Source_Files    
+    ../../../Source/Global/mem.cpp
+    ../../../Source/Global/mem.h
+    ../../../Source/Global/global_publics.cpp
+    ../../../Source/Global/global.cpp
+    ../../../Source/Global/global.h       
+    )
+
+set(Mock_Source_Files        
+    ../../../Source/Mock/mock.cpp
+    ../../../Source/Mock/mock.h
+    ../../../Source/Mock/mock_publics.cpp
+    )
+
 set(Common_Source_Files
-    ../../../Source/Common/taskImpl.cpp
-    ../../../Source/Common/taskImpl.h
-    ../../../Source/Common/mem.cpp
-    ../../../Source/Common/mem.h
+    ../../../Source/Common/buildver.h
     ../../../Source/Common/pch.cpp
     ../../../Source/Common/pch.h
     ../../../Source/Common/pch_common.h
-    ../../../Source/Common/settings_publics.cpp
-    ../../../Source/Common/task_publics.cpp
-    ../../../Source/Common/global_publics.cpp
-    ../../../Source/Common/singleton.cpp
-    ../../../Source/Common/singleton.h
     ../../../Source/Common/utils.cpp
     ../../../Source/Common/utils.h
-    ../../../Source/Common/buildver.h
     )
 
 set(Common_Windows_Source_Files
@@ -112,13 +123,8 @@ set(Common_Windows_Source_Files
 set(HTTP_Source_Files
     ../../../Source/HTTP/httpcall.cpp
     ../../../Source/HTTP/httpcall.h
-    ../../../Source/HTTP/httpcallrequest.cpp
-    ../../../Source/HTTP/httpcallresponse.cpp
-    )
-
-set(Mock_HTTP_Source_Files
-    ../../../Source/HTTP/Mock/http_mock.cpp
-    ../../../Source/HTTP/Mock/http_mock.h
+    ../../../Source/HTTP/httpcall_request.cpp
+    ../../../Source/HTTP/httpcall_response.cpp
     )
 
 set(Unittest_HTTP_Source_Files
@@ -136,6 +142,7 @@ set(XMLHttp_HTTP_Source_Files
 set(Logger_Source_Files
     ../../../Source/Logger/trace.cpp
     ../../../Source/Logger/trace_internal.h
+    ../../../Source/Logger/log_publics.cpp
     )
 
 
@@ -178,16 +185,20 @@ endif() # SHIP
 message(STATUS "Common source group")
 source_group("Header Files" FILES ${Public_Source_Files})
 source_group("C++ Source\\Common" FILES ${Common_Source_Files})
+source_group("C++ Source\\Global" FILES ${Global_Source_Files})
+source_group("C++ Source\\Task" FILES ${Task_Source_Files})
+source_group("C++ Source\\Mock" FILES ${Mock_Source_Files})
 source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
-source_group("C++ Source\\HTTP\\Mock" FILES ${Mock_HTTP_Source_Files})
 source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
 
 set( SOURCE_FILES
-    ${Common_Source_Files}
     ${Public_Source_Files}
-    ${Logger_Source_Files}
+    ${Common_Source_Files}
+    ${Global_Source_Files}
+    ${Task_Source_Files}
+    ${Mock_Source_Files}
     ${HTTP_Source_Files}
-    ${Mock_HTTP_Source_Files}
+    ${Logger_Source_Files}
     )
 
 if( XDK )
