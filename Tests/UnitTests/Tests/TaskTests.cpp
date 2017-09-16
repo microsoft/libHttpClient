@@ -6,7 +6,7 @@
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
 #include "Utils.h"
-#include "singleton.h"
+#include "../global/global.h"
 
 using namespace xbox::httpclient;
 bool g_calledTestTaskExecute = false;

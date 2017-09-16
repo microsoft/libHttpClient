@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "../httpcall.h"
 #include "win/utils_win.h"
-#include "singleton.h"
+#include "../global/global.h"
 #include <memory.h>
 
 #include <Strsafe.h>
