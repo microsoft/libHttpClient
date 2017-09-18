@@ -33,8 +33,7 @@ public:
         )
     {
         const byte* bv = reinterpret_cast<const byte*>(pv);
-        std::vector<byte> srcData(bv, bv+cb);
-        m_buffer.insert(m_buffer.end(), srcData.begin(), srcData.end());
+        m_buffer.insert(m_buffer.end(), bv, bv + cb);
         return 0;
     }
 
@@ -84,11 +83,11 @@ public:
 
     std::exception_ptr m_exceptionPtr;
     http_buffer m_responseBuffer;
-    std::wstring m_allResponseHeaders;
+    http_internal_wstring m_allResponseHeaders;
 
 private:
     DWORD m_statusCode;
-    std::wstring m_errorMessage;
+    http_internal_wstring m_errorMessage;
     HRESULT m_hrCoInit;
     Microsoft::WRL::ComPtr<IXMLHTTPRequest2> m_hRequest;
 };
@@ -289,8 +288,8 @@ void xmlhttp_http_task::perform_async(
 {
     try
     {
-        std::string headerName;
-        std::string headerValue;
+        http_internal_string headerName;
+        http_internal_string headerValue;
         const char* url = nullptr;
         const char* method = nullptr;
         const char* requestBody = nullptr;
@@ -326,8 +325,8 @@ void xmlhttp_http_task::perform_async(
         std::shared_ptr<hc_task> httpTask2 = shared_from_this();
         std::shared_ptr<xmlhttp_http_task> httpTask = std::dynamic_pointer_cast<xmlhttp_http_task>(httpTask2);
 
-        std::wstring wMethod = to_wstring(method);
-        std::wstring wUrl = to_wstring(url);
+        http_internal_wstring wMethod = utf16_from_utf8(method);
+        http_internal_wstring wUrl = utf16_from_utf8(url);
         hr = m_hRequest->Open(
             wMethod.c_str(),
             wUrl.c_str(),
@@ -362,7 +361,7 @@ void xmlhttp_http_task::perform_async(
             HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
             if (headerName != nullptr && headerValue != nullptr)
             {
-                hr = m_hRequest->SetRequestHeader(to_wstring(headerName).c_str(), to_wstring(headerValue).c_str());
+                hr = m_hRequest->SetRequestHeader(utf16_from_utf8(headerName).c_str(), utf16_from_utf8(headerValue).c_str());
             }
         }
 
