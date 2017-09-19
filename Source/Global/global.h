@@ -54,7 +54,7 @@ struct http_singleton
 
     // Mock state
     std::mutex m_mocksLock;
-    std::vector<HC_CALL*> m_mocks;
+    http_internal_vector<HC_CALL*> m_mocks;
     HC_CALL* m_lastMatchingMock;
     bool m_mocksEnabled;
 

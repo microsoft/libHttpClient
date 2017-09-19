@@ -34,7 +34,7 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     return false;
 }
 
-size_t GetIndexOfMock(const std::vector<HC_CALL*>& mocks, HC_CALL* lastMatchingMock)
+size_t GetIndexOfMock(const http_internal_vector<HC_CALL*>& mocks, HC_CALL* lastMatchingMock)
 {
     if (lastMatchingMock == nullptr)
     {
@@ -58,7 +58,7 @@ HC_CALL* GetMatchingMock(
 {
     auto httpSingleton = get_http_singleton();
 
-    std::vector<HC_CALL*> mocks;
+    http_internal_vector<HC_CALL*> mocks;
     HC_CALL* lastMatchingMock = nullptr;
     HC_CALL* matchingMock = nullptr;
 

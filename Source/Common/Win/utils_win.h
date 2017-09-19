@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "../Global/mem.h"
+
 #if HC_USE_HANDLES
 
 class win32_handle
@@ -29,5 +31,15 @@ private:
     HANDLE m_handle;
 };
 
-
 #endif
+
+using http_internal_wstring = http_internal_basic_string<wchar_t>;
+
+http_internal_string utf8_from_utf16(http_internal_wstring const& utf16);
+http_internal_wstring utf16_from_utf8(http_internal_string const& utf8);
+
+http_internal_string utf8_from_utf16(_In_z_ PCWSTR utf16);
+http_internal_wstring utf16_from_utf8(_In_z_ PCSTR utf8);
+
+http_internal_string utf8_from_utf16(_In_reads_(size) PCWSTR utf16, size_t size);
+http_internal_wstring utf16_from_utf8(_In_reads_(size) PCSTR utf8, size_t size);
