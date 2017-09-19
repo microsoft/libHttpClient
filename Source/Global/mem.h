@@ -55,13 +55,11 @@ public:
     typedef T value_type;
 
     http_stl_allocator() = default;
-    template<class U>
-    http_stl_allocator(http_stl_allocator<U> const&) {}
+    template<class U> http_stl_allocator(http_stl_allocator<U> const&) {}
 
     T* allocate(size_t n)
     {
         T* p = static_cast<T*>(xbox::httpclient::http_memory::mem_alloc(n * sizeof(T)));
-
         if (p == nullptr)
         {
             throw std::bad_alloc();
@@ -74,6 +72,41 @@ public:
         xbox::httpclient::http_memory::mem_free(p);
     }
 };
+
+template<typename T>
+struct http_alloc_deleter
+{
+    http_alloc_deleter() {}
+    http_alloc_deleter(const http_stl_allocator<T>& alloc) : m_alloc(alloc) { }
+
+    void operator()(typename std::allocator_traits<http_stl_allocator<T>>::pointer p) const
+    {
+        http_stl_allocator<T> alloc(m_alloc);
+        std::allocator_traits<http_stl_allocator<T>>::destroy(alloc, std::addressof(*p));
+        std::allocator_traits<http_stl_allocator<T>>::deallocate(alloc, p, 1);
+    }
+
+private:
+    http_stl_allocator<T> m_alloc;
+};
+
+template<typename T, typename... Args>
+std::shared_ptr<T> http_allocate_shared(Args&&... args)
+{
+    return std::allocate_shared<T, http_stl_allocator<T>>(http_stl_allocator<T>(), std::forward(args)...);
+}
+
+template<typename T, typename... Args>
+std::unique_ptr<T, http_alloc_deleter<T>> http_allocate_unique()
+{
+    http_stl_allocator<T> alloc;
+    auto p = std::allocator_traits<http_stl_allocator<T>>::allocate(alloc, 1); // malloc memory
+    auto o = new(p) T(std::forward<Args>(args)...); // call class ctor using placement new
+    return std::unique_ptr<T, http_alloc_deleter<T>>(o, http_alloc_deleter<T>(alloc));
+}
+
+template<typename T>
+using HC_UNIQUE_PTR = std::unique_ptr<T, http_alloc_deleter<T>>;
 
 template<typename T1, typename T2>
 inline bool operator==(const http_stl_allocator<T1>&, const http_stl_allocator<T2>&)

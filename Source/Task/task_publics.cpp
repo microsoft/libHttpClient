@@ -124,11 +124,7 @@ HCTaskCreate(
         HC_TASK* pTask = nullptr;
 
         {
-            std::unique_ptr<HC_TASK> task = std::make_unique<HC_TASK>();
-            if (task == nullptr)
-            {
-                return HC_E_OUTOFMEMORY;
-            }
+            HC_TASK_PTR task = http_allocate_unique<HC_TASK>();
 
             pTask = task.get();
             task->executionRoutine = executionRoutine;

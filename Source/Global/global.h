@@ -34,7 +34,7 @@ struct http_singleton
     // Task state
     std::atomic<std::uint64_t> m_lastId;
     std::mutex m_taskHandleIdMapLock;
-    http_internal_map<uint64_t, std::unique_ptr<HC_TASK>> m_taskHandleIdMap;
+    http_internal_map<uint64_t, HC_TASK_PTR> m_taskHandleIdMap;
 
     std::mutex m_taskLock;
     http_internal_queue<HC_TASK*> m_taskPendingQueue;
