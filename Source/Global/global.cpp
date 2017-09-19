@@ -60,7 +60,7 @@ HC_RESULT init_http_singleton()
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
-        auto newSingleton = std::make_shared<http_singleton>();
+        auto newSingleton = http_allocate_shared<http_singleton>();
         std::atomic_compare_exchange_strong(
             &g_httpSingleton_atomicReadsOnly,
             &httpSingleton,
@@ -103,7 +103,7 @@ std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_qu
         return it->second;
     }
 
-    std::shared_ptr<http_task_completed_queue> taskQueue = std::make_shared<http_task_completed_queue>();
+    std::shared_ptr<http_task_completed_queue> taskQueue = http_allocate_shared<http_task_completed_queue>();
     taskQueue->m_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
 
     m_taskCompletedQueue[taskGroupId] = taskQueue;
