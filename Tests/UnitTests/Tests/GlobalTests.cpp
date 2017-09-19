@@ -6,7 +6,7 @@
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
 #include "Utils.h"
-#include "../global/global.h"
+#include "../Common/Win/utils_win.h"
 
 using namespace xbox::httpclient;
 static bool g_gotCall = false;
@@ -27,14 +27,10 @@ public:
         VERIFY_ARE_EQUAL_STR("1.0.0.0", ver);
 
 #pragma warning(disable: 4800)
-        std::wstring test1 = to_wstring(L"test");
-        VERIFY_ARE_EQUAL_STR(L"test", test1.c_str());
-        std::wstring test2 = to_wstring("test");
-        VERIFY_ARE_EQUAL_STR(L"test", test2.c_str());
-        std::string test3 = to_utf8string(L"test");
-        VERIFY_ARE_EQUAL_STR("test", test3.c_str());
-        std::string test4 = to_utf8string("test");
-        VERIFY_ARE_EQUAL_STR("test", test4.c_str());
+        http_internal_wstring utf16 = utf16_from_utf8("test");
+        VERIFY_ARE_EQUAL_STR(L"test", utf16.c_str());
+        http_internal_string utf8 = utf8_from_utf16(L"test");
+        VERIFY_ARE_EQUAL_STR("test", utf8.c_str());
     }
 
 };
