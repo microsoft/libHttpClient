@@ -98,7 +98,7 @@ void Internal_HCHttpCallPerform(
     _In_ HC_TASK_HANDLE taskHandle
     )
 {
-    std::shared_ptr<xmlhttp_http_task> httpTask = std::make_shared<xmlhttp_http_task>();
+    std::shared_ptr<xmlhttp_http_task> httpTask = http_allocate_shared<xmlhttp_http_task>();
     call->task = std::dynamic_pointer_cast<hc_task>(httpTask);
 
     httpTask->perform_async(call, taskHandle);

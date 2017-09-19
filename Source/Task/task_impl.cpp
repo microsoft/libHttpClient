@@ -142,7 +142,7 @@ HC_TASK* http_task_get_task_from_handle_id(
 }
 
 void http_task_store_task_from_handle_id(
-    _In_ std::unique_ptr<HC_TASK> task
+    _In_ HC_TASK_PTR task
     )
 {
     auto httpSingleton = get_http_singleton();

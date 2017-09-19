@@ -48,6 +48,23 @@ private:
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
+template<typename TAllocator>
+struct http_alloc_deleter
+{
+    http_alloc_deleter() {}
+    http_alloc_deleter(const TAllocator& alloc) : m_alloc(alloc) { }
+
+    void operator()(typename std::allocator_traits<TAllocator>::pointer p) const
+    {
+        TAllocator alloc(m_alloc);
+        std::allocator_traits<TAllocator>::destroy(alloc, std::addressof(*p));
+        std::allocator_traits<TAllocator>::deallocate(alloc, p, 1);
+    }
+
+private:
+    TAllocator m_alloc;
+};
+
 template<typename T>
 class http_stl_allocator
 {
@@ -55,13 +72,11 @@ public:
     typedef T value_type;
 
     http_stl_allocator() = default;
-    template<class U>
-    http_stl_allocator(http_stl_allocator<U> const&) {}
+    template<class U> http_stl_allocator(http_stl_allocator<U> const&) {}
 
     T* allocate(size_t n)
     {
         T* p = static_cast<T*>(xbox::httpclient::http_memory::mem_alloc(n * sizeof(T)));
-
         if (p == nullptr)
         {
             throw std::bad_alloc();
@@ -74,6 +89,21 @@ public:
         xbox::httpclient::http_memory::mem_free(p);
     }
 };
+
+template<typename T>
+std::shared_ptr<T> http_allocate_shared()
+{
+    return std::allocate_shared<T, http_stl_allocator<T>>(http_stl_allocator<T>());
+}
+
+template<typename T>
+std::unique_ptr<T, http_alloc_deleter<http_stl_allocator<T>>> http_allocate_unique()
+{
+    http_stl_allocator<T> alloc;
+    auto p = std::allocator_traits<http_stl_allocator<T>>::allocate(alloc, 1); // malloc memory
+    new(p) T(); // call class ctor using placement new
+    return std::unique_ptr<T, http_alloc_deleter<http_stl_allocator<T>>>(p, http_alloc_deleter<http_stl_allocator<T>>(alloc));
+}
 
 template<typename T1, typename T2>
 inline bool operator==(const http_stl_allocator<T1>&, const http_stl_allocator<T2>&)

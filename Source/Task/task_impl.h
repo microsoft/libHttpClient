@@ -45,6 +45,8 @@ struct HC_TASK
 #endif
 };
 
+typedef std::unique_ptr< HC_TASK, http_alloc_deleter<http_stl_allocator<HC_TASK>> > HC_TASK_PTR;
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 void http_task_queue_pending(_In_ HC_TASK* info);
@@ -56,7 +58,7 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandle);
 HC_TASK* http_task_get_next_completed(_In_ uint64_t taskGroupId);
 
 HC_TASK* http_task_get_task_from_handle_id(_In_ HC_TASK_HANDLE taskHandleId);
-void http_task_store_task_from_handle_id(_In_ std::unique_ptr<HC_TASK> task);
+void http_task_store_task_from_handle_id(_In_ HC_TASK_PTR task);
 void http_task_clear_task_from_handle_id(_In_ HC_TASK_HANDLE taskHandleId);
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
