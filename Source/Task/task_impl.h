@@ -45,7 +45,7 @@ struct HC_TASK
 #endif
 };
 
-typedef std::unique_ptr< HC_TASK, http_alloc_deleter<http_stl_allocator<HC_TASK>> > HC_TASK_PTR;
+typedef HC_UNIQUE_PTR< HC_TASK > HC_TASK_PTR;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 

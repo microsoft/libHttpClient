@@ -48,23 +48,6 @@ private:
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-template<typename TAllocator>
-struct http_alloc_deleter
-{
-    http_alloc_deleter() {}
-    http_alloc_deleter(const TAllocator& alloc) : m_alloc(alloc) { }
-
-    void operator()(typename std::allocator_traits<TAllocator>::pointer p) const
-    {
-        TAllocator alloc(m_alloc);
-        std::allocator_traits<TAllocator>::destroy(alloc, std::addressof(*p));
-        std::allocator_traits<TAllocator>::deallocate(alloc, p, 1);
-    }
-
-private:
-    TAllocator m_alloc;
-};
-
 template<typename T>
 class http_stl_allocator
 {
@@ -91,19 +74,39 @@ public:
 };
 
 template<typename T>
-std::shared_ptr<T> http_allocate_shared()
+struct http_alloc_deleter
 {
-    return std::allocate_shared<T, http_stl_allocator<T>>(http_stl_allocator<T>());
+    http_alloc_deleter() {}
+    http_alloc_deleter(const http_stl_allocator<T>& alloc) : m_alloc(alloc) { }
+
+    void operator()(typename std::allocator_traits<http_stl_allocator<T>>::pointer p) const
+    {
+        http_stl_allocator<T> alloc(m_alloc);
+        std::allocator_traits<http_stl_allocator<T>>::destroy(alloc, std::addressof(*p));
+        std::allocator_traits<http_stl_allocator<T>>::deallocate(alloc, p, 1);
+    }
+
+private:
+    http_stl_allocator<T> m_alloc;
+};
+
+template<typename T, typename... Args>
+std::shared_ptr<T> http_allocate_shared(Args&&... args)
+{
+    return std::allocate_shared<T, http_stl_allocator<T>>(http_stl_allocator<T>(), std::forward(args)...);
 }
 
-template<typename T>
-std::unique_ptr<T, http_alloc_deleter<http_stl_allocator<T>>> http_allocate_unique()
+template<typename T, typename... Args>
+std::unique_ptr<T, http_alloc_deleter<T>> http_allocate_unique()
 {
     http_stl_allocator<T> alloc;
     auto p = std::allocator_traits<http_stl_allocator<T>>::allocate(alloc, 1); // malloc memory
-    new(p) T(); // call class ctor using placement new
-    return std::unique_ptr<T, http_alloc_deleter<http_stl_allocator<T>>>(p, http_alloc_deleter<http_stl_allocator<T>>(alloc));
+    auto o = new(p) T(std::forward<Args>(args)...); // call class ctor using placement new
+    return std::unique_ptr<T, http_alloc_deleter<T>>(o, http_alloc_deleter<T>(alloc));
 }
+
+template<typename T>
+using HC_UNIQUE_PTR = std::unique_ptr<T, http_alloc_deleter<T>>;
 
 template<typename T1, typename T2>
 inline bool operator==(const http_stl_allocator<T1>&, const http_stl_allocator<T2>&)
