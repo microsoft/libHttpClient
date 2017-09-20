@@ -1,8 +1,6 @@
 @echo off
-if "%1" EQU "" goto help
 echo on
-set ROOT_FOLDER=%1
-if "%1" EQU "1" set ROOT_FOLDER=%~dp0\..\..
+ROOT_FOLDER=%~dp0\..\..
 rem force root folder to an absolute path
 pushd %ROOT_FOLDER%
 set ROOT_FOLDER=%CD%

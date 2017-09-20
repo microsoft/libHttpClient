@@ -208,9 +208,11 @@ endif()
 if( UNITTEST )
     message(STATUS "Unittest source group")
     source_group("C++ Source\\HTTP\\Unittest" FILES ${Unittest_HTTP_Source_Files})
+    source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${Unittest_HTTP_Source_Files}
+        ${Common_Windows_Source_Files}
         )
 endif()
 
