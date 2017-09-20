@@ -10,7 +10,7 @@ using namespace xbox::httpclient::log;
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockCallCreate(
     _Out_ HC_MOCK_CALL_HANDLE* call
-    )
+    ) HC_NOEXCEPT
 {
     return HCHttpCallCreate(call);
 }
@@ -18,68 +18,68 @@ HCMockCallCreate(
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockAddMock(
     _In_ HC_MOCK_CALL_HANDLE call,
-    _In_opt_ PCSTR method,
-    _In_opt_ PCSTR url,
-    _In_opt_ PCSTR requestBodyString
-    )
+    _In_opt_z_ PCSTR method,
+    _In_opt_z_ PCSTR url,
+    _In_opt_z_ PCSTR requestBodyString
+    ) HC_NOEXCEPT
+try 
 {
     if (call == nullptr)
     {
         return HC_E_INVALIDARG;
     }
 
-    CONVERT_STD_EXCEPTION(
-        auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton();
 
-        if (method != nullptr && url != nullptr)
+    if (method != nullptr && url != nullptr)
+    {
+        HC_RESULT hr = HCHttpCallRequestSetUrl(call, method, url);
+        if (hr != HC_OK)
         {
-            HC_RESULT hr = HCHttpCallRequestSetUrl(call, method, url);
-            if (hr != HC_OK)
-            {
-                return hr;
-            }
+            return hr;
         }
+    }
 
-        if (requestBodyString)
+    if (requestBodyString)
+    {
+        HC_RESULT hr = HCHttpCallRequestSetRequestBodyString(call, requestBodyString);
+        if (hr != HC_OK)
         {
-            HC_RESULT hr = HCHttpCallRequestSetRequestBodyString(call, requestBodyString);
-            if (hr != HC_OK)
-            {
-                return hr;
-            }
+            return hr;
         }
+    }
 
-        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
-        httpSingleton->m_mocks.push_back(call);
-        httpSingleton->m_mocksEnabled = true;
-    );
+    std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+    httpSingleton->m_mocks.push_back(call);
+    httpSingleton->m_mocksEnabled = true;
+    return HC_OK;
 }
+CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
-HCMockClearMocks()
+HCMockClearMocks() HC_NOEXCEPT
+try 
 {
-    CONVERT_STD_EXCEPTION(
-        auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton();
 
-        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+    std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
 
-        for (auto& mockCall : httpSingleton->m_mocks)
-        {
-            HCHttpCallCleanup(mockCall);
-        }
+    for (auto& mockCall : httpSingleton->m_mocks)
+    {
+        HCHttpCallCleanup(mockCall);
+    }
 
-        httpSingleton->m_mocks.clear();
-        httpSingleton->m_mocksEnabled = false;
-    );
+    httpSingleton->m_mocks.clear();
+    httpSingleton->m_mocksEnabled = false;
+    return HC_OK;
 }
-
-
+CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockResponseSetResponseString(
     _In_ HC_MOCK_CALL_HANDLE call,
-    _In_ PCSTR responseString
-    )
+    _In_z_ PCSTR responseString
+    ) HC_NOEXCEPT
 {
     return HCHttpCallResponseSetResponseString(call, responseString);
 }
@@ -88,7 +88,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCMockResponseSetStatusCode(
     _In_ HC_MOCK_CALL_HANDLE call,
     _In_ uint32_t statusCode
-    )
+    ) HC_NOEXCEPT
 {
     return HCHttpCallResponseSetStatusCode(call, statusCode);
 }
@@ -98,7 +98,7 @@ HCMockResponseSetNetworkErrorCode(
     _In_ HC_MOCK_CALL_HANDLE call,
     _In_ HC_RESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
-    )
+    ) HC_NOEXCEPT
 {
     return HCHttpCallResponseSetNetworkErrorCode(call, networkErrorCode, platformNetworkErrorCode);
 }
@@ -106,9 +106,9 @@ HCMockResponseSetNetworkErrorCode(
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockResponseSetHeader(
     _In_ HC_MOCK_CALL_HANDLE call,
-    _In_ PCSTR headerName,
-    _In_ PCSTR headerValue
-    )
+    _In_z_ PCSTR headerName,
+    _In_z_ PCSTR headerValue
+    ) HC_NOEXCEPT
 {
     return HCHttpCallResponseSetHeader(call, headerName, headerValue);
 }

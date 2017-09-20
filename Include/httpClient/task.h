@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include "types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -104,14 +103,14 @@ HCTaskCreate(
     _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext,
     _Out_opt_ HC_TASK_HANDLE* taskHandle
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Calls the executionRoutine callback for the next pending task. It is recommended 
 /// the app calls HCTaskProcessNextPendingTask() in a background thread.
 /// </summary>
 HC_API HC_RESULT HC_CALLING_CONV
-HCTaskProcessNextPendingTask();
+HCTaskProcessNextPendingTask() HC_NOEXCEPT;
 
 /// <summary>
 /// Calls the completionRoutine callback for the next task that is completed.  
@@ -128,7 +127,7 @@ HCTaskProcessNextPendingTask();
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </param>
 HC_API HC_RESULT HC_CALLING_CONV
-HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId);
+HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId) HC_NOEXCEPT;
 
 /// <summary>
 /// Called by async task's executionRoutine when the results are completed.  This will mark the task as
@@ -139,7 +138,7 @@ HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId);
 HC_API HC_RESULT HC_CALLING_CONV
 HCTaskSetCompleted(
     _In_ HC_TASK_HANDLE taskHandle
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Returns if the task's result is completed and ready to return results
@@ -149,7 +148,7 @@ HCTaskSetCompleted(
 HC_API bool HC_CALLING_CONV
 HCTaskIsCompleted(
     _In_ HC_TASK_HANDLE taskHandle
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Wait until a specific task is completed.
@@ -163,7 +162,7 @@ HC_API bool HC_CALLING_CONV
 HCTaskWaitForCompleted(
     _In_ HC_TASK_HANDLE taskHandle,
     _In_ uint32_t timeoutInMilliseconds
-    );
+    ) HC_NOEXCEPT;
 
 #if defined(__cplusplus)
 } // end extern "C"

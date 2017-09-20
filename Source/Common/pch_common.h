@@ -56,12 +56,6 @@
 #define ARRAYSIZE(x) sizeof(x) / sizeof(x[0])
 #endif
 
-#ifndef UNIT_TEST_SERVICES
-#define HC_ASSERT(x) assert(x);
-#else
-#define HC_ASSERT(x) if(!(x)) throw std::invalid_argument("");
-#endif
-
 #if _MSC_VER <= 1800
 typedef std::chrono::system_clock chrono_clock_t;
 #else
@@ -72,12 +66,20 @@ typedef std::chrono::steady_clock chrono_clock_t;
 #define NAMESPACE_XBOX_HTTP_CLIENT_END                       }}
 #define NAMESPACE_XBOX_HTTP_CLIENT_LOG_BEGIN                 namespace xbox { namespace httpclient { namespace log {
 #define NAMESPACE_XBOX_HTTP_CLIENT_LOG_END                   }}}
+#define NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN              namespace xbox { namespace httpclient { namespace detail {
+#define NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_END                }}}
 #define NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN                namespace xbox { namespace httpclienttest {
 #define NAMESPACE_XBOX_HTTP_CLIENT_TEST_END                  }}
 
 #if !HC_UNITTEST_API
 #define ENABLE_LOGS 1
 #define ENABLE_ASSERTS 1
+#endif
+
+#ifndef ENABLE_ASSERTS
+#define HC_ASSERT(x) assert(x);
+#else
+#define HC_ASSERT(x)
 #endif
 
 typedef int32_t function_context;
@@ -90,3 +92,26 @@ typedef int32_t function_context;
 #include "trace_internal.h"
 
 HC_DECLARE_TRACE_AREA(HTTPCLIENT);
+
+#define CATCH_RETURN() CATCH_RETURN_IMPL(__FILE__, __LINE__)
+
+#define CATCH_RETURN_IMPL(file, line) \
+    catch (std::bad_alloc const& e) { return ::xbox::httpclient::detail::StdBadAllocToResult(e, file, line); } \
+    catch (std::exception const& e) { return ::xbox::httpclient::detail::StdExceptionToResult(e, file, line); } \
+    catch (...) { return ::xbox::httpclient::detail::UnknownExceptionToResult(file, line); }
+
+#define CATCH_RETURN_WITH(errCode) CATCH_RETURN_IMPL_WITH(__FILE__, __LINE__, errCode)
+
+#define CATCH_RETURN_IMPL_WITH(file, line, errCode) \
+    catch (std::bad_alloc const& e) { ::xbox::httpclient::detail::StdBadAllocToResult(e, file, line); return errCode; } \
+    catch (std::exception const& e) { ::xbox::httpclient::detail::StdExceptionToResult(e, file, line); return errCode; } \
+    catch (...) { ::xbox::httpclient::detail::UnknownExceptionToResult(file, line); return errCode; }
+
+
+NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
+
+HC_RESULT StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line);
+HC_RESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, uint32_t line);
+HC_RESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
+
+NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_END

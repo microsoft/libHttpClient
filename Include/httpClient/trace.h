@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #pragma once
-
-#include <stdint.h>
-
 #include <httpClient/types.h>
 
 #if defined(__cplusplus)

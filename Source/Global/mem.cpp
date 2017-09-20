@@ -28,7 +28,7 @@ HC_API void HC_CALLING_CONV
 HCMemSetFunctions(
     _In_opt_ HC_MEM_ALLOC_FUNC memAllocFunc,
     _In_opt_ HC_MEM_FREE_FUNC memFreeFunc
-)
+    ) HC_NOEXCEPT
 {
     g_memAllocFunc = (memAllocFunc == nullptr) ? DefaultMemAllocFunction : memAllocFunc;
     g_memFreeFunc = (memFreeFunc == nullptr) ? DefaultMemFreeFunction : memFreeFunc;
@@ -38,7 +38,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCMemGetFunctions(
     _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
     _Out_ HC_MEM_FREE_FUNC* memFreeFunc
-    )
+    ) HC_NOEXCEPT
 {
     if (memAllocFunc == nullptr || memFreeFunc == nullptr)
     {
