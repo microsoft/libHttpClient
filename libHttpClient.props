@@ -45,7 +45,7 @@
   
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(libHttpClientDefine);HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(libHttpClientInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
