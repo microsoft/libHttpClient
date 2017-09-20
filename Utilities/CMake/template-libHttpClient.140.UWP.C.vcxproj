@@ -29,7 +29,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8F96710E-5169-4917-8874-7DE248F4D243}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <ApplicationType>Windows Store</ApplicationType>
