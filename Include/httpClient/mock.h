@@ -2,9 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include "types.h"
-#include "task.h"
-#include "httpProvider.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -26,7 +23,7 @@ extern "C" {
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockCallCreate(
     _Out_ HC_MOCK_CALL_HANDLE* call
-    );
+    ) HC_NOEXCEPT;
 
 
 /// <summary>
@@ -65,17 +62,17 @@ HCMockCallCreate(
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockAddMock(
     _In_ HC_MOCK_CALL_HANDLE call,
-    _In_opt_ PCSTR method,
-    _In_opt_ PCSTR url,
-    _In_opt_ PCSTR requestBodyString
-    );
+    _In_opt_z_ PCSTR method,
+    _In_opt_z_ PCSTR url,
+    _In_opt_z_ PCSTR requestBodyString
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Removes and cleans up all mock calls added by HCMockAddMock
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
-HCMockClearMocks();
+HCMockClearMocks() HC_NOEXCEPT;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -91,8 +88,8 @@ HCMockClearMocks();
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockResponseSetResponseString(
     _In_ HC_MOCK_CALL_HANDLE call,
-    _In_ PCSTR responseString
-    );
+    _In_z_ PCSTR responseString
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Set the HTTP status code to return for the mock
@@ -104,7 +101,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCMockResponseSetStatusCode(
     _In_ HC_MOCK_CALL_HANDLE call,
     _In_ uint32_t statusCode
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Set the network error code to return for the mock
@@ -118,7 +115,7 @@ HCMockResponseSetNetworkErrorCode(
     _In_ HC_MOCK_CALL_HANDLE call,
     _In_ HC_RESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
-);
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Set a response header to return for the mock
@@ -130,9 +127,9 @@ HCMockResponseSetNetworkErrorCode(
 HC_API HC_RESULT HC_CALLING_CONV
 HCMockResponseSetHeader(
     _In_ HC_MOCK_CALL_HANDLE call,
-    _In_ PCSTR headerName,
-    _In_ PCSTR headerValue
-    );
+    _In_z_ PCSTR headerName,
+    _In_z_ PCSTR headerValue
+    ) HC_NOEXCEPT;
 
 
 #if defined(__cplusplus)

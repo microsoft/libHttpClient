@@ -3,7 +3,6 @@
 
 #pragma once
 #pragma warning(disable: 4062)
-
 #include <stdint.h>
 
 #ifdef _WIN32
@@ -77,6 +76,10 @@
   #endif
 #endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #define HC_CALLING_CONV __cdecl
 typedef uint32_t HC_MEMORY_TYPE;
 typedef struct HC_CALL* HC_CALL_HANDLE;
@@ -95,37 +98,13 @@ typedef enum HC_RESULT
     HC_E_FEATURENOTPRESENT = -7,
 } HC_RESULT;
 
+#ifdef __cplusplus
+#define HC_NOEXCEPT noexcept
+#else
+#define HC_NOEXCEPT
+#endif
 
-#define CONVERT_STD_EXCEPTION(operation) \
-{                                               \
-    try                                         \
-    {                                           \
-        operation;                              \
-    }                                           \
-    catch(const std::bad_alloc&)                \
-    {                                           \
-        return HC_E_OUTOFMEMORY;                \
-    }                                           \
-    catch(...)                                  \
-    {                                           \
-        return HC_E_FAIL;                       \
-    }                                           \
-                                                \
-    return HC_OK;                               \
-}
 
-#define CONVERT_STD_EXCEPTION_RETURN(errCode, operation) \
-{                                               \
-    try                                         \
-    {                                           \
-        operation;                              \
-    }                                           \
-    catch(const std::bad_alloc&)                \
-    {                                           \
-        return errCode;                         \
-    }                                           \
-    catch(...)                                  \
-    {                                           \
-        return errCode;                         \
-    }                                           \
-}
+#if defined(__cplusplus)
+} // end extern "C"
+#endif // defined(__cplusplus)
