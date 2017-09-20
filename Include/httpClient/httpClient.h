@@ -241,6 +241,8 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 /// 
 /// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCleanup() to free the 
 /// memory associated with the HC_CALL_HANDLE
+///
+/// HCHttpCallPerform can only be called once.  Create new HC_CALL_HANDLE to repeat the call.
 /// </summary>
 /// <param name="taskHandle">The task handle returned by the operation. If the API fails, HC_TASK_HANDLE will be 0</param>
 /// <param name="taskGroupId">
