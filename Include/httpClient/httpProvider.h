@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #pragma once
-#include <stdint.h>
-#include "types.h"
-#include "task.h"
-#include "mock.h"
-#include "trace.h"
+#include <httpClient/types.h>
+#include <httpClient/task.h>
+#include <httpClient/trace.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -34,7 +33,7 @@ typedef void
 HC_API void HC_CALLING_CONV
 HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Returns the current HC_HTTP_CALL_PERFORM_FUNC callback which implements the HTTP 
@@ -47,7 +46,7 @@ HCGlobalSetHttpCallPerformFunction(
 HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalGetHttpCallPerformFunction(
     _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
-    );
+    ) HC_NOEXCEPT;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -66,7 +65,7 @@ HCHttpCallRequestGetUrl(
     _In_ HC_CALL_HANDLE call,
     _Outptr_ PCSTR* method,
     _Outptr_ PCSTR* url
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Get the request body string of the HTTP call
@@ -78,7 +77,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRequestBodyString(
     _In_ HC_CALL_HANDLE call,
     _Out_ PCSTR* requestBodyString
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Get a request header for the HTTP call for a given header name
@@ -90,9 +89,9 @@ HCHttpCallRequestGetRequestBodyString(
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetHeader(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR headerName,
+    _In_z_ PCSTR headerName,
     _Out_ PCSTR* headerValue
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets the number of request headers in the the HTTP call
@@ -104,7 +103,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetNumHeaders(
     _In_ HC_CALL_HANDLE call,
     _Out_ uint32_t* numHeaders
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets the request headers at specific zero based index in the the HTTP call.
@@ -121,7 +120,7 @@ HCHttpCallRequestGetHeaderAtIndex(
     _In_ uint32_t headerIndex,
     _Out_ PCSTR* headerName,
     _Out_ PCSTR* headerValue
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets if retry is allowed for this HTTP call
@@ -134,7 +133,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRetryAllowed(
     _In_opt_ HC_CALL_HANDLE call,
     _Out_ bool* retryAllowed
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets the timeout for this HTTP call.
@@ -147,7 +146,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetTimeout(
     _In_opt_ HC_CALL_HANDLE call,
     _Out_ uint32_t* timeoutInSeconds
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets the HTTP retry delay in seconds. The default and minimum delay is 2 seconds.
@@ -178,7 +177,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRetryDelay(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ uint32_t* retryDelayInSeconds
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Sets the HTTP timeout window in seconds.
@@ -202,7 +201,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetTimeoutWindow(
     _In_opt_ HC_CALL_HANDLE call,
     _Out_ uint32_t* timeoutWindowInSeconds
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets if assert are enabled if throttled.
@@ -221,7 +220,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetAssertsForThrottling(
     _In_opt_ HC_CALL_HANDLE call,
     _Out_ bool* enableAssertsForThrottling
-    );
+    ) HC_NOEXCEPT;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -237,8 +236,8 @@ HCHttpCallRequestGetAssertsForThrottling(
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseSetResponseString(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR responseString
-    );
+    _In_z_ PCSTR responseString
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Set the HTTP status code of the HTTP call response
@@ -250,7 +249,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseSetStatusCode(
     _In_ HC_CALL_HANDLE call,
     _In_ uint32_t statusCode
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Set the network error code of the HTTP call
@@ -264,7 +263,7 @@ HCHttpCallResponseSetNetworkErrorCode(
     _In_ HC_CALL_HANDLE call,
     _In_ HC_RESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
-);
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Set a response header for the HTTP call
@@ -276,9 +275,9 @@ HCHttpCallResponseSetNetworkErrorCode(
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseSetHeader(
     _In_ HC_CALL_HANDLE call,
-    _In_ PCSTR headerName,
-    _In_ PCSTR headerValue
-    );
+    _In_z_ PCSTR headerName,
+    _In_z_ PCSTR headerValue
+    ) HC_NOEXCEPT;
 
 #if defined(__cplusplus)
 } // end extern "C"

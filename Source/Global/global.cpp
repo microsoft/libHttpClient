@@ -41,14 +41,11 @@ http_singleton::~http_singleton()
 std::shared_ptr<http_singleton> get_http_singleton()
 {
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
-
-#if ENABLE_ASSERTS
     if (httpSingleton == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
-        assert(httpSingleton != nullptr);
+        HC_ASSERT(httpSingleton != nullptr);
     }
-#endif
 
     return httpSingleton;
 }
@@ -140,3 +137,5 @@ http_internal_queue<HC_TASK*>& http_task_completed_queue::get_completed_queue()
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
+
+
