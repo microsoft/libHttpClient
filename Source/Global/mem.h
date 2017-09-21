@@ -93,7 +93,7 @@ private:
 template<typename T, typename... Args>
 std::shared_ptr<T> http_allocate_shared(Args&&... args)
 {
-    return std::allocate_shared<T, http_stl_allocator<T>>(http_stl_allocator<T>(), std::forward(args)...);
+    return std::allocate_shared<T, http_stl_allocator<T>>(http_stl_allocator<T>(), std::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>

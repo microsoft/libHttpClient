@@ -176,7 +176,7 @@ try
     }
 
     uint32_t index = 0;
-    for (auto it = call->responseHeaders.cbegin(); it != call->responseHeaders.cend(); ++it)
+    for (auto& it = call->responseHeaders.cbegin(); it != call->responseHeaders.cend(); ++it)
     {
         if (index == headerIndex)
         {
