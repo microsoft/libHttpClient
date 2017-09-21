@@ -1,6 +1,6 @@
 @echo off
 echo on
-ROOT_FOLDER=%~dp0\..\..
+set ROOT_FOLDER=%~dp0\..\..
 rem force root folder to an absolute path
 pushd %ROOT_FOLDER%
 set ROOT_FOLDER=%CD%
