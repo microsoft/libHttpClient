@@ -86,15 +86,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup>
-    <CustomBuildStep>
-      <Command>copy $(MSBuildProjectDirectory)\..\..\Binaries\Debug\x64\libHttpClient.141.Win32.C\libHttpClient.141.Win32.C.dll $(OutputPath)
-      copy $(MSBuildProjectDirectory)\..\..\Binaries\Debug\x64\libHttpClient.141.Win32.C\libHttpClient.141.Win32.C.pdb $(OutputPath)</Command>
-    </CustomBuildStep>
-    <CustomBuildStep>
-      <Outputs>always</Outputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
