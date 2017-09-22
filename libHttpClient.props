@@ -8,19 +8,6 @@
     <HCLibPlatformType>UWP</HCLibPlatformType>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Platform)'=='ARM'">
-    <HCLibPlatform>$(Platform)</HCLibPlatform>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Platform)|$(ApplicationType)'=='Win32|Windows Store'">
-    <HCLibPlatform>x86</HCLibPlatform>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Platform)|$(ApplicationType)'=='Win32|'">
-    <HCLibPlatform>Win32</HCLibPlatform>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <HCLibPlatform>$(Platform)</HCLibPlatform>
-  </PropertyGroup>
-
   <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
     <libHttpClientDefine>HC_UWP_API</libHttpClientDefine>
   </PropertyGroup>
@@ -38,8 +25,8 @@
   <PropertyGroup>
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
-    <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(HCLibPlatform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib>
-    <libHttpClientLib2>$(libHttpClientRoot)lib\$(HCLibPlatform)\</libHttpClientLib2>
+    <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib>
+    <libHttpClientLib2>$(libHttpClientRoot)lib\$(Platform)\</libHttpClientLib2>
 	<libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
   </PropertyGroup>
   
