@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "stdafx.h"
 #include "httpClient\httpClient.h"
+#include "json_cpp\json.h"
 
 std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
 {
@@ -81,7 +82,7 @@ DWORD WINAPI http_thread_proc(LPVOID lpParam)
 
 void InitBackgroundThread()
 {
-    g_stopRequestedHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
     for (uint32_t i = 0; i < g_targetNumThreads; i++)
     {
         g_hActiveThreads[i] = CreateThread(nullptr, 0, http_thread_proc, nullptr, 0, nullptr);
@@ -189,7 +190,13 @@ int main()
 
     HCTaskWaitForCompleted(taskHandle, 1000*1000);
     HCTaskProcessNextCompletedTask(0);
+
+    ShutdownActiveThreads();
     HCGlobalCleanup();
+
+    std::error_code err;
+    std::wstring test = L"{\"hello\":\"hi\"}";
+    web::json::value m_jsonConfig = web::json::value::parse(test, err);
 
     return 0;
 }
