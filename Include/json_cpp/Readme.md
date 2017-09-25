@@ -10,6 +10,7 @@ Just #include <json_cpp/json.h> in your C++ project then you can use cpprestsdk 
 
     #include <json_cpp/json.h>
 ...
+
     std::error_code err;
     std::wstring exampleString = L"{\"exampleName\":\"exampleValue\"}";
     web::json::value jsonConfig = web::json::value::parse(exampleString, err);
