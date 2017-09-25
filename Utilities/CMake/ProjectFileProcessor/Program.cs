@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -302,13 +303,34 @@ namespace ProjectFileProcessor
             }
         }
 
+        public static string CaseInsenstiveReplace(
+            string originalString, 
+            string oldValue, 
+            string newValue)
+        {
+            StringComparison comparisonType = StringComparison.OrdinalIgnoreCase;
+            int startIndex = 0;
+            while (true)
+            {
+                startIndex = originalString.IndexOf(oldValue, startIndex, comparisonType);
+                if (startIndex == -1)
+                    break;
+
+                originalString = originalString.Substring(0, startIndex) + newValue + originalString.Substring(startIndex + oldValue.Length);
+
+                startIndex += newValue.Length;
+            }
+
+            return originalString;
+        }
+
         private static string MakeFilePathRelative(string inputFile, string rootFolder)
         {
             //     <ClInclude Include="C:\git\forks\xbox-live-api\Source\Services\Common\Desktop\pch.h" />
             // to
             //     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Services\Common\Desktop\pch.h" />
 
-            string filteredFile = inputFile.Replace(rootFolder, @"$(MSBuildThisFileDirectory)..\..\");
+            string filteredFile = CaseInsenstiveReplace( inputFile, rootFolder, @"$(MSBuildThisFileDirectory)..\..\");
             filteredFile = filteredFile.Replace(" Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\"", "");
             filteredFile = filteredFile.Replace(@"..\..\Utilities\CMake\build\", "");
             filteredFile = filteredFile.Replace("\"  />", "\" />");

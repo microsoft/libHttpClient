@@ -136,7 +136,14 @@ set(WinRTHttpClient_HTTP_Source_Files
     )
     
 set(XMLHttp_HTTP_Source_Files
-    ../../../Source/HTTP/XMLHttp/http_xmlhttp.cpp
+    ../../../Source/HTTP/XMLHttp/http_buffer.cpp
+    ../../../Source/HTTP/XMLHttp/http_buffer.h
+    ../../../Source/HTTP/XMLHttp/http_request_callback.cpp
+    ../../../Source/HTTP/XMLHttp/http_request_callback.h
+    ../../../Source/HTTP/XMLHttp/http_response_stream.cpp
+    ../../../Source/HTTP/XMLHttp/http_response_stream.h
+    ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
+    ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
     
 set(Logger_Source_Files
@@ -147,8 +154,6 @@ set(Logger_Source_Files
 
 
 set(UnitTests_Source_Files_Support
-#	../../../Tests/UnitTests/Support/iso8601.cpp
-#	../../../Tests/UnitTests/Support/iso8601.h
 	../../../Tests/UnitTests/Support/DefineTestMacros.h
 	../../../Tests/UnitTests/Support/UnitTestIncludes.h
     )
@@ -173,14 +178,6 @@ set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/GlobalTests.cpp
     ../../../Tests/UnitTests/Tests/TaskTests.cpp
     )
-
-if( SHIP )
-	message(STATUS "SHIP add_library")
-	# source_group("Build" FILES ${Ship_Source_Files})
-	# set( SOURCE_FILES
-		# ${Ship_Source_Files}
-		# )
-endif() # SHIP
 
 message(STATUS "Common source group")
 source_group("Header Files" FILES ${Public_Source_Files})
@@ -208,9 +205,11 @@ endif()
 if( UNITTEST )
     message(STATUS "Unittest source group")
     source_group("C++ Source\\HTTP\\Unittest" FILES ${Unittest_HTTP_Source_Files})
+    source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${Unittest_HTTP_Source_Files}
+        ${Common_Windows_Source_Files}
         )
 endif()
 

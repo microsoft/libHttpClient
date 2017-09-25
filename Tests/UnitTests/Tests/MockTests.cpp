@@ -46,10 +46,8 @@ public:
         HCHttpCallCreate(&call);
 
         HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", false, false);
-        HCMockAddMock(mockCall);
+        HCMockAddMock(mockCall, "1", "2", "3");
 
-        HCHttpCallRequestSetUrl(call, "1", "2");
-        HCHttpCallRequestSetRequestBodyString(call, "3");
         HCHttpCallPerform(nullptr, 0, call, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
@@ -81,7 +79,7 @@ public:
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", true, false);
-        HCMockAddMock(mockCall);
+        HCMockAddMock(mockCall, nullptr, nullptr, nullptr);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
@@ -148,7 +146,7 @@ public:
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", true, true);
-        HCMockAddMock(mockCall);
+        HCMockAddMock(mockCall, nullptr, nullptr, nullptr);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
@@ -271,8 +269,8 @@ public:
 
         HC_CALL_HANDLE mockCall1 = CreateMockCall("Mock1", true, true);
         HC_CALL_HANDLE mockCall2 = CreateMockCall("Mock2", true, true);
-        HCMockAddMock(mockCall1);
-        HCMockAddMock(mockCall2);
+        HCMockAddMock(mockCall1, nullptr, nullptr, nullptr);
+        HCMockAddMock(mockCall2, nullptr, nullptr, nullptr);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);

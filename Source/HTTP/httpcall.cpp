@@ -137,6 +137,7 @@ HCHttpCallPerform(
     ) HC_NOEXCEPT
 try
 {
+    // TODO: fail if previously called
     if (call == nullptr)
     {
         return HC_E_INVALIDARG;

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "stdafx.h"
 #include "httpClient\httpClient.h"
+#include "json_cpp\json.h"
 
 std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
 {
@@ -60,15 +61,10 @@ DWORD g_numActiveThreads = 0;
 
 DWORD WINAPI http_thread_proc(LPVOID lpParam)
 {
-    HANDLE hEvents[1] =
-    {
-        g_stopRequestedHandle.get()
-    };
-
     bool stop = false;
     while (!stop)
     {
-        DWORD dwResult = WaitForMultipleObjectsEx(1, hEvents, false, 20, false);
+        DWORD dwResult = WaitForSingleObject(g_stopRequestedHandle.get(), 20);
         switch (dwResult)
         {
         case WAIT_TIMEOUT: // pending ready
@@ -86,6 +82,7 @@ DWORD WINAPI http_thread_proc(LPVOID lpParam)
 
 void InitBackgroundThread()
 {
+    g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
     for (uint32_t i = 0; i < g_targetNumThreads; i++)
     {
         g_hActiveThreads[i] = CreateThread(nullptr, 0, http_thread_proc, nullptr, 0, nullptr);
@@ -169,13 +166,37 @@ int main()
 
             HCHttpCallCleanup(call);
 
-            printf_s("Got ErrorCode:%d HttpStatus:%d\r\n", errCode, statusCode);
-            printf_s("responseString:%s\r\n", responseString.c_str());
+            printf_s("HTTP call done\r\n");
+            printf_s("Network error code: %d\r\n", errCode);
+            printf_s("Http status code: %d\r\n", statusCode);
+
+            int i = 0;
+            for (auto& header : headers)
+            {
+                printf_s("Header[%d] '%s'='%s'\r\n", i, header[0].c_str(), header[1].c_str());
+                i++;
+            }
+
+            if (responseString.length() > 200)
+            {
+                std::string subResponseString = responseString.substr(0, 200);
+                printf_s("Response string:\r\n%s...\r\n", subResponseString.c_str());
+            }
+            else
+            {
+                printf_s("Response string:\r\n%s\r\n", responseString.c_str());
+            }
         });
 
     HCTaskWaitForCompleted(taskHandle, 1000*1000);
     HCTaskProcessNextCompletedTask(0);
+
+    ShutdownActiveThreads();
     HCGlobalCleanup();
+
+    std::error_code err;
+    std::wstring test = L"{\"hello\":\"hi\"}";
+    web::json::value m_jsonConfig = web::json::value::parse(test, err);
 
     return 0;
 }

@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "MainPage.xaml.h"
-#include "httpClient\httpClient.h"
+#include <httpClient\httpClient.h>
+#include <httpClient\httpProvider.h>
 
 #include <regex>
 #include <sstream>
