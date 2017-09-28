@@ -72,7 +72,7 @@ HRESULT STDMETHODCALLTYPE http_request_callback::OnResponseReceived(
     auto& headerNames = m_httpTask->get_headers_names();
     auto& headerValues = m_httpTask->get_headers_values();
     HC_ASSERT(headerNames.size() == headerValues.size());
-    for (int i = 0; i < headerNames.size(); i++)
+    for (unsigned i = 0; i < headerNames.size(); i++)
     {
         HCHttpCallResponseSetHeader(call, headerNames[i].c_str(), headerValues[i].c_str());
     }
