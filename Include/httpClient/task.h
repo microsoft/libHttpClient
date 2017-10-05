@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "types.h"
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
