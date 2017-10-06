@@ -102,7 +102,7 @@ public:
 
     DEFINE_TEST_CASE(TestGlobalInit)
     {
-        DEFINE_TEST_CASE_PROPERTIES(TestGlobalInit);
+        DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestGlobalInit);
 
         VERIFY_IS_NULL(get_http_singleton());
         HCGlobalInitialize();
@@ -123,7 +123,7 @@ public:
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
-        HCHttpCallPerform(nullptr, 0, call, nullptr, 
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 HC_RESULT errCode = HC_OK;
@@ -132,7 +132,7 @@ public:
                 uint32_t statusCode = 0;
                 HCHttpCallResponseGetStatusCode(call, &statusCode);
             });
-        HCTaskProcessNextPendingTask();
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
         HCHttpCallCleanup(call);
         HCGlobalCleanup();

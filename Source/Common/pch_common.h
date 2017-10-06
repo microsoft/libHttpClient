@@ -76,7 +76,7 @@ typedef std::chrono::steady_clock chrono_clock_t;
 #define ENABLE_ASSERTS 1
 #endif
 
-#ifndef ENABLE_ASSERTS
+#ifdef ENABLE_ASSERTS
 #define HC_ASSERT(x) assert(x);
 #else
 #define HC_ASSERT(x)

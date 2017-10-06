@@ -12,22 +12,24 @@ void http_task_queue_pending(_In_ HC_TASK* task)
     auto httpSingleton = get_http_singleton();
 
     task->state = http_task_state::pending;
-    std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
-    auto& taskPendingQueue = httpSingleton->m_taskPendingQueue;
-    taskPendingQueue.push(task);
+    {
+        std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
+        auto& taskPendingQueue = httpSingleton->get_task_pending_queue(task->taskSubsystemId);
+        taskPendingQueue.push(task);
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "Task queue pending: queueSize=%zu taskId=%llu",
-        taskPendingQueue.size(), task->id);
+        HC_TRACE_INFORMATION(HTTPCLIENT, "Task queue pending: queueSize=%zu taskId=%llu",
+            taskPendingQueue.size(), task->id);
+    }
 
     httpSingleton->set_task_pending_ready();
 }
 
-HC_TASK* http_task_get_next_pending()
+HC_TASK* http_task_get_next_pending(_In_ HC_SUBSYSTEM_ID taskSubsystemId)
 {
     auto httpSingleton = get_http_singleton();
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
-    auto& taskPendingQueue = httpSingleton->m_taskPendingQueue;
+    auto& taskPendingQueue = httpSingleton->get_task_pending_queue(taskSubsystemId);
     if (!taskPendingQueue.empty())
     {
         auto it = taskPendingQueue.front();
@@ -82,7 +84,7 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
         if (task != nullptr)
         {
             taskProcessingQueue.erase(std::remove(taskProcessingQueue.begin(), taskProcessingQueue.end(), task), taskProcessingQueue.end());
-            auto& taskCompletedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->get_completed_queue();
+            auto& taskCompletedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskSubsystemId, taskHandle->taskGroupId)->get_completed_queue();
             taskCompletedQueue.push(task);
 
             HC_TRACE_INFORMATION(HTTPCLIENT, "Task queue completed: queueSize=%zu taskId=%llu", taskCompletedQueue.size(), task->id);
@@ -96,15 +98,16 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
 #if HC_USE_HANDLES
     SetEvent(taskHandle->resultsReady.get());
 #endif
-    httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskGroupId)->set_task_completed_event();
+    httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskSubsystemId, taskHandle->taskGroupId)->set_task_completed_event();
 }
 
-HC_TASK* http_task_get_next_completed(_In_ uint64_t taskGroupId)
+HC_TASK* http_task_get_next_completed(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_ uint64_t taskGroupId)
 {
     auto httpSingleton = get_http_singleton();
 
+    // TODO: use taskSubsystemId
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
-    auto& completedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskGroupId)->get_completed_queue();
+    auto& completedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_completed_queue();
     if (!completedQueue.empty())
     {
         auto it = completedQueue.front();

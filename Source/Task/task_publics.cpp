@@ -43,17 +43,20 @@ try
 CATCH_RETURN_WITH(true)
 
 HC_API HC_RESULT HC_CALLING_CONV
-HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId) HC_NOEXCEPT
+HCTaskProcessNextCompletedTask(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId
+    ) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton();
 
-    HC_TASK* task = http_task_get_next_completed(taskGroupId);
+    HC_TASK* task = http_task_get_next_completed(taskSubsystemId, taskGroupId);
     if (task == nullptr)
         return HC_OK;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCTaskProcessNextCompletedTask: taskGroupId=%llu taskId=%llu",
-        taskGroupId, task->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCTaskProcessNextCompletedTask: taskSubsystemId=%llu taskGroupId=%llu taskId=%llu",
+        taskSubsystemId, taskGroupId, task->id);
 
     http_task_process_completed(task);
 
@@ -87,19 +90,19 @@ HCTaskGetPendingHandle()
 }
 
 HANDLE HC_CALLING_CONV
-HCTaskGetCompletedHandle(_In_ uint64_t taskGroupId)
+HCTaskGetCompletedHandle(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_ uint64_t taskGroupId)
 {
     auto httpSingleton = get_http_singleton();
-    return httpSingleton->get_task_completed_queue_for_taskgroup(taskGroupId)->get_complete_ready_handle();
+    return httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_complete_ready_handle();
 }
 #endif
 
 HC_RESULT HC_CALLING_CONV
-HCTaskProcessNextPendingTask() HC_NOEXCEPT
+HCTaskProcessNextPendingTask(_In_ HC_SUBSYSTEM_ID taskSubsystemId) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton();
-    HC_TASK* task = http_task_get_next_pending();
+    HC_TASK* task = http_task_get_next_pending(taskSubsystemId);
     if (task == nullptr)
         return HC_OK;
 
@@ -110,6 +113,7 @@ CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCTaskCreate(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId,
     _In_ HC_TASK_EXECUTE_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
@@ -134,6 +138,7 @@ try
         task->writeResultsRoutineContext = writeResultsRoutineContext;
         task->completionRoutine = completionRoutine;
         task->completionRoutineContext = completionRoutineContext;
+        task->taskSubsystemId = taskSubsystemId;
         task->taskGroupId = taskGroupId;
         task->id = httpSingleton->m_lastId++;
 

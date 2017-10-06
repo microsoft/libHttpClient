@@ -67,13 +67,16 @@ DWORD WINAPI http_thread_proc(LPVOID lpParam)
         DWORD dwResult = WaitForSingleObject(g_stopRequestedHandle.get(), 20);
         switch (dwResult)
         {
-        case WAIT_TIMEOUT: // pending ready
-            HCTaskProcessNextPendingTask();
-            break;
+            case WAIT_TIMEOUT: // pending ready
+            {
+                HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
+                HCTaskProcessNextPendingTask(taskSubsystemId);
+                break;
+            }
 
-        default:
-            stop = true;
-            break;
+            default:
+                stop = true;
+                break;
         }
     }
 
@@ -146,9 +149,10 @@ int main()
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
+    HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
     uint64_t taskGroupId = 0;
     HC_TASK_HANDLE taskHandle;
-    HCHttpCallPerform(&taskHandle, taskGroupId, call, nullptr,
+    HCHttpCallPerform(call, &taskHandle, taskSubsystemId, taskGroupId, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             const char* str;
@@ -189,7 +193,7 @@ int main()
         });
 
     HCTaskWaitForCompleted(taskHandle, 1000*1000);
-    HCTaskProcessNextCompletedTask(0);
+    HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
 
     ShutdownActiveThreads();
     HCGlobalCleanup();

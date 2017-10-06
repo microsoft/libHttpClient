@@ -129,9 +129,10 @@ CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallPerform(
-    _Out_ HC_TASK_HANDLE* taskHandle,
-    _In_ uint64_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
+    _Out_ HC_TASK_HANDLE* taskHandle,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
     _In_opt_ void* completionRoutineContext,
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     ) HC_NOEXCEPT
@@ -146,6 +147,7 @@ try
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
 
     return HCTaskCreate(
+        taskSubsystemId,
         taskGroupId,
         HttpCallPerformExecute, (void*)call,
         HttpCallPerformWriteResults, (void*)call,

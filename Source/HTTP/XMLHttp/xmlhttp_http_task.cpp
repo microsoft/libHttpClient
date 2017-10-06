@@ -129,6 +129,11 @@ void xmlhttp_http_task::perform_async(
             HCTaskSetCompleted(taskHandle);
             return;
         }
+
+        // If there were no errors so far, HCTaskSetCompleted is called later 
+        // http_request_callback::OnResponseReceived 
+        // or 
+        // http_request_callback::OnError
     }
     catch (std::bad_alloc const& e)
     {

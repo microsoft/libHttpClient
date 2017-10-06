@@ -98,6 +98,20 @@ typedef enum HC_RESULT
     HC_E_FEATURENOTPRESENT = -7,
 } HC_RESULT;
 
+typedef enum HC_SUBSYSTEM_ID
+{
+    HC_SUBSYSTEM_ID_GAME_MIN = 0, // Start of the range of subsystem IDs available to titles.
+    HC_SUBSYSTEM_ID_GAME = 0, // Primary subsystem ID used by the game
+    HC_SUBSYSTEM_ID_GAME_MAX = 127, // End of the range of subsystem IDs available to titles.
+    HC_SUBSYSTEM_ID_PLATFORM_RESERVED_MIN = 128, // Start of the range of subsystem IDs used by the system.
+    HC_SUBSYSTEM_ID_XSAPI = 128, // Subsystem ID used by XSAPI internally
+    HC_SUBSYSTEM_ID_XAL = 129, // Subsystem ID used by XAL internally
+    HC_SUBSYSTEM_ID_PLATFORM_RESERVED_MAX = 191, // End of the range of subsystem IDs used by the system.
+    HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN = 192, // Start of the range of subsystem IDs reserved for middleware.
+    HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MAX = 255 // End of the range of subsystem IDs reserved for middleware.
+} HC_SUBSYSTEM_ID;
+
+
 #ifdef __cplusplus
 #define HC_NOEXCEPT noexcept
 #else

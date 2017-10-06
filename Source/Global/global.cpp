@@ -91,11 +91,28 @@ void cleanup_http_singleton()
     // httpSingleton will be destroyed on this thread now
 }
 
-std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId)
+
+http_internal_queue<HC_TASK*>& http_singleton::get_task_pending_queue(_In_ uint64_t taskSubsystemId)
+{
+    auto it = m_taskPendingQueue.find(taskSubsystemId);
+    if (it != m_taskPendingQueue.end())
+    {
+        return it->second;
+    }
+
+    return m_taskPendingQueue[taskSubsystemId];
+}
+
+
+std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId
+    )
 {
     std::lock_guard<std::mutex> lock(m_taskCompletedQueueLock);
-    auto it = m_taskCompletedQueue.find(taskGroupId);
-    if (it != m_taskCompletedQueue.end())
+    auto& taskCompletedQueue = m_taskCompletedQueue[taskSubsystemId];
+    auto it = taskCompletedQueue.find(taskGroupId);
+    if (it != taskCompletedQueue.end())
     {
         return it->second;
     }
@@ -103,7 +120,7 @@ std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_qu
     std::shared_ptr<http_task_completed_queue> taskQueue = http_allocate_shared<http_task_completed_queue>();
     taskQueue->m_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
 
-    m_taskCompletedQueue[taskGroupId] = taskQueue;
+    taskCompletedQueue[taskGroupId] = taskQueue;
     return taskQueue;
 }
 

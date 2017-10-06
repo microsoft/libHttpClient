@@ -94,8 +94,9 @@ std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::strin
 
 void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e)
 {
+    HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
     uint32_t taskGroupId = 0;
-    HCTaskProcessNextCompletedTask(taskGroupId);
+    HCTaskProcessNextCompletedTask(taskSubsystemId, taskGroupId);
 }
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
@@ -106,13 +107,16 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         DWORD dwResult = WaitForSingleObject(g_stopHandle, 20);
         switch (dwResult)
         {
-        case WAIT_TIMEOUT: 
-            HCTaskProcessNextPendingTask();
-            break;
+            case WAIT_TIMEOUT: 
+            {
+                HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
+                HCTaskProcessNextPendingTask(taskSubsystemId);
+                break;
+            }
 
-        default:
-            stop = true;
-            break;
+            default:
+                stop = true;
+                break;
         }
     }
 
@@ -233,8 +237,9 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
+    HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
     uint32_t taskGroupId = 0;
-    HCHttpCallPerform(nullptr, taskGroupId, call, nullptr,
+    HCHttpCallPerform(call, nullptr, taskSubsystemId, taskGroupId, nullptr,
         [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             const char* str;
