@@ -244,22 +244,31 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 ///
 /// HCHttpCallPerform can only be called once.  Create new HC_CALL_HANDLE to repeat the call.
 /// </summary>
+/// <param name="call">The handle of the HTTP call</param>
 /// <param name="taskHandle">The task handle returned by the operation. If the API fails, HC_TASK_HANDLE will be 0</param>
+/// <param name="taskSubsystemId">
+/// The task subsystem ID to assign to this task.  This is the ID of the caller's subsystem.
+/// If this isn't needed or unknown, just pass in 0.
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// can each expose thier own version of ProcessNextPendingTask() and 
+/// ProcessNextCompletedTask() APIs that operate independently.
+/// </param>
 /// <param name="taskGroupId">
 /// The task group ID to assign to this task.  The ID is defined by the caller and can be any number.
-/// HCTaskProcessNextCompletedTask(taskGroupId) will only process completed tasks that have a
-/// matching taskGroupId.  This enables the caller to split the where results are
-/// returned between between a set of app threads.  If this isn't needed, just pass in 0.
+/// HCTaskProcessNextCompletedTask(taskSubsystemId, taskGroupId) will only process completed tasks that have a
+/// matching taskSubsystemId and taskGroupId.  This enables the caller to split the where results are
+/// returned between between a set of app threads and a set of subsystems.
+/// If the group ID isn't needed, just pass in 0.
 /// </param>
-/// <param name="call">The handle of the HTTP call</param>
 /// <param name="completionRoutineContext">The context to pass in to the completionRoutine callback</param>
 /// <param name="completionRoutine">A callback that's called when the HTTP call completes</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallPerform(
-    _Out_opt_ HC_TASK_HANDLE* taskHandle,
-    _In_ uint64_t taskGroupId,
     _In_ HC_CALL_HANDLE call,
+    _Out_opt_ HC_TASK_HANDLE* taskHandle,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
     _In_opt_ void* completionRoutineContext,
     _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
     ) HC_NOEXCEPT;

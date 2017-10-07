@@ -46,9 +46,9 @@ public:
         HCHttpCallCreate(&call);
 
         HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", false, false);
-        HCMockAddMock(mockCall, "1", "2", "3");
+        HCMockAddMock(mockCall, "", "", "");
 
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 HC_RESULT errCode = HC_OK;
@@ -66,8 +66,8 @@ public:
                 g_gotCall = true;
             });
 
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         HCGlobalCleanup();
     }
@@ -86,7 +86,7 @@ public:
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "3");
         g_gotCall = false;
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 HC_RESULT errCode = HC_OK;
@@ -105,15 +105,15 @@ public:
             });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "10", "20");
         HCHttpCallRequestSetRequestBodyString(call, "3");
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             HC_RESULT errCode = HC_OK;
@@ -131,8 +131,8 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -153,7 +153,7 @@ public:
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 HC_RESULT errCode = HC_OK;
@@ -172,15 +172,15 @@ public:
             });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "3");
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             HC_RESULT errCode = HC_OK;
@@ -198,8 +198,8 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -208,7 +208,7 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             HC_RESULT errCode = HC_OK;
@@ -226,8 +226,8 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -236,7 +236,7 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             HC_RESULT errCode = HC_OK;
@@ -253,8 +253,8 @@ public:
             g_gotCall = true;
         });
 
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         g_gotCall = false;
 
         HCGlobalCleanup();
@@ -277,7 +277,7 @@ public:
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
         g_gotCall = false;
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 HC_RESULT errCode = HC_OK;
@@ -296,15 +296,15 @@ public:
             });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             HC_RESULT errCode = HC_OK;
@@ -323,8 +323,8 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -332,7 +332,7 @@ public:
         HCHttpCallCreate(&call);
         HCHttpCallRequestSetUrl(call, "1", "2");
         HCHttpCallRequestSetRequestBodyString(call, "requestBody");
-        HCHttpCallPerform(nullptr, 0, call, nullptr,
+        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
         {
             HC_RESULT errCode = HC_OK;
@@ -351,8 +351,8 @@ public:
         });
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
-        HCTaskProcessNextPendingTask();
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 

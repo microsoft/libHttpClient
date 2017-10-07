@@ -73,6 +73,7 @@ public:
         uint64_t taskGroupId = 1;
         HC_TASK_HANDLE taskHandle;
         HCTaskCreate(
+            HC_SUBSYSTEM_ID_GAME, 
             taskGroupId,
             TestTaskExecute, (void*)1,
             TestTaskWriteResults, (void*)2,
@@ -91,7 +92,7 @@ public:
         g_calledTestTaskWriteResults = false;
         g_calledTestTaskCompleteRoutine = false;
 
-        HCTaskProcessNextPendingTask();
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
 
         // Verify execute called
         VERIFY_ARE_EQUAL(true, g_calledTestTaskExecute);
@@ -102,13 +103,13 @@ public:
         g_calledTestTaskCompleteRoutine = false;
 
         // Nothing should happen if we do task group 0
-        HCTaskProcessNextCompletedTask(0);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskWriteResults);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskCompleteRoutine);
 
         // Verify write & complete were called after 
-        HCTaskProcessNextCompletedTask(taskGroupId);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, taskGroupId);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
         VERIFY_ARE_EQUAL(true, g_calledTestTaskWriteResults);
         VERIFY_ARE_EQUAL(true, g_calledTestTaskCompleteRoutine);

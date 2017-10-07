@@ -62,9 +62,16 @@ typedef HC_RESULT
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </summary>
+/// <param name="taskSubsystemId">
+/// The task subsystem ID to assign to this task.  This is the ID of the caller's subsystem.
+/// If this isn't needed or unknown, just pass in HC_SUBSYSTEM_ID_GAME.
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// can each expose thier own version of ProcessNextPendingTask() and 
+/// ProcessNextCompletedTask() APIs that operate independently.
+/// </param>
 /// <param name="taskGroupId">
 /// The task group ID to assign to this task.  The ID is defined by the caller and can be any number.
-/// HCTaskProcessNextCompletedTask(taskGroupId) will only process completed tasks that have a
+/// HCTaskProcessNextCompletedTask(taskSubsystemId, taskGroupId) will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </param>
@@ -97,6 +104,7 @@ typedef HC_RESULT
 /// </param>
 HC_API HC_RESULT HC_CALLING_CONV
 HCTaskCreate(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId,
     _In_ HC_TASK_EXECUTE_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
@@ -111,8 +119,15 @@ HCTaskCreate(
 /// Calls the executionRoutine callback for the next pending task. It is recommended 
 /// the app calls HCTaskProcessNextPendingTask() in a background thread.
 /// </summary>
+/// <param name="taskSubsystemId">
+/// The task subsystem ID to assign to this task.  This is the ID of the caller's subsystem.
+/// If this isn't needed or unknown, just pass in HC_SUBSYSTEM_ID_GAME.
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// can each expose thier own version of ProcessNextPendingTask() and 
+/// ProcessNextCompletedTask() APIs that operate independently.
+/// </param>
 HC_API HC_RESULT HC_CALLING_CONV
-HCTaskProcessNextPendingTask() HC_NOEXCEPT;
+HCTaskProcessNextPendingTask(_In_ HC_SUBSYSTEM_ID taskSubsystemId) HC_NOEXCEPT;
 
 /// <summary>
 /// Calls the completionRoutine callback for the next task that is completed.  
@@ -123,13 +138,20 @@ HCTaskProcessNextPendingTask() HC_NOEXCEPT;
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </summary>
+/// <param name="taskSubsystemId">
+/// HCTaskProcessNextCompletedTask will only process completed tasks that have a
+/// matching subsystem ID. 
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// can each expose thier own version of ProcessNextPendingTask() and 
+/// ProcessNextCompletedTask() APIs that operate independently.
+/// </param>
 /// <param name="taskGroupId">
 /// HCTaskProcessNextCompletedTask will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </param>
 HC_API HC_RESULT HC_CALLING_CONV
-HCTaskProcessNextCompletedTask(_In_ uint64_t taskGroupId) HC_NOEXCEPT;
+HCTaskProcessNextCompletedTask(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_ uint64_t taskGroupId) HC_NOEXCEPT;
 
 /// <summary>
 /// Called by async task's executionRoutine when the results are completed.  This will mark the task as

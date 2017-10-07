@@ -38,12 +38,15 @@ struct http_singleton
     http_internal_map<uint64_t, HC_TASK_PTR> m_taskHandleIdMap;
 
     std::mutex m_taskLock;
-    http_internal_queue<HC_TASK*> m_taskPendingQueue;
+    http_internal_map<uint64_t, http_internal_queue<HC_TASK*>> m_taskPendingQueue;
     http_internal_vector<HC_TASK*> m_taskExecutingQueue;
+    http_internal_queue<HC_TASK*>& get_task_pending_queue(_In_ uint64_t taskSubsystemId);
 
     std::mutex m_taskCompletedQueueLock;
-    http_internal_map<uint64_t, std::shared_ptr<http_task_completed_queue>> m_taskCompletedQueue;
-    std::shared_ptr<http_task_completed_queue> get_task_completed_queue_for_taskgroup(_In_ uint64_t taskGroupId);
+    http_internal_map<HC_SUBSYSTEM_ID, http_internal_map<uint64_t, std::shared_ptr<http_task_completed_queue>>> m_taskCompletedQueue;
+    std::shared_ptr<http_task_completed_queue> get_task_completed_queue_for_taskgroup(
+        _In_ HC_SUBSYSTEM_ID taskSubsystemId, 
+        _In_ uint64_t taskGroupId);
 
     // HTTP state
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;
