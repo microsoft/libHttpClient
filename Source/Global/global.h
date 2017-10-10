@@ -33,6 +33,8 @@ struct http_singleton
     std::mutex m_singletonLock;
 
     // Task state
+    HC_TASK_EVENT_FUNC m_taskEventFunc;
+    void* m_taskEventFuncContext;
     std::atomic<std::uint64_t> m_lastId;
     std::mutex m_taskHandleIdMapLock;
     http_internal_map<uint64_t, HC_TASK_PTR> m_taskHandleIdMap;

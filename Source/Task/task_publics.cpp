@@ -6,6 +6,20 @@
 
 using namespace xbox::httpclient;
 
+HC_API HC_RESULT HC_CALLING_CONV
+HCSetTaskEventHandler(
+    _In_opt_ void* context,
+    _In_ HC_TASK_EVENT_FUNC taskEventFunc
+    ) HC_NOEXCEPT
+try
+{
+    auto httpSingleton = get_http_singleton();
+    httpSingleton->m_taskEventFunc = taskEventFunc;
+    httpSingleton->m_taskEventFuncContext = context;
+    return HC_OK;
+}
+CATCH_RETURN()
+
 bool HC_CALLING_CONV
 HCTaskIsTaskPending()
 try
@@ -77,7 +91,7 @@ try
     if (taskHandle == nullptr)
         return true; // already completed
 
-    DWORD dwResult = WaitForSingleObject(taskHandle->resultsReady.get(), timeoutInMilliseconds);
+    DWORD dwResult = WaitForSingleObject(taskHandle->eventTaskCompleted.get(), timeoutInMilliseconds);
     return (dwResult == WAIT_OBJECT_0);
 }
 CATCH_RETURN_WITH(true)

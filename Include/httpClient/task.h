@@ -14,7 +14,7 @@ extern "C" {
 // 
 
 /// <summary>
-/// The callback definition used by HCTaskCreate.
+/// The callback definition used by HCTaskCreate to execute the task.
 /// </summary>
 /// <param name="context">The context passed to this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
@@ -25,7 +25,7 @@ typedef HC_RESULT
     );
 
 /// <summary>
-/// The callback definition used by HCTaskCreate.
+/// The callback definition used by HCTaskCreate to write results.
 /// </summary>
 /// <param name="context">The context passed to this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
@@ -37,6 +37,35 @@ typedef HC_RESULT
     _In_opt_ void* completionRoutineContext
     );
 
+typedef enum HC_TASK_EVENT_TYPE
+{
+    HC_TASK_EVENT_PENDING,
+    HC_TASK_EVENT_EXECUTE_STARTED,
+    HC_TASK_EVENT_EXECUTE_COMPLETED
+} HC_TASK_EVENT_TYPE;
+
+/// <summary>
+/// The callback definition used by HCSetTaskEventHandler that's raised when a task changes state (pending, executing, completed).
+/// </summary>
+/// <param name="context">The context passed to this callback</param>
+/// <param name="taskHandle">The handle to the task</param>
+typedef HC_RESULT
+(HC_CALLING_CONV* HC_TASK_EVENT_FUNC)(
+    _In_opt_ void* context,
+    _In_ HC_TASK_EVENT_TYPE eventType,
+    _In_ HC_TASK_HANDLE taskHandle
+    );
+
+/// <summary>
+/// Sets the callback that is called when when task changes state (pending, executing, completed)
+/// </summary>
+/// <param name="context">The context passed to the event handler whenever it is called</param>
+/// <param name="taskEventFunc">The function pointer for the event handler.  Set it to nullptr to disable</param>
+HC_API HC_RESULT HC_CALLING_CONV
+HCSetTaskEventHandler(
+    _In_opt_ void* context,
+    _In_opt_ HC_TASK_EVENT_FUNC taskEventFunc
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Create a new async task by passing in 3 callbacks and their associated contexts which

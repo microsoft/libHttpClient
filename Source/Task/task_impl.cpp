@@ -21,6 +21,13 @@ void http_task_queue_pending(_In_ HC_TASK* task)
             taskPendingQueue.size(), task->id);
     }
 
+    auto taskEventContext = httpSingleton->m_taskEventFuncContext;
+    auto taskEvent = httpSingleton->m_taskEventFunc;
+    if (taskEvent != nullptr)
+    {
+        taskEvent(taskEventContext, HC_TASK_EVENT_PENDING, task->id);
+    }
+
     httpSingleton->set_task_pending_ready();
 }
 
@@ -53,10 +60,22 @@ void http_task_process_pending(_In_ HC_TASK* task)
             taskExecutingQueue.size(), task->id);
     }
 
+    auto taskEventContext = httpSingleton->m_taskEventFuncContext;
+    auto taskEvent = httpSingleton->m_taskEventFunc;
+    if (taskEvent != nullptr)
+    {
+        taskEvent(taskEventContext, HC_TASK_EVENT_EXECUTE_STARTED, task->id);
+    }
+
     task->executionRoutine(
         task->executionRoutineContext,
         task->id
         );
+
+    if (taskEvent != nullptr)
+    {
+        taskEvent(taskEventContext, HC_TASK_EVENT_EXECUTE_COMPLETED, task->id);
+    }
 }
 
 void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
@@ -96,8 +115,10 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
     }
 
 #if HC_USE_HANDLES
-    SetEvent(taskHandle->resultsReady.get());
+    SetEvent(taskHandle->eventTaskCompleted.get());
 #endif
+    //if(httpSingleton-> )
+
     httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskSubsystemId, taskHandle->taskGroupId)->set_task_completed_event();
 }
 
