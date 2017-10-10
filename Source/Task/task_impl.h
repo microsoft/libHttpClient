@@ -27,7 +27,7 @@ struct HC_TASK
         id(0)
     {
 #if HC_USE_HANDLES
-        resultsReady.set(CreateEvent(NULL, FALSE, FALSE, NULL));
+        eventTaskCompleted.set(CreateEvent(NULL, FALSE, FALSE, NULL));
 #endif
     }
 
@@ -43,7 +43,7 @@ struct HC_TASK
     uint64_t id;
 
 #if HC_USE_HANDLES
-    win32_handle resultsReady;
+    win32_handle eventTaskCompleted;
 #endif
 };
 

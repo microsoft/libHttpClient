@@ -26,6 +26,7 @@ http_singleton::http_singleton()
     m_lastMatchingMock = nullptr;
     m_retryAllowed = true;
     m_timeoutInSeconds = 0;
+    m_taskEventFunc = nullptr;
     m_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
 }
 
