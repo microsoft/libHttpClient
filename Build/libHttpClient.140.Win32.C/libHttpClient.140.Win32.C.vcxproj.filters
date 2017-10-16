@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
+      <Filter>C++ Source\Common\Win</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.cpp">
+      <Filter>C++ Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp">
+      <Filter>C++ Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
+      <Filter>C++ Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_buffer.cpp">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.cpp">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_response_stream.cpp">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.cpp">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.cpp">
+      <Filter>C++ Source\Mock</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp">
+      <Filter>C++ Source\Mock</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.cpp">
+      <Filter>C++ Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp">
+      <Filter>C++ Source\Task</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\task.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
+      <Filter>C++ Source\Common\Win</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.h">
+      <Filter>C++ Source\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h">
+      <Filter>C++ Source\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_buffer.h">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.h">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_response_stream.h">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.h">
+      <Filter>C++ Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h">
+      <Filter>C++ Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.h">
+      <Filter>C++ Source\Mock</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="C++ Public Includes">
+      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source">
+      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Common">
+      <UniqueIdentifier>{6D290126-3831-3A04-903B-F2ADD104D81C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Common\Win">
+      <UniqueIdentifier>{E705B256-E422-3FF4-95FA-7E24B8A5474F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Global">
+      <UniqueIdentifier>{B5E18BF5-6C51-323C-96A0-81422D9D6069}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP">
+      <UniqueIdentifier>{6DAD9E7F-080C-3264-920E-77D0AFFE8CC9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\XMLHttp">
+      <UniqueIdentifier>{9E2AE52A-298B-33E8-90DA-A2C8709C836F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Logger">
+      <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Mock">
+      <UniqueIdentifier>{ECB59FD8-67C4-354A-90B2-DFC893C0F2E5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Task">
+      <UniqueIdentifier>{09ED63FC-76E4-368A-B7E4-40A1D70ABD31}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
