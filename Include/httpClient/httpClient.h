@@ -71,7 +71,7 @@ typedef void
 /// pointer to restore the default.</param>
 /// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null 
 /// pointer to restore the default.</param>
-HC_API void HC_CALLING_CONV
+HC_API HC_RESULT HC_CALLING_CONV
 HCMemSetFunctions(
     _In_opt_ HC_MEM_ALLOC_FUNC memAllocFunc,
     _In_opt_ HC_MEM_FREE_FUNC memFreeFunc

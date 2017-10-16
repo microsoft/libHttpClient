@@ -53,7 +53,6 @@ std::shared_ptr<http_singleton> get_http_singleton()
 
 HC_RESULT init_http_singleton()
 {
-    // TODO still need to figure out the best way to support multiple clients
     HC_RESULT hr = HC_OK;
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
