@@ -61,10 +61,9 @@ Big things that still need to be done in rough priority order:
 * [Done] Prototype XSAPI on top of libHttpClient HTTP stack
 * [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin/tree/libHttpClient
 * [Done] Flush out XML doc comments in header 
-* Win32 project & implementation
-* Task Chaining
-* Standalone C++ JSON parser
-* Prototype XSAPI on top of libHttpClient async task stack
+* [Done] Win32 project & implementation
+* [Done] Standalone C++ JSON parser
+* [Done] Prototype XSAPI on top of libHttpClient async task stack
 * Retry logic
 * Throttling logic
 * XDK project & XDK implementation calling XDK platform HTTP APIs
