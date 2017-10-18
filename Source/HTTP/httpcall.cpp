@@ -138,13 +138,13 @@ HCHttpCallPerform(
     ) HC_NOEXCEPT
 try
 {
-    // TODO: fail if previously called
     if (call == nullptr)
     {
         return HC_E_INVALIDARG;
     }
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
+    call->performCalled = true;
 
     return HCTaskCreate(
         taskSubsystemId,

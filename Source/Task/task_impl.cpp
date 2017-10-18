@@ -126,7 +126,6 @@ HC_TASK* http_task_get_next_completed(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_
 {
     auto httpSingleton = get_http_singleton();
 
-    // TODO: use taskSubsystemId
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
     auto& completedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_completed_queue();
     if (!completedQueue.empty())

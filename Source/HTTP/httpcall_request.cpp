@@ -18,6 +18,7 @@ try
     {
         return HC_E_INVALIDARG;
     }
+    RETURN_IF_PERFORM_CALLED(call);
 
     auto httpSingleton = get_http_singleton();
 
@@ -63,6 +64,7 @@ try
     {
         return HC_E_INVALIDARG;
     }
+    RETURN_IF_PERFORM_CALLED(call);
 
     auto httpSingleton = get_http_singleton();
     call->requestBodyString = requestBodyString;
@@ -103,6 +105,7 @@ try
     {
         return HC_E_INVALIDARG;
     }
+    RETURN_IF_PERFORM_CALLED(call);
 
     call->requestHeaders[headerName] = headerValue;
 
@@ -202,6 +205,7 @@ try
     }
     else
     {
+        RETURN_IF_PERFORM_CALLED(call);
         call->retryAllowed = retryAllowed;
 
         HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",
@@ -236,7 +240,6 @@ try
 }
 CATCH_RETURN()
 
-// TODO: verify only can happen prior to perform for this and other APIs
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetTimeout(
     _In_opt_ HC_CALL_HANDLE call,
@@ -251,6 +254,7 @@ try
     }
     else
     {
+        RETURN_IF_PERFORM_CALLED(call);
         call->timeoutInSeconds = timeoutInSeconds;
     }
 
@@ -300,6 +304,7 @@ try
     }
     else
     {
+        RETURN_IF_PERFORM_CALLED(call);
         call->timeoutWindowInSeconds = timeoutWindowInSeconds;
     }
 
@@ -347,6 +352,7 @@ try
     }
     else
     {
+        RETURN_IF_PERFORM_CALLED(call);
         call->retryDelayInSeconds = retryDelayInSeconds;
     }
     return HC_OK;
@@ -393,6 +399,7 @@ try
     }
     else
     {
+        RETURN_IF_PERFORM_CALLED(call);
         call->enableAssertsForThrottling = enableAssertsForThrottling;
     }
     return HC_OK;

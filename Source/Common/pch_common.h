@@ -107,6 +107,7 @@ HC_DECLARE_TRACE_AREA(HTTPCLIENT);
     catch (std::exception const& e) { ::xbox::httpclient::detail::StdExceptionToResult(e, file, line); return errCode; } \
     catch (...) { ::xbox::httpclient::detail::UnknownExceptionToResult(file, line); return errCode; }
 
+#define RETURN_IF_PERFORM_CALLED(call) if (call->performCalled) return HC_E_PERFORMALREADYCALLED;
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
 
