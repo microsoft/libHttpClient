@@ -194,7 +194,6 @@ try
 }
 CATCH_RETURN()
 
-// TODO: verify header can be empty string
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseSetHeader(
     _In_ HC_CALL_HANDLE call,

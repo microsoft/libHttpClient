@@ -23,7 +23,8 @@ struct HC_CALL
         timeoutInSeconds(0),
         timeoutWindowInSeconds(0),
         retryDelayInSeconds(0),
-        enableAssertsForThrottling(false)
+        enableAssertsForThrottling(false),
+        performCalled(false)
     {
     }
 
@@ -45,6 +46,7 @@ struct HC_CALL
     uint32_t timeoutWindowInSeconds;
     uint32_t retryDelayInSeconds;
     bool enableAssertsForThrottling;
+    bool performCalled;
 };
 
 void Internal_HCHttpCallPerform(
