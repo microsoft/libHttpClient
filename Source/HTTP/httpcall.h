@@ -29,7 +29,7 @@ struct HC_CALL
 
     http_internal_string method;
     http_internal_string url;
-    http_internal_string requestBodyString;
+    http_internal_vector<uint8_t> requestBodyBytes;
     http_internal_map<http_internal_string, http_internal_string> requestHeaders;
 
     http_internal_string responseString;

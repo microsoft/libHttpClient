@@ -20,7 +20,8 @@ HCMockAddMock(
     _In_ HC_MOCK_CALL_HANDLE call,
     _In_opt_z_ PCSTR method,
     _In_opt_z_ PCSTR url,
-    _In_opt_z_ PCSTR requestBodyString
+    _In_reads_bytes_opt_(requestBodySize) const PBYTE requestBodyBytes,
+    _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT
 try 
 {
@@ -40,9 +41,9 @@ try
         }
     }
 
-    if (requestBodyString)
+    if (requestBodyBytes)
     {
-        HC_RESULT hr = HCHttpCallRequestSetRequestBodyString(call, requestBodyString);
+        HC_RESULT hr = HCHttpCallRequestSetRequestBodyBytes(call, requestBodyBytes, requestBodySize);
         if (hr != HC_OK)
         {
             return hr;

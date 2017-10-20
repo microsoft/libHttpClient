@@ -17,13 +17,13 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     {
         if (originalCall->url == mockCall->url)
         {
-            if (mockCall->requestBodyString.empty())
+            if (mockCall->requestBodyBytes.empty())
             {
                 return true;
             }
             else
             {
-                if (originalCall->requestBodyString == mockCall->requestBodyString)
+                if (originalCall->requestBodyBytes == mockCall->requestBodyBytes)
                 {
                     return true;
                 }
