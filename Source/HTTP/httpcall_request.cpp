@@ -77,12 +77,57 @@ try
 CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestSetRequestBodyString(
+    _In_ HC_CALL_HANDLE call,
+    _In_z_ PCSTR requestBodyString
+) HC_NOEXCEPT
+{
+    if (requestBodyString == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    return HCHttpCallRequestSetRequestBodyBytes(
+        call,
+        reinterpret_cast<uint8_t const*>(requestBodyString),
+        static_cast<uint32_t>(strlen(requestBodyString))
+    );
+}
+
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRequestBodyBytes(
     _In_ HC_CALL_HANDLE call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
     ) HC_NOEXCEPT
 try 
+{
+    if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    *requestBodySize = static_cast<uint32_t>(call->requestBodyBytes.size());
+    if (*requestBodySize == 0)
+    {
+        *requestBodyBytes = nullptr;
+    }
+    else
+    {
+        *requestBodyBytes = call->requestBodyBytes.data();
+    }
+
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestGetRequestBodyString(
+    _In_ HC_CALL_HANDLE call,
+    _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
+    _Out_ uint32_t* requestBodySize
+) HC_NOEXCEPT
+try
 {
     if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == nullptr)
     {
