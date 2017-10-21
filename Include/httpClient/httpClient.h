@@ -324,7 +324,7 @@ HCHttpCallRequestSetRequestBodyBytes(
 /// This must be called prior to calling HCHttpCallPerform.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="requestBodyBytes">The request body string of the HTTP call.</param>
+/// <param name="requestBodyString">The request body string of the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetRequestBodyString(
