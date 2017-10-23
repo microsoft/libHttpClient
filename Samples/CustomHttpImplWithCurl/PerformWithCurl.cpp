@@ -36,6 +36,24 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
     return realsize;
 }
 
+static size_t
+ReadMemoryCallback(char* buffer, size_t size, size_t nitems, void* instream)
+{
+    size_t realsize = size * nitems;
+    MemoryStruct* mem = static_cast<MemoryStruct*>(instream);
+
+    size_t toCopy = min(realsize, mem->size);
+
+    memcpy(buffer, mem->memory, toCopy);
+
+    if (toCopy <= mem->size)
+    {
+        mem->memory += toCopy;
+    }
+
+    return toCopy;
+}
+
 std::string to_utf8string(const std::wstring &value)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> conversion;
@@ -55,10 +73,11 @@ void HC_CALLING_CONV PerformCallWithCurl(
 {
     const char* url = nullptr;
     const char* method = nullptr;
-    const char* requestBody = nullptr;
+    const uint8_t* requestBody = nullptr;
+    uint32_t requestBodySize = 0;
     const char* userAgent = nullptr;
     HCHttpCallRequestGetUrl(call, &method, &url);
-    HCHttpCallRequestGetRequestBodyString(call, &requestBody);
+    HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
     HCHttpCallRequestGetHeader(call, "User-Agent", &userAgent);
     // TODO: get/set headers for Curl to use
 
@@ -67,13 +86,19 @@ void HC_CALLING_CONV PerformCallWithCurl(
     CURLcode res;
 
     // from https://curl.haxx.se/libcurl/c/postinmemory.html
-    struct MemoryStruct chunk;
+    struct MemoryStruct chunk = {};
     chunk.memory = (char*)malloc(1);  /* will be grown as needed by realloc above */
     chunk.size = 0;    /* no data at this point */
 
+    struct MemoryStruct requestBodyChunk = {};
+    chunk.memory = const_cast<char*>(reinterpret_cast<char const*>(requestBody));
+    chunk.size = requestBodySize;
+
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &chunk);
+    curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadMemoryCallback);
+    curl_easy_setopt(curl, CURLOPT_READDATA, &requestBodyChunk);
 
     res = curl_easy_perform(curl);
     HC_RESULT errCode = HC_E_FAIL;

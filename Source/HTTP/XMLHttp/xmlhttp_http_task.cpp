@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
+#include <Shlwapi.h>
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
 #include "http_request_callback.h"
 #include "http_response_stream.h"
-
 
 xmlhttp_http_task::xmlhttp_http_task(
     _In_ HC_CALL_HANDLE call,
@@ -37,10 +37,11 @@ void xmlhttp_http_task::perform_async(
         http_internal_string headerValue;
         const char* url = nullptr;
         const char* method = nullptr;
-        const char* requestBody = nullptr;
+        const BYTE* requestBody = nullptr;
+        uint32_t requestBodyBytes = 0;
         const char* userAgent = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
-        HCHttpCallRequestGetRequestBodyString(call, &requestBody);
+        HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodyBytes);
 
         uint32_t numHeaders = 0;
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
@@ -120,7 +121,21 @@ void xmlhttp_http_task::perform_async(
             return;
         }
 
-        hr = m_hRequest->Send(nullptr, 0);
+        if (requestBodyBytes > 0 && requestBody != nullptr)
+        {
+            m_hRequestBodyStream.Attach(SHCreateMemStream(requestBody, requestBodyBytes));
+            if (m_hRequestBodyStream == nullptr)
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "[%d] SHCreateMemStream failed in xmlhttp_http_task.",
+                    HC_E_OUTOFMEMORY);
+
+                HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, HC_E_OUTOFMEMORY);
+                HCTaskSetCompleted(taskHandle);
+                return;
+            }
+        }
+
+        hr = m_hRequest->Send(m_hRequestBodyStream.Get(), requestBodyBytes);
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);

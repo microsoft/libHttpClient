@@ -34,8 +34,8 @@ HCMockCallCreate(
 /// 
 /// By default, the mock response will be returned for all HTTP calls.
 /// If you want the mock to only apply to a specific URL, pass in a URL. 
-/// If you want the mock to only apply to a specific URL & request string, 
-/// pass in a URL and a string body.
+/// If you want the mock to only apply to a specific URL & request body, 
+/// pass in a URL and a body.
 ///
 /// Once the HC_MOCK_CALL_HANDLE is configured as desired, add the mock to the system by 
 /// calling HCMockAddMock(). 
@@ -54,9 +54,12 @@ HCMockCallCreate(
 /// <param name="url">
 /// If you want the mock to only apply to a specific URL, pass in a method and URL. 
 /// </param>
-/// <param name="requestBodyString">
+/// <param name="requestBodyBytes">
 /// If you want the mock to only apply to a specific URL & request string, 
 /// pass in a method, URL and a string body.
+/// </param>
+/// <param name="requestBodySize">
+/// The size of requestBodyBytes in bytes.
 /// </param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
@@ -64,7 +67,8 @@ HCMockAddMock(
     _In_ HC_MOCK_CALL_HANDLE call,
     _In_opt_z_ PCSTR method,
     _In_opt_z_ PCSTR url,
-    _In_opt_z_ PCSTR requestBodyString
+    _In_reads_bytes_opt_(requestBodySize) const PBYTE requestBodyBytes,
+    _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT;
 
 /// <summary>

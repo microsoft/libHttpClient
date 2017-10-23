@@ -213,8 +213,10 @@ public:
         VERIFY_ARE_EQUAL_STR("2", t2);
 
         HCHttpCallRequestSetRequestBodyString(call, "4");
-        HCHttpCallRequestGetRequestBodyString(call, &t1);
+        uint32_t s1 = 0;
+        HCHttpCallRequestGetRequestBodyBytes(call, &t1, &s1);
         VERIFY_ARE_EQUAL_STR("4", t1);
+        VERIFY_ARE_EQUAL(strlen("4"), s1);
 
         HCHttpCallRequestSetRetryAllowed(call, true);
         bool retry = false;

@@ -3,6 +3,9 @@
 
 #include "pch.h"
 #if HC_UWP_API
+#include <robuffer.h>
+#include <wrl.h>
+
 #include "../httpcall.h"
 #include "win/utils_win.h"
 
@@ -54,10 +57,11 @@ void uwp_http_task::perform_async(
     {
         const char* url = nullptr;
         const char* method = nullptr;
-        const char* requestBody = nullptr;
+        const uint8_t* requestBody = nullptr;
+        uint32_t requestBodySize = 0;
         const char* userAgent = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
-        HCHttpCallRequestGetRequestBodyString(call, &requestBody);
+        HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
 
         uint32_t numHeaders = 0;
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
@@ -91,9 +95,20 @@ void uwp_http_task::perform_async(
 
         if (requestBody != nullptr)
         {
-            http_internal_wstring wRequestBody = utf16_from_utf8(requestBody);
-            requestMsg->Content = ref new HttpStringContent(ref new Platform::String(wRequestBody.c_str()
-            ));
+            // create an IBuffer
+            auto buffer = ref new Windows::Storage::Streams::Buffer(requestBodySize);
+            buffer->Length = requestBodySize; // set the length
+
+            // Get hold of the IBufferByteAccess interface that actually lets us see the data
+            Microsoft::WRL::ComPtr<Windows::Storage::Streams::IBufferByteAccess> bufferByteAccess;
+            reinterpret_cast<IInspectable*>(buffer)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+
+            // Get pointer to the data and copy
+            uint8_t* bufferMemory = nullptr;
+            bufferByteAccess->Buffer(&bufferMemory);
+            memcpy(bufferMemory, requestBody, requestBodySize);
+
+            requestMsg->Content = ref new HttpBufferContent(buffer);
             requestMsg->Content->Headers->ContentType = Windows::Web::Http::Headers::HttpMediaTypeHeaderValue::Parse(L"application/json; charset=utf-8");
         }
 
