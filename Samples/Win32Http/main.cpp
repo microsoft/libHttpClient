@@ -121,7 +121,7 @@ int main()
 {
     std::string method = "GET";
     std::string url = "http://www.bing.com";
-    std::string requestBody = "";
+    std::string requestBody = "{\"test\":\"value\"}";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
     std::vector< std::string > header;
