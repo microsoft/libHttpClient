@@ -213,10 +213,17 @@ public:
         VERIFY_ARE_EQUAL_STR("2", t2);
 
         HCHttpCallRequestSetRequestBodyString(call, "4");
-        uint32_t s1 = 0;
-        HCHttpCallRequestGetRequestBodyBytes(call, &t1, &s1);
-        VERIFY_ARE_EQUAL_STR("4", t1);
-        VERIFY_ARE_EQUAL(strlen("4"), s1);
+        const BYTE* s1 = 0;
+        uint32_t bodySize = 0;
+        const CHAR* t3 = nullptr;
+        HCHttpCallRequestGetRequestBodyString(call, &t3);
+        VERIFY_ARE_EQUAL_STR("4", t3);
+
+        HCHttpCallRequestGetRequestBodyBytes(call, &s1, &bodySize);
+        VERIFY_ARE_EQUAL(bodySize, 1);
+        VERIFY_ARE_EQUAL(s1[0], '4');
+        std::string s2( reinterpret_cast<char const*>(s1), bodySize);
+        VERIFY_ARE_EQUAL_STR("4", s2.c_str());
 
         HCHttpCallRequestSetRetryAllowed(call, true);
         bool retry = false;

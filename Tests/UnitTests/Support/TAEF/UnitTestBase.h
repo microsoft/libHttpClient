@@ -97,13 +97,13 @@ inline void VERIFY_ARE_EQUAL_STR_HELPER(std::string expected, std::string actual
 {
     if (expected != actual)
     {
-        WEX::Logging::Log::Error(FormatString(L"EXPECTED: %s = \"%s\"", pszParamName, expected.c_str()).c_str());
-        WEX::Logging::Log::Error(FormatString(L"ACTUAL: %s = \"%s\"", pszParamName, actual.c_str()).c_str());
+        WEX::Logging::Log::Error(FormatString(L"EXPECTED: %s = \"%S\"", pszParamName, expected.c_str()).c_str());
+        WEX::Logging::Log::Error(FormatString(L"ACTUAL: %s = \"%S\"", pszParamName, actual.c_str()).c_str());
         WEX::TestExecution::Private::MacroVerify::IsTrue(false, L"false", errorInfo, nullptr);
     }
     else
     {
-        WEX::Logging::Log::Comment(FormatString(L"Verify: AreEqual(%s,\"%s\")", pszParamName, expected.c_str()).c_str());
+        WEX::Logging::Log::Comment(FormatString(L"Verify: AreEqual(%S,\"%S\")", pszParamName, expected.c_str()).c_str());
     }
 }
 
