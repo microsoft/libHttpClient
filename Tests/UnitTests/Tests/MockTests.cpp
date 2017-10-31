@@ -46,7 +46,7 @@ public:
         HCHttpCallCreate(&call);
 
         HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", false, false);
-        HCMockAddMock(mockCall, "", "", "");
+        HCMockAddMock(mockCall, "", "", nullptr, 0);
 
         HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
@@ -79,7 +79,7 @@ public:
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", true, false);
-        HCMockAddMock(mockCall, nullptr, nullptr, nullptr);
+        HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
@@ -146,7 +146,7 @@ public:
         HCGlobalInitialize();
 
         HC_CALL_HANDLE mockCall = CreateMockCall("Mock1", true, true);
-        HCMockAddMock(mockCall, nullptr, nullptr, nullptr);
+        HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
@@ -269,8 +269,8 @@ public:
 
         HC_CALL_HANDLE mockCall1 = CreateMockCall("Mock1", true, true);
         HC_CALL_HANDLE mockCall2 = CreateMockCall("Mock2", true, true);
-        HCMockAddMock(mockCall1, nullptr, nullptr, nullptr);
-        HCMockAddMock(mockCall2, nullptr, nullptr, nullptr);
+        HCMockAddMock(mockCall1, nullptr, nullptr, nullptr, 0);
+        HCMockAddMock(mockCall2, nullptr, nullptr, nullptr, 0);
 
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);

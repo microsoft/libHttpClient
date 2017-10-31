@@ -69,6 +69,7 @@ try
 
     auto httpSingleton = get_http_singleton();
     call->requestBodyBytes.assign(requestBodyBytes, requestBodyBytes + requestBodySize);
+    call->requestBodyString.clear();
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRequestBodyBytes [ID %llu]: requestBodySize=%lu",
         call->id, requestBodySize);
@@ -93,6 +94,7 @@ HCHttpCallRequestSetRequestBodyString(
         static_cast<uint32_t>(strlen(requestBodyString))
     );
 }
+
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRequestBodyBytes(
@@ -124,30 +126,23 @@ CATCH_RETURN()
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRequestBodyString(
     _In_ HC_CALL_HANDLE call,
-    _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
-    _Out_ uint32_t* requestBodySize
+    _Outptr_ PCSTR* requestBody
 ) HC_NOEXCEPT
 try
 {
-    if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == nullptr)
+    if (call == nullptr || requestBody == nullptr)
     {
         return HC_E_INVALIDARG;
     }
 
-    *requestBodySize = static_cast<uint32_t>(call->requestBodyBytes.size());
-    if (*requestBodySize == 0)
+    if (call->requestBodyString.empty())
     {
-        *requestBodyBytes = nullptr;
+        call->requestBodyString = http_internal_string(reinterpret_cast<char const*>(call->requestBodyBytes.data()), call->requestBodyBytes.size());
     }
-    else
-    {
-        *requestBodyBytes = call->requestBodyBytes.data();
-    }
-
+    *requestBody = call->requestBodyString.c_str();
     return HC_OK;
 }
 CATCH_RETURN()
-
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetHeader(

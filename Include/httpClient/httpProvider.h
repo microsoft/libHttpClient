@@ -82,6 +82,18 @@ HCHttpCallRequestGetRequestBodyBytes(
     ) HC_NOEXCEPT;
 
 /// <summary>
+/// Get the request body bytes of the HTTP call
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="requestBody">The request body of the HTTP call</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestGetRequestBodyString(
+    _In_ HC_CALL_HANDLE call,
+    _Outptr_ PCSTR* requestBody
+    ) HC_NOEXCEPT;
+
+/// <summary>
 /// Get a request header for the HTTP call for a given header name
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
