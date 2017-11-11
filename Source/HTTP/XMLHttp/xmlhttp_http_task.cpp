@@ -187,16 +187,17 @@ uint32_t xmlhttp_http_task::get_status_code()
 
 http_internal_vector<http_internal_string> xmlhttp_http_task::split(
     _In_ const http_internal_string& s, 
-    _In_ char delim)
+    _In_z_ const char* delim)
 {
     http_internal_vector<http_internal_string> v;
     size_t i = 0;
+    size_t delimLen = strlen(delim);
     auto pos = s.find(delim);
     while (pos != std::string::npos) 
     {
         v.push_back(s.substr(i, pos - i));
-        i = ++pos;
-        pos = s.find(delim, pos);
+        i = pos + delimLen;
+        pos = s.find(delim, i);
     }
     v.push_back(s.substr(i, s.length()));
 
@@ -206,28 +207,30 @@ http_internal_vector<http_internal_string> xmlhttp_http_task::split(
 void xmlhttp_http_task::set_headers(_In_ WCHAR* allResponseHeaders)
 {
     auto allHeaders = utf8_from_utf16(allResponseHeaders);
-    auto& splitHeaders = split(allHeaders, '\n');
+    auto& splitHeaders = split(allHeaders, "\r\n");
     for (auto& header : splitHeaders)
     {
-        auto& headerNameValue = split(header, ':');
-        if (headerNameValue.size() == 2)
+        auto colonPos = header.find(':');
+        if (colonPos == std::string::npos || colonPos == 0)
         {
-            m_headerNames.push_back(headerNameValue[0]);
+            // Invalid header found
+            continue;
+        }
 
-            if (headerNameValue[1].length() > 0 &&
-                headerNameValue[1][0] == ' ')
-            {
-                headerNameValue[1].erase(0, 1); // trim the space
-            }
-
-            auto index = headerNameValue[1].find_last_of('\r');
-            if (index != std::string::npos)
-            {
-                headerNameValue[1].erase(index, index + 1);
-            }
-            m_headerValues.push_back(headerNameValue[1]);
+        m_headerNames.push_back(header.substr(0, colonPos));
+        size_t valueStartPos = colonPos + 1; // skip the colon
+        valueStartPos = header.find_first_not_of(" \t", valueStartPos); // skip all leading optional whitespace
+        if (valueStartPos != std::string::npos)
+        {
+            size_t valueEndPos = header.find_last_not_of(" \t");
+            m_headerValues.push_back(header.substr(valueStartPos, valueEndPos - valueStartPos + 1));
+        }
+        else
+        {
+            m_headerValues.push_back("");
         }
     }
+
     HC_ASSERT(m_headerNames.size() == m_headerValues.size());
 }
 

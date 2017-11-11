@@ -28,7 +28,7 @@ public:
     uint32_t get_status_code();
     http_internal_vector<http_internal_string> split(
         _In_ const http_internal_string& s,
-        _In_ char delim);
+        _In_z_ const char* delim);
     void set_headers(_In_ WCHAR* allResponseHeaders);
     const http_internal_vector<http_internal_string>& get_headers_names();
     const http_internal_vector<http_internal_string>& get_headers_values();
