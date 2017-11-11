@@ -211,7 +211,7 @@ void xmlhttp_http_task::set_headers(_In_ WCHAR* allResponseHeaders)
     for (auto& header : splitHeaders)
     {
         auto colonPos = header.find(':');
-        if (colonPos == std::string::npos)
+        if (colonPos == std::string::npos || colonPos == 0)
         {
             // Invalid header found
             continue;
