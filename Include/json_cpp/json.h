@@ -21,6 +21,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
+#include <mutex>
 #include "details/asyncrt_utils.h"
 
 namespace web
