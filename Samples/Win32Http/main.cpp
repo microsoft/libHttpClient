@@ -54,6 +54,10 @@ private:
 };
 
 win32_handle g_stopRequestedHandle;
+win32_handle g_pendingReadyHandle;
+win32_handle g_completeReadyHandle;
+win32_handle g_exampleTaskDone;
+
 DWORD g_targetNumThreads = 2;
 HANDLE g_hActiveThreads[10] = { 0 };
 DWORD g_defaultIdealProcessor = 0;
@@ -61,18 +65,26 @@ DWORD g_numActiveThreads = 0;
 
 DWORD WINAPI http_thread_proc(LPVOID lpParam)
 {
+    HANDLE hEvents[3] =
+    {
+        g_pendingReadyHandle.get(),
+        g_completeReadyHandle.get(),
+        g_stopRequestedHandle.get()
+    };
+
     bool stop = false;
     while (!stop)
     {
-        DWORD dwResult = WaitForSingleObject(g_stopRequestedHandle.get(), 20);
+        DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
         switch (dwResult)
         {
-            case WAIT_TIMEOUT: // pending ready
-            {
-                HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
-                HCTaskProcessNextPendingTask(taskSubsystemId);
+            case WAIT_OBJECT_0: // pending 
+                HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
                 break;
-            }
+
+            case WAIT_OBJECT_0 + 1: // completed 
+                HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+                break;
 
             default:
                 stop = true;
@@ -83,9 +95,43 @@ DWORD WINAPI http_thread_proc(LPVOID lpParam)
     return 0;
 }
 
+HC_RESULT libhttpclient_event_handler(
+    _In_opt_ void* context,
+    _In_ HC_TASK_EVENT_TYPE eventType,
+    _In_ HC_TASK_HANDLE taskHandle
+    )
+{
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(taskHandle);
+
+    uint64_t t;
+    switch (eventType)
+    {
+    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_PENDING:
+        t = HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME);
+        SetEvent(g_pendingReadyHandle.get());
+        break;
+
+    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_STARTED:
+        t = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
+        break;
+
+    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_COMPLETED:
+        t = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
+        SetEvent(g_completeReadyHandle.get());
+        break;
+    }
+
+    return HC_OK;
+}
+
 void InitBackgroundThread()
 {
     g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
+    g_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_exampleTaskDone.set(CreateEvent(nullptr, false, false, nullptr));
+
     for (uint32_t i = 0; i < g_targetNumThreads; i++)
     {
         g_hActiveThreads[i] = CreateThread(nullptr, 0, http_thread_proc, nullptr, 0, nullptr);
@@ -132,6 +178,14 @@ int main()
     headers.push_back(header);
 
     HCGlobalInitialize();
+
+    HC_TASK_EVENT_HANDLE eventHandle;
+    HCAddTaskEventHandler(
+        HC_SUBSYSTEM_ID_GAME,
+        nullptr,
+        libhttpclient_event_handler,
+        &eventHandle
+        );
 
     InitBackgroundThread();
 
@@ -190,10 +244,12 @@ int main()
             {
                 printf_s("Response string:\r\n%s\r\n", responseString.c_str());
             }
+
+            SetEvent(g_exampleTaskDone.get());
         });
 
     HCTaskWaitForCompleted(taskHandle, 1000*1000);
-    HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+    WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 
     ShutdownActiveThreads();
     HCGlobalCleanup();

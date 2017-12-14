@@ -20,6 +20,8 @@ xmlhttp_http_task::xmlhttp_http_task(
 
 xmlhttp_http_task::~xmlhttp_http_task()
 {
+    m_hRequest = nullptr;
+    m_hRequestBodyStream = nullptr;
     if (SUCCEEDED(m_hrCoInit))
     {
         CoUninitialize();
@@ -275,8 +277,7 @@ void Internal_HCHttpCallPerform(
 )
 {
     std::shared_ptr<xmlhttp_http_task> httpTask = http_allocate_shared<xmlhttp_http_task>(call, taskHandle);
-    call->task = std::dynamic_pointer_cast<hc_task>(httpTask);
-
+    call->task = httpTask;
     httpTask->perform_async(call, taskHandle);
 }
 

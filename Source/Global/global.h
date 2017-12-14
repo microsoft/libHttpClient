@@ -25,6 +25,13 @@ public:
     http_internal_queue<HC_TASK*> m_completedQueue;
 };
 
+struct HC_TASK_EVENT_FUNC_NODE
+{
+    HC_TASK_EVENT_FUNC taskEventFunc;
+    void* taskEventFuncContext;
+    HC_SUBSYSTEM_ID taskSubsystemId;
+};
+
 struct http_singleton
 {
     http_singleton();
@@ -33,8 +40,8 @@ struct http_singleton
     std::mutex m_singletonLock;
 
     // Task state
-    HC_TASK_EVENT_FUNC m_taskEventFunc;
-    void* m_taskEventFuncContext;
+    std::mutex m_taskEventListLock;
+    std::map<HC_TASK_EVENT_HANDLE, HC_TASK_EVENT_FUNC_NODE> m_taskEventFuncList;
     std::atomic<std::uint64_t> m_lastId;
     std::mutex m_taskHandleIdMapLock;
     http_internal_map<uint64_t, HC_TASK_PTR> m_taskHandleIdMap;

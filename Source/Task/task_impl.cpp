@@ -7,6 +7,30 @@ using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+void raise_task_event(
+    _In_ const std::shared_ptr<http_singleton>& httpSingleton,
+    _In_ HC_TASK* task,
+    _In_ HC_TASK_EVENT_TYPE eventType
+    )
+{
+    std::map<HC_TASK_EVENT_HANDLE, HC_TASK_EVENT_FUNC_NODE> taskEventFuncList;
+    {
+        std::lock_guard<std::mutex> guard(httpSingleton->m_taskEventListLock);
+        taskEventFuncList = httpSingleton->m_taskEventFuncList;
+    }
+
+    for (const auto& eventFunc : taskEventFuncList)
+    {
+        auto taskEventContext = eventFunc.second.taskEventFuncContext;
+        auto taskEvent = eventFunc.second.taskEventFunc;
+        auto taskEventSubsystemId = eventFunc.second.taskSubsystemId;
+        if (taskEvent != nullptr && task->taskSubsystemId == taskEventSubsystemId)
+        {
+            taskEvent(taskEventContext, eventType, task->id);
+        }
+    }
+}
+
 void http_task_queue_pending(_In_ HC_TASK* task)
 {
     auto httpSingleton = get_http_singleton();
@@ -21,13 +45,7 @@ void http_task_queue_pending(_In_ HC_TASK* task)
             taskPendingQueue.size(), task->id);
     }
 
-    auto taskEventContext = httpSingleton->m_taskEventFuncContext;
-    auto taskEvent = httpSingleton->m_taskEventFunc;
-    if (taskEvent != nullptr)
-    {
-        taskEvent(taskEventContext, HC_TASK_EVENT_PENDING, task->id);
-    }
-
+    raise_task_event(httpSingleton, task, HC_TASK_EVENT_PENDING);
     httpSingleton->set_task_pending_ready();
 }
 
@@ -60,12 +78,7 @@ void http_task_process_pending(_In_ HC_TASK* task)
             taskExecutingQueue.size(), task->id);
     }
 
-    auto taskEventContext = httpSingleton->m_taskEventFuncContext;
-    auto taskEvent = httpSingleton->m_taskEventFunc;
-    if (taskEvent != nullptr)
-    {
-        taskEvent(taskEventContext, HC_TASK_EVENT_EXECUTE_STARTED, task->id);
-    }
+    raise_task_event(httpSingleton, task, HC_TASK_EVENT_EXECUTE_STARTED);
 
     task->executionRoutine(
         task->executionRoutineContext,
@@ -115,12 +128,7 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
 
     httpSingleton->get_task_completed_queue_for_taskgroup(taskHandle->taskSubsystemId, taskHandle->taskGroupId)->set_task_completed_event();
 
-    auto taskEventContext = httpSingleton->m_taskEventFuncContext;
-    auto taskEvent = httpSingleton->m_taskEventFunc;
-    if (taskEvent != nullptr)
-    {
-        taskEvent(taskEventContext, HC_TASK_EVENT_EXECUTE_COMPLETED, taskHandle->id);
-    }
+    raise_task_event(httpSingleton, task, HC_TASK_EVENT_EXECUTE_COMPLETED);
 }
 
 HC_TASK* http_task_get_next_completed(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_ uint64_t taskGroupId)
