@@ -73,7 +73,7 @@ public:
         uint64_t taskGroupId = 1;
         HC_TASK_HANDLE taskHandle;
         HCTaskCreate(
-            HC_SUBSYSTEM_ID_GAME, 
+            HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN,
             taskGroupId,
             TestTaskExecute, (void*)1,
             TestTaskWriteResults, (void*)2,
@@ -81,8 +81,20 @@ public:
             &taskHandle
             );
 
+        VERIFY_ARE_EQUAL(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, HCTaskGetSubsystemId(taskHandle));
+
+        /// <summary>
+        /// Returns the task's task group ID
+        /// </summary>
+        /// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
+        /// <returns>Returns the task's task group ID</returns>
+        VERIFY_ARE_EQUAL(taskGroupId, HCTaskGetTaskGroupId(taskHandle));
+
+
         //VERIFY_ARE_EQUAL(true, HCTaskIsTaskPending());
         VERIFY_ARE_EQUAL(false, HCTaskIsCompleted(taskHandle));
+        VERIFY_ARE_EQUAL(0, HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId));
+        VERIFY_ARE_EQUAL(1, HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
 
         // Verify no called
         VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
@@ -92,7 +104,7 @@ public:
         g_calledTestTaskWriteResults = false;
         g_calledTestTaskCompleteRoutine = false;
 
-        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN);
 
         // Verify execute called
         VERIFY_ARE_EQUAL(true, g_calledTestTaskExecute);
@@ -101,15 +113,21 @@ public:
         g_calledTestTaskExecute = false;
         g_calledTestTaskWriteResults = false;
         g_calledTestTaskCompleteRoutine = false;
+        VERIFY_ARE_EQUAL(1, HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId));
+        VERIFY_ARE_EQUAL(0, HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
 
         // Nothing should happen if we do task group 0
-        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, 0);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskWriteResults);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskCompleteRoutine);
+        VERIFY_ARE_EQUAL(1, HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId));
+        VERIFY_ARE_EQUAL(0, HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
 
         // Verify write & complete were called after 
-        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, taskGroupId);
+        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId);
+        VERIFY_ARE_EQUAL(0, HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId));
+        VERIFY_ARE_EQUAL(0, HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
         VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
         VERIFY_ARE_EQUAL(true, g_calledTestTaskWriteResults);
         VERIFY_ARE_EQUAL(true, g_calledTestTaskCompleteRoutine);

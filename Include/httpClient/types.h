@@ -85,6 +85,7 @@ typedef uint32_t HC_MEMORY_TYPE;
 typedef struct HC_CALL* HC_CALL_HANDLE;
 typedef struct HC_CALL* HC_MOCK_CALL_HANDLE;
 typedef uint64_t HC_TASK_HANDLE;
+typedef uint64_t HC_TASK_EVENT_HANDLE;
 
 typedef enum HC_RESULT
 {

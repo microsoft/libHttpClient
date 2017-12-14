@@ -7,15 +7,42 @@
 using namespace xbox::httpclient;
 
 HC_API HC_RESULT HC_CALLING_CONV
-HCSetTaskEventHandler(
+HCAddTaskEventHandler(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_opt_ void* context,
-    _In_ HC_TASK_EVENT_FUNC taskEventFunc
+    _In_opt_ HC_TASK_EVENT_FUNC taskEventFunc,
+    _Out_opt_ HC_TASK_EVENT_HANDLE* eventHandle
     ) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton();
-    httpSingleton->m_taskEventFunc = taskEventFunc;
-    httpSingleton->m_taskEventFuncContext = context;
+    HC_TASK_EVENT_HANDLE handleId = httpSingleton->m_lastId.load();
+    httpSingleton->m_lastId++;
+
+    HC_TASK_EVENT_FUNC_NODE node = { taskEventFunc, context, taskSubsystemId };
+
+    {
+        std::lock_guard<std::mutex> guard(httpSingleton->m_taskEventListLock);
+        httpSingleton->m_taskEventFuncList[handleId] = node;
+    }
+
+    if (eventHandle != nullptr)
+    {
+        *eventHandle = handleId;
+    }
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCRemoveTaskEventHandler(
+    _Out_ HC_TASK_EVENT_HANDLE eventHandle
+    ) HC_NOEXCEPT
+try
+{
+    auto httpSingleton = get_http_singleton();
+    std::lock_guard<std::mutex> guard(httpSingleton->m_taskEventListLock);
+    httpSingleton->m_taskEventFuncList.erase(eventHandle);
     return HC_OK;
 }
 CATCH_RETURN()
@@ -55,6 +82,63 @@ try
     return taskHandle->state == http_task_state::completed;
 }
 CATCH_RETURN_WITH(true)
+
+HC_API HC_SUBSYSTEM_ID HC_CALLING_CONV
+HCTaskGetSubsystemId(
+    _In_ HC_TASK_HANDLE taskHandleId
+    ) HC_NOEXCEPT
+try
+{
+    HC_TASK* taskHandle = http_task_get_task_from_handle_id(taskHandleId);
+    if (taskHandle == nullptr)
+        return HC_SUBSYSTEM_ID_GAME;
+
+    return taskHandle->taskSubsystemId;
+}
+CATCH_RETURN_WITH(HC_SUBSYSTEM_ID_GAME)
+
+HC_API uint64_t HC_CALLING_CONV
+HCTaskGetTaskGroupId(
+    _In_ HC_TASK_HANDLE taskHandleId
+    ) HC_NOEXCEPT
+try
+{
+    HC_TASK* taskHandle = http_task_get_task_from_handle_id(taskHandleId);
+    if (taskHandle == nullptr)
+        return 0;
+
+    return taskHandle->taskGroupId;
+}
+CATCH_RETURN_WITH(0)
+
+HC_API uint64_t HC_CALLING_CONV
+HCTaskGetCompletedTaskQueueSize(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId
+    ) HC_NOEXCEPT
+try
+{
+    auto httpSingleton = get_http_singleton();
+
+    std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
+    auto& completedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_completed_queue();
+    return completedQueue.size();
+}
+CATCH_RETURN_WITH(0)
+
+HC_API uint64_t HC_CALLING_CONV
+HCTaskGetPendingTaskQueueSize(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId
+    ) HC_NOEXCEPT
+try
+{
+    auto httpSingleton = get_http_singleton();
+
+    std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
+    auto& taskPendingQueue = httpSingleton->get_task_pending_queue(taskSubsystemId);
+    return taskPendingQueue.size();
+}
+CATCH_RETURN_WITH(0)
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCTaskProcessNextCompletedTask(

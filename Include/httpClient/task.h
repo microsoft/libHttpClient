@@ -37,10 +37,24 @@ typedef HC_RESULT
     _In_opt_ void* completionRoutineContext
     );
 
+/// <summary>
+/// The task event type
+/// </summary>
 typedef enum HC_TASK_EVENT_TYPE
 {
+    /// <summary>
+    /// The task is in a pending task and has not started executing 
+    /// </summary>
     HC_TASK_EVENT_PENDING,
+
+    /// <summary>
+    /// The task has started executing but has not yet completed execution
+    /// </summary>
     HC_TASK_EVENT_EXECUTE_STARTED,
+
+    /// <summary>
+    /// The task has completed executing
+    /// </summary>
     HC_TASK_EVENT_EXECUTE_COMPLETED
 } HC_TASK_EVENT_TYPE;
 
@@ -48,6 +62,7 @@ typedef enum HC_TASK_EVENT_TYPE
 /// The callback definition used by HCSetTaskEventHandler that's raised when a task changes state (pending, executing, completed).
 /// </summary>
 /// <param name="context">The context passed to this callback</param>
+/// <param name="eventType">The event type for this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
 typedef HC_RESULT
 (HC_CALLING_CONV* HC_TASK_EVENT_FUNC)(
@@ -59,12 +74,31 @@ typedef HC_RESULT
 /// <summary>
 /// Sets the callback that is called when when task changes state (pending, executing, completed)
 /// </summary>
+/// <param name="taskSubsystemId">
+/// The task subsystem ID to assign to this task.  This is the ID of the caller's subsystem.
+/// If this isn't needed or unknown, just pass in HC_SUBSYSTEM_ID_GAME.
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// can each expose thier own version of ProcessNextPendingTask() and 
+/// ProcessNextCompletedTask() APIs that operate independently.
+/// </param>
 /// <param name="context">The context passed to the event handler whenever it is called</param>
 /// <param name="taskEventFunc">The function pointer for the event handler.  Set it to nullptr to disable</param>
+/// <param name="eventHandle">Handle to the event handler.  Use this to remove the handler using HCRemoveTaskEventHandler</param>
 HC_API HC_RESULT HC_CALLING_CONV
-HCSetTaskEventHandler(
+HCAddTaskEventHandler(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_opt_ void* context,
-    _In_opt_ HC_TASK_EVENT_FUNC taskEventFunc
+    _In_opt_ HC_TASK_EVENT_FUNC taskEventFunc,
+    _Out_opt_ HC_TASK_EVENT_HANDLE* eventHandle
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Removes the callback that is called when when task changes state (pending, executing, completed)
+/// </summary>
+/// <param name="eventHandle">Handle to the event handler.  Use this to remove the handler using HCRemoveTaskEventHandler</param>
+HC_API HC_RESULT HC_CALLING_CONV
+HCRemoveTaskEventHandler(
+    _Out_ HC_TASK_EVENT_HANDLE eventHandle
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -194,12 +228,61 @@ HCTaskSetCompleted(
     ) HC_NOEXCEPT;
 
 /// <summary>
+/// Returns the size of the pending task queue for a specific task subsystem and task group ID
+/// </summary>
+/// <param name="taskSubsystemId">
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// </param>
+/// <returns>Returns the size of the pending task queue for a specific task subsystem and task group ID</returns>
+HC_API uint64_t HC_CALLING_CONV
+HCTaskGetPendingTaskQueueSize(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Returns the size of the completed task queue for a specific task subsystem and task group ID
+/// </summary>
+/// <param name="taskSubsystemId">
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// </param>
+/// <param name="taskGroupId">
+/// This enables the caller to split the where results are returned between between a set of app threads.  
+/// If this isn't needed, just pass in 0.
+/// </param>
+/// <returns>Returns the size of the completed task queue for a specific task subsystem and task group ID</returns>
+HC_API uint64_t HC_CALLING_CONV
+HCTaskGetCompletedTaskQueueSize(
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId, 
+    _In_ uint64_t taskGroupId
+    ) HC_NOEXCEPT;
+
+/// <summary>
 /// Returns if the task's result is completed and ready to return results
 /// </summary>
 /// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
 /// <returns>Returns true if the task's result is completed</returns>
 HC_API bool HC_CALLING_CONV
 HCTaskIsCompleted(
+    _In_ HC_TASK_HANDLE taskHandle
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Returns the task's subsystem ID 
+/// </summary>
+/// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
+/// <returns>Returns the task's subsystem ID</returns>
+HC_API HC_SUBSYSTEM_ID HC_CALLING_CONV
+HCTaskGetSubsystemId(
+    _In_ HC_TASK_HANDLE taskHandle
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Returns the task's task group ID
+/// </summary>
+/// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
+/// <returns>Returns the task's task group ID</returns>
+HC_API uint64_t HC_CALLING_CONV
+HCTaskGetTaskGroupId(
     _In_ HC_TASK_HANDLE taskHandle
     ) HC_NOEXCEPT;
 
