@@ -104,20 +104,20 @@ HC_RESULT libhttpclient_event_handler(
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(taskHandle);
 
-    uint64_t t;
     switch (eventType)
     {
     case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_PENDING:
-        t = HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME);
+        // For size, you can do:
+        // uint64_t sizeOfPendingQueue = HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME);
         SetEvent(g_pendingReadyHandle.get());
         break;
 
     case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_STARTED:
-        t = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
         break;
 
     case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_COMPLETED:
-        t = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
+        // For size, you can do:
+        // uint64_t sizeOfPendingQueue = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
         SetEvent(g_completeReadyHandle.get());
         break;
     }

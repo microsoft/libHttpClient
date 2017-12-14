@@ -21,8 +21,33 @@ using namespace Windows::UI::Xaml::Navigation;
 
 static HttpTestApp::MainPage^ g_MainPage;
 static Windows::UI::Core::CoreDispatcher^ s_dispatcher;
-static bool g_manualThreadingCheckbox = false;
-HANDLE g_stopHandle = nullptr;
+class win32_handle
+{
+public:
+    win32_handle() : m_handle(nullptr)
+    {
+    }
+
+    ~win32_handle()
+    {
+        if (m_handle != nullptr) CloseHandle(m_handle);
+        m_handle = nullptr;
+    }
+
+    void set(HANDLE handle)
+    {
+        m_handle = handle;
+    }
+
+    HANDLE get() { return m_handle; }
+
+private:
+    HANDLE m_handle;
+};
+
+win32_handle g_stopRequestedHandle;
+win32_handle g_pendingReadyHandle;
+win32_handle g_completeReadyHandle;
 
 #define TICKS_PER_SECOND 10000000i64
 
@@ -39,14 +64,55 @@ static std::wstring to_utf16string(const std::string& input)
     return utfConverter.from_bytes(input);
 }
 
+HC_RESULT libhttpclient_event_handler(
+    _In_opt_ void* context,
+    _In_ HC_TASK_EVENT_TYPE eventType,
+    _In_ HC_TASK_HANDLE taskHandle
+    )
+{
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(taskHandle);
+
+    switch (eventType)
+    {
+    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_PENDING:
+        // For size, you can do:
+        // uint64_t sizeOfPendingQueue = HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME);
+        SetEvent(g_pendingReadyHandle.get());
+        break;
+
+    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_STARTED:
+        break;
+
+    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_COMPLETED:
+        // For size, you can do:
+        // uint64_t sizeOfPendingQueue = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
+        SetEvent(g_completeReadyHandle.get());
+        break;
+    }
+
+    return HC_OK;
+}
+
 MainPage::MainPage()
 {
     s_dispatcher = this->Dispatcher;
     g_MainPage = this;
-    g_stopHandle = CreateEvent(nullptr, false, false, nullptr);
+    g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
+    g_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
     HCGlobalInitialize();
     HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
+
+    HC_TASK_EVENT_HANDLE eventHandle;
+    HCAddTaskEventHandler(
+        HC_SUBSYSTEM_ID_GAME,
+        nullptr,
+        libhttpclient_event_handler,
+        &eventHandle
+        );
+
     StartBackgroundThread();
 
     TextboxURL->Text = L"http://www.bing.com";
@@ -92,27 +158,30 @@ void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platf
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
-    HANDLE hEvents[1] =
+    HANDLE hEvents[3] =
     {
-        g_stopHandle
+        g_pendingReadyHandle.get(),
+        g_completeReadyHandle.get(),
+        g_stopRequestedHandle.get()
     };
 
     bool stop = false;
     while (!stop)
     {
-        DWORD dwResult = WaitForSingleObject(g_stopHandle, 20);
+        DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
         switch (dwResult)
         {
-            case WAIT_TIMEOUT: 
-            {
-                HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
-                HCTaskProcessNextPendingTask(taskSubsystemId);
-                break;
-            }
+        case WAIT_OBJECT_0: // pending 
+            HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+            break;
 
-            default:
-                stop = true;
-                break;
+        case WAIT_OBJECT_0 + 1: // completed 
+            HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+            break;
+
+        default:
+            stop = true;
+            break;
         }
     }
 
@@ -123,7 +192,7 @@ void HttpTestApp::MainPage::StopBackgroundThread()
 {
     if (m_hBackgroundThread != nullptr)
     {
-        SetEvent(g_stopHandle);
+        SetEvent(g_stopRequestedHandle.get());
         WaitForSingleObject(m_hBackgroundThread, INFINITE);
         CloseHandle(m_hBackgroundThread);
         m_hBackgroundThread = nullptr;
@@ -192,25 +261,13 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 
     std::string strText = ss.str();
 
-    if (!g_manualThreadingCheckbox)
+    // This callback is called from background thread
+    // and we must set the XAML text on the UI thread, so use CoreDispatcher to get it there
+    s_dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+        ref new Windows::UI::Core::DispatchedHandler([strText]()
     {
-        // If !g_manualThreadingCheckbox, then this callback is called from background thread
-        // and we must set the XAML text on the UI thread, so use CoreDispatcher to get it there
-        s_dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-            ref new Windows::UI::Core::DispatchedHandler([strText]()
-        {
-            g_MainPage->LogTextBox->Text = ref new Platform::String(to_utf16string(strText).c_str());
-        }));
-    }
-    else
-    {
-        // If g_manualThreadingCheckbox, then this callback is called from thread 
-        // that called HCThreadProcessCompletedAsyncOp() which in this sample 
-        // is the UI thread
-
-        // We must set the XAML text on the UI thread, so no need to use CoreDispatcher here
         g_MainPage->LogTextBox->Text = ref new Platform::String(to_utf16string(strText).c_str());
-    }
+    }));
 }
 
 void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
