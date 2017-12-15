@@ -11,7 +11,7 @@ extern "C" {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Task APIs
-// 
+//
 
 /// <summary>
 /// The callback definition used by HCTaskCreate to execute the task.
@@ -43,7 +43,7 @@ typedef HC_RESULT
 typedef enum HC_TASK_EVENT_TYPE
 {
     /// <summary>
-    /// The task is in a pending task and has not started executing 
+    /// The task is in a pending task and has not started executing
     /// </summary>
     HC_TASK_EVENT_PENDING,
 
@@ -77,8 +77,8 @@ typedef HC_RESULT
 /// <param name="taskSubsystemId">
 /// The task subsystem ID to assign to this task.  This is the ID of the caller's subsystem.
 /// If this isn't needed or unknown, just pass in HC_SUBSYSTEM_ID_GAME.
-/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
-/// can each expose thier own version of ProcessNextPendingTask() and 
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc)
+/// can each expose thier own version of ProcessNextPendingTask() and
 /// ProcessNextCompletedTask() APIs that operate independently.
 /// </param>
 /// <param name="context">The context passed to the event handler whenever it is called</param>
@@ -98,7 +98,7 @@ HCAddTaskEventHandler(
 /// <param name="eventHandle">Handle to the event handler.  Use this to remove the handler using HCRemoveTaskEventHandler</param>
 HC_API HC_RESULT HC_CALLING_CONV
 HCRemoveTaskEventHandler(
-    _Out_ HC_TASK_EVENT_HANDLE eventHandle
+    _In_ HC_TASK_EVENT_HANDLE eventHandle
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -128,8 +128,8 @@ HCRemoveTaskEventHandler(
 /// <param name="taskSubsystemId">
 /// The task subsystem ID to assign to this task.  This is the ID of the caller's subsystem.
 /// If this isn't needed or unknown, just pass in HC_SUBSYSTEM_ID_GAME.
-/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
-/// can each expose thier own version of ProcessNextPendingTask() and 
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc)
+/// can each expose thier own version of ProcessNextPendingTask() and
 /// ProcessNextCompletedTask() APIs that operate independently.
 /// </param>
 /// <param name="taskGroupId">
@@ -179,33 +179,33 @@ HCTaskCreate(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Calls the executionRoutine callback for the next pending task. It is recommended 
+/// Calls the executionRoutine callback for the next pending task. It is recommended
 /// the app calls HCTaskProcessNextPendingTask() in a background thread.
 /// </summary>
 /// <param name="taskSubsystemId">
 /// The task subsystem ID to assign to this task.  This is the ID of the caller's subsystem.
 /// If this isn't needed or unknown, just pass in HC_SUBSYSTEM_ID_GAME.
-/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
-/// can each expose thier own version of ProcessNextPendingTask() and 
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc)
+/// can each expose thier own version of ProcessNextPendingTask() and
 /// ProcessNextCompletedTask() APIs that operate independently.
 /// </param>
 HC_API HC_RESULT HC_CALLING_CONV
 HCTaskProcessNextPendingTask(_In_ HC_SUBSYSTEM_ID taskSubsystemId) HC_NOEXCEPT;
 
 /// <summary>
-/// Calls the completionRoutine callback for the next task that is completed.  
-/// This enables the caller to execute the callback on a specific thread to 
+/// Calls the completionRoutine callback for the next task that is completed.
+/// This enables the caller to execute the callback on a specific thread to
 /// avoid the need to marshal data to a app thread from a background thread.
-/// 
+///
 /// HCTaskProcessNextCompletedTask will only process completed tasks that have a
 /// matching taskGroupId.  This enables the caller to split the where results are
 /// returned between between a set of app threads.  If this isn't needed, just pass in 0.
 /// </summary>
 /// <param name="taskSubsystemId">
 /// HCTaskProcessNextCompletedTask will only process completed tasks that have a
-/// matching subsystem ID. 
-/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
-/// can each expose thier own version of ProcessNextPendingTask() and 
+/// matching subsystem ID.
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc)
+/// can each expose thier own version of ProcessNextPendingTask() and
 /// ProcessNextCompletedTask() APIs that operate independently.
 /// </param>
 /// <param name="taskGroupId">
@@ -231,7 +231,7 @@ HCTaskSetCompleted(
 /// Returns the size of the pending task queue for a specific task subsystem and task group ID
 /// </summary>
 /// <param name="taskSubsystemId">
-/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc)
 /// </param>
 /// <returns>Returns the size of the pending task queue for a specific task subsystem and task group ID</returns>
 HC_API uint64_t HC_CALLING_CONV
@@ -243,16 +243,16 @@ HCTaskGetPendingTaskQueueSize(
 /// Returns the size of the completed task queue for a specific task subsystem and task group ID
 /// </summary>
 /// <param name="taskSubsystemId">
-/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc) 
+/// This is used to subdivide results so each subsystem (XSAPI, XAL, Mixer, etc)
 /// </param>
 /// <param name="taskGroupId">
-/// This enables the caller to split the where results are returned between between a set of app threads.  
+/// This enables the caller to split the where results are returned between between a set of app threads.
 /// If this isn't needed, just pass in 0.
 /// </param>
 /// <returns>Returns the size of the completed task queue for a specific task subsystem and task group ID</returns>
 HC_API uint64_t HC_CALLING_CONV
 HCTaskGetCompletedTaskQueueSize(
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId, 
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId
     ) HC_NOEXCEPT;
 
@@ -267,7 +267,7 @@ HCTaskIsCompleted(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Returns the task's subsystem ID 
+/// Returns the task's subsystem ID
 /// </summary>
 /// <param name="taskHandle">Handle to task returned by HCTaskCreate</param>
 /// <returns>Returns the task's subsystem ID</returns>
