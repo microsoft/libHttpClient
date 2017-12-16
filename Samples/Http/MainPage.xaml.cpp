@@ -166,6 +166,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
     };
 
     bool stop = false;
+    uint64_t taskGroupId = 0;
     while (!stop)
     {
         DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
@@ -173,10 +174,22 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         {
         case WAIT_OBJECT_0: // pending 
             HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+
+            // If there's more pending tasks, then set the event to process them
+            if (HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME) > 0)
+            {
+                SetEvent(g_pendingReadyHandle.get());
+            }
             break;
 
         case WAIT_OBJECT_0 + 1: // completed 
             HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+
+            // If there's more completed tasks, then set the event to process them
+            if (HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, taskGroupId) > 0)
+            {
+                SetEvent(g_completeReadyHandle.get());
+            }
             break;
 
         default:
