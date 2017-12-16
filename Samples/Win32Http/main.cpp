@@ -73,6 +73,7 @@ DWORD WINAPI http_thread_proc(LPVOID lpParam)
     };
 
     bool stop = false;
+    uint64_t taskGroupId = 0;
     while (!stop)
     {
         DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
@@ -80,10 +81,22 @@ DWORD WINAPI http_thread_proc(LPVOID lpParam)
         {
             case WAIT_OBJECT_0: // pending 
                 HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+
+                // If there's more pending tasks, then set the event to process them
+                if (HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME) > 0)
+                {
+                    SetEvent(g_pendingReadyHandle.get());
+                }
                 break;
 
             case WAIT_OBJECT_0 + 1: // completed 
-                HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+                HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, taskGroupId);
+
+                // If there's more completed tasks, then set the event to process them
+                if (HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, taskGroupId) > 0)
+                {
+                    SetEvent(g_completeReadyHandle.get());
+                }
                 break;
 
             default:
@@ -107,8 +120,6 @@ HC_RESULT libhttpclient_event_handler(
     switch (eventType)
     {
     case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_PENDING:
-        // For size, you can do:
-        // uint64_t sizeOfPendingQueue = HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME);
         SetEvent(g_pendingReadyHandle.get());
         break;
 
@@ -116,8 +127,6 @@ HC_RESULT libhttpclient_event_handler(
         break;
 
     case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_COMPLETED:
-        // For size, you can do:
-        // uint64_t sizeOfPendingQueue = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
         SetEvent(g_completeReadyHandle.get());
         break;
     }
