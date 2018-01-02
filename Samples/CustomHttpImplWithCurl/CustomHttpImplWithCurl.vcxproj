@@ -219,7 +219,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Build\libHttpClient.141.UWP.C\libHttpClient.141.UWP.C.vcxproj">
-      <Project>{8f96710e-5169-4917-8874-7de248f4d243}</Project>
+      <Project>{1B0DFB7F-2CD5-48DE-80D4-5CC56C22AEEE}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
