@@ -158,13 +158,6 @@ std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::strin
     return headers;
 }
 
-void HttpTestApp::MainPage::DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e)
-{
-    HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
-    uint32_t taskGroupId = 0;
-    HCTaskProcessNextCompletedTask(taskSubsystemId, taskGroupId);
-}
-
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
     HANDLE hEvents[3] =
@@ -218,7 +211,6 @@ void HttpTestApp::MainPage::StopBackgroundThread()
         WaitForSingleObject(m_hBackgroundThread, INFINITE);
         CloseHandle(m_hBackgroundThread);
         m_hBackgroundThread = nullptr;
-        m_timer = nullptr;
     }
 }
 
@@ -227,15 +219,6 @@ void HttpTestApp::MainPage::StartBackgroundThread()
     if (m_hBackgroundThread == nullptr)
     {
         m_hBackgroundThread = CreateThread(nullptr, 0, background_thread_proc, nullptr, 0, nullptr);
-
-        m_timer = ref new DispatcherTimer;
-        m_timer->Tick += ref new EventHandler<Object^>(this, &HttpTestApp::MainPage::DispatcherTimer_Tick);
-
-        TimeSpan ts;
-        ts.Duration = TICKS_PER_SECOND / 60;
-        m_timer->Interval = ts;
-
-        m_timer->Start();
     }
 }
 
