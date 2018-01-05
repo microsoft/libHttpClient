@@ -111,6 +111,7 @@ HC_RESULT HttpCallPerformWriteResults(
     )
 try
 {
+    UNREFERENCED_PARAMETER(taskHandleId);
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
 
     if (call != nullptr)

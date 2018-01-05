@@ -125,11 +125,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="C++ Source\HTTP\XMLHttp">
-      <UniqueIdentifier>{9E2AE52A-298B-33E8-90DA-A2C8709C836F}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Source\Common\Win">
       <UniqueIdentifier>{E705B256-E422-3FF4-95FA-7E24B8A5474F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\XMLHttp">
+      <UniqueIdentifier>{9E2AE52A-298B-33E8-90DA-A2C8709C836F}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
       <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
@@ -155,5 +155,15 @@
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Source\Shared\Logger\ERA_ETW.man">
+      <Filter>C++ source\Shared\Logger</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\Source\Shared\Logger\ERA_ETW.rc">
+      <Filter>C++ source\Shared\Logger</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

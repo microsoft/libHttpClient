@@ -23,6 +23,7 @@ HRESULT STDMETHODCALLTYPE http_request_callback::OnHeadersAvailable(
     __RPC__in_string const WCHAR* phrase
     )
 {
+    UNREFERENCED_PARAMETER(phrase);
     m_httpTask->set_status_code(statusCode);
 
     WCHAR* allResponseHeaders = nullptr;

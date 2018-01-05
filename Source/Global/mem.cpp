@@ -10,6 +10,7 @@ DefaultMemAllocFunction(
     _In_ HC_MEMORY_TYPE memoryType
     )
 {
+    UNREFERENCED_PARAMETER(memoryType);
     return malloc(size);
 }
 
@@ -19,6 +20,7 @@ DefaultMemFreeFunction(
     _In_ HC_MEMORY_TYPE memoryType
     )
 {
+    UNREFERENCED_PARAMETER(memoryType);
     free(pointer);
 }
 

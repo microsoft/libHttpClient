@@ -1,8 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup Condition="'$(ApplicationType)'!='Windows Store'">
+  <PropertyGroup Condition="'$(ApplicationType)'!='Windows Store' AND '$(Platform)'!='Durango'">
     <HCLibPlatformType>Win32</HCLibPlatformType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ApplicationType)'!='Windows Store' AND '$(Platform)'=='Durango'">
+    <HCLibPlatformType>XDK</HCLibPlatformType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
     <HCLibPlatformType>UWP</HCLibPlatformType>
@@ -11,8 +14,11 @@
   <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
     <libHttpClientDefine>HC_UWP_API</libHttpClientDefine>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(ApplicationType)'==''">
+  <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango'">
     <libHttpClientDefine>HC_WIN32_API</libHttpClientDefine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">
+    <libHttpClientDefine>HC_XDK_API</libHttpClientDefine>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">

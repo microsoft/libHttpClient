@@ -3,7 +3,7 @@
 #pragma once
 #include "pch.h"
 #include <wrl.h>
-#if !XDK_API
+#if !HC_XDK_API
 #include <msxml6.h>
 #else
 #include <ixmlhttprequest2.h>
