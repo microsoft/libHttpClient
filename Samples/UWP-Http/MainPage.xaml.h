@@ -10,11 +10,8 @@ namespace HttpTestApp
         virtual ~MainPage();
 
     private:
-        Windows::UI::Xaml::DispatcherTimer^ m_timer;
         HANDLE m_hBackgroundThread;
-
         void Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
-        void DispatcherTimer_Tick(Platform::Object^ sender, Platform::Object^ e);
 
         static void UpdateXamlUI(
             _In_ uint32_t errCode,
