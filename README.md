@@ -15,7 +15,7 @@ If you want to contribute to the project, please talk to us to avoid overlap.
 - Builds for **UWP, XDK ERA, Win32, iOS, and Android**
 - Public API is a **flat C API**
 - **Asynchronous** API
-- Public API **supports simple P/Invoke** without needing to use the "C#/.NET P/Invoke Interop SDK" [https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK]
+- Public API **supports simple P/Invoke** without needing to use the "C#/.NET P/Invoke Interop SDK" or C++/CLI  [https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK]
 - Public APIs to **manage async tasks** 
 - Async data can be returned to a specific game thread so the **game doesn't need to marshal the data between threads**
 - **No streams** support
@@ -60,16 +60,15 @@ If you want to contribute to the project, please talk to us to avoid overlap.
 Big things that still need to be done in rough priority order:
 
 * [Done] Prototype XSAPI on top of libHttpClient HTTP stack
-* [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin/tree/libHttpClient
+* [Done] Switch to libHttpClient's task API in https://github.com/Microsoft/xbox-live-unity-plugin/
 * [Done] Flush out XML doc comments in header 
 * [Done] Win32 project & implementation
 * [Done] Standalone C++ JSON parser
 * [Done] Prototype XSAPI on top of libHttpClient async task stack
-* [Done] XDK project & XDK implementation calling XDK platform HTTP APIs
-* [Done] XDK ERA sample
+* [Done] XDK project & XDK implementation 
+* [Done] XDK sample
 * Design WebSocket APIs
-* Flushout of UWP implementation calling UWP platform WebSocket APIs
-* XDK project & XDK implementation calling XDK platform WebSocket APIs
+* WebSocket implementation for UWP & XDK & Win32
 * Prototype XSAPI on top of libHttpClient WebSocket stack
 * Retry logic
 * Throttling logic
