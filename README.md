@@ -42,7 +42,8 @@ If you want to contribute to the project, please talk to us to avoid overlap.
 1. Optionally call HCSettingsSet*()
 1. Call HCHttpCallCreate() to create a new HC_CALL_HANDLE
 1. Call HCHttpCallRequestSet*() to prepare the HC_CALL_HANDLE
-1. Call HCHttpCallPerform() to perform an HTTP call using the HC_CALL_HANDLE.  This call is asynchronous, so the work will be done on task thread and it will return via the callback.
+1. Call HCHttpCallPerform() to perform an HTTP call using the HC_CALL_HANDLE.  
+1. The perform call is asynchronous, so the work will be done on a background thread which calls HCTaskProcessNextPendingTask().  The results will return to the callback on the thread that calls HCTaskProcessNextCompletedTask().
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE
 1. Call HCHttpCallCleanup() to cleanup the HC_CALL_HANDLE
 1. Repeat 4-8 for each new HTTP call
@@ -64,24 +65,21 @@ Big things that still need to be done in rough priority order:
 * [Done] Win32 project & implementation
 * [Done] Standalone C++ JSON parser
 * [Done] Prototype XSAPI on top of libHttpClient async task stack
-* Retry logic
-* Throttling logic
-* XDK project & XDK implementation calling XDK platform HTTP APIs
-* XDK ERA sample
-* API for binary request & response data 
+* [Done] XDK project & XDK implementation calling XDK platform HTTP APIs
+* [Done] XDK ERA sample
 * Design WebSocket APIs
 * Flushout of UWP implementation calling UWP platform WebSocket APIs
 * XDK project & XDK implementation calling XDK platform WebSocket APIs
 * Prototype XSAPI on top of libHttpClient WebSocket stack
-* P/Invoke layer and UWP C# sample
-* libHttpClient Unity sample (using P/Invoke layer)
+* Retry logic
+* Throttling logic
+* API for binary request & response data 
 * iOS project & iOS implementation calling iOS platform HTTP APIs
 * iOS implementation calling iOS platform WebSocket APIs
 * iOS sample
 * Android project & Android implementation calling Android platform HTTP APIs
 * Android implementation calling Android platform WebSocket APIs
 * Android sample
-* libHttpClient Unity iOS/Android sample (using P/Invoke layer)
 
 ## How to clone repo
 
