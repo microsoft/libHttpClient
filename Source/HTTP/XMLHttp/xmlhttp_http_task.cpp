@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
+#if !HC_XDK_API
 #include <Shlwapi.h>
+#endif
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
 #include "http_request_callback.h"
@@ -35,13 +37,10 @@ void xmlhttp_http_task::perform_async(
 {
     try
     {
-        http_internal_string headerName;
-        http_internal_string headerValue;
         const char* url = nullptr;
         const char* method = nullptr;
         const BYTE* requestBody = nullptr;
         uint32_t requestBodyBytes = 0;
-        const char* userAgent = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
         HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodyBytes);
 
@@ -54,7 +53,7 @@ void xmlhttp_http_task::perform_async(
         HRESULT hr = CoCreateInstance(
             __uuidof(FreeThreadedXMLHTTP60),
             nullptr,
-#if XDK_API
+#if HC_XDK_API
             CLSCTX_SERVER,
 #else
             CLSCTX_INPROC,
@@ -104,12 +103,12 @@ void xmlhttp_http_task::perform_async(
         m_hRequest->SetRequestHeader(L"User-Agent", L"libHttpClient/1.0.0.0");
         for (uint32_t i = 0; i < numHeaders; i++)
         {
-            const char* headerName;
-            const char* headerValue;
-            HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
-            if (headerName != nullptr && headerValue != nullptr)
+            const char* iHeaderName;
+            const char* iHeaderValue;
+            HCHttpCallRequestGetHeaderAtIndex(call, i, &iHeaderName, &iHeaderValue);
+            if (iHeaderName != nullptr && iHeaderValue != nullptr)
             {
-                hr = m_hRequest->SetRequestHeader(utf16_from_utf8(headerName).c_str(), utf16_from_utf8(headerValue).c_str());
+                hr = m_hRequest->SetRequestHeader(utf16_from_utf8(iHeaderName).c_str(), utf16_from_utf8(iHeaderValue).c_str());
             }
         }
 
@@ -123,6 +122,7 @@ void xmlhttp_http_task::perform_async(
             return;
         }
 
+#if !HC_XDK_API
         if (requestBodyBytes > 0 && requestBody != nullptr)
         {
             m_hRequestBodyStream.Attach(SHCreateMemStream(requestBody, requestBodyBytes));
@@ -136,6 +136,7 @@ void xmlhttp_http_task::perform_async(
                 return;
             }
         }
+#endif
 
         hr = m_hRequest->Send(m_hRequestBodyStream.Get(), requestBodyBytes);
         if (FAILED(hr))
@@ -157,7 +158,7 @@ void xmlhttp_http_task::perform_async(
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::bad_alloc in xmlhttp_http_task: %s",
             HC_E_OUTOFMEMORY, e.what());
 
-        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, HC_E_OUTOFMEMORY);
+        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, static_cast<uint32_t>(HC_E_OUTOFMEMORY));
         HCTaskSetCompleted(taskHandle);
     }
     catch (std::exception const& e)
@@ -165,14 +166,14 @@ void xmlhttp_http_task::perform_async(
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::exception in xmlhttp_http_task: %s",
             HC_E_FAIL, e.what());
 
-        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, HC_E_FAIL);
+        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, static_cast<uint32_t>(HC_E_FAIL));
         HCTaskSetCompleted(taskHandle);
     }
     catch (...)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception in xmlhttp_http_task", HC_E_FAIL);
 
-        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, HC_E_FAIL);
+        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, static_cast<uint32_t>(HC_E_FAIL));
         HCTaskSetCompleted(taskHandle);
     }
 }
@@ -209,7 +210,7 @@ http_internal_vector<http_internal_string> xmlhttp_http_task::split(
 void xmlhttp_http_task::set_headers(_In_ WCHAR* allResponseHeaders)
 {
     auto allHeaders = utf8_from_utf16(allResponseHeaders);
-    auto& splitHeaders = split(allHeaders, "\r\n");
+    auto splitHeaders = split(allHeaders, "\r\n");
     for (auto& header : splitHeaders)
     {
         auto colonPos = header.find(':');

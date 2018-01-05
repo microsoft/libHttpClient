@@ -34,14 +34,14 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     return false;
 }
 
-size_t GetIndexOfMock(const http_internal_vector<HC_CALL*>& mocks, HC_CALL* lastMatchingMock)
+long GetIndexOfMock(const http_internal_vector<HC_CALL*>& mocks, HC_CALL* lastMatchingMock)
 {
     if (lastMatchingMock == nullptr)
     {
         return -1;
     }
 
-    for (size_t i = 0; i < mocks.size(); i++)
+    for (long i = 0; i < static_cast<long>(mocks.size()); i++)
     {
         if (mocks[i] == lastMatchingMock)
         {

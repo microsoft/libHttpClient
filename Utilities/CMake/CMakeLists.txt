@@ -225,8 +225,7 @@ if( UWP )
         )
 endif()
     
-if( BUILDWIN32 )
-    message(STATUS "Win32 source group")
+if( BUILDWIN32 OR XDK )
     source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
 

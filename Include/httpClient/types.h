@@ -3,6 +3,7 @@
 
 #pragma once
 #pragma warning(disable: 4062)
+#pragma warning(disable: 4702)
 #include <stdint.h>
 
 #ifdef _WIN32
@@ -12,8 +13,8 @@
     #define _WIN32_WINNT_WIN10 0x0A00
     #endif
 
-    #ifndef XDK_API
-    #define XDK_API (WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE) 
+    #ifndef HC_XDK_API
+    #define HC_XDK_API (WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE) 
     #endif
 
     #ifndef HC_UWP_API
