@@ -8,6 +8,7 @@
 #include "xmlhttp_http_task.h"
 #include "http_request_callback.h"
 #include "http_response_stream.h"
+#include "http_request_stream.h"
 
 xmlhttp_http_task::xmlhttp_http_task(
     _In_ HC_CALL_HANDLE call,
@@ -122,23 +123,33 @@ void xmlhttp_http_task::perform_async(
             return;
         }
 
-#if !HC_XDK_API
         if (requestBodyBytes > 0 && requestBody != nullptr)
         {
-            m_hRequestBodyStream.Attach(SHCreateMemStream(requestBody, requestBodyBytes));
-            if (m_hRequestBodyStream == nullptr)
+            auto requestStream = Microsoft::WRL::Make<http_request_stream>();
+            if (requestStream != nullptr)
             {
-                HC_TRACE_ERROR(HTTPCLIENT, "[%d] SHCreateMemStream failed in xmlhttp_http_task.",
-                    HC_E_OUTOFMEMORY);
+                hr = requestStream->init(requestBody, requestBodyBytes);
+            }
+            else
+            {
+                hr = HC_E_OUTOFMEMORY;
+            }
 
-                HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, HC_E_OUTOFMEMORY);
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "[%d] http_request_stream failed in xmlhttp_http_task.", hr);
+                HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, static_cast<uint32_t>(hr));
                 HCTaskSetCompleted(taskHandle);
                 return;
             }
-        }
-#endif
 
-        hr = m_hRequest->Send(m_hRequestBodyStream.Get(), requestBodyBytes);
+            hr = m_hRequest->Send(requestStream.Get(), requestBodyBytes);
+        }
+        else
+        {
+            hr = m_hRequest->Send(nullptr, 0);
+        }
+
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
@@ -147,7 +158,6 @@ void xmlhttp_http_task::perform_async(
             HCTaskSetCompleted(taskHandle);
             return;
         }
-
         // If there were no errors so far, HCTaskSetCompleted is called later 
         // http_request_callback::OnResponseReceived 
         // or 

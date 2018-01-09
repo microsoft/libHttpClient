@@ -142,6 +142,8 @@ set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_request_callback.h
     ../../../Source/HTTP/XMLHttp/http_response_stream.cpp
     ../../../Source/HTTP/XMLHttp/http_response_stream.h
+    ../../../Source/HTTP/XMLHttp/http_request_stream.cpp
+    ../../../Source/HTTP/XMLHttp/http_request_stream.h
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
