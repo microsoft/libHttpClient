@@ -77,8 +77,6 @@ HC_RESULT libhttpclient_event_handler(
     switch (eventType)
     {
     case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_PENDING:
-        // For size, you can do:
-        // uint64_t sizeOfPendingQueue = HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME);
         SetEvent(g_pendingReadyHandle.get());
         break;
 
@@ -86,8 +84,6 @@ HC_RESULT libhttpclient_event_handler(
         break;
 
     case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_COMPLETED:
-        // For size, you can do:
-        // uint64_t sizeOfPendingQueue = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
         SetEvent(g_completeReadyHandle.get());
         break;
     }
@@ -123,7 +119,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
             break;
 
         case WAIT_OBJECT_0 + 1: // completed 
-            HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+            HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, taskGroupId);
 
             // If there's more completed tasks, then set the event to process them
             if (HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, taskGroupId) > 0)
@@ -413,9 +409,9 @@ std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call
 
 void Sample::MakeHttpCall()
 {
-    std::string requestBody = "";
+    std::string requestBody = "{\"exampleBody\":\"exampleValue\"}";
     std::string requestHeaders = "User-Agent: XboxServicesAPI; x-xbl-contract-version: 1";
-    std::string requestMethod = "GET";
+    std::string requestMethod = "POST";
     std::string requestUrl = "http://www.bing.com";
     bool retryAllowed = true;
 

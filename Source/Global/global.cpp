@@ -9,6 +9,7 @@
 using namespace xbox::httpclient;
 
 static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
+static const uint32_t DEFAULT_HTTP_TIMEOUT_IN_SECONDS = 30;
 static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 
 static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
@@ -25,7 +26,7 @@ http_singleton::http_singleton()
     m_mocksEnabled = false;
     m_lastMatchingMock = nullptr;
     m_retryAllowed = true;
-    m_timeoutInSeconds = 0;
+    m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
     m_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
 }
 

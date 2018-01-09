@@ -74,7 +74,7 @@
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;Pathcch.lib;Shlwapi.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Bcrypt.lib;Pathcch.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>

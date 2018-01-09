@@ -48,6 +48,6 @@ private:
     http_internal_vector<http_internal_string> m_headerNames;
     http_internal_vector<http_internal_string> m_headerValues;
     Microsoft::WRL::ComPtr<IXMLHTTPRequest2> m_hRequest;
-    Microsoft::WRL::ComPtr<IStream> m_hRequestBodyStream;
+    Microsoft::WRL::ComPtr<ISequentialStream> m_hRequestBodyStream;
 };
 
