@@ -24,7 +24,8 @@ struct HC_CALL
         timeoutWindowInSeconds(0),
         retryDelayInSeconds(0),
         enableAssertsForThrottling(false),
-        performCalled(false)
+        performCalled(false),
+        refCount(1)
     {
     }
 
@@ -41,6 +42,7 @@ struct HC_CALL
     uint32_t platformNetworkErrorCode;
     std::shared_ptr<hc_task> task;
     uint64_t id;
+    std::atomic<int> refCount;
 
     bool retryAllowed;
     uint32_t timeoutInSeconds;

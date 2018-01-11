@@ -22,7 +22,6 @@ http_singleton::http_singleton()
     m_performFunc = Internal_HCHttpCallPerform;
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
-    m_enableAssertsForThrottling = true;
     m_mocksEnabled = false;
     m_lastMatchingMock = nullptr;
     m_retryAllowed = true;
@@ -34,7 +33,7 @@ http_singleton::~http_singleton()
 {
     for (auto& mockCall : m_mocks)
     {
-        HCHttpCallCleanup(mockCall);
+        HCHttpCallCloseHandle(mockCall);
     }
     m_mocks.clear();
 }

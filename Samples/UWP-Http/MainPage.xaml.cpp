@@ -305,7 +305,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
             if (str != nullptr) responseString = str;
             std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
 
             UpdateXamlUI(errCode, errMessage, statusCode, responseString, headers);
         });

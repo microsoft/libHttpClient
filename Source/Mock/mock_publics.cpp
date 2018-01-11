@@ -67,7 +67,7 @@ try
 
     for (auto& mockCall : httpSingleton->m_mocks)
     {
-        HCHttpCallCleanup(mockCall);
+        HCHttpCallCloseHandle(mockCall);
     }
 
     httpSingleton->m_mocks.clear();

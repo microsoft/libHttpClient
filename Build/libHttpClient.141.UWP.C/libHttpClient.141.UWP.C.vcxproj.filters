@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
@@ -48,6 +48,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp">
       <Filter>C++ Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\WebSocket\websocket.cpp">
+      <Filter>C++ Source\WebSocket</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -102,6 +105,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\WebSocket\websocket.h">
+      <Filter>C++ Source\WebSocket</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source\Common">
@@ -133,6 +139,9 @@
     </Filter>
     <Filter Include="C++ Source">
       <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\WebSocket">
+      <UniqueIdentifier>{d27a6e0e-63ff-47f6-8097-76e8054a4d2c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

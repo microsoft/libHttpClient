@@ -16,8 +16,7 @@ HCAddTaskEventHandler(
 try
 {
     auto httpSingleton = get_http_singleton();
-    HC_TASK_EVENT_HANDLE handleId = httpSingleton->m_lastId.load();
-    httpSingleton->m_lastId++;
+    HC_TASK_EVENT_HANDLE handleId = ++httpSingleton->m_lastId;
 
     HC_TASK_EVENT_FUNC_NODE node = { taskEventFunc, context, taskSubsystemId };
 

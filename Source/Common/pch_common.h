@@ -94,6 +94,7 @@ typedef int32_t function_context;
 #include "trace_internal.h"
 
 HC_DECLARE_TRACE_AREA(HTTPCLIENT);
+HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
 #define CATCH_RETURN() CATCH_RETURN_IMPL(__FILE__, __LINE__)
 
@@ -110,6 +111,7 @@ HC_DECLARE_TRACE_AREA(HTTPCLIENT);
     catch (...) { ::xbox::httpclient::detail::UnknownExceptionToResult(file, line); return errCode; }
 
 #define RETURN_IF_PERFORM_CALLED(call) if (call->performCalled) return HC_E_PERFORMALREADYCALLED;
+#define RETURN_IF_WEBSOCKET_CONNECT_CALLED(socket) if (socket->connectCalled) return HC_E_CONNECTALREADYCALLED;
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
 
