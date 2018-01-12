@@ -71,7 +71,6 @@ Big things that still need to be done in rough priority order:
 * WebSocket implementation for UWP & XDK & Win32
 * Prototype XSAPI on top of libHttpClient WebSocket stack
 * Retry logic
-* Throttling logic
 * API for binary request & response data 
 * iOS project & iOS implementation calling iOS platform HTTP APIs
 * iOS implementation calling iOS platform WebSocket APIs
