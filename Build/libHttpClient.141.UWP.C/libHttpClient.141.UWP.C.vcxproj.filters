@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
@@ -48,9 +48,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp">
       <Filter>C++ Source\Task</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\WebSocket\websocket.cpp">
-      <Filter>C++ Source\WebSocket</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -105,11 +102,14 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\WebSocket\websocket.h">
-      <Filter>C++ Source\WebSocket</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="C++ Public Includes">
+      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source">
+      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
+    </Filter>
     <Filter Include="C++ Source\Common">
       <UniqueIdentifier>{6D290126-3831-3A04-903B-F2ADD104D81C}</UniqueIdentifier>
     </Filter>
@@ -128,20 +128,11 @@
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\HTTP\WinRTHttpClient">
-      <UniqueIdentifier>{A2C2ED20-B5C7-300F-9483-8321E3E2DA14}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Source\Common\Win">
       <UniqueIdentifier>{E705B256-E422-3FF4-95FA-7E24B8A5474F}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source">
-      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{d27a6e0e-63ff-47f6-8097-76e8054a4d2c}</UniqueIdentifier>
+    <Filter Include="C++ Source\HTTP\WinRTHttpClient">
+      <UniqueIdentifier>{A2C2ED20-B5C7-300F-9483-8321E3E2DA14}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -118,10 +118,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
-    <ClCompile Include="..\..\Source\WebSocket\websocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -154,7 +153,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\task.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h" />
-    <ClInclude Include="..\..\Source\WebSocket\websocket.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

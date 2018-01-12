@@ -231,7 +231,7 @@ int main()
             if (str != nullptr) responseString = str;
             std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
 
             printf_s("HTTP call done\r\n");
             printf_s("Network error code: %d\r\n", errCode);

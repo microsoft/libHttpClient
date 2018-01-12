@@ -310,7 +310,11 @@ typedef HC_RESULT
 (HC_CALLING_CONV* HC_WEBSOCKET_CONNECT_FUNC)(
     _In_z_ PCSTR uri,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args
+    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     );
 
 /// <summary>
@@ -321,7 +325,11 @@ typedef HC_RESULT
 typedef HC_RESULT
 (HC_CALLING_CONV* HC_WEBSOCKET_SEND_MESSAGE_FUNC)(
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_z_ PCSTR message
+    _In_z_ PCSTR message,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     );
 
 /// <summary>

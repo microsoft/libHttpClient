@@ -134,7 +134,7 @@ public:
             });
         HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
-        HCHttpCallCleanup(call);
+        HCHttpCallCloseHandle(call);
         HCGlobalCleanup();
     }
 
@@ -174,11 +174,6 @@ public:
         HCHttpCallRequestGetTimeoutWindow(nullptr, &timeout);
         VERIFY_ARE_EQUAL(1000, timeout);
 
-        HCHttpCallRequestSetAssertsForThrottling(nullptr, true);
-        bool enabled = false;
-        HCHttpCallRequestGetAssertsForThrottling(nullptr, &enabled);
-        VERIFY_ARE_EQUAL(true, enabled);
-
         HCHttpCallRequestSetRetryDelay(nullptr, 500);
         uint32_t retryDelayInSeconds = 0;
         HCHttpCallRequestGetRetryDelay(nullptr, &retryDelayInSeconds);
@@ -194,7 +189,7 @@ public:
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
         VERIFY_IS_NOT_NULL(call);
-        HCHttpCallCleanup(call);
+        HCHttpCallCloseHandle(call);
         HCGlobalCleanup();
     }
 
@@ -239,16 +234,11 @@ public:
         HCHttpCallRequestGetTimeoutWindow(call, &timeout);
         VERIFY_ARE_EQUAL(1000, timeout);
 
-        HCHttpCallRequestSetAssertsForThrottling(call, true);
-        bool enabled = false;
-        HCHttpCallRequestGetAssertsForThrottling(call, &enabled);
-        VERIFY_ARE_EQUAL(true, enabled);
-
         HCHttpCallRequestSetRetryDelay(call, 500);
         uint32_t retryDelayInSeconds = 0;
         HCHttpCallRequestGetRetryDelay(call, &retryDelayInSeconds);
 
-        HCHttpCallCleanup(call);
+        HCHttpCallCloseHandle(call);
         HCGlobalCleanup();
     }
 
@@ -296,7 +286,7 @@ public:
         VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
-        HCHttpCallCleanup(call);
+        HCHttpCallCloseHandle(call);
         HCGlobalCleanup();
     }
 
@@ -326,7 +316,7 @@ public:
         VERIFY_ARE_EQUAL(101, platErrorCode);
         VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
 
-        HCHttpCallCleanup(call);
+        HCHttpCallCloseHandle(call);
         HCGlobalCleanup();
     }
 
@@ -374,7 +364,7 @@ public:
         VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
-        HCHttpCallCleanup(call);
+        HCHttpCallCloseHandle(call);
         HCGlobalCleanup();
     }
 };

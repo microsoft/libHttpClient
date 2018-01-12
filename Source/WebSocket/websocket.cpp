@@ -85,10 +85,19 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args
+    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     ) HC_NOEXCEPT
 try 
 {
+    if (uri == nullptr || websocket == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
     auto httpSingleton = get_http_singleton();
 
     auto connectFunc = httpSingleton->m_websocketConnectFunc;
@@ -96,7 +105,8 @@ try
     {
         try
         {
-            connectFunc(uri, websocket, args);
+            connectFunc(uri, websocket, args, taskSubsystemId, taskGroupId, completionRoutineContext, completionRoutine);
+            websocket->connectCalled = true;
         }
         catch (...)
         {
@@ -111,10 +121,19 @@ CATCH_RETURN()
 HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketSendMessage(
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_z_ PCSTR message
+    _In_z_ PCSTR message,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     ) HC_NOEXCEPT
 try
 {
+    if (message == nullptr || websocket == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
     auto httpSingleton = get_http_singleton();
 
     auto sendFunc = httpSingleton->m_websocketSendMessageFunc;
@@ -122,7 +141,7 @@ try
     {
         try
         {
-            sendFunc(websocket, message);
+            sendFunc(websocket, message, taskSubsystemId, taskGroupId, completionRoutineContext, completionRoutine);
         }
         catch (...)
         {
@@ -140,6 +159,11 @@ HCWebSocketClose(
     ) HC_NOEXCEPT
 try 
 {
+    if (websocket == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
     auto httpSingleton = get_http_singleton();
 
     auto closeFunc = httpSingleton->m_websocketCloseFunc;
@@ -219,8 +243,12 @@ CATCH_RETURN()
 HC_RESULT Internal_HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args
-    )
+    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+)
 {
     // TODO
     return HC_OK;
@@ -228,7 +256,11 @@ HC_RESULT Internal_HCWebSocketConnect(
 
 HC_RESULT Internal_HCWebSocketSendMessage(
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_z_ PCSTR message
+    _In_z_ PCSTR message,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     )
 {
     // TODO

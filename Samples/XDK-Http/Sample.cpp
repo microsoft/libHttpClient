@@ -448,7 +448,7 @@ void Sample::MakeHttpCall()
         if (str != nullptr) responseString = str;
         std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
-        HCHttpCallCleanup(call);
+        HCHttpCallCloseHandle(call);
 
 
         std::wstringstream ss;

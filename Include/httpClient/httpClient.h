@@ -642,9 +642,24 @@ typedef struct HC_WEBSOCKET_CONNECT_INIT_ARGS_STRUCT
     // TODO: add thread affinity options for platforms need it.  UWP and XDK do not 
 } HC_WEBSOCKET_CONNECT_INIT_ARGS;
 
+
 /// <summary>
-/// Connects to the WebSocket.  This API returns immediately and will spin up a thread under the covers.
-/// On UWP and XDK, the thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket
+/// Callback definition for the WebSocket completion routine used by HCWebSocketConnect() and HCWebSocketSendMessage()
+/// </summary>
+/// <param name="completionRoutineContext">The context passed to the completion routine</param>
+/// <param name="websocket">The handle of the HTTP call</param>
+/// <param name="errorCode">The error code of the call. Possible values are HC_OK, or HC_E_FAIL.</param>
+/// <param name="platformErrorCode">The platform specific network error code of the call to be used for logging / debugging</param>
+typedef void(* HCWebSocketCompletionRoutine)(
+    _In_opt_ void* completionRoutineContext,
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ HC_RESULT* errorCode,
+    _In_ uint32_t* platformErrorCode
+    );
+
+/// <summary>
+/// Connects to the WebSocket.
+/// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket
 /// </summary>
 /// <param name="uri">The URI to connect to</param>
 /// <param name="websocket">The handle of the WebSocket</param>
@@ -654,7 +669,11 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args
+    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -665,7 +684,11 @@ HCWebSocketConnect(
 HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketSendMessage(
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_z_ PCSTR message
+    _In_z_ PCSTR message,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     ) HC_NOEXCEPT;
 
 /// <summary>

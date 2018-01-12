@@ -23,12 +23,20 @@ struct HC_WEBSOCKET
 HC_RESULT Internal_HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args
+    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     );
 
 HC_RESULT Internal_HCWebSocketSendMessage(
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_z_ PCSTR message
+    _In_z_ PCSTR message,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     );
 
 HC_RESULT Internal_HCWebSocketClose(
