@@ -67,7 +67,7 @@ Big things that still need to be done in rough priority order:
 * [Done] Prototype XSAPI on top of libHttpClient async task stack
 * [Done] XDK project & XDK implementation 
 * [Done] XDK sample
-* Design WebSocket APIs
+* [Done] Design WebSocket APIs
 * WebSocket implementation for UWP & XDK & Win32
 * Prototype XSAPI on top of libHttpClient WebSocket stack
 * Retry logic
