@@ -26,10 +26,8 @@ try
     call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
     call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
     call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
-    call->enableAssertsForThrottling = httpSingleton->m_enableAssertsForThrottling;
 
-    call->id = httpSingleton->m_lastId.load();
-    httpSingleton->m_lastId++;
+    call->id = ++httpSingleton->m_lastId;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
 
@@ -38,8 +36,26 @@ try
 }
 CATCH_RETURN()
 
+HC_CALL_HANDLE HCHttpCallDuplicateHandle(
+    _In_ HC_CALL_HANDLE call
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr)
+    {
+        return nullptr;
+    }
+
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallDuplicateHandle [ID %llu]", call->id);
+    ++call->refCount;
+
+    return call;
+}
+CATCH_RETURN_WITH(nullptr)
+
+
 HC_API HC_RESULT HC_CALLING_CONV
-HCHttpCallCleanup(
+HCHttpCallCloseHandle(
     _In_ HC_CALL_HANDLE call
     ) HC_NOEXCEPT
 try 
@@ -49,8 +65,13 @@ try
         return HC_E_INVALIDARG;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCleanup [ID %llu]", call->id);
-    delete call;
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCloseHandle [ID %llu]", call->id);
+    int refCount = --call->refCount;
+    if (refCount <= 0)
+    {
+        assert(refCount == 0); // should only fire at 0
+        delete call;
+    }
 
     return HC_OK;
 }

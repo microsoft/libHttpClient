@@ -204,7 +204,7 @@ HCSettingsGetLogLevel(
 /// HCTaskWaitForCompleted(), then get the result of the HTTP call by calling 
 /// HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE.
 /// 
-/// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCleanup() to free the 
+/// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCloseHandle() to free the 
 /// memory associated with the HC_CALL_HANDLE
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
@@ -239,7 +239,7 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 /// HCTaskWaitForCompleted(), then get the result of the HTTP call by calling 
 /// HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE.
 /// 
-/// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCleanup() to free the 
+/// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCloseHandle() to free the 
 /// memory associated with the HC_CALL_HANDLE
 ///
 /// HCHttpCallPerform can only be called once.  Create new HC_CALL_HANDLE to repeat the call.
@@ -274,13 +274,23 @@ HCHttpCallPerform(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// When the HC_CALL_HANDLE is no longer needed, call HCHttpCallCleanup() to free the 
-/// memory associated with the HC_CALL_HANDLE
+/// Increments the reference count on the call object.
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <returns>Returns the duplicated handle.</returns>
+HC_CALL_HANDLE HCHttpCallDuplicateHandle(
+    _In_ HC_CALL_HANDLE call
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Decrements the reference count on the call object. 
+/// When the HC_CALL_HANDLE ref count is 0, HCHttpCallCloseHandle() will 
+/// free the memory associated with the HC_CALL_HANDLE
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
-HCHttpCallCleanup(
+HCHttpCallCloseHandle(
     _In_ HC_CALL_HANDLE call
     ) HC_NOEXCEPT;
 
@@ -434,27 +444,6 @@ HCHttpCallRequestSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     ) HC_NOEXCEPT;
 
-/// <summary>
-/// Sets if assert are enabled if throttled.
-/// This means if HTTP status 429 is returned, a debug assert is triggered.
-/// This causes caller to immediately notice that their calling pattern is too fast and should be corrected.
-///
-/// It is best practice to not call this API, and instead adjust the calling pattern but this is provided
-/// as a temporary way to get unblocked while in early stages of game development.
-///
-/// Default is true.
-///
-/// This must be called prior to calling HCHttpCallPerform.
-/// </summary>
-/// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
-/// <param name="enableAssertsForThrottling">True if assert are enabled if throttled</param>
-/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
-HC_API HC_RESULT HC_CALLING_CONV
-HCHttpCallRequestSetAssertsForThrottling(
-    _In_opt_ HC_CALL_HANDLE call,
-    _In_ bool enableAssertsForThrottling
-    ) HC_NOEXCEPT;
-
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Get APIs
@@ -467,7 +456,7 @@ HCHttpCallRequestSetAssertsForThrottling(
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="responseString">
 /// The response body string of the HTTP call
-/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCloseHandle() is called on it.
 /// </param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
@@ -509,11 +498,11 @@ HCHttpCallResponseGetNetworkErrorCode(
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerName">Response header name for the HTTP call
-/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCloseHandle() is called on it.
 /// </param>
 /// <param name="headerValue">Response header value for the HTTP call.
 /// Returns nullptr if the header doesn't exist.
-/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCloseHandle() is called on it.
 /// </param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
@@ -544,10 +533,10 @@ HCHttpCallResponseGetNumHeaders(
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerIndex">Specific zero based index of the response header</param>
 /// <param name="headerName">Response header name for the HTTP call.
-/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCloseHandle() is called on it.
 /// </param>
 /// <param name="headerValue">Response header value for the HTTP call.
-/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCleanup() is called on it.
+/// The memory for the returned string pointer remains valid for the life of the HC_CALL_HANDLE object until HCHttpCallCloseHandle() is called on it.
 /// </param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
@@ -557,6 +546,182 @@ HCHttpCallResponseGetHeaderAtIndex(
     _Out_ PCSTR* headerName,
     _Out_ PCSTR* headerValue
     ) HC_NOEXCEPT;
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// WebSocket APIs
+// 
+
+/// <summary>
+/// Creates an WebSocket handle
+///
+/// WebSocket usage:
+/// Setup the handler functions with HCWebSocketSetFunctions()
+/// Create a WebSocket handle using HCWebSocketCreate()
+/// Call HCWebSocketSetProxyUri() and HCWebSocketSetHeader() to prepare the HC_WEBSOCKET_HANDLE
+/// Call HCWebSocketConnect() to connect the WebSocket using the HC_WEBSOCKET_HANDLE.
+/// Call HCWebSocketSendMessage() to send a message to the WebSocket using the HC_WEBSOCKET_HANDLE.
+/// Call HCWebSocketClose() to close to the WebSocket using the HC_WEBSOCKET_HANDLE.
+/// 
+/// When the HC_WEBSOCKET_HANDLE is no longer needed, call HCWebSocketCloseHandle() to free the 
+/// memory associated with the HC_WEBSOCKET_HANDLE
+/// </summary>
+/// <param name="websocket">The handle of the websocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketCreate(
+    _Out_ HC_WEBSOCKET_HANDLE* websocket
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Set the proxy URI for the WebSocket
+/// This must be called prior to calling HCWebsocketConnect.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="proxyUri">The proxy URI for the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketSetProxyUri(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_z_ PCSTR proxyUri
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Set a header for the WebSocket
+/// This must be called prior to calling HCWebsocketConnect.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="headerName">Header name for the WebSocket</param>
+/// <param name="headerValue">Header value for the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketSetHeader(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_z_ PCSTR headerName,
+    _In_z_ PCSTR headerValue
+    ) HC_NOEXCEPT;
+
+
+/// <summary>
+/// A callback invoked every time a WebSocket receives an incoming message
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
+/// <param name="incomingBodyString">Body of the incoming message as a string value, only if the message type is UTF-8.</param>
+typedef void
+(HC_CALLING_CONV* HC_WEBSOCKET_MESSAGE_FUNC)(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_z_ PCSTR incomingBodyString
+    );
+
+/// <summary>
+/// A callback invoked when a WebSocket is closed
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <param name="closeStatus">The status of why the WebSocket was closed</param>
+typedef void
+(HC_CALLING_CONV* HC_WEBSOCKET_CLOSE_EVENT_FUNC)(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ HC_WEBSOCKET_CLOSE_STATUS closeStatus
+    );
+
+/// <summary>
+/// Sets the WebSocket functions to allow callers to respond to incoming messages and WebSocket close events.
+/// </summary>
+/// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
+/// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketSetFunctions(
+    _In_opt_ HC_WEBSOCKET_MESSAGE_FUNC messageFunc,
+    _In_opt_ HC_WEBSOCKET_CLOSE_EVENT_FUNC closeFunc
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Struct for WebSocket connection args
+/// </summary>
+typedef struct HC_WEBSOCKET_CONNECT_INIT_ARGS_STRUCT
+{
+    // TODO: add thread affinity options for platforms need it.  UWP and XDK do not 
+} HC_WEBSOCKET_CONNECT_INIT_ARGS;
+
+
+/// <summary>
+/// Callback definition for the WebSocket completion routine used by HCWebSocketConnect() and HCWebSocketSendMessage()
+/// </summary>
+/// <param name="completionRoutineContext">The context passed to the completion routine</param>
+/// <param name="websocket">The handle of the HTTP call</param>
+/// <param name="errorCode">The error code of the call. Possible values are HC_OK, or HC_E_FAIL.</param>
+/// <param name="platformErrorCode">The platform specific network error code of the call to be used for logging / debugging</param>
+typedef void(* HCWebSocketCompletionRoutine)(
+    _In_opt_ void* completionRoutineContext,
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ HC_RESULT* errorCode,
+    _In_ uint32_t* platformErrorCode
+    );
+
+/// <summary>
+/// Connects to the WebSocket.
+/// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket
+/// </summary>
+/// <param name="uri">The URI to connect to</param>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="args">Struct for describing the WebSocket connection args</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketConnect(
+    _In_z_ PCSTR uri,
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Send message the WebSocket
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketSendMessage(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_z_ PCSTR message,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Closes the WebSocket
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketClose(
+    _In_ HC_WEBSOCKET_HANDLE websocket
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Increments the reference count on the call object.
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <returns>Returns the duplicated handle.</returns>
+HC_WEBSOCKET_HANDLE HCWebSocketDuplicateHandle(
+    _In_ HC_WEBSOCKET_HANDLE websocket
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Decrements the reference count on the WebSocket object. 
+/// When the ref count is 0, HCWebSocketCloseHandle() will 
+/// free the memory associated with the HC_WEBSOCKET_HANDLE
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketCloseHandle(
+    _In_ HC_WEBSOCKET_HANDLE websocket
+    ) HC_NOEXCEPT;
+
 
 #if defined(__cplusplus)
 } // end extern "C"

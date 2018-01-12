@@ -34,7 +34,7 @@ enum HCTraceLevel
 // Configuration
 //------------------------------------------------------------------------------
 // All macros used for configuration are always defined. Clients can define
-// their own values for these macros to control tracing behaviour
+// their own values for these macros to control tracing behavior
 //
 // HC_TRACE_BUILD_LEVEL [trace level (0-5)]
 //     controls the maximum level of verbosity that will be built in the

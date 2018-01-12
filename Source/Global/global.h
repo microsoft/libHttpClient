@@ -63,7 +63,13 @@ struct http_singleton
     uint32_t m_timeoutInSeconds;
     uint32_t m_timeoutWindowInSeconds;
     uint32_t m_retryDelayInSeconds;
-    bool m_enableAssertsForThrottling;
+
+    // WebSocket state
+    HC_WEBSOCKET_MESSAGE_FUNC m_websocketMessageFunc;
+    HC_WEBSOCKET_CLOSE_EVENT_FUNC m_websocketCloseEventFunc;
+    HC_WEBSOCKET_CONNECT_FUNC m_websocketConnectFunc;
+    HC_WEBSOCKET_SEND_MESSAGE_FUNC m_websocketSendMessageFunc;
+    HC_WEBSOCKET_CLOSE_FUNC m_websocketCloseFunc;
 
     // Mock state
     std::mutex m_mocksLock;

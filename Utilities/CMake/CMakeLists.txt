@@ -100,6 +100,11 @@ set(Global_Source_Files
     ../../../Source/Global/global.h       
     )
 
+set(WebSocket_Source_Files
+    ../../../Source/WebSocket/websocket.h
+    ../../../Source/WebSocket/websocket.cpp
+    )
+
 set(Mock_Source_Files        
     ../../../Source/Mock/mock.cpp
     ../../../Source/Mock/mock.h
@@ -185,6 +190,7 @@ message(STATUS "Common source group")
 source_group("Header Files" FILES ${Public_Source_Files})
 source_group("C++ Source\\Common" FILES ${Common_Source_Files})
 source_group("C++ Source\\Global" FILES ${Global_Source_Files})
+source_group("C++ Source\\WebSocket" FILES ${WebSocket_Source_Files})
 source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 source_group("C++ Source\\Mock" FILES ${Mock_Source_Files})
 source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})

@@ -27,7 +27,7 @@ typedef void
 /// get information about the HTTP call and perform the call as desired and set 
 /// the response with HCHttpCallResponseSet*().
 /// </summary>
-/// <param name="performFunc">A callback where that implements HTTP perform function as desired. 
+/// <param name="performFunc">A callback that implements HTTP perform function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
 HC_API void HC_CALLING_CONV
@@ -292,6 +292,73 @@ HCHttpCallResponseSetHeader(
     _In_z_ PCSTR headerName,
     _In_z_ PCSTR headerValue
     ) HC_NOEXCEPT;
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// WebSocket Set APIs
+// 
+
+/// <summary>
+/// Function to connects to the WebSocket.  This API returns immediately and will spin up a thread under the covers.
+/// On UWP and XDK, the thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket
+/// </summary>
+/// <param name="uri">The URI to connect to</param>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="args">Struct for describing the WebSocket connection args</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+typedef HC_RESULT
+(HC_CALLING_CONV* HC_WEBSOCKET_CONNECT_FUNC)(
+    _In_z_ PCSTR uri,
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    );
+
+/// <summary>
+/// Send message the WebSocket
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+typedef HC_RESULT
+(HC_CALLING_CONV* HC_WEBSOCKET_SEND_MESSAGE_FUNC)(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_z_ PCSTR message,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    );
+
+/// <summary>
+/// Closes the WebSocket
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+typedef HC_RESULT
+(HC_CALLING_CONV* HC_WEBSOCKET_CLOSE_FUNC)(
+    _In_ HC_WEBSOCKET_HANDLE websocket
+    );
+
+/// <summary>
+/// Optionally allows the caller to implement the WebSocket functions.
+/// </summary>
+/// <param name="websocketConnectFunc">A callback that implements WebSocket connect function as desired. 
+/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
+/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <param name="websocketCloseFunc">A callback that implements WebSocket close function as desired. 
+/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCGlobalSetWebSocketFunctions(
+    _In_opt_ HC_WEBSOCKET_CONNECT_FUNC websocketConnectFunc,
+    _In_opt_ HC_WEBSOCKET_SEND_MESSAGE_FUNC websocketSendMessageFunc,
+    _In_opt_ HC_WEBSOCKET_CLOSE_FUNC websocketCloseFunc
+    ) HC_NOEXCEPT;
+
 
 #if defined(__cplusplus)
 } // end extern "C"

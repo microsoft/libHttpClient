@@ -62,7 +62,7 @@ public:
                 VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
-                HCHttpCallCleanup(call);
+                HCHttpCallCloseHandle(call);
                 g_gotCall = true;
             });
 
@@ -100,7 +100,7 @@ public:
                 VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
-                HCHttpCallCleanup(call);
+                HCHttpCallCloseHandle(call);
                 g_gotCall = true;
             });
 
@@ -126,7 +126,7 @@ public:
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
             VERIFY_ARE_EQUAL_STR("", responseStr);
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
             g_gotCall = true;
         });
 
@@ -167,7 +167,7 @@ public:
                 VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
-                HCHttpCallCleanup(call);
+                HCHttpCallCloseHandle(call);
                 g_gotCall = true;
             });
 
@@ -193,7 +193,7 @@ public:
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
             VERIFY_ARE_EQUAL_STR("", responseStr);
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
             g_gotCall = true;
         });
 
@@ -221,7 +221,7 @@ public:
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
             VERIFY_ARE_EQUAL_STR("", responseStr);
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
             g_gotCall = true;
         });
 
@@ -249,7 +249,7 @@ public:
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
             VERIFY_ARE_EQUAL_STR("", responseStr);
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
             g_gotCall = true;
         });
 
@@ -291,7 +291,7 @@ public:
                 VERIFY_ARE_EQUAL(300, platErrCode);
                 VERIFY_ARE_EQUAL(400, statusCode);
                 VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
-                HCHttpCallCleanup(call);
+                HCHttpCallCloseHandle(call);
                 g_gotCall = true;
             });
 
@@ -318,7 +318,7 @@ public:
             VERIFY_ARE_EQUAL(300, platErrCode);
             VERIFY_ARE_EQUAL(400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
             g_gotCall = true;
         });
 
@@ -346,7 +346,7 @@ public:
             VERIFY_ARE_EQUAL(300, platErrCode);
             VERIFY_ARE_EQUAL(400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
-            HCHttpCallCleanup(call);
+            HCHttpCallCloseHandle(call);
             g_gotCall = true;
         });
 

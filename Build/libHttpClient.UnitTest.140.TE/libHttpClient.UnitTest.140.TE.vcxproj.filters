@@ -131,6 +131,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="C++ Public Includes">
+      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source">
+      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
+    </Filter>
     <Filter Include="C++ Source\UnitTests\Support">
       <UniqueIdentifier>{BCE7FDEA-54B9-3AB5-AB87-41CB4718BCE1}</UniqueIdentifier>
     </Filter>
@@ -163,12 +169,6 @@
     </Filter>
     <Filter Include="C++ Source\UnitTests">
       <UniqueIdentifier>{9DD24917-C0AC-36D9-A105-B9A606812FD6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source">
-      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
