@@ -6,8 +6,6 @@
 
 #include <httpClient/trace.h>
 
-HC_DECLARE_TRACE_AREA(HTTPCLIENT);
-
 http_internal_string utf8_from_utf16(http_internal_wstring const& utf16)
 {
     return utf8_from_utf16(utf16.data(), utf16.size());

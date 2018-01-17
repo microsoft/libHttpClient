@@ -1,29 +1,29 @@
 cmake_minimum_required (VERSION 3.6)
 
 if( SHIP )
-	set (PROJECT_NAME libHttpClient.Ship)
+    set (PROJECT_NAME libHttpClient.Ship)
 elseif( UNITTEST )
-	if( TAEF )
-		set (PROJECT_NAME libHttpClient.UnitTest.140.TAEF)
-	elseif( TE )
-		set (PROJECT_NAME libHttpClient.UnitTest.140.TE)
-	endif()
+    if( TAEF )
+        set (PROJECT_NAME libHttpClient.UnitTest.140.TAEF)
+    elseif( TE )
+        set (PROJECT_NAME libHttpClient.UnitTest.140.TE)
+    endif()
 else()
-	if( XDK )
-		if( WINRT )
-			set (PROJECT_NAME libHttpClient.XDK.WinRT)
-		else()
-			set (PROJECT_NAME libHttpClient.XDK.C)
-		endif()
+    if( XDK )
+        if( WINRT )
+            set (PROJECT_NAME libHttpClient.XDK.WinRT)
+        else()
+            set (PROJECT_NAME libHttpClient.XDK.C)
+        endif()
     elseif( BUILDWIN32 )
         set (PROJECT_NAME libHttpClient.Win32.C)
-	else()
-		if( WINRT )
-			set (PROJECT_NAME libHttpClient.UWP.WinRT)
-		else()
-			set (PROJECT_NAME libHttpClient.UWP.C)
-		endif()
-	endif()
+    else()
+        if( WINRT )
+            set (PROJECT_NAME libHttpClient.UWP.WinRT)
+        else()
+            set (PROJECT_NAME libHttpClient.UWP.C)
+        endif()
+    endif()
 endif()
 
 
@@ -104,7 +104,11 @@ set(WebSocket_Source_Files
     ../../../Source/WebSocket/websocket.h
     ../../../Source/WebSocket/websocket.cpp
     )
-
+    
+set(WinRT_WebSocket_Source_Files
+    ../../../Source/WebSocket/WinRT/winrt_websocket.cpp
+    )
+    
 set(Mock_Source_Files        
     ../../../Source/Mock/mock.cpp
     ../../../Source/Mock/mock.h
@@ -136,6 +140,10 @@ set(Unittest_HTTP_Source_Files
     ../../../Source/HTTP/Unittest/http_unittest.cpp
     )
 
+set(Unittest_WebSocket_Source_Files
+    ../../../Source/WebSocket/Unittest/websocket_unittest.cpp
+    )
+
 set(WinRTHttpClient_HTTP_Source_Files
     ../../../Source/HTTP/WinRTHttpClient/http_winrthttpclient.cpp
     )
@@ -161,16 +169,16 @@ set(Logger_Source_Files
 
 
 set(UnitTests_Source_Files_Support
-	../../../Tests/UnitTests/Support/DefineTestMacros.h
-	../../../Tests/UnitTests/Support/UnitTestIncludes.h
+    ../../../Tests/UnitTests/Support/DefineTestMacros.h
+    ../../../Tests/UnitTests/Support/UnitTestIncludes.h
     )
 
 set(Taef_UnitTests_Source_Files
-	../../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
-	../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
-	../../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
-	../../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
-	../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
+    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
+    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
+    ../../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
+    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
+    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
     )
 
 set(TE_UnitTests_Source_Files
@@ -180,10 +188,11 @@ set(TE_UnitTests_Source_Files
     )
 
 set(UnitTests_Source_Files_Tests
-	../../../Tests/UnitTests/Tests/HttpTests.cpp
-	../../../Tests/UnitTests/Tests/MockTests.cpp
+    ../../../Tests/UnitTests/Tests/HttpTests.cpp
+    ../../../Tests/UnitTests/Tests/MockTests.cpp
     ../../../Tests/UnitTests/Tests/GlobalTests.cpp
     ../../../Tests/UnitTests/Tests/TaskTests.cpp
+    ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 
 message(STATUS "Common source group")
@@ -200,6 +209,7 @@ set( SOURCE_FILES
     ${Public_Source_Files}
     ${Common_Source_Files}
     ${Global_Source_Files}
+    ${WebSocket_Source_Files}
     ${Task_Source_Files}
     ${Mock_Source_Files}
     ${HTTP_Source_Files}
@@ -213,27 +223,44 @@ endif()
 if( UNITTEST )
     message(STATUS "Unittest source group")
     source_group("C++ Source\\HTTP\\Unittest" FILES ${Unittest_HTTP_Source_Files})
+    source_group("C++ Source\\WebSocket\\Unittest" FILES ${Unittest_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${Unittest_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${Unittest_WebSocket_Source_Files}
         )
 endif()
 
 if( UWP )
     message(STATUS "UWP source group")
-    source_group("C++ Source\\HTTP\\WinRTHttpClient" FILES ${WinRTHttpClient_HTTP_Source_Files})
+    source_group("C++ Source\\HTTP\\WinRT" FILES ${WinRTHttpClient_HTTP_Source_Files})
+    source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
 
     list(APPEND
         SOURCE_FILES
         ${WinRTHttpClient_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${WinRT_WebSocket_Source_Files}
         )
 endif()
     
-if( BUILDWIN32 OR XDK )
+if( XDK )
+    source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
+    source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
+    source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
+
+    list(APPEND
+        SOURCE_FILES
+        ${XMLHttp_HTTP_Source_Files}
+        ${Common_Windows_Source_Files}
+        ${WinRT_WebSocket_Source_Files}
+        )
+endif()
+
+if( BUILDWIN32 )
     source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
 
@@ -246,28 +273,28 @@ endif()
 
 if( TAEF )
     message(STATUS "TAEF source group")
-	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
-	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
+    source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
+    source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
     source_group("C++ Source\\UnitTests\\Support" FILES ${Taef_UnitTests_Source_Files})
-	list(APPEND
-		SOURCE_FILES
-		${UnitTests_Source_Files_Support}
+    list(APPEND
+        SOURCE_FILES
+        ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${Taef_UnitTests_Source_Files}
-		)
+        )
 endif()
 
 if( TE )
     message(STATUS "TE source group")
-	source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
-	source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
-        source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
-	list(APPEND
-		SOURCE_FILES
-		${UnitTests_Source_Files_Support}
+    source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
+    source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
+    source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
+    list(APPEND
+        SOURCE_FILES
+        ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${TE_UnitTests_Source_Files}
-		)
+        )
 endif()
 
 list( SORT SOURCE_FILES )

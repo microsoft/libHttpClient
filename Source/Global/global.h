@@ -67,6 +67,7 @@ struct http_singleton
     // WebSocket state
     HC_WEBSOCKET_MESSAGE_FUNC m_websocketMessageFunc;
     HC_WEBSOCKET_CLOSE_EVENT_FUNC m_websocketCloseEventFunc;
+
     HC_WEBSOCKET_CONNECT_FUNC m_websocketConnectFunc;
     HC_WEBSOCKET_SEND_MESSAGE_FUNC m_websocketSendMessageFunc;
     HC_WEBSOCKET_CLOSE_FUNC m_websocketCloseFunc;

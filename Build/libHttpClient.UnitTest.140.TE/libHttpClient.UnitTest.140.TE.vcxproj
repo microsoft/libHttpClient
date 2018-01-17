@@ -212,6 +212,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Unittest\websocket_unittest.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h" />
@@ -221,6 +224,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />

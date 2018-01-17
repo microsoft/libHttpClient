@@ -108,10 +108,10 @@ HCHttpCallRequestGetHeader(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Gets the number of request headers in the the HTTP call
+/// Gets the number of request headers in the HTTP call
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="numHeaders">the number of request headers in the the HTTP call</param>
+/// <param name="numHeaders">the number of request headers in the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetNumHeaders(
@@ -120,7 +120,7 @@ HCHttpCallRequestGetNumHeaders(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Gets the request headers at specific zero based index in the the HTTP call.
+/// Gets the request headers at specific zero based index in the HTTP call.
 /// Use HCHttpCallRequestGetNumHeaders() to know how many request headers there are in the HTTP call.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
@@ -339,7 +339,8 @@ typedef HC_RESULT
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 typedef HC_RESULT
 (HC_CALLING_CONV* HC_WEBSOCKET_CLOSE_FUNC)(
-    _In_ HC_WEBSOCKET_HANDLE websocket
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ HC_WEBSOCKET_CLOSE_STATUS closeStatus
     );
 
 /// <summary>
@@ -358,6 +359,90 @@ HCGlobalSetWebSocketFunctions(
     _In_opt_ HC_WEBSOCKET_SEND_MESSAGE_FUNC websocketSendMessageFunc,
     _In_opt_ HC_WEBSOCKET_CLOSE_FUNC websocketCloseFunc
     ) HC_NOEXCEPT;
+
+/// <summary>
+/// Gets the functions that implement the WebSocket functions.
+/// </summary>
+/// <param name="websocketConnectFunc">A callback that implements WebSocket connect function as desired. 
+/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
+/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <param name="websocketCloseFunc">A callback that implements WebSocket close function as desired. 
+/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCGlobalGetWebSocketFunctions(
+    _Out_ HC_WEBSOCKET_CONNECT_FUNC* websocketConnectFunc,
+    _Out_ HC_WEBSOCKET_SEND_MESSAGE_FUNC* websocketSendMessageFunc,
+    _Out_ HC_WEBSOCKET_CLOSE_FUNC* websocketCloseFunc
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Get the proxy URI for the WebSocket
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="proxyUri">The proxy URI for the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetProxyUri(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _Out_ PCSTR* proxyUri
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Get a header for the WebSocket
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="headerName">Header name for the WebSocket</param>
+/// <param name="headerValue">Header value for the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, HC_E_OUTOFMEMORY, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetHeader(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_z_ PCSTR headerName,
+    _Out_ PCSTR* headerValue
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Gets the number of headers in the WebSocket
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="numHeaders">the number of headers in the WebSocket</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetNumHeaders(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _Out_ uint32_t* numHeaders
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Gets the headers at specific zero based index in the WebSocket.
+/// Use HCHttpCallGetNumHeaders() to know how many headers there are in the HTTP call.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="headerIndex">Specific zero based index of the header</param>
+/// <param name="headerName">Header name for the HTTP call</param>
+/// <param name="headerValue">Header value for the HTTP call</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetHeaderAtIndex(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ uint32_t headerIndex,
+    _Out_ PCSTR* headerName,
+    _Out_ PCSTR* headerValue
+) HC_NOEXCEPT;
+
+/// <summary>
+/// Gets the WebSocket functions to allow callers to respond to incoming messages and WebSocket close events.
+/// </summary>
+/// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
+/// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetFunctions(
+    _Out_ HC_WEBSOCKET_MESSAGE_FUNC* messageFunc,
+    _Out_ HC_WEBSOCKET_CLOSE_EVENT_FUNC* closeFunc
+    ) HC_NOEXCEPT;
+
 
 
 #if defined(__cplusplus)

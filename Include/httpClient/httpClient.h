@@ -513,11 +513,11 @@ HCHttpCallResponseGetHeader(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Gets the number of response headers in the the HTTP call
+/// Gets the number of response headers in the HTTP call
 /// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="numHeaders">The number of response headers in the the HTTP call</param>
+/// <param name="numHeaders">The number of response headers in the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallResponseGetNumHeaders(
@@ -526,7 +526,7 @@ HCHttpCallResponseGetNumHeaders(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Gets the response headers at specific zero based index in the the HTTP call.
+/// Gets the response headers at specific zero based index in the HTTP call.
 /// Use HCHttpCallResponseGetNumHeaders() to know how many response headers there are in the HTTP call.
 /// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>

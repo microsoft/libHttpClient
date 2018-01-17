@@ -65,21 +65,21 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestHCTaskCreateExecuteDelayed);
 
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         g_calledTestTaskExecute = false;
         g_calledTestTaskWriteResults = false;
         g_calledTestTaskCompleteRoutine = false;
 
         uint64_t taskGroupId = 1;
         HC_TASK_HANDLE taskHandle;
-        HCTaskCreate(
+        VERIFY_ARE_EQUAL(HC_OK, HCTaskCreate(
             HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN,
             taskGroupId,
             TestTaskExecute, (void*)1,
             TestTaskWriteResults, (void*)2,
             TestTaskCompleteRoutine, (void*)3,
             &taskHandle
-            );
+            ));
 
         VERIFY_ARE_EQUAL(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, HCTaskGetSubsystemId(taskHandle));
 
@@ -104,7 +104,7 @@ public:
         g_calledTestTaskWriteResults = false;
         g_calledTestTaskCompleteRoutine = false;
 
-        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN);
+        VERIFY_ARE_EQUAL(HC_OK, HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
 
         // Verify execute called
         VERIFY_ARE_EQUAL(true, g_calledTestTaskExecute);
@@ -117,7 +117,7 @@ public:
         VERIFY_ARE_EQUAL(0, HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
 
         // Nothing should happen if we do task group 0
-        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, 0);
+        VERIFY_ARE_EQUAL(HC_OK, HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, 0));
         VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskWriteResults);
         VERIFY_ARE_EQUAL(false, g_calledTestTaskCompleteRoutine);
@@ -125,7 +125,7 @@ public:
         VERIFY_ARE_EQUAL(0, HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
 
         // Verify write & complete were called after 
-        HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId);
+        VERIFY_ARE_EQUAL(HC_OK, HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId));
         VERIFY_ARE_EQUAL(0, HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN, taskGroupId));
         VERIFY_ARE_EQUAL(0, HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_MIDDLEWARE_RESERVED_MIN));
         VERIFY_ARE_EQUAL(false, g_calledTestTaskExecute);
@@ -133,11 +133,10 @@ public:
         VERIFY_ARE_EQUAL(true, g_calledTestTaskCompleteRoutine);
         VERIFY_ARE_EQUAL(true, HCTaskIsCompleted(taskHandle));
 
-        HCTaskWaitForCompleted(taskHandle, 0);
+        VERIFY_ARE_EQUAL(true, HCTaskWaitForCompleted(taskHandle, 0));
 
         HCGlobalCleanup();
     }
-
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
