@@ -23,10 +23,10 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
             VERIFY_ARE_EQUAL(hr, hrVerify); \
         }
 
-static bool g_memAllocCalled = false;
-static bool g_memFreeCalled = false;
+bool g_memAllocCalled = false;
+bool g_memFreeCalled = false;
 
-static _Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV MemAlloc(
+_Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV MemAlloc(
     _In_ size_t size,
     _In_ HC_MEMORY_TYPE memoryType
     )   
@@ -35,7 +35,7 @@ static _Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV Mem
     return new (std::nothrow) int8_t[size];
 }
 
-static void HC_CALLING_CONV MemFree(
+void HC_CALLING_CONV MemFree(
     _In_ _Post_invalid_ void* pointer,
     _In_ HC_MEMORY_TYPE memoryType
     )
@@ -65,7 +65,7 @@ public:
         g_memAllocCalled = false;
         g_memFreeCalled = false;
 
-        HCMemSetFunctions(&MemAlloc, &MemFree);
+        VERIFY_ARE_EQUAL(HC_OK, HCMemSetFunctions(&MemAlloc, &MemFree));
 
         {
             http_internal_vector<int> v;
@@ -81,11 +81,11 @@ public:
 
         HC_MEM_ALLOC_FUNC memAllocFunc = nullptr;
         HC_MEM_FREE_FUNC memFreeFunc = nullptr;
-        HCMemGetFunctions(&memAllocFunc, &memFreeFunc);
+        VERIFY_ARE_EQUAL(HC_OK, HCMemGetFunctions(&memAllocFunc, &memFreeFunc));
         VERIFY_IS_NOT_NULL(memAllocFunc);
         VERIFY_IS_NOT_NULL(memFreeFunc);
 
-        HCMemSetFunctions(nullptr, nullptr);
+        VERIFY_ARE_EQUAL(HC_OK, HCMemSetFunctions(nullptr, nullptr));
 
         g_memAllocCalled = false;
         g_memFreeCalled = false;
@@ -105,7 +105,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestGlobalInit);
 
         VERIFY_IS_NULL(get_http_singleton());
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         VERIFY_IS_NOT_NULL(get_http_singleton());
         HCGlobalCleanup();
         VERIFY_IS_NULL(get_http_singleton());
@@ -113,70 +113,70 @@ public:
 
     DEFINE_TEST_CASE(TestGlobalPerformCallback)
     {
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         g_PerformCallbackCalled = false;
         HC_HTTP_CALL_PERFORM_FUNC func = nullptr;
-        HCGlobalGetHttpCallPerformFunction(&func);
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalGetHttpCallPerformFunction(&func));
         VERIFY_IS_NOT_NULL(func);
 
         HCGlobalSetHttpCallPerformFunction(&PerformCallback);
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
-        HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
             [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
             {
                 HC_RESULT errCode = HC_OK;
                 uint32_t platErrCode = 0;
-                HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
+                VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
                 uint32_t statusCode = 0;
-                HCHttpCallResponseGetStatusCode(call, &statusCode);
-            });
-        HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+                VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
+            }));
+        VERIFY_ARE_EQUAL(HC_OK, HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME));
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
-        HCHttpCallCloseHandle(call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCloseHandle(call));
         HCGlobalCleanup();
     }
 
     DEFINE_TEST_CASE(TestSettings)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
 
         HC_LOG_LEVEL level;
 
-        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_OFF);
-        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_OFF));
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsGetLogLevel(&level));
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_OFF, level);
 
-        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_ERROR);
-        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_ERROR));
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsGetLogLevel(&level));
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_ERROR, level);
 
-        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_WARNING);
-        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_WARNING));
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsGetLogLevel(&level));
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_WARNING, level);
 
-        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_IMPORTANT);
-        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_IMPORTANT));
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsGetLogLevel(&level));
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_IMPORTANT, level);
 
-        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_INFORMATION);
-        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_INFORMATION));
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsGetLogLevel(&level));
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_INFORMATION, level);
 
-        HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
-        HCSettingsGetLogLevel(&level);
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE));
+        VERIFY_ARE_EQUAL(HC_OK, HCSettingsGetLogLevel(&level));
         VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_VERBOSE, level);
 
-        HCHttpCallRequestSetTimeoutWindow(nullptr, 1000);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetTimeoutWindow(nullptr, 1000));
         uint32_t timeout = 0;
-        HCHttpCallRequestGetTimeoutWindow(nullptr, &timeout);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetTimeoutWindow(nullptr, &timeout));
         VERIFY_ARE_EQUAL(1000, timeout);
 
-        HCHttpCallRequestSetRetryDelay(nullptr, 500);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetRetryDelay(nullptr, 500));
         uint32_t retryDelayInSeconds = 0;
-        HCHttpCallRequestGetRetryDelay(nullptr, &retryDelayInSeconds);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetRetryDelay(nullptr, &retryDelayInSeconds));
 
         HCGlobalCleanup();
     }
@@ -185,60 +185,60 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestCall);
 
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         HC_CALL_HANDLE call = nullptr;
-        HCHttpCallCreate(&call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCreate(&call));
         VERIFY_IS_NOT_NULL(call);
-        HCHttpCallCloseHandle(call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCloseHandle(call));
         HCGlobalCleanup();
     }
 
     DEFINE_TEST_CASE(TestRequest)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequest);
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         HC_CALL_HANDLE call = nullptr;
-        HCHttpCallCreate(&call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCreate(&call));
 
-        HCHttpCallRequestSetUrl(call, "1", "2");
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
         const CHAR* t1 = nullptr;
         const CHAR* t2 = nullptr;
-        HCHttpCallRequestGetUrl(call, &t1, &t2);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetUrl(call, &t1, &t2));
         VERIFY_ARE_EQUAL_STR("1", t1);
         VERIFY_ARE_EQUAL_STR("2", t2);
 
-        HCHttpCallRequestSetRequestBodyString(call, "4");
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetRequestBodyString(call, "4"));
         const BYTE* s1 = 0;
         uint32_t bodySize = 0;
         const CHAR* t3 = nullptr;
-        HCHttpCallRequestGetRequestBodyString(call, &t3);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetRequestBodyString(call, &t3));
         VERIFY_ARE_EQUAL_STR("4", t3);
 
-        HCHttpCallRequestGetRequestBodyBytes(call, &s1, &bodySize);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetRequestBodyBytes(call, &s1, &bodySize));
         VERIFY_ARE_EQUAL(bodySize, 1);
         VERIFY_ARE_EQUAL(s1[0], '4');
         std::string s2( reinterpret_cast<char const*>(s1), bodySize);
         VERIFY_ARE_EQUAL_STR("4", s2.c_str());
 
-        HCHttpCallRequestSetRetryAllowed(call, true);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetRetryAllowed(call, true));
         bool retry = false;
-        HCHttpCallRequestGetRetryAllowed(call, &retry);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetRetryAllowed(call, &retry));
         VERIFY_ARE_EQUAL(true, retry);
 
-        HCHttpCallRequestSetTimeout(call, 2000);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetTimeout(call, 2000));
         uint32_t timeout = 0;
-        HCHttpCallRequestGetTimeout(call, &timeout);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetTimeout(call, &timeout));
         VERIFY_ARE_EQUAL(2000, timeout);
                 
-        HCHttpCallRequestSetTimeoutWindow(call, 1000);
-        HCHttpCallRequestGetTimeoutWindow(call, &timeout);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetTimeoutWindow(call, 1000));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetTimeoutWindow(call, &timeout));
         VERIFY_ARE_EQUAL(1000, timeout);
 
-        HCHttpCallRequestSetRetryDelay(call, 500);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetRetryDelay(call, 500));
         uint32_t retryDelayInSeconds = 0;
-        HCHttpCallRequestGetRetryDelay(call, &retryDelayInSeconds);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetRetryDelay(call, &retryDelayInSeconds));
 
-        HCHttpCallCloseHandle(call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCloseHandle(call));
         HCGlobalCleanup();
     }
 
@@ -246,47 +246,47 @@ public:
     DEFINE_TEST_CASE(TestRequestHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         HC_CALL_HANDLE call = nullptr;
-        HCHttpCallCreate(&call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCreate(&call));
 
         uint32_t numHeaders = 0;
-        HCHttpCallRequestGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(0, numHeaders);
 
-        HCHttpCallRequestSetHeader(call, "testHeader", "testValue");
-        HCHttpCallRequestGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallRequestSetHeader(call, "testHeader", "testValue2");
-        HCHttpCallRequestGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue2"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
         const CHAR* t1 = nullptr;
-        HCHttpCallRequestGetHeader(call, "testHeader", &t1);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetHeader(call, "testHeader", &t1));
         VERIFY_ARE_EQUAL_STR("testValue2", t1);
-        HCHttpCallRequestGetHeader(call, "testHeader2", &t1);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetHeader(call, "testHeader2", &t1));
         VERIFY_IS_NULL(t1);
-        HCHttpCallRequestGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallRequestSetHeader(call, "testHeader", "testValue");
-        HCHttpCallRequestSetHeader(call, "testHeader2", "testValue2");
-        HCHttpCallRequestGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestSetHeader(call, "testHeader2", "testValue2"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(2, numHeaders);
 
         const CHAR* hn0 = nullptr;
         const CHAR* hv0 = nullptr;
         const CHAR* hn1 = nullptr;
         const CHAR* hv1 = nullptr;
-        HCHttpCallRequestGetHeaderAtIndex(call, 0, &hn0, &hv0);
-        HCHttpCallRequestGetHeaderAtIndex(call, 1, &hn1, &hv1);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetHeaderAtIndex(call, 0, &hn0, &hv0));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallRequestGetHeaderAtIndex(call, 1, &hn1, &hv1));
         VERIFY_ARE_EQUAL_STR("testHeader", hn0);
         VERIFY_ARE_EQUAL_STR("testValue", hv0);
         VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
-        HCHttpCallCloseHandle(call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCloseHandle(call));
         HCGlobalCleanup();
     }
 
@@ -294,29 +294,29 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponse);
 
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         HC_CALL_HANDLE call = nullptr;
-        HCHttpCallCreate(&call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCreate(&call));
 
-        HCHttpCallResponseSetResponseString(call, "test1");
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseSetResponseString(call, "test1"));
         const CHAR* t1 = nullptr;
-        HCHttpCallResponseGetResponseString(call, &t1);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetResponseString(call, &t1));
         VERIFY_ARE_EQUAL_STR("test1", t1);
 
-        HCHttpCallResponseSetStatusCode(call, 200);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseSetStatusCode(call, 200));
         uint32_t statusCode = 0;
-        HCHttpCallResponseGetStatusCode(call, &statusCode);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
         VERIFY_ARE_EQUAL(200, statusCode);
 
-        HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, 101);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, 101));
         HC_RESULT errCode = HC_OK;
         uint32_t errorCode = 0;
         uint32_t platErrorCode = 0;
-        HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrorCode);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrorCode));
         VERIFY_ARE_EQUAL(101, platErrorCode);
         VERIFY_ARE_EQUAL(HC_E_OUTOFMEMORY, errCode);
 
-        HCHttpCallCloseHandle(call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCloseHandle(call));
         HCGlobalCleanup();
     }
 
@@ -324,47 +324,47 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
 
-        HCGlobalInitialize();
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
         HC_CALL_HANDLE call = nullptr;
         HCHttpCallCreate(&call);
 
         uint32_t numHeaders = 0;
-        HCHttpCallResponseGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(0, numHeaders);
 
-        HCHttpCallResponseSetHeader(call, "testHeader", "testValue");
-        HCHttpCallResponseGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallResponseSetHeader(call, "testHeader", "testValue2");
-        HCHttpCallResponseGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue2"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
         const CHAR* t1 = nullptr;
-        HCHttpCallResponseGetHeader(call, "testHeader", &t1);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetHeader(call, "testHeader", &t1));
         VERIFY_ARE_EQUAL_STR("testValue2", t1);
-        HCHttpCallResponseGetHeader(call, "testHeader2", &t1);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetHeader(call, "testHeader2", &t1));
         VERIFY_IS_NULL(t1);
-        HCHttpCallResponseGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        HCHttpCallResponseSetHeader(call, "testHeader", "testValue");
-        HCHttpCallResponseSetHeader(call, "testHeader2", "testValue2");
-        HCHttpCallResponseGetNumHeaders(call, &numHeaders);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseSetHeader(call, "testHeader2", "testValue2"));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(2, numHeaders);
 
         const CHAR* hn0 = nullptr;
         const CHAR* hv0 = nullptr;
         const CHAR* hn1 = nullptr;
         const CHAR* hv1 = nullptr;
-        HCHttpCallResponseGetHeaderAtIndex(call, 0, &hn0, &hv0);
-        HCHttpCallResponseGetHeaderAtIndex(call, 1, &hn1, &hv1);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetHeaderAtIndex(call, 0, &hn0, &hv0));
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetHeaderAtIndex(call, 1, &hn1, &hv1));
         VERIFY_ARE_EQUAL_STR("testHeader", hn0);
         VERIFY_ARE_EQUAL_STR("testValue", hv0);
         VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
-        HCHttpCallCloseHandle(call);
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCloseHandle(call));
         HCGlobalCleanup();
     }
 };

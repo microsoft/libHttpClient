@@ -5,6 +5,7 @@
 #include "../http/httpcall.h"
 #include "buildver.h"
 #include "global.h"
+#include "../WebSocket/hcwebsocket.h"
 
 using namespace xbox::httpclient;
 
@@ -20,6 +21,14 @@ http_singleton::http_singleton()
 {
     m_lastId = 0;
     m_performFunc = Internal_HCHttpCallPerform;
+
+    m_websocketMessageFunc = nullptr;
+    m_websocketCloseEventFunc = nullptr;
+
+    m_websocketConnectFunc = Internal_HCWebSocketConnect;
+    m_websocketSendMessageFunc = Internal_HCWebSocketSendMessage;
+    m_websocketCloseFunc = Internal_HCWebSocketClose;
+
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
     m_mocksEnabled = false;

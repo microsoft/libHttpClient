@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "websocket.h"
+#include "hcwebsocket.h"
 
 using namespace xbox::httpclient;
 
@@ -171,7 +171,7 @@ try
     {
         try
         {
-            closeFunc(websocket);
+            closeFunc(websocket, HC_WEBSOCKET_CLOSE_STATUS::HC_WEBSOCKET_CLOSE_NORMAL);
         }
         catch (...)
         {
@@ -240,38 +240,140 @@ try
 }
 CATCH_RETURN()
 
-HC_RESULT Internal_HCWebSocketConnect(
-    _In_z_ PCSTR uri,
-    _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
-)
+HC_API HC_RESULT HC_CALLING_CONV
+HCGlobalGetWebSocketFunctions(
+    _Out_ HC_WEBSOCKET_CONNECT_FUNC* websocketConnectFunc,
+    _Out_ HC_WEBSOCKET_SEND_MESSAGE_FUNC* websocketSendMessageFunc,
+    _Out_ HC_WEBSOCKET_CLOSE_FUNC* websocketCloseFunc
+    ) HC_NOEXCEPT
+try
 {
-    // TODO
-    return HC_OK;
-}
+    if (websocketConnectFunc == nullptr || 
+        websocketSendMessageFunc == nullptr ||
+        websocketCloseFunc == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
 
-HC_RESULT Internal_HCWebSocketSendMessage(
-    _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_z_ PCSTR message,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
-    )
-{
-    // TODO
-    return HC_OK;
-}
+    auto httpSingleton = get_http_singleton();
+    *websocketConnectFunc = httpSingleton->m_websocketConnectFunc;
+    *websocketSendMessageFunc = httpSingleton->m_websocketSendMessageFunc;
+    *websocketCloseFunc = httpSingleton->m_websocketCloseFunc;
 
-HC_RESULT Internal_HCWebSocketClose(
-    _In_ HC_WEBSOCKET_HANDLE websocket
-    )
-{
-    // TODO
     return HC_OK;
 }
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetProxyUri(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _Out_ PCSTR* proxyUri
+    ) HC_NOEXCEPT
+try
+{
+    if (websocket == nullptr || proxyUri == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    *proxyUri = websocket->proxyUri.c_str();
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetHeader(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_z_ PCSTR headerName,
+    _Out_ PCSTR* headerValue
+    ) HC_NOEXCEPT
+try
+{
+    if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    auto it = websocket->connectHeaders.find(headerName);
+    if (it != websocket->connectHeaders.end())
+    {
+        *headerValue = it->second.c_str();
+    }
+    else
+    {
+        *headerValue = nullptr;
+    }
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetNumHeaders(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _Out_ uint32_t* numHeaders
+    ) HC_NOEXCEPT
+try
+{
+    if (websocket == nullptr || numHeaders == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    *numHeaders = static_cast<uint32_t>(websocket->connectHeaders.size());
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetHeaderAtIndex(
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ uint32_t headerIndex,
+    _Out_ PCSTR* headerName,
+    _Out_ PCSTR* headerValue
+    ) HC_NOEXCEPT
+try
+{
+    if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    uint32_t index = 0;
+    for (auto it = websocket->connectHeaders.cbegin(); it != websocket->connectHeaders.cend(); ++it)
+    {
+        if (index == headerIndex)
+        {
+            *headerName = it->first.c_str();
+            *headerValue = it->second.c_str();
+            return HC_OK;
+        }
+
+        index++;
+    }
+
+    *headerName = nullptr;
+    *headerValue = nullptr;
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCWebSocketGetFunctions(
+    _Out_ HC_WEBSOCKET_MESSAGE_FUNC* messageFunc,
+    _Out_ HC_WEBSOCKET_CLOSE_EVENT_FUNC* closeFunc
+    ) HC_NOEXCEPT
+try
+{
+    if (messageFunc == nullptr || closeFunc == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    auto httpSingleton = get_http_singleton();
+    *messageFunc = httpSingleton->m_websocketMessageFunc;
+    *closeFunc = httpSingleton->m_websocketCloseEventFunc;
+
+    return HC_OK;
+}
+CATCH_RETURN()
 
