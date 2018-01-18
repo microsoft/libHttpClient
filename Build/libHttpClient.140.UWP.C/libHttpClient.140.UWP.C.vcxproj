@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -148,8 +148,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />

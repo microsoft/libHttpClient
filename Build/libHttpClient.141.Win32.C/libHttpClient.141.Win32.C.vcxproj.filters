@@ -61,7 +61,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
     </ClCompile>
   </ItemGroup>
@@ -114,7 +114,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h">
       <Filter>C++ Source\Task</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
       <Filter>C++ Source\WebSocket</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h">
