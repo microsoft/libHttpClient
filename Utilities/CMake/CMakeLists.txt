@@ -101,8 +101,8 @@ set(Global_Source_Files
     )
 
 set(WebSocket_Source_Files
-    ../../../Source/WebSocket/websocket.h
-    ../../../Source/WebSocket/websocket.cpp
+    ../../../Source/WebSocket/hcwebsocket.h
+    ../../../Source/WebSocket/hcwebsocket.cpp
     )
     
 set(WinRT_WebSocket_Source_Files
