@@ -15,16 +15,8 @@ HC_RESULT Internal_HCWebSocketConnect(
     _In_ uint64_t taskGroupId,
     _In_opt_ void* completionRoutineContext,
     _In_opt_ HCWebSocketCompletionRoutine completionRoutine
-    )
+)
 {
-    UNREFERENCED_PARAMETER(uri);
-    UNREFERENCED_PARAMETER(websocket);
-    UNREFERENCED_PARAMETER(args);
-    UNREFERENCED_PARAMETER(taskSubsystemId);
-    UNREFERENCED_PARAMETER(taskGroupId);
-    UNREFERENCED_PARAMETER(completionRoutineContext);
-    UNREFERENCED_PARAMETER(completionRoutine);
-
     // TODO
     return HC_OK;
 }
@@ -38,13 +30,6 @@ HC_RESULT Internal_HCWebSocketSendMessage(
     _In_opt_ HCWebSocketCompletionRoutine completionRoutine
     )
 {
-    UNREFERENCED_PARAMETER(websocket);
-    UNREFERENCED_PARAMETER(message);
-    UNREFERENCED_PARAMETER(taskSubsystemId);
-    UNREFERENCED_PARAMETER(taskGroupId);
-    UNREFERENCED_PARAMETER(completionRoutineContext);
-    UNREFERENCED_PARAMETER(completionRoutine);
-
     // TODO
     return HC_OK;
 }
@@ -54,11 +39,7 @@ HC_RESULT Internal_HCWebSocketClose(
     _In_ HC_WEBSOCKET_CLOSE_STATUS closeStatus
     )
 {
-    UNREFERENCED_PARAMETER(websocket);
-    UNREFERENCED_PARAMETER(closeStatus);
-
     // TODO
     return HC_OK;
 }
-
 
