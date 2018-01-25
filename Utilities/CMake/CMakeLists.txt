@@ -109,6 +109,10 @@ set(WinRT_WebSocket_Source_Files
     ../../../Source/WebSocket/WinRT/winrt_websocket.cpp
     )
     
+set(Win32_WebSocket_Source_Files
+    ../../../Source/WebSocket/Win32/win32_websocket.cpp
+    )
+    
 set(Mock_Source_Files        
     ../../../Source/Mock/mock.cpp
     ../../../Source/Mock/mock.h
@@ -263,11 +267,13 @@ endif()
 if( BUILDWIN32 )
     source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
+    source_group("C++ Source\\WebSocket\\Win32" FILES ${Win32_WebSocket_Source_Files})
 
     list(APPEND
         SOURCE_FILES
         ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${Win32_WebSocket_Source_Files}
         )
 endif()
 
