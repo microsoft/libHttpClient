@@ -35,8 +35,8 @@ private:
 
 using http_internal_wstring = http_internal_basic_string<wchar_t>;
 
-http_internal_string utf8_from_utf16(http_internal_wstring const& utf16);
-http_internal_wstring utf16_from_utf8(http_internal_string const& utf8);
+http_internal_string utf8_from_utf16(const http_internal_wstring& utf16);
+http_internal_wstring utf16_from_utf8(const http_internal_string& utf8);
 
 http_internal_string utf8_from_utf16(_In_z_ PCWSTR utf16);
 http_internal_wstring utf16_from_utf8(_In_z_ PCSTR utf8);

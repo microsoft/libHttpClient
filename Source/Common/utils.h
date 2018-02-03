@@ -5,4 +5,12 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+class hc_task : public std::enable_shared_from_this<hc_task>
+{
+public:
+    hc_task() {}
+
+    virtual ~hc_task() {}
+};
+
 NAMESPACE_XBOX_HTTP_CLIENT_END

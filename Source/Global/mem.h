@@ -4,6 +4,7 @@
 #pragma once
 #include <new>
 #include <stddef.h>
+#include <sstream>
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -137,7 +138,7 @@ using http_internal_string = http_internal_basic_string<char>;
 template<class C, class TRAITS = std::char_traits<C>>
 using http_internal_basic_stringstream = std::basic_stringstream<C, TRAITS, http_stl_allocator<C>>;
 
-using http_internal_stringstream = http_internal_basic_string<char>;
+using http_internal_stringstream = http_internal_basic_stringstream<char>;
 
 template<class T>
 using http_internal_dequeue = std::deque<T, http_stl_allocator<T>>;

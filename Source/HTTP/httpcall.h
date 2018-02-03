@@ -4,14 +4,6 @@
 #pragma once
 #include "pch.h"
 
-class hc_task : public std::enable_shared_from_this<hc_task>
-{
-public:
-    hc_task() {}
-
-    virtual ~hc_task() {}
-};
-
 struct HC_CALL
 {
     HC_CALL() :
@@ -40,7 +32,7 @@ struct HC_CALL
     uint32_t statusCode;
     HC_RESULT networkErrorCode;
     uint32_t platformNetworkErrorCode;
-    std::shared_ptr<hc_task> task;
+    std::shared_ptr<xbox::httpclient::hc_task> task;
     uint64_t id;
     std::atomic<int> refCount;
 

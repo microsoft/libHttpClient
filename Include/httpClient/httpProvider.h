@@ -309,8 +309,8 @@ HCHttpCallResponseSetHeader(
 typedef HC_RESULT
 (HC_CALLING_CONV* HC_WEBSOCKET_CONNECT_FUNC)(
     _In_z_ PCSTR uri,
+    _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId,
     _In_opt_ void* completionRoutineContext,
@@ -338,7 +338,7 @@ typedef HC_RESULT
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 typedef HC_RESULT
-(HC_CALLING_CONV* HC_WEBSOCKET_CLOSE_FUNC)(
+(HC_CALLING_CONV* HC_WEBSOCKET_DISCONNECT_FUNC)(
     _In_ HC_WEBSOCKET_HANDLE websocket,
     _In_ HC_WEBSOCKET_CLOSE_STATUS closeStatus
     );
@@ -350,14 +350,14 @@ typedef HC_RESULT
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
-/// <param name="websocketCloseFunc">A callback that implements WebSocket close function as desired. 
+/// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalSetWebSocketFunctions(
     _In_opt_ HC_WEBSOCKET_CONNECT_FUNC websocketConnectFunc,
     _In_opt_ HC_WEBSOCKET_SEND_MESSAGE_FUNC websocketSendMessageFunc,
-    _In_opt_ HC_WEBSOCKET_CLOSE_FUNC websocketCloseFunc
+    _In_opt_ HC_WEBSOCKET_DISCONNECT_FUNC websocketDisconnectFunc
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -367,14 +367,14 @@ HCGlobalSetWebSocketFunctions(
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
-/// <param name="websocketCloseFunc">A callback that implements WebSocket close function as desired. 
+/// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalGetWebSocketFunctions(
     _Out_ HC_WEBSOCKET_CONNECT_FUNC* websocketConnectFunc,
     _Out_ HC_WEBSOCKET_SEND_MESSAGE_FUNC* websocketSendMessageFunc,
-    _Out_ HC_WEBSOCKET_CLOSE_FUNC* websocketCloseFunc
+    _Out_ HC_WEBSOCKET_DISCONNECT_FUNC* websocketDisconnectFunc
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -439,8 +439,8 @@ HCWebSocketGetHeaderAtIndex(
 /// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
 HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketGetFunctions(
-    _Out_ HC_WEBSOCKET_MESSAGE_FUNC* messageFunc,
-    _Out_ HC_WEBSOCKET_CLOSE_EVENT_FUNC* closeFunc
+    _Out_opt_ HC_WEBSOCKET_MESSAGE_FUNC* messageFunc,
+    _Out_opt_ HC_WEBSOCKET_CLOSE_EVENT_FUNC* closeFunc
     ) HC_NOEXCEPT;
 
 
