@@ -1,0 +1,59 @@
+﻿<Page
+    x:Class="HttpTestApp.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:HttpTestApp"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" RequestedTheme="Dark" >
+
+        <Grid >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+
+            <StackPanel Grid.Column="0" Grid.Row="0" Margin="30,30,0,0" Orientation="Vertical" Padding="1,0,0,0">
+                <Grid Height="32" HorizontalAlignment="Left" VerticalAlignment="Top" Width="700" Margin="0,5,5,0" >
+                    <TextBox x:Name="TextboxURL" HorizontalAlignment="Left" Margin="110,0,0,0" TextWrapping="Wrap" Text="URL" VerticalAlignment="Top" Width="500"/>
+                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Text="URL:" VerticalAlignment="Top" Width="100" HorizontalAlignment="Left" TextAlignment="Right"/>
+                </Grid>
+
+                <Grid Height="32" HorizontalAlignment="Left" VerticalAlignment="Top" Width="700" Margin="0,5,5,0" >
+                    <TextBox x:Name="TextboxMethod" HorizontalAlignment="Left" Margin="110,0,0,0" TextWrapping="Wrap" Text="Method" VerticalAlignment="Top" Width="500"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="0,6,0,0" TextWrapping="Wrap" Text="Method:" Width="100" VerticalAlignment="Top" TextAlignment="Right" />
+                </Grid>
+
+                <Grid Height="32" HorizontalAlignment="Left" VerticalAlignment="Top" Width="700" Margin="0,5,5,0" >
+                    <TextBox x:Name="TextboxHeaders" HorizontalAlignment="Left" Margin="110,0,0,0" TextWrapping="Wrap" Text="Headers" VerticalAlignment="Top" Width="500"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="0,6,0,0" TextWrapping="Wrap" Text="Headers:" Width="100" VerticalAlignment="Top" TextAlignment="Right"/>
+                </Grid>
+
+                <Grid Height="32" HorizontalAlignment="Left" VerticalAlignment="Top" Width="700" Margin="0,5,5,0" >
+                    <TextBox x:Name="TextboxTimeout" HorizontalAlignment="Left" Margin="110,0,0,0" TextWrapping="Wrap" Text="Timeout" VerticalAlignment="Top" Width="500"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="0,6,0,0" TextWrapping="Wrap" Text="Timeout:" Width="100" VerticalAlignment="Top" TextAlignment="Right"/>
+                </Grid>
+
+                <Grid Height="32" HorizontalAlignment="Left" VerticalAlignment="Top" Width="700" Margin="0,5,5,0" >
+                    <TextBox x:Name="TextboxRequestString" HorizontalAlignment="Left" Margin="110,0,0,0" TextWrapping="Wrap" Text="Request Body" VerticalAlignment="Top" Width="500"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="0,6,0,0" TextWrapping="Wrap" Text="Request Body:" Width="100" VerticalAlignment="Top" TextAlignment="Right"/>
+                </Grid>
+
+                <CheckBox Margin="0,5,5,0" x:Name="RetryAllowedCheckbox" Content="Retry Allowed" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" />
+
+                <Button Margin="0,5,5,0" Content="Connect" Click="Connect_Button_Click" Height="30" Width="152" HorizontalAlignment="Left" VerticalAlignment="Top" RequestedTheme="Dark" />
+                <Button Margin="0,5,5,0" Content="Send Message" Click="SendMessage_Button_Click" Height="30" Width="152" HorizontalAlignment="Left" VerticalAlignment="Top" RequestedTheme="Dark" />
+                <Button Margin="0,5,5,0" Content="Close" Click="Close_Button_Click" Height="30" Width="152" HorizontalAlignment="Left" VerticalAlignment="Top" RequestedTheme="Dark" />
+
+            </StackPanel>
+            <TextBox x:Name="LogTextBox" Grid.Column="1" Grid.Row="1" Margin="30,0,30,0" TextWrapping="Wrap" Text="TextBox" RequestedTheme="Dark" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+        </Grid>
+
+    </Grid>
+</Page>

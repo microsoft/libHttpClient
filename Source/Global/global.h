@@ -70,7 +70,7 @@ struct http_singleton
 
     HC_WEBSOCKET_CONNECT_FUNC m_websocketConnectFunc;
     HC_WEBSOCKET_SEND_MESSAGE_FUNC m_websocketSendMessageFunc;
-    HC_WEBSOCKET_CLOSE_FUNC m_websocketCloseFunc;
+    HC_WEBSOCKET_DISCONNECT_FUNC m_websocketDisconnectFunc;
 
     // Mock state
     std::mutex m_mocksLock;
@@ -83,11 +83,68 @@ struct http_singleton
     win32_handle m_pendingReadyHandle;
 #endif
     void set_task_pending_ready();
+
+    std::mutex m_sharedPtrsLock;
+    http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 };
+
 
 std::shared_ptr<http_singleton> get_http_singleton();
 HC_RESULT init_http_singleton();
 void cleanup_http_singleton();
+
+
+class shared_ptr_cache
+{
+public:
+    template<typename T>
+    static void* store(std::shared_ptr<T> contextSharedPtr)
+    {
+        auto httpSingleton = get_http_singleton();
+        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+
+        void *rawVoidPtr = contextSharedPtr.get();
+        std::shared_ptr<void> voidSharedPtr(contextSharedPtr, rawVoidPtr);
+        httpSingleton->m_sharedPtrs.insert(std::make_pair(rawVoidPtr, voidSharedPtr));
+        return rawVoidPtr;
+    }
+
+    template<typename T>
+    static std::shared_ptr<T> fetch(void *rawContextPtr, bool deleteShared = true)
+    {
+        auto httpSingleton = get_http_singleton();
+        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+
+        auto iter = httpSingleton->m_sharedPtrs.find(rawContextPtr);
+        if (iter != httpSingleton->m_sharedPtrs.end())
+        {
+            auto returnPtr = std::shared_ptr<T>(iter->second, reinterpret_cast<T*>(iter->second.get()));
+            if (deleteShared)
+            {
+                httpSingleton->m_sharedPtrs.erase(iter);
+            }
+            return returnPtr;
+        }
+        else
+        {
+            HC_ASSERT(false && "Context not found!");
+            return std::shared_ptr<T>();
+        }
+    }
+
+    static void cleanup()
+    {
+        auto httpSingleton = get_http_singleton();
+        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+        HC_ASSERT(httpSingleton->m_sharedPtrs.size() == 0);
+        httpSingleton->m_sharedPtrs.clear();
+    }
+
+private:
+    shared_ptr_cache();
+    shared_ptr_cache(const shared_ptr_cache&);
+    shared_ptr_cache& operator=(const shared_ptr_cache&);
+};
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 

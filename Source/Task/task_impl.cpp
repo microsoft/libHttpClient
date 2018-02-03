@@ -78,12 +78,15 @@ void http_task_process_pending(_In_ HC_TASK* task)
             taskExecutingQueue.size(), task->id);
     }
 
-    raise_task_event(httpSingleton, task, HC_TASK_EVENT_EXECUTE_STARTED);
+    if (task->executionRoutine != nullptr)
+    {
+        raise_task_event(httpSingleton, task, HC_TASK_EVENT_EXECUTE_STARTED);
 
-    task->executionRoutine(
-        task->executionRoutineContext,
-        task->id
-        );
+        task->executionRoutine(
+            task->executionRoutineContext,
+            task->id
+            );
+    }
 }
 
 void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
@@ -148,12 +151,15 @@ HC_TASK* http_task_get_next_completed(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_
 
 void http_task_process_completed(_In_ HC_TASK* task)
 {
-    task->writeResultsRoutine(
-        task->writeResultsRoutineContext,
-        task->id,
-        task->completionRoutine,
-        task->completionRoutineContext
+    if (task->writeResultsRoutine != nullptr)
+    {
+        task->writeResultsRoutine(
+            task->writeResultsRoutineContext,
+            task->id,
+            task->completionRoutine,
+            task->completionRoutineContext
         );
+    }
 }
 
 HC_TASK* http_task_get_task_from_handle_id(

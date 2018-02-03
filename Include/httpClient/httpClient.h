@@ -560,10 +560,8 @@ HCHttpCallResponseGetHeaderAtIndex(
 /// Call HCWebSocketSetProxyUri() and HCWebSocketSetHeader() to prepare the HC_WEBSOCKET_HANDLE
 /// Call HCWebSocketConnect() to connect the WebSocket using the HC_WEBSOCKET_HANDLE.
 /// Call HCWebSocketSendMessage() to send a message to the WebSocket using the HC_WEBSOCKET_HANDLE.
-/// Call HCWebSocketClose() to close to the WebSocket using the HC_WEBSOCKET_HANDLE.
-/// 
-/// When the HC_WEBSOCKET_HANDLE is no longer needed, call HCWebSocketCloseHandle() to free the 
-/// memory associated with the HC_WEBSOCKET_HANDLE
+/// Call HCWebSocketDisconnect() to disconnect the WebSocket using the HC_WEBSOCKET_HANDLE.
+/// Call HCWebSocketCloseHandle() when done with the HC_WEBSOCKET_HANDLE to free the associated memory
 /// </summary>
 /// <param name="websocket">The handle of the websocket</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
@@ -635,15 +633,6 @@ HCWebSocketSetFunctions(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Struct for WebSocket connection args
-/// </summary>
-typedef struct HC_WEBSOCKET_CONNECT_INIT_ARGS_STRUCT
-{
-    // TODO: add thread affinity options for platforms need it.  UWP and XDK do not 
-} HC_WEBSOCKET_CONNECT_INIT_ARGS;
-
-
-/// <summary>
 /// Callback definition for the WebSocket completion routine used by HCWebSocketConnect() and HCWebSocketSendMessage()
 /// </summary>
 /// <param name="completionRoutineContext">The context passed to the completion routine</param>
@@ -653,8 +642,8 @@ typedef struct HC_WEBSOCKET_CONNECT_INIT_ARGS_STRUCT
 typedef void(* HCWebSocketCompletionRoutine)(
     _In_opt_ void* completionRoutineContext,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_RESULT* errorCode,
-    _In_ uint32_t* platformErrorCode
+    _In_ HC_RESULT errorCode,
+    _In_ uint32_t platformErrorCode
     );
 
 /// <summary>
@@ -668,8 +657,8 @@ typedef void(* HCWebSocketCompletionRoutine)(
 HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketConnect(
     _In_z_ PCSTR uri,
+    _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId,
     _In_opt_ void* completionRoutineContext,
@@ -692,12 +681,12 @@ HCWebSocketSendMessage(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Closes the WebSocket
+/// Disconnects / closes the WebSocket
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
 HC_API HC_RESULT HC_CALLING_CONV
-HCWebSocketClose(
+HCWebSocketDisconnect(
     _In_ HC_WEBSOCKET_HANDLE websocket
     ) HC_NOEXCEPT;
 

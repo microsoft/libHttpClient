@@ -13,7 +13,7 @@ using namespace Windows::Foundation;
 using namespace Windows::Web::Http;
 
 
-class uwp_http_task : public hc_task
+class uwp_http_task : public xbox::httpclient::hc_task
 {
 private:
     IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ m_getHttpAsyncOp;
@@ -42,7 +42,7 @@ void Internal_HCHttpCallPerform(
     )
 {
     std::shared_ptr<uwp_http_task> uwpHttpTask = std::make_shared<uwp_http_task>();
-    call->task = std::dynamic_pointer_cast<hc_task>(uwpHttpTask);
+    call->task = std::dynamic_pointer_cast<xbox::httpclient::hc_task>(uwpHttpTask);
 
     uwpHttpTask->perform_async(call, taskHandle);
 }

@@ -84,8 +84,8 @@ CATCH_RETURN()
 HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketConnect(
     _In_z_ PCSTR uri,
+    _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId,
     _In_opt_ void* completionRoutineContext,
@@ -93,7 +93,7 @@ HCWebSocketConnect(
     ) HC_NOEXCEPT
 try 
 {
-    if (uri == nullptr || websocket == nullptr)
+    if (uri == nullptr || websocket == nullptr || subProtocol == nullptr)
     {
         return HC_E_INVALIDARG;
     }
@@ -105,7 +105,7 @@ try
     {
         try
         {
-            connectFunc(uri, websocket, args, taskSubsystemId, taskGroupId, completionRoutineContext, completionRoutine);
+            connectFunc(uri, subProtocol, websocket, taskSubsystemId, taskGroupId, completionRoutineContext, completionRoutine);
             websocket->connectCalled = true;
         }
         catch (...)
@@ -154,7 +154,7 @@ try
 CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
-HCWebSocketClose(
+HCWebSocketDisconnect(
     _In_ HC_WEBSOCKET_HANDLE websocket
     ) HC_NOEXCEPT
 try 
@@ -166,12 +166,19 @@ try
 
     auto httpSingleton = get_http_singleton();
 
-    auto closeFunc = httpSingleton->m_websocketCloseFunc;
+    auto closeEventFunc = httpSingleton->m_websocketCloseEventFunc;
+    auto closeFunc = httpSingleton->m_websocketDisconnectFunc;
     if (closeFunc != nullptr)
     {
         try
         {
-            closeFunc(websocket, HC_WEBSOCKET_CLOSE_STATUS::HC_WEBSOCKET_CLOSE_NORMAL);
+            HC_WEBSOCKET_CLOSE_STATUS closeStatus = HC_WEBSOCKET_CLOSE_STATUS::HC_WEBSOCKET_CLOSE_NORMAL;
+            closeFunc(websocket, closeStatus);
+
+            if(closeEventFunc != nullptr)
+            {
+                closeEventFunc(websocket, closeStatus);
+            }
         }
         catch (...)
         {
@@ -227,14 +234,14 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalSetWebSocketFunctions(
     _In_opt_ HC_WEBSOCKET_CONNECT_FUNC websocketConnectFunc,
     _In_opt_ HC_WEBSOCKET_SEND_MESSAGE_FUNC websocketSendMessageFunc,
-    _In_opt_ HC_WEBSOCKET_CLOSE_FUNC websocketCloseFunc
+    _In_opt_ HC_WEBSOCKET_DISCONNECT_FUNC websocketDisconnectFunc
     ) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton();
     httpSingleton->m_websocketConnectFunc = (websocketConnectFunc) ? websocketConnectFunc : Internal_HCWebSocketConnect;
     httpSingleton->m_websocketSendMessageFunc = (websocketSendMessageFunc) ? websocketSendMessageFunc : Internal_HCWebSocketSendMessage;
-    httpSingleton->m_websocketCloseFunc = (websocketCloseFunc) ? websocketCloseFunc : Internal_HCWebSocketClose;
+    httpSingleton->m_websocketDisconnectFunc = (websocketDisconnectFunc) ? websocketDisconnectFunc : Internal_HCWebSocketDisconnect;
 
     return HC_OK;
 }
@@ -244,13 +251,13 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCGlobalGetWebSocketFunctions(
     _Out_ HC_WEBSOCKET_CONNECT_FUNC* websocketConnectFunc,
     _Out_ HC_WEBSOCKET_SEND_MESSAGE_FUNC* websocketSendMessageFunc,
-    _Out_ HC_WEBSOCKET_CLOSE_FUNC* websocketCloseFunc
+    _Out_ HC_WEBSOCKET_DISCONNECT_FUNC* websocketDisconnectFunc
     ) HC_NOEXCEPT
 try
 {
     if (websocketConnectFunc == nullptr || 
         websocketSendMessageFunc == nullptr ||
-        websocketCloseFunc == nullptr)
+        websocketDisconnectFunc == nullptr)
     {
         return HC_E_INVALIDARG;
     }
@@ -258,7 +265,7 @@ try
     auto httpSingleton = get_http_singleton();
     *websocketConnectFunc = httpSingleton->m_websocketConnectFunc;
     *websocketSendMessageFunc = httpSingleton->m_websocketSendMessageFunc;
-    *websocketCloseFunc = httpSingleton->m_websocketCloseFunc;
+    *websocketDisconnectFunc = httpSingleton->m_websocketDisconnectFunc;
 
     return HC_OK;
 }
@@ -359,19 +366,21 @@ CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketGetFunctions(
-    _Out_ HC_WEBSOCKET_MESSAGE_FUNC* messageFunc,
-    _Out_ HC_WEBSOCKET_CLOSE_EVENT_FUNC* closeFunc
+    _Out_opt_ HC_WEBSOCKET_MESSAGE_FUNC* messageFunc,
+    _Out_opt_ HC_WEBSOCKET_CLOSE_EVENT_FUNC* closeFunc
     ) HC_NOEXCEPT
 try
 {
-    if (messageFunc == nullptr || closeFunc == nullptr)
+    auto httpSingleton = get_http_singleton();
+    if (messageFunc != nullptr)
     {
-        return HC_E_INVALIDARG;
+        *messageFunc = httpSingleton->m_websocketMessageFunc;
     }
 
-    auto httpSingleton = get_http_singleton();
-    *messageFunc = httpSingleton->m_websocketMessageFunc;
-    *closeFunc = httpSingleton->m_websocketCloseEventFunc;
+    if (closeFunc != nullptr)
+    {
+        *closeFunc = httpSingleton->m_websocketCloseEventFunc;
+    }
 
     return HC_OK;
 }

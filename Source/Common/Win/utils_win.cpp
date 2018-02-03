@@ -6,12 +6,12 @@
 
 #include <httpClient/trace.h>
 
-http_internal_string utf8_from_utf16(http_internal_wstring const& utf16)
+http_internal_string utf8_from_utf16(const http_internal_wstring& utf16)
 {
     return utf8_from_utf16(utf16.data(), utf16.size());
 }
 
-http_internal_wstring utf16_from_utf8(http_internal_string const& utf8)
+http_internal_wstring utf16_from_utf8(const http_internal_string& utf8)
 {
     return utf16_from_utf8(utf8.data(), utf8.size());
 }

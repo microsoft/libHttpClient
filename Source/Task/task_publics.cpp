@@ -244,7 +244,14 @@ try
         http_task_store_task_from_handle_id(std::move(task));
     }
 
-    http_task_queue_pending(pTask);
+    if (pTask->executionRoutine != nullptr)
+    {
+        http_task_queue_pending(pTask);
+    }
+    else
+    {
+        http_task_process_pending(pTask);
+    }
 
     if (taskHandle != nullptr)
     {

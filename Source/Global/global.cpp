@@ -27,7 +27,7 @@ http_singleton::http_singleton()
 
     m_websocketConnectFunc = Internal_HCWebSocketConnect;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessage;
-    m_websocketCloseFunc = Internal_HCWebSocketClose;
+    m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
 
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
@@ -84,6 +84,8 @@ HC_RESULT init_http_singleton()
 
 void cleanup_http_singleton()
 {
+    shared_ptr_cache::cleanup();
+
     std::shared_ptr<http_singleton> httpSingleton;
     httpSingleton = std::atomic_exchange(&g_httpSingleton_atomicReadsOnly, httpSingleton);
 
