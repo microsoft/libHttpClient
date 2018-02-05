@@ -9,8 +9,9 @@
 #include <ixmlhttprequest2.h>
 #endif
 #include "http_buffer.h"
+#include "utils.h"
 
-class xmlhttp_http_task : public hc_task
+class xmlhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
     xmlhttp_http_task(
