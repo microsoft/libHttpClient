@@ -75,8 +75,8 @@ void Internal_HCWebSocketCloseEvent(
 bool g_HCWebSocketConnect_Called = false;
 HC_RESULT Test_Internal_HCWebSocketConnect(
     _In_z_ PCSTR uri,
+    _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_WEBSOCKET_CONNECT_INIT_ARGS args,
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId,
     _In_opt_ void* completionRoutineContext,
@@ -101,13 +101,13 @@ HC_RESULT Test_Internal_HCWebSocketSendMessage(
     return HC_OK;
 }
 
-bool g_HCWebSocketClose_Called = false;
-HC_RESULT Test_Internal_HCWebSocketClose(
+bool g_HCWebSocketDisconnect_Called = false;
+HC_RESULT Test_Internal_HCWebSocketDisconnect(
     _In_ HC_WEBSOCKET_HANDLE websocket,
     _In_ HC_WEBSOCKET_CLOSE_STATUS closeStatus
     )
 {
-    g_HCWebSocketClose_Called = true;
+    g_HCWebSocketDisconnect_Called = true;
     return HC_OK;
 }
 
@@ -163,17 +163,17 @@ public:
 
         HC_WEBSOCKET_CONNECT_FUNC websocketConnectFunc = nullptr;
         HC_WEBSOCKET_SEND_MESSAGE_FUNC websocketSendMessageFunc = nullptr;
-        HC_WEBSOCKET_CLOSE_FUNC websocketCloseFunc = nullptr;
-        VERIFY_ARE_EQUAL(HC_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketCloseFunc));
+        HC_WEBSOCKET_DISCONNECT_FUNC websocketDisconnectFunc = nullptr;
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
-        VERIFY_IS_NOT_NULL(websocketCloseFunc);
+        VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
-        VERIFY_ARE_EQUAL(HC_OK, HCGlobalSetWebSocketFunctions(Test_Internal_HCWebSocketConnect, Test_Internal_HCWebSocketSendMessage, Test_Internal_HCWebSocketClose));
-        VERIFY_ARE_EQUAL(HC_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketCloseFunc));
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalSetWebSocketFunctions(Test_Internal_HCWebSocketConnect, Test_Internal_HCWebSocketSendMessage, Test_Internal_HCWebSocketDisconnect));
+        VERIFY_ARE_EQUAL(HC_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
-        VERIFY_IS_NOT_NULL(websocketCloseFunc);
+        VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
         HC_WEBSOCKET_HANDLE websocket;
         VERIFY_ARE_EQUAL(HC_OK, HCWebSocketCreate(&websocket));
@@ -187,16 +187,16 @@ public:
         VERIFY_ARE_EQUAL_STR("1234", proxy);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketConnect_Called);
-        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketConnect("test", websocket, {}, HC_SUBSYSTEM_ID_GAME, 0, nullptr, nullptr));
+        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketConnect("test", "subProtoTest", websocket, HC_SUBSYSTEM_ID_GAME, 0, nullptr, nullptr));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketConnect_Called);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketSendMessage_Called);
         VERIFY_ARE_EQUAL(HC_OK, HCWebSocketSendMessage(websocket, "test", HC_SUBSYSTEM_ID_GAME, 0, nullptr, nullptr));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketSendMessage_Called);
 
-        VERIFY_ARE_EQUAL(false, g_HCWebSocketClose_Called);
-        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketClose(websocket));
-        VERIFY_ARE_EQUAL(true, g_HCWebSocketClose_Called);
+        VERIFY_ARE_EQUAL(false, g_HCWebSocketDisconnect_Called);
+        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketDisconnect(websocket));
+        VERIFY_ARE_EQUAL(true, g_HCWebSocketDisconnect_Called);
 
         VERIFY_ARE_EQUAL(HC_OK, HCWebSocketCloseHandle(websocket));
         HCGlobalCleanup();
