@@ -212,9 +212,9 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCTaskCreate(
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId,
-    _In_ HC_TASK_EXECUTE_FUNC executionRoutine,
+    _In_opt_ HC_TASK_EXECUTE_FUNC executionRoutine,
     _In_opt_ void* executionRoutineContext,
-    _In_ HC_TASK_WRITE_RESULTS_FUNC writeResultsRoutine,
+    _In_opt_ HC_TASK_WRITE_RESULTS_FUNC writeResultsRoutine,
     _In_opt_ void* writeResultsRoutineContext,
     _In_opt_ void* completionRoutine,
     _In_opt_ void* completionRoutineContext,
