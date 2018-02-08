@@ -76,7 +76,7 @@ std::string format_string(_Printf_format_string_ char const* format, ...)
     return message;
 }
 
-HC_RESULT libhttpclient_event_handler(
+void libhttpclient_event_handler(
     _In_opt_ void* context,
     _In_ HC_TASK_EVENT_TYPE eventType,
     _In_ HC_TASK_HANDLE taskHandle
@@ -98,8 +98,6 @@ HC_RESULT libhttpclient_event_handler(
         SetEvent(g_completeReadyHandle.get());
         break;
     }
-
-    return HC_OK;
 }
 
 MainPage::MainPage()

@@ -64,7 +64,7 @@ typedef enum HC_TASK_EVENT_TYPE
 /// <param name="context">The context passed to this callback</param>
 /// <param name="eventType">The event type for this callback</param>
 /// <param name="taskHandle">The handle to the task</param>
-typedef HC_RESULT
+typedef void
 (HC_CALLING_CONV* HC_TASK_EVENT_FUNC)(
     _In_opt_ void* context,
     _In_ HC_TASK_EVENT_TYPE eventType,
