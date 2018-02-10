@@ -173,15 +173,15 @@ void ShutdownActiveThreads()
 int main()
 {
     std::string method = "GET";
-    std::string url = "http://www.bing.com";
-    std::string requestBody = "{\"test\":\"value\"}";
+    std::string url = "http://www.bing.com/search?q=Microsoft#test1";
+    std::string requestBody = "";// "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
     std::vector< std::string > header;
 
     header.clear();
-    header.push_back("User-Agent");
-    header.push_back("libHttpClient");
+    header.push_back("TestHeader");
+    header.push_back("1.0");
     headers.push_back(header);
 
     HCGlobalInitialize();
@@ -233,7 +233,7 @@ int main()
 
             printf_s("HTTP call done\r\n");
             printf_s("Network error code: %d\r\n", errCode);
-            printf_s("Http status code: %d\r\n", statusCode);
+            printf_s("HTTP status code: %d\r\n", statusCode);
 
             int i = 0;
             for (auto& header : headers)
@@ -260,10 +260,6 @@ int main()
 
     ShutdownActiveThreads();
     HCGlobalCleanup();
-
-    std::error_code err;
-    std::wstring test = L"{\"hello\":\"hi\"}";
-    web::json::value m_jsonConfig = web::json::value::parse(test, err);
 
     return 0;
 }

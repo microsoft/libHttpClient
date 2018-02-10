@@ -126,6 +126,8 @@
     </ClCompile>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.cpp" />
