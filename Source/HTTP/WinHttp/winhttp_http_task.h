@@ -22,6 +22,14 @@ enum msg_body_type
     transfer_encoding_chunked
 };
 
+enum proxy_type
+{
+    no_proxy,
+    default_proxy,
+    autodiscover_proxy,
+    named_proxy
+};
+
 class winhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
@@ -32,15 +40,6 @@ public:
     ~winhttp_http_task();
 
     void perform_async();
-
-    http_internal_vector<http_internal_string> split(
-        _In_ const http_internal_string& s,
-        _In_z_ const char* delim);
-    bool has_error();
-    void set_exception(const std::exception_ptr& exceptionPtr);
-    http_buffer& response_buffer();
-    HC_CALL_HANDLE call();
-    HC_TASK_HANDLE task_handle();
 
 private:
     static HRESULT query_header_length(_In_ HC_CALL_HANDLE call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
@@ -88,12 +87,16 @@ private:
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
 
+    void get_ie_proxy_info();
+
     void get_proxy_name(
         _Out_ DWORD* pAccessType,
         _Out_ const wchar_t** pwProxyName
         );
 
-    void get_proxy_info(
+    void set_autodiscover_proxy(_In_ const xbox::httpclient::Uri& cUri);
+
+    static void get_proxy_info(
         _In_ WINHTTP_PROXY_INFO* pInfo,
         _In_ bool* pProxyInfoRequired,
         _In_ const xbox::httpclient::Uri& cUri);
@@ -108,7 +111,6 @@ private:
     HC_CALL_HANDLE m_call;
     HC_TASK_HANDLE m_taskHandle;
     http_buffer m_responseBuffer;
-    std::exception_ptr m_exceptionPtr;
 
     HINTERNET m_hSession;
     HINTERNET m_hConnection;
@@ -116,6 +118,10 @@ private:
     msg_body_type m_requestBodyType;
     uint64_t m_requestBodyRemainingToWrite;
     uint64_t m_requestBodyOffset;
+
+    http_internal_string m_proxyAddress;
+    http_internal_wstring m_wProxyName;
+    proxy_type m_proxyType;
 };
 
 

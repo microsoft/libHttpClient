@@ -8,14 +8,14 @@ using namespace xbox::httpclient;
 
 
 HC_RESULT Internal_HCWebSocketConnect(
-	_In_z_ PCSTR uri,
-	_In_z_ PCSTR subProtocol,
-	_In_ HC_WEBSOCKET_HANDLE websocket,
-	_In_ HC_SUBSYSTEM_ID taskSubsystemId,
-	_In_ uint64_t taskGroupId,
-	_In_opt_ void* completionRoutineContext,
-	_In_opt_ HCWebSocketCompletionRoutine completionRoutine
-	)
+    _In_z_ PCSTR uri,
+    _In_z_ PCSTR subProtocol,
+    _In_ HC_WEBSOCKET_HANDLE websocket,
+    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
+    _In_ uint64_t taskGroupId,
+    _In_opt_ void* completionRoutineContext,
+    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    )
 {
     // TODO
     return HC_OK;

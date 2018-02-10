@@ -24,9 +24,11 @@ winhttp_http_task::winhttp_http_task(
     m_hRequest(nullptr),
     m_requestBodyType(msg_body_type::no_body),
     m_requestBodyRemainingToWrite(0),
-    m_requestBodyOffset(0)
+    m_requestBodyOffset(0),
+    m_proxyType(proxy_type::default_proxy)
 {
 }
+
 
 winhttp_http_task::~winhttp_http_task()
 {
@@ -278,9 +280,9 @@ void winhttp_http_task::callback_status_data_available(
     else
     {
         // No more data available, complete the request.
-        if (pRequestContext->response_buffer().size() > 0)
+        if (pRequestContext->m_responseBuffer.size() > 0)
         {
-            auto const& responseString = pRequestContext->response_buffer().as_string();
+            auto const& responseString = pRequestContext->m_responseBuffer.as_string();
             if (responseString.length() > 0)
             {
                 HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString.c_str());
@@ -303,9 +305,9 @@ void winhttp_http_task::callback_status_read_complete(
     // If no bytes have been read, then this is the end of the response.
     if (bytesRead == 0)
     {
-        if (pRequestContext->response_buffer().size() > 0)
+        if (pRequestContext->m_responseBuffer.size() > 0)
         {
-            auto const& responseString = pRequestContext->response_buffer().as_string();
+            auto const& responseString = pRequestContext->m_responseBuffer.as_string();
             if (responseString.length() > 0)
             {
                 HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString.c_str());
@@ -418,85 +420,130 @@ void winhttp_http_task::get_proxy_name(
     _Out_ const wchar_t** pwProxyName
     )
 {
-    // TODO
-    //LPCWSTR proxy_name;
-    //utility::string_t proxy_str;
-    //const auto& config = client_config();
-    //if (config.proxy().is_disabled())
-    //{
-    //    access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
-    //    proxy_name = WINHTTP_NO_PROXY_NAME;
-    //}
-    //else if (config.proxy().is_default() || config.proxy().is_auto_discovery())
-    //{
-    //    access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-    //    proxy_name = WINHTTP_NO_PROXY_NAME;
-    //}
-    //else
-    //{
-    //    _ASSERTE(config.proxy().is_specified());
-    //    access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-    //    // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
-    //    // proxy_str is intentionally declared at the function level to avoid pointing to the string in the destructed object
-    //    uri = config.proxy().address();
-    //    if (uri.is_port_default())
-    //    {
-    //        proxy_name = uri.host().c_str();
-    //    }
-    //    else
-    //    {
-    //        if (uri.port() > 0)
-    //        {
-    //            utility::ostringstream_t ss;
-    //            ss.imbue(std::locale::classic());
-    //            ss << uri.host() << _XPLATSTR(":") << uri.port();
-    //            proxy_str = ss.str();
-    //        }
-    //        else
-    //        {
-    //            proxy_str = uri.host();
-    //        }
-    //        proxy_name = proxy_str.c_str();
-    //    }
-    //}
+    switch (m_proxyType)
+    {
+        case proxy_type::no_proxy:
+            *pAccessType = WINHTTP_ACCESS_TYPE_NO_PROXY;
+            *pwProxyName = WINHTTP_NO_PROXY_NAME;
+            break;
 
-    *pAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-    *pwProxyName = WINHTTP_NO_PROXY_NAME;
+        case proxy_type::named_proxy:
+        {
+            *pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+
+            xbox::httpclient::Uri cProxyUri(m_proxyAddress);
+            http_internal_wstring wProxyHost = utf16_from_utf8(cProxyUri.Host());
+
+            // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
+            if (cProxyUri.IsPortDefault())
+            {
+                m_wProxyName = wProxyHost;
+                *pwProxyName = m_wProxyName.c_str();
+            }
+            else
+            {
+                if (cProxyUri.Port() > 0)
+                {
+                    http_internal_basic_stringstream<wchar_t> ss;
+                    ss.imbue(std::locale::classic());
+                    ss << wProxyHost << L":" << cProxyUri.Port();
+                    m_wProxyName = ss.str();
+                    *pwProxyName = m_wProxyName.c_str();
+                }
+                else
+                {
+                    m_wProxyName = wProxyHost;
+                    *pwProxyName = m_wProxyName.c_str();
+                }
+            }
+            break;
+        }
+
+        default:
+        case proxy_type::autodiscover_proxy:
+        case proxy_type::default_proxy:
+            *pAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+            *pwProxyName = WINHTTP_NO_PROXY_NAME;
+
+            WINHTTP_PROXY_INFO info = { 0 };
+            WinHttpGetDefaultProxyConfiguration(&info);
+            OutputDebugString(info.lpszProxy);
+            break;
+    }
 }
 
-void winhttp_http_task::get_proxy_info(
-    _In_ WINHTTP_PROXY_INFO* pInfo, 
-    _In_ bool* pProxyInfoRequired,
+void winhttp_http_task::set_autodiscover_proxy(
     _In_ const xbox::httpclient::Uri& cUri)
 {
-    // TODO
-    //WINHTTP_PROXY_INFO info = { 0 };
-    //bool proxyInfoRequired = false;
+    WINHTTP_PROXY_INFO info = { 0 };
 
-    //WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
-    //memset(&autoproxy_options, 0, sizeof(WINHTTP_AUTOPROXY_OPTIONS));
-    //memset(&info, 0, sizeof(WINHTTP_PROXY_INFO));
+    WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
+    memset(&autoproxy_options, 0, sizeof(WINHTTP_AUTOPROXY_OPTIONS));
+    memset(&info, 0, sizeof(WINHTTP_PROXY_INFO));
 
-    //autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
-    //autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
-    //autoproxy_options.fAutoLogonIfChallenged = TRUE;
+    autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+    autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+    autoproxy_options.fAutoLogonIfChallenged = TRUE;
 
-    //auto result = WinHttpGetProxyForUrl(
-    //    m_hSession,
-    //    utf16_from_utf8(cUri.FullPath()).c_str(),
-    //    &autoproxy_options,
-    //    &info);
-    //if (result)
-    //{
-    //    proxyInfoRequired = true;
-    //}
-    //else
-    //{
-    //    // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
-    //}
+    auto result = WinHttpGetProxyForUrl(
+        m_hSession,
+        utf16_from_utf8(cUri.FullPath()).c_str(),
+        &autoproxy_options,
+        &info);
+    if (result)
+    {
+        auto result = WinHttpSetOption(
+            m_hRequest,
+            WINHTTP_OPTION_PROXY,
+            &info,
+            sizeof(WINHTTP_PROXY_INFO));
+        if (!result)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetOption errorcode %d", m_call->id, GetLastError());
+            return;
+        }
+    }
+    else
+    {
+        // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
+    }
+}
 
-    //*pInfo = info;
-    //*pProxyInfoRequired = proxyInfoRequired;
+void winhttp_http_task::get_ie_proxy_info()
+{
+    WINHTTP_CURRENT_USER_IE_PROXY_CONFIG config = { 0 };
+    WinHttpGetIEProxyConfigForCurrentUser(&config);
+
+    if (config.fAutoDetect)
+    {
+        m_proxyType = proxy_type::autodiscover_proxy;
+    }
+    else if (config.lpszProxy != nullptr)
+    {
+        // something like "http=127.0.0.1:8888;https=127.0.0.1:8888"
+        wchar_t* next_token;
+        wchar_t* token = wcstok_s(config.lpszProxy, L";", &next_token);
+        
+        while (token != nullptr)
+        {
+            http_internal_wstring wToken = token;
+            if (wToken.find(L"http=") == 0)
+            {
+                m_wProxyName = wToken.substr(5);
+            }
+            if (wToken.find(L"https=") == 0)
+            {
+                m_wProxyName = wToken.substr(6);
+            }
+            token = wcstok_s(nullptr, L";", &next_token);
+        }
+
+        m_proxyType = (m_wProxyName.empty()) ? proxy_type::no_proxy : proxy_type::named_proxy;
+    }
+    else
+    {
+        m_proxyType = proxy_type::no_proxy;
+    }
 }
 
 HRESULT winhttp_http_task::connect(
@@ -509,6 +556,8 @@ HRESULT winhttp_http_task::connect(
     {
         return E_FAIL;
     }
+
+    get_ie_proxy_info();
 
     DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     const wchar_t* wProxyName = nullptr;
@@ -624,21 +673,9 @@ HRESULT winhttp_http_task::send(
         return E_FAIL;
     }
 
-    WINHTTP_PROXY_INFO info = { 0 };
-    bool proxyInfoRequired = false;
-    get_proxy_info(&info, &proxyInfoRequired, cUri);
-    if (proxyInfoRequired)
+    if (m_proxyType == proxy_type::autodiscover_proxy)
     {
-        auto result = WinHttpSetOption(
-            m_hRequest,
-            WINHTTP_OPTION_PROXY,
-            &info,
-            sizeof(WINHTTP_PROXY_INFO));
-        if (!result)
-        {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetOption errorcode %d", m_call->id, GetLastError());
-            return E_FAIL;
-        }
+        set_autodiscover_proxy(cUri);
     }
 
     const BYTE* requestBody = nullptr;
@@ -752,31 +789,6 @@ void winhttp_http_task::perform_async()
         HCHttpCallResponseSetNetworkErrorCode(m_call, HC_E_FAIL, static_cast<uint32_t>(HC_E_FAIL));
         HCTaskSetCompleted(m_taskHandle);
     }
-}
-
-bool winhttp_http_task::has_error()
-{
-    return m_exceptionPtr != nullptr;
-}
-
-void winhttp_http_task::set_exception(const std::exception_ptr& exceptionPtr)
-{
-    m_exceptionPtr = exceptionPtr;
-}
-
-http_buffer& winhttp_http_task::response_buffer()
-{
-    return m_responseBuffer;
-}
-
-HC_CALL_HANDLE winhttp_http_task::call()
-{
-    return m_call;
-}
-
-HC_TASK_HANDLE winhttp_http_task::task_handle()
-{
-    return m_taskHandle;
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
