@@ -3,6 +3,78 @@
 
 #include "pch.h"
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+static void ltrim_whitespace(_In_ http_internal_wstring& str)
+{
+    size_t index;
+    for (index = 0; index < str.size() && isspace(str[index]); ++index);
+    str.erase(0, index);
+}
+
+static void rtrim_whitespace(_In_ http_internal_wstring& str)
+{
+    size_t index;
+    for (index = str.size(); index > 0 && isspace(str[index - 1]); --index);
+    str.erase(index);
+}
+
+void trim_whitespace(_In_ http_internal_wstring& str)
+{
+    ltrim_whitespace(str);
+    rtrim_whitespace(str);
+}
+
+bool StringToUint4(char const* begin, char const* end, uint64_t& v, int32_t base)
+{
+    v = 0;
+
+    char* readTo = nullptr;
+    uint64_t n = std::strtoull(begin, &readTo, base);
+
+    if (n == 0 && readTo == begin) // could not convert
+    {
+        return false;
+    }
+    else if (errno == ERANGE) // out of range
+    {
+        return false;
+    }
+    else if (readTo != end) // could not convert whole string
+    {
+        return false;
+    }
+    else
+    {
+        v = n;
+        return true;
+    }
+}
+
+void BasicAsciiLowercase(String& s)
+{
+    static std::locale const classicLocale = std::locale::classic();
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c)
+    {
+        if ((c & 0x7F) == c)
+        {
+            return std::tolower(c, classicLocale);
+        }
+        else
+        {
+            assert(false);
+            return c;
+        }
+    });
+}
+
+bool StringToUint(String const& s, uint64_t& v, int32_t base)
+{
+    return StringToUint4(s.data(), s.data() + s.size(), v, base);
+}
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
+
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
 
 HC_RESULT StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line)

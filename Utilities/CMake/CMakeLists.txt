@@ -124,6 +124,8 @@ set(Common_Source_Files
     ../../../Source/Common/pch.cpp
     ../../../Source/Common/pch.h
     ../../../Source/Common/pch_common.h
+    ../../../Source/Common/uri.cpp
+    ../../../Source/Common/uri.h
     ../../../Source/Common/utils.cpp
     ../../../Source/Common/utils.h
     )
@@ -151,7 +153,14 @@ set(Unittest_WebSocket_Source_Files
 set(WinRTHttpClient_HTTP_Source_Files
     ../../../Source/HTTP/WinRTHttpClient/http_winrthttpclient.cpp
     )
-    
+
+set(WinHttp_HTTP_Source_Files
+    ../../../Source/HTTP/WinHttp/http_buffer.cpp
+    ../../../Source/HTTP/WinHttp/http_buffer.h
+    ../../../Source/HTTP/WinHttp/winhttp_http_task.cpp
+    ../../../Source/HTTP/WinHttp/winhttp_http_task.h
+    )
+        
 set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_buffer.cpp
     ../../../Source/HTTP/XMLHttp/http_buffer.h
@@ -265,13 +274,13 @@ if( XDK )
 endif()
 
 if( BUILDWIN32 )
-    source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
+    source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\Win32" FILES ${Win32_WebSocket_Source_Files})
 
     list(APPEND
         SOURCE_FILES
-        ${XMLHttp_HTTP_Source_Files}
+        ${WinHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${Win32_WebSocket_Source_Files}
         )
