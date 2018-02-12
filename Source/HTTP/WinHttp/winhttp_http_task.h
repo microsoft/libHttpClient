@@ -87,7 +87,7 @@ private:
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
 
-    void get_ie_proxy_info();
+    void get_ie_proxy_info(_In_ bool isSecure);
 
     void get_proxy_name(
         _Out_ DWORD* pAccessType,
@@ -119,7 +119,7 @@ private:
     uint64_t m_requestBodyRemainingToWrite;
     uint64_t m_requestBodyOffset;
 
-    http_internal_string m_proxyAddress;
+    http_internal_wstring m_proxyAddress;
     http_internal_wstring m_wProxyName;
     proxy_type m_proxyType;
 };

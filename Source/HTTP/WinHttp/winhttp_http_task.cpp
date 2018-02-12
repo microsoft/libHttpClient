@@ -431,7 +431,7 @@ void winhttp_http_task::get_proxy_name(
         {
             *pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
 
-            xbox::httpclient::Uri cProxyUri(m_proxyAddress);
+            xbox::httpclient::Uri cProxyUri(utf8_from_utf16(m_proxyAddress));
             http_internal_wstring wProxyHost = utf16_from_utf8(cProxyUri.Host());
 
             // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
@@ -464,10 +464,6 @@ void winhttp_http_task::get_proxy_name(
         case proxy_type::default_proxy:
             *pAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
             *pwProxyName = WINHTTP_NO_PROXY_NAME;
-
-            WINHTTP_PROXY_INFO info = { 0 };
-            WinHttpGetDefaultProxyConfiguration(&info);
-            OutputDebugString(info.lpszProxy);
             break;
     }
 }
@@ -509,10 +505,13 @@ void winhttp_http_task::set_autodiscover_proxy(
     }
 }
 
-void winhttp_http_task::get_ie_proxy_info()
+void winhttp_http_task::get_ie_proxy_info(_In_ bool isSecure)
 {
     WINHTTP_CURRENT_USER_IE_PROXY_CONFIG config = { 0 };
-    WinHttpGetIEProxyConfigForCurrentUser(&config);
+    if (!WinHttpGetIEProxyConfigForCurrentUser(&config))
+    {
+        return;
+    }
 
     if (config.fAutoDetect)
     {
@@ -520,25 +519,41 @@ void winhttp_http_task::get_ie_proxy_info()
     }
     else if (config.lpszProxy != nullptr)
     {
-        // something like "http=127.0.0.1:8888;https=127.0.0.1:8888"
-        wchar_t* next_token;
-        wchar_t* token = wcstok_s(config.lpszProxy, L";", &next_token);
-        
-        while (token != nullptr)
+        // something like "http=127.0.0.1:8888;https=127.0.0.1:8888", or "localhost:80"
+        http_internal_wstring proxyConfig = config.lpszProxy;
+        if (proxyConfig.find(L";") == http_internal_wstring::npos)
         {
-            http_internal_wstring wToken = token;
-            if (wToken.find(L"http=") == 0)
+            m_proxyAddress = proxyConfig;
+        }
+        else
+        {
+            wchar_t* next_token;
+            wchar_t* token = wcstok_s(config.lpszProxy, L";", &next_token);
+
+            while (token != nullptr)
             {
-                m_wProxyName = wToken.substr(5);
+                http_internal_wstring wToken = token;
+                if (!isSecure && wToken.find(L"http=") == 0)
+                {
+                    m_proxyAddress = wToken.substr(5);
+                }
+                if (isSecure && wToken.find(L"https=") == 0)
+                {
+                    m_proxyAddress = wToken.substr(6);
+                }
+                token = wcstok_s(nullptr, L";", &next_token);
             }
-            if (wToken.find(L"https=") == 0)
-            {
-                m_wProxyName = wToken.substr(6);
-            }
-            token = wcstok_s(nullptr, L";", &next_token);
         }
 
-        m_proxyType = (m_wProxyName.empty()) ? proxy_type::no_proxy : proxy_type::named_proxy;
+        if (!m_proxyAddress.empty())
+        {
+            if (m_proxyAddress.find(L"://") == http_internal_wstring::npos)
+            {
+                m_proxyAddress = L"http://" + m_proxyAddress;
+            }
+        }
+
+        m_proxyType = (m_proxyAddress.empty()) ? proxy_type::no_proxy : proxy_type::named_proxy;
     }
     else
     {
@@ -557,7 +572,7 @@ HRESULT winhttp_http_task::connect(
         return E_FAIL;
     }
 
-    get_ie_proxy_info();
+    get_ie_proxy_info(cUri.IsSecure());
 
     DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     const wchar_t* wProxyName = nullptr;
