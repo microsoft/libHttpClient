@@ -120,7 +120,7 @@ http_internal_queue<HC_TASK*>& http_singleton::get_task_pending_queue(_In_ uint6
 std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId
-)
+    )
 {
     std::lock_guard<std::mutex> lock(m_taskCompletedQueueLock);
     auto& taskCompletedQueue = m_taskCompletedQueue[taskSubsystemId];
