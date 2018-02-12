@@ -17,7 +17,7 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton() 
+http_singleton::http_singleton()
 {
     m_lastId = 0;
     m_performFunc = Internal_HCHttpCallPerform;
@@ -40,6 +40,7 @@ http_singleton::http_singleton()
 
 http_singleton::~http_singleton()
 {
+    g_httpSingleton_atomicReadsOnly = nullptr;
     for (auto& mockCall : m_mocks)
     {
         HCHttpCallCloseHandle(mockCall);
@@ -84,21 +85,23 @@ HC_RESULT init_http_singleton()
 
 void cleanup_http_singleton()
 {
-    shared_ptr_cache::cleanup();
-
     std::shared_ptr<http_singleton> httpSingleton;
     httpSingleton = std::atomic_exchange(&g_httpSingleton_atomicReadsOnly, httpSingleton);
 
-    // Wait for all other references to the singleton to go away
-    // Note that the use count check here is only valid because we never create
-    // a weak_ptr to the singleton. If we did that could cause the use count
-    // to increase even though we are the only strong reference
-    while (httpSingleton.use_count() > 1)
+    if (httpSingleton != nullptr)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds{ 10 });
-    }
+        shared_ptr_cache::cleanup();
 
-    // httpSingleton will be destroyed on this thread now
+        // Wait for all other references to the singleton to go away
+        // Note that the use count check here is only valid because we never create
+        // a weak_ptr to the singleton. If we did that could cause the use count
+        // to increase even though we are the only strong reference
+        while (httpSingleton.use_count() > 1)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds{ 10 });
+        }
+        // httpSingleton will be destroyed on this thread now
+    }
 }
 
 
@@ -117,7 +120,7 @@ http_internal_queue<HC_TASK*>& http_singleton::get_task_pending_queue(_In_ uint6
 std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,
     _In_ uint64_t taskGroupId
-    )
+)
 {
     std::lock_guard<std::mutex> lock(m_taskCompletedQueueLock);
     auto& taskCompletedQueue = m_taskCompletedQueue[taskSubsystemId];
