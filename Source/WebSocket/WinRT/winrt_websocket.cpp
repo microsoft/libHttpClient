@@ -121,26 +121,6 @@ inline bool str_icmp(const char* left, const char* right)
 #endif
 }
 
-static void ltrim_whitespace(http_internal_wstring& str)
-{
-    size_t index;
-    for (index = 0; index < str.size() && isspace(str[index]); ++index);
-    str.erase(0, index);
-}
-
-static void rtrim_whitespace(http_internal_wstring& str)
-{
-    size_t index;
-    for (index = str.size(); index > 0 && isspace(str[index - 1]); --index);
-    str.erase(index);
-}
-
-void trim_whitespace(http_internal_wstring& str)
-{
-    ltrim_whitespace(str);
-    rtrim_whitespace(str);
-}
-
 http_internal_vector<http_internal_wstring> parse_subprotocols(const http_internal_string& subProtocol)
 {
     http_internal_vector<http_internal_wstring> values;
@@ -200,7 +180,7 @@ try
         }
     }
 
-    auto& protocols = parse_subprotocols(websocket->subProtocol);
+    auto protocols = parse_subprotocols(websocket->subProtocol);
     for (const auto& value : protocols)
     {
         websocketTask->m_messageWebSocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
@@ -222,9 +202,9 @@ try
     websocketTask->m_connectAsyncOp->Completed = ref new AsyncActionCompletedHandler(
         [websocket, websocketTask, taskHandle](Windows::Foundation::IAsyncAction^ asyncOp, Windows::Foundation::AsyncStatus status)
     {
+        UNREFERENCED_PARAMETER(status);
         try
         {
-            std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
             websocketTask->m_messageDataWriter = ref new DataWriter(websocketTask->m_messageWebSocket->OutputStream);
             websocketTask->m_connectAsyncOpResult = S_OK;
         }
@@ -259,6 +239,7 @@ HC_RESULT WebsockConnectWriteResults(
     )
 try
 {
+    UNREFERENCED_PARAMETER(taskHandleId);
     HC_WEBSOCKET_HANDLE websocket = static_cast<HC_WEBSOCKET_HANDLE>(writeResultsRoutineContext);
     if (websocket != nullptr)
     {
@@ -427,6 +408,7 @@ HC_RESULT WebsockSendMessageWriteResults(
     )
 try
 {
+    UNREFERENCED_PARAMETER(taskHandleId);
     auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContent>(writeResultsRoutineContext);
     if (sendMsgContext == nullptr)
     {
