@@ -90,7 +90,7 @@ void cleanup_http_singleton()
 
     if (httpSingleton != nullptr)
     {
-        shared_ptr_cache::cleanup();
+        shared_ptr_cache::cleanup(httpSingleton);
 
         // Wait for all other references to the singleton to go away
         // Note that the use count check here is only valid because we never create

@@ -132,9 +132,8 @@ public:
         }
     }
 
-    static void cleanup()
+    static void cleanup(_In_ std::shared_ptr<http_singleton> httpSingleton)
     {
-        auto httpSingleton = get_http_singleton();
         std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
         HC_ASSERT(httpSingleton->m_sharedPtrs.size() == 0);
         httpSingleton->m_sharedPtrs.clear();
