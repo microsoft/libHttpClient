@@ -155,8 +155,6 @@ set(WinRTHttpClient_HTTP_Source_Files
     )
 
 set(WinHttp_HTTP_Source_Files
-    ../../../Source/HTTP/WinHttp/http_buffer.cpp
-    ../../../Source/HTTP/WinHttp/http_buffer.h
     ../../../Source/HTTP/WinHttp/winhttp_http_task.cpp
     ../../../Source/HTTP/WinHttp/winhttp_http_task.h
     )

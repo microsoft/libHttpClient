@@ -4,12 +4,6 @@
 #include "pch.h"
 #include <wrl.h>
 #include <winhttp.h>
-#if !HC_XDK_API
-#include <msxml6.h>
-#else
-#include <ixmlhttprequest2.h>
-#endif
-#include "http_buffer.h"
 #include "utils.h"
 #include "uri.h"
 
@@ -48,7 +42,7 @@ private:
         _In_ HINTERNET hRequestHandle,
         _In_ winhttp_http_task* pRequestContext);
 
-    static void read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD bytesRead, bool firstRead = false);
+    static void read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD bytesRead);
     static void _multiple_segment_write_data(_In_ winhttp_http_task* pRequestContext);
 
     static void parse_headers_string(_In_ HC_CALL_HANDLE call, _In_ wchar_t* headersStr);
@@ -110,7 +104,6 @@ private:
 
     HC_CALL_HANDLE m_call;
     HC_TASK_HANDLE m_taskHandle;
-    http_buffer m_responseBuffer;
 
     HINTERNET m_hSession;
     HINTERNET m_hConnection;
@@ -118,6 +111,7 @@ private:
     msg_body_type m_requestBodyType;
     uint64_t m_requestBodyRemainingToWrite;
     uint64_t m_requestBodyOffset;
+    http_internal_vector<char> m_responseBuffer;
 
     http_internal_wstring m_proxyAddress;
     http_internal_wstring m_wProxyName;

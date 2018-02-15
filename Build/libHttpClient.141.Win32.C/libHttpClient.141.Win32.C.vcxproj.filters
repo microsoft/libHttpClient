@@ -22,9 +22,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
       <Filter>C++ Source\Global</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\http_buffer.cpp">
-      <Filter>C++ Source\HTTP\WinHttp</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_task.cpp">
       <Filter>C++ Source\HTTP\WinHttp</Filter>
     </ClCompile>
@@ -87,9 +84,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h">
       <Filter>C++ Source\Global</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\http_buffer.h">
-      <Filter>C++ Source\HTTP\WinHttp</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_task.h">
       <Filter>C++ Source\HTTP\WinHttp</Filter>
     </ClInclude>
@@ -128,41 +122,41 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="C++ Source\Common\Win">
-      <UniqueIdentifier>{C5542DD7-B9D6-3A58-A084-0561ECB2DF75}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\WebSocket\Win32">
-      <UniqueIdentifier>{29B07563-10FC-39D4-9F3E-654327F48D98}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\HTTP\WinHttp">
-      <UniqueIdentifier>{4419E017-C7B7-366B-9B22-021AF9430F5F}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{F97BB50C-1FC3-3327-9A1C-241917BD6B71}</UniqueIdentifier>
+      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{7AA2F186-54B6-32C8-8821-F4F87EFDC3CF}</UniqueIdentifier>
+      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\WebSocket\Win32">
+      <UniqueIdentifier>{F48BC9FE-FA7F-3CDA-A2EA-6A9E7BD4A600}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\WinHttp">
+      <UniqueIdentifier>{01466804-77B8-33C2-AAEE-469619C39927}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Common\Win">
+      <UniqueIdentifier>{E705B256-E422-3FF4-95FA-7E24B8A5474F}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{3E29A7DB-48CF-3B6F-BEC6-6FA213404005}</UniqueIdentifier>
+      <UniqueIdentifier>{6D290126-3831-3A04-903B-F2ADD104D81C}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{DF0EF27F-ACEA-331E-9067-3FEE5DE3F903}</UniqueIdentifier>
+      <UniqueIdentifier>{B5E18BF5-6C51-323C-96A0-81422D9D6069}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{584EC0D2-E3A3-33BF-967A-1588C2C89C6C}</UniqueIdentifier>
+      <UniqueIdentifier>{09CB3AE4-1639-3274-BB94-99AAC498EA50}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{3AB8EF87-7838-349A-B38F-0880E6786A57}</UniqueIdentifier>
+      <UniqueIdentifier>{09ED63FC-76E4-368A-B7E4-40A1D70ABD31}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{D912E6B8-C8CF-3AED-BF78-068424DF0945}</UniqueIdentifier>
+      <UniqueIdentifier>{ECB59FD8-67C4-354A-90B2-DFC893C0F2E5}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{069E91F4-D32B-3ADB-ACFD-255B08C63151}</UniqueIdentifier>
+      <UniqueIdentifier>{6DAD9E7F-080C-3264-920E-77D0AFFE8CC9}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{87BF5B5A-44C2-381D-B322-1D70A654F58C}</UniqueIdentifier>
+      <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
