@@ -56,7 +56,9 @@ HC_CALL* GetMatchingMock(
     _In_ HC_CALL_HANDLE originalCall
     )
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return nullptr;
 
     http_internal_vector<HC_CALL*> mocks;
     HC_CALL* lastMatchingMock = nullptr;
@@ -90,7 +92,7 @@ HC_CALL* GetMatchingMock(
     else
     {
         // if there was last matching call, looking through the rest of the mocks to see if there's more that match
-        for (auto j = lastMockIndex + 1; j < mocks.size(); j++)
+        for (auto j = lastMockIndex + 1; j < static_cast<long>(mocks.size()); j++)
         {
             if (DoesMockCallMatch(mocks[j], originalCall))
             {

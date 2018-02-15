@@ -20,7 +20,9 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     call->method = method;
     call->url = url;
@@ -45,7 +47,9 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     *method = call->method.c_str();
     *url = call->url.c_str();
@@ -67,7 +71,10 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     call->requestBodyBytes.assign(requestBodyBytes, requestBodyBytes + requestBodySize);
     call->requestBodyString.clear();
 
@@ -251,7 +258,10 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         httpSingleton->m_retryAllowed = retryAllowed;
     }
     else
@@ -280,7 +290,10 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         *retryAllowed = httpSingleton->m_retryAllowed;
     }
     else
@@ -300,7 +313,10 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         httpSingleton->m_timeoutInSeconds = timeoutInSeconds;
     }
     else
@@ -329,7 +345,10 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         *timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
     }
     else
@@ -350,7 +369,10 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         httpSingleton->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
     }
     else
@@ -378,7 +400,10 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         *retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
     }
     else
@@ -398,7 +423,10 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         httpSingleton->m_retryDelayInSeconds = retryDelayInSeconds;
     }
     else
@@ -424,7 +452,10 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
         *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
     }
     else

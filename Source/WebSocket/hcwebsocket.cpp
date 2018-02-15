@@ -18,7 +18,9 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     HC_WEBSOCKET* socket = new HC_WEBSOCKET();
     socket->id = ++httpSingleton->m_lastId;
@@ -73,7 +75,10 @@ HCWebSocketSetFunctions(
     ) HC_NOEXCEPT
 try 
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     httpSingleton->m_websocketMessageFunc = messageFunc;
     httpSingleton->m_websocketCloseEventFunc = closeFunc;
 
@@ -98,7 +103,9 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     auto connectFunc = httpSingleton->m_websocketConnectFunc;
     if (connectFunc != nullptr)
@@ -134,7 +141,9 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     auto sendFunc = httpSingleton->m_websocketSendMessageFunc;
     if (sendFunc != nullptr)
@@ -164,7 +173,9 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     auto closeEventFunc = httpSingleton->m_websocketCloseEventFunc;
     auto closeFunc = httpSingleton->m_websocketDisconnectFunc;
@@ -238,7 +249,10 @@ HCGlobalSetWebSocketFunctions(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     httpSingleton->m_websocketConnectFunc = (websocketConnectFunc) ? websocketConnectFunc : Internal_HCWebSocketConnect;
     httpSingleton->m_websocketSendMessageFunc = (websocketSendMessageFunc) ? websocketSendMessageFunc : Internal_HCWebSocketSendMessage;
     httpSingleton->m_websocketDisconnectFunc = (websocketDisconnectFunc) ? websocketDisconnectFunc : Internal_HCWebSocketDisconnect;
@@ -262,7 +276,10 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     *websocketConnectFunc = httpSingleton->m_websocketConnectFunc;
     *websocketSendMessageFunc = httpSingleton->m_websocketSendMessageFunc;
     *websocketDisconnectFunc = httpSingleton->m_websocketDisconnectFunc;
@@ -371,7 +388,10 @@ HCWebSocketGetFunctions(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     if (messageFunc != nullptr)
     {
         *messageFunc = httpSingleton->m_websocketMessageFunc;

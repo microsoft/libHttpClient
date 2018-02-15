@@ -45,7 +45,10 @@ HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
     ) HC_NOEXCEPT
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return;
+
     httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
@@ -60,7 +63,10 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     *performFunc = httpSingleton->m_performFunc;
     return HC_OK;
 }

@@ -33,7 +33,7 @@ HCMemSetFunctions(
     _In_opt_ HC_MEM_FREE_FUNC memFreeFunc
     ) HC_NOEXCEPT
 {
-    if (xbox::httpclient::get_http_singleton() != nullptr)
+    if (xbox::httpclient::get_http_singleton(false) != nullptr)
     {
         return HC_E_ALREADYINITIALISED;
     }

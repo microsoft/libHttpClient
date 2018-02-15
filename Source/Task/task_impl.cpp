@@ -33,7 +33,9 @@ void raise_task_event(
 
 void http_task_queue_pending(_In_ HC_TASK* task)
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return;
 
     task->state = http_task_state::pending;
     {
@@ -51,7 +53,9 @@ void http_task_queue_pending(_In_ HC_TASK* task)
 
 HC_TASK* http_task_get_next_pending(_In_ HC_SUBSYSTEM_ID taskSubsystemId)
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return nullptr;
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
     auto& taskPendingQueue = httpSingleton->get_task_pending_queue(taskSubsystemId);
@@ -66,7 +70,10 @@ HC_TASK* http_task_get_next_pending(_In_ HC_SUBSYSTEM_ID taskSubsystemId)
 
 void http_task_process_pending(_In_ HC_TASK* task)
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return;
+
     task->state = http_task_state::processing;
 
     {
@@ -91,7 +98,9 @@ void http_task_process_pending(_In_ HC_TASK* task)
 
 void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return;
 
     HC_TASK* taskHandle = http_task_get_task_from_handle_id(taskHandleId);
     if (taskHandle == nullptr)
@@ -136,7 +145,9 @@ void http_task_queue_completed(_In_ HC_TASK_HANDLE taskHandleId)
 
 HC_TASK* http_task_get_next_completed(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_ uint64_t taskGroupId)
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return nullptr;
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
     auto& completedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_completed_queue();
@@ -166,8 +177,10 @@ HC_TASK* http_task_get_task_from_handle_id(
     _In_ HC_TASK_HANDLE taskHandleId
     )
 {
-    auto httpSingleton = get_http_singleton();
-    
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return nullptr;
+
     std::lock_guard<std::mutex> lock(httpSingleton->m_taskHandleIdMapLock);
     auto& taskHandleIdMap = httpSingleton->m_taskHandleIdMap;
     auto it = taskHandleIdMap.find(taskHandleId);
@@ -183,7 +196,9 @@ void http_task_store_task_from_handle_id(
     _In_ HC_TASK_PTR task
     )
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return;
 
     std::lock_guard<std::mutex> lock(httpSingleton->m_taskHandleIdMapLock);
     auto& taskHandleIdMap = httpSingleton->m_taskHandleIdMap;
@@ -194,7 +209,9 @@ void http_task_clear_task_from_handle_id(
     _In_ HC_TASK_HANDLE taskHandleId
     )
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return;
 
     std::lock_guard<std::mutex> lock(httpSingleton->m_taskHandleIdMapLock);
     auto& taskHandleIdMap = httpSingleton->m_taskHandleIdMap;

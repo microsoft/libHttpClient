@@ -49,7 +49,7 @@ void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pReques
 void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRequestContext)
 {
     const size_t defaultChunkSize = 64 * 1024;
-    uint64_t safeSize = std::min(pRequestContext->m_requestBodyRemainingToWrite, defaultChunkSize);
+    uint64_t safeSize = MIN(pRequestContext->m_requestBodyRemainingToWrite, defaultChunkSize);
 
     const BYTE* requestBody = nullptr;
     uint32_t requestBodyBytes = 0;
@@ -284,8 +284,7 @@ void winhttp_http_task::callback_status_data_available(
         // No more data available, complete the request.
         if (pRequestContext->m_responseBuffer.size() > 0)
         {
-            char c[1] = { 0 };
-            pRequestContext->m_responseBuffer.insert(pRequestContext->m_responseBuffer.end(), &c[0], &c[0] + 1);
+            pRequestContext->m_responseBuffer.push_back(0); // Add null term
 
             char* responseString = &pRequestContext->m_responseBuffer[0];
             HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString);
@@ -309,11 +308,10 @@ void winhttp_http_task::callback_status_read_complete(
     {
         if (pRequestContext->m_responseBuffer.size() > 0)
         {
-            http_internal_string responseString = http_internal_string(pRequestContext->m_responseBuffer.begin(), pRequestContext->m_responseBuffer.end());
-            if (responseString.length() > 0)
-            {
-                HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString.c_str());
-            }
+            pRequestContext->m_responseBuffer.push_back(0); // Add null term
+
+            char* responseString = &pRequestContext->m_responseBuffer[0];
+            HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString);
         }
         HCTaskSetCompleted(pRequestContext->m_taskHandle);
         return;

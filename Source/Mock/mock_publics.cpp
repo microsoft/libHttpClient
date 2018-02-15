@@ -30,7 +30,9 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     if (method != nullptr && url != nullptr)
     {
@@ -61,7 +63,9 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCMockClearMocks() HC_NOEXCEPT
 try 
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
 

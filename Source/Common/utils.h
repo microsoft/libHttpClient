@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 using String = http_internal_string;
 
 template<class K, class V, class LESS = std::less<K>>

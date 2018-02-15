@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Win32Http", "Win32Http.vcxproj", "{00867B85-BAE6-4129-85EA-18CCFA002E00}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.141.Win32.C", "..\..\Build\libHttpClient.141.Win32.C\libHttpClient.141.Win32.C.vcxproj", "{CF37BEB2-A66A-42BA-B348-1F07566F4865}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.140.Win32.C", "..\..\Build\libHttpClient.140.Win32.C\libHttpClient.140.Win32.C.vcxproj", "{CF37BEB2-A66A-42BA-B348-1F07566F4865}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
