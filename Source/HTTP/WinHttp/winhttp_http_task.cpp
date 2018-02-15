@@ -38,7 +38,7 @@ winhttp_http_task::~winhttp_http_task()
 
 
 // Helper function to query/read next part of response data from winhttp.
-void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD bytesRead, bool firstRead)
+void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD bytesRead)
 {
     if (!WinHttpQueryDataAvailable(pRequestContext->m_hRequest, nullptr))
     {
@@ -109,6 +109,9 @@ void winhttp_http_task::callback_status_request_error(
 
     const DWORD errorCode = error_result->dwError;
     HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", pRequestContext->m_call->id, error_result->dwResult, error_result->dwError);
+    HCHttpCallResponseSetNetworkErrorCode(pRequestContext->m_call, HC_E_FAIL, errorCode);
+    HCTaskSetCompleted(pRequestContext->m_taskHandle);
+
 }
 
 void winhttp_http_task::callback_status_sendrequest_complete(
@@ -247,7 +250,7 @@ void winhttp_http_task::callback_status_headers_available(
 
     uint32_t statusCode = parse_status_code(pRequestContext->m_call, hRequestHandle, pRequestContext);
     parse_headers_string(pRequestContext->m_call, headerBuffer);
-    read_next_response_chunk(pRequestContext, 0, true);
+    read_next_response_chunk(pRequestContext, 0);
 }
 
 void winhttp_http_task::callback_status_data_available(
@@ -256,37 +259,36 @@ void winhttp_http_task::callback_status_data_available(
     _In_ void* statusInfo)
 {
     // Status information contains pointer to DWORD containing number of bytes available.
-    DWORD numBytes = *(PDWORD)statusInfo;
+    DWORD newBytesAvailable = *(PDWORD)statusInfo;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE numBytes=%d", pRequestContext->m_call->id, numBytes);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE newBytesAvailable=%d", pRequestContext->m_call->id, newBytesAvailable);
 
-    if (numBytes > 0)
+    if (newBytesAvailable > 0)
     {
-        http_internal_vector<uint8_t> bodyData;
-        bodyData.resize(numBytes);
+        size_t oldSize = pRequestContext->m_responseBuffer.size();
+        size_t newSize = oldSize + newBytesAvailable;
+        pRequestContext->m_responseBuffer.resize(newSize);
 
         // Read in body all at once.
         if (!WinHttpReadData(
             hRequestHandle,
-            &bodyData[0],
-            numBytes,
+            &pRequestContext->m_responseBuffer[oldSize],
+            newBytesAvailable,
             nullptr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpReadData errorcode %d", pRequestContext->m_call->id, GetLastError());
         }
-
-        pRequestContext->m_responseBuffer.append(&bodyData[0], static_cast<ULONG>(bodyData.size()));
     }
     else
     {
         // No more data available, complete the request.
         if (pRequestContext->m_responseBuffer.size() > 0)
         {
-            auto const& responseString = pRequestContext->m_responseBuffer.as_string();
-            if (responseString.length() > 0)
-            {
-                HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString.c_str());
-            }
+            char c[1] = { 0 };
+            pRequestContext->m_responseBuffer.insert(pRequestContext->m_responseBuffer.end(), &c[0], &c[0] + 1);
+
+            char* responseString = &pRequestContext->m_responseBuffer[0];
+            HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString);
         }
         HCTaskSetCompleted(pRequestContext->m_taskHandle);
     }
@@ -307,7 +309,7 @@ void winhttp_http_task::callback_status_read_complete(
     {
         if (pRequestContext->m_responseBuffer.size() > 0)
         {
-            auto const& responseString = pRequestContext->m_responseBuffer.as_string();
+            http_internal_string responseString = http_internal_string(pRequestContext->m_responseBuffer.begin(), pRequestContext->m_responseBuffer.end());
             if (responseString.length() > 0)
             {
                 HCHttpCallResponseSetResponseString(pRequestContext->m_call, responseString.c_str());
@@ -317,7 +319,7 @@ void winhttp_http_task::callback_status_read_complete(
         return;
     }
 
-    read_next_response_chunk(pRequestContext, bytesRead, false);
+    read_next_response_chunk(pRequestContext, bytesRead);
 }
 
 
