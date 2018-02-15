@@ -18,7 +18,9 @@ try
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     HC_CALL* call = new HC_CALL();
 
@@ -83,7 +85,9 @@ HC_RESULT HttpCallPerformExecute(
     )
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
     if (call == nullptr)

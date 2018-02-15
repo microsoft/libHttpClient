@@ -89,7 +89,7 @@ struct http_singleton
 };
 
 
-std::shared_ptr<http_singleton> get_http_singleton();
+std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull);
 HC_RESULT init_http_singleton();
 void cleanup_http_singleton();
 
@@ -100,7 +100,9 @@ public:
     template<typename T>
     static void* store(std::shared_ptr<T> contextSharedPtr)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+            return nullptr;
         std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
 
         void *rawVoidPtr = contextSharedPtr.get();
@@ -112,7 +114,10 @@ public:
     template<typename T>
     static std::shared_ptr<T> fetch(void *rawContextPtr, bool deleteShared = true)
     {
-        auto httpSingleton = get_http_singleton();
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+            return nullptr;
+
         std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
 
         auto iter = httpSingleton->m_sharedPtrs.find(rawContextPtr);

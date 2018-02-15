@@ -15,7 +15,10 @@ HCAddTaskEventHandler(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     HC_TASK_EVENT_HANDLE handleId = ++httpSingleton->m_lastId;
 
     HC_TASK_EVENT_FUNC_NODE node = { taskEventFunc, context, taskSubsystemId };
@@ -39,7 +42,10 @@ HCRemoveTaskEventHandler(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskEventListLock);
     httpSingleton->m_taskEventFuncList.erase(eventHandle);
     return HC_OK;
@@ -50,7 +56,10 @@ bool HC_CALLING_CONV
 HCTaskIsTaskPending()
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return false;
+
     auto& map = httpSingleton->m_taskPendingQueue;
     return !map.empty();
 }
@@ -62,7 +71,10 @@ HCTaskSetCompleted(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     http_task_queue_completed(taskHandle);
     return HC_OK;
 }
@@ -117,7 +129,9 @@ HCTaskGetCompletedTaskQueueSize(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
     auto& completedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_completed_queue();
@@ -131,7 +145,9 @@ HCTaskGetPendingTaskQueueSize(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
     auto& taskPendingQueue = httpSingleton->get_task_pending_queue(taskSubsystemId);
@@ -146,7 +162,9 @@ HCTaskProcessNextCompletedTask(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
 
     HC_TASK* task = http_task_get_next_completed(taskSubsystemId, taskGroupId);
     if (task == nullptr)
@@ -182,14 +200,20 @@ CATCH_RETURN_WITH(true)
 HANDLE HC_CALLING_CONV
 HCTaskGetPendingHandle()
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return nullptr;
+
     return httpSingleton->get_pending_ready_handle();
 }
 
 HANDLE HC_CALLING_CONV
 HCTaskGetCompletedHandle(_In_ HC_SUBSYSTEM_ID taskSubsystemId, _In_ uint64_t taskGroupId)
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return nullptr;
+
     return httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_complete_ready_handle();
 }
 #endif
@@ -198,7 +222,10 @@ HC_RESULT HC_CALLING_CONV
 HCTaskProcessNextPendingTask(_In_ HC_SUBSYSTEM_ID taskSubsystemId) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     HC_TASK* task = http_task_get_next_pending(taskSubsystemId);
     if (task == nullptr)
         return HC_OK;
@@ -222,7 +249,10 @@ HCTaskCreate(
     ) HC_NOEXCEPT
 try
 {
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
+
     HC_TASK* pTask = nullptr;
 
     {
