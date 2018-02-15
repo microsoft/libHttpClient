@@ -637,8 +637,9 @@ HRESULT winhttp_http_task::connect(
 
 http_internal_wstring flatten_http_headers(_In_ HC_CALL_HANDLE call)
 {
-    http_internal_wstring flattened_headers = L"User-Agent:libHttpClient/1.0.0.0\r\n";
+    http_internal_wstring flattened_headers;
 
+    bool foundUserAgent = false;
     uint32_t numHeaders = 0;
     HCHttpCallRequestGetNumHeaders(call, &numHeaders);
     for (uint32_t i = 0; i < numHeaders; i++)
@@ -648,11 +649,22 @@ http_internal_wstring flatten_http_headers(_In_ HC_CALL_HANDLE call)
         HCHttpCallRequestGetHeaderAtIndex(call, i, &iHeaderName, &iHeaderValue);
         if (iHeaderName != nullptr && iHeaderValue != nullptr)
         {
-            flattened_headers.append(utf16_from_utf8(iHeaderName));
+            auto wHeaderName = utf16_from_utf8(iHeaderName);
+            if (wHeaderName == L"User-Agent")
+            {
+                foundUserAgent = true;
+            }
+
+            flattened_headers.append(wHeaderName);
             flattened_headers.push_back(L':');
             flattened_headers.append(utf16_from_utf8(iHeaderValue));
             flattened_headers.append(CRLF);
         }
+    }
+
+    if (!foundUserAgent)
+    {
+        flattened_headers.append(L"User-Agent:libHttpClient/1.0.0.0\r\n");
     }
 
     return flattened_headers;
