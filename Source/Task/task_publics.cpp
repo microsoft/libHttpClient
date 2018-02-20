@@ -131,7 +131,7 @@ try
 {
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return 0;
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
     auto& completedQueue = httpSingleton->get_task_completed_queue_for_taskgroup(taskSubsystemId, taskGroupId)->get_completed_queue();
@@ -147,7 +147,7 @@ try
 {
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return 0;
 
     std::lock_guard<std::mutex> guard(httpSingleton->m_taskLock);
     auto& taskPendingQueue = httpSingleton->get_task_pending_queue(taskSubsystemId);

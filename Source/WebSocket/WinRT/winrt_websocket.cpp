@@ -299,7 +299,9 @@ HC_RESULT Internal_HCWebSocketSendMessage(
         return HC_E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton();
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return HC_E_NOTINITIALISED;
     std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
 
     std::shared_ptr<websocket_outgoing_message> msg = std::make_shared<websocket_outgoing_message>();
