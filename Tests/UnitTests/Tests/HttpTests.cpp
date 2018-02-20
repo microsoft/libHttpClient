@@ -104,11 +104,11 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestGlobalInit);
 
-        VERIFY_IS_NULL(get_http_singleton());
+        VERIFY_IS_NULL(get_http_singleton(false));
         VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
-        VERIFY_IS_NOT_NULL(get_http_singleton());
+        VERIFY_IS_NOT_NULL(get_http_singleton(false));
         HCGlobalCleanup();
-        VERIFY_IS_NULL(get_http_singleton());
+        VERIFY_IS_NULL(get_http_singleton(false));
     }
 
     DEFINE_TEST_CASE(TestGlobalPerformCallback)
