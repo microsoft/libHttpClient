@@ -29,7 +29,7 @@ class winhttp_http_task : public xbox::httpclient::hc_task
 public:
     winhttp_http_task(
         _In_ HC_CALL_HANDLE call,
-        _In_ HC_TASK_HANDLE taskHandle
+        _In_ AsyncBlock* asyncBlock
         );
     ~winhttp_http_task();
 
@@ -103,7 +103,7 @@ private:
         DWORD statusInfoLength);
 
     HC_CALL_HANDLE m_call;
-    HC_TASK_HANDLE m_taskHandle;
+    AsyncBlock* m_asyncBlock;
 
     HINTERNET m_hSession;
     HINTERNET m_hConnection;

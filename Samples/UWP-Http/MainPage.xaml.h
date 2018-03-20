@@ -23,5 +23,8 @@ namespace HttpTestApp
 
         void StartBackgroundThread();
         void StopBackgroundThread();
+
+        async_queue_t m_queue;
+        uint32_t m_callbackToken;
     };
 }

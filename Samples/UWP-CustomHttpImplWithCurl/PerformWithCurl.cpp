@@ -68,7 +68,7 @@ std::wstring to_wstring(const std::string &value)
 
 void HC_CALLING_CONV PerformCallWithCurl(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
+    _In_ AsyncBlock* asyncBlock
     )
 {
     const char* url = nullptr;
@@ -114,7 +114,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
         errCode = HC_OK;
     }
     HCHttpCallResponseSetNetworkErrorCode(call, errCode, res);
-    HCTaskSetCompleted(taskHandle);
+    CompleteAsync(asyncBlock, errCode, 0);
 
     curl_easy_cleanup(curl);
 }

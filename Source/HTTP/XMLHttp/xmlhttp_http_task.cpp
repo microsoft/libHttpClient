@@ -12,11 +12,11 @@
 
 xmlhttp_http_task::xmlhttp_http_task(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
+    _In_ AsyncBlock* asyncBlock
     ) :
     m_statusCode(0),
     m_call(call),
-    m_taskHandle(taskHandle)
+    m_asyncBlock(asyncBlock)
 {
     m_hrCoInit = CoInitializeEx(nullptr, 0);
 }
@@ -33,7 +33,7 @@ xmlhttp_http_task::~xmlhttp_http_task()
 
 void xmlhttp_http_task::perform_async(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
+    _In_ AsyncBlock* asyncBlock
     )
 {
     try
@@ -66,7 +66,7 @@ void xmlhttp_http_task::perform_async(
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to create IXMLHTTPRequest2 instance %lu", hr);
             HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
             HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
-            HCTaskSetCompleted(taskHandle);
+            CompleteAsync(asyncBlock, hr, 0);
             return;
         }
 
@@ -88,7 +88,7 @@ void xmlhttp_http_task::perform_async(
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to open HTTP request %lu", hr);
             HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
             HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
-            HCTaskSetCompleted(taskHandle);
+            CompleteAsync(asyncBlock, hr, 0);
             return;
         }
 
@@ -119,7 +119,7 @@ void xmlhttp_http_task::perform_async(
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to set HTTP response stream %lu", hr);
             HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
             HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
-            HCTaskSetCompleted(taskHandle);
+            CompleteAsync(asyncBlock, hr, 0);
             return;
         }
 
@@ -139,7 +139,7 @@ void xmlhttp_http_task::perform_async(
             {
                 HC_TRACE_ERROR(HTTPCLIENT, "[%d] http_request_stream failed in xmlhttp_http_task.", hr);
                 HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, static_cast<uint32_t>(hr));
-                HCTaskSetCompleted(taskHandle);
+                CompleteAsync(asyncBlock, hr, 0);
                 return;
             }
 
@@ -155,7 +155,7 @@ void xmlhttp_http_task::perform_async(
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
             HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
             HCHttpCallResponseSetNetworkErrorCode(call, hrTranslated, hr);
-            HCTaskSetCompleted(taskHandle);
+            CompleteAsync(asyncBlock, hr, 0);
             return;
         }
         // If there were no errors so far, HCTaskSetCompleted is called later 
@@ -169,7 +169,7 @@ void xmlhttp_http_task::perform_async(
             HC_E_OUTOFMEMORY, e.what());
 
         HCHttpCallResponseSetNetworkErrorCode(call, HC_E_OUTOFMEMORY, static_cast<uint32_t>(HC_E_OUTOFMEMORY));
-        HCTaskSetCompleted(taskHandle);
+        CompleteAsync(asyncBlock, E_OUTOFMEMORY, 0);
     }
     catch (std::exception const& e)
     {
@@ -177,14 +177,14 @@ void xmlhttp_http_task::perform_async(
             HC_E_FAIL, e.what());
 
         HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, static_cast<uint32_t>(HC_E_FAIL));
-        HCTaskSetCompleted(taskHandle);
+        CompleteAsync(asyncBlock, E_FAIL, 0);
     }
     catch (...)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception in xmlhttp_http_task", HC_E_FAIL);
 
         HCHttpCallResponseSetNetworkErrorCode(call, HC_E_FAIL, static_cast<uint32_t>(HC_E_FAIL));
-        HCTaskSetCompleted(taskHandle);
+        CompleteAsync(asyncBlock, E_FAIL, 0);
     }
 }
 
@@ -277,18 +277,18 @@ HC_CALL_HANDLE xmlhttp_http_task::call()
     return m_call;
 }
 
-HC_TASK_HANDLE xmlhttp_http_task::task_handle()
+AsyncBlock* xmlhttp_http_task::async_block()
 {
-    return m_taskHandle;
+    return m_asyncBlock;
 }
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
-)
+    _In_ AsyncBlock* asyncBlock
+    )
 {
-    std::shared_ptr<xmlhttp_http_task> httpTask = http_allocate_shared<xmlhttp_http_task>(call, taskHandle);
+    std::shared_ptr<xmlhttp_http_task> httpTask = http_allocate_shared<xmlhttp_http_task>(call, asyncBlock);
     call->task = httpTask;
-    httpTask->perform_async(call, taskHandle);
+    httpTask->perform_async(call, asyncBlock);
 }
 
