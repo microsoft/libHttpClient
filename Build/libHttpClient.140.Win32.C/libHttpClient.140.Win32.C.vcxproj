@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{CF37BEB2-A66A-42BA-B348-1F07566F4865}</ProjectGuid>
+    <ProjectGuid>{BD57C607-E104-4505-8A43-3D152F016F16}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v140</PlatformToolset>
@@ -110,7 +110,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -137,12 +137,18 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\EntryList.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Win32\win32_websocket.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncQueue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />

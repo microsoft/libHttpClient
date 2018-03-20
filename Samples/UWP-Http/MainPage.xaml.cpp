@@ -46,8 +46,8 @@ private:
 };
 
 win32_handle g_stopRequestedHandle;
-win32_handle g_pendingReadyHandle;
-win32_handle g_completeReadyHandle;
+win32_handle g_workReadyHandle;
+win32_handle g_completionReadyHandle;
 
 #define TICKS_PER_SECOND 10000000i64
 
@@ -64,30 +64,23 @@ static std::wstring to_utf16string(const std::string& input)
     return utfConverter.from_bytes(input);
 }
 
-void libhttpclient_event_handler(
-    _In_opt_ void* context,
-    _In_ HC_TASK_EVENT_TYPE eventType,
-    _In_ HC_TASK_HANDLE taskHandle
+void HandleAsyncQueueCallback(
+    _In_ void* context,
+    _In_ async_queue_t queue,
+    _In_ AsyncQueueCallbackType type
     )
 {
     UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(taskHandle);
+    UNREFERENCED_PARAMETER(queue);
 
-    switch (eventType)
+    switch (type)
     {
-    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_PENDING:
-        // For size, you can do:
-        // uint64_t sizeOfPendingQueue = HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME);
-        SetEvent(g_pendingReadyHandle.get());
+    case AsyncQueueCallbackType::AsyncQueueCallbackType_Work:
+        SetEvent(g_workReadyHandle.get());
         break;
 
-    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_STARTED:
-        break;
-
-    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_COMPLETED:
-        // For size, you can do:
-        // uint64_t sizeOfPendingQueue = HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, 0);
-        SetEvent(g_completeReadyHandle.get());
+    case AsyncQueueCallbackType::AsyncQueueCallbackType_Completion:
+        SetEvent(g_completionReadyHandle.get());
         break;
     }
 }
@@ -97,19 +90,19 @@ MainPage::MainPage()
     s_dispatcher = this->Dispatcher;
     g_MainPage = this;
     g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
-    g_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
-    g_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
     HCGlobalInitialize();
     HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
 
-    HC_TASK_EVENT_HANDLE eventHandle;
-    HCAddTaskEventHandler(
-        HC_SUBSYSTEM_ID_GAME,
-        nullptr,
-        libhttpclient_event_handler,
-        &eventHandle
-        );
+    uint32_t sharedAsyncQueueId = 0;
+    CreateSharedAsyncQueue(
+        sharedAsyncQueueId,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        &m_queue);
+    AddAsyncCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
@@ -151,10 +144,18 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
     HANDLE hEvents[3] =
     {
-        g_pendingReadyHandle.get(),
-        g_completeReadyHandle.get(),
+        g_workReadyHandle.get(),
+        g_completionReadyHandle.get(),
         g_stopRequestedHandle.get()
     };
+
+    async_queue_t queue;
+    uint32_t sharedAsyncQueueId = 0;
+    CreateSharedAsyncQueue(
+        sharedAsyncQueueId,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        &queue);
 
     bool stop = false;
     uint64_t taskGroupId = 0;
@@ -163,23 +164,25 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
         switch (dwResult)
         {
-        case WAIT_OBJECT_0: // pending 
-            HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        case WAIT_OBJECT_0: // work ready
+            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0);
 
-            // If there's more pending tasks, then set the event to process them
-            if (HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME) > 0)
+            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work))
             {
-                SetEvent(g_pendingReadyHandle.get());
+                // If there's more pending work, then set the event to process them
+                SetEvent(g_workReadyHandle.get());
             }
             break;
 
         case WAIT_OBJECT_0 + 1: // completed 
-            HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+            // Typically completions should be dispatched on the game thread, but
+            // for this simple XAML app we're doing it here
+            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Completion, 0);
 
-            // If there's more completed tasks, then set the event to process them
-            if (HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, taskGroupId) > 0)
+            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion))
             {
-                SetEvent(g_completeReadyHandle.get());
+                // If there's more pending completions, then set the event to process them
+                SetEvent(g_completionReadyHandle.get());
             }
             break;
 
@@ -189,6 +192,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         }
     }
 
+    CloseAsyncQueue(queue);
     return 0;
 }
 
@@ -285,27 +289,33 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
-    HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
-    uint64_t taskGroupId = 0;
-    HCHttpCallPerform(call, nullptr, taskSubsystemId, taskGroupId, nullptr,
-        [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
-        {
-            const CHAR* str;
-            HC_RESULT errCode = HC_OK;
-            uint32_t platErrCode = 0;
-            uint32_t statusCode = 0;
-            std::string responseString;
-            std::string errMessage;
+    AsyncBlock* b = new AsyncBlock;
+    ZeroMemory(b, sizeof(AsyncBlock));
+    b->context = call;
+    b->queue = m_queue;
+    b->callback = [](AsyncBlock* async)
+    {
+        const CHAR* str;
+        HC_RESULT errCode = HC_OK;
+        uint32_t platErrCode = 0;
+        uint32_t statusCode = 0;
+        std::string responseString;
+        std::string errMessage;
 
-            HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
-            HCHttpCallResponseGetStatusCode(call, &statusCode);
-            HCHttpCallResponseGetResponseString(call, &str);
-            if (str != nullptr) responseString = str;
-            std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
+        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(async->context);
+        HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
+        HCHttpCallResponseGetStatusCode(call, &statusCode);
+        HCHttpCallResponseGetResponseString(call, &str);
+        if (str != nullptr) responseString = str;
+        std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
-            HCHttpCallCloseHandle(call);
+        HCHttpCallCloseHandle(call);
+        delete async;
 
-            UpdateXamlUI(errCode, errMessage, statusCode, responseString, headers);
-        });
+        UpdateXamlUI(errCode, errMessage, statusCode, responseString, headers);
+    };
+
+    HCHttpCallPerform(call, b);
 }
+
 

@@ -211,6 +211,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\EntryList.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp" />
@@ -227,6 +230,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncQueue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />

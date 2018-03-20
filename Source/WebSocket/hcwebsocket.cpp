@@ -91,10 +91,7 @@ HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
     ) HC_NOEXCEPT
 try 
 {
@@ -112,8 +109,8 @@ try
     {
         try
         {
-            connectFunc(uri, subProtocol, websocket, taskSubsystemId, taskGroupId, completionRoutineContext, completionRoutine);
             websocket->connectCalled = true;
+            connectFunc(uri, subProtocol, websocket, async);
         }
         catch (...)
         {
@@ -129,10 +126,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketSendMessage(
     _In_ HC_WEBSOCKET_HANDLE websocket,
     _In_z_ PCSTR message,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
     ) HC_NOEXCEPT
 try
 {
@@ -150,7 +144,7 @@ try
     {
         try
         {
-            sendFunc(websocket, message, taskSubsystemId, taskGroupId, completionRoutineContext, completionRoutine);
+            sendFunc(websocket, message, async);
         }
         catch (...)
         {
@@ -406,3 +400,24 @@ try
 }
 CATCH_RETURN()
 
+HC_API HC_RESULT HC_CALLING_CONV
+HCGetWebSocketConnectResult(
+    _In_ AsyncBlock* async,
+    _In_ WebSocketCompletionResult* result
+    ) HC_NOEXCEPT
+try
+{
+    return HRESULTtoHC(GetAsyncResult(async, HCWebSocketConnect, sizeof(WebSocketCompletionResult), result));
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCGetWebSocketSendMessageResult(
+    _In_ AsyncBlock* async,
+    _In_ WebSocketCompletionResult* result
+    ) HC_NOEXCEPT
+try
+{
+    return HRESULTtoHC(GetAsyncResult(async, HCWebSocketSendMessage, sizeof(WebSocketCompletionResult), result));
+}
+CATCH_RETURN()

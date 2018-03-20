@@ -168,4 +168,28 @@ http_internal_queue<HC_TASK*>& http_task_completed_queue::get_completed_queue()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
+HRESULT HCtoHRESULT(_In_ HC_RESULT hc)
+{
+    switch (hc)
+    {
+        case HC_OK: return S_OK;
+        case HC_E_FAIL: return E_FAIL;
+        case HC_E_POINTER: return E_POINTER;
+        case HC_E_INVALIDARG: return E_INVALIDARG;
+        case HC_E_OUTOFMEMORY: return E_OUTOFMEMORY;
+        default: return E_FAIL;
+    }
+}
 
+HC_RESULT HRESULTtoHC(_In_ HRESULT hr)
+{
+    switch (hr)
+    {
+        case S_OK: return HC_OK;
+        case E_FAIL: return HC_E_FAIL;
+        case E_POINTER: return HC_E_POINTER;
+        case E_INVALIDARG: return HC_E_INVALIDARG;
+        case E_OUTOFMEMORY: return HC_E_OUTOFMEMORY;
+        default: return HC_E_FAIL;
+    }
+}

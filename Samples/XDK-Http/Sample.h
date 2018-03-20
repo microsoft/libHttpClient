@@ -6,6 +6,7 @@
 #include "DeviceResources.h"
 #include "StepTimer.h"
 #include "SampleGUI.h"
+#include "httpClient/httpClient.h"
 
 // A basic sample implementation that creates a D3D11 device and
 // provides a render loop.
@@ -61,4 +62,7 @@ private:
     // UI Objects
     std::shared_ptr<ATG::UIManager>             m_ui;
     std::unique_ptr<DX::TextConsole>            m_console;
+
+    async_queue_t m_queue;
+    uint32_t m_callbackToken;
 };

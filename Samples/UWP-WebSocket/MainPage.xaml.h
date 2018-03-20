@@ -19,15 +19,10 @@ namespace HttpTestApp
         void ClearLog();
         HC_WEBSOCKET_HANDLE m_websocket;
 
-        //static void UpdateXamlUI(
-        //    _In_ uint32_t errCode,
-        //    _In_ std::string errMessage,
-        //    _In_ uint32_t statusCode,
-        //    _In_ std::string responseString,
-        //    _In_ std::vector<std::vector<std::string>> headers
-        //    );
-
         void StartBackgroundThread();
         void StopBackgroundThread();
+
+        async_queue_t m_queue;
+        uint32_t m_callbackToken;
     };
 }

@@ -6,6 +6,8 @@
 #include <httpClient/task.h>
 #include <httpClient/mock.h>
 #include <httpClient/trace.h>
+#include <httpClient/async.h>
+#include <httpClient/asyncQueue.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -266,11 +268,7 @@ typedef void(* HCHttpCallPerformCompletionRoutine)(
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _Out_opt_ HC_TASK_HANDLE* taskHandle,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -632,19 +630,21 @@ HCWebSocketSetFunctions(
     _In_opt_ HC_WEBSOCKET_CLOSE_EVENT_FUNC closeFunc
     ) HC_NOEXCEPT;
 
+
 /// <summary>
-/// Callback definition for the WebSocket completion routine used by HCWebSocketConnect() and HCWebSocketSendMessage()
+/// Used by HCWebSocketConnect() and HCWebSocketSendMessage()
 /// </summary>
-/// <param name="completionRoutineContext">The context passed to the completion routine</param>
-/// <param name="websocket">The handle of the HTTP call</param>
-/// <param name="errorCode">The error code of the call. Possible values are HC_OK, or HC_E_FAIL.</param>
-/// <param name="platformErrorCode">The platform specific network error code of the call to be used for logging / debugging</param>
-typedef void(* HCWebSocketCompletionRoutine)(
-    _In_opt_ void* completionRoutineContext,
-    _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_RESULT errorCode,
-    _In_ uint32_t platformErrorCode
-    );
+struct WebSocketCompletionResult
+{
+    /// <param name="websocket">The handle of the HTTP call</param>
+    HC_WEBSOCKET_HANDLE websocket;
+
+    /// <param name="errorCode">The error code of the call. Possible values are HC_OK, or HC_E_FAIL.</param>
+    HC_RESULT errorCode;
+
+    /// <param name="platformErrorCode">The platform specific network error code of the call to be used for logging / debugging</param>
+    uint32_t platformErrorCode;
+};
 
 /// <summary>
 /// Connects to the WebSocket.
@@ -659,10 +659,13 @@ HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
+    ) HC_NOEXCEPT;
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCGetWebSocketConnectResult(
+    _In_ AsyncBlock* async,
+    _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -674,10 +677,13 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCWebSocketSendMessage(
     _In_ HC_WEBSOCKET_HANDLE websocket,
     _In_z_ PCSTR message,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
+    ) HC_NOEXCEPT;
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCGetWebSocketSendMessageResult(
+    _In_ AsyncBlock* async,
+    _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
 /// <summary>

@@ -46,8 +46,8 @@ private:
 };
 
 win32_handle g_stopRequestedHandle;
-win32_handle g_pendingReadyHandle;
-win32_handle g_completeReadyHandle;
+win32_handle g_workReadyHandle;
+win32_handle g_completionReadyHandle;
 
 #define TICKS_PER_SECOND 10000000i64
 
@@ -76,26 +76,23 @@ std::string format_string(_Printf_format_string_ char const* format, ...)
     return message;
 }
 
-void libhttpclient_event_handler(
-    _In_opt_ void* context,
-    _In_ HC_TASK_EVENT_TYPE eventType,
-    _In_ HC_TASK_HANDLE taskHandle
-    )
+void HandleAsyncQueueCallback(
+    _In_ void* context,
+    _In_ async_queue_t queue,
+    _In_ AsyncQueueCallbackType type
+)
 {
     UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(taskHandle);
+    UNREFERENCED_PARAMETER(queue);
 
-    switch (eventType)
+    switch (type)
     {
-    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_PENDING:
-        SetEvent(g_pendingReadyHandle.get());
+    case AsyncQueueCallbackType::AsyncQueueCallbackType_Work:
+        SetEvent(g_workReadyHandle.get());
         break;
 
-    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_STARTED:
-        break;
-
-    case HC_TASK_EVENT_TYPE::HC_TASK_EVENT_EXECUTE_COMPLETED:
-        SetEvent(g_completeReadyHandle.get());
+    case AsyncQueueCallbackType::AsyncQueueCallbackType_Completion:
+        SetEvent(g_completionReadyHandle.get());
         break;
     }
 }
@@ -107,25 +104,26 @@ MainPage::MainPage()
     g_MainPage = this;
 
     g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
-    g_pendingReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
-    g_completeReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
 
     HCGlobalInitialize();
     HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
 
-    HC_TASK_EVENT_HANDLE eventHandle;
-    HCAddTaskEventHandler(
-        HC_SUBSYSTEM_ID_GAME,
-        nullptr,
-        libhttpclient_event_handler,
-        &eventHandle
-        );
+    uint32_t sharedAsyncQueueId = 0;
+    CreateSharedAsyncQueue(
+        sharedAsyncQueueId,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        &m_queue);
+    AddAsyncCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
     TextboxURL->Text = L"wss://rta.xboxlive.com/connect";    
     TextboxHeaders->Text = L"Accept-Language: en-US; Authorization: XBL3.0 x=TBD; Signature: TBD";
+
     TextboxMethod->Text = L"rta.xboxlive.com.V2";
     TextboxTimeout->Text = L"120";
     TextboxRequestString->Text = L"[1,1,\"http://social.xboxlive.com/users/xuid(2814653827156252)/friends\"]";
@@ -162,10 +160,18 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
     HANDLE hEvents[3] =
     {
-        g_pendingReadyHandle.get(),
-        g_completeReadyHandle.get(),
+        g_workReadyHandle.get(),
+        g_completionReadyHandle.get(),
         g_stopRequestedHandle.get()
     };
+
+    async_queue_t queue;
+    uint32_t sharedAsyncQueueId = 0;
+    CreateSharedAsyncQueue(
+        sharedAsyncQueueId,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        &queue);
 
     bool stop = false;
     uint64_t taskGroupId = 0;
@@ -174,26 +180,27 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
         switch (dwResult)
         {
-        case WAIT_OBJECT_0: // pending 
-            HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME);
+        case WAIT_OBJECT_0: // work ready
+            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0);
 
-            // If there's more pending tasks, then set the event to process them
-            if (HCTaskGetPendingTaskQueueSize(HC_SUBSYSTEM_ID_GAME) > 0)
+            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work))
             {
-                SetEvent(g_pendingReadyHandle.get());
+                // If there's more pending work, then set the event to process them
+                SetEvent(g_workReadyHandle.get());
             }
             break;
 
         case WAIT_OBJECT_0 + 1: // completed 
-            HCTaskProcessNextCompletedTask(HC_SUBSYSTEM_ID_GAME, 0);
+            // Typically completions should be dispatched on the game thread, but
+            // for this simple XAML app we're doing it here
+            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Completion, 0);
 
-            // If there's more completed tasks, then set the event to process them
-            if (HCTaskGetCompletedTaskQueueSize(HC_SUBSYSTEM_ID_GAME, taskGroupId) > 0)
+            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion))
             {
-                SetEvent(g_completeReadyHandle.get());
+                // If there's more pending completions, then set the event to process them
+                SetEvent(g_completionReadyHandle.get());
             }
             break;
-
         default:
             stop = true;
             break;
@@ -264,16 +271,18 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
         hr = HCWebSocketSetHeader(m_websocket, headerName.c_str(), headerValue.c_str());
     }
 
-    hr = HCWebSocketConnect(
-        requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket, 
-        taskSubsystemId, taskGroupId, callbackContext,
-        [](_In_opt_ void* completionRoutineContext,
-           _In_ HC_WEBSOCKET_HANDLE websocket,
-           _In_ HC_RESULT errorCode,
-           _In_ uint32_t platformErrorCode)
-        {
-            g_MainPage->LogToUI(format_string("HCWebSocketConnect complete: %d, %d", errorCode, platformErrorCode));
-        });
+    AsyncBlock* b = new AsyncBlock;
+    ZeroMemory(b, sizeof(AsyncBlock));
+    b->queue = m_queue;
+    b->callback = [](AsyncBlock* async)
+    {
+        WebSocketCompletionResult result = {};
+        HCGetWebSocketConnectResult(async, &result);
+
+        g_MainPage->LogToUI(format_string("HCWebSocketConnect complete: %d, %d", result.errorCode, result.platformErrorCode));
+    };
+
+    hr = HCWebSocketConnect(requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket, b);
     LogToUI(format_string("HCWebSocketConnect: %d", hr));
 
 }
@@ -286,16 +295,18 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
 
     std::string requestBody = to_utf8string(TextboxRequestString->Text->Data());
 
-    HC_RESULT hr = HCWebSocketSendMessage(
-        m_websocket, requestBody.c_str(),
-        taskSubsystemId, taskGroupId, callbackContext,
-        [](_In_opt_ void* completionRoutineContext,
-           _In_ HC_WEBSOCKET_HANDLE websocket,
-           _In_ HC_RESULT errorCode,
-           _In_ uint32_t platformErrorCode)
-        {
-            g_MainPage->LogToUI(format_string("HCWebSocketSendMessage complete: %d, %d", errorCode, platformErrorCode));
-        });
+    AsyncBlock* b = new AsyncBlock;
+    ZeroMemory(b, sizeof(AsyncBlock));
+    b->queue = m_queue;
+    b->callback = [](AsyncBlock* async)
+    {
+        WebSocketCompletionResult result = {};
+        HCGetWebSocketConnectResult(async, &result);
+
+        g_MainPage->LogToUI(format_string("HCWebSocketSendMessage complete: %d, %d", result.errorCode, result.platformErrorCode));
+    };
+
+    HC_RESULT hr = HCWebSocketSendMessage(m_websocket, requestBody.c_str(), b);
     LogToUI(format_string("HCWebSocketSendMessage: %d", hr));
 }
 

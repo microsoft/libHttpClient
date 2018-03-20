@@ -31,26 +31,26 @@ public:
 
     void perform_async(
         _In_ HC_CALL_HANDLE call,
-        _In_ HC_TASK_HANDLE taskHandle
+        _In_ AsyncBlock* asyncBlock
         );
 };
 
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
+    _In_ AsyncBlock* asyncBlock
     )
 {
     std::shared_ptr<uwp_http_task> uwpHttpTask = std::make_shared<uwp_http_task>();
     call->task = std::dynamic_pointer_cast<xbox::httpclient::hc_task>(uwpHttpTask);
 
-    uwpHttpTask->perform_async(call, taskHandle);
+    uwpHttpTask->perform_async(call, asyncBlock);
 }
 
 
 void uwp_http_task::perform_async(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
+    _In_ AsyncBlock* asyncBlock
     )
 {
     try
@@ -114,7 +114,7 @@ void uwp_http_task::perform_async(
 
         m_getHttpAsyncOp = httpClient->SendRequestAsync(requestMsg, HttpCompletionOption::ResponseContentRead);
         m_getHttpAsyncOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(
-            [call, taskHandle](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ asyncOp, AsyncStatus status)
+            [call, asyncBlock](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ asyncOp, AsyncStatus status)
         {
             try
             {
@@ -139,20 +139,20 @@ void uwp_http_task::perform_async(
 
                 uwpHttpTask->m_readAsStringAsyncOp = httpResponse->Content->ReadAsStringAsync();
                 uwpHttpTask->m_readAsStringAsyncOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<Platform::String^, unsigned long long>(
-                    [call, taskHandle](IAsyncOperationWithProgress<Platform::String^, unsigned long long>^ asyncOp, AsyncStatus status)
+                    [call, asyncBlock](IAsyncOperationWithProgress<Platform::String^, unsigned long long>^ asyncOp, AsyncStatus status)
                 {
                     try
                     {
                         Platform::String^ httpResponseBody = asyncOp->GetResults();
                         http_internal_string aHttpResponseBody = utf8_from_utf16(httpResponseBody->Data());
                         HCHttpCallResponseSetResponseString(call, aHttpResponseBody.c_str());
-                        HCTaskSetCompleted(taskHandle);
+                        CompleteAsync(asyncBlock, S_OK, 0);
                     }
                     catch (Platform::Exception^ ex)
                     {
                         HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
                         HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
-                        HCTaskSetCompleted(taskHandle);
+                        CompleteAsync(asyncBlock, ex->HResult, 0);
                     }
                 });
             }
@@ -160,7 +160,7 @@ void uwp_http_task::perform_async(
             {
                 HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
                 HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
-                HCTaskSetCompleted(taskHandle);
+                CompleteAsync(asyncBlock, ex->HResult, 0);
             }
         });
     }
@@ -168,7 +168,7 @@ void uwp_http_task::perform_async(
     {
         HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
         HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
-        HCTaskSetCompleted(taskHandle);
+        CompleteAsync(asyncBlock, ex->HResult, 0);
     }
 }
 

@@ -3,6 +3,8 @@
 
 #include "pch.h"
 #include "httpcall.h"
+#include "httpClient/async.h"
+#include "httpClient/asyncProvider.h"
 #include "../mock/mock.h"
 
 using namespace xbox::httpclient;
@@ -79,24 +81,18 @@ try
 }
 CATCH_RETURN()
 
-HC_RESULT HttpCallPerformExecute(
-    _In_opt_ void* executionRoutineContext,
-    _In_ HC_TASK_HANDLE taskHandle
+HRESULT HttpCallPerformDoWork(
+    _In_ void* executionRoutineContext,
+    _In_ AsyncBlock* asyncBlock
     )
 try
 {
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return E_INVALIDARG;
 
     HC_CALL_HANDLE call = (HC_CALL_HANDLE)executionRoutineContext;
-    if (call == nullptr)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerformExecute null call");
-        return HC_E_INVALIDARG;
-    }
-
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu]", call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HttpCallPerformDoWork [ID %llu]", call->id);
 
     bool matchedMocks = false;
     if (httpSingleton->m_mocksEnabled)
@@ -104,7 +100,7 @@ try
         matchedMocks = Mock_Internal_HCHttpCallPerform(call);
         if (matchedMocks)
         {
-            HCTaskSetCompleted(taskHandle);
+            CompleteAsync(asyncBlock, S_OK, 0);
         }
     }
    
@@ -115,52 +111,24 @@ try
         {
             try
             {
-                performFunc(call, taskHandle);
+                performFunc(call, asyncBlock);
             }
             catch (...)
             {
-                HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", call->id);
+                HC_TRACE_ERROR(HTTPCLIENT, "HttpCallPerformDoWork [ID %llu]: failed", call->id);
             }
         }
     }
 
-    return HC_OK;
+    return E_PENDING;
 }
 CATCH_RETURN()
 
-HC_RESULT HttpCallPerformWriteResults(
-    _In_opt_ void* writeResultsRoutineContext,
-    _In_ HC_TASK_HANDLE taskHandleId,
-    _In_opt_ void* completionRoutine,
-    _In_opt_ void* completionRoutineContext
-    )
-try
-{
-    UNREFERENCED_PARAMETER(taskHandleId);
-    HC_CALL_HANDLE call = (HC_CALL_HANDLE)writeResultsRoutineContext;
-
-    if (call != nullptr)
-    {
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformWriteResults [ID %llu]", call->id);
-
-        HCHttpCallPerformCompletionRoutine completeFn = (HCHttpCallPerformCompletionRoutine)completionRoutine;
-        if (completeFn != nullptr)
-        {
-            completeFn(completionRoutineContext, call);
-        }
-    }
-    return HC_OK;
-}
-CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,
-    _Out_ HC_TASK_HANDLE* taskHandle,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCHttpCallPerformCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
     ) HC_NOEXCEPT
 try
 {
@@ -172,15 +140,23 @@ try
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
     call->performCalled = true;
 
-    return HCTaskCreate(
-        taskSubsystemId,
-        taskGroupId,
-        HttpCallPerformExecute, (void*)call,
-        HttpCallPerformWriteResults, (void*)call,
-        completionRoutine, completionRoutineContext,
-        taskHandle
-        );
+    HC_RESULT hr = HRESULTtoHC(BeginAsync(async, call, HCHttpCallPerform, __FUNCTION__, 
+        [](_In_ AsyncOp op, _Inout_ AsyncProviderData* data)
+    {
+        switch (op)
+        {
+            case AsyncOp_DoWork: return HttpCallPerformDoWork(data->context, data->async);
+        }
+
+        return S_OK;
+    }));
+
+    if (hr == HC_OK)
+    {
+        hr = HRESULTtoHC(ScheduleAsync(async, 0));
+    }
+
+    return hr;
 }
 CATCH_RETURN()
-
 

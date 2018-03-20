@@ -81,6 +81,9 @@ set(Public_Source_Files
     ../../../include/httpClient/httpClient.h
     ../../../include/httpClient/httpProvider.h
     ../../../include/httpClient/mock.h
+    ../../../include/httpClient/async.h
+    ../../../include/httpClient/asyncProvider.h
+    ../../../include/httpClient/asyncQueue.h
     ../../../include/httpClient/task.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/types.h
@@ -90,6 +93,9 @@ set(Task_Source_Files
     ../../../Source/Task/task_impl.cpp
     ../../../Source/Task/task_impl.h
     ../../../Source/Task/task_publics.cpp
+    ../../../Source/Task/EntryList.h
+    ../../../Source/Task/AsyncQueue.cpp
+    ../../../Source/Task/AsyncLib.cpp
     )
     
 set(Global_Source_Files    

@@ -3,7 +3,8 @@
 
 #pragma once
 #include <httpClient/types.h>
-#include <httpClient/task.h>
+//#include <httpClient/task.h>
+#include <httpClient/asyncProvider.h>
 #include <httpClient/trace.h>
 
 #if defined(__cplusplus)
@@ -18,7 +19,7 @@ extern "C" {
 typedef void
 (HC_CALLING_CONV* HC_HTTP_CALL_PERFORM_FUNC)(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
+    _In_ AsyncBlock* asyncBlock
     );
 
 /// <summary>
@@ -311,10 +312,7 @@ typedef HC_RESULT
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
     );
 
 /// <summary>
@@ -326,10 +324,7 @@ typedef HC_RESULT
 (HC_CALLING_CONV* HC_WEBSOCKET_SEND_MESSAGE_FUNC)(
     _In_ HC_WEBSOCKET_HANDLE websocket,
     _In_z_ PCSTR message,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* async
     );
 
 /// <summary>
