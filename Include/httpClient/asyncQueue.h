@@ -129,7 +129,7 @@ STDAPI SubmitAsyncCallback(
 /// the predicate wishes to remove the callback, it should return
 /// true.  The predicate is invoked while holding a lock on the
 /// async queue -- care should be taken to do no work on the
-/// qsync queue within the predicate or you could deadlock.
+/// async queue within the predicate or you could deadlock.
 /// This should be called before an object is deleted
 /// to ensure there are no orphan callbacks in the async queue
 /// that could later call back into the deleted object.

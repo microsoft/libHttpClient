@@ -268,7 +268,6 @@ int main()
 
     HCHttpCallPerform(call, b);
 
-    //HCTaskWaitForCompleted(taskHandle, 1000*1000);
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 
     ShutdownActiveThreads();
