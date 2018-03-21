@@ -47,10 +47,11 @@ void HC_CALLING_CONV MemFree(
 static bool g_PerformCallbackCalled = false;
 static void HC_CALLING_CONV PerformCallback(
     _In_ HC_CALL_HANDLE call,
-    _In_ HC_TASK_HANDLE taskHandle
+    _In_ AsyncBlock* asyncBlock
     )
 {
     g_PerformCallbackCalled = true;
+    CompleteAsync(asyncBlock, S_OK, 0);
 }
 
 
@@ -102,7 +103,7 @@ public:
 
     DEFINE_TEST_CASE(TestGlobalInit)
     {
-        DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestGlobalInit);
+        DEFINE_TEST_CASE_PROPERTIES(TestGlobalInit);
 
         VERIFY_IS_NULL(get_http_singleton(false));
         VERIFY_ARE_EQUAL(HC_OK, HCGlobalInitialize());
@@ -123,18 +124,35 @@ public:
         HC_CALL_HANDLE call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
-        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallPerform(call, nullptr, HC_SUBSYSTEM_ID_GAME, 0, nullptr,
-            [](_In_ void* completionRoutineContext, _In_ HC_CALL_HANDLE call)
-            {
-                HC_RESULT errCode = HC_OK;
-                uint32_t platErrCode = 0;
-                VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
-                uint32_t statusCode = 0;
-                VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
-            }));
-        VERIFY_ARE_EQUAL(HC_OK, HCTaskProcessNextPendingTask(HC_SUBSYSTEM_ID_GAME));
+
+        async_queue_t queue;
+        uint32_t sharedAsyncQueueId = 0;
+        CreateSharedAsyncQueue(
+            sharedAsyncQueueId,
+            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+            &queue);
+
+        AsyncBlock* asyncBlock = new AsyncBlock;
+        ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+        asyncBlock->context = call;
+        asyncBlock->queue = queue;
+        asyncBlock->callback = [](AsyncBlock* asyncBlock)
+        {
+            HC_RESULT errCode = HC_OK;
+            uint32_t platErrCode = 0;
+            HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(asyncBlock->context);
+            VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
+            uint32_t statusCode = 0;
+            VERIFY_ARE_EQUAL(HC_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
+            delete asyncBlock;
+        };
+        VERIFY_ARE_EQUAL(HC_OK, HCHttpCallPerform(call, asyncBlock));
+
+        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0));
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
         VERIFY_ARE_EQUAL(HC_OK, HCHttpCallCloseHandle(call));
+        CloseAsyncQueue(queue);
         HCGlobalCleanup();
     }
 

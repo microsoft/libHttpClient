@@ -220,11 +220,11 @@ int main()
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
-    AsyncBlock* b = new AsyncBlock;
-    ZeroMemory(b, sizeof(AsyncBlock));
-    b->context = call;
-    b->queue = g_queue;
-    b->callback = [](AsyncBlock* async)
+    AsyncBlock* asyncBlock = new AsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    asyncBlock->context = call;
+    asyncBlock->queue = g_queue;
+    asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const char* str;
         HC_RESULT errCode = HC_OK;
@@ -233,7 +233,7 @@ int main()
         std::string responseString;
         std::string errMessage;
 
-        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(async->context);
+        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);
@@ -264,9 +264,10 @@ int main()
         }
 
         SetEvent(g_exampleTaskDone.get());
+        delete asyncBlock;
     };
 
-    HCHttpCallPerform(call, b);
+    HCHttpCallPerform(call, asyncBlock);
 
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 
