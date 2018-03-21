@@ -77,10 +77,7 @@ HC_RESULT Test_Internal_HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HC_WEBSOCKET_HANDLE websocket,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* asyncBlock
     )
 {
     g_HCWebSocketConnect_Called = true;
@@ -91,10 +88,7 @@ bool g_HCWebSocketSendMessage_Called = false;
 HC_RESULT Test_Internal_HCWebSocketSendMessage(
     _In_ HC_WEBSOCKET_HANDLE websocket,
     _In_z_ PCSTR message,
-    _In_ HC_SUBSYSTEM_ID taskSubsystemId,
-    _In_ uint64_t taskGroupId,
-    _In_opt_ void* completionRoutineContext,
-    _In_opt_ HCWebSocketCompletionRoutine completionRoutine
+    _In_ AsyncBlock* asyncBlock
     )
 {
     g_HCWebSocketSendMessage_Called = true;
@@ -187,11 +181,11 @@ public:
         VERIFY_ARE_EQUAL_STR("1234", proxy);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketConnect_Called);
-        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketConnect("test", "subProtoTest", websocket, HC_SUBSYSTEM_ID_GAME, 0, nullptr, nullptr));
+        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketConnect("test", "subProtoTest", websocket, nullptr));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketConnect_Called);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketSendMessage_Called);
-        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketSendMessage(websocket, "test", HC_SUBSYSTEM_ID_GAME, 0, nullptr, nullptr));
+        VERIFY_ARE_EQUAL(HC_OK, HCWebSocketSendMessage(websocket, "test", nullptr));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketSendMessage_Called);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketDisconnect_Called);

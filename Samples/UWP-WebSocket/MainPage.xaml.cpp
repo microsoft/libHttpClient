@@ -271,18 +271,19 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
         hr = HCWebSocketSetHeader(m_websocket, headerName.c_str(), headerValue.c_str());
     }
 
-    AsyncBlock* b = new AsyncBlock;
-    ZeroMemory(b, sizeof(AsyncBlock));
-    b->queue = m_queue;
-    b->callback = [](AsyncBlock* async)
+    AsyncBlock* asyncBlock = new AsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    asyncBlock->queue = m_queue;
+    asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(async, &result);
+        HCGetWebSocketConnectResult(asyncBlock, &result);
 
         g_MainPage->LogToUI(format_string("HCWebSocketConnect complete: %d, %d", result.errorCode, result.platformErrorCode));
+        delete asyncBlock;
     };
 
-    hr = HCWebSocketConnect(requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket, b);
+    hr = HCWebSocketConnect(requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket, asyncBlock);
     LogToUI(format_string("HCWebSocketConnect: %d", hr));
 
 }
@@ -295,18 +296,19 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
 
     std::string requestBody = to_utf8string(TextboxRequestString->Text->Data());
 
-    AsyncBlock* b = new AsyncBlock;
-    ZeroMemory(b, sizeof(AsyncBlock));
-    b->queue = m_queue;
-    b->callback = [](AsyncBlock* async)
+    AsyncBlock* asyncBlock = new AsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    asyncBlock->queue = m_queue;
+    asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(async, &result);
+        HCGetWebSocketConnectResult(asyncBlock, &result);
 
         g_MainPage->LogToUI(format_string("HCWebSocketSendMessage complete: %d, %d", result.errorCode, result.platformErrorCode));
+        delete asyncBlock;
     };
 
-    HC_RESULT hr = HCWebSocketSendMessage(m_websocket, requestBody.c_str(), b);
+    HC_RESULT hr = HCWebSocketSendMessage(m_websocket, requestBody.c_str(), asyncBlock);
     LogToUI(format_string("HCWebSocketSendMessage: %d", hr));
 }
 

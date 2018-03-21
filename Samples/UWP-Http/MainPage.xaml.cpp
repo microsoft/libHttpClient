@@ -289,11 +289,11 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
-    AsyncBlock* b = new AsyncBlock;
-    ZeroMemory(b, sizeof(AsyncBlock));
-    b->context = call;
-    b->queue = m_queue;
-    b->callback = [](AsyncBlock* async)
+    AsyncBlock* asyncBlock = new AsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    asyncBlock->context = call;
+    asyncBlock->queue = m_queue;
+    asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const CHAR* str;
         HC_RESULT errCode = HC_OK;
@@ -302,7 +302,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         std::string responseString;
         std::string errMessage;
 
-        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(async->context);
+        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);
@@ -310,12 +310,11 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
         HCHttpCallCloseHandle(call);
-        delete async;
-
         UpdateXamlUI(errCode, errMessage, statusCode, responseString, headers);
+        delete asyncBlock;
     };
 
-    HCHttpCallPerform(call, b);
+    HCHttpCallPerform(call, asyncBlock);
 }
 
 

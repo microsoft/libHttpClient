@@ -433,11 +433,11 @@ void Sample::MakeHttpCall()
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
     }
 
-    AsyncBlock* b = new AsyncBlock;
-    ZeroMemory(b, sizeof(AsyncBlock));
-    b->context = call;
-    b->queue = m_queue;
-    b->callback = [](AsyncBlock* async)
+    AsyncBlock* asyncBlock = new AsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    asyncBlock->context = call;
+    asyncBlock->queue = m_queue;
+    asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const CHAR* str;
         HC_RESULT errCode = HC_OK;
@@ -446,7 +446,7 @@ void Sample::MakeHttpCall()
         std::string responseString;
         std::string errMessage;
 
-        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(async->context);
+        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);
@@ -480,9 +480,11 @@ void Sample::MakeHttpCall()
         g_MainPage->m_console->WriteLine(ss.str().c_str());
         ss.str(str1);
         ss.clear();
+
+        delete asyncBlock;
     };
 
-    HCHttpCallPerform(call, b);
+    HCHttpCallPerform(call, asyncBlock);
 }
 
 
