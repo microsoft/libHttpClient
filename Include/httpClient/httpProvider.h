@@ -3,7 +3,7 @@
 
 #pragma once
 #include <httpClient/types.h>
-//#include <httpClient/task.h>
+#include <httpClient/task.h>
 #include <httpClient/asyncProvider.h>
 #include <httpClient/trace.h>
 
@@ -148,6 +148,19 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRetryAllowed(
     _In_opt_ HC_CALL_HANDLE call,
     _Out_ bool* retryAllowed
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Gets the ID number of this REST endpoint used to cache the Retry-After header for fast fail.
+/// Defaults is 0
+/// </summary>
+/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls</param>
+/// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail.  1-1000 are reserved for XSAPI</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, HC_E_INVALIDARG, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestGetRetryCacheId(
+    _In_ HC_CALL_HANDLE call,
+    _Out_ uint32_t* retryAfterCacheId
     ) HC_NOEXCEPT;
 
 /// <summary>
