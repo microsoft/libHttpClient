@@ -32,6 +32,25 @@ struct HC_TASK_EVENT_FUNC_NODE
     HC_SUBSYSTEM_ID taskSubsystemId;
 };
 
+struct http_retry_after_api_state
+{
+    http_retry_after_api_state() : statusCode(0)
+    {
+    }
+
+    http_retry_after_api_state(
+        _In_ const chrono_clock_t::time_point& _retryAfterTime,
+        _In_ uint32_t _statusCode
+        ) :
+        retryAfterTime(_retryAfterTime),
+        statusCode(_statusCode)
+    {
+    }
+
+    chrono_clock_t::time_point retryAfterTime;
+    uint32_t statusCode;
+};
+
 struct http_singleton
 {
     http_singleton();
@@ -56,6 +75,12 @@ struct http_singleton
     std::shared_ptr<http_task_completed_queue> get_task_completed_queue_for_taskgroup(
         _In_ HC_SUBSYSTEM_ID taskSubsystemId, 
         _In_ uint64_t taskGroupId);
+
+    std::mutex m_retryAfterCacheLock;
+    std::unordered_map<uint32_t, http_retry_after_api_state> m_retryAfterCache;
+    void set_retry_state(_In_ uint32_t retryAfterCacheId, _In_ const http_retry_after_api_state& state);
+    http_retry_after_api_state get_retry_state(_In_ uint32_t retryAfterCacheId);
+    void clear_retry_state(_In_ uint32_t retryAfterCacheId);
 
     // HTTP state
     HC_HTTP_CALL_PERFORM_FUNC m_performFunc;

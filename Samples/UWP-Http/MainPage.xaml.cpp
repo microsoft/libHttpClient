@@ -94,7 +94,7 @@ MainPage::MainPage()
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
     HCGlobalInitialize();
-    HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
+    HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_INFORMATION);
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
@@ -274,10 +274,13 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     std::string requestHeaders = to_utf8string(TextboxHeaders->Text->Data());
     std::string requestMethod = to_utf8string(TextboxMethod->Text->Data());
     std::string requestUrl = to_utf8string(TextboxURL->Text->Data());
+    std::string timeout = to_utf8string(TextboxTimeout->Text->Data());
+    uint32_t timeoutInt = atoi(timeout.c_str());
 
     HC_CALL_HANDLE call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, requestMethod.c_str(), requestUrl.c_str());
+    HCHttpCallRequestSetTimeoutWindow(call, timeoutInt);
 
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, RetryAllowedCheckbox->IsChecked->Value);

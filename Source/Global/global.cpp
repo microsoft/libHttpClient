@@ -104,7 +104,6 @@ void cleanup_http_singleton()
     }
 }
 
-
 http_internal_queue<HC_TASK*>& http_singleton::get_task_pending_queue(_In_ uint64_t taskSubsystemId)
 {
     auto it = m_taskPendingQueue.find(taskSubsystemId);
@@ -116,6 +115,30 @@ http_internal_queue<HC_TASK*>& http_singleton::get_task_pending_queue(_In_ uint6
     return m_taskPendingQueue[taskSubsystemId];
 }
 
+void http_singleton::set_retry_state(
+    _In_ uint32_t retryAfterCacheId,
+    _In_ const http_retry_after_api_state& state)
+{
+    std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
+    m_retryAfterCache[retryAfterCacheId] = state;
+}
+
+http_retry_after_api_state http_singleton::get_retry_state(_In_ uint32_t retryAfterCacheId)
+{
+    auto it = m_retryAfterCache.find(retryAfterCacheId); // STL is multithread read safe
+    if (it != m_retryAfterCache.end())
+    {
+        return it->second; // returning a copy of state struct
+    }
+
+    return http_retry_after_api_state();
+}
+
+void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
+{
+    std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
+    m_retryAfterCache.erase(retryAfterCacheId);
+}
 
 std::shared_ptr<http_task_completed_queue> http_singleton::get_task_completed_queue_for_taskgroup(
     _In_ HC_SUBSYSTEM_ID taskSubsystemId,

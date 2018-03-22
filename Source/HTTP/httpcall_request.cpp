@@ -250,6 +250,29 @@ try
 CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestSetRetryCacheId(
+    _In_opt_ HC_CALL_HANDLE call,
+    _In_ uint32_t retryAfterCacheId
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+    else
+    {
+        RETURN_IF_PERFORM_CALLED(call);
+        call->retryAfterCacheId = retryAfterCacheId;
+
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryCacheId [ID %llu]: retryAfterCacheId=%d",
+            call->id, retryAfterCacheId);
+    }
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetRetryAllowed(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ bool retryAllowed
@@ -299,6 +322,25 @@ try
     else
     {
         *retryAllowed = call->retryAllowed;
+    }
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestGetRetryCacheId(
+    _In_ HC_CALL_HANDLE call,
+    _Out_ uint32_t* retryAfterCacheId
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr || retryAfterCacheId == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+    else
+    {
+        *retryAfterCacheId = call->retryAfterCacheId;
     }
     return HC_OK;
 }
@@ -387,6 +429,34 @@ try
 CATCH_RETURN()
 
 HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestGetTimeoutWindow(
+    _In_opt_ HC_CALL_HANDLE call,
+    _Out_ uint32_t* timeoutWindowInSeconds
+    ) HC_NOEXCEPT
+try
+{
+    if (timeoutWindowInSeconds == nullptr)
+    {
+        return HC_E_INVALIDARG;
+    }
+
+    if (call == nullptr)
+    {
+        auto httpSingleton = get_http_singleton(true);
+        if (nullptr == httpSingleton)
+            return HC_E_NOTINITIALISED;
+
+        *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
+    }
+    else
+    {
+        *timeoutWindowInSeconds = call->timeoutWindowInSeconds;
+    }
+    return HC_OK;
+}
+CATCH_RETURN()
+
+HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestGetRetryDelay(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ uint32_t* retryDelayInSeconds
@@ -437,33 +507,3 @@ try
     return HC_OK;
 }
 CATCH_RETURN()
-
-HC_API HC_RESULT HC_CALLING_CONV
-HCHttpCallRequestGetTimeoutWindow(
-    _In_opt_ HC_CALL_HANDLE call,
-    _Out_ uint32_t* timeoutWindowInSeconds
-    ) HC_NOEXCEPT
-try
-{
-    if (timeoutWindowInSeconds == nullptr)
-    {
-        return HC_E_INVALIDARG;
-    }
-
-    if (call == nullptr)
-    {
-        auto httpSingleton = get_http_singleton(true);
-        if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
-
-        *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
-    }
-    else
-    {
-        *timeoutWindowInSeconds = call->timeoutWindowInSeconds;
-    }
-    return HC_OK;
-}
-CATCH_RETURN()
-
-

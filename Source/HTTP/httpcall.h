@@ -15,10 +15,11 @@ struct HC_CALL
         timeoutInSeconds(0),
         timeoutWindowInSeconds(0),
         retryDelayInSeconds(0),
-        enableAssertsForThrottling(false),
         performCalled(false),
-        refCount(1)
+        refCount(1),
+        retryAfterCacheId(0)
     {
+        delayBeforeRetry = std::chrono::milliseconds(0);
     }
 
     http_internal_string method;
@@ -33,14 +34,18 @@ struct HC_CALL
     HC_RESULT networkErrorCode;
     uint32_t platformNetworkErrorCode;
     std::shared_ptr<xbox::httpclient::hc_task> task;
+
     uint64_t id;
     std::atomic<int> refCount;
 
+    chrono_clock_t::time_point firstRequestStartTime;
+    std::chrono::milliseconds delayBeforeRetry;
+    uint32_t retryIterationNumber;
     bool retryAllowed;
+    uint32_t retryAfterCacheId;
     uint32_t timeoutInSeconds;
     uint32_t timeoutWindowInSeconds;
     uint32_t retryDelayInSeconds;
-    bool enableAssertsForThrottling;
     bool performCalled;
 };
 

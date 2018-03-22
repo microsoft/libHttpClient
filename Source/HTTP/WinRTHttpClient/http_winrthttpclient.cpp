@@ -83,8 +83,10 @@ void uwp_http_task::perform_async(
             {
                 http_internal_wstring wHeaderName = utf16_from_utf8(headerName);
                 http_internal_wstring wHeaderValue = utf16_from_utf8(headerValue);
-                requestMsg->Headers->TryAppendWithoutValidation(ref new Platform::String(wHeaderName.c_str()), ref new Platform::String(wHeaderValue.c_str()
-                ));
+                requestMsg->Headers->TryAppendWithoutValidation(
+                    ref new Platform::String(wHeaderName.c_str()),
+                    ref new Platform::String(wHeaderValue.c_str()
+                    ));
             }
         }
 

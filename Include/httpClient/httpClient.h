@@ -338,7 +338,7 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetRequestBodyString(
     _In_ HC_CALL_HANDLE call,
     _In_z_ PCSTR requestBodyString
-) HC_NOEXCEPT;
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Set a request header for the HTTP call
@@ -367,6 +367,19 @@ HC_API HC_RESULT HC_CALLING_CONV
 HCHttpCallRequestSetRetryAllowed(
     _In_opt_ HC_CALL_HANDLE call,
     _In_ bool retryAllowed
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// ID number of this REST endpoint used to cache the Retry-After header for fast fail.
+/// This must be called prior to calling HCHttpCallPerform.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
+/// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail.  1-1000 are reserved for XSAPI</param>
+/// <returns>Result code for this API operation.  Possible values are HC_OK, or HC_E_FAIL.</returns>
+HC_API HC_RESULT HC_CALLING_CONV
+HCHttpCallRequestSetRetryCacheId(
+    _In_opt_ HC_CALL_HANDLE call,
+    _In_ uint32_t retryAfterCacheId
     ) HC_NOEXCEPT;
 
 /// <summary>
