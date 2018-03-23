@@ -174,7 +174,6 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         &queue);
 
     bool stop = false;
-    uint64_t taskGroupId = 0;
     while (!stop)
     {
         DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
@@ -260,7 +259,6 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
     LogToUI(format_string("HCWebSocketCreate: %d", hr));
 
     HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
-    uint64_t taskGroupId = 0;
     void* callbackContext = nullptr;
 
     auto headers = ExtractHeadersFromHeadersString(requestHeaders);
@@ -291,7 +289,6 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
 void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     HC_SUBSYSTEM_ID taskSubsystemId = HC_SUBSYSTEM_ID_GAME;
-    uint64_t taskGroupId = 0;
     void* callbackContext = nullptr;
 
     std::string requestBody = to_utf8string(TextboxRequestString->Text->Data());

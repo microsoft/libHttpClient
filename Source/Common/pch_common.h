@@ -89,7 +89,6 @@ typedef int32_t function_context;
 #include "../global/mem.h"
 #include "win/utils_win.h"
 #include "utils.h"
-#include "../task/task_impl.h"
 #include "../global/global.h"
 #include "trace_internal.h"
 

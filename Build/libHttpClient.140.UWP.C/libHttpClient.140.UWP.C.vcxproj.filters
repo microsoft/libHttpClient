@@ -52,12 +52,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.cpp">
-      <Filter>C++ Source\Task</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_publics.cpp">
-      <Filter>C++ Source\Task</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.cpp">
       <Filter>C++ Source\WebSocket\WinRT</Filter>
     </ClCompile>
@@ -102,9 +96,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\EntryList.h">
       <Filter>C++ Source\Task</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\task_impl.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
       <Filter>C++ Source\WebSocket</Filter>
     </ClInclude>
@@ -124,9 +115,6 @@
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\task.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
