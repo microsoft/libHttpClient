@@ -43,7 +43,7 @@ If you want to contribute to the project, please talk to us to avoid overlap.
 1. Call HCHttpCallCreate() to create a new HC_CALL_HANDLE
 1. Call HCHttpCallRequestSet*() to prepare the HC_CALL_HANDLE
 1. Call HCHttpCallPerform() to perform an HTTP call using the HC_CALL_HANDLE.  
-1. The perform call is asynchronous, so the work will be done on a background thread which calls HCTaskProcessNextPendingTask().  The results will return to the callback on the thread that calls HCTaskProcessNextCompletedTask().
+1. The perform call is asynchronous, so the work will be done on a background thread which calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Work ).  The results will return to the callback on the thread that calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Completion ).
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE
 1. Call HCHttpCallCleanup() to cleanup the HC_CALL_HANDLE
 1. Repeat 4-8 for each new HTTP call
@@ -70,7 +70,7 @@ Big things that still need to be done in rough priority order:
 * [Done] Design WebSocket APIs
 * [Done] WebSocket implementation for UWP & XDK
 * [Done] Prototype XSAPI on top of libHttpClient WebSocket stack
-* Retry logic
+* [Done] Retry logic
 * API for binary request & response data 
 * iOS project & iOS implementation calling iOS platform HTTP APIs
 * iOS implementation calling iOS platform WebSocket APIs
