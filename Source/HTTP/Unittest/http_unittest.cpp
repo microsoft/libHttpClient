@@ -5,7 +5,6 @@
 #include "httpClient/types.h"
 #include "httpClient/httpClient.h"
 #include "../global/global.h"
-#include "../task/task_impl.h"
 
 void Internal_HCHttpCallPerform(
     _In_ HC_CALL_HANDLE call,

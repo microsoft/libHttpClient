@@ -28,11 +28,6 @@
 #define HC_UWP_API 1
 #endif 
 
-#if HC_UWP_API || HC_WIN32_API || HC_XDK_API
-#undef HC_USE_HANDLES
-#define HC_USE_HANDLES 1
-#endif
-
 #ifndef _WIN32
     #ifdef _In_
     #undef _In_

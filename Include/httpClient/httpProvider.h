@@ -3,7 +3,6 @@
 
 #pragma once
 #include <httpClient/types.h>
-#include <httpClient/task.h>
 #include <httpClient/asyncProvider.h>
 #include <httpClient/trace.h>
 

@@ -84,7 +84,6 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         &queue);
 
     bool stop = false;
-    uint64_t taskGroupId = 0;
     while (!stop)
     {
         DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
