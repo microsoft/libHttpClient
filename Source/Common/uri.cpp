@@ -185,7 +185,7 @@ void Uri::SetQuery(String&& query)
     auto it = query.begin();
     if (!ParseQuery(query, it, false) || it != query.end())
     {
-        //THROW(HC_E_FAIL, "Attempting to set invalid query on URI.");
+        //THROW(E_FAIL, "Attempting to set invalid query on URI.");
     }
 }
 
@@ -199,7 +199,7 @@ void Uri::SetFragment(String&& fragment)
     auto it = fragment.begin();
     if (!ParseFragment(fragment, it, false) || it != fragment.end())
     {
-        //THROW(HC_E_FAIL, "Attempting to set invalid fragment on URI.");
+        //THROW(E_FAIL, "Attempting to set invalid fragment on URI.");
     }
 }
 
@@ -287,13 +287,13 @@ String Uri::ToString() const
         {
             if (chunkEnd > urlPart.size() - 3) // a % encoding is 3 characters long
             {
-                //THROW(HC_E_INVALIDARG, "Invalid % encode in url encoded string");
+                //THROW(E_INVALIDARG, "Invalid % encode in url encoded string");
             }
 
             uint8_t value = 0;
             if (!HexDecodePair(urlPart[chunkEnd + 1], urlPart[chunkEnd + 2], value))
             {
-                //THROW(HC_E_INVALIDARG, "Invalid value for % encode in url encoded string");
+                //THROW(E_INVALIDARG, "Invalid value for % encode in url encoded string");
             }
 
             decoded.push_back(value);

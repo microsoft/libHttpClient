@@ -16,25 +16,25 @@ struct AsyncState
     HANDLE waitEvent;
     PTP_TIMER timer;
     void* token;
-    PCSTR function;
+    const_utf8_string function;
 };
 
 static void CALLBACK CompletionCallback(_In_ void* context);
 static void CALLBACK WorkerCallback(_In_ void* context);
 static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE instance, _In_ PVOID context, _In_ PTP_TIMER timer);
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock);
-static HRESULT AllocState(_In_ AsyncBlock* asyncBlock);
+static hresult_t AllocState(_In_ AsyncBlock* asyncBlock);
 static void CleanupState(_In_ AsyncBlock* asyncBlock);
 static AsyncState* GetState(_In_ AsyncBlock* asyncBlock);
 
-static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
+static hresult_t AllocState(_In_ AsyncBlock* asyncBlock)
 {
     if (GetState(asyncBlock) != nullptr)
     {
         return E_INVALIDARG;
     }
 
-    HRESULT hr = S_OK;
+    hresult_t hr = S_OK;
     HANDLE event = nullptr;
     AsyncState* state = nullptr;
 
@@ -202,7 +202,7 @@ static void CALLBACK WorkerCallback(
     AsyncBlock* asyncBlock = (AsyncBlock*)context;
     AsyncState* state = GetState(asyncBlock);
     InterlockedExchange(&state->workScheduled, 0);
-    HRESULT result = state->provider(AsyncOp_DoWork, &state->providerData);
+    hresult_t result = state->provider(AsyncOp_DoWork, &state->providerData);
 
     // Work routine can return E_PENDING if there is more work to do.  Otherwise
     // it either needs to be a failure or it should have called CompleteAsync, which
@@ -215,7 +215,7 @@ static void CALLBACK WorkerCallback(
             result = E_UNEXPECTED;
         }
 
-        HRESULT priorStatus = InterlockedCompareExchange(&asyncBlock->internalStatus, result, E_PENDING);
+        hresult_t priorStatus = InterlockedCompareExchange(&asyncBlock->internalStatus, result, E_PENDING);
 
         if (priorStatus == E_PENDING)
         {
@@ -233,7 +233,7 @@ static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE instance, _In_ PVO
     AsyncState* state = GetState(async);
     if (state != nullptr)
     {
-        HRESULT hr = SubmitAsyncCallback(
+        hresult_t hr = SubmitAsyncCallback(
             state->providerData.queue,
             AsyncQueueCallbackType_Work,
             async,
@@ -262,7 +262,7 @@ STDAPI GetAsyncStatus(
 {
     if (asyncBlock == nullptr) return E_POINTER;
 
-    HRESULT result = InterlockedCompareExchange(&asyncBlock->internalStatus, 0xFFFFFFFF, 0xFFFFFFFF);
+    hresult_t result = InterlockedCompareExchange(&asyncBlock->internalStatus, 0xFFFFFFFF, 0xFFFFFFFF);
 
     if (result == E_PENDING)
     {
@@ -292,7 +292,7 @@ STDAPI GetAsyncResultSize(
 {
     if (asyncBlock == nullptr) return E_POINTER;
 
-    HRESULT result = GetAsyncStatus(asyncBlock, false);
+    hresult_t result = GetAsyncStatus(asyncBlock, false);
 
     if (SUCCEEDED(result))
     {
@@ -319,7 +319,7 @@ STDAPI GetAsyncResultSize(
 STDAPI_(void) CancelAsync(
     _In_ AsyncBlock* asyncBlock)
 {
-    HRESULT status = InterlockedCompareExchange(&asyncBlock->internalStatus, E_ABORT, E_PENDING);
+    hresult_t status = InterlockedCompareExchange(&asyncBlock->internalStatus, E_ABORT, E_PENDING);
 
     if (status == E_PENDING)
     {
@@ -344,7 +344,7 @@ STDAPI RunAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work)
 {
-    HRESULT hr = BeginAsync(
+    hresult_t hr = BeginAsync(
         asyncBlock, 
         work, 
         nullptr, 
@@ -354,7 +354,7 @@ STDAPI RunAsync(
         if (op == AsyncOp_DoWork)
         {
             AsyncWork* work = (AsyncWork*)data->context;
-            HRESULT hr = work(data->async);
+            hresult_t hr = work(data->async);
             CompleteAsync(data->async, hr, 0);
         }
         return S_OK;
@@ -382,10 +382,10 @@ STDAPI BeginAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ void* token,
-    _In_opt_ PCSTR function,
+    _In_opt_ const_utf8_string function,
     _In_ AsyncProvider* provider)
 {
-    HRESULT hr = AllocState(asyncBlock);
+    hresult_t hr = AllocState(asyncBlock);
 
     if (SUCCEEDED(hr))
     {
@@ -452,7 +452,7 @@ STDAPI ScheduleAsync(
 /// </summary
 STDAPI_(void) CompleteAsync(
     _In_ AsyncBlock* asyncBlock,
-    _In_ HRESULT result,
+    _In_ hresult_t result,
     _In_ size_t requiredBufferSize)
 {
     AsyncState* state = GetState(asyncBlock);
@@ -466,7 +466,7 @@ STDAPI_(void) CompleteAsync(
         return;
     }
 
-    HRESULT priorStatus = InterlockedCompareExchange(&asyncBlock->internalStatus, result, E_PENDING);
+    hresult_t priorStatus = InterlockedCompareExchange(&asyncBlock->internalStatus, result, E_PENDING);
 
     // If prior status was not pending, we either already completed or were canceled.
     if (priorStatus == E_PENDING)
@@ -498,7 +498,7 @@ STDAPI GetAsyncResult(
 {
     if (asyncBlock == nullptr) return E_POINTER;
 
-    HRESULT result = GetAsyncStatus(asyncBlock, false);
+    hresult_t result = GetAsyncStatus(asyncBlock, false);
     AsyncState* state = GetState(asyncBlock);
 
     if (SUCCEEDED(result))

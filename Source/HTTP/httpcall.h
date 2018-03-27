@@ -4,11 +4,11 @@
 #pragma once
 #include "pch.h"
 
-struct HC_CALL
+typedef struct HC_CALL
 {
     HC_CALL() :
         statusCode(0),
-        networkErrorCode(HC_OK),
+        networkErrorCode(S_OK),
         platformNetworkErrorCode(0),
         id(0),
         retryAllowed(false),
@@ -31,11 +31,12 @@ struct HC_CALL
     http_internal_string responseString;
     http_internal_map<http_internal_string, http_internal_string> responseHeaders;
     uint32_t statusCode;
-    HC_RESULT networkErrorCode;
+    hresult_t networkErrorCode;
     uint32_t platformNetworkErrorCode;
     std::shared_ptr<xbox::httpclient::hc_task> task;
 
     uint64_t id;
+    void* context;
     std::atomic<int> refCount;
 
     chrono_clock_t::time_point firstRequestStartTime;
@@ -47,10 +48,10 @@ struct HC_CALL
     uint32_t timeoutWindowInSeconds;
     uint32_t retryDelayInSeconds;
     bool performCalled;
-};
+} HC_CALL;
 
 void Internal_HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE call, 
+    _In_ hc_call_handle call, 
     _In_ AsyncBlock* asyncBlock
     );
 

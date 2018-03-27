@@ -2,12 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 typedef enum AsyncOp
 {
     /// <summary>
     /// An async provider is invoked with this opcode when ScheduleAsync has been called to
     /// schedule work. Implementations should perform their asynchronous work and then call
-    /// CompleteAsync with the data payload size. If additonal work needs to be done they
+    /// CompleteAsync with the data payload size. If additional work needs to be done they
     /// can schedule it and return E_PENDING.
     /// </summary>
     AsyncOp_DoWork,
@@ -63,7 +67,7 @@ typedef struct AsyncProviderData
     void* context;
 } AsyncProviderData;
 
-typedef HRESULT CALLBACK AsyncProvider(_In_ AsyncOp op, _Inout_ AsyncProviderData* data);
+typedef hresult_t CALLBACK AsyncProvider(_In_ AsyncOp op, _Inout_ AsyncProviderData* data);
 
 /// <summary>
 /// Initializes an async block for use.  Once begun calls such
@@ -75,7 +79,7 @@ STDAPI BeginAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ void* token,
-    _In_opt_ PCSTR function,
+    _In_opt_ const_utf8_string function,
     _In_ AsyncProvider* provider);
 
 /// <summary>
@@ -95,7 +99,7 @@ STDAPI ScheduleAsync(
 /// </summary
 STDAPI_(void) CompleteAsync(
     _In_ AsyncBlock* asyncBlock,
-    _In_ HRESULT result,
+    _In_ hresult_t result,
     _In_ size_t requiredBufferSize);
 
 /// <summary>
@@ -108,4 +112,10 @@ STDAPI GetAsyncResult(
     _In_opt_ void* token,
     _In_ size_t bufferSize,
     _Out_writes_bytes_opt_(bufferSize) void* buffer);
+
+
+
+#if defined(__cplusplus)
+} // end extern "C"
+#endif // defined(__cplusplus)
 

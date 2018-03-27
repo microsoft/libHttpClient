@@ -4,7 +4,7 @@
 #include "httpClient\httpClient.h"
 #include "json_cpp\json.h"
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -205,7 +205,7 @@ int main()
 
     StartBackgroundThread();
 
-    HC_CALL_HANDLE call = nullptr;
+    hc_call_handle call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
@@ -226,13 +226,13 @@ int main()
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const char* str;
-        HC_RESULT errCode = HC_OK;
+        hresult_t errCode = S_OK;
         uint32_t platErrCode = 0;
         uint32_t statusCode = 0;
         std::string responseString;
         std::string errMessage;
 
-        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(asyncBlock->context);
+        hc_call_handle call = static_cast<hc_call_handle>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);

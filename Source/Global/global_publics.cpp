@@ -8,21 +8,21 @@
 
 using namespace xbox::httpclient;
 
-HC_API HC_RESULT HC_CALLING_CONV
-HCGlobalGetLibVersion(_Outptr_ PCSTR* version) HC_NOEXCEPT
+HCAPI 
+HCGlobalGetLibVersion(_Outptr_ const_utf8_string* version) HC_NOEXCEPT
 try
 {
     if (version == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     *version = LIBHTTPCLIENT_VERSION;
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCGlobalInitialize() HC_NOEXCEPT
 try
 {
@@ -31,8 +31,7 @@ try
 }
 CATCH_RETURN()
 
-HC_API void HC_CALLING_CONV
-HCGlobalCleanup() HC_NOEXCEPT
+HCAPI_(void) HCGlobalCleanup() HC_NOEXCEPT
 try
 {
     xbox::httpclient::cleanup_http_singleton();
@@ -40,7 +39,7 @@ try
 }
 CATCH_RETURN_WITH(;)
 
-HC_API void HC_CALLING_CONV
+HCAPI_(void)
 HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
     ) HC_NOEXCEPT
@@ -52,7 +51,7 @@ HCGlobalSetHttpCallPerformFunction(
     httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCGlobalGetHttpCallPerformFunction(
     _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
     ) HC_NOEXCEPT
@@ -60,15 +59,15 @@ try
 {
     if (performFunc == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return E_HC_NOT_INITIALISED;
 
     *performFunc = httpSingleton->m_performFunc;
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 

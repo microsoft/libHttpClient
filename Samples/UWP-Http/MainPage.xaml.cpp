@@ -214,7 +214,7 @@ void HttpTestApp::MainPage::StartBackgroundThread()
     }
 }
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HC_CALL_HANDLE call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -276,7 +276,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     std::string timeout = to_utf8string(TextboxTimeout->Text->Data());
     uint32_t timeoutInt = atoi(timeout.c_str());
 
-    HC_CALL_HANDLE call = nullptr;
+    hc_call_handle call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, requestMethod.c_str(), requestUrl.c_str());
     HCHttpCallRequestSetTimeoutWindow(call, timeoutInt);
@@ -298,13 +298,13 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const CHAR* str;
-        HC_RESULT errCode = HC_OK;
+        HRESULT errCode = S_OK;
         uint32_t platErrCode = 0;
         uint32_t statusCode = 0;
         std::string responseString;
         std::string errMessage;
 
-        HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(asyncBlock->context);
+        hc_call_handle call = static_cast<hc_call_handle>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);

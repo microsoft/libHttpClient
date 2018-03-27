@@ -59,9 +59,9 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     return httpSingleton;
 }
 
-HC_RESULT init_http_singleton()
+hresult_t init_http_singleton()
 {
-    HC_RESULT hr = HC_OK;
+    hresult_t hr = S_OK;
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
@@ -74,7 +74,7 @@ HC_RESULT init_http_singleton()
 
         if (newSingleton == nullptr)
         {
-            hr = HC_E_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
         }
         // At this point there is a singleton (ours or someone else's)
     }
@@ -129,29 +129,3 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
-
-HRESULT HCtoHRESULT(_In_ HC_RESULT hc)
-{
-    switch (hc)
-    {
-        case HC_OK: return S_OK;
-        case HC_E_FAIL: return E_FAIL;
-        case HC_E_POINTER: return E_POINTER;
-        case HC_E_INVALIDARG: return E_INVALIDARG;
-        case HC_E_OUTOFMEMORY: return E_OUTOFMEMORY;
-        default: return E_FAIL;
-    }
-}
-
-HC_RESULT HRESULTtoHC(_In_ HRESULT hr)
-{
-    switch (hr)
-    {
-        case S_OK: return HC_OK;
-        case E_FAIL: return HC_E_FAIL;
-        case E_POINTER: return HC_E_POINTER;
-        case E_INVALIDARG: return HC_E_INVALIDARG;
-        case E_OUTOFMEMORY: return HC_E_OUTOFMEMORY;
-        default: return HC_E_FAIL;
-    }
-}

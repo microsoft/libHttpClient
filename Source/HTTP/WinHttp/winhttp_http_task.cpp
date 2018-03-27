@@ -14,7 +14,7 @@
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 winhttp_http_task::winhttp_http_task(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     ) :
     m_call(call),
@@ -42,7 +42,7 @@ void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pReques
 {
     if (!WinHttpQueryDataAvailable(pRequestContext->m_hRequest, nullptr))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryDataAvailable errorcode %d", pRequestContext->m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryDataAvailable errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetLastError());
     }
 }
 
@@ -53,7 +53,7 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
 
     const BYTE* requestBody = nullptr;
     uint32_t requestBodyBytes = 0;
-    if (HCHttpCallRequestGetRequestBodyBytes(pRequestContext->m_call, &requestBody, &requestBodyBytes) != HC_OK)
+    if (HCHttpCallRequestGetRequestBodyBytes(pRequestContext->m_call, &requestBody, &requestBodyBytes) != S_OK)
     {
         return;
     }
@@ -64,7 +64,7 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
         static_cast<DWORD>(safeSize),
         nullptr))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpWriteData errorcode %d", pRequestContext->m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpWriteData errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetLastError());
     }
 
     // Stop writing chunks after this one if no more data.
@@ -82,7 +82,7 @@ void winhttp_http_task::callback_status_write_complete(
     _In_ void* statusInfo)
 {
     DWORD bytesWritten = *((DWORD *)statusInfo);
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", pRequestContext->m_call->id, bytesWritten);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", HCHttpCallGetId(pRequestContext->m_call), bytesWritten);
 
     if (pRequestContext->m_requestBodyType == content_length_chunked)
     {
@@ -92,7 +92,7 @@ void winhttp_http_task::callback_status_write_complete(
     {
         if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpReceiveResponse errorcode %d", pRequestContext->m_call->id, GetLastError());
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpReceiveResponse errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetLastError());
         }
     }
 }
@@ -108,8 +108,8 @@ void winhttp_http_task::callback_status_request_error(
         return;
 
     const DWORD errorCode = error_result->dwError;
-    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", pRequestContext->m_call->id, error_result->dwResult, error_result->dwError);
-    HCHttpCallResponseSetNetworkErrorCode(pRequestContext->m_call, HC_E_FAIL, errorCode);
+    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", HCHttpCallGetId(pRequestContext->m_call), error_result->dwResult, error_result->dwError);
+    HCHttpCallResponseSetNetworkErrorCode(pRequestContext->m_call, E_FAIL, errorCode);
     CompleteAsync(pRequestContext->m_asyncBlock, E_FAIL, 0);
 
 }
@@ -119,7 +119,7 @@ void winhttp_http_task::callback_status_sendrequest_complete(
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", pRequestContext->m_call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", HCHttpCallGetId(pRequestContext->m_call));
 
     if (pRequestContext->m_requestBodyType == content_length_chunked)
     {
@@ -129,13 +129,14 @@ void winhttp_http_task::callback_status_sendrequest_complete(
     {
         if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpReceiveResponse errorcode %d", pRequestContext->m_call->id, GetLastError());
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpReceiveResponse errorcode %d",                 
+                HCHttpCallGetId(pRequestContext->m_call), GetLastError());
         }
     }
 }
 
-HRESULT winhttp_http_task::query_header_length(
-    _In_ HC_CALL_HANDLE call,
+hresult_t winhttp_http_task::query_header_length(
+    _In_ hc_call_handle call,
     _In_ HINTERNET hRequestHandle,
     _In_ DWORD header,
     _Out_ DWORD* pLength)
@@ -151,7 +152,7 @@ HRESULT winhttp_http_task::query_header_length(
         DWORD dwError = GetLastError();
         if (dwError != ERROR_INSUFFICIENT_BUFFER)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryHeaders errorcode %d", call->id, dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryHeaders errorcode %d", HCHttpCallGetId(call), dwError);
             return E_FAIL;
         }
     }
@@ -160,7 +161,7 @@ HRESULT winhttp_http_task::query_header_length(
 }
 
 uint32_t winhttp_http_task::parse_status_code(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext
     )
@@ -182,7 +183,7 @@ uint32_t winhttp_http_task::parse_status_code(
         &length,
         WINHTTP_NO_HEADER_INDEX))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryHeaders errorcode %d", pRequestContext->m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryHeaders errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetLastError());
         return 0;
     }
 
@@ -194,7 +195,7 @@ uint32_t winhttp_http_task::parse_status_code(
 
 
 void winhttp_http_task::parse_headers_string(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ wchar_t* headersStr)
 {
     wchar_t* context = nullptr;
@@ -223,7 +224,7 @@ void winhttp_http_task::callback_status_headers_available(
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", pRequestContext->m_call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", HCHttpCallGetId(pRequestContext->m_call));
 
     // First need to query to see what the headers size is.
     DWORD headerBufferLength = 0;
@@ -244,7 +245,7 @@ void winhttp_http_task::callback_status_headers_available(
         &headerBufferLength,
         WINHTTP_NO_HEADER_INDEX))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryHeaders errorcode %d", pRequestContext->m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpQueryHeaders errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetLastError());
         return;
     }
 
@@ -261,7 +262,8 @@ void winhttp_http_task::callback_status_data_available(
     // Status information contains pointer to DWORD containing number of bytes available.
     DWORD newBytesAvailable = *(PDWORD)statusInfo;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE newBytesAvailable=%d", pRequestContext->m_call->id, newBytesAvailable);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE newBytesAvailable=%d", 
+        HCHttpCallGetId(pRequestContext->m_call), newBytesAvailable);
 
     if (newBytesAvailable > 0)
     {
@@ -276,7 +278,8 @@ void winhttp_http_task::callback_status_data_available(
             newBytesAvailable,
             nullptr))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpReadData errorcode %d", pRequestContext->m_call->id, GetLastError());
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpReadData errorcode %d", 
+                HCHttpCallGetId(pRequestContext->m_call), GetLastError());
         }
     }
     else
@@ -301,7 +304,7 @@ void winhttp_http_task::callback_status_read_complete(
     // Status information length contains the number of bytes read.
     const DWORD bytesRead = statusInfoLength;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_READ_COMPLETE bytesRead=%d", pRequestContext->m_call->id, bytesRead);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_READ_COMPLETE bytesRead=%d", HCHttpCallGetId(pRequestContext->m_call), bytesRead);
 
     // If no bytes have been read, then this is the end of the response.
     if (bytesRead == 0)
@@ -495,7 +498,7 @@ void winhttp_http_task::set_autodiscover_proxy(
             sizeof(WINHTTP_PROXY_INFO));
         if (!result)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetOption errorcode %d", m_call->id, GetLastError());
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetLastError());
             return;
         }
     }
@@ -561,13 +564,13 @@ void winhttp_http_task::get_ie_proxy_info(_In_ bool isSecure)
     }
 }
 
-HRESULT winhttp_http_task::connect(
+hresult_t winhttp_http_task::connect(
     _In_ const xbox::httpclient::Uri& cUri
     )
 {
     const char* url = nullptr;
     const char* method = nullptr;
-    if (HCHttpCallRequestGetUrl(m_call, &method, &url) != HC_OK)
+    if (HCHttpCallRequestGetUrl(m_call, &method, &url) != S_OK)
     {
         return E_FAIL;
     }
@@ -586,12 +589,12 @@ HRESULT winhttp_http_task::connect(
         WINHTTP_FLAG_ASYNC);
     if (!m_hSession)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpOpen errorcode %d", m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpOpen errorcode %d", HCHttpCallGetId(m_call), GetLastError());
         return E_FAIL;
     }
 
     uint32_t timeoutInSeconds = 0;
-    if (HCHttpCallRequestGetTimeout(m_call, &timeoutInSeconds) != HC_OK)
+    if (HCHttpCallRequestGetTimeout(m_call, &timeoutInSeconds) != S_OK)
         return E_FAIL;
 
     int timeoutInMilliseconds = static_cast<int>(timeoutInSeconds * 1000);
@@ -602,7 +605,7 @@ HRESULT winhttp_http_task::connect(
         timeoutInMilliseconds,
         timeoutInMilliseconds))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetTimeouts errorcode %d", m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetTimeouts errorcode %d", HCHttpCallGetId(m_call), GetLastError());
         return E_FAIL;
     }
 
@@ -612,7 +615,7 @@ HRESULT winhttp_http_task::connect(
         WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES,
         0))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetStatusCallback errorcode %d", m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSetStatusCallback errorcode %d", HCHttpCallGetId(m_call), GetLastError());
         return E_FAIL;
     }
 
@@ -628,14 +631,14 @@ HRESULT winhttp_http_task::connect(
         0);
     if (m_hConnection == nullptr)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpConnect errorcode %d", m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpConnect errorcode %d", HCHttpCallGetId(m_call), GetLastError());
         return E_FAIL;
     }
 
     return S_OK;
 }
 
-http_internal_wstring flatten_http_headers(_In_ HC_CALL_HANDLE call)
+http_internal_wstring flatten_http_headers(_In_ hc_call_handle call)
 {
     http_internal_wstring flattened_headers;
 
@@ -670,13 +673,13 @@ http_internal_wstring flatten_http_headers(_In_ HC_CALL_HANDLE call)
     return flattened_headers;
 }
 
-HRESULT winhttp_http_task::send(
+hresult_t winhttp_http_task::send(
     _In_ const xbox::httpclient::Uri& cUri
     )
 {
     const char* url = nullptr;
     const char* method = nullptr;
-    if (HCHttpCallRequestGetUrl(m_call, &method, &url) != HC_OK)
+    if (HCHttpCallRequestGetUrl(m_call, &method, &url) != S_OK)
     {
         return E_FAIL;
     }
@@ -696,7 +699,7 @@ HRESULT winhttp_http_task::send(
         WINHTTP_FLAG_ESCAPE_DISABLE | (cUri.IsSecure() ? WINHTTP_FLAG_SECURE : 0));
     if (m_hRequest == nullptr)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpOpenRequest errorcode %d", m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpOpenRequest errorcode %d", HCHttpCallGetId(m_call), GetLastError());
         return E_FAIL;
     }
 
@@ -707,7 +710,7 @@ HRESULT winhttp_http_task::send(
 
     const BYTE* requestBody = nullptr;
     uint32_t requestBodyBytes = 0;
-    if (HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodyBytes) != HC_OK)
+    if (HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodyBytes) != S_OK)
     {
         return E_FAIL;
     }
@@ -725,7 +728,7 @@ HRESULT winhttp_http_task::send(
     }
 
     uint32_t numHeaders = 0;
-    if (HCHttpCallRequestGetNumHeaders(m_call, &numHeaders) != HC_OK)
+    if (HCHttpCallRequestGetNumHeaders(m_call, &numHeaders) != S_OK)
     {
         return E_FAIL;
     }
@@ -739,7 +742,7 @@ HRESULT winhttp_http_task::send(
                 static_cast<DWORD>(flattenedHeaders.length()),
                 WINHTTP_ADDREQ_FLAG_ADD))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpAddRequestHeaders errorcode %d", m_call->id, GetLastError());
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpAddRequestHeaders errorcode %d", HCHttpCallGetId(m_call), GetLastError());
             return E_FAIL;
         }
     }
@@ -761,7 +764,7 @@ HRESULT winhttp_http_task::send(
         dwTotalLength,
         (DWORD_PTR)this))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSendRequest errorcode %d", m_call->id, GetLastError());
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WinHttpSendRequest errorcode %d", HCHttpCallGetId(m_call), GetLastError());
         return E_FAIL;
     }
 
@@ -778,7 +781,7 @@ void winhttp_http_task::perform_async()
         HCHttpCallRequestGetUrl(m_call, &method, &url);
         xbox::httpclient::Uri cUri(url);
 
-        HRESULT hr = connect(cUri);
+        hresult_t hr = connect(cUri);
         if (SUCCEEDED(hr))
         {
             hr = send(cUri);
@@ -787,7 +790,7 @@ void winhttp_http_task::perform_async()
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
-            HC_RESULT hrTranslated = (SUCCEEDED(hr)) ? HC_OK : HC_E_FAIL;
+            hresult_t hrTranslated = (SUCCEEDED(hr)) ? S_OK : E_FAIL;
             HCHttpCallResponseSetNetworkErrorCode(m_call, hrTranslated, hr);
             CompleteAsync(m_asyncBlock, hr, 0);
             return;
@@ -796,24 +799,24 @@ void winhttp_http_task::perform_async()
     catch (std::bad_alloc const& e)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::bad_alloc in winhttp_http_task: %s",
-            HC_E_OUTOFMEMORY, e.what());
+            E_OUTOFMEMORY, e.what());
 
-        HCHttpCallResponseSetNetworkErrorCode(m_call, HC_E_OUTOFMEMORY, static_cast<uint32_t>(HC_E_OUTOFMEMORY));
+        HCHttpCallResponseSetNetworkErrorCode(m_call, E_OUTOFMEMORY, static_cast<uint32_t>(E_OUTOFMEMORY));
         CompleteAsync(m_asyncBlock, E_OUTOFMEMORY, 0);
     }
     catch (std::exception const& e)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::exception in winhttp_http_task: %s",
-            HC_E_FAIL, e.what());
+            E_FAIL, e.what());
 
-        HCHttpCallResponseSetNetworkErrorCode(m_call, HC_E_FAIL, static_cast<uint32_t>(HC_E_FAIL));
+        HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, static_cast<uint32_t>(E_FAIL));
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
     }
     catch (...)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception in winhttp_http_task", HC_E_FAIL);
+        HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception in winhttp_http_task", E_FAIL);
 
-        HCHttpCallResponseSetNetworkErrorCode(m_call, HC_E_FAIL, static_cast<uint32_t>(HC_E_FAIL));
+        HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, static_cast<uint32_t>(E_FAIL));
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
     }
 }
@@ -822,12 +825,12 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 
 
 void Internal_HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     )
 {
-    std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<xbox::httpclient::winhttp_http_task>(call, asyncBlock);
-    call->task = httpTask;
+    xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(call, asyncBlock);
+    HCHttpCallSetContext(call, httpTask); // TODO: cleanup 
     httpTask->perform_async();
 }
 

@@ -109,13 +109,13 @@ HC_DECLARE_TRACE_AREA(WEBSOCKET);
     catch (std::exception const& e) { ::xbox::httpclient::detail::StdExceptionToResult(e, file, line); return errCode; } \
     catch (...) { ::xbox::httpclient::detail::UnknownExceptionToResult(file, line); return errCode; }
 
-#define RETURN_IF_PERFORM_CALLED(call) if (call->performCalled) return HC_E_PERFORMALREADYCALLED;
-#define RETURN_IF_WEBSOCKET_CONNECT_CALLED(socket) if (socket->connectCalled) return HC_E_CONNECTALREADYCALLED;
+#define RETURN_IF_PERFORM_CALLED(call) if (call->performCalled) return E_HC_PERFORM_ALREADY_CALLED;
+#define RETURN_IF_WEBSOCKET_CONNECT_CALLED(socket) if (socket->connectCalled) return E_HC_CONNECT_ALREADY_CALLED;
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
 
-HC_RESULT StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line);
-HC_RESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, uint32_t line);
-HC_RESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
+hresult_t StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line);
+hresult_t StdExceptionToResult(std::exception const& e, _In_z_ char const* file, uint32_t line);
+hresult_t UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_END
