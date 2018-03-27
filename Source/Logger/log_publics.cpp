@@ -6,7 +6,7 @@
 using namespace xbox::httpclient;
 using namespace xbox::httpclient::log;
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCSettingsSetLogLevel(
     _In_ HC_LOG_LEVEL traceLevel
     ) HC_NOEXCEPT
@@ -21,16 +21,16 @@ try
         case LOG_WARNING: internalTraceLevel = HC_TRACELEVEL_WARNING; break;
         case LOG_INFORMATION: internalTraceLevel = HC_TRACELEVEL_INFORMATION; break;
         case LOG_VERBOSE: internalTraceLevel = HC_TRACELEVEL_VERBOSE; break;
-        default: return HC_E_INVALIDARG;
+        default: return E_INVALIDARG;
     };
 
     HC_TRACE_SET_VERBOSITY(HTTPCLIENT, internalTraceLevel);
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsSetLogLevel: %d", traceLevel);
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCSettingsGetLogLevel(
     _Out_ HC_LOG_LEVEL* traceLevel
     ) HC_NOEXCEPT
@@ -38,10 +38,10 @@ try
 {
     if (traceLevel == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     *traceLevel = static_cast<HC_LOG_LEVEL>(HC_TRACE_GET_VERBOSITY(HTTPCLIENT)); 
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()

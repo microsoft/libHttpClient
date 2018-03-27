@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /// <summary>
 /// An async_queue_t contains async work. An async queue has two sides:  a worker side and
 /// a completion side.  Each side can have different rules for how queued calls
@@ -157,3 +161,9 @@ STDAPI AddAsyncCallbackSubmitted(
 STDAPI_(void) RemoveAsyncQueueCallbackSubmitted(
     _In_ async_queue_t queue,
     _In_ uint32_t token);
+
+
+#if defined(__cplusplus)
+} // end extern "C"
+#endif // defined(__cplusplus)
+

@@ -67,7 +67,7 @@ std::wstring to_wstring(const std::string &value)
 }
 
 void HC_CALLING_CONV PerformCallWithCurl(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -101,7 +101,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
     curl_easy_setopt(curl, CURLOPT_READDATA, &requestBodyChunk);
 
     res = curl_easy_perform(curl);
-    HC_RESULT errCode = HC_E_FAIL;
+    HRESULT errCode = E_FAIL;
     if (res == CURLE_OK)
     {
         long response_code;
@@ -111,7 +111,7 @@ void HC_CALLING_CONV PerformCallWithCurl(
         res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
         HCHttpCallResponseSetResponseString(call, chunk.memory);
 
-        errCode = HC_OK;
+        errCode = S_OK;
     }
     HCHttpCallResponseSetNetworkErrorCode(call, errCode, res);
     CompleteAsync(asyncBlock, errCode, 0);

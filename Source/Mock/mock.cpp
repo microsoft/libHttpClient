@@ -53,7 +53,7 @@ long GetIndexOfMock(const http_internal_vector<HC_CALL*>& mocks, HC_CALL* lastMa
 }
 
 HC_CALL* GetMatchingMock(
-    _In_ HC_CALL_HANDLE originalCall
+    _In_ HC_CALL* originalCall
     )
 {
     auto httpSingleton = get_http_singleton(false);
@@ -117,16 +117,17 @@ HC_CALL* GetMatchingMock(
 }
 
 bool Mock_Internal_HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE originalCall
+    _In_ hc_call_handle originalCallHandle
     )
 {
+    HC_CALL* originalCall = static_cast<HC_CALL*>(originalCallHandle);
     HC_CALL* matchingMock = GetMatchingMock(originalCall);
     if (matchingMock == nullptr)
     {
         return false;
     }
 
-    PCSTR str;
+    const_utf8_string str;
     HCHttpCallResponseGetResponseString(matchingMock, &str);
     HCHttpCallResponseSetResponseString(originalCall, str);
 
@@ -134,15 +135,15 @@ bool Mock_Internal_HCHttpCallPerform(
     HCHttpCallResponseGetStatusCode(matchingMock, &code);
     HCHttpCallResponseSetStatusCode(originalCall, code);
 
-    HC_RESULT genCode;
+    hresult_t genCode;
     HCHttpCallResponseGetNetworkErrorCode(matchingMock, &genCode, &code);
     HCHttpCallResponseSetNetworkErrorCode(originalCall, genCode, code);
 
     uint32_t numheaders;
     HCHttpCallResponseGetNumHeaders(matchingMock, &numheaders);
 
-    PCSTR str1;
-    PCSTR str2;
+    const_utf8_string str1;
+    const_utf8_string str2;
     for (uint32_t i = 0; i < numheaders; i++)
     {
         HCHttpCallResponseGetHeaderAtIndex(matchingMock, i, &str1, &str2);

@@ -30,26 +30,25 @@ public:
     }
 
     void perform_async(
-        _In_ HC_CALL_HANDLE call,
+        _In_ hc_call_handle call,
         _In_ AsyncBlock* asyncBlock
         );
 };
 
 
 void Internal_HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     )
 {
-    std::shared_ptr<uwp_http_task> uwpHttpTask = std::make_shared<uwp_http_task>();
-    call->task = std::dynamic_pointer_cast<xbox::httpclient::hc_task>(uwpHttpTask);
-
+    uwp_http_task* uwpHttpTask = new uwp_http_task();
+    HCHttpCallSetContext(call, uwpHttpTask);
     uwpHttpTask->perform_async(call, asyncBlock);
 }
 
 
 void uwp_http_task::perform_async(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -120,7 +119,9 @@ void uwp_http_task::perform_async(
         {
             try
             {
-                std::shared_ptr<uwp_http_task> uwpHttpTask = std::dynamic_pointer_cast<uwp_http_task>(call->task);
+                void* callContext;
+                HCHttpCallGetContext(call, &callContext);
+                uwp_http_task* uwpHttpTask = static_cast<uwp_http_task*>(callContext); // TODO: cleanup at close
                 uwpHttpTask->m_getHttpAsyncOpStatus = status;
                 HttpResponseMessage^ httpResponse = asyncOp->GetResults();
 
@@ -152,7 +153,7 @@ void uwp_http_task::perform_async(
                     }
                     catch (Platform::Exception^ ex)
                     {
-                        HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
+                        HRESULT errCode = (SUCCEEDED(ex->HResult)) ? S_OK : E_FAIL;
                         HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
                         CompleteAsync(asyncBlock, ex->HResult, 0);
                     }
@@ -160,7 +161,7 @@ void uwp_http_task::perform_async(
             }
             catch (Platform::Exception^ ex)
             {
-                HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
+                HRESULT errCode = (SUCCEEDED(ex->HResult)) ? S_OK : E_FAIL;
                 HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
                 CompleteAsync(asyncBlock, ex->HResult, 0);
             }
@@ -168,7 +169,7 @@ void uwp_http_task::perform_async(
     }
     catch (Platform::Exception^ ex)
     {
-        HC_RESULT errCode = (SUCCEEDED(ex->HResult)) ? HC_OK : HC_E_FAIL;
+        HRESULT errCode = (SUCCEEDED(ex->HResult)) ? S_OK : E_FAIL;
         HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
         CompleteAsync(asyncBlock, ex->HResult, 0);
     }

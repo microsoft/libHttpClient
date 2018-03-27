@@ -20,7 +20,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 // Trace level enum
 //------------------------------------------------------------------------------
-enum HCTraceLevel
+typedef enum HCTraceLevel
 {
     HC_TRACELEVEL_OFF = HC_PRIVATE_TRACE_LEVEL_OFF,
     HC_TRACELEVEL_ERROR = HC_PRIVATE_TRACE_LEVEL_ERROR,
@@ -28,7 +28,7 @@ enum HCTraceLevel
     HC_TRACELEVEL_IMPORTANT = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
     HC_TRACELEVEL_INFORMATION = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
     HC_TRACELEVEL_VERBOSE = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
-};
+} HCTraceLevel;
 
 //------------------------------------------------------------------------------
 // Configuration
@@ -135,7 +135,7 @@ typedef void (HCTraceCallback)(
     char const* message
 );
 
-HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
+HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 
 //------------------------------------------------------------------------------
 // Trace area macros
@@ -266,11 +266,11 @@ HC_API void HC_CALLING_CONV HCTraceSetClientCallback(HCTraceCallback* callback);
 #define HC_PRIVATE_TRACE_AREA_NAME(area) g_trace##area
 #define HC_FUNCTION __FUNCTION__
 
-struct HCTraceImplArea
+typedef struct HCTraceImplArea
 {
     char const* const Name;
     enum HCTraceLevel Verbosity;
-};
+} HCTraceImplArea;
 
 inline
 void HC_CALLING_CONV HCTraceImplSetAreaVerbosity(struct HCTraceImplArea* area, enum HCTraceLevel verbosity)
@@ -284,7 +284,7 @@ enum HCTraceLevel HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area)
     return area->Verbosity;
 }
 
-HC_API void HC_CALLING_CONV HCTraceImplMessage(
+HCAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     enum HCTraceLevel level,
     _Printf_format_string_ char const* format,

@@ -17,20 +17,20 @@ const double MAX_DELAY_TIME_IN_SEC = 60.0;
 const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallCreate(
-    _Out_ HC_CALL_HANDLE* callHandle
+    _Out_ hc_call_handle* callHandle
     ) HC_NOEXCEPT
 try 
 {
     if (callHandle == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return E_HC_NOT_INITIALISED;
 
     HC_CALL* call = new HC_CALL();
 
@@ -44,12 +44,12 @@ try
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
 
     *callHandle = call;
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_CALL_HANDLE HCHttpCallDuplicateHandle(
-    _In_ HC_CALL_HANDLE call
+hc_call_handle HCHttpCallDuplicateHandle(
+    _In_ hc_call_handle call
     ) HC_NOEXCEPT
 try
 {
@@ -58,22 +58,22 @@ try
         return nullptr;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallDuplicateHandle [ID %llu]", call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallDuplicateHandle [ID %llu]", static_cast<HC_CALL*>(call)->id);
     ++call->refCount;
 
     return call;
 }
 CATCH_RETURN_WITH(nullptr)
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallCloseHandle(
-    _In_ HC_CALL_HANDLE call
+    _In_ hc_call_handle call
     ) HC_NOEXCEPT
 try 
 {
     if (call == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCloseHandle [ID %llu]", call->id);
@@ -84,24 +84,24 @@ try
         delete call;
     }
 
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HRESULT perform_http_call(
+hresult_t perform_http_call(
     _In_ std::shared_ptr<http_singleton> httpSingleton,
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     )
 {
-    HRESULT hr = BeginAsync(asyncBlock, call, perform_http_call, __FUNCTION__, 
+    hresult_t hr = BeginAsync(asyncBlock, call, perform_http_call, __FUNCTION__,
         [](AsyncOp opCode, AsyncProviderData* data)
     {
         switch (opCode)
         {
             case AsyncOp_DoWork:
             {
-                HC_CALL_HANDLE call = static_cast<HC_CALL_HANDLE>(data->context);
+                hc_call_handle call = static_cast<hc_call_handle>(data->context);
                 auto httpSingleton = get_http_singleton(false);
                 if (nullptr == httpSingleton)
                     return E_INVALIDARG;
@@ -127,7 +127,7 @@ HRESULT perform_http_call(
                         }
                         catch (...)
                         {
-                            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", call->id);
+                            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", static_cast<HC_CALL*>(call)->id);
                         }
                     }
                 }
@@ -148,17 +148,17 @@ HRESULT perform_http_call(
     return hr;
 }
 
-void clear_http_call_response(_In_ HC_CALL_HANDLE call)
+void clear_http_call_response(_In_ hc_call_handle call)
 {
     call->responseString.clear();
     call->responseHeaders.clear();
     call->statusCode = 0;
-    call->networkErrorCode = HC_OK;
+    call->networkErrorCode = S_OK;
     call->platformNetworkErrorCode = 0;
     call->task.reset();
 }
 
-std::chrono::seconds GetRetryAfterHeaderTime(_In_ HC_CALL_HANDLE call)
+std::chrono::seconds GetRetryAfterHeaderTime(_In_ HC_CALL* call)
 {
     auto it = call->responseHeaders.find(RETRY_AFTER_HEADER);
     if (it != call->responseHeaders.end())
@@ -184,7 +184,7 @@ std::chrono::seconds GetRetryAfterHeaderTime(_In_ HC_CALL_HANDLE call)
 }
 
 bool http_call_should_retry(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ const chrono_clock_t::time_point& responseReceivedTime)
 {
     if (!call->retryAllowed)
@@ -200,7 +200,7 @@ bool http_call_should_retry(
         httpStatus == 502 || // Bad Gateway 
         httpStatus == 503 || // Service Unavailable
         httpStatus == 504 || // Gateway Timeout
-        call->networkErrorCode != HC_OK)
+        call->networkErrorCode != S_OK)
     {
         std::chrono::milliseconds retryAfter = GetRetryAfterHeaderTime(call);
 
@@ -266,7 +266,7 @@ bool http_call_should_retry(
 
 bool should_fast_fail(
     _In_ http_retry_after_api_state apiState,
-    _In_ HC_CALL_HANDLE call,
+    _In_ HC_CALL* call,
     _In_ const chrono_clock_t::time_point& currentTime
     )
 {
@@ -296,15 +296,15 @@ bool should_fast_fail(
     }
 }
 
-struct RetryContext
+typedef struct retry_context
 {
-    HC_CALL_HANDLE call;
+    HC_CALL* call;
     AsyncBlock* outerAsyncBlock;
     async_queue_t outerQueue;
-};
+} retry_context;
 
 void retry_http_call_until_done(
-    _In_ RetryContext* retryContext
+    _In_ retry_context* retryContext
     )
 {
     auto httpSingleton = get_http_singleton(false);
@@ -347,7 +347,7 @@ void retry_http_call_until_done(
 
     nestedBlock->callback = [](AsyncBlock* nestedAsyncBlock)
     {
-        RetryContext* retryContext = static_cast<RetryContext*>(nestedAsyncBlock->context);
+        retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
         auto responseReceivedTime = chrono_clock_t::now();
 
         uint32_t timeoutWindowInSeconds = 0;
@@ -371,7 +371,7 @@ void retry_http_call_until_done(
         }
     };
 
-    HRESULT hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
+    hresult_t hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
     if (FAILED(hr))
     {
         CompleteAsync(retryContext->outerAsyncBlock, hr, 0);
@@ -379,50 +379,99 @@ void retry_http_call_until_done(
     }
 }
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallPerform(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
     call->performCalled = true;
 
-    std::shared_ptr<RetryContext> retryContext = std::make_shared<RetryContext>();
-    retryContext->call = call;
+    std::shared_ptr<retry_context> retryContext = std::make_shared<retry_context>();
+    retryContext->call = static_cast<HC_CALL*>(call);
     retryContext->outerAsyncBlock = asyncBlock;
     retryContext->outerQueue = asyncBlock->queue;
-    RetryContext* rawRetryContext = static_cast<RetryContext*>(shared_ptr_cache::store<RetryContext>(retryContext));
+    retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
 
-    HC_RESULT hr = HRESULTtoHC(BeginAsync(asyncBlock, rawRetryContext, HCHttpCallPerform, __FUNCTION__,
+    hresult_t hr = BeginAsync(asyncBlock, rawRetryContext, HCHttpCallPerform, __FUNCTION__,
         [](_In_ AsyncOp op, _Inout_ AsyncProviderData* data)
     {
         switch (op)
         {
             case AsyncOp_DoWork:
-                retry_http_call_until_done(static_cast<RetryContext*>(data->context));
+                retry_http_call_until_done(static_cast<retry_context*>(data->context));
                 return E_PENDING;
 
             case AsyncOp_Cleanup:
-                shared_ptr_cache::fetch<RetryContext>(data->context, true);
+                shared_ptr_cache::fetch<retry_context>(data->context, true);
                 break;
         }
 
         return S_OK;
-    }));
+    });
 
-    if (hr == HC_OK)
+    if (hr == S_OK)
     {
-        hr = HRESULTtoHC(ScheduleAsync(asyncBlock, 0));
+        hr = ScheduleAsync(asyncBlock, 0);
     }
 
     return hr;
 }
 CATCH_RETURN()
 
+HCAPI_(uint64_t)
+HCHttpCallGetId(
+    _In_ hc_call_handle call
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr)
+    {
+        return 0;
+    }
+    return call->id;
+}
+CATCH_RETURN()
+
+HCAPI 
+HCHttpCallSetContext(
+    _In_ hc_call_handle call,
+    _In_ void* context
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    call->context = context;
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+HCAPI 
+HCHttpCallGetContext(
+    _In_ hc_call_handle call,
+    _In_ void** context
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr)
+    {
+        return 0;
+    }
+    
+    *context = call->context;
+
+    return S_OK;
+}
+CATCH_RETURN()

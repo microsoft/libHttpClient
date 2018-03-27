@@ -287,8 +287,8 @@ void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock
     )
 {
-    std::shared_ptr<xmlhttp_http_task> httpTask = http_allocate_shared<xmlhttp_http_task>(call, asyncBlock);
-    call->task = httpTask;
+    xmlhttp_http_task* uwpHttpTask = new xmlhttp_http_task();
+    HCHttpCallSetContext(call, uwpHttpTask); // TODO: cleanup
     httpTask->perform_async(call, asyncBlock);
 }
 

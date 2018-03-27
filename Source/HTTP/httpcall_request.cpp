@@ -6,23 +6,23 @@
 
 using namespace xbox::httpclient;
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetUrl(
-    _In_ HC_CALL_HANDLE call,
-    _In_z_ PCSTR method,
-    _In_z_ PCSTR url
+    _In_ hc_call_handle call,
+    _In_z_ const_utf8_string method,
+    _In_z_ const_utf8_string url
     ) HC_NOEXCEPT
 try 
 {
     if (call == nullptr || method == nullptr || url == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
     RETURN_IF_PERFORM_CALLED(call);
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return E_HC_NOT_INITIALISED;
 
     call->method = method;
     call->url = url;
@@ -30,36 +30,36 @@ try
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetUrl [ID %llu]: method=%s url=%s",
         call->id, method, url);
 
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetUrl(
-    _In_ HC_CALL_HANDLE call,
-    _Outptr_ PCSTR* method,
-    _Outptr_ PCSTR* url
+    _In_ hc_call_handle call,
+    _Outptr_ const_utf8_string* method,
+    _Outptr_ const_utf8_string* url
     ) HC_NOEXCEPT
 try
 {
     if (call == nullptr || method == nullptr || url == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return E_HC_NOT_INITIALISED;
 
     *method = call->method.c_str();
     *url = call->url.c_str();
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetRequestBodyBytes(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_reads_bytes_(requestBodySize) const BYTE* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT
@@ -67,32 +67,32 @@ try
 {
     if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == 0)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
     RETURN_IF_PERFORM_CALLED(call);
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
-        return HC_E_NOTINITIALISED;
+        return E_HC_NOT_INITIALISED;
 
     call->requestBodyBytes.assign(requestBodyBytes, requestBodyBytes + requestBodySize);
     call->requestBodyString.clear();
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRequestBodyBytes [ID %llu]: requestBodySize=%lu",
         call->id, requestBodySize);
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetRequestBodyString(
-    _In_ HC_CALL_HANDLE call,
-    _In_z_ PCSTR requestBodyString
+    _In_ hc_call_handle call,
+    _In_z_ const_utf8_string requestBodyString
 ) HC_NOEXCEPT
 {
     if (requestBodyString == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     return HCHttpCallRequestSetRequestBodyBytes(
@@ -103,9 +103,9 @@ HCHttpCallRequestSetRequestBodyString(
 }
 
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetRequestBodyBytes(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
     ) HC_NOEXCEPT
@@ -113,7 +113,7 @@ try
 {
     if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     *requestBodySize = static_cast<uint32_t>(call->requestBodyBytes.size());
@@ -126,20 +126,20 @@ try
         *requestBodyBytes = call->requestBodyBytes.data();
     }
 
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetRequestBodyString(
-    _In_ HC_CALL_HANDLE call,
-    _Outptr_ PCSTR* requestBody
+    _In_ hc_call_handle call,
+    _Outptr_ const_utf8_string* requestBody
 ) HC_NOEXCEPT
 try
 {
     if (call == nullptr || requestBody == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     if (call->requestBodyString.empty())
@@ -147,21 +147,21 @@ try
         call->requestBodyString = http_internal_string(reinterpret_cast<char const*>(call->requestBodyBytes.data()), call->requestBodyBytes.size());
     }
     *requestBody = call->requestBodyString.c_str();
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetHeader(
-    _In_ HC_CALL_HANDLE call,
-    _In_z_ PCSTR headerName,
-    _In_z_ PCSTR headerValue
+    _In_ hc_call_handle call,
+    _In_z_ const_utf8_string headerName,
+    _In_z_ const_utf8_string headerValue
     ) HC_NOEXCEPT
 try 
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
     RETURN_IF_PERFORM_CALLED(call);
 
@@ -169,21 +169,21 @@ try
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetHeader [ID %llu]: %s=%s",
         call->id, headerName, headerValue);
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetHeader(
-    _In_ HC_CALL_HANDLE call,
-    _In_z_ PCSTR headerName,
-    _Out_ PCSTR* headerValue
+    _In_ hc_call_handle call,
+    _In_z_ const_utf8_string headerName,
+    _Out_ const_utf8_string* headerValue
     ) HC_NOEXCEPT
 try 
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     auto it = call->requestHeaders.find(headerName);
@@ -195,39 +195,39 @@ try
     {
         *headerValue = nullptr;
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetNumHeaders(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _Out_ uint32_t* numHeaders
     ) HC_NOEXCEPT
 try
 {
     if (call == nullptr || numHeaders == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     *numHeaders = static_cast<uint32_t>(call->requestHeaders.size());
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetHeaderAtIndex(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _In_ uint32_t headerIndex,
-    _Out_ PCSTR* headerName,
-    _Out_ PCSTR* headerValue
+    _Out_ const_utf8_string* headerName,
+    _Out_ const_utf8_string* headerValue
     ) HC_NOEXCEPT
 try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     uint32_t index = 0;
@@ -237,7 +237,7 @@ try
         {
             *headerName = it->first.c_str();
             *headerValue = it->second.c_str();
-            return HC_OK;
+            return S_OK;
         }
 
         index++;
@@ -245,20 +245,20 @@ try
 
     *headerName = nullptr;
     *headerValue = nullptr;
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetRetryCacheId(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _In_ uint32_t retryAfterCacheId
     ) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
     else
     {
@@ -268,13 +268,13 @@ try
         HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryCacheId [ID %llu]: retryAfterCacheId=%d",
             call->id, retryAfterCacheId);
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetRetryAllowed(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _In_ bool retryAllowed
     ) HC_NOEXCEPT
 try
@@ -283,7 +283,7 @@ try
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         httpSingleton->m_retryAllowed = retryAllowed;
     }
@@ -295,27 +295,27 @@ try
         HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",
             call->id, retryAllowed ? "true" : "false");
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetRetryAllowed(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _Out_ bool* retryAllowed
     ) HC_NOEXCEPT
 try
 {
     if (retryAllowed == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     if (call == nullptr)
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         *retryAllowed = httpSingleton->m_retryAllowed;
     }
@@ -323,32 +323,32 @@ try
     {
         *retryAllowed = call->retryAllowed;
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetRetryCacheId(
-    _In_ HC_CALL_HANDLE call,
+    _In_ hc_call_handle call,
     _Out_ uint32_t* retryAfterCacheId
     ) HC_NOEXCEPT
 try
 {
     if (call == nullptr || retryAfterCacheId == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
     else
     {
         *retryAfterCacheId = call->retryAfterCacheId;
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetTimeout(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _In_ uint32_t timeoutInSeconds
     ) HC_NOEXCEPT
 try
@@ -357,7 +357,7 @@ try
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         httpSingleton->m_timeoutInSeconds = timeoutInSeconds;
     }
@@ -369,27 +369,27 @@ try
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetTimeout [ID %llu]: timeoutInSeconds=%u",
         call->id, timeoutInSeconds);
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetTimeout(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _Out_ uint32_t* timeoutInSeconds
     ) HC_NOEXCEPT
 try
 {
     if (timeoutInSeconds == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     if (call == nullptr)
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         *timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
     }
@@ -397,14 +397,14 @@ try
     {
         *timeoutInSeconds = call->timeoutInSeconds;
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetTimeoutWindow(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _In_ uint32_t timeoutWindowInSeconds
     ) HC_NOEXCEPT
 try
@@ -413,7 +413,7 @@ try
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         httpSingleton->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
     }
@@ -424,27 +424,27 @@ try
     }
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestTimeoutWindow: %u", timeoutWindowInSeconds);
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetTimeoutWindow(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _Out_ uint32_t* timeoutWindowInSeconds
     ) HC_NOEXCEPT
 try
 {
     if (timeoutWindowInSeconds == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     if (call == nullptr)
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
     }
@@ -452,27 +452,27 @@ try
     {
         *timeoutWindowInSeconds = call->timeoutWindowInSeconds;
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestGetRetryDelay(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _In_ uint32_t* retryDelayInSeconds
     ) HC_NOEXCEPT
 try
 {
-    if (retryDelayInSeconds == nullptr)
+     if (retryDelayInSeconds == nullptr)
     {
-        return HC_E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     if (call == nullptr)
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         *retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
     }
@@ -480,13 +480,13 @@ try
     {
         *retryDelayInSeconds = call->retryDelayInSeconds;
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()
 
-HC_API HC_RESULT HC_CALLING_CONV
+HCAPI 
 HCHttpCallRequestSetRetryDelay(
-    _In_opt_ HC_CALL_HANDLE call,
+    _In_opt_ hc_call_handle call,
     _In_ uint32_t retryDelayInSeconds
     ) HC_NOEXCEPT
 try
@@ -495,7 +495,7 @@ try
     {
         auto httpSingleton = get_http_singleton(true);
         if (nullptr == httpSingleton)
-            return HC_E_NOTINITIALISED;
+            return E_HC_NOT_INITIALISED;
 
         httpSingleton->m_retryDelayInSeconds = retryDelayInSeconds;
     }
@@ -504,6 +504,6 @@ try
         RETURN_IF_PERFORM_CALLED(call);
         call->retryDelayInSeconds = retryDelayInSeconds;
     }
-    return HC_OK;
+    return S_OK;
 }
 CATCH_RETURN()

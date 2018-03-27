@@ -86,6 +86,7 @@ set(Public_Source_Files
     ../../../include/httpClient/asyncQueue.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/types.h
+    ../../../include/httpClient/pal.h
     )
 
 set(Task_Source_Files    
@@ -204,7 +205,6 @@ set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/HttpTests.cpp
     ../../../Tests/UnitTests/Tests/MockTests.cpp
     ../../../Tests/UnitTests/Tests/GlobalTests.cpp
-    ../../../Tests/UnitTests/Tests/TaskTests.cpp
     ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 
