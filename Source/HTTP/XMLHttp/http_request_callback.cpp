@@ -80,10 +80,10 @@ HRESULT STDMETHODCALLTYPE http_request_callback::OnResponseReceived(
     auto const& responseString = m_httpTask->response_buffer().as_string();
     HCHttpCallResponseSetResponseString(call, responseString.c_str());
 
-    HC_RESULT hr = HC_OK;
+    HRESULT hr = S_OK;
     if (m_httpTask->has_error())
     {
-        hr = HC_E_FAIL;
+        hr = E_FAIL;
     }
     HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
 
@@ -112,7 +112,7 @@ HRESULT STDMETHODCALLTYPE http_request_callback::OnError(
     HRESULT hrError
     )
 {
-    HCHttpCallResponseSetNetworkErrorCode(m_httpTask->call(), HC_E_FAIL, hrError);
+    HCHttpCallResponseSetNetworkErrorCode(m_httpTask->call(), E_FAIL, hrError);
     CompleteAsync(m_httpTask->async_block(), E_FAIL, 0);
 
     // Break the circular reference loop.

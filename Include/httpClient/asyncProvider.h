@@ -2,10 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 typedef enum AsyncOp
 {
     /// <summary>
@@ -75,7 +71,7 @@ typedef hresult_t CALLBACK AsyncProvider(_In_ AsyncOp op, _Inout_ AsyncProviderD
 /// async work will begin on some system defined thread after this call
 /// returns.
 /// </summary>
-STDAPI BeginAsync(
+HCAPI BeginAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ void* token,
@@ -88,7 +84,7 @@ STDAPI BeginAsync(
 /// work.  If work should be scheduled after a delay, pass the number of ms ScheduleAsync should wait
 /// before it schedules work.
 /// </summary>
-STDAPI ScheduleAsync(
+HCAPI ScheduleAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ uint32_t delay);
 
@@ -97,7 +93,7 @@ STDAPI ScheduleAsync(
 /// The caller should supply the resulting data payload size.  If the call
 /// has no data payload, pass zero.
 /// </summary
-STDAPI_(void) CompleteAsync(
+HCAPI_(void) CompleteAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hresult_t result,
     _In_ size_t requiredBufferSize);
@@ -107,15 +103,10 @@ STDAPI_(void) CompleteAsync(
 /// the async block is completed and no longer associated with the 
 /// operation.
 /// </summary>
-STDAPI GetAsyncResult(
+HCAPI GetAsyncResult(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* token,
     _In_ size_t bufferSize,
     _Out_writes_bytes_opt_(bufferSize) void* buffer);
 
-
-
-#if defined(__cplusplus)
-} // end extern "C"
-#endif // defined(__cplusplus)
 

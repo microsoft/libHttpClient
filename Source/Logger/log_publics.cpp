@@ -8,19 +8,19 @@ using namespace xbox::httpclient::log;
 
 HCAPI 
 HCSettingsSetLogLevel(
-    _In_ HC_LOG_LEVEL traceLevel
+    _In_ HCLogLevel traceLevel
     ) HC_NOEXCEPT
 try
 {
-    HCTraceLevel internalTraceLevel = HC_TRACELEVEL_OFF;
+    HCTraceLevel internalTraceLevel = HCTraceLevel_Off;
     switch (traceLevel)
     {
-        case LOG_OFF: internalTraceLevel = HC_TRACELEVEL_OFF; break;
-        case LOG_ERROR: internalTraceLevel = HC_TRACELEVEL_ERROR; break;
-        case LOG_IMPORTANT: internalTraceLevel = HC_TRACELEVEL_IMPORTANT; break;
-        case LOG_WARNING: internalTraceLevel = HC_TRACELEVEL_WARNING; break;
-        case LOG_INFORMATION: internalTraceLevel = HC_TRACELEVEL_INFORMATION; break;
-        case LOG_VERBOSE: internalTraceLevel = HC_TRACELEVEL_VERBOSE; break;
+        case HCLogLevel_Off: internalTraceLevel = HCTraceLevel_Off; break;
+        case HCLogLevel_Error: internalTraceLevel = HCTraceLevel_Error; break;
+        case HCLogLevel_Important: internalTraceLevel = HCTraceLevel_Important; break;
+        case HCLogLevel_Warning: internalTraceLevel = HCTraceLevel_Warning; break;
+        case HCLogLevel_Information: internalTraceLevel = HCTraceLevel_Information; break;
+        case HCLogLevel_Verbose: internalTraceLevel = HCTraceLevel_Verbose; break;
         default: return E_INVALIDARG;
     };
 
@@ -32,7 +32,7 @@ CATCH_RETURN()
 
 HCAPI 
 HCSettingsGetLogLevel(
-    _Out_ HC_LOG_LEVEL* traceLevel
+    _Out_ HCLogLevel* traceLevel
     ) HC_NOEXCEPT
 try
 {
@@ -41,7 +41,7 @@ try
         return E_INVALIDARG;
     }
 
-    *traceLevel = static_cast<HC_LOG_LEVEL>(HC_TRACE_GET_VERBOSITY(HTTPCLIENT)); 
+    *traceLevel = static_cast<HCLogLevel>(HC_TRACE_GET_VERBOSITY(HTTPCLIENT)); 
     return S_OK;
 }
 CATCH_RETURN()

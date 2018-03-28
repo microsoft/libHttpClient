@@ -3,15 +3,11 @@
 
 #pragma once
 #include <httpClient/pal.h>
-#include <httpClient/types.h>
 #include <httpClient/mock.h>
 #include <httpClient/trace.h>
 #include <httpClient/async.h>
 #include <httpClient/asyncQueue.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Memory APIs
@@ -22,11 +18,11 @@ extern "C" {
 /// This callback is optionally installed by calling HCMemSetFunctions()
 /// 
 /// The callback must allocate and return a pointer to a contiguous block of memory of the 
-/// specified size that will remain valid until the app's corresponding HC_MEM_FREE_FUNC 
+/// specified size that will remain valid until the app's corresponding HCMemFreeFunction 
 /// callback is invoked to release it.
 /// 
 /// Every non-null pointer returned by this method will be subsequently passed to the corresponding
-/// HC_MEM_FREE_FUNC callback once the memory is no longer needed.
+/// HCMemFreeFunction callback once the memory is no longer needed.
 /// </summary>
 /// <returns>A pointer to an allocated block of memory of the specified size, or a null 
 /// pointer if allocation failed.</returns>
@@ -34,7 +30,7 @@ extern "C" {
 /// <param name="memoryTypeId">An opaque identifier representing the internal category of 
 /// memory being allocated.</param>
 typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
-(HC_CALLING_CONV* HC_MEM_ALLOC_FUNC)(
+(HC_CALLING_CONV* HCMemAllocFunction)(
     _In_ size_t size,
     _In_ hc_memory_type memoryType
     );
@@ -44,7 +40,7 @@ typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
 /// the library and can be freed. This callback is optionally installed by calling HCMemSetFunctions()
 ///
 /// The callback is invoked whenever the library has finished using a memory buffer previously 
-/// returned by the app's corresponding HC_MEM_ALLOC_FUNC such that the application can free the
+/// returned by the app's corresponding HCMemAllocFunction such that the application can free the
 /// memory buffer.
 /// </summary>
 /// <param name="pointer">The pointer to the memory buffer previously allocated. This value will
@@ -52,7 +48,7 @@ typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
 /// <param name="memoryTypeId">An opaque identifier representing the internal category of 
 /// memory being allocated.</param>
 typedef void
-(HC_CALLING_CONV* HC_MEM_FREE_FUNC)(
+(HC_CALLING_CONV* HCMemFreeFunction)(
     _In_ _Post_invalid_ void* pointer,
     _In_ hc_memory_type memoryType
     );
@@ -74,8 +70,8 @@ typedef void
 /// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null 
 /// pointer to restore the default.</param>
 HCAPI HCMemSetFunctions(
-    _In_opt_ HC_MEM_ALLOC_FUNC memAllocFunc,
-    _In_opt_ HC_MEM_FREE_FUNC memFreeFunc
+    _In_opt_ HCMemAllocFunction memAllocFunc,
+    _In_opt_ HCMemFreeFunction memFreeFunc
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -89,8 +85,8 @@ HCAPI HCMemSetFunctions(
 /// routine if not previously set</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 HCAPI HCMemGetFunctions(
-    _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
-    _Out_ HC_MEM_FREE_FUNC* memFreeFunc
+    _Out_ HCMemAllocFunction* memAllocFunc,
+    _Out_ HCMemFreeFunction* memFreeFunc
     ) HC_NOEXCEPT;
 
 
@@ -128,38 +124,38 @@ HCAPI HCGlobalGetLibVersion(_Outptr_ const_utf8_string* version) HC_NOEXCEPT;
 /// <summary>
 /// Diagnostic level used by logging
 /// </summary>
-typedef enum HC_LOG_LEVEL
+typedef enum HCLogLevel
 {
     /// <summary>
     /// No logging
     /// </summary>
-    LOG_OFF,
+    HCLogLevel_Off,
 
     /// <summary>
     /// Log only errors
     /// </summary>
-    LOG_ERROR,
+    HCLogLevel_Error,
 
     /// <summary>
     /// Log warnings and errors
     /// </summary>
-    LOG_WARNING,
+    HCLogLevel_Warning,
 
     /// <summary>
     /// Log important, warnings and errors
     /// </summary>
-    LOG_IMPORTANT,
+    HCLogLevel_Important,
 
     /// <summary>
     /// Log info, important, warnings and errors
     /// </summary>
-    LOG_INFORMATION,
+    HCLogLevel_Information,
 
     /// <summary>
     /// Log everything
     /// </summary>
-    LOG_VERBOSE
-} HC_LOG_LEVEL;
+    HCLogLevel_Verbose
+} HCLogLevel;
 
 /// <summary>
 /// Sets the log level for the library.  Logs are sent the debug output
@@ -167,7 +163,7 @@ typedef enum HC_LOG_LEVEL
 /// <param name="logLevel">Log level</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 HCAPI HCSettingsSetLogLevel(
-    _In_ HC_LOG_LEVEL logLevel
+    _In_ HCLogLevel logLevel
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -176,7 +172,7 @@ HCAPI HCSettingsSetLogLevel(
 /// <param name="logLevel">Log level</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 HCAPI HCSettingsGetLogLevel(
-    _Out_ HC_LOG_LEVEL* logLevel
+    _Out_ HCLogLevel* logLevel
     ) HC_NOEXCEPT;
 
 
@@ -572,7 +568,7 @@ HCAPI HCWebSocketSetHeader(
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="incomingBodyString">Body of the incoming message as a string value, only if the message type is UTF-8.</param>
 typedef void
-(HC_CALLING_CONV* HC_WEBSOCKET_MESSAGE_FUNC)(
+(HC_CALLING_CONV* HCWebsocketMessageFunction)(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string incomingBodyString
     );
@@ -583,9 +579,9 @@ typedef void
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="closeStatus">The status of why the WebSocket was closed</param>
 typedef void
-(HC_CALLING_CONV* HC_WEBSOCKET_CLOSE_EVENT_FUNC)(
+(HC_CALLING_CONV* HCWebsocketCloseEventFunction)(
     _In_ hc_websocket_handle websocket,
-    _In_ HcWebsocketCloseStatus closeStatus
+    _In_ HCWebsocketCloseStatus closeStatus
     );
 
 /// <summary>
@@ -594,8 +590,8 @@ typedef void
 /// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
 /// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
 HCAPI HCWebSocketSetFunctions(
-    _In_opt_ HC_WEBSOCKET_MESSAGE_FUNC messageFunc,
-    _In_opt_ HC_WEBSOCKET_CLOSE_EVENT_FUNC closeFunc
+    _In_opt_ HCWebsocketMessageFunction messageFunc,
+    _In_opt_ HCWebsocketCloseEventFunction closeFunc
     ) HC_NOEXCEPT;
 
 
@@ -680,7 +676,4 @@ HCAPI HCWebSocketCloseHandle(
     ) HC_NOEXCEPT;
 
 
-#if defined(__cplusplus)
-} // end extern "C"
-#endif // defined(__cplusplus)
 
