@@ -2,13 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include <httpClient/types.h>
+#include <httpClient/pal.h>
 #include <httpClient/asyncProvider.h>
 #include <httpClient/trace.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 
     /// <summary>
 /// The callback definition used by HCGlobalSetHttpCallPerformFunction().
@@ -323,7 +320,7 @@ HCAPI HCHttpCallResponseSetHeader(
 /// <param name="args">Struct for describing the WebSocket connection args</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef hresult_t
-(HC_CALLING_CONV* HC_WEBSOCKET_CONNECT_FUNC)(
+(HC_CALLING_CONV* HCWebSocketConnectFunction)(
     _In_z_ const_utf8_string uri,
     _In_z_ const_utf8_string subProtocol,
     _In_ hc_websocket_handle websocket,
@@ -336,7 +333,7 @@ typedef hresult_t
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef hresult_t
-(HC_CALLING_CONV* HC_WEBSOCKET_SEND_MESSAGE_FUNC)(
+(HC_CALLING_CONV* HCWebSocketSendMessageFunction)(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string message,
     _In_ AsyncBlock* async
@@ -348,9 +345,9 @@ typedef hresult_t
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef hresult_t
-(HC_CALLING_CONV* HC_WEBSOCKET_DISCONNECT_FUNC)(
+(HC_CALLING_CONV* HCWebSocketDisconnectFunction)(
     _In_ hc_websocket_handle websocket,
-    _In_ HcWebsocketCloseStatus closeStatus
+    _In_ HCWebsocketCloseStatus closeStatus
     );
 
 /// <summary>
@@ -365,9 +362,9 @@ typedef hresult_t
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 HCAPI 
 HCGlobalSetWebSocketFunctions(
-    _In_opt_ HC_WEBSOCKET_CONNECT_FUNC websocketConnectFunc,
-    _In_opt_ HC_WEBSOCKET_SEND_MESSAGE_FUNC websocketSendMessageFunc,
-    _In_opt_ HC_WEBSOCKET_DISCONNECT_FUNC websocketDisconnectFunc
+    _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
+    _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
+    _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -382,9 +379,9 @@ HCGlobalSetWebSocketFunctions(
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 HCAPI 
 HCGlobalGetWebSocketFunctions(
-    _Out_ HC_WEBSOCKET_CONNECT_FUNC* websocketConnectFunc,
-    _Out_ HC_WEBSOCKET_SEND_MESSAGE_FUNC* websocketSendMessageFunc,
-    _Out_ HC_WEBSOCKET_DISCONNECT_FUNC* websocketDisconnectFunc
+    _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
+    _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
+    _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -448,13 +445,7 @@ HCWebSocketGetHeaderAtIndex(
 /// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
 /// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
 HCAPI HCWebSocketGetFunctions(
-    _Out_opt_ HC_WEBSOCKET_MESSAGE_FUNC* messageFunc,
-    _Out_opt_ HC_WEBSOCKET_CLOSE_EVENT_FUNC* closeFunc
+    _Out_opt_ HCWebsocketMessageFunction* messageFunc,
+    _Out_opt_ HCWebsocketCloseEventFunction* closeFunc
     ) HC_NOEXCEPT;
-
-
-
-#if defined(__cplusplus)
-} // end extern "C"
-#endif // defined(__cplusplus)
 

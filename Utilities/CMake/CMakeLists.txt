@@ -85,7 +85,6 @@ set(Public_Source_Files
     ../../../include/httpClient/asyncProvider.h
     ../../../include/httpClient/asyncQueue.h
     ../../../include/httpClient/trace.h
-    ../../../include/httpClient/types.h
     ../../../include/httpClient/pal.h
     )
 

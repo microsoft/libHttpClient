@@ -15,13 +15,13 @@ class xmlhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
     xmlhttp_http_task(
-        _In_ HC_CALL_HANDLE call,
+        _In_ hc_call_handle call,
         _In_ AsyncBlock* asyncBlock
         );
     ~xmlhttp_http_task();
 
     void perform_async(
-        _In_ HC_CALL_HANDLE call,
+        _In_ hc_call_handle call,
         _In_ AsyncBlock* asyncBlock
         );
 
@@ -36,11 +36,11 @@ public:
     bool has_error();
     void set_exception(const std::exception_ptr& exceptionPtr);
     http_buffer& response_buffer();
-    HC_CALL_HANDLE call();
+    hc_call_handle call();
     AsyncBlock* async_block();
 
 private:
-    HC_CALL_HANDLE m_call;
+    hc_call_handle m_call;
     AsyncBlock* m_asyncBlock;
     http_buffer m_responseBuffer;
     uint32_t m_statusCode;

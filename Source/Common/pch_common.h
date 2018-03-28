@@ -18,7 +18,6 @@
 #define NOMINMAX
 
 #include <windows.h>
-//#include <winapifamily.h>
 #else
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>

@@ -24,13 +24,13 @@ DefaultMemFreeFunction(
     free(pointer);
 }
 
-HC_MEM_ALLOC_FUNC g_memAllocFunc = DefaultMemAllocFunction;
-HC_MEM_FREE_FUNC g_memFreeFunc = DefaultMemFreeFunction;
+HCMemAllocFunction g_memAllocFunc = DefaultMemAllocFunction;
+HCMemFreeFunction g_memFreeFunc = DefaultMemFreeFunction;
 
 HCAPI 
 HCMemSetFunctions(
-    _In_opt_ HC_MEM_ALLOC_FUNC memAllocFunc,
-    _In_opt_ HC_MEM_FREE_FUNC memFreeFunc
+    _In_opt_ HCMemAllocFunction memAllocFunc,
+    _In_opt_ HCMemFreeFunction memFreeFunc
     ) HC_NOEXCEPT
 {
     if (xbox::httpclient::get_http_singleton(false) != nullptr)
@@ -45,8 +45,8 @@ HCMemSetFunctions(
 
 HCAPI 
 HCMemGetFunctions(
-    _Out_ HC_MEM_ALLOC_FUNC* memAllocFunc,
-    _Out_ HC_MEM_FREE_FUNC* memFreeFunc
+    _Out_ HCMemAllocFunction* memAllocFunc,
+    _Out_ HCMemFreeFunction* memFreeFunc
     ) HC_NOEXCEPT
 {
     if (memAllocFunc == nullptr || memFreeFunc == nullptr)
@@ -67,7 +67,7 @@ void* http_memory::mem_alloc(
     _In_ size_t size
     )
 {
-    HC_MEM_ALLOC_FUNC pMemAlloc = g_memAllocFunc;
+    HCMemAllocFunction pMemAlloc = g_memAllocFunc;
     try
     {
         return pMemAlloc(size, 0);
@@ -83,7 +83,7 @@ void http_memory::mem_free(
     _In_opt_ void* pAddress
     )
 {
-    HC_MEM_FREE_FUNC pMemFree = g_memFreeFunc;
+    HCMemFreeFunction pMemFree = g_memFreeFunc;
     try
     {
         if (pAddress)

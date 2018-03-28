@@ -2,12 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
-#include <httpClient/pal.h>
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 /// <summary>
 /// An async_queue_t contains async work.  When you make an async call, that call is placed
 /// on an async queue for execution.  An async queue has two sides:  a worker side and
@@ -19,7 +13,7 @@ extern "C" {
 /// the system thread pool. Completions will be invoked on the thread that initiated
 /// the async call when that thread is alertable.
 /// </summary>
-typedef HANDLE async_queue_t;
+typedef void* async_queue_t;
 
 /// <summary>
 /// An AsyncBlock defines a piece of asynchronous work.  An async block can be used
@@ -69,14 +63,14 @@ typedef struct AsyncBlock
 /// the async call has a resulting data payload. If it doesn't, calling
 /// GetAsyncResult is unneeded.
 /// </summary>
-STDAPI GetAsyncStatus(
+HCAPI GetAsyncStatus(
     _In_ AsyncBlock* asyncBlock,
     _In_ bool wait);
 
 /// <summary>
 /// Returns the required size of the buffer to pass to GetAsyncResult.
 /// </summary>
-STDAPI GetAsyncResultSize(
+HCAPI GetAsyncResultSize(
     _In_ AsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize);
 
@@ -85,7 +79,7 @@ STDAPI GetAsyncResultSize(
 /// the completion callback will be invoked and the event in the async block will be
 /// signaled.
 /// </summary>
-STDAPI_(void) CancelAsync(
+HCAPI_(void) CancelAsync(
     _In_ AsyncBlock* asyncBlock);
 
 typedef hresult_t CALLBACK AsyncWork(_In_ AsyncBlock* asyncBlock);
@@ -93,12 +87,7 @@ typedef hresult_t CALLBACK AsyncWork(_In_ AsyncBlock* asyncBlock);
 /// <summary>
 /// Runs the given callback asynchronously.
 /// </summary>
-STDAPI RunAsync(
+HCAPI RunAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work);
-
-
-#if defined(__cplusplus)
-} // end extern "C"
-#endif // defined(__cplusplus)
 

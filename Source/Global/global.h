@@ -52,12 +52,12 @@ typedef struct http_singleton
     uint32_t m_retryDelayInSeconds;
 
     // WebSocket state
-    HC_WEBSOCKET_MESSAGE_FUNC m_websocketMessageFunc;
-    HC_WEBSOCKET_CLOSE_EVENT_FUNC m_websocketCloseEventFunc;
+    HCWebsocketMessageFunction m_websocketMessageFunc;
+    HCWebsocketCloseEventFunction m_websocketCloseEventFunc;
 
-    HC_WEBSOCKET_CONNECT_FUNC m_websocketConnectFunc;
-    HC_WEBSOCKET_SEND_MESSAGE_FUNC m_websocketSendMessageFunc;
-    HC_WEBSOCKET_DISCONNECT_FUNC m_websocketDisconnectFunc;
+    HCWebSocketConnectFunction m_websocketConnectFunc;
+    HCWebSocketSendMessageFunction m_websocketSendMessageFunc;
+    HCWebSocketDisconnectFunction m_websocketDisconnectFunc;
 
     // Mock state
     std::mutex m_mocksLock;

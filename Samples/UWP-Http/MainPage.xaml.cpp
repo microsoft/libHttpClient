@@ -94,7 +94,7 @@ MainPage::MainPage()
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
     HCGlobalInitialize();
-    HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_INFORMATION);
+    HCSettingsSetLogLevel(HCLogLevel::HCLogLevel_Information);
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(

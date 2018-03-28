@@ -126,9 +126,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">

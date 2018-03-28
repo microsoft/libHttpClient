@@ -2,11 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#include <httpClient/types.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 
 // These defines are not meant to be used by clients at runtime, the
 // HCTraceLevel enum should be used instead
@@ -22,12 +18,12 @@ extern "C" {
 //------------------------------------------------------------------------------
 typedef enum HCTraceLevel
 {
-    HC_TRACELEVEL_OFF = HC_PRIVATE_TRACE_LEVEL_OFF,
-    HC_TRACELEVEL_ERROR = HC_PRIVATE_TRACE_LEVEL_ERROR,
-    HC_TRACELEVEL_WARNING = HC_PRIVATE_TRACE_LEVEL_WARNING,
-    HC_TRACELEVEL_IMPORTANT = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
-    HC_TRACELEVEL_INFORMATION = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
-    HC_TRACELEVEL_VERBOSE = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
+    HCTraceLevel_Off = HC_PRIVATE_TRACE_LEVEL_OFF,
+    HCTraceLevel_Error = HC_PRIVATE_TRACE_LEVEL_ERROR,
+    HCTraceLevel_Warning = HC_PRIVATE_TRACE_LEVEL_WARNING,
+    HCTraceLevel_Important = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
+    HCTraceLevel_Information = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
+    HCTraceLevel_Verbose = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
 } HCTraceLevel;
 
 //------------------------------------------------------------------------------
@@ -170,7 +166,7 @@ HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 #define HC_DEFINE_TRACE_AREA(name, verbosity)
 #define HC_DECLARE_TRACE_AREA(name)
 #define HC_TRACE_SET_VERBOSITY(area, level)
-#define HC_TRACE_GET_VERBOSITY(area) HC_TRACELEVEL_OFF
+#define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel_Off
 #endif
 
 //------------------------------------------------------------------------------
@@ -198,7 +194,7 @@ HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 
 #if HC_TRACE_ERROR_ENABLE
 #define HC_TRACE_ERROR(area, msg, ...)  \
-    HC_TRACE_MESSAGE(area, HC_TRACELEVEL_ERROR, msg, ##__VA_ARGS__)
+    HC_TRACE_MESSAGE(area, HCTraceLevel_Error, msg, ##__VA_ARGS__)
 
 #define HC_TRACE_ERROR_HR(area, failedHr, msg)  \
     HC_TRACE_ERROR(area, "%hs (hr=0x%08x)", msg, failedHr)
@@ -209,7 +205,7 @@ HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 
 #if HC_TRACE_WARNING_ENABLE
 #define HC_TRACE_WARNING(area, msg, ...) \
-    HC_TRACE_MESSAGE(area, HC_TRACELEVEL_WARNING, msg, ##__VA_ARGS__)
+    HC_TRACE_MESSAGE(area, HCTraceLevel_Warning, msg, ##__VA_ARGS__)
 
 #define HC_TRACE_WARNING_HR(area, failedHr, msg)  \
     HC_TRACE_WARNING(area, "%hs (hr=0x%08x)", msg, failedHr)
@@ -220,10 +216,10 @@ HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 
 #if HC_TRACE_IMPORTANT_ENABLE
 #define HC_TRACE_IMPORTANT(area, msg, ...) \
-    HC_TRACE_MESSAGE(area, HC_TRACELEVEL_IMPORTANT, msg, ##__VA_ARGS__)
+    HC_TRACE_MESSAGE(area, HCTraceLevel_Important, msg, ##__VA_ARGS__)
 
 #define HC_TRACE_SCOPE_IMPORTANT(area) \
-    HC_TRACE_SCOPE(area, HC_TRACELEVEL_IMPORTANT)
+    HC_TRACE_SCOPE(area, HCTraceLevel_Important)
 #else
 #define HC_TRACE_IMPORTANT(area, msg, ...)
 #define HC_TRACE_SCOPE_IMPORTANT(area)
@@ -231,10 +227,10 @@ HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 
 #if HC_TRACE_INFORMATION_ENABLE
 #define HC_TRACE_INFORMATION(area, msg, ...) \
-    HC_TRACE_MESSAGE(area, HC_TRACELEVEL_INFORMATION, msg, ##__VA_ARGS__)
+    HC_TRACE_MESSAGE(area, HCTraceLevel_Information, msg, ##__VA_ARGS__)
 
 #define HC_TRACE_SCOPE_INFORMATION(area) \
-    HC_TRACE_SCOPE(area, HC_TRACELEVEL_INFORMATION)
+    HC_TRACE_SCOPE(area, HCTraceLevel_Information)
 #else
 #define HC_TRACE_INFORMATION(area, msg, ...)
 #define HC_TRACE_SCOPE_INFORMATION(area)
@@ -242,10 +238,10 @@ HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 
 #if HC_TRACE_VERBOSE_ENABLE
 #define HC_TRACE_VERBOSE(area, msg, ...) \
-        HC_TRACE_MESSAGE(area, HC_TRACELEVEL_VERBOSE, msg, ##__VA_ARGS__)
+        HC_TRACE_MESSAGE(area, HCTraceLevel_Verbose, msg, ##__VA_ARGS__)
 
 #define HC_TRACE_SCOPE_VERBOSE(area) \
-    HC_TRACE_SCOPE(area, HC_TRACELEVEL_VERBOSE)
+    HC_TRACE_SCOPE(area, HCTraceLevel_Verbose)
 #else
 #define HC_TRACE_VERBOSE(area, msg, ...)
 #define HC_TRACE_SCOPE_VERBOSE(area)
@@ -289,11 +285,8 @@ HCAPI_(void) HCTraceImplMessage(
     enum HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
-);
+    );
 
-#if defined(__cplusplus)
-} // end extern "C"
-#endif // defined(__cplusplus)
 
 #if defined(__cplusplus)
 class HCTraceImplScopeHelper
