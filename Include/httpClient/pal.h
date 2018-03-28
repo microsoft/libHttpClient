@@ -39,8 +39,9 @@
         #define HC_UWP_API 1
     #endif 
 
-#else // _WIN32
+#else 
 
+    // not _WIN32
     typedef int32_t hresult_t;
 
     #define CALLBACK
