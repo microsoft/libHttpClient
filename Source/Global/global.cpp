@@ -59,9 +59,9 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     return httpSingleton;
 }
 
-hresult_t init_http_singleton()
+HRESULT init_http_singleton()
 {
-    hresult_t hr = S_OK;
+    HRESULT hr = S_OK;
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {

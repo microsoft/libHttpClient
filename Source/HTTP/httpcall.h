@@ -31,7 +31,7 @@ typedef struct HC_CALL
     http_internal_string responseString;
     http_internal_map<http_internal_string, http_internal_string> responseHeaders;
     uint32_t statusCode;
-    hresult_t networkErrorCode;
+    HRESULT networkErrorCode;
     uint32_t platformNetworkErrorCode;
     std::shared_ptr<xbox::httpclient::hc_task> task;
 

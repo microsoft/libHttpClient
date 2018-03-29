@@ -63,7 +63,7 @@ typedef struct AsyncProviderData
     void* context;
 } AsyncProviderData;
 
-typedef hresult_t CALLBACK AsyncProvider(_In_ AsyncOp op, _Inout_ AsyncProviderData* data);
+typedef HRESULT CALLBACK AsyncProvider(_In_ AsyncOp op, _Inout_ AsyncProviderData* data);
 
 /// <summary>
 /// Initializes an async block for use.  Once begun calls such
@@ -95,7 +95,7 @@ HCAPI ScheduleAsync(
 /// </summary
 HCAPI_(void) CompleteAsync(
     _In_ AsyncBlock* asyncBlock,
-    _In_ hresult_t result,
+    _In_ HRESULT result,
     _In_ size_t requiredBufferSize);
 
 /// <summary>

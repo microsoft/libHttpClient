@@ -54,7 +54,7 @@ typedef struct AsyncBlock
     /// <summary>
     /// Internal use only
     /// </summary>
-    hresult_t internalStatus;
+    HRESULT internalStatus;
 } AsyncBlock;
 
 /// <summary>
@@ -82,7 +82,7 @@ HCAPI GetAsyncResultSize(
 HCAPI_(void) CancelAsync(
     _In_ AsyncBlock* asyncBlock);
 
-typedef hresult_t CALLBACK AsyncWork(_In_ AsyncBlock* asyncBlock);
+typedef HRESULT CALLBACK AsyncWork(_In_ AsyncBlock* asyncBlock);
 
 /// <summary>
 /// Runs the given callback asynchronously.

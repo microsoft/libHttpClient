@@ -23,20 +23,20 @@ typedef struct HC_WEBSOCKET
     std::shared_ptr<xbox::httpclient::hc_task> task;
 } HC_WEBSOCKET;
 
-hresult_t Internal_HCWebSocketConnect(
+HRESULT Internal_HCWebSocketConnect(
     _In_z_ const_utf8_string uri,
     _In_z_ const_utf8_string subProtocol,
     _In_ hc_websocket_handle websocket,
     _In_ AsyncBlock* asyncBlock
     );
 
-hresult_t Internal_HCWebSocketSendMessage(
+HRESULT Internal_HCWebSocketSendMessage(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string message,
     _In_ AsyncBlock* asyncBlock
     );
 
-hresult_t Internal_HCWebSocketDisconnect(
+HRESULT Internal_HCWebSocketDisconnect(
     _In_ hc_websocket_handle websocket,
     _In_ HCWebsocketCloseStatus closeStatus
     );

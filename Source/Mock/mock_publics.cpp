@@ -36,7 +36,7 @@ try
 
     if (method != nullptr && url != nullptr)
     {
-        hresult_t hr = HCHttpCallRequestSetUrl(call, method, url);
+        HRESULT hr = HCHttpCallRequestSetUrl(call, method, url);
         if (hr != S_OK)
         {
             return hr;
@@ -45,7 +45,7 @@ try
 
     if (requestBodyBytes)
     {
-        hresult_t hr = HCHttpCallRequestSetRequestBodyBytes(call, requestBodyBytes, requestBodySize);
+        HRESULT hr = HCHttpCallRequestSetRequestBodyBytes(call, requestBodyBytes, requestBodySize);
         if (hr != S_OK)
         {
             return hr;
@@ -101,7 +101,7 @@ HCMockResponseSetStatusCode(
 HCAPI 
 HCMockResponseSetNetworkErrorCode(
     _In_ hc_mock_call_handle call,
-    _In_ hresult_t networkErrorCode,
+    _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
     ) HC_NOEXCEPT
 {

@@ -36,7 +36,7 @@ public:
     void perform_async();
 
 private:
-    static hresult_t query_header_length(_In_ hc_call_handle call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
+    static HRESULT query_header_length(_In_ hc_call_handle call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
     static uint32_t parse_status_code(
         _In_ hc_call_handle call,
         _In_ HINTERNET hRequestHandle,
@@ -77,9 +77,9 @@ private:
         _In_ winhttp_http_task* pRequestContext,
         _In_ DWORD statusInfoLength);
 
-    hresult_t send(_In_ const xbox::httpclient::Uri& cUri);
+    HRESULT send(_In_ const xbox::httpclient::Uri& cUri);
 
-    hresult_t connect(_In_ const xbox::httpclient::Uri& cUri);
+    HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
 
     void get_ie_proxy_info(_In_ bool isSecure);
 

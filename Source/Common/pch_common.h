@@ -113,8 +113,8 @@ HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
 
-hresult_t StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line);
-hresult_t StdExceptionToResult(std::exception const& e, _In_z_ char const* file, uint32_t line);
-hresult_t UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
+HRESULT StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line);
+HRESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, uint32_t line);
+HRESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_END

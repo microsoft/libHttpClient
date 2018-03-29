@@ -135,7 +135,7 @@ bool Mock_Internal_HCHttpCallPerform(
     HCHttpCallResponseGetStatusCode(matchingMock, &code);
     HCHttpCallResponseSetStatusCode(originalCall, code);
 
-    hresult_t genCode;
+    HRESULT genCode;
     HCHttpCallResponseGetNetworkErrorCode(matchingMock, &genCode, &code);
     HCHttpCallResponseSetNetworkErrorCode(originalCall, genCode, code);
 

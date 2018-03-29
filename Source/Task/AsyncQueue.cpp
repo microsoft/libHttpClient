@@ -94,7 +94,7 @@ public:
         }
     }
 
-    hresult_t Initialize(async_queue_t owner, AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
+    HRESULT Initialize(async_queue_t owner, AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
     {
         Owner = owner;
         Type = type;
@@ -136,7 +136,7 @@ public:
         return S_OK;
     }
 
-    hresult_t AppendItem(
+    HRESULT AppendItem(
         uint32_t* refsPointer,
         AsyncQueueCallback* callback,
         void* context)
@@ -160,7 +160,7 @@ public:
         case AsyncQueueDispatchMode_FixedThread:
             if (queueApc && QueueUserAPC(APCCallback, ApcThread, (ULONG_PTR)this) == 0)
             {
-                hresult_t result = HRESULT_FROM_WIN32(GetLastError());
+                HRESULT result = HRESULT_FROM_WIN32(GetLastError());
                 InterlockedDecrement(refsPointer);
                 EnterCriticalSection(&Cs);
                 RemoveEntryList(&entry->Entry);
@@ -347,9 +347,9 @@ public:
         InterlockedIncrement(&Parent->Refs);
     }
 
-    hresult_t Initialize(AsyncQueueDispatchMode workMode, AsyncQueueDispatchMode completionMode)
+    HRESULT Initialize(AsyncQueueDispatchMode workMode, AsyncQueueDispatchMode completionMode)
     {
-        hresult_t hr;
+        HRESULT hr;
 
         Queue* workQueue = nullptr;
         Queue* completionQueue = nullptr;
@@ -478,7 +478,7 @@ HCAPI CreateAsyncQueue(
     AsyncQueue* aq = new (std::nothrow) AsyncQueue;
     if (aq == nullptr) return E_OUTOFMEMORY;
 
-    hresult_t hr = aq->Initialize(workDispatchMode, completionDispatchMode);
+    HRESULT hr = aq->Initialize(workDispatchMode, completionDispatchMode);
 
     if (FAILED(hr))
     {
@@ -531,7 +531,7 @@ HCAPI CreateSharedAsyncQueue(
     if (id == INVALID_SHARE_ID) return E_INVALIDARG;
     if (queue == nullptr) return E_POINTER;
 
-    hresult_t hr = S_OK;
+    HRESULT hr = S_OK;
     EnsureSharedInitialization();
     EnterCriticalSection(&_sharedCs);
     uint64_t queueId = MAKE_SHARED_ID(id, workerMode, completionMode);

@@ -45,7 +45,7 @@ typedef struct http_singleton
 
     // HTTP state
     std::atomic<std::uint64_t> m_lastId;
-    HC_HTTP_CALL_PERFORM_FUNC m_performFunc;
+    HCCallPerformFunction m_performFunc;
     bool m_retryAllowed;
     uint32_t m_timeoutInSeconds;
     uint32_t m_timeoutWindowInSeconds;
@@ -71,7 +71,7 @@ typedef struct http_singleton
 
 
 std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull);
-hresult_t init_http_singleton();
+HRESULT init_http_singleton();
 void cleanup_http_singleton();
 
 

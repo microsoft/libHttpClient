@@ -20,8 +20,6 @@
 
     #include <windows.h>
 
-    typedef HRESULT hresult_t;
-
     #ifndef _WIN32_WINNT_WIN10
     #define _WIN32_WINNT_WIN10 0x0A00
     #endif
@@ -42,15 +40,15 @@
 #else 
 
     // not _WIN32
-    typedef int32_t hresult_t;
+    typedef int32_t HRESULT;
 
     #define CALLBACK
 
     #define SEVERITY_SUCCESS    0
     #define SEVERITY_ERROR      1
 
-    #define SUCCEEDED(hr)           (((hresult_t)(hr)) >= 0)
-    #define FAILED(hr)              (((hresult_t)(hr)) < 0)
+    #define SUCCEEDED(hr)           (((HRESULT)(hr)) >= 0)
+    #define FAILED(hr)              (((HRESULT)(hr)) < 0)
 
     #define HRESULT_CODE(hr)        ((hr) & 0xFFFF)
     #define SCODE_CODE(sc)          ((sc) & 0xFFFF)
@@ -62,34 +60,31 @@
     #define SCODE_SEVERITY(sc)      (((sc) >> 31) & 0x1)
 
     #define MAKE_HRESULT(sev,fac,code) \
-        ((hresult_t) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
+        ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
     #define MAKE_SCODE(sev,fac,code) \
         ((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 
-    #define _HRESULT_TYPEDEF_(_sc) ((hresult_t)_sc)
+    #define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
 
-    #define S_OK                             ((hresult_t)0L)
-    #define E_NOTIMPL                        _HRESULT_TYPEDEF_(0x80004001L)
-    #define E_OUTOFMEMORY                    _HRESULT_TYPEDEF_(0x8007000EL)
-    #define E_INVALIDARG                     _HRESULT_TYPEDEF_(0x80070057L)
-    #define E_FAIL                           _HRESULT_TYPEDEF_(0x80004005L)
-    #define E_ACCESSDENIED                   _HRESULT_TYPEDEF_(0x80070005L)
-    #define E_ABORT                          _HRESULT_TYPEDEF_(0x80000007L)
+    #define S_OK                             ((HRESULT)0L)
+    #define E_NOTIMPL                        _HRESULTYPEDEF_(0x80004001L)
+    #define E_OUTOFMEMORY                    _HRESULTYPEDEF_(0x8007000EL)
+    #define E_INVALIDARG                     _HRESULTYPEDEF_(0x80070057L)
+    #define E_FAIL                           _HRESULTYPEDEF_(0x80004005L)
+    #define E_ACCESSDENIED                   _HRESULTYPEDEF_(0x80070005L)
+    #define E_ABORT                          _HRESULTYPEDEF_(0x80000007L)
 
-    #ifdef _In_
-    #undef _In_
-    #endif
+    #ifndef _In_
     #define _In_
-
-    #ifdef _Ret_maybenull_
-    #undef _Ret_maybenull_
     #endif
+
+    #ifndef _Ret_maybenull_
     #define _Ret_maybenull_
-
-    #ifdef _Post_writable_byte_size_
-    #undef _Post_writable_byte_size_
     #endif
+
+    #ifndef _Post_writable_byte_size_
     #define _Post_writable_byte_size_(X)
+    #endif
 
 #endif
 
@@ -101,7 +96,7 @@
 
 #define HC_CALLING_CONV __cdecl
 #define HCAPI_(t) t HC_CALLING_CONV
-#define HCAPI HCAPI_(hresult_t) 
+#define HCAPI HCAPI_(HRESULT) 
 
 #define FACILITY_XBOX 2339
 #define MAKE_E_HC(code)                 MAKE_HRESULT(1, FACILITY_XBOX, code)

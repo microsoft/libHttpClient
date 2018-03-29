@@ -81,7 +81,7 @@ CATCH_RETURN()
 HCAPI 
 HCHttpCallResponseGetNetworkErrorCode(
     _In_ hc_call_handle call,
-    _Out_ hresult_t* networkErrorCode,
+    _Out_ HRESULT* networkErrorCode,
     _Out_ uint32_t* platformNetworkErrorCode
     ) HC_NOEXCEPT
 try 
@@ -100,7 +100,7 @@ CATCH_RETURN()
 HCAPI 
 HCHttpCallResponseSetNetworkErrorCode(
     _In_ hc_call_handle call,
-    _In_ hresult_t networkErrorCode,
+    _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
     ) HC_NOEXCEPT
 try 
