@@ -347,7 +347,7 @@ typedef HRESULT
 typedef HRESULT
 (HC_CALLING_CONV* HCWebSocketDisconnectFunction)(
     _In_ hc_websocket_handle websocket,
-    _In_ HCWebsocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus
     );
 
 /// <summary>
@@ -445,7 +445,7 @@ HCWebSocketGetHeaderAtIndex(
 /// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
 /// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
 HCAPI HCWebSocketGetFunctions(
-    _Out_opt_ HCWebsocketMessageFunction* messageFunc,
-    _Out_opt_ HCWebsocketCloseEventFunction* closeFunc
+    _Out_opt_ HCWebSocketMessageFunction* messageFunc,
+    _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
     ) HC_NOEXCEPT;
 

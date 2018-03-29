@@ -38,5 +38,5 @@ HRESULT Internal_HCWebSocketSendMessage(
 
 HRESULT Internal_HCWebSocketDisconnect(
     _In_ hc_websocket_handle websocket,
-    _In_ HCWebsocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus
     );

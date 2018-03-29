@@ -70,8 +70,8 @@ CATCH_RETURN()
 
 HCAPI 
 HCWebSocketSetFunctions(
-    _In_opt_ HCWebsocketMessageFunction messageFunc,
-    _In_opt_ HCWebsocketCloseEventFunction closeFunc
+    _In_opt_ HCWebSocketMessageFunction messageFunc,
+    _In_opt_ HCWebSocketCloseEventFunction closeFunc
     ) HC_NOEXCEPT
 try 
 {
@@ -177,7 +177,7 @@ try
     {
         try
         {
-            HCWebsocketCloseStatus closeStatus = HCWebsocketCloseStatus::HCWebsocketCloseStatus_Normal;
+            HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::HCWebSocketCloseStatus_Normal;
             closeFunc(websocket, closeStatus);
 
             if(closeEventFunc != nullptr)
@@ -377,8 +377,8 @@ CATCH_RETURN()
 
 HCAPI 
 HCWebSocketGetFunctions(
-    _Out_opt_ HCWebsocketMessageFunction* messageFunc,
-    _Out_opt_ HCWebsocketCloseEventFunction* closeFunc
+    _Out_opt_ HCWebSocketMessageFunction* messageFunc,
+    _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
     ) HC_NOEXCEPT
 try
 {
