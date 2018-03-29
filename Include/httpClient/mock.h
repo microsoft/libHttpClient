@@ -107,7 +107,7 @@ HCAPI HCMockResponseSetStatusCode(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 HCAPI HCMockResponseSetNetworkErrorCode(
     _In_ hc_mock_call_handle call,
-    _In_ hresult_t networkErrorCode,
+    _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
     ) HC_NOEXCEPT;
 

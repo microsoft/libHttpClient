@@ -135,7 +135,7 @@ void winhttp_http_task::callback_status_sendrequest_complete(
     }
 }
 
-hresult_t winhttp_http_task::query_header_length(
+HRESULT winhttp_http_task::query_header_length(
     _In_ hc_call_handle call,
     _In_ HINTERNET hRequestHandle,
     _In_ DWORD header,
@@ -564,7 +564,7 @@ void winhttp_http_task::get_ie_proxy_info(_In_ bool isSecure)
     }
 }
 
-hresult_t winhttp_http_task::connect(
+HRESULT winhttp_http_task::connect(
     _In_ const xbox::httpclient::Uri& cUri
     )
 {
@@ -673,7 +673,7 @@ http_internal_wstring flatten_http_headers(_In_ hc_call_handle call)
     return flattened_headers;
 }
 
-hresult_t winhttp_http_task::send(
+HRESULT winhttp_http_task::send(
     _In_ const xbox::httpclient::Uri& cUri
     )
 {
@@ -781,7 +781,7 @@ void winhttp_http_task::perform_async()
         HCHttpCallRequestGetUrl(m_call, &method, &url);
         xbox::httpclient::Uri cUri(url);
 
-        hresult_t hr = connect(cUri);
+        HRESULT hr = connect(cUri);
         if (SUCCEEDED(hr))
         {
             hr = send(cUri);
@@ -790,7 +790,7 @@ void winhttp_http_task::perform_async()
         if (FAILED(hr))
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
-            hresult_t hrTranslated = (SUCCEEDED(hr)) ? S_OK : E_FAIL;
+            HRESULT hrTranslated = (SUCCEEDED(hr)) ? S_OK : E_FAIL;
             HCHttpCallResponseSetNetworkErrorCode(m_call, hrTranslated, hr);
             CompleteAsync(m_asyncBlock, hr, 0);
             return;

@@ -77,14 +77,14 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
 
-hresult_t StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line)
+HRESULT StdBadAllocToResult(std::bad_alloc const& e, _In_z_ char const* file, uint32_t line)
 {
     HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::bad_alloc reached api boundary: %s\n    %s:%u",
         E_OUTOFMEMORY, e.what(), file, line);
     return E_OUTOFMEMORY;
 }
 
-hresult_t StdExceptionToResult(std::exception const& e, _In_z_ char const* file, uint32_t line)
+HRESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, uint32_t line)
 {
     HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::exception reached api boundary: %s\n    %s:%u",
         E_FAIL, e.what(), file, line);
@@ -93,7 +93,7 @@ hresult_t StdExceptionToResult(std::exception const& e, _In_z_ char const* file,
     return E_FAIL;
 }
 
-hresult_t UnknownExceptionToResult(_In_z_ char const* file, uint32_t line)
+HRESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line)
 {
     HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception reached api boundary\n    %s:%u",
         E_FAIL, file, line);

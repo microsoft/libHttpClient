@@ -457,7 +457,7 @@ HCAPI HCHttpCallResponseGetStatusCode(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 HCAPI HCHttpCallResponseGetNetworkErrorCode(
     _In_ hc_call_handle call,
-    _Out_ hresult_t* networkErrorCode,
+    _Out_ HRESULT* networkErrorCode,
     _Out_ uint32_t* platformNetworkErrorCode
     ) HC_NOEXCEPT;
 
@@ -604,7 +604,7 @@ typedef struct WebSocketCompletionResult
     hc_websocket_handle websocket;
 
     /// <param name="errorCode">The error code of the call. Possible values are S_OK, or E_FAIL.</param>
-    hresult_t errorCode;
+    HRESULT errorCode;
 
     /// <param name="platformErrorCode">The platform specific network error code of the call to be used for logging / debugging</param>
     uint32_t platformErrorCode;

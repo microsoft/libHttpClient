@@ -226,7 +226,7 @@ int main()
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const char* str;
-        hresult_t errCode = S_OK;
+        HRESULT errCode = S_OK;
         uint32_t platErrCode = 0;
         uint32_t statusCode = 0;
         std::string responseString;

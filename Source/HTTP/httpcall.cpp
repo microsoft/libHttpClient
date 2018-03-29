@@ -88,13 +88,13 @@ try
 }
 CATCH_RETURN()
 
-hresult_t perform_http_call(
+HRESULT perform_http_call(
     _In_ std::shared_ptr<http_singleton> httpSingleton,
     _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     )
 {
-    hresult_t hr = BeginAsync(asyncBlock, call, perform_http_call, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, call, perform_http_call, __FUNCTION__,
         [](AsyncOp opCode, AsyncProviderData* data)
     {
         switch (opCode)
@@ -118,7 +118,7 @@ hresult_t perform_http_call(
 
                 if (!matchedMocks) // if there wasn't a matched mock, then real call
                 {
-                    HC_HTTP_CALL_PERFORM_FUNC performFunc = httpSingleton->m_performFunc;
+                    HCCallPerformFunction performFunc = httpSingleton->m_performFunc;
                     if (performFunc != nullptr)
                     {
                         try
@@ -371,7 +371,7 @@ void retry_http_call_until_done(
         }
     };
 
-    hresult_t hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
+    HRESULT hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
     if (FAILED(hr))
     {
         CompleteAsync(retryContext->outerAsyncBlock, hr, 0);
@@ -400,7 +400,7 @@ try
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
 
-    hresult_t hr = BeginAsync(asyncBlock, rawRetryContext, HCHttpCallPerform, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, HCHttpCallPerform, __FUNCTION__,
         [](_In_ AsyncOp op, _Inout_ AsyncProviderData* data)
     {
         switch (op)

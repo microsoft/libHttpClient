@@ -41,7 +41,7 @@ CATCH_RETURN_WITH(;)
 
 HCAPI_(void)
 HCGlobalSetHttpCallPerformFunction(
-    _In_opt_ HC_HTTP_CALL_PERFORM_FUNC performFunc
+    _In_opt_ HCCallPerformFunction performFunc
     ) HC_NOEXCEPT
 {
     auto httpSingleton = get_http_singleton(true);
@@ -53,7 +53,7 @@ HCGlobalSetHttpCallPerformFunction(
 
 HCAPI 
 HCGlobalGetHttpCallPerformFunction(
-    _Out_ HC_HTTP_CALL_PERFORM_FUNC* performFunc
+    _Out_ HCCallPerformFunction* performFunc
     ) HC_NOEXCEPT
 try
 {
