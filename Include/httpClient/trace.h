@@ -131,7 +131,7 @@ typedef void (HCTraceCallback)(
     char const* message
 );
 
-HCAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
+STDAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 
 //------------------------------------------------------------------------------
 // Trace area macros
@@ -269,7 +269,7 @@ typedef struct HCTraceImplArea
 } HCTraceImplArea;
 
 inline
-void HC_CALLING_CONV HCTraceImplSetAreaVerbosity(struct HCTraceImplArea* area, enum HCTraceLevel verbosity)
+void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(struct HCTraceImplArea* area, enum HCTraceLevel verbosity)
 {
     area->Verbosity = verbosity;
 }
@@ -280,7 +280,7 @@ enum HCTraceLevel HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area)
     return area->Verbosity;
 }
 
-HCAPI_(void) HCTraceImplMessage(
+STDAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     enum HCTraceLevel level,
     _Printf_format_string_ char const* format,

@@ -6,7 +6,7 @@
 
 using namespace xbox::httpclient;
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetUrl(
     _In_ hc_call_handle call,
     _In_z_ const_utf8_string method,
@@ -34,7 +34,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetUrl(
     _In_ hc_call_handle call,
     _Outptr_ const_utf8_string* method,
@@ -57,7 +57,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetRequestBodyBytes(
     _In_ hc_call_handle call,
     _In_reads_bytes_(requestBodySize) const BYTE* requestBodyBytes,
@@ -84,7 +84,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetRequestBodyString(
     _In_ hc_call_handle call,
     _In_z_ const_utf8_string requestBodyString
@@ -103,7 +103,7 @@ HCHttpCallRequestSetRequestBodyString(
 }
 
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetRequestBodyBytes(
     _In_ hc_call_handle call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
@@ -130,7 +130,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetRequestBodyString(
     _In_ hc_call_handle call,
     _Outptr_ const_utf8_string* requestBody
@@ -151,7 +151,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetHeader(
     _In_ hc_call_handle call,
     _In_z_ const_utf8_string headerName,
@@ -173,7 +173,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetHeader(
     _In_ hc_call_handle call,
     _In_z_ const_utf8_string headerName,
@@ -199,7 +199,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetNumHeaders(
     _In_ hc_call_handle call,
     _Out_ uint32_t* numHeaders
@@ -216,7 +216,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetHeaderAtIndex(
     _In_ hc_call_handle call,
     _In_ uint32_t headerIndex,
@@ -249,7 +249,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetRetryCacheId(
     _In_opt_ hc_call_handle call,
     _In_ uint32_t retryAfterCacheId
@@ -272,7 +272,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetRetryAllowed(
     _In_opt_ hc_call_handle call,
     _In_ bool retryAllowed
@@ -299,7 +299,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetRetryAllowed(
     _In_opt_ hc_call_handle call,
     _Out_ bool* retryAllowed
@@ -327,7 +327,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetRetryCacheId(
     _In_ hc_call_handle call,
     _Out_ uint32_t* retryAfterCacheId
@@ -346,7 +346,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetTimeout(
     _In_opt_ hc_call_handle call,
     _In_ uint32_t timeoutInSeconds
@@ -373,7 +373,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetTimeout(
     _In_opt_ hc_call_handle call,
     _Out_ uint32_t* timeoutInSeconds
@@ -402,7 +402,7 @@ try
 CATCH_RETURN()
 
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetTimeoutWindow(
     _In_opt_ hc_call_handle call,
     _In_ uint32_t timeoutWindowInSeconds
@@ -428,7 +428,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetTimeoutWindow(
     _In_opt_ hc_call_handle call,
     _Out_ uint32_t* timeoutWindowInSeconds
@@ -456,7 +456,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestGetRetryDelay(
     _In_opt_ hc_call_handle call,
     _In_ uint32_t* retryDelayInSeconds
@@ -484,7 +484,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallRequestSetRetryDelay(
     _In_opt_ hc_call_handle call,
     _In_ uint32_t retryDelayInSeconds

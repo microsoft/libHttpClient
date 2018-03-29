@@ -256,7 +256,7 @@ static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE instance, _In_ PVO
 /// the async call has a resulting data payload. If it doesn't, calling
 /// GetAsyncResult is unneeded.
 /// </summary>
-HCAPI GetAsyncStatus(
+STDAPI GetAsyncStatus(
     _In_ AsyncBlock* asyncBlock,
     _In_ bool wait)
 {
@@ -286,7 +286,7 @@ HCAPI GetAsyncStatus(
 /// <summary>
 /// Returns the required size of the buffer to pass to GetAsyncResult.
 /// </summary>
-HCAPI GetAsyncResultSize(
+STDAPI GetAsyncResultSize(
     _In_ AsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize)
 {
@@ -316,7 +316,7 @@ HCAPI GetAsyncResultSize(
 /// the completion callback will be invoked and the event in the async block will be
 /// signaled.
 /// </summary>
-HCAPI_(void) CancelAsync(
+STDAPI_(void) CancelAsync(
     _In_ AsyncBlock* asyncBlock)
 {
     HRESULT status = InterlockedCompareExchange(&asyncBlock->internalStatus, E_ABORT, E_PENDING);
@@ -340,7 +340,7 @@ HCAPI_(void) CancelAsync(
 /// <summary>
 /// Runs the given callback asynchronously.
 /// </summary>
-HCAPI RunAsync(
+STDAPI RunAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work)
 {
@@ -378,7 +378,7 @@ HCAPI RunAsync(
 /// async work will begin on some system defined thread after this call
 /// returns.
 /// </summary>
-HCAPI BeginAsync(
+STDAPI BeginAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ void* token,
@@ -405,7 +405,7 @@ HCAPI BeginAsync(
 /// work.  If work should be scheduled after a delay, pass the number of ms ScheduleAsync should wait
 /// before it schedules work.
 /// </summary>
-HCAPI ScheduleAsync(
+STDAPI ScheduleAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ uint32_t delay)
 {
@@ -450,7 +450,7 @@ HCAPI ScheduleAsync(
 /// The caller should supply the resulting data payload size.  If the call
 /// has no data payload, pass zero.
 /// </summary
-HCAPI_(void) CompleteAsync(
+STDAPI_(void) CompleteAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ HRESULT result,
     _In_ size_t requiredBufferSize)
@@ -490,7 +490,7 @@ HCAPI_(void) CompleteAsync(
 /// the async block is completed and no longer associated with the 
 /// operation.
 /// </summary>
-HCAPI GetAsyncResult(
+STDAPI GetAsyncResult(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* token,
     _In_ size_t bufferSize,

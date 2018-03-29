@@ -50,7 +50,7 @@ typedef bool CALLBACK AsyncQueueRemovePredicate(_In_ void* predicateContext, _In
 /// Creates an Async Queue, which can be used to queue
 /// different async calls together.
 /// </summary>
-HCAPI CreateAsyncQueue(
+STDAPI CreateAsyncQueue(
     _In_ AsyncQueueDispatchMode workDispatchMode,
     _In_ AsyncQueueDispatchMode completionDispatchMode,
     _Out_ async_queue_t* queue);
@@ -61,7 +61,7 @@ HCAPI CreateAsyncQueue(
 /// modes, it will be referenced.  Otherwise a new queue will be
 /// created.  Call CloseAsyncQueue when done with the shared instance.
 /// </summary>
-HCAPI CreateSharedAsyncQueue(
+STDAPI CreateSharedAsyncQueue(
     _In_ uint32_t id,
     _In_ AsyncQueueDispatchMode workerMode,
     _In_ AsyncQueueDispatchMode completionMode,
@@ -74,7 +74,7 @@ HCAPI CreateSharedAsyncQueue(
 /// the parent as "work" callback types.  A nested queue is useful
 /// for performing intermediate work within a larger task.
 /// </summary>
-HCAPI CreateNestedAsyncQueue(
+STDAPI CreateNestedAsyncQueue(
     _In_ async_queue_t parentQueue,
     _Out_ async_queue_t* queue);
 
@@ -82,7 +82,7 @@ HCAPI CreateNestedAsyncQueue(
 /// Increments the reference count on the async queue.  Call CloseAsyncQueue
 /// to decrement.
 /// </summary>
-HCAPI ReferenceAsyncQueue(
+STDAPI ReferenceAsyncQueue(
     _In_ async_queue_t queue);
 
 /// <summary>
@@ -91,7 +91,7 @@ HCAPI ReferenceAsyncQueue(
 /// this returns FALSE.  You can pass a timeout, which will cause
 /// DispatchAsyncQueue to wait for something to arrive in the queue.
 /// </summary>
-HCAPI_(bool) DispatchAsyncQueue(
+STDAPI_(bool) DispatchAsyncQueue(
     _In_ async_queue_t queue,
     _In_ AsyncQueueCallbackType type,
     _In_ uint32_t timeout);
@@ -100,7 +100,7 @@ HCAPI_(bool) DispatchAsyncQueue(
 /// Returns TRUE if there is no outstanding work in this
 /// queue for the given callback type.
 /// </summary>
-HCAPI_(bool) IsAsyncQueueEmpty(
+STDAPI_(bool) IsAsyncQueueEmpty(
     _In_ async_queue_t queue,
     _In_ AsyncQueueCallbackType type);
 
@@ -109,14 +109,14 @@ HCAPI_(bool) IsAsyncQueueEmpty(
 /// is not in use by an async api or is empty.  If not true, the queue
 /// will be marked for closure and closed when it can. 
 /// </summary>
-HCAPI_(void) CloseAsyncQueue(
+STDAPI_(void) CloseAsyncQueue(
     _In_ async_queue_t queue);
 
 /// <summary>
 /// Submits a callback to the queue for the given callback
 /// type.
 /// </summary>
-HCAPI SubmitAsyncCallback(
+STDAPI SubmitAsyncCallback(
     _In_ async_queue_t queue,
     _In_ AsyncQueueCallbackType type,
     _In_ void* callbackContext,
@@ -134,7 +134,7 @@ HCAPI SubmitAsyncCallback(
 /// to ensure there are no orphan callbacks in the async queue
 /// that could later call back into the deleted object.
 /// </summary>
-HCAPI_(void) RemoveAsyncQueueCallbacks(
+STDAPI_(void) RemoveAsyncQueueCallbacks(
     _In_ async_queue_t queue,
     _In_ AsyncQueueCallbackType type,
     _In_ AsyncQueueCallback* searchCallback,
@@ -145,7 +145,7 @@ HCAPI_(void) RemoveAsyncQueueCallbacks(
 /// Adds a callback that will be invoked whenever a callback
 /// is submitted to this queue.
 /// </summary>
-HCAPI AddAsyncCallbackSubmitted(
+STDAPI AddAsyncCallbackSubmitted(
     _In_ async_queue_t queue,
     _In_opt_ void* context,
     _In_ AsyncQueueCallbackSubmitted* callback,
@@ -154,7 +154,7 @@ HCAPI AddAsyncCallbackSubmitted(
 /// <summary>
 /// Removes a previously added callback.
 /// </summary>
-HCAPI_(void) RemoveAsyncQueueCallbackSubmitted(
+STDAPI_(void) RemoveAsyncQueueCallbackSubmitted(
     _In_ async_queue_t queue,
     _In_ uint32_t token);
 

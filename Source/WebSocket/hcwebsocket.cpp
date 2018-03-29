@@ -7,7 +7,7 @@
 using namespace xbox::httpclient;
 
 
-HCAPI 
+STDAPI 
 HCWebSocketCreate(
     _Out_ hc_websocket_handle* websocket
     ) HC_NOEXCEPT
@@ -32,7 +32,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketSetProxyUri(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string proxyUri
@@ -46,7 +46,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketSetHeader(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string headerName,
@@ -68,7 +68,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketSetFunctions(
     _In_opt_ HCWebSocketMessageFunction messageFunc,
     _In_opt_ HCWebSocketCloseEventFunction closeFunc
@@ -86,7 +86,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketConnect(
     _In_z_ const_utf8_string uri,
     _In_z_ const_utf8_string subProtocol,
@@ -122,7 +122,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketSendMessage(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string message,
@@ -156,7 +156,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketDisconnect(
     _In_ hc_websocket_handle websocket
     ) HC_NOEXCEPT
@@ -212,7 +212,7 @@ try
 }
 CATCH_RETURN_WITH(nullptr)
 
-HCAPI 
+STDAPI 
 HCWebSocketCloseHandle(
     _In_ hc_websocket_handle websocket
     ) HC_NOEXCEPT
@@ -235,7 +235,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCGlobalSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
@@ -255,7 +255,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCGlobalGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
@@ -282,7 +282,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketGetProxyUri(
     _In_ hc_websocket_handle websocket,
     _Out_ const_utf8_string* proxyUri
@@ -299,7 +299,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketGetHeader(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string headerName,
@@ -325,7 +325,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketGetNumHeaders(
     _In_ hc_websocket_handle websocket,
     _Out_ uint32_t* numHeaders
@@ -342,7 +342,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketGetHeaderAtIndex(
     _In_ hc_websocket_handle websocket,
     _In_ uint32_t headerIndex,
@@ -375,7 +375,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCWebSocketGetFunctions(
     _Out_opt_ HCWebSocketMessageFunction* messageFunc,
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
@@ -400,7 +400,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCGetWebSocketConnectResult(
     _In_ AsyncBlock* async,
     _In_ WebSocketCompletionResult* result
@@ -411,7 +411,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCGetWebSocketSendMessageResult(
     _In_ AsyncBlock* async,
     _In_ WebSocketCompletionResult* result

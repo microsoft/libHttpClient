@@ -6,7 +6,7 @@
 using namespace xbox::httpclient;
 using namespace xbox::httpclient::log;
 
-HCAPI 
+STDAPI 
 HCSettingsSetLogLevel(
     _In_ HCLogLevel traceLevel
     ) HC_NOEXCEPT
@@ -30,7 +30,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCSettingsGetLogLevel(
     _Out_ HCLogLevel* traceLevel
     ) HC_NOEXCEPT

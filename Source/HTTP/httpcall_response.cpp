@@ -7,7 +7,7 @@
 using namespace xbox::httpclient;
 
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseGetResponseString(
     _In_ hc_call_handle call,
     _Out_ const_utf8_string* responseString
@@ -24,7 +24,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseSetResponseString(
     _In_ hc_call_handle call,
     _In_z_ const_utf8_string responseString
@@ -42,7 +42,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseGetStatusCode(
     _In_ hc_call_handle call,
     _Out_ uint32_t* statusCode
@@ -59,7 +59,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseSetStatusCode(
     _In_ hc_call_handle call,
     _In_ uint32_t statusCode
@@ -78,7 +78,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseGetNetworkErrorCode(
     _In_ hc_call_handle call,
     _Out_ HRESULT* networkErrorCode,
@@ -97,7 +97,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseSetNetworkErrorCode(
     _In_ hc_call_handle call,
     _In_ HRESULT networkErrorCode,
@@ -118,7 +118,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseGetHeader(
     _In_ hc_call_handle call,
     _In_z_ const_utf8_string headerName,
@@ -144,7 +144,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseGetNumHeaders(
     _In_ hc_call_handle call,
     _Out_ uint32_t* numHeaders
@@ -161,7 +161,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseGetHeaderAtIndex(
     _In_ hc_call_handle call,
     _In_ uint32_t headerIndex,
@@ -194,7 +194,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallResponseSetHeader(
     _In_ hc_call_handle call,
     _In_z_ const_utf8_string headerName,

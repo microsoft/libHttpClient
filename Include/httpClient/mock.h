@@ -16,7 +16,7 @@
 /// </summary>
 /// <param name="call">The handle of the mock HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-HCAPI HCMockCallCreate(
+STDAPI HCMockCallCreate(
     _Out_ hc_mock_call_handle* call
     ) HC_NOEXCEPT;
 
@@ -57,7 +57,7 @@ HCAPI HCMockCallCreate(
 /// The size of requestBodyBytes in bytes.
 /// </param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-HCAPI HCMockAddMock(
+STDAPI HCMockAddMock(
     _In_ hc_mock_call_handle call,
     _In_opt_z_ const_utf8_string method,
     _In_opt_z_ const_utf8_string url,
@@ -69,7 +69,7 @@ HCAPI HCMockAddMock(
 /// Removes and cleans up all mock calls added by HCMockAddMock
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-HCAPI HCMockClearMocks() HC_NOEXCEPT;
+STDAPI HCMockClearMocks() HC_NOEXCEPT;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ HCAPI HCMockClearMocks() HC_NOEXCEPT;
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="responseString">the response body string of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-HCAPI HCMockResponseSetResponseString(
+STDAPI HCMockResponseSetResponseString(
     _In_ hc_mock_call_handle call,
     _In_z_ const_utf8_string responseString
     ) HC_NOEXCEPT;
@@ -93,7 +93,7 @@ HCAPI HCMockResponseSetResponseString(
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="statusCode">the HTTP status code of the HTTP call response</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-HCAPI HCMockResponseSetStatusCode(
+STDAPI HCMockResponseSetStatusCode(
     _In_ hc_mock_call_handle call,
     _In_ uint32_t statusCode
     ) HC_NOEXCEPT;
@@ -105,7 +105,7 @@ HCAPI HCMockResponseSetStatusCode(
 /// <param name="networkErrorCode">The network error code of the HTTP call.</param>
 /// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-HCAPI HCMockResponseSetNetworkErrorCode(
+STDAPI HCMockResponseSetNetworkErrorCode(
     _In_ hc_mock_call_handle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
@@ -118,7 +118,7 @@ HCAPI HCMockResponseSetNetworkErrorCode(
 /// <param name="headerName">Response header name for the HTTP call</param>
 /// <param name="headerValue">Response header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-HCAPI HCMockResponseSetHeader(
+STDAPI HCMockResponseSetHeader(
     _In_ hc_mock_call_handle call,
     _In_z_ const_utf8_string headerName,
     _In_z_ const_utf8_string headerValue

@@ -86,6 +86,18 @@
     #define _Post_writable_byte_size_(X)
     #endif
 
+    #ifndef STDAPIVCALLTYPE
+    #define STDAPIVCALLTYPE         __cdecl
+    #endif
+
+    #ifndef STDAPI
+    #define STDAPI                  EXTERN_C HRESULT STDAPIVCALLTYPE
+    #endif
+
+    #ifndef STDAPI_
+    #define STDAPI_(type)           EXTERN_C type STDAPIVCALLTYPE
+    #endif
+
 #endif
 
 #ifdef __cplusplus
@@ -93,10 +105,6 @@
 #else
     #define HC_NOEXCEPT
 #endif
-
-#define HC_CALLING_CONV __cdecl
-#define HCAPI_(t) t HC_CALLING_CONV
-#define HCAPI HCAPI_(HRESULT) 
 
 #define FACILITY_XBOX 2339
 #define MAKE_E_HC(code)                 MAKE_HRESULT(1, FACILITY_XBOX, code)
