@@ -80,8 +80,8 @@ public:
         VERIFY_ARE_EQUAL(false, g_memAllocCalled);
         VERIFY_ARE_EQUAL(true, g_memFreeCalled);
 
-        HC_MEM_ALLOC_FUNC memAllocFunc = nullptr;
-        HC_MEM_FREE_FUNC memFreeFunc = nullptr;
+        HCMemAllocFunction memAllocFunc = nullptr;
+        HCMemFreeFunction memFreeFunc = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCMemGetFunctions(&memAllocFunc, &memFreeFunc));
         VERIFY_IS_NOT_NULL(memAllocFunc);
         VERIFY_IS_NOT_NULL(memFreeFunc);
@@ -118,7 +118,7 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
         g_PerformCallbackCalled = false;
-        HC_HTTP_CALL_PERFORM_FUNC func = nullptr;
+        HCCallPerformFunction func = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCGlobalGetHttpCallPerformFunction(&func));
         VERIFY_IS_NOT_NULL(func);
 
@@ -167,31 +167,31 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
 
-        HC_LOG_LEVEL level;
+        HCLogLevel level;
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_OFF));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Off));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_OFF, level);
+        VERIFY_ARE_EQUAL(HCLogLevel_Off, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_ERROR));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Error));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_ERROR, level);
+        VERIFY_ARE_EQUAL(HCLogLevel_Error, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_WARNING));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Warning));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_WARNING, level);
+        VERIFY_ARE_EQUAL(HCLogLevel_Warning, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_IMPORTANT));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Important));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_IMPORTANT, level);
+        VERIFY_ARE_EQUAL(HCLogLevel_Important, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_INFORMATION));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Information));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_INFORMATION, level);
+        VERIFY_ARE_EQUAL(HCLogLevel_Information, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Verbose));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HC_LOG_LEVEL::LOG_VERBOSE, level);
+        VERIFY_ARE_EQUAL(HCLogLevel_Verbose, level);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetTimeoutWindow(nullptr, 1000));
         uint32_t timeout = 0;

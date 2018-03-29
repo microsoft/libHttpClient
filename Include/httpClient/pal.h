@@ -117,18 +117,18 @@ typedef struct HC_CALL* hc_call_handle;
 typedef struct HC_CALL* hc_mock_call_handle;
 
 // Error codes from https://www.iana.org/assignments/websocket/websocket.xml#close-code-number
-typedef enum HCWebsocketCloseStatus
+typedef enum HCWebSocketCloseStatus
 {
-    HCWebsocketCloseStatus_Normal = 1000,
-    HCWebsocketCloseStatus_GoingAway = 1001,
-    HCWebsocketCloseStatus_ProtocolError = 1002,
-    HCWebsocketCloseStatus_Unsupported = 1003,
-    HCWebsocketCloseStatus_AbnormalClose = 1006,
-    HCWebsocketCloseStatus_InconsistentDatatype = 1007,
-    HCWebsocketCloseStatus_PolicyViolation = 1008,
-    HCWebsocketCloseStatus_TooLarge = 1009,
-    HCWebsocketCloseStatus_NegotiateError = 1010,
-    HCWebsocketCloseStatus_ServerTerminate = 1011,
-    HCWebsocketCloseStatus_UnknownError = 4000
-} HCWebsocketCloseStatus;
+    HCWebSocketCloseStatus_Normal = 1000,
+    HCWebSocketCloseStatus_GoingAway = 1001,
+    HCWebSocketCloseStatus_ProtocolError = 1002,
+    HCWebSocketCloseStatus_Unsupported = 1003,
+    HCWebSocketCloseStatus_AbnormalClose = 1006,
+    HCWebSocketCloseStatus_InconsistentDatatype = 1007,
+    HCWebSocketCloseStatus_PolicyViolation = 1008,
+    HCWebSocketCloseStatus_TooLarge = 1009,
+    HCWebSocketCloseStatus_NegotiateError = 1010,
+    HCWebSocketCloseStatus_ServerTerminate = 1011,
+    HCWebSocketCloseStatus_UnknownError = 4000
+} HCWebSocketCloseStatus;
 

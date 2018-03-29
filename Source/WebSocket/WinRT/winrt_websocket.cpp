@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "../hcwebsocket.h"
+#include "../HCWebSocket.h"
 
 using namespace xbox::httpclient;
 using namespace ::Windows::Foundation;
@@ -80,7 +80,7 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
             reader->ReadBytes(Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8 *>(&payload[0]), len));
             HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: receieved msg [%s]", m_websocket->id, payload.c_str());
 
-            HCWebsocketMessageFunction messageFunc = nullptr;
+            HCWebSocketMessageFunction messageFunc = nullptr;
             HCWebSocketGetFunctions(&messageFunc, nullptr);
             if (messageFunc != nullptr)
             {
@@ -100,11 +100,11 @@ void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args
 {
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: on closed event triggered", m_websocket->id);
 
-    HCWebsocketCloseEventFunction closeFunc = nullptr;
+    HCWebSocketCloseEventFunction closeFunc = nullptr;
     HCWebSocketGetFunctions(nullptr, &closeFunc);
     if (closeFunc != nullptr)
     {
-        closeFunc(m_websocket, static_cast<HCWebsocketCloseStatus>(args->Code));
+        closeFunc(m_websocket, static_cast<HCWebSocketCloseStatus>(args->Code));
     }
 }
 
@@ -468,7 +468,7 @@ void MessageWebSocketSendMessage(
 
 HRESULT Internal_HCWebSocketDisconnect(
     _In_ hc_websocket_handle websocket,
-    _In_ HCWebsocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus
     )
 {
     if (websocket == nullptr)

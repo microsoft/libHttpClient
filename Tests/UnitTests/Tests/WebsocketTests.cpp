@@ -35,7 +35,7 @@ void HC_CALLING_CONV PerformMessageCallback(
 bool g_PerformCloseCallbackCalled = false;
 void HC_CALLING_CONV PerformCloseCallback(
     _In_ hc_websocket_handle websocket,
-    _In_ HcWebsocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus
     )
 {
     g_PerformCloseCallbackCalled = true;
@@ -64,7 +64,7 @@ void Internal_HCWebSocketMessage(
 
 void Internal_HCWebSocketCloseEvent(
     _In_ hc_websocket_handle websocket,
-    _In_ HcWebsocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus
 )
 {
 }
@@ -98,7 +98,7 @@ HRESULT Test_Internal_HCWebSocketSendMessage(
 bool g_HCWebSocketDisconnect_Called = false;
 HRESULT Test_Internal_HCWebSocketDisconnect(
     _In_ hc_websocket_handle websocket,
-    _In_ HcWebsocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus
     )
 {
     g_HCWebSocketDisconnect_Called = true;
@@ -116,8 +116,8 @@ public:
         //g_PerformMessageCallbackCalled = false;
         //g_PerformCloseCallbackCalled = false;
 
-        HC_WEBSOCKET_MESSAGE_FUNC messageFunc = nullptr;
-        HC_WEBSOCKET_CLOSE_EVENT_FUNC closeFunc = nullptr;
+        HCWebSocketMessageFunction messageFunc = nullptr;
+        HCWebSocketCloseEventFunction closeFunc = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetFunctions(&messageFunc, &closeFunc));
         VERIFY_IS_NULL(messageFunc);
         VERIFY_IS_NULL(closeFunc);
@@ -155,9 +155,9 @@ public:
     {
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
 
-        HC_WEBSOCKET_CONNECT_FUNC websocketConnectFunc = nullptr;
-        HC_WEBSOCKET_SEND_MESSAGE_FUNC websocketSendMessageFunc = nullptr;
-        HC_WEBSOCKET_DISCONNECT_FUNC websocketDisconnectFunc = nullptr;
+        HCWebSocketConnectFunction websocketConnectFunc = nullptr;
+        HCWebSocketSendMessageFunction websocketSendMessageFunc = nullptr;
+        HCWebSocketDisconnectFunction websocketDisconnectFunc = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);

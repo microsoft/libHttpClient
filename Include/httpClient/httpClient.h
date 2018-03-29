@@ -537,7 +537,7 @@ HCAPI HCWebSocketCreate(
 
 /// <summary>
 /// Set the proxy URI for the WebSocket
-/// This must be called prior to calling HCWebsocketConnect.
+/// This must be called prior to calling HCWebSocketConnect.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="proxyUri">The proxy URI for the WebSocket</param>
@@ -549,7 +549,7 @@ HCAPI HCWebSocketSetProxyUri(
 
 /// <summary>
 /// Set a header for the WebSocket
-/// This must be called prior to calling HCWebsocketConnect.
+/// This must be called prior to calling HCWebSocketConnect.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="headerName">Header name for the WebSocket</param>
@@ -568,7 +568,7 @@ HCAPI HCWebSocketSetHeader(
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="incomingBodyString">Body of the incoming message as a string value, only if the message type is UTF-8.</param>
 typedef void
-(HC_CALLING_CONV* HCWebsocketMessageFunction)(
+(HC_CALLING_CONV* HCWebSocketMessageFunction)(
     _In_ hc_websocket_handle websocket,
     _In_z_ const_utf8_string incomingBodyString
     );
@@ -579,9 +579,9 @@ typedef void
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="closeStatus">The status of why the WebSocket was closed</param>
 typedef void
-(HC_CALLING_CONV* HCWebsocketCloseEventFunction)(
+(HC_CALLING_CONV* HCWebSocketCloseEventFunction)(
     _In_ hc_websocket_handle websocket,
-    _In_ HCWebsocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus
     );
 
 /// <summary>
@@ -590,8 +590,8 @@ typedef void
 /// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
 /// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
 HCAPI HCWebSocketSetFunctions(
-    _In_opt_ HCWebsocketMessageFunction messageFunc,
-    _In_opt_ HCWebsocketCloseEventFunction closeFunc
+    _In_opt_ HCWebSocketMessageFunction messageFunc,
+    _In_opt_ HCWebSocketCloseEventFunction closeFunc
     ) HC_NOEXCEPT;
 
 
