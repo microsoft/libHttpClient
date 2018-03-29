@@ -7,7 +7,7 @@ using namespace xbox::httpclient;
 using namespace xbox::httpclient::log;
 
 
-HCAPI 
+STDAPI 
 HCMockCallCreate(
     _Out_ hc_mock_call_handle* call
     ) HC_NOEXCEPT
@@ -15,7 +15,7 @@ HCMockCallCreate(
     return HCHttpCallCreate(call);
 }
 
-HCAPI 
+STDAPI 
 HCMockAddMock(
     _In_ hc_mock_call_handle call,
     _In_opt_z_ const_utf8_string method,
@@ -59,7 +59,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCMockClearMocks() HC_NOEXCEPT
 try 
 {
@@ -80,7 +80,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCMockResponseSetResponseString(
     _In_ hc_mock_call_handle call,
     _In_z_ const_utf8_string responseString
@@ -89,7 +89,7 @@ HCMockResponseSetResponseString(
     return HCHttpCallResponseSetResponseString(call, responseString);
 }
 
-HCAPI 
+STDAPI 
 HCMockResponseSetStatusCode(
     _In_ hc_mock_call_handle call,
     _In_ uint32_t statusCode
@@ -98,7 +98,7 @@ HCMockResponseSetStatusCode(
     return HCHttpCallResponseSetStatusCode(call, statusCode);
 }
 
-HCAPI 
+STDAPI 
 HCMockResponseSetNetworkErrorCode(
     _In_ hc_mock_call_handle call,
     _In_ HRESULT networkErrorCode,
@@ -108,7 +108,7 @@ HCMockResponseSetNetworkErrorCode(
     return HCHttpCallResponseSetNetworkErrorCode(call, networkErrorCode, platformNetworkErrorCode);
 }
 
-HCAPI 
+STDAPI 
 HCMockResponseSetHeader(
     _In_ hc_mock_call_handle call,
     _In_z_ const_utf8_string headerName,

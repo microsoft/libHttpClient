@@ -17,7 +17,7 @@ const double MAX_DELAY_TIME_IN_SEC = 60.0;
 const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
-HCAPI 
+STDAPI 
 HCHttpCallCreate(
     _Out_ hc_call_handle* callHandle
     ) HC_NOEXCEPT
@@ -65,7 +65,7 @@ try
 }
 CATCH_RETURN_WITH(nullptr)
 
-HCAPI 
+STDAPI 
 HCHttpCallCloseHandle(
     _In_ hc_call_handle call
     ) HC_NOEXCEPT
@@ -379,7 +379,7 @@ void retry_http_call_until_done(
     }
 }
 
-HCAPI 
+STDAPI 
 HCHttpCallPerform(
     _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
@@ -426,7 +426,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI_(uint64_t)
+STDAPI_(uint64_t)
 HCHttpCallGetId(
     _In_ hc_call_handle call
     ) HC_NOEXCEPT
@@ -440,7 +440,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallSetContext(
     _In_ hc_call_handle call,
     _In_ void* context
@@ -458,7 +458,7 @@ try
 }
 CATCH_RETURN()
 
-HCAPI 
+STDAPI 
 HCHttpCallGetContext(
     _In_ hc_call_handle call,
     _In_ void** context

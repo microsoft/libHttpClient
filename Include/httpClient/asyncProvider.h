@@ -71,7 +71,7 @@ typedef HRESULT CALLBACK AsyncProvider(_In_ AsyncOp op, _Inout_ AsyncProviderDat
 /// async work will begin on some system defined thread after this call
 /// returns.
 /// </summary>
-HCAPI BeginAsync(
+STDAPI BeginAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ void* token,
@@ -84,7 +84,7 @@ HCAPI BeginAsync(
 /// work.  If work should be scheduled after a delay, pass the number of ms ScheduleAsync should wait
 /// before it schedules work.
 /// </summary>
-HCAPI ScheduleAsync(
+STDAPI ScheduleAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ uint32_t delay);
 
@@ -93,7 +93,7 @@ HCAPI ScheduleAsync(
 /// The caller should supply the resulting data payload size.  If the call
 /// has no data payload, pass zero.
 /// </summary
-HCAPI_(void) CompleteAsync(
+STDAPI_(void) CompleteAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ HRESULT result,
     _In_ size_t requiredBufferSize);
@@ -103,7 +103,7 @@ HCAPI_(void) CompleteAsync(
 /// the async block is completed and no longer associated with the 
 /// operation.
 /// </summary>
-HCAPI GetAsyncResult(
+STDAPI GetAsyncResult(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* token,
     _In_ size_t bufferSize,

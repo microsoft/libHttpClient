@@ -63,14 +63,14 @@ typedef struct AsyncBlock
 /// the async call has a resulting data payload. If it doesn't, calling
 /// GetAsyncResult is unneeded.
 /// </summary>
-HCAPI GetAsyncStatus(
+STDAPI GetAsyncStatus(
     _In_ AsyncBlock* asyncBlock,
     _In_ bool wait);
 
 /// <summary>
 /// Returns the required size of the buffer to pass to GetAsyncResult.
 /// </summary>
-HCAPI GetAsyncResultSize(
+STDAPI GetAsyncResultSize(
     _In_ AsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize);
 
@@ -79,7 +79,7 @@ HCAPI GetAsyncResultSize(
 /// the completion callback will be invoked and the event in the async block will be
 /// signaled.
 /// </summary>
-HCAPI_(void) CancelAsync(
+STDAPI_(void) CancelAsync(
     _In_ AsyncBlock* asyncBlock);
 
 typedef HRESULT CALLBACK AsyncWork(_In_ AsyncBlock* asyncBlock);
@@ -87,7 +87,7 @@ typedef HRESULT CALLBACK AsyncWork(_In_ AsyncBlock* asyncBlock);
 /// <summary>
 /// Runs the given callback asynchronously.
 /// </summary>
-HCAPI RunAsync(
+STDAPI RunAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work);
 

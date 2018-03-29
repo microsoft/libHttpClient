@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "../Global/global.h"
 
-_Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV 
+_Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE 
 DefaultMemAllocFunction(
     _In_ size_t size,
     _In_ hc_memory_type memoryType
@@ -14,7 +14,7 @@ DefaultMemAllocFunction(
     return malloc(size);
 }
 
-void HC_CALLING_CONV 
+void STDAPIVCALLTYPE 
 DefaultMemFreeFunction(
     _In_ _Post_invalid_ void* pointer,
     _In_ hc_memory_type memoryType
@@ -27,7 +27,7 @@ DefaultMemFreeFunction(
 HCMemAllocFunction g_memAllocFunc = DefaultMemAllocFunction;
 HCMemFreeFunction g_memFreeFunc = DefaultMemFreeFunction;
 
-HCAPI 
+STDAPI 
 HCMemSetFunctions(
     _In_opt_ HCMemAllocFunction memAllocFunc,
     _In_opt_ HCMemFreeFunction memFreeFunc
@@ -43,7 +43,7 @@ HCMemSetFunctions(
     return S_OK;
 }
 
-HCAPI 
+STDAPI 
 HCMemGetFunctions(
     _Out_ HCMemAllocFunction* memAllocFunc,
     _Out_ HCMemFreeFunction* memFreeFunc
