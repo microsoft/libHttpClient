@@ -26,7 +26,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 bool g_memAllocCalled = false;
 bool g_memFreeCalled = false;
 
-_Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV MemAlloc(
+_Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE MemAlloc(
     _In_ size_t size,
     _In_ hc_memory_type memoryType
     )   
@@ -35,7 +35,7 @@ _Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV MemAlloc(
     return new (std::nothrow) int8_t[size];
 }
 
-void HC_CALLING_CONV MemFree(
+void STDAPIVCALLTYPE MemFree(
     _In_ _Post_invalid_ void* pointer,
     _In_ hc_memory_type memoryType
     )
@@ -45,7 +45,7 @@ void HC_CALLING_CONV MemFree(
 }
 
 static bool g_PerformCallbackCalled = false;
-static void HC_CALLING_CONV PerformCallback(
+static void STDAPIVCALLTYPE PerformCallback(
     _In_ hc_call_handle call,
     _In_ AsyncBlock* asyncBlock
     )
