@@ -24,7 +24,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
         }
 
 bool g_PerformMessageCallbackCalled = false;
-void HC_CALLING_CONV PerformMessageCallback(
+void STDAPIVCALLTYPE PerformMessageCallback(
     _In_ hc_websocket_handle websocket,
     _In_z_ PCSTR incomingBodyString
     )
@@ -33,7 +33,7 @@ void HC_CALLING_CONV PerformMessageCallback(
 }
 
 bool g_PerformCloseCallbackCalled = false;
-void HC_CALLING_CONV PerformCloseCallback(
+void STDAPIVCALLTYPE PerformCloseCallback(
     _In_ hc_websocket_handle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
@@ -41,11 +41,11 @@ void HC_CALLING_CONV PerformCloseCallback(
     g_PerformCloseCallbackCalled = true;
 }
 
-_Ret_maybenull_ _Post_writable_byte_size_(size) void* HC_CALLING_CONV MemAlloc(
+_Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE MemAlloc(
     _In_ size_t size,
     _In_ hc_memory_type memoryType
     );
-void HC_CALLING_CONV MemFree(
+void STDAPIVCALLTYPE MemFree(
     _In_ _Post_invalid_ void* pointer,
     _In_ hc_memory_type memoryType
     );
