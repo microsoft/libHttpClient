@@ -75,7 +75,7 @@ STDAPI BeginAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ void* token,
-    _In_opt_ const_utf8_string function,
+    _In_opt_ UTF8CSTR function,
     _In_ AsyncProvider* provider);
 
 /// <summary>

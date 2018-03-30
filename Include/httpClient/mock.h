@@ -59,8 +59,8 @@ STDAPI HCMockCallCreate(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockAddMock(
     _In_ hc_mock_call_handle call,
-    _In_opt_z_ const_utf8_string method,
-    _In_opt_z_ const_utf8_string url,
+    _In_opt_z_ UTF8CSTR method,
+    _In_opt_z_ UTF8CSTR url,
     _In_reads_bytes_opt_(requestBodySize) const PBYTE requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT;
@@ -84,7 +84,7 @@ STDAPI HCMockClearMocks() HC_NOEXCEPT;
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockResponseSetResponseString(
     _In_ hc_mock_call_handle call,
-    _In_z_ const_utf8_string responseString
+    _In_z_ UTF8CSTR responseString
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -120,8 +120,8 @@ STDAPI HCMockResponseSetNetworkErrorCode(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockResponseSetHeader(
     _In_ hc_mock_call_handle call,
-    _In_z_ const_utf8_string headerName,
-    _In_z_ const_utf8_string headerValue
+    _In_z_ UTF8CSTR headerName,
+    _In_z_ UTF8CSTR headerValue
     ) HC_NOEXCEPT;
 
 

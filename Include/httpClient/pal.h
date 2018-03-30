@@ -116,8 +116,8 @@
 #define E_HC_ALREADY_INITIALISED        MAKE_E_HC(5004L)
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(5005L)
 
-typedef _Null_terminated_ char* utf8_string;
-typedef _Null_terminated_ const char* const_utf8_string;
+typedef _Null_terminated_ char* UTF8STR;
+typedef _Null_terminated_ const char* UTF8CSTR;
 
 typedef uint32_t hc_memory_type;
 typedef struct HC_WEBSOCKET* hc_websocket_handle;

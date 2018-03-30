@@ -9,7 +9,7 @@
 using namespace xbox::httpclient;
 
 STDAPI 
-HCGlobalGetLibVersion(_Outptr_ const_utf8_string* version) HC_NOEXCEPT
+HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT
 try
 {
     if (version == nullptr)

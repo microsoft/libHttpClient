@@ -78,8 +78,8 @@ STDAPI HCHttpCallSetContext(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetUrl(
     _In_ hc_call_handle call,
-    _Outptr_ const_utf8_string* method,
-    _Outptr_ const_utf8_string* url
+    _Outptr_ UTF8CSTR* method,
+    _Outptr_ UTF8CSTR* url
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -103,7 +103,7 @@ STDAPI HCHttpCallRequestGetRequestBodyBytes(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyString(
     _In_ hc_call_handle call,
-    _Outptr_ const_utf8_string* requestBody
+    _Outptr_ UTF8CSTR* requestBody
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -115,8 +115,8 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetHeader(
     _In_ hc_call_handle call,
-    _In_z_ const_utf8_string headerName,
-    _Out_ const_utf8_string* headerValue
+    _In_z_ UTF8CSTR headerName,
+    _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -142,8 +142,8 @@ STDAPI HCHttpCallRequestGetNumHeaders(
 STDAPI HCHttpCallRequestGetHeaderAtIndex(
     _In_ hc_call_handle call,
     _In_ uint32_t headerIndex,
-    _Out_ const_utf8_string* headerName,
-    _Out_ const_utf8_string* headerValue
+    _Out_ UTF8CSTR* headerName,
+    _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -266,7 +266,7 @@ STDAPI HCHttpCallRequestGetAssertsForThrottling(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetResponseString(
     _In_ hc_call_handle call,
-    _In_z_ const_utf8_string responseString
+    _In_z_ UTF8CSTR responseString
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -302,8 +302,8 @@ STDAPI HCHttpCallResponseSetNetworkErrorCode(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetHeader(
     _In_ hc_call_handle call,
-    _In_z_ const_utf8_string headerName,
-    _In_z_ const_utf8_string headerValue
+    _In_z_ UTF8CSTR headerName,
+    _In_z_ UTF8CSTR headerValue
     ) HC_NOEXCEPT;
 
 
@@ -321,8 +321,8 @@ STDAPI HCHttpCallResponseSetHeader(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketConnectFunction)(
-    _In_z_ const_utf8_string uri,
-    _In_z_ const_utf8_string subProtocol,
+    _In_z_ UTF8CSTR uri,
+    _In_z_ UTF8CSTR subProtocol,
     _In_ hc_websocket_handle websocket,
     _In_ AsyncBlock* async
     );
@@ -335,7 +335,7 @@ typedef HRESULT
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketSendMessageFunction)(
     _In_ hc_websocket_handle websocket,
-    _In_z_ const_utf8_string message,
+    _In_z_ UTF8CSTR message,
     _In_ AsyncBlock* async
     );
 
@@ -393,7 +393,7 @@ HCGlobalGetWebSocketFunctions(
 STDAPI 
 HCWebSocketGetProxyUri(
     _In_ hc_websocket_handle websocket,
-    _Out_ const_utf8_string* proxyUri
+    _Out_ UTF8CSTR* proxyUri
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -406,8 +406,8 @@ HCWebSocketGetProxyUri(
 STDAPI 
 HCWebSocketGetHeader(
     _In_ hc_websocket_handle websocket,
-    _In_z_ const_utf8_string headerName,
-    _Out_ const_utf8_string* headerValue
+    _In_z_ UTF8CSTR headerName,
+    _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -435,8 +435,8 @@ STDAPI
 HCWebSocketGetHeaderAtIndex(
     _In_ hc_websocket_handle websocket,
     _In_ uint32_t headerIndex,
-    _Out_ const_utf8_string* headerName,
-    _Out_ const_utf8_string* headerValue
+    _Out_ UTF8CSTR* headerName,
+    _Out_ UTF8CSTR* headerValue
 ) HC_NOEXCEPT;
 
 /// <summary>

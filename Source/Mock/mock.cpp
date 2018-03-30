@@ -127,7 +127,7 @@ bool Mock_Internal_HCHttpCallPerform(
         return false;
     }
 
-    const_utf8_string str;
+    UTF8CSTR str;
     HCHttpCallResponseGetResponseString(matchingMock, &str);
     HCHttpCallResponseSetResponseString(originalCall, str);
 
@@ -142,8 +142,8 @@ bool Mock_Internal_HCHttpCallPerform(
     uint32_t numheaders;
     HCHttpCallResponseGetNumHeaders(matchingMock, &numheaders);
 
-    const_utf8_string str1;
-    const_utf8_string str2;
+    UTF8CSTR str1;
+    UTF8CSTR str2;
     for (uint32_t i = 0; i < numheaders; i++)
     {
         HCHttpCallResponseGetHeaderAtIndex(matchingMock, i, &str1, &str2);
