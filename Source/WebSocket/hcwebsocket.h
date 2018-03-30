@@ -24,15 +24,15 @@ typedef struct HC_WEBSOCKET
 } HC_WEBSOCKET;
 
 HRESULT Internal_HCWebSocketConnect(
-    _In_z_ const_utf8_string uri,
-    _In_z_ const_utf8_string subProtocol,
+    _In_z_ UTF8CSTR uri,
+    _In_z_ UTF8CSTR subProtocol,
     _In_ hc_websocket_handle websocket,
     _In_ AsyncBlock* asyncBlock
     );
 
 HRESULT Internal_HCWebSocketSendMessage(
     _In_ hc_websocket_handle websocket,
-    _In_z_ const_utf8_string message,
+    _In_z_ UTF8CSTR message,
     _In_ AsyncBlock* asyncBlock
     );
 

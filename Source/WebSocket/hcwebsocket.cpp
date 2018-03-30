@@ -35,7 +35,7 @@ CATCH_RETURN()
 STDAPI 
 HCWebSocketSetProxyUri(
     _In_ hc_websocket_handle websocket,
-    _In_z_ const_utf8_string proxyUri
+    _In_z_ UTF8CSTR proxyUri
     ) HC_NOEXCEPT
 try
 {
@@ -49,8 +49,8 @@ CATCH_RETURN()
 STDAPI 
 HCWebSocketSetHeader(
     _In_ hc_websocket_handle websocket,
-    _In_z_ const_utf8_string headerName,
-    _In_z_ const_utf8_string headerValue
+    _In_z_ UTF8CSTR headerName,
+    _In_z_ UTF8CSTR headerValue
     ) HC_NOEXCEPT
 try 
 {
@@ -88,8 +88,8 @@ CATCH_RETURN()
 
 STDAPI 
 HCWebSocketConnect(
-    _In_z_ const_utf8_string uri,
-    _In_z_ const_utf8_string subProtocol,
+    _In_z_ UTF8CSTR uri,
+    _In_z_ UTF8CSTR subProtocol,
     _In_ hc_websocket_handle websocket,
     _In_ AsyncBlock* async
     ) HC_NOEXCEPT
@@ -125,7 +125,7 @@ CATCH_RETURN()
 STDAPI 
 HCWebSocketSendMessage(
     _In_ hc_websocket_handle websocket,
-    _In_z_ const_utf8_string message,
+    _In_z_ UTF8CSTR message,
     _In_ AsyncBlock* async
     ) HC_NOEXCEPT
 try
@@ -285,7 +285,7 @@ CATCH_RETURN()
 STDAPI 
 HCWebSocketGetProxyUri(
     _In_ hc_websocket_handle websocket,
-    _Out_ const_utf8_string* proxyUri
+    _Out_ UTF8CSTR* proxyUri
     ) HC_NOEXCEPT
 try
 {
@@ -302,8 +302,8 @@ CATCH_RETURN()
 STDAPI 
 HCWebSocketGetHeader(
     _In_ hc_websocket_handle websocket,
-    _In_z_ const_utf8_string headerName,
-    _Out_ const_utf8_string* headerValue
+    _In_z_ UTF8CSTR headerName,
+    _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT
 try
 {
@@ -346,8 +346,8 @@ STDAPI
 HCWebSocketGetHeaderAtIndex(
     _In_ hc_websocket_handle websocket,
     _In_ uint32_t headerIndex,
-    _Out_ const_utf8_string* headerName,
-    _Out_ const_utf8_string* headerValue
+    _Out_ UTF8CSTR* headerName,
+    _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT
 try
 {

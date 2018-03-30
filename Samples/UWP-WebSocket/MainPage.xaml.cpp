@@ -109,7 +109,7 @@ MainPage::MainPage()
     InitializeComponent();
 
     HCGlobalInitialize();
-    HCSettingsSetLogLevel(HC_LOG_LEVEL::LOG_VERBOSE);
+    HCSettingsSetLogLevel(HCLogLevel_Verbose);
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(

@@ -9,8 +9,8 @@ using namespace xbox::httpclient;
 STDAPI 
 HCHttpCallRequestSetUrl(
     _In_ hc_call_handle call,
-    _In_z_ const_utf8_string method,
-    _In_z_ const_utf8_string url
+    _In_z_ UTF8CSTR method,
+    _In_z_ UTF8CSTR url
     ) HC_NOEXCEPT
 try 
 {
@@ -37,8 +37,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestGetUrl(
     _In_ hc_call_handle call,
-    _Outptr_ const_utf8_string* method,
-    _Outptr_ const_utf8_string* url
+    _Outptr_ UTF8CSTR* method,
+    _Outptr_ UTF8CSTR* url
     ) HC_NOEXCEPT
 try
 {
@@ -87,7 +87,7 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestSetRequestBodyString(
     _In_ hc_call_handle call,
-    _In_z_ const_utf8_string requestBodyString
+    _In_z_ UTF8CSTR requestBodyString
 ) HC_NOEXCEPT
 {
     if (requestBodyString == nullptr)
@@ -133,7 +133,7 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestGetRequestBodyString(
     _In_ hc_call_handle call,
-    _Outptr_ const_utf8_string* requestBody
+    _Outptr_ UTF8CSTR* requestBody
 ) HC_NOEXCEPT
 try
 {
@@ -154,8 +154,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestSetHeader(
     _In_ hc_call_handle call,
-    _In_z_ const_utf8_string headerName,
-    _In_z_ const_utf8_string headerValue
+    _In_z_ UTF8CSTR headerName,
+    _In_z_ UTF8CSTR headerValue
     ) HC_NOEXCEPT
 try 
 {
@@ -176,8 +176,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestGetHeader(
     _In_ hc_call_handle call,
-    _In_z_ const_utf8_string headerName,
-    _Out_ const_utf8_string* headerValue
+    _In_z_ UTF8CSTR headerName,
+    _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT
 try 
 {
@@ -220,8 +220,8 @@ STDAPI
 HCHttpCallRequestGetHeaderAtIndex(
     _In_ hc_call_handle call,
     _In_ uint32_t headerIndex,
-    _Out_ const_utf8_string* headerName,
-    _Out_ const_utf8_string* headerValue
+    _Out_ UTF8CSTR* headerName,
+    _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT
 try
 {
