@@ -30,14 +30,14 @@ public:
     }
 
     void perform_async(
-        _In_ hc_call_handle call,
+        _In_ hc_call_handle_t call,
         _In_ AsyncBlock* asyncBlock
         );
 };
 
 
 void Internal_HCHttpCallPerform(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -48,7 +48,7 @@ void Internal_HCHttpCallPerform(
 
 
 void uwp_http_task::perform_async(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -119,45 +119,53 @@ void uwp_http_task::perform_async(
         {
             try
             {
-                void* callContext;
+                void* callContext = nullptr;
                 HCHttpCallGetContext(call, &callContext);
                 uwp_http_task* uwpHttpTask = static_cast<uwp_http_task*>(callContext); // TODO: cleanup at close
-                uwpHttpTask->m_getHttpAsyncOpStatus = status;
-                HttpResponseMessage^ httpResponse = asyncOp->GetResults();
-
-                uint32_t statusCode = (uint32_t)httpResponse->StatusCode;
-                HCHttpCallResponseSetStatusCode(call, statusCode);
-
-                auto view = httpResponse->Headers->GetView();
-                auto iter = view->First();
-                while (iter->MoveNext())
+                if (uwpHttpTask != nullptr)
                 {
-                    auto cur = iter->Current;
-                    auto headerName = cur->Key;
-                    auto headerValue = cur->Value;
-                    http_internal_string aHeaderName = utf8_from_utf16(headerName->Data());
-                    http_internal_string aHeaderValue = utf8_from_utf16(headerValue->Data());
-                    HCHttpCallResponseSetHeader(call, aHeaderName.c_str(), aHeaderValue.c_str());
+                    uwpHttpTask->m_getHttpAsyncOpStatus = status;
+                    HttpResponseMessage^ httpResponse = asyncOp->GetResults();
+
+                    uint32_t statusCode = (uint32_t)httpResponse->StatusCode;
+                    HCHttpCallResponseSetStatusCode(call, statusCode);
+
+                    auto view = httpResponse->Headers->GetView();
+                    auto iter = view->First();
+                    while (iter->MoveNext())
+                    {
+                        auto cur = iter->Current;
+                        auto headerName = cur->Key;
+                        auto headerValue = cur->Value;
+                        http_internal_string aHeaderName = utf8_from_utf16(headerName->Data());
+                        http_internal_string aHeaderValue = utf8_from_utf16(headerValue->Data());
+                        HCHttpCallResponseSetHeader(call, aHeaderName.c_str(), aHeaderValue.c_str());
+                    }
+
+                    uwpHttpTask->m_readAsStringAsyncOp = httpResponse->Content->ReadAsStringAsync();
+                    uwpHttpTask->m_readAsStringAsyncOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<Platform::String^, unsigned long long>(
+                        [call, asyncBlock](IAsyncOperationWithProgress<Platform::String^, unsigned long long>^ asyncOp, AsyncStatus status)
+                    {
+                        try
+                        {
+                            Platform::String^ httpResponseBody = asyncOp->GetResults();
+                            http_internal_string aHttpResponseBody = utf8_from_utf16(httpResponseBody->Data());
+                            HCHttpCallResponseSetResponseString(call, aHttpResponseBody.c_str());
+                            CompleteAsync(asyncBlock, S_OK, 0);
+                        }
+                        catch (Platform::Exception^ ex)
+                        {
+                            HRESULT errCode = (SUCCEEDED(ex->HResult)) ? S_OK : E_FAIL;
+                            HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
+                            CompleteAsync(asyncBlock, ex->HResult, 0);
+                        }
+                    });
                 }
-
-                uwpHttpTask->m_readAsStringAsyncOp = httpResponse->Content->ReadAsStringAsync();
-                uwpHttpTask->m_readAsStringAsyncOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<Platform::String^, unsigned long long>(
-                    [call, asyncBlock](IAsyncOperationWithProgress<Platform::String^, unsigned long long>^ asyncOp, AsyncStatus status)
+                else
                 {
-                    try
-                    {
-                        Platform::String^ httpResponseBody = asyncOp->GetResults();
-                        http_internal_string aHttpResponseBody = utf8_from_utf16(httpResponseBody->Data());
-                        HCHttpCallResponseSetResponseString(call, aHttpResponseBody.c_str());
-                        CompleteAsync(asyncBlock, S_OK, 0);
-                    }
-                    catch (Platform::Exception^ ex)
-                    {
-                        HRESULT errCode = (SUCCEEDED(ex->HResult)) ? S_OK : E_FAIL;
-                        HCHttpCallResponseSetNetworkErrorCode(call, errCode, ex->HResult);
-                        CompleteAsync(asyncBlock, ex->HResult, 0);
-                    }
-                });
+                    HCHttpCallResponseSetNetworkErrorCode(call, E_FAIL, E_FAIL);
+                    CompleteAsync(asyncBlock, E_FAIL, 0);
+                }
             }
             catch (Platform::Exception^ ex)
             {

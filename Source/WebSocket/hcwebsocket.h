@@ -26,17 +26,17 @@ typedef struct HC_WEBSOCKET
 HRESULT Internal_HCWebSocketConnect(
     _In_z_ UTF8CSTR uri,
     _In_z_ UTF8CSTR subProtocol,
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ AsyncBlock* asyncBlock
     );
 
 HRESULT Internal_HCWebSocketSendMessage(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR message,
     _In_ AsyncBlock* asyncBlock
     );
 
 HRESULT Internal_HCWebSocketDisconnect(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     );

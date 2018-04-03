@@ -11,10 +11,10 @@
 /// The callback definition used by HCGlobalSetHttpCallPerformFunction().
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="taskHandle">The handle to the task</param>
+/// <param name="asyncBlock">The asyncBlock of the async task</param>
 typedef void
 (STDAPIVCALLTYPE* HCCallPerformFunction)(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     );
 
@@ -50,7 +50,7 @@ STDAPI HCGlobalGetHttpCallPerformFunction(
 /// <param name="context">the context pointer attached to this call object</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallGetContext(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ void** context
     ) HC_NOEXCEPT;
 
@@ -61,7 +61,7 @@ STDAPI HCHttpCallGetContext(
 /// <param name="context">the context pointer attached to this call object</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallSetContext(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ void* context
     ) HC_NOEXCEPT;
 
@@ -77,7 +77,7 @@ STDAPI HCHttpCallSetContext(
 /// <param name="url">URL for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetUrl(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _Outptr_ UTF8CSTR* method,
     _Outptr_ UTF8CSTR* url
     ) HC_NOEXCEPT;
@@ -90,7 +90,7 @@ STDAPI HCHttpCallRequestGetUrl(
 /// <param name="requestBodySize">The request body bytes size in bytes of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyBytes(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
     ) HC_NOEXCEPT;
@@ -102,7 +102,7 @@ STDAPI HCHttpCallRequestGetRequestBodyBytes(
 /// <param name="requestBody">The request body of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyString(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _Outptr_ UTF8CSTR* requestBody
     ) HC_NOEXCEPT;
 
@@ -114,7 +114,7 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
 /// <param name="headerValue">request header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetHeader(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_z_ UTF8CSTR headerName,
     _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT;
@@ -126,7 +126,7 @@ STDAPI HCHttpCallRequestGetHeader(
 /// <param name="numHeaders">the number of request headers in the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetNumHeaders(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _Out_ uint32_t* numHeaders
     ) HC_NOEXCEPT;
 
@@ -140,7 +140,7 @@ STDAPI HCHttpCallRequestGetNumHeaders(
 /// <param name="headerValue">Request header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetHeaderAtIndex(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ uint32_t headerIndex,
     _Out_ UTF8CSTR* headerName,
     _Out_ UTF8CSTR* headerValue
@@ -154,7 +154,7 @@ STDAPI HCHttpCallRequestGetHeaderAtIndex(
 /// <param name="retryAllowed">If retry is allowed for this HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRetryAllowed(
-    _In_opt_ hc_call_handle call,
+    _In_opt_ hc_call_handle_t call,
     _Out_ bool* retryAllowed
     ) HC_NOEXCEPT;
 
@@ -166,7 +166,7 @@ STDAPI HCHttpCallRequestGetRetryAllowed(
 /// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail.  1-1000 are reserved for XSAPI</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRetryCacheId(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _Out_ uint32_t* retryAfterCacheId
     ) HC_NOEXCEPT;
 
@@ -178,7 +178,7 @@ STDAPI HCHttpCallRequestGetRetryCacheId(
 /// <param name="timeoutInSeconds">the timeout for this HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetTimeout(
-    _In_opt_ hc_call_handle call,
+    _In_opt_ hc_call_handle_t call,
     _Out_ uint32_t* timeoutInSeconds
     ) HC_NOEXCEPT;
 
@@ -208,7 +208,7 @@ STDAPI HCHttpCallRequestGetTimeout(
 /// <param name="retryDelayInSeconds">The retry delay in seconds</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRetryDelay(
-    _In_opt_ hc_call_handle call,
+    _In_opt_ hc_call_handle_t call,
     _In_ uint32_t* retryDelayInSeconds
     ) HC_NOEXCEPT;
 
@@ -231,7 +231,7 @@ STDAPI HCHttpCallRequestGetRetryDelay(
 /// <param name="timeoutWindowInSeconds">The timeout window in seconds</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetTimeoutWindow(
-    _In_opt_ hc_call_handle call,
+    _In_opt_ hc_call_handle_t call,
     _Out_ uint32_t* timeoutWindowInSeconds
     ) HC_NOEXCEPT;
 
@@ -249,7 +249,7 @@ STDAPI HCHttpCallRequestGetTimeoutWindow(
 /// <param name="enableAssertsForThrottling">True if assert are enabled if throttled</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetAssertsForThrottling(
-    _In_opt_ hc_call_handle call,
+    _In_opt_ hc_call_handle_t call,
     _Out_ bool* enableAssertsForThrottling
     ) HC_NOEXCEPT;
 
@@ -265,7 +265,7 @@ STDAPI HCHttpCallRequestGetAssertsForThrottling(
 /// <param name="responseString">the response body string of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetResponseString(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_z_ UTF8CSTR responseString
     ) HC_NOEXCEPT;
 
@@ -276,7 +276,7 @@ STDAPI HCHttpCallResponseSetResponseString(
 /// <param name="statusCode">the HTTP status code of the HTTP call response</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetStatusCode(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ uint32_t statusCode
     ) HC_NOEXCEPT;
 
@@ -288,7 +288,7 @@ STDAPI HCHttpCallResponseSetStatusCode(
 /// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetNetworkErrorCode(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
     ) HC_NOEXCEPT;
@@ -301,7 +301,7 @@ STDAPI HCHttpCallResponseSetNetworkErrorCode(
 /// <param name="headerValue">Response header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetHeader(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_z_ UTF8CSTR headerName,
     _In_z_ UTF8CSTR headerValue
     ) HC_NOEXCEPT;
@@ -316,25 +316,28 @@ STDAPI HCHttpCallResponseSetHeader(
 /// On UWP and XDK, the thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket
 /// </summary>
 /// <param name="uri">The URI to connect to</param>
+/// <param name="subProtocol">The subProtocol to connect to</param>
 /// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="args">Struct for describing the WebSocket connection args</param>
+/// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketConnectFunction)(
     _In_z_ UTF8CSTR uri,
     _In_z_ UTF8CSTR subProtocol,
-    _In_ hc_websocket_handle websocket,
-    _In_ AsyncBlock* async
+    _In_ hc_websocket_handle_t websocket,
+    _In_ AsyncBlock* asyncBlock
     );
 
 /// <summary>
 /// Send message the WebSocket
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
+/// <param name="message">The message to send</param>
+/// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketSendMessageFunction)(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR message,
     _In_ AsyncBlock* async
     );
@@ -343,10 +346,11 @@ typedef HRESULT
 /// Closes the WebSocket
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
+/// <param name="closeStatus">The close status of the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketDisconnectFunction)(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     );
 
@@ -392,7 +396,7 @@ HCGlobalGetWebSocketFunctions(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetProxyUri(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _Out_ UTF8CSTR* proxyUri
     ) HC_NOEXCEPT;
 
@@ -405,7 +409,7 @@ HCWebSocketGetProxyUri(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetHeader(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR headerName,
     _Out_ UTF8CSTR* headerValue
     ) HC_NOEXCEPT;
@@ -418,7 +422,7 @@ HCWebSocketGetHeader(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetNumHeaders(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _Out_ uint32_t* numHeaders
     ) HC_NOEXCEPT;
 
@@ -433,7 +437,7 @@ HCWebSocketGetNumHeaders(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetHeaderAtIndex(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ uint32_t headerIndex,
     _Out_ UTF8CSTR* headerName,
     _Out_ UTF8CSTR* headerValue

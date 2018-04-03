@@ -509,7 +509,7 @@ STDAPI GetAsyncResult(
         }
         else if (token != state->token)
         {
-            WCHAR buf[100];
+            WCHAR buf[100] = { 0 };
             if (state->function != nullptr)
             {
                 swprintf_s(
