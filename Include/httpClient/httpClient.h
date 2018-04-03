@@ -27,7 +27,7 @@
 /// <returns>A pointer to an allocated block of memory of the specified size, or a null 
 /// pointer if allocation failed.</returns>
 /// <param name="size">The size of the allocation to be made. This value will never be zero.</param>
-/// <param name="memoryTypeId">An opaque identifier representing the internal category of 
+/// <param name="memoryType">An opaque identifier representing the internal category of 
 /// memory being allocated.</param>
 typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
 (STDAPIVCALLTYPE* HCMemAllocFunction)(
@@ -45,7 +45,7 @@ typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
 /// </summary>
 /// <param name="pointer">The pointer to the memory buffer previously allocated. This value will
 /// never be a null pointer.</param>
-/// <param name="memoryTypeId">An opaque identifier representing the internal category of 
+/// <param name="memoryType">An opaque identifier representing the internal category of 
 /// memory being allocated.</param>
 typedef void
 (STDAPIVCALLTYPE* HCMemFreeFunction)(
@@ -617,17 +617,23 @@ typedef struct WebSocketCompletionResult
 /// <param name="uri">The URI to connect to</param>
 /// <param name="subProtocol">The subProtocol to connect to</param>
 /// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="args">Struct for describing the WebSocket connection args</param>
+/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCWebSocketConnect(
     _In_z_ UTF8CSTR uri,
     _In_z_ UTF8CSTR subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _In_ AsyncBlock* async
+    _In_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
+/// <summary>
+/// Gets the result for HCGetWebSocketConnectResult.
+/// </summary>
+/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="result">Pointer to the result payload</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCGetWebSocketConnectResult(
-    _In_ AsyncBlock* async,
+    _In_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
@@ -635,15 +641,23 @@ STDAPI HCGetWebSocketConnectResult(
 /// Send message the WebSocket
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
+/// <param name="message">The message to send</param>
+/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketSendMessage(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR message,
-    _In_ AsyncBlock* async
+    _In_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
+/// <summary>
+/// Gets the result from HCWebSocketSendMessage 
+/// </summary>
+/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="result">Pointer to the result payload</param>
+/// <returns>Returns the duplicated handle.</returns>
 STDAPI HCGetWebSocketSendMessageResult(
-    _In_ AsyncBlock* async,
+    _In_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
