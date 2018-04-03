@@ -40,7 +40,7 @@ public:
     void OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args);
 
 private:
-    hc_websocket_handle m_websocket;
+    hc_websocket_handle_t m_websocket;
 };
 
 class winrt_websocket_task : public xbox::httpclient::hc_task
@@ -60,7 +60,7 @@ public:
 
     std::mutex m_outgoingMessageQueueLock;
     std::queue<std::shared_ptr<websocket_outgoing_message>> m_outgoingMessageQueue;
-    hc_websocket_handle m_websocketHandle;
+    hc_websocket_handle_t m_websocketHandle;
 };
 
 void MessageWebSocketSendMessage(
@@ -141,7 +141,7 @@ HRESULT WebsocketConnectDoWork(
     )
 try
 {
-    hc_websocket_handle websocket = static_cast<hc_websocket_handle>(executionRoutineContext);
+    hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(executionRoutineContext);
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Connect executing", websocket->id);
 
     std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
@@ -233,7 +233,7 @@ CATCH_RETURN()
 
 HRESULT WebsocketConnectGetResult(_Inout_ AsyncProviderData* data)
 {
-    hc_websocket_handle websocket = static_cast<hc_websocket_handle>(data->context);
+    hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(data->context);
     std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
 
     WebSocketCompletionResult result = {};
@@ -248,7 +248,7 @@ HRESULT WebsocketConnectGetResult(_Inout_ AsyncProviderData* data)
 HRESULT Internal_HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -279,7 +279,7 @@ HRESULT Internal_HCWebSocketConnect(
 }
 
 HRESULT Internal_HCWebSocketSendMessage(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message,
     _In_ AsyncBlock* asyncBlock
     )
@@ -311,7 +311,7 @@ HRESULT Internal_HCWebSocketSendMessage(
         {
             sendInProgress = true;
         }
-        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %d", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
+        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %lld", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
 
         websocketTask->m_outgoingMessageQueue.push(msg);
     }
@@ -467,7 +467,7 @@ void MessageWebSocketSendMessage(
 
 
 HRESULT Internal_HCWebSocketDisconnect(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {

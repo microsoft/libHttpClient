@@ -19,7 +19,7 @@ const int RETRY_AFTER_CAP_IN_SEC = 15;
 
 STDAPI 
 HCHttpCallCreate(
-    _Out_ hc_call_handle* callHandle
+    _Out_ hc_call_handle_t* callHandle
     ) HC_NOEXCEPT
 try 
 {
@@ -48,8 +48,8 @@ try
 }
 CATCH_RETURN()
 
-hc_call_handle HCHttpCallDuplicateHandle(
-    _In_ hc_call_handle call
+hc_call_handle_t HCHttpCallDuplicateHandle(
+    _In_ hc_call_handle_t call
     ) HC_NOEXCEPT
 try
 {
@@ -67,7 +67,7 @@ CATCH_RETURN_WITH(nullptr)
 
 STDAPI 
 HCHttpCallCloseHandle(
-    _In_ hc_call_handle call
+    _In_ hc_call_handle_t call
     ) HC_NOEXCEPT
 try 
 {
@@ -90,7 +90,7 @@ CATCH_RETURN()
 
 HRESULT perform_http_call(
     _In_ std::shared_ptr<http_singleton> httpSingleton,
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -101,7 +101,7 @@ HRESULT perform_http_call(
         {
             case AsyncOp_DoWork:
             {
-                hc_call_handle call = static_cast<hc_call_handle>(data->context);
+                hc_call_handle_t call = static_cast<hc_call_handle_t>(data->context);
                 auto httpSingleton = get_http_singleton(false);
                 if (nullptr == httpSingleton)
                     return E_INVALIDARG;
@@ -148,7 +148,7 @@ HRESULT perform_http_call(
     return hr;
 }
 
-void clear_http_call_response(_In_ hc_call_handle call)
+void clear_http_call_response(_In_ hc_call_handle_t call)
 {
     call->responseString.clear();
     call->responseHeaders.clear();
@@ -184,7 +184,7 @@ std::chrono::seconds GetRetryAfterHeaderTime(_In_ HC_CALL* call)
 }
 
 bool http_call_should_retry(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ const chrono_clock_t::time_point& responseReceivedTime)
 {
     if (!call->retryAllowed)
@@ -211,7 +211,7 @@ bool http_call_should_retry(
         HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
         std::chrono::seconds timeoutWindow = std::chrono::seconds(timeoutWindowInSeconds);
         std::chrono::milliseconds remainingTimeBeforeTimeout = timeoutWindow - timeElapsedSinceFirstCall;
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %d ms", call->id, remainingTimeBeforeTimeout.count());
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", call->id, remainingTimeBeforeTimeout.count());
         if (remainingTimeBeforeTimeout.count() <= MIN_HTTP_TIMEOUT_IN_MS) // Need at least 5 seconds to bother making a call
         {
             return false;
@@ -241,7 +241,7 @@ bool http_call_should_retry(
         {
             call->delayBeforeRetry = waitTime;
         }
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %d ms", call->id, call->delayBeforeRetry.count());
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %lld ms", call->id, call->delayBeforeRetry.count());
 
         if (remainingTimeBeforeTimeout < call->delayBeforeRetry + std::chrono::milliseconds(MIN_HTTP_TIMEOUT_IN_MS))
         {
@@ -358,7 +358,7 @@ void retry_http_call_until_done(
 
         if (http_call_should_retry(retryContext->call, responseReceivedTime))
         {
-            HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %d ms",
+            HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms",
                 retryContext->call->id,
                 retryContext->call->delayBeforeRetry.count());
 
@@ -381,7 +381,7 @@ void retry_http_call_until_done(
 
 STDAPI 
 HCHttpCallPerform(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
@@ -428,7 +428,7 @@ CATCH_RETURN()
 
 STDAPI_(uint64_t)
 HCHttpCallGetId(
-    _In_ hc_call_handle call
+    _In_ hc_call_handle_t call
     ) HC_NOEXCEPT
 try
 {
@@ -442,7 +442,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallSetContext(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ void* context
     ) HC_NOEXCEPT
 try
@@ -460,7 +460,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallGetContext(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ void** context
     ) HC_NOEXCEPT
 try

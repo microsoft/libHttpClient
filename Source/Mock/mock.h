@@ -4,4 +4,4 @@
 #pragma once
 #include "pch.h"
 
-bool Mock_Internal_HCHttpCallPerform(_In_ hc_call_handle originalCall);
+bool Mock_Internal_HCHttpCallPerform(_In_ hc_call_handle_t originalCall);

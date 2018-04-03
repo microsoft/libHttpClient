@@ -117,7 +117,7 @@ HC_CALL* GetMatchingMock(
 }
 
 bool Mock_Internal_HCHttpCallPerform(
-    _In_ hc_call_handle originalCallHandle
+    _In_ hc_call_handle_t originalCallHandle
     )
 {
     HC_CALL* originalCall = static_cast<HC_CALL*>(originalCallHandle);
