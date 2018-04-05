@@ -339,7 +339,7 @@ typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketSendMessageFunction)(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR message,
-    _In_ AsyncBlock* async
+    _In_ AsyncBlock* asyncBlock
     );
 
 /// <summary>
