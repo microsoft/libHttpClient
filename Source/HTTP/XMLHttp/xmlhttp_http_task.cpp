@@ -11,7 +11,7 @@
 #include "http_request_stream.h"
 
 xmlhttp_http_task::xmlhttp_http_task(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     ) :
     m_statusCode(0),
@@ -32,7 +32,7 @@ xmlhttp_http_task::~xmlhttp_http_task()
 }
 
 void xmlhttp_http_task::perform_async(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -268,7 +268,7 @@ http_buffer& xmlhttp_http_task::response_buffer()
     return m_responseBuffer;
 }
 
-hc_call_handle xmlhttp_http_task::call()
+hc_call_handle_t xmlhttp_http_task::call()
 {
     return m_call;
 }
@@ -279,7 +279,7 @@ AsyncBlock* xmlhttp_http_task::async_block()
 }
 
 void Internal_HCHttpCallPerform(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     )
 {

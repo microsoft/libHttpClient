@@ -46,7 +46,7 @@ void STDAPIVCALLTYPE MemFree(
 
 static bool g_PerformCallbackCalled = false;
 static void STDAPIVCALLTYPE PerformCallback(
-    _In_ hc_call_handle call,
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -123,7 +123,7 @@ public:
         VERIFY_IS_NOT_NULL(func);
 
         HCGlobalSetHttpCallPerformFunction(&PerformCallback);
-        hc_call_handle call;
+        hc_call_handle_t call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
 
@@ -143,7 +143,7 @@ public:
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
-            hc_call_handle call = static_cast<hc_call_handle>(asyncBlock->context);
+            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             uint32_t statusCode = 0;
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
@@ -210,7 +210,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestCall);
 
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
-        hc_call_handle call = nullptr;
+        hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_IS_NOT_NULL(call);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
@@ -221,7 +221,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequest);
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
-        hc_call_handle call = nullptr;
+        hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
@@ -271,7 +271,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
-        hc_call_handle call = nullptr;
+        hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
         uint32_t numHeaders = 0;
@@ -319,7 +319,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestResponse);
 
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
-        hc_call_handle call = nullptr;
+        hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetResponseString(call, "test1"));
@@ -349,7 +349,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
-        hc_call_handle call = nullptr;
+        hc_call_handle_t call = nullptr;
         HCHttpCallCreate(&call);
 
         uint32_t numHeaders = 0;

@@ -287,7 +287,7 @@ bool should_fast_fail(
     // If the Retry-After will happen first, just wait till Retry-After is done, and don't fast fail
     if (apiState.retryAfterTime < timeoutTime)
     {
-        auto retryAfterCountInMS = static_cast<uint32_t>(remainingTimeBeforeRetryAfterInMS.count());
+        call->delayBeforeRetry = remainingTimeBeforeRetryAfterInMS;
         return false;
     }
     else

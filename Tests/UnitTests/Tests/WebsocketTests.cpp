@@ -25,7 +25,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
 bool g_PerformMessageCallbackCalled = false;
 void STDAPIVCALLTYPE PerformMessageCallback(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR incomingBodyString
     )
 {
@@ -34,7 +34,7 @@ void STDAPIVCALLTYPE PerformMessageCallback(
 
 bool g_PerformCloseCallbackCalled = false;
 void STDAPIVCALLTYPE PerformCloseCallback(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {
@@ -56,14 +56,14 @@ extern bool g_memFreeCalled;
 
 
 void Internal_HCWebSocketMessage(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR incomingBodyString
     )
 {
 }
 
 void Internal_HCWebSocketCloseEvent(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
 )
 {
@@ -76,7 +76,7 @@ bool g_HCWebSocketConnect_Called = false;
 HRESULT Test_Internal_HCWebSocketConnect(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ AsyncBlock* asyncBlock
     )
 {
@@ -86,7 +86,7 @@ HRESULT Test_Internal_HCWebSocketConnect(
 
 bool g_HCWebSocketSendMessage_Called = false;
 HRESULT Test_Internal_HCWebSocketSendMessage(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message,
     _In_ AsyncBlock* asyncBlock
     )
@@ -97,7 +97,7 @@ HRESULT Test_Internal_HCWebSocketSendMessage(
 
 bool g_HCWebSocketDisconnect_Called = false;
 HRESULT Test_Internal_HCWebSocketDisconnect(
-    _In_ hc_websocket_handle websocket,
+    _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {
@@ -136,10 +136,10 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCMemSetFunctions(&MemAlloc, &MemFree));
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
 
-        hc_websocket_handle websocket;
+        hc_websocket_handle_t websocket;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket));
 
-        hc_websocket_handle websocket2;
+        hc_websocket_handle_t websocket2;
         websocket2 = HCWebSocketDuplicateHandle(websocket);
         VERIFY_IS_NOT_NULL(websocket2);
         g_memFreeCalled = false;
@@ -169,7 +169,7 @@ public:
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
-        hc_websocket_handle websocket;
+        hc_websocket_handle_t websocket;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket));
         VERIFY_IS_NOT_NULL(websocket);
 
@@ -201,7 +201,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
-        hc_websocket_handle call = nullptr;
+        hc_websocket_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&call));
 
         uint32_t numHeaders = 0;
