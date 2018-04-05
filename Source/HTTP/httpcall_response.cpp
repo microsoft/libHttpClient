@@ -207,9 +207,24 @@ try
         return E_INVALIDARG;
     }
 
-    call->responseHeaders[headerName] = headerValue;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %s=%s",
-        call->id, headerName, headerValue);
+    auto it = call->responseHeaders.find(headerName);
+    if (it != call->responseHeaders.end())
+    {
+        // Duplicated response header found. We must concatenate it with the existing headers
+        http_internal_string& newHeaderValue = it->second;
+        newHeaderValue.append(", ");
+        newHeaderValue.append(headerValue);
+
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: Duplicated header %s=%s",
+            call->id, headerName, newHeaderValue.c_str());
+    }
+    else
+    {
+        call->responseHeaders[headerName] = headerValue;
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %s=%s",
+            call->id, headerName, headerValue);
+    }
+
     return S_OK;
 }
 CATCH_RETURN()
