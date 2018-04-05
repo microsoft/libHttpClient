@@ -26,12 +26,12 @@ If you want to contribute to the project, please talk to us to avoid overlap.
 - **Built in retry** support according to Xbox Live best practices (obey Retry-After header, jitter wait, etc) according to https://developer.microsoft.com/en-us/games/xbox/docs/xboxlive/using-xbox-live/best-practices/best-practices-for-calling-xbox-live
 - **Xbox Live throttle** handling logic
 - Built-in API support to switch to **mock layer**
-- Does **not require C++/CX** to build on UWP or ERA
 - **Open source** project on GitHub
 - Binaries eventually on Nuget.org as **Nuget packages**, and maybe VcPkg
 - Unit tests via TAEF
-- End to end samples for UWP C++, UWP C# (with P/Invoke layer), XDK ERA, iOS, and Android
-- Support for cancellation?
+- End to end samples for UWP C++, XDK ERA, Win32, iOS, and Android
+- No support for support for cancellation
+- TBD: Does **not require C++/CX** to build on UWP or ERA 
 
 ## HTTP API Usage
 
