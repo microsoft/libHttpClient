@@ -28,7 +28,7 @@ class winhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
     winhttp_http_task(
-        _In_ hc_call_handle call,
+        _In_ hc_call_handle_t call,
         _In_ AsyncBlock* asyncBlock
         );
     ~winhttp_http_task();
@@ -36,16 +36,16 @@ public:
     void perform_async();
 
 private:
-    static HRESULT query_header_length(_In_ hc_call_handle call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
+    static HRESULT query_header_length(_In_ hc_call_handle_t call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
     static uint32_t parse_status_code(
-        _In_ hc_call_handle call,
+        _In_ hc_call_handle_t call,
         _In_ HINTERNET hRequestHandle,
         _In_ winhttp_http_task* pRequestContext);
 
     static void read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD bytesRead);
     static void _multiple_segment_write_data(_In_ winhttp_http_task* pRequestContext);
 
-    static void parse_headers_string(_In_ hc_call_handle call, _In_ wchar_t* headersStr);
+    static void parse_headers_string(_In_ hc_call_handle_t call, _In_ wchar_t* headersStr);
 
     static void callback_status_request_error(
         _In_ HINTERNET hRequestHandle,
@@ -102,7 +102,7 @@ private:
         _In_ void* statusInfo,
         DWORD statusInfoLength);
 
-    hc_call_handle m_call;
+    hc_call_handle_t m_call;
     AsyncBlock* m_asyncBlock;
 
     HINTERNET m_hSession;
