@@ -1,29 +1,30 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.#include "stdafx.h"
 #include "pch.h"
-#include "httpClient/async.h"
-#include "httpClient/asyncQueue.h"
-#include "CallbackLib.h"
+#include "Async.h"
+#include "AsyncQueue.h"
+#include "CriticalThread.h"
 
-#define QUEUE_SIGNATURE 0x41515545
+#ifdef _WIN32
+#include "Callback.h"
+#else
+#include "Callback_STL.h"
+#endif
 
-#define SHARED_UNINITIALIZED 0x0
-#define SHARED_INITIALIZING  0x1
-#define SHARED_INITIALIZED   0x2
-
-#define INVALID_SHARE_ID     0xFFFFFFFFFFFFFFFF
+#define QUEUE_SIGNATURE     0x41515545
+#define INVALID_SHARE_ID    0xFFFFFFFFFFFFFFFF
 
 // Support for shared queues
-static LIST_ENTRY _sharedList;
-static CRITICAL_SECTION _sharedCs;
-static DWORD _sharedInit = SHARED_UNINITIALIZED;
+static LIST_ENTRY s_sharedList;
+static std::mutex s_sharedCs;
+static INIT_ONCE s_sharedInit = INIT_ONCE_STATIC_INIT;
 
 #define MAKE_SHARED_ID(threadId, workMode, completionMode) \
     (uint64_t)(((uint64_t)workMode) << 48 | ((uint64_t)completionMode) << 32 | threadId)
 
 struct AsyncQueueCallbackSubmittedData
 {
-    async_queue_t queue;
+    async_queue_handle_t queue;
     AsyncQueueCallbackType type;
 };
 
@@ -37,195 +38,184 @@ struct AsyncQueueCallbackSubmittedThunk
 
 typedef Callback<AsyncQueueCallbackSubmitted, AsyncQueueCallbackSubmittedData, AsyncQueueCallbackSubmittedThunk> SubmitCallback;
 
-struct QueueEntry
-{
-    LIST_ENTRY Entry;
-    uint32_t* RefsPointer;
-    void* Context;
-    AsyncQueueCallback* Callback;
-};
-
 class Queue
 {
 public:
 
     Queue()
-        : ApcThread(nullptr)
-        , Event(nullptr)
-        , Work(nullptr)
-        , Owner(nullptr)
-        , Type(AsyncQueueCallbackType_Work)
-        , DispatchMode(AsyncQueueDispatchMode_Manual)
-        , CallbackSubmitted(nullptr)
-        , IsApcQueued(false)
     {
+        InitializeListHead(&m_queueHead);
     }
 
     ~Queue()
     {
-        EnterCriticalSection(&Cs);
-
-        PLIST_ENTRY listEntry = RemoveHeadList(&QueueHead);
-
-        while (listEntry != &QueueHead)
         {
-            QueueEntry* entry = CONTAINING_RECORD(listEntry, QueueEntry, Entry);
-            InterlockedDecrement(entry->RefsPointer);
-            delete entry;
-            listEntry = RemoveHeadList(&QueueHead);
+            std::lock_guard<std::mutex> lock(m_cs);
+            PLIST_ENTRY listEntry = RemoveHeadList(&m_queueHead);
+
+            while (listEntry != &m_queueHead)
+            {
+                QueueEntry* entry = CONTAINING_RECORD(listEntry, QueueEntry, entry);
+                (*entry->refsPointer)--;
+                delete entry;
+                listEntry = RemoveHeadList(&m_queueHead);
+            }
         }
 
-        LeaveCriticalSection(&Cs);
-        DeleteCriticalSection(&Cs);
-
-        if (Event != nullptr)
+        if (m_event != nullptr)
         {
-            CloseHandle(Event);
+            CloseHandle(m_event);
         }
 
-        if (ApcThread != nullptr)
+        if (m_apcThread != nullptr)
         {
-            CloseHandle(ApcThread);
+            CloseHandle(m_apcThread);
         }
 
-        if (Work != nullptr)
+        if (m_work != nullptr)
         {
-            CloseThreadpoolWork(Work);
+            WaitForThreadpoolWorkCallbacks(m_work, TRUE);
+            CloseThreadpoolWork(m_work);
         }
     }
 
-    HRESULT Initialize(async_queue_t owner, AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
+    HRESULT Initialize(async_queue_handle_t owner, AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
     {
-        Owner = owner;
-        Type = type;
-        CallbackSubmitted = submitCallback;
-        DispatchMode = mode;
-
-        InitializeCriticalSection(&Cs);
-        InitializeListHead(&QueueHead);
+        m_owner = owner;
+        m_type = type;
+        m_callbackSubmitted = submitCallback;
+        m_dispatchMode = mode;
 
         switch (mode)
         {
         case AsyncQueueDispatchMode_FixedThread:
-            if (!DuplicateHandle(
+            RETURN_IF_WIN32_BOOL_FALSE(DuplicateHandle(
                 GetCurrentProcess(), 
                 GetCurrentThread(), 
                 GetCurrentProcess(), 
-                &ApcThread, 0, 
+                &m_apcThread, 0, 
                 FALSE, 
-                DUPLICATE_SAME_ACCESS))
-            {
-                return HRESULT_FROM_WIN32(GetLastError());
-            }
+                DUPLICATE_SAME_ACCESS));
             break;
 
         case AsyncQueueDispatchMode_ThreadPool:
-            Work = CreateThreadpoolWork(TPCallback, this, nullptr);
-            if (Work == nullptr)
-            {
-                return HRESULT_FROM_WIN32(GetLastError());
-            }
+            m_work = CreateThreadpoolWork(TPCallback, this, nullptr);
+            RETURN_LAST_ERROR_IF_NULL(m_work);
         }
 
-        Event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        if (Event == nullptr)
-        {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
+        m_event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        RETURN_LAST_ERROR_IF_NULL(m_event);
 
         return S_OK;
     }
 
     HRESULT AppendItem(
-        uint32_t* refsPointer,
+        std::atomic<uint32_t>* refsPointer,
         AsyncQueueCallback* callback,
         void* context)
     {
         QueueEntry* entry = new (std::nothrow) QueueEntry;
-        if (entry == nullptr) return E_OUTOFMEMORY;
-        entry->RefsPointer = refsPointer;
-        entry->Callback = callback;
-        entry->Context = context;
+        RETURN_IF_NULL_ALLOC(entry);
 
-        EnterCriticalSection(&Cs);
-        InsertTailList(&QueueHead, &entry->Entry);
-        SetEvent(Event);
-        InterlockedIncrement(refsPointer);
-        bool queueApc = !IsApcQueued;
-        IsApcQueued = true;
-        LeaveCriticalSection(&Cs);
+        entry->refsPointer = refsPointer;
+        entry->callback = callback;
+        entry->context = context;
 
-        switch (DispatchMode)
+        bool queueCallback;
+
         {
-        case AsyncQueueDispatchMode_FixedThread:
-            if (queueApc && QueueUserAPC(APCCallback, ApcThread, (ULONG_PTR)this) == 0)
-            {
-                HRESULT result = HRESULT_FROM_WIN32(GetLastError());
-                InterlockedDecrement(refsPointer);
-                EnterCriticalSection(&Cs);
-                RemoveEntryList(&entry->Entry);
-                IsApcQueued = false;
-                LeaveCriticalSection(&Cs);
-                delete entry;
-                return result;
-            }
-            break;
+            std::lock_guard<std::mutex> lock(m_cs);
+            InsertTailList(&m_queueHead, &entry->entry);
+            SetEvent(m_event);
+            (*refsPointer)++;
+            queueCallback = !m_isCallbackQueued;
+            m_isCallbackQueued = true;
+        }
 
-        case AsyncQueueDispatchMode_ThreadPool:
-            SubmitThreadpoolWork(Work);
-            break;
+        if (queueCallback)
+        {
+            switch (m_dispatchMode)
+            {
+            case AsyncQueueDispatchMode_FixedThread:
+                if (QueueUserAPC(APCCallback, m_apcThread, (ULONG_PTR)this) == 0)
+                {
+                    HRESULT result = HRESULT_FROM_WIN32(GetLastError());
+                    std::lock_guard<std::mutex> lock(m_cs);
+                    (*refsPointer)--;
+                    RemoveEntryList(&entry->entry);
+                    m_isCallbackQueued = false;
+                    delete entry;
+                    return result;
+                }
+                break;
+
+            case AsyncQueueDispatchMode_ThreadPool:
+                SubmitThreadpoolWork(m_work);
+                break;
+            }
         }
 
         AsyncQueueCallbackSubmittedData data;
-        data.queue = Owner;
-        data.type = Type;
-        CallbackSubmitted->Invoke(&data);
+        data.queue = m_owner;
+        data.type = m_type;
+        (void)m_callbackSubmitted->Invoke(&data);
 
         return S_OK;
     }
 
     bool IsEmpty()
     {
-        EnterCriticalSection(&Cs);
-        bool empty = QueueHead.Flink == &QueueHead;
-        LeaveCriticalSection(&Cs);
+        std::lock_guard<std::mutex> lock(m_cs);
+        bool empty = m_queueHead.Flink == &m_queueHead;
+
+        if (empty)
+        {
+            empty = (m_processingCallback == 0);
+        }
+
         return empty;
     }
 
-    bool DrainOneItem(bool insideApc)
+    bool DrainOneItem(AsyncQueueDispatchMode dispatcher)
     {
         QueueEntry* entry = nullptr;
 
-        EnterCriticalSection(&Cs);
-        PLIST_ENTRY listEntry = RemoveHeadList(&QueueHead);
+        {
+            std::lock_guard<std::mutex> lock(m_cs);
+            PLIST_ENTRY listEntry = RemoveHeadList(&m_queueHead);
 
-        if (listEntry != &QueueHead)
-        {
-            entry = CONTAINING_RECORD(listEntry, QueueEntry, Entry);
-        }
-        else
-        {
-            ResetEvent(Event);
-            if (insideApc)
+            if (listEntry != &m_queueHead)
             {
-                IsApcQueued = false;
+                entry = CONTAINING_RECORD(listEntry, QueueEntry, entry);
+                m_processingCallback++;
+            }
+            else
+            {
+                ResetEvent(m_event);
+                if (dispatcher != AsyncQueueDispatchMode_Manual)
+                {
+                    m_isCallbackQueued = false;
+                }
             }
         }
-        LeaveCriticalSection(&Cs);
 
         if (entry != nullptr)
         {
-            entry->Callback(entry->Context);
-            InterlockedDecrement(entry->RefsPointer);
+            entry->callback(entry->context);
+            (*entry->refsPointer)--;
+            m_processingCallback--;
             delete entry;
         }
 
         return entry != nullptr;
     }
 
-    void DrainQueue(bool insideApc)
+    void DrainQueue(AsyncQueueDispatchMode dispatcher)
     {
-        while (DrainOneItem(insideApc));
+        while (DrainOneItem(dispatcher))
+        {
+            // Do nothing.
+        }
     }
 
     void RemoveCallbacks(
@@ -233,232 +223,229 @@ public:
         _In_opt_ void* predicateContext,
         _In_ AsyncQueueRemovePredicate* removePredicate)
     {
-        EnterCriticalSection(&Cs);
-        PLIST_ENTRY entry = QueueHead.Flink;
+        bool isEmpty;
 
-        while (entry != &QueueHead)
         {
-            QueueEntry* candidate = CONTAINING_RECORD(entry, QueueEntry, Entry);
-            entry = entry->Flink;
+            std::lock_guard<std::mutex> lock(m_cs);
+            PLIST_ENTRY entry = m_queueHead.Flink;
 
-            if (candidate->Callback == searchCallback && removePredicate(predicateContext, candidate->Context))
+            while (entry != &m_queueHead)
             {
-                RemoveEntryList(&candidate->Entry);
-                InterlockedDecrement(candidate->RefsPointer);
-                delete candidate;
+                QueueEntry* candidate = CONTAINING_RECORD(entry, QueueEntry, entry);
+                entry = entry->Flink;
+
+                if (candidate->callback == searchCallback && removePredicate(predicateContext, candidate->context))
+                {
+                    RemoveEntryList(&candidate->entry);
+                    (*candidate->refsPointer)--;
+                    delete candidate;
+                }
+            }
+
+            isEmpty = m_queueHead.Flink == &m_queueHead;
+            if (isEmpty)
+            {
+                ResetEvent(m_event);
             }
         }
 
-        bool isEmpty = QueueHead.Flink == &QueueHead;
-        if (isEmpty)
-        {
-            ResetEvent(Event);
-        }
-
-        LeaveCriticalSection(&Cs);
-
-        if (isEmpty && DispatchMode == AsyncQueueDispatchMode_FixedThread &&
-            GetThreadId(ApcThread) == GetCurrentThreadId())
+        if (isEmpty && m_dispatchMode == AsyncQueueDispatchMode_FixedThread &&
+            GetThreadId(m_apcThread) == GetCurrentThreadId())
         {
             SleepEx(0, TRUE);
         }
     }
 
-    bool Wait(DWORD timeout)
+    bool Wait(uint32_t timeout)
     {
-        DWORD w = WaitForSingleObject(Event, timeout);
+        uint32_t w = WaitForSingleObject(m_event, timeout);
         return (w == WAIT_OBJECT_0);
     }
 
 private:
 
-    CRITICAL_SECTION Cs;
-    LIST_ENTRY QueueHead;
-    async_queue_t Owner;
-    AsyncQueueCallbackType Type;
-    AsyncQueueDispatchMode DispatchMode;
-    SubmitCallback* CallbackSubmitted;
-    HANDLE ApcThread;
-    PTP_WORK Work;
-    HANDLE Event;
-    bool IsApcQueued;
+    async_queue_handle_t m_owner = nullptr;
+    AsyncQueueCallbackType m_type = AsyncQueueCallbackType_Work;
+    AsyncQueueDispatchMode m_dispatchMode = AsyncQueueDispatchMode_Manual;
+    SubmitCallback* m_callbackSubmitted = nullptr;
+    HANDLE m_apcThread = nullptr;
+    PTP_WORK m_work = nullptr;
+    HANDLE m_event = nullptr;
+    bool m_isCallbackQueued = false;
+    std::atomic<uint32_t> m_processingCallback = 0;
+    std::mutex m_cs;
+    LIST_ENTRY m_queueHead;
 
-    static VOID CALLBACK APCCallback(ULONG_PTR context)
+    struct QueueEntry
+    {
+        LIST_ENTRY entry;
+        std::atomic<uint32_t>* refsPointer;
+        void* context;
+        AsyncQueueCallback* callback;
+    };
+ 
+    static void CALLBACK APCCallback(ULONG_PTR context)
     {
         Queue* queue = (Queue*)context;
-        queue->DrainQueue(true);
+        queue->DrainQueue(AsyncQueueDispatchMode_FixedThread);
     }
 
-    static VOID CALLBACK TPCallback(PTP_CALLBACK_INSTANCE, PVOID context, PTP_WORK)
+    static void CALLBACK TPCallback(PTP_CALLBACK_INSTANCE, void* context, PTP_WORK)
     {
+        // Prevent any callbacks from declaring this thread as time critical.
+        (void)LockTimeCriticalThread();
         Queue* queue = (Queue*)context;
-        queue->DrainQueue(false);
+        queue->DrainQueue(AsyncQueueDispatchMode_ThreadPool);
     }
 };
 
-class AsyncQueue
+struct async_queue_t
 {
-public:
-
-    DWORD Signature;
-    LIST_ENTRY ShareEntry;
-    uint32_t Refs;
-    uint64_t ShareId;
-    Queue* Work;
-    Queue* Completion;
-    SubmitCallback CallbackSubmitted;
-    AsyncQueue* Parent;
-
-    AsyncQueue()
-        : Signature(QUEUE_SIGNATURE)
-        , Refs(1)
-        , ShareId(INVALID_SHARE_ID)
-        , Work(nullptr)
-        , Completion(nullptr)
-        , Parent(nullptr)
+    ~async_queue_t()
     {
-    }
-
-    ~AsyncQueue()
-    {
-        if (Parent != nullptr)
+        if (m_parent != nullptr)
         {
-            CloseAsyncQueue((async_queue_t)Parent);
+            CloseAsyncQueue(m_parent);
         }
         else
         {
-            if (Work != nullptr)
+            if (m_work != nullptr)
             {
-                delete Work;
+                delete m_work;
             }
 
-            if (Completion != nullptr)
+            if (m_completion != nullptr)
             {
-                delete Completion;
+                delete m_completion;
             }
         }
     }
 
-    void Initialize(AsyncQueue* parent)
+    void Initialize(async_queue_t* parent)
     {
-        Work = parent->Work;
-        Completion = parent->Work;  // N.B. When creating a child queue its completions share the work queue
-        Parent = parent;
-        InterlockedIncrement(&Parent->Refs);
+        m_work = parent->m_work;
+        m_completion = parent->m_work;  // N.B. When creating a child queue its completions share the work queue
+        m_parent = parent;
+        m_parent->AddRef();
     }
 
     HRESULT Initialize(AsyncQueueDispatchMode workMode, AsyncQueueDispatchMode completionMode)
     {
-        HRESULT hr;
+        m_work = new (std::nothrow) Queue;
+        RETURN_IF_NULL_ALLOC(m_work);
+        RETURN_IF_FAILED(m_work->Initialize(this, AsyncQueueCallbackType_Work, workMode, &m_callbackSubmitted));
 
-        Queue* workQueue = nullptr;
-        Queue* completionQueue = nullptr;
+        m_completion = new (std::nothrow) Queue;
+        RETURN_IF_NULL_ALLOC(m_completion);
+        RETURN_IF_FAILED(m_completion->Initialize(this, AsyncQueueCallbackType_Completion, completionMode, &m_callbackSubmitted));
 
-        async_queue_t q = (async_queue_t)this;
-
-        workQueue = new (std::nothrow) Queue;
-        if (workQueue == nullptr)
-        {
-            hr = E_OUTOFMEMORY;
-        }
-        else
-        {
-            hr = workQueue->Initialize(q, AsyncQueueCallbackType_Work, workMode, &CallbackSubmitted);
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            completionQueue = new (std::nothrow) Queue;
-            if (completionQueue == nullptr)
-            {
-                hr = E_OUTOFMEMORY;
-            }
-            else
-            {
-                hr = completionQueue->Initialize(q, AsyncQueueCallbackType_Completion, completionMode, &CallbackSubmitted);
-            }
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            Work = workQueue;
-            Completion = completionQueue;
-            workQueue = nullptr;
-            completionQueue = nullptr;
-        }
-
-        if (workQueue != nullptr)
-        {
-            delete workQueue;
-        }
-
-        if (completionQueue != nullptr)
-        {
-            delete completionQueue;
-        }
-
-        return hr;
+        return S_OK;
     }
 
-    bool IsEmpty(_In_ AsyncQueueCallbackType type)
+    void AddRef()
     {
-        Queue* q = type == AsyncQueueCallbackType_Work ? Work : Completion;
-        return q->IsEmpty();
+        m_refs++;
     }
+
+    void Release()
+    {
+        if (m_refs.fetch_sub(1) == 0)
+        {
+            if (m_shareId != INVALID_SHARE_ID)
+            {
+                std::lock_guard<std::mutex> lock(s_sharedCs);
+                RemoveEntryList(&m_shareEntry);
+                m_shareId = INVALID_SHARE_ID;
+            }
+
+            delete this;
+        }
+    }
+
+    Queue* GetSide(_In_ AsyncQueueCallbackType type)
+    {
+        return type == AsyncQueueCallbackType_Work ? m_work : m_completion;
+    }
+
+    HRESULT AppendItem(
+        AsyncQueueCallbackType type,
+        AsyncQueueCallback* callback,
+        void* context)
+    {
+        Queue* q = GetSide(type);
+        return q->AppendItem(&m_refs, callback, context);
+    }
+
+    HRESULT AddCallback(
+        _In_ void* context,
+        _In_ AsyncQueueCallbackSubmitted* callback,
+        _Out_ uint32_t* token)
+    {
+        return m_callbackSubmitted.Add(nullptr, context, callback, token);
+    }
+
+    void RemoveCallback(
+        _In_ uint32_t token)
+    {
+        m_callbackSubmitted.Remove(token);
+    }
+
+    void MakeShared(_In_ uint64_t shareId)
+    {
+        ASSERT(m_shareId == INVALID_SHARE_ID);
+        m_shareId = shareId;
+        InsertHeadList(&s_sharedList, &m_shareEntry);
+    }
+
+    static async_queue_t* GetQueue(_In_ async_queue_handle_t queue)
+    {
+        async_queue_t* aq = (async_queue_t*)queue;
+        if (queue == nullptr || aq->m_signature != QUEUE_SIGNATURE)
+        {
+            DebugBreak();
+            aq = nullptr;
+        }
+
+        return aq;
+    }
+    
+    static async_queue_t* FindSharedQueue(_In_ uint64_t id)
+    {
+        for (PLIST_ENTRY entry = s_sharedList.Flink; entry != &s_sharedList; entry = entry->Flink)
+        {
+            async_queue_t* queue = (async_queue_t*)CONTAINING_RECORD(entry, async_queue_t, m_shareEntry);
+            if (queue->m_shareId == id)
+            {
+                return queue;
+            }
+        }
+        return nullptr;
+    }
+
+private:
+
+    uint32_t m_signature = QUEUE_SIGNATURE;
+    std::atomic<uint32_t> m_refs = 1;
+    uint64_t m_shareId = INVALID_SHARE_ID;
+    LIST_ENTRY m_shareEntry;
+    SubmitCallback m_callbackSubmitted;
+    Queue* m_work = nullptr;
+    Queue* m_completion = nullptr;
+    async_queue_t* m_parent = nullptr;
 };
 
 static void EnsureSharedInitialization()
 {
-    DWORD init = InterlockedCompareExchange(&_sharedInit, SHARED_INITIALIZING, SHARED_UNINITIALIZED);
+    BOOL pending;
 
-    switch (init)
+    // Only failure modes for InitOnce are usage errors.
+    NT_VERIFY(InitOnceBeginInitialize(&s_sharedInit, 0, &pending, nullptr));
+
+    if (pending)
     {
-    case SHARED_UNINITIALIZED:
-        InitializeCriticalSection(&_sharedCs);
-        InitializeListHead(&_sharedList);
-        InterlockedCompareExchange(&_sharedInit, SHARED_INITIALIZED, SHARED_INITIALIZING);
-        break;
-
-    case SHARED_INITIALIZING:
-        do
-        {
-            init = InterlockedCompareExchange(&_sharedInit, 0xFFFFFFFF, 0xFFFFFFFF);
-        } while (init != SHARED_INITIALIZED);
-        break;
+        InitializeListHead(&s_sharedList);
+        NT_VERIFY(InitOnceComplete(&s_sharedInit, 0, nullptr));
     }
-}
-
-static AsyncQueue* FindSharedQueue(_In_ uint64_t id)
-{
-    EnterCriticalSection(&_sharedCs);
-    for (PLIST_ENTRY entry = _sharedList.Flink; entry != &_sharedList; entry = entry->Flink)
-    {
-        AsyncQueue* queue = (AsyncQueue*)CONTAINING_RECORD(entry, AsyncQueue, ShareEntry);
-        if (queue->ShareId == id)
-        {
-            LeaveCriticalSection(&_sharedCs);
-            return queue;
-        }
-    }
-
-    LeaveCriticalSection(&_sharedCs);
-    return nullptr;
-}
-
-static void AddSharedQueue(_In_ uint64_t id, AsyncQueue* queue)
-{
-    queue->ShareId = id;
-    EnterCriticalSection(&_sharedCs);
-    InsertHeadList(&_sharedList, &queue->ShareEntry);
-    LeaveCriticalSection(&_sharedCs);
-}
-
-static void RemoveSharedQueue(AsyncQueue* queue)
-{
-    EnterCriticalSection(&_sharedCs);
-    RemoveEntryList(&queue->ShareEntry);
-    LeaveCriticalSection(&_sharedCs);
-    queue->ShareId = INVALID_SHARE_ID;
 }
 
 //
@@ -468,26 +455,14 @@ static void RemoveSharedQueue(AsyncQueue* queue)
 STDAPI CreateAsyncQueue(
     _In_ AsyncQueueDispatchMode workDispatchMode,
     _In_ AsyncQueueDispatchMode completionDispatchMode,
-    _Out_ async_queue_t* queue)
+    _Out_ async_queue_handle_t* queue)
 {
-    if (queue == nullptr)
-    {
-        return E_POINTER;
-    }
+    std::unique_ptr<async_queue_t> aq(new (std::nothrow) async_queue_t);
+    RETURN_IF_NULL_ALLOC(aq);
+    RETURN_IF_FAILED(aq->Initialize(workDispatchMode, completionDispatchMode));
+    *queue = aq.release();
 
-    AsyncQueue* aq = new (std::nothrow) AsyncQueue;
-    if (aq == nullptr) return E_OUTOFMEMORY;
-
-    HRESULT hr = aq->Initialize(workDispatchMode, completionDispatchMode);
-
-    if (FAILED(hr))
-    {
-        delete aq;
-        aq = nullptr;
-    }
-
-    *queue = (async_queue_t)aq;
-    return hr;
+    return S_OK;
 }
 
 /// <summary>
@@ -498,23 +473,21 @@ STDAPI CreateAsyncQueue(
 /// for performing intermediate work within a larger task.
 /// </summary>
 STDAPI CreateNestedAsyncQueue(
-    _In_ async_queue_t parentQueue,
-    _Out_ async_queue_t* queue)
+    _In_ async_queue_handle_t parentQueue,
+    _Out_ async_queue_handle_t* queue)
 {
-    if (queue == nullptr)
+    async_queue_t* parent = async_queue_t::GetQueue(parentQueue);
+    if (parent == nullptr)
     {
-        return E_POINTER;
+        RETURN_HR(E_INVALIDARG);
     }
-
-    AsyncQueue* parent = (AsyncQueue*)parentQueue;
-    if (parent == nullptr || parent->Signature != QUEUE_SIGNATURE) return E_INVALIDARG;
     
-    AsyncQueue* aq = new (std::nothrow) AsyncQueue;
-    if (aq == nullptr) return E_OUTOFMEMORY;
+    async_queue_t* aq = new (std::nothrow) async_queue_t;
+    RETURN_IF_NULL_ALLOC(aq);
 
     aq->Initialize(parent);
 
-    *queue = (async_queue_t)aq;
+    *queue = aq;
     return S_OK;
 }
 
@@ -526,34 +499,30 @@ STDAPI CreateSharedAsyncQueue(
     _In_ uint32_t id,
     _In_ AsyncQueueDispatchMode workerMode,
     _In_ AsyncQueueDispatchMode completionMode,
-    _Out_ async_queue_t* queue)
+    _Out_ async_queue_handle_t* queue)
 {
-    if (id == INVALID_SHARE_ID) return E_INVALIDARG;
-    if (queue == nullptr) return E_POINTER;
+    if (id == INVALID_SHARE_ID)
+    {
+        RETURN_HR(E_INVALIDARG);
+    }
 
-    HRESULT hr = S_OK;
     EnsureSharedInitialization();
-    EnterCriticalSection(&_sharedCs);
+    std::lock_guard<std::mutex> lock(s_sharedCs);
     uint64_t queueId = MAKE_SHARED_ID(id, workerMode, completionMode);
-    AsyncQueue* q = FindSharedQueue(queueId);
+    async_queue_t* q = async_queue_t::FindSharedQueue(queueId);
 
     if (q != nullptr)
     {
+        ReferenceAsyncQueue(q);
         *queue = q;
-        ReferenceAsyncQueue(*queue);
     }
     else
     {
-        hr = CreateAsyncQueue(workerMode, completionMode, queue);
-        if (SUCCEEDED(hr))
-        {
-            AddSharedQueue(queueId, (AsyncQueue*)(*queue));
-        }
+        RETURN_IF_FAILED(CreateAsyncQueue(workerMode, completionMode, queue));
+        (*queue)->MakeShared(queueId);
     }
 
-    LeaveCriticalSection(&_sharedCs);
-
-    return hr;
+    return S_OK;
 }
 
 //
@@ -563,24 +532,23 @@ STDAPI CreateSharedAsyncQueue(
 // DispatchAsyncQueue to wait for something to arrive in the queue.
 //
 STDAPI_(bool) DispatchAsyncQueue(
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
-    _In_ uint32_t timeout)
+    _In_ uint32_t timeoutInMs)
 {
-    AsyncQueue* aq = (AsyncQueue*)queue;
-    if (aq == nullptr || aq->Signature != QUEUE_SIGNATURE)
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    if (aq == nullptr)
     {
-        //DebugBreak();
         return false;
     }
 
-    Queue* q = type == AsyncQueueCallbackType_Work ? aq->Work : aq->Completion;
+    Queue* q = aq->GetSide(type);
 
-    bool found = q->DrainOneItem(false);
-    if (!found && timeout != 0)
+    bool found = q->DrainOneItem(AsyncQueueDispatchMode_Manual);
+    if (!found && timeoutInMs != 0)
     {
-        found = q->Wait((DWORD)timeout);
-        if (found) q->DrainOneItem(false);
+        found = q->Wait(timeoutInMs);
+        if (found) q->DrainOneItem(AsyncQueueDispatchMode_Manual);
     }
 
     return found;
@@ -591,17 +559,16 @@ STDAPI_(bool) DispatchAsyncQueue(
 // queue.
 //
 STDAPI_(bool) IsAsyncQueueEmpty(
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type)
 {
-    AsyncQueue* q = (AsyncQueue*)queue;
-    if (q == nullptr || q->Signature != QUEUE_SIGNATURE)
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    if (aq == nullptr)
     {
-        //DebugBreak();
         return false;
     }
 
-    return q->IsEmpty(type);
+    return aq->GetSide(type)->IsEmpty();
 }
 
 //
@@ -610,26 +577,12 @@ STDAPI_(bool) IsAsyncQueueEmpty(
 // will be marked for closure and closed when it can. 
 //
 STDAPI_(void) CloseAsyncQueue(
-    _In_ async_queue_t queue)
+    _In_ async_queue_handle_t queue)
 {
-    AsyncQueue* aq = (AsyncQueue*)queue;
-    if (aq == nullptr || aq->Signature != QUEUE_SIGNATURE)
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    if (aq != nullptr)
     {
-        //DebugBreak();
-        return;
-    }
-
-    if (InterlockedDecrement(&aq->Refs) == 0)
-    {
-        if (aq->ShareId != INVALID_SHARE_ID)
-        {
-            EnsureSharedInitialization();
-            EnterCriticalSection(&_sharedCs);
-            RemoveSharedQueue(aq);
-            LeaveCriticalSection(&_sharedCs);
-        }
-
-        delete aq;
+        aq->Release();
     }
 }
 
@@ -637,16 +590,18 @@ STDAPI_(void) CloseAsyncQueue(
 // Submits either a work or completion callback.
 //
 STDAPI SubmitAsyncCallback(
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
-    _In_ void* callbackContext,
+    _In_opt_ void* callbackContext,
     _In_ AsyncQueueCallback* callback)
 {
-    AsyncQueue* aq = (AsyncQueue*)queue;
-    if (aq == nullptr || aq->Signature != QUEUE_SIGNATURE) return E_INVALIDARG;
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    if (aq == nullptr)
+    {
+        RETURN_HR(E_INVALIDARG);
+    }
 
-    Queue* q = type == AsyncQueueCallbackType_Work ? aq->Work : aq->Completion;
-    return q->AppendItem(&aq->Refs, callback, callbackContext);
+    RETURN_HR(aq->AppendItem(type, callback, callbackContext));
 }
 
 /// <summary>
@@ -658,36 +613,28 @@ STDAPI SubmitAsyncCallback(
 /// that could later call back into the deleted object.
 /// </summary>
 STDAPI_(void) RemoveAsyncQueueCallbacks(
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
     _In_ AsyncQueueCallback* searchCallback,
     _In_opt_ void* predicateContext,
     _In_ AsyncQueueRemovePredicate* removePredicate)
 {
-    AsyncQueue* aq = (AsyncQueue*)queue;
-    if (aq != nullptr && aq->Signature == QUEUE_SIGNATURE)
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    if (aq != nullptr)
     {
-        Queue* q = type == AsyncQueueCallbackType_Work ? aq->Work : aq->Completion;
-        return q->RemoveCallbacks(searchCallback, predicateContext, removePredicate);
+        Queue* q = aq->GetSide(type);
+        q->RemoveCallbacks(searchCallback, predicateContext, removePredicate);
     }
 }
 
 //
 // Increments the refcount on the queue
 //
-STDAPI ReferenceAsyncQueue(
-    _In_ async_queue_t queue)
+STDAPI_(void) ReferenceAsyncQueue(
+    _In_ async_queue_handle_t queue)
 {
-    AsyncQueue* q = (AsyncQueue*)queue;
-    if (q == nullptr || q->Signature != QUEUE_SIGNATURE)
-    {
-        //DebugBreak();
-        return E_INVALIDARG;
-    }
-
-    InterlockedIncrement(&q->Refs);
-
-    return S_OK;
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    aq->AddRef();
 }
 
 //
@@ -695,33 +642,31 @@ STDAPI ReferenceAsyncQueue(
 // is submitted. The callback will be directly invoked when
 // the call is submitted.
 //
-STDAPI AddAsyncCallbackSubmitted(
-    _In_ async_queue_t queue,
+STDAPI AddAsyncQueueCallbackSubmitted(
+    _In_ async_queue_handle_t queue,
     _In_opt_ void* context,
     _In_ AsyncQueueCallbackSubmitted* callback,
     _Out_ uint32_t* token)
 {
-    AsyncQueue* aq = (AsyncQueue*)queue;
-    if (aq == nullptr || aq->Signature != QUEUE_SIGNATURE) return E_INVALIDARG;
-
-    if (callback == nullptr || token == nullptr)
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    if (aq == nullptr)
     {
-        return E_POINTER;
+        RETURN_HR(E_INVALIDARG);
     }
 
-    return aq->CallbackSubmitted.Add(nullptr, context, callback, token);
+    RETURN_HR(aq->AddCallback(context, callback, token));
 }
 
 //
 // Removes a previously added callback.
 //
 STDAPI_(void) RemoveAsyncQueueCallbackSubmitted(
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ uint32_t token)
 {
-    AsyncQueue* aq = (AsyncQueue*)queue;
-    if (aq != nullptr && aq->Signature == QUEUE_SIGNATURE)
+    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    if (aq != nullptr)
     {
-        aq->CallbackSubmitted.Remove(token);
+        aq->RemoveCallback(token);
     }
 }

@@ -407,7 +407,7 @@ HCGetWebSocketConnectResult(
     ) HC_NOEXCEPT
 try
 {
-    return GetAsyncResult(asyncBlock, HCWebSocketConnect, sizeof(WebSocketCompletionResult), result);
+    return GetAsyncResult(asyncBlock, HCWebSocketConnect, sizeof(WebSocketCompletionResult), result, nullptr);
 }
 CATCH_RETURN()
 
@@ -418,6 +418,6 @@ HCGetWebSocketSendMessageResult(
     ) HC_NOEXCEPT
 try
 {
-    return GetAsyncResult(asyncBlock, HCWebSocketSendMessage, sizeof(WebSocketCompletionResult), result);
+    return GetAsyncResult(asyncBlock, HCWebSocketSendMessage, sizeof(WebSocketCompletionResult), result, nullptr);
 }
 CATCH_RETURN()

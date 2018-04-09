@@ -1,14 +1,13 @@
 #pragma once
 
-#include "httpClient/AsyncQueue.h"
-#include "EntryList.h"
+#include "AsyncQueue.h"
 
 template<class CallbackType, class CallbackDataType>
 struct DefaultThunk
 {
     void operator()(CallbackType callback, void* context, CallbackDataType* data)
     {
-        callback(context, data);
+        callback(context, static_cast<const CallbackDataType*>(data));
     }
 };
 
@@ -18,24 +17,24 @@ struct DefaultThunk
 //
 // Type parameters:
 //
-//      CallbackType - The type of function pointer callback.  The callback must have the 
-//          following prototype:
-//
-//              void CallbackType(void* context, CallbackDataType* data);
+//      CallbackType - The type of function pointer callback.
 //
 //      CallbackDataType -- The data type of the payload of the callback.  The data type
 //          may be dynanically allocated and Callback can free it with delete, or
 //          the data type must implement operator=.
+//
+//     CallbackThunk -- A struct with a function operator that can invoke the callback.  
+//         The default callback thunk assumes the callback prototype is:
+//
+//              void CallbackType(void* context, const CallbackDataType* data);
 //
 template<class CallbackType, class CallbackDataType, class CallbackThunk = DefaultThunk<CallbackType, CallbackDataType>>
 class Callback
 {
 public:
     Callback()
-        : _nextCookie(1)
     {
-        InitializeListHead(&_callbackHead);
-        InitializeSRWLock(&_lock);
+        InitializeListHead(&m_callbackHead);
     }
 
     ~Callback()
@@ -47,12 +46,11 @@ public:
     // Adds a callback function to this callback.
     //
     HRESULT Add(
-        _In_opt_ async_queue_t queue, 
+        _In_opt_ async_queue_handle_t queue, 
         _In_opt_ void* context, 
         _In_ CallbackType callback, 
         _Out_ uint32_t* cookie)
     {
-        HRESULT hr;
         CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;
 
         if (entry == nullptr)
@@ -62,34 +60,35 @@ public:
 
         if (queue == nullptr)
         {
-            hr = CreateSharedAsyncQueue(
+            HRESULT hr = CreateSharedAsyncQueue(
                 GetCurrentThreadId(),
                 AsyncQueueDispatchMode_ThreadPool,
                 AsyncQueueDispatchMode_FixedThread,
                 &queue);
+
+            if (FAILED(hr))
+            {
+                Destroy(entry);
+                return hr;
+            }
         }
         else
         {
-            hr = ReferenceAsyncQueue(queue);
-        }
-
-        if (FAILED(hr))
-        {
-            Destroy(entry);
-            return hr;
+            ReferenceAsyncQueue(queue);
         }
 
         entry->Queue = queue;
-        entry->Cookie = InterlockedIncrement(&_nextCookie);
+        entry->Cookie = m_nextCookie.fetch_add(1);
         entry->Context = context;
         entry->Callback = callback;
         entry->Refs = 1;
 
         *cookie = entry->Cookie;
 
-        AcquireSRWLockExclusive(&_lock);
-        InsertTailList(&_callbackHead, &entry->ListEntry);
-        ReleaseSRWLockExclusive(&_lock);
+        {
+            std::unique_lock<std::shared_mutex>(m_lock);
+            InsertTailList(&m_callbackHead, &entry->ListEntry);
+        }
 
         return S_OK;
     }
@@ -126,10 +125,10 @@ public:
     //
     void Clear()
     {
-        AcquireSRWLockExclusive(&_lock);
-
-        PLIST_ENTRY entry = RemoveHeadList(&_callbackHead);
-        while (entry != &_callbackHead)
+        std::unique_lock<std::shared_mutex>(m_lock);
+        
+        PLIST_ENTRY entry = RemoveHeadList(&m_callbackHead);
+        while (entry != &m_callbackHead)
         {
             CallbackRegistration* ce = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
 
@@ -148,77 +147,74 @@ public:
             }
 
             Destroy(ce);
-            entry = RemoveHeadList(&_callbackHead);
+            entry = RemoveHeadList(&m_callbackHead);
         }
-
-        ReleaseSRWLockExclusive(&_lock);
     }
 
     //
     // If free is true, pointer to data will be freed using delete when callback
     // has run.  If false, CallbackType must be copyable with a copy ctor.  Returns
-    // true if queue was successful, or false if not (IE, out of memory).
+    // S_OK if successful.
     //
-    bool Queue(
+    HRESULT Queue(
         _In_ CallbackDataType* data, 
         _In_ bool free)
     {
-        AcquireSRWLockShared(&_lock);
+        HRESULT result = S_OK;
 
-        bool result = true;
-        CallbackSharedData* sharedData = nullptr;
-        PLIST_ENTRY entry = _callbackHead.Flink;
-
-        while (entry != &_callbackHead)
         {
-            if (sharedData == nullptr && free)
+            std::shared_lock<std::shared_mutex>(m_lock);
+
+            CallbackSharedData* sharedData = nullptr;
+            PLIST_ENTRY entry = m_callbackHead.Flink;
+
+            while (entry != &m_callbackHead)
             {
-                sharedData = new (std::nothrow) CallbackSharedData;
-                if (sharedData == nullptr)
+                if (sharedData == nullptr && free)
                 {
-                    result = false;
-                    goto Cleanup;
+                    sharedData = new (std::nothrow) CallbackSharedData;
+                    if (sharedData == nullptr)
+                    {
+                        result = E_OUTOFMEMORY;
+                        break;
+                    }
+
+                    sharedData->Data = data;
+                    sharedData->Refs = 1;
                 }
 
-                sharedData->Data = data;
-                sharedData->Refs = 1;
-            }
+                CallbackInvocation* invocation = new (std::nothrow) CallbackInvocation;
+                if (invocation == nullptr)
+                {
+                    result = E_OUTOFMEMORY;
+                    break;
+                }
 
-            CallbackInvocation* invocation = new (std::nothrow) CallbackInvocation;
-            if (invocation == nullptr)
-            {
-                result = false;
-                goto Cleanup;
-            }
+                CallbackRegistration* cb = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
+                invocation->Owner = this;
+                invocation->Cookie = cb->Cookie;
 
-            CallbackRegistration* cb = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
-            invocation->Owner = this;
-            invocation->Cookie = cb->Cookie;
+                if (free)
+                {
+                    invocation->SharedData = sharedData;
+                    sharedData->Refs++;
+                }
+                else
+                {
+                    invocation->Data = *data;
+                    invocation->SharedData = nullptr;
+                }
 
-            if (free)
-            {
-                invocation->SharedData = sharedData;
-                InterlockedIncrement(&sharedData->Refs);
-            }
-            else
-            {
-                invocation->Data = *data;
-                invocation->SharedData = nullptr;
-            }
+                result = SubmitAsyncCallback(cb->Queue, AsyncQueueCallbackType_Completion, invocation, OnQueueCallback);
+                if (FAILED(result))
+                {
+                    Destroy(invocation);
+                    break;
+                }
 
-            if (FAILED(SubmitAsyncCallback(cb->Queue, AsyncQueueCallbackType_Completion, invocation, OnQueueCallback)))
-            {
-                result = false;
-                Destroy(invocation);
-                goto Cleanup;
+                entry = entry->Flink;
             }
-
-            entry = entry->Flink;
         }
-
-    Cleanup:
-
-        ReleaseSRWLockShared(&_lock);
 
         if (sharedData != nullptr)
         {
@@ -235,47 +231,47 @@ public:
     //
     // Invokes the callbacks directly without queuing.
     //
-    bool Invoke(
+    HRESULT Invoke(
         _In_ CallbackDataType* data)
     {
         uint32_t* cookies = nullptr;
         size_t cookieCount = 0;
 
-        AcquireSRWLockShared(&_lock);
-
-        // Walk through all the callback entries and grab their
-        // cookies.
-
-        PLIST_ENTRY entry = _callbackHead.Flink;
-        while (entry != &_callbackHead)
         {
-            cookieCount++;
-            entry = entry->Flink;
-        }
+            std::shared_lock<std::shared_mutex>(m_lock);
 
-        if (cookieCount != 0)
-        {
-            cookies = new (std::nothrow) uint32_t[cookieCount];
+            // Walk through all the callback entries and grab their
+            // cookies.
 
-            if (cookies != nullptr)
+            PLIST_ENTRY entry = m_callbackHead.Flink;
+            while (entry != &m_callbackHead)
             {
-                entry = _callbackHead.Flink;
-                cookieCount = 0;
-                while (entry != &_callbackHead)
+                cookieCount++;
+                entry = entry->Flink;
+            }
+
+            if (cookieCount != 0)
+            {
+                cookies = new (std::nothrow) uint32_t[cookieCount];
+
+                if (cookies != nullptr)
                 {
-                    CallbackRegistration* cb = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
-                    cookies[cookieCount] = cb->Cookie;
-                    cookieCount++;
-                    entry = entry->Flink;
+                    entry = m_callbackHead.Flink;
+                    cookieCount = 0;
+                    while (entry != &m_callbackHead)
+                    {
+                        CallbackRegistration* cb = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
+                        cookies[cookieCount] = cb->Cookie;
+                        cookieCount++;
+                        entry = entry->Flink;
+                    }
                 }
             }
         }
 
-        ReleaseSRWLockShared(&_lock);
-
         if (cookieCount != 0 && cookies == nullptr)
         {
-            return false;
+            return E_OUTOFMEMORY;
         }
 
         for (uint32_t idx = 0; idx < cookieCount; idx++)
@@ -291,7 +287,7 @@ public:
 
         delete[] cookies;
 
-        return true;
+        return S_OK;
     }
 
 private:
@@ -299,7 +295,7 @@ private:
     struct CallbackSharedData
     {
         CallbackDataType* Data;
-        LONG Refs;
+        std::atomic<uint32_t> Refs;
     };
 
     struct CallbackInvocation
@@ -314,34 +310,34 @@ private:
     {
         LIST_ENTRY ListEntry;
         uint32_t Cookie;
-        LONG Refs;
-        async_queue_t Queue;
+        std::atomic<uint32_t> Refs;
+        async_queue_handle_t Queue;
         void* Context;
         CallbackType* Callback;
     };
 
-    SRWLOCK _lock;
-    uint32_t _nextCookie;
-    LIST_ENTRY _callbackHead;
+    std::shared_mutex m_lock;
+    std::atomic<uint32_t> m_nextCookie = 1;
+    LIST_ENTRY m_callbackHead;
 
-    void Release(CallbackSharedData* sharedData)
+    void Release(_In_ CallbackSharedData* sharedData)
     {
-        if (InterlockedDecrement(&sharedData->Refs) == 0)
+        if (sharedData->Refs.fetch_sub(1) == 1)
         {
             delete sharedData->Data;
             delete sharedData;
         }
     }
 
-    void Release(CallbackRegistration* entry)
+    void Release(_In_ CallbackRegistration* entry)
     {
-        if (InterlockedDecrement(&entry->Refs) == 0)
+        if (entry->Refs.fetch_sub(1) == 1)
         {
             Destroy(entry);
         }
     }
 
-    void Destroy(CallbackRegistration* entry)
+    void Destroy(_In_ CallbackRegistration* entry)
     {
         if (entry->Queue != nullptr)
         {
@@ -350,7 +346,7 @@ private:
         delete entry;
     }
 
-    void Destroy(CallbackInvocation* invocation)
+    void Destroy(_In_ CallbackInvocation* invocation)
     {
         if (invocation->SharedData != nullptr)
         {
@@ -360,20 +356,20 @@ private:
         delete invocation;
     }
 
-    CallbackRegistration* Find(uint32_t cookie, bool remove)
+    CallbackRegistration* Find(_In_ uint32_t cookie, _In_ bool remove)
     {
         if (remove)
         {
-            AcquireSRWLockExclusive(&_lock);
+            m_lock.lock();
         }
         else
         {
-            AcquireSRWLockShared(&_lock);
+            m_lock.lock_shared();
         }
 
         CallbackRegistration* found = nullptr;
-        PLIST_ENTRY entry = _callbackHead.Flink;
-        while (entry != &_callbackHead)
+        PLIST_ENTRY entry = m_callbackHead.Flink;
+        while (entry != &m_callbackHead)
         {
             CallbackRegistration* ce = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
             if (ce->Cookie == cookie)
@@ -386,7 +382,7 @@ private:
                 }
                 else
                 {
-                    InterlockedIncrement(&found->Refs);
+                    found->Refs++;
                 }
                 break;
             }
@@ -396,11 +392,11 @@ private:
 
         if (remove)
         {
-            ReleaseSRWLockExclusive(&_lock);
+            m_lock.unlock();
         }
         else
         {
-            ReleaseSRWLockShared(&_lock);
+            m_lock.unlock_shared();
         }
 
         return found;
