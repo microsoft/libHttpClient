@@ -3,7 +3,7 @@
 #pragma once
 
 /// <summary>
-/// An async_queue_t contains async work.  When you make an async call, that call is placed
+/// An async_queue_handle_t contains async work.  When you make an async call, that call is placed
 /// on an async queue for execution.  An async queue has two sides:  a worker side and
 /// a completion side.  Each side can have different rules for how queued calls
 /// are dispatched.
@@ -13,7 +13,7 @@
 /// the system thread pool. Completions will be invoked on the thread that initiated
 /// the async call when that thread is alertable.
 /// </summary>
-typedef void* async_queue_t;
+typedef struct async_queue_t* async_queue_handle_t;
 
 /// <summary>
 /// An AsyncBlock defines a piece of asynchronous work.  An async block can be used
@@ -22,14 +22,30 @@ typedef void* async_queue_t;
 /// </summary>
 struct AsyncBlock;
 
+/// <summary>
+/// Callback routine that is invoked when an async call completes. Use GetAsyncStatus
+/// or the async call's Get*Result method to obtain the results of the call.  If the
+/// call was canceled these methods will return E_ABORT.
+/// </summary>
+/// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
+/// <seealso cref='AsyncBlock' />
 typedef void CALLBACK AsyncCompletionRoutine(_In_ struct AsyncBlock* asyncBlock);
+
+/// <summary>
+/// Callback rutine that is invoked on a worker asynchronously when RunAsync is called.
+/// The result of the callback bercomes the result of the async call.
+/// </summary>
+/// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to RunAsync.</param>
+/// <seealso cref='AsyncBlock' />
+/// <seealso cref='RunAsync' />
+typedef HRESULT CALLBACK AsyncWork(_In_ struct AsyncBlock* asyncBlock);
 
 typedef struct AsyncBlock
 {
     /// <summary>
     /// Optional queue to queue the call on
     /// </summary>
-    async_queue_t queue;
+    async_queue_handle_t queue;
 
     /// <summary>
     /// Optional event to wait on
@@ -63,6 +79,8 @@ typedef struct AsyncBlock
 /// the async call has a resulting data payload. If it doesn't, calling
 /// GetAsyncResult is unneeded.
 /// </summary>
+/// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
+/// <param name='wait'>If true, GetAsyncStatus waits until the async call either completes or is canceled.</param>
 STDAPI GetAsyncStatus(
     _In_ AsyncBlock* asyncBlock,
     _In_ bool wait);
@@ -70,6 +88,8 @@ STDAPI GetAsyncStatus(
 /// <summary>
 /// Returns the required size of the buffer to pass to GetAsyncResult.
 /// </summary>
+/// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
+/// <param name='bufferSize'>The required size of the buffer in bytes needed to hold the results.</param>
 STDAPI GetAsyncResultSize(
     _In_ AsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize);
@@ -77,17 +97,17 @@ STDAPI GetAsyncResultSize(
 /// <summary>
 /// Cancels an asynchronous operation. The status result will return E_ABORT,
 /// the completion callback will be invoked and the event in the async block will be
-/// signaled.
+/// signaled.  This does nothing if the call has already completed.
 /// </summary>
+/// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
 STDAPI_(void) CancelAsync(
     _In_ AsyncBlock* asyncBlock);
-
-typedef HRESULT CALLBACK AsyncWork(_In_ AsyncBlock* asyncBlock);
 
 /// <summary>
 /// Runs the given callback asynchronously.
 /// </summary>
+/// <param name='asyncBlock'>A pointer to an async block that is used to track the async call.</param>
+/// <param name='work'>A pointer to a callback function to run asynchronously.</param>
 STDAPI RunAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work);
-

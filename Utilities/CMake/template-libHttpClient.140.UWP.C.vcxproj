@@ -74,6 +74,7 @@
        $(ProjectDir)..\..\Source\Common;
        $(ProjectDir)..\..\Source\Logger;
        $(ProjectDir)..\..\Include;
+       $(ProjectDir)..\..\Include\httpClient;
        %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>

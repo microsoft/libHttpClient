@@ -105,6 +105,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
@@ -136,7 +138,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\EntryList.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Unittest\websocket_unittest.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />

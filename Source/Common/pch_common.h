@@ -90,6 +90,8 @@ typedef int32_t function_context;
 #include "utils.h"
 #include "../global/global.h"
 #include "trace_internal.h"
+#include "ResultMacros.h"
+#include "EntryList.h"
 
 HC_DECLARE_TRACE_AREA(HTTPCLIENT);
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
@@ -118,3 +120,15 @@ HRESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, u
 HRESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_END
+
+#ifndef DebugBreak
+#define DebugBreak()
+#endif
+
+#if DBG
+#define ASSERT(condition) if (!(condition)) DebugBreak()
+#define NT_VERIFY(condition) ASSERT(condition)
+#else
+#define ASSERT(condition)
+#define NT_VERIFY(condition) condition
+#endif // DBG
