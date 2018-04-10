@@ -66,8 +66,8 @@ std::wstring to_wstring(const std::string &value)
     return conversion.from_bytes(value);
 }
 
-void HC_CALLING_CONV PerformCallWithCurl(
-    _In_ hc_call_handle call,
+STDAPI_(void) PerformCallWithCurl(
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     )
 {
