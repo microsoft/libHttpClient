@@ -67,7 +67,7 @@ win32_handle g_completionReadyHandle;
 
 void CALLBACK HandleAsyncQueueCallback(
     _In_ void* context,
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
     )
 {
@@ -95,7 +95,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    async_queue_t queue;
+    async_queue_handle_t queue;
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
         sharedAsyncQueueId,
@@ -179,7 +179,7 @@ Sample::Sample() :
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &m_queue);
-    AddAsyncCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    AddAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
     ATG::UIConfig uiconfig;
@@ -386,7 +386,7 @@ std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::strin
     return headers;
 }
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle_t call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -419,7 +419,7 @@ void Sample::MakeHttpCall()
     std::string requestUrl = "http://www.bing.com";
     bool retryAllowed = true;
 
-    hc_call_handle call = nullptr;
+    hc_call_handle_t call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, requestMethod.c_str(), requestUrl.c_str());
 
@@ -446,7 +446,7 @@ void Sample::MakeHttpCall()
         std::string responseString;
         std::string errMessage;
 
-        hc_call_handle call = static_cast<hc_call_handle>(asyncBlock->context);
+        hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);

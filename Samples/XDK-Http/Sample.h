@@ -63,6 +63,6 @@ private:
     std::shared_ptr<ATG::UIManager>             m_ui;
     std::unique_ptr<DX::TextConsole>            m_console;
 
-    async_queue_t m_queue;
+    async_queue_handle_t m_queue;
     uint32_t m_callbackToken;
 };
