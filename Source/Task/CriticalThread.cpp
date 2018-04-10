@@ -52,8 +52,8 @@ STDAPI SetTimeCriticalThread(_In_ bool isTimeCriticalThread)
 {
     RETURN_IF_FAILED(InitTls());
 
-    DWORD current = (DWORD)TlsGetValue(s_tlsSlot);
-    DWORD value = isTimeCriticalThread ? CRITICAL_TRUE : CRITICAL_FALSE;
+    UINT64 current = (UINT64)TlsGetValue(s_tlsSlot);
+    UINT64 value = isTimeCriticalThread ? CRITICAL_TRUE : CRITICAL_FALSE;
 
     if (current & CRITICAL_LOCKED)
     {
@@ -84,7 +84,7 @@ STDAPI VerifyNotTimeCriticalThread()
         return S_OK;
     }
 
-    DWORD timeCritical = (DWORD)TlsGetValue(s_tlsSlot);
+    UINT64 timeCritical = (UINT64)TlsGetValue(s_tlsSlot);
 
     if ((timeCritical & CRITICAL_TRUE) == 0)
     {
@@ -104,7 +104,7 @@ STDAPI LockTimeCriticalThread()
 {
     RETURN_IF_FAILED(InitTls());
 
-    DWORD current = (DWORD)TlsGetValue(s_tlsSlot) | CRITICAL_LOCKED;
+    UINT64 current = (UINT64)TlsGetValue(s_tlsSlot) | CRITICAL_LOCKED;
     TlsSetValue(s_tlsSlot, (PVOID)current);
    
     return S_OK;

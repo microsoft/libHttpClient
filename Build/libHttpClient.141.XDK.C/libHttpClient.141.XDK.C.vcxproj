@@ -60,13 +60,13 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">Level4</WarningLevel>
       <MinimalRebuild>false</MinimalRebuild>
       <CompileAsWinRT>true</CompileAsWinRT>
-      <AdditionalIncludeDirectories>
-        $(ProjectDir);
-        $(ProjectDir)..\..\Source\Common;
-        $(ProjectDir)..\..\Source\Logger;
-        $(ProjectDir)..\..\Include;
-        $(ProjectDir)..\..\Include\httpClient;
-        %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories> 
+       $(ProjectDir);
+       $(ProjectDir)..\..\Source\Common;
+       $(ProjectDir)..\..\Source\Logger;
+       $(ProjectDir)..\..\Include;
+       $(ProjectDir)..\..\Include\httpClient;
+      %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,17 +87,17 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
@@ -129,6 +129,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />

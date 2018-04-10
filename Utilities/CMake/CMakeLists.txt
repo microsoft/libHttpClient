@@ -73,6 +73,7 @@ include_directories(
     $(ProjectDir)../../../Source/HTTP
     $(ProjectDir)../../../Source/Logger
     $(ProjectDir)../../../include
+    $(ProjectDir)../../../include/httpClient
     )
 
 set(CMAKE_SUPPRESS_REGENERATION true)
@@ -89,9 +90,9 @@ set(Public_Source_Files
     )
 
 set(Task_Source_Files    
-    ../../../Source/Task/EntryList.h
     ../../../Source/Task/AsyncQueue.cpp
     ../../../Source/Task/AsyncLib.cpp
+    ../../../Source/Task/CriticalThread.cpp
     )
     
 set(Global_Source_Files    
@@ -123,9 +124,11 @@ set(Mock_Source_Files
 
 set(Common_Source_Files
     ../../../Source/Common/buildver.h
+    ../../../Source/Common/EntryList.h
     ../../../Source/Common/pch.cpp
     ../../../Source/Common/pch.h
     ../../../Source/Common/pch_common.h
+    ../../../Source/Common/ResultMacros.h
     ../../../Source/Common/uri.cpp
     ../../../Source/Common/uri.h
     ../../../Source/Common/utils.cpp
