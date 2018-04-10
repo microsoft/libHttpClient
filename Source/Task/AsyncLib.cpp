@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "httpClient\async.h"
-#include "httpClient\asyncProvider.h"
-#include "httpClient\asyncQueue.h"
+#include "Async.h"
+#include "AsyncProvider.h"
+#include "AsyncQueue.h"
 
 #define ASYNC_STATE_SIG 0x41535445
 

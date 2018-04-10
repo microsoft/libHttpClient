@@ -55,6 +55,7 @@
        $(ProjectDir)..\..\Tests\UnitTests\Support;
        $(ProjectDir)..\..\Tests\UnitTests;
        $(ProjectDir)..\..\Include;
+       $(ProjectDir)..\..\Include\httpClient;
       c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;
       %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
