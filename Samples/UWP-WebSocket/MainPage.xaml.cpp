@@ -78,7 +78,7 @@ std::string format_string(_Printf_format_string_ char const* format, ...)
 
 void HandleAsyncQueueCallback(
     _In_ void* context,
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
 )
 {
@@ -117,7 +117,7 @@ MainPage::MainPage()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &m_queue);
-    AddAsyncCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    AddAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
@@ -165,7 +165,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    async_queue_t queue;
+    async_queue_handle_t queue;
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
         sharedAsyncQueueId,

@@ -32,8 +32,8 @@ struct AsyncBlock;
 typedef void CALLBACK AsyncCompletionRoutine(_In_ struct AsyncBlock* asyncBlock);
 
 /// <summary>
-/// Callback rutine that is invoked on a worker asynchronously when RunAsync is called.
-/// The result of the callback bercomes the result of the async call.
+/// Callback routine that is invoked on a worker asynchronously when RunAsync is called.
+/// The result of the callback becomes the result of the async call.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to RunAsync.</param>
 /// <seealso cref='AsyncBlock' />

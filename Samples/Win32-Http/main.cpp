@@ -4,7 +4,7 @@
 #include "httpClient\httpClient.h"
 #include "json_cpp\json.h"
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle_t call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -63,7 +63,7 @@ HANDLE g_hActiveThreads[10] = { 0 };
 DWORD g_defaultIdealProcessor = 0;
 DWORD g_numActiveThreads = 0;
 
-async_queue_t g_queue;
+async_queue_handle_t g_queue;
 uint32_t g_callbackToken;
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
@@ -75,7 +75,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    async_queue_t queue;
+    async_queue_handle_t queue;
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
         sharedAsyncQueueId,
@@ -122,7 +122,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
 
 void HandleAsyncQueueCallback(
     _In_ void* context,
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
     )
 {
@@ -201,11 +201,11 @@ int main()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &g_queue);
-    AddAsyncCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+    AddAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
 
     StartBackgroundThread();
 
-    hc_call_handle call = nullptr;
+    hc_call_handle_t call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
@@ -232,7 +232,7 @@ int main()
         std::string responseString;
         std::string errMessage;
 
-        hc_call_handle call = static_cast<hc_call_handle>(asyncBlock->context);
+        hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);

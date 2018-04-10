@@ -55,8 +55,8 @@ win32_handle g_completionReadyHandle;
 
 #define TICKS_PER_SECOND 10000000i64
 
-void HC_CALLING_CONV PerformCallWithCurl(
-    _In_ hc_call_handle call,
+STDAPI_(void) PerformCallWithCurl(
+    _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
     );
 
@@ -75,7 +75,7 @@ static std::wstring to_utf16string(const std::string& input)
 
 void HandleAsyncQueueCallback(
     _In_ void* context,
-    _In_ async_queue_t queue,
+    _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
     )
 {
@@ -110,7 +110,7 @@ MainPage::MainPage()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &m_queue);
-    AddAsyncCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    AddAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
@@ -160,7 +160,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    async_queue_t queue;
+    async_queue_handle_t queue;
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
         sharedAsyncQueueId,
@@ -224,7 +224,7 @@ void HttpTestApp::MainPage::StartBackgroundThread()
     }
 }
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle_t call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -296,7 +296,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     std::string requestMethod = to_utf8string(TextboxMethod->Text->Data());
     std::string requestUrl = to_utf8string(TextboxURL->Text->Data());
 
-    hc_call_handle call = nullptr;
+    hc_call_handle_t call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, requestMethod.c_str(), requestUrl.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
@@ -322,7 +322,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         std::string responseString;
         std::string errMessage;
 
-        hc_call_handle call = static_cast<hc_call_handle>(asyncBlock->context);
+        hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);
