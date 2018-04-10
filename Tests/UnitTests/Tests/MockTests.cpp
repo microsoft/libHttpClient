@@ -49,7 +49,7 @@ public:
         hc_call_handle_t mockCall = CreateMockCall("Mock1", false, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, "", "", nullptr, 0));
 
-        async_queue_t queue;
+        async_queue_handle_t queue;
         uint32_t sharedAsyncQueueId = 1;
         CreateSharedAsyncQueue(
             sharedAsyncQueueId,
@@ -108,7 +108,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "3"));
         g_gotCall = false;
 
-        async_queue_t queue;
+        async_queue_handle_t queue;
         uint32_t sharedAsyncQueueId = 2;
         CreateSharedAsyncQueue(
             sharedAsyncQueueId,
@@ -206,7 +206,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
         g_gotCall = false;
 
-        async_queue_t queue;
+        async_queue_handle_t queue;
         uint32_t sharedAsyncQueueId = 3;
         CreateSharedAsyncQueue(
             sharedAsyncQueueId,
@@ -381,7 +381,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
         g_gotCall = false;
 
-        async_queue_t queue;
+        async_queue_handle_t queue;
         uint32_t sharedAsyncQueueId = 5;
         CreateSharedAsyncQueue(
             sharedAsyncQueueId,
