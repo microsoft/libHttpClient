@@ -127,7 +127,7 @@ public:
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
 
-        async_queue_t queue;
+        async_queue_handle_t queue;
         uint32_t sharedAsyncQueueId = 0;
         CreateSharedAsyncQueue(
             sharedAsyncQueueId,
@@ -366,7 +366,7 @@ public:
 
         const CHAR* t1 = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader", &t1));
-        VERIFY_ARE_EQUAL_STR("testValue2", t1);
+        VERIFY_ARE_EQUAL_STR("testValue, testValue2", t1);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader2", &t1));
         VERIFY_IS_NULL(t1);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
@@ -384,7 +384,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeaderAtIndex(call, 0, &hn0, &hv0));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeaderAtIndex(call, 1, &hn1, &hv1));
         VERIFY_ARE_EQUAL_STR("testHeader", hn0);
-        VERIFY_ARE_EQUAL_STR("testValue", hv0);
+        VERIFY_ARE_EQUAL_STR("testValue, testValue2, testValue", hv0);
         VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 

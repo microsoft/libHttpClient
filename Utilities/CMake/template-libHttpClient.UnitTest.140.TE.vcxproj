@@ -28,6 +28,7 @@
        $(ProjectDir)..\..\Tests\UnitTests\Support;
        $(ProjectDir)..\..\Tests\UnitTests;
        $(ProjectDir)..\..\Include;
+       $(ProjectDir)..\..\Include\httpClient;
       %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
