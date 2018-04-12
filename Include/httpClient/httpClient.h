@@ -118,65 +118,6 @@ STDAPI HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// Logging APIs
-//
-
-/// <summary>
-/// Diagnostic level used by logging
-/// </summary>
-typedef enum HCLogLevel
-{
-    /// <summary>
-    /// No logging
-    /// </summary>
-    HCLogLevel_Off,
-
-    /// <summary>
-    /// Log only errors
-    /// </summary>
-    HCLogLevel_Error,
-
-    /// <summary>
-    /// Log warnings and errors
-    /// </summary>
-    HCLogLevel_Warning,
-
-    /// <summary>
-    /// Log important, warnings and errors
-    /// </summary>
-    HCLogLevel_Important,
-
-    /// <summary>
-    /// Log info, important, warnings and errors
-    /// </summary>
-    HCLogLevel_Information,
-
-    /// <summary>
-    /// Log everything
-    /// </summary>
-    HCLogLevel_Verbose
-} HCLogLevel;
-
-/// <summary>
-/// Sets the log level for the library.  Logs are sent the debug output
-/// </summary>
-/// <param name="logLevel">Log level</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCSettingsSetLogLevel(
-    _In_ HCLogLevel logLevel
-    ) HC_NOEXCEPT;
-
-/// <summary>
-/// Gets the log level for the library
-/// </summary>
-/// <param name="logLevel">Log level</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCSettingsGetLogLevel(
-    _Out_ HCLogLevel* logLevel
-    ) HC_NOEXCEPT;
-
-
-/////////////////////////////////////////////////////////////////////////////////////////
 // Http APIs
 //
 
@@ -257,9 +198,19 @@ STDAPI HCHttpCallCloseHandle(
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <returns>Returns a unique uint64_t which identifies this HTTP call object or 0 if invalid</returns>
-STDAPI_(uint64_t)
-HCHttpCallGetId(
+STDAPI_(uint64_t) HCHttpCallGetId(
     _In_ hc_call_handle_t call
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Enables or disables tracing for this specific HTTP call
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="traceCall">Trace this call</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallSetTracing(
+    _In_ hc_call_handle_t call,
+    _In_ bool traceCall
     ) HC_NOEXCEPT;
 
 
@@ -314,11 +265,13 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerName">request header name for the HTTP call</param>
 /// <param name="headerValue">request header value for the HTTP call</param>
+/// <param name="allowTracing">Set to false to skip tracing this request header, for example if it contains private information</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestSetHeader(
     _In_ hc_call_handle_t call,
     _In_z_ UTF8CSTR headerName,
-    _In_z_ UTF8CSTR headerValue
+    _In_z_ UTF8CSTR headerValue,
+    _In_ bool allowTracing
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -453,7 +406,7 @@ STDAPI HCHttpCallResponseGetStatusCode(
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="networkErrorCode">The network error code of the HTTP call. Possible values are S_OK, or E_FAIL.</param>
-/// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging</param>
+/// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for tracing / debugging</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseGetNetworkErrorCode(
     _In_ hc_call_handle_t call,
@@ -606,7 +559,7 @@ typedef struct WebSocketCompletionResult
     /// <param name="errorCode">The error code of the call. Possible values are S_OK, or E_FAIL.</param>
     HRESULT errorCode;
 
-    /// <param name="platformErrorCode">The platform specific network error code of the call to be used for logging / debugging</param>
+    /// <param name="platformErrorCode">The platform specific network error code of the call to be used for tracing / debugging</param>
     uint32_t platformErrorCode;
 } WebSocketCompletionResult;
 

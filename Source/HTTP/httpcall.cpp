@@ -127,7 +127,7 @@ HRESULT perform_http_call(
                         }
                         catch (...)
                         {
-                            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", static_cast<HC_CALL*>(call)->id);
+                            if (call->traceCall) HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", static_cast<HC_CALL*>(call)->id);
                         }
                     }
                 }
@@ -211,7 +211,7 @@ bool http_call_should_retry(
         HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
         std::chrono::seconds timeoutWindow = std::chrono::seconds(timeoutWindowInSeconds);
         std::chrono::milliseconds remainingTimeBeforeTimeout = timeoutWindow - timeElapsedSinceFirstCall;
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", call->id, remainingTimeBeforeTimeout.count());
+        if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", call->id, remainingTimeBeforeTimeout.count());
         if (remainingTimeBeforeTimeout.count() <= MIN_HTTP_TIMEOUT_IN_MS) // Need at least 5 seconds to bother making a call
         {
             return false;
@@ -241,7 +241,7 @@ bool http_call_should_retry(
         {
             call->delayBeforeRetry = waitTime;
         }
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %lld ms", call->id, call->delayBeforeRetry.count());
+        if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %lld ms", call->id, call->delayBeforeRetry.count());
 
         if (remainingTimeBeforeTimeout < call->delayBeforeRetry + std::chrono::milliseconds(MIN_HTTP_TIMEOUT_IN_MS))
         {
@@ -319,7 +319,7 @@ void retry_http_call_until_done(
         retryContext->call->firstRequestStartTime = requestStartTime;
     }
     retryContext->call->retryIterationNumber++;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d", 
+    if (retryContext->call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d",
         retryContext->call->id, 
         retryContext->call->retryIterationNumber);
 
@@ -329,7 +329,7 @@ void retry_http_call_until_done(
         if (should_fast_fail(apiState, retryContext->call, requestStartTime))
         {
             HCHttpCallResponseSetStatusCode(retryContext->call, apiState.statusCode);
-            HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", retryContext->call->id, apiState.statusCode);
+            if (retryContext->call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", retryContext->call->id, apiState.statusCode);
             CompleteAsync(retryContext->outerAsyncBlock, S_OK, 0);
         }
         else
@@ -358,7 +358,7 @@ void retry_http_call_until_done(
 
         if (http_call_should_retry(retryContext->call, responseReceivedTime))
         {
-            HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms",
+            if (retryContext->call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms",
                 retryContext->call->id,
                 retryContext->call->delayBeforeRetry.count());
 
@@ -391,7 +391,7 @@ try
         return E_INVALIDARG;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
+    if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id);
     call->performCalled = true;
 
     std::shared_ptr<retry_context> retryContext = std::make_shared<retry_context>();
@@ -437,6 +437,22 @@ try
         return 0;
     }
     return call->id;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallSetLogging(
+    _In_ hc_call_handle_t call,
+    _In_ bool logCall
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    call->traceCall = logCall;
+    return S_OK;
 }
 CATCH_RETURN()
 

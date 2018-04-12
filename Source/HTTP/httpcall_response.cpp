@@ -37,7 +37,7 @@ try
     }
 
     call->responseString = responseString;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%.2048s", call->id, responseString);
+    if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%.2048s", call->id, responseString);
     return S_OK;
 }
 CATCH_RETURN()
@@ -72,7 +72,7 @@ try
     }
 
     call->statusCode = statusCode;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetStatusCode [ID %llu]: statusCode=%u",
+    if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetStatusCode [ID %llu]: statusCode=%u",
         call->id, statusCode);
     return S_OK;
 }
@@ -112,7 +112,7 @@ try
 
     call->networkErrorCode = networkErrorCode;
     call->platformNetworkErrorCode = platformNetworkErrorCode;
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorCode [ID %llu]: errorCode=%08X (%08X)",
+    if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorCode [ID %llu]: errorCode=%08X (%08X)",
         call->id, networkErrorCode, platformNetworkErrorCode);
     return S_OK;
 }
@@ -215,13 +215,13 @@ try
         newHeaderValue.append(", ");
         newHeaderValue.append(headerValue);
 
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: Duplicated header %s=%s",
+        if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: Duplicated header %s=%s",
             call->id, headerName, newHeaderValue.c_str());
     }
     else
     {
         call->responseHeaders[headerName] = headerValue;
-        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %s=%s",
+        if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %s=%s",
             call->id, headerName, headerValue);
     }
 
