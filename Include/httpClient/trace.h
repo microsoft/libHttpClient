@@ -3,28 +3,15 @@
 
 #pragma once
 
+#ifndef HC_TRACE_BUILD_LEVEL
+#define HC_TRACE_BUILD_LEVEL HC_PRIVATE_TRACE_LEVEL_VERBOSE
+#endif
 
-// These defines are not meant to be used by clients at runtime, the
-// HCTraceLevel enum should be used instead
-#define HC_PRIVATE_TRACE_LEVEL_OFF 0
-#define HC_PRIVATE_TRACE_LEVEL_ERROR 1
-#define HC_PRIVATE_TRACE_LEVEL_WARNING 2
-#define HC_PRIVATE_TRACE_LEVEL_IMPORTANT 3
-#define HC_PRIVATE_TRACE_LEVEL_INFORMATION 4
-#define HC_PRIVATE_TRACE_LEVEL_VERBOSE 5
 
-//------------------------------------------------------------------------------
-// Trace level enum
-//------------------------------------------------------------------------------
-typedef enum HCTraceLevel
-{
-    HCTraceLevel_Off = HC_PRIVATE_TRACE_LEVEL_OFF,
-    HCTraceLevel_Error = HC_PRIVATE_TRACE_LEVEL_ERROR,
-    HCTraceLevel_Warning = HC_PRIVATE_TRACE_LEVEL_WARNING,
-    HCTraceLevel_Important = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
-    HCTraceLevel_Information = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
-    HCTraceLevel_Verbose = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
-} HCTraceLevel;
+/////////////////////////////////////////////////////////////////////////////////////////
+// Tracing APIs
+//
+
 
 //------------------------------------------------------------------------------
 // Configuration
@@ -40,10 +27,15 @@ typedef enum HCTraceLevel
 // HC_TRACE_TO_DEBUGGER [0,1]
 //     controls if trace will output using OutputDebugString
 //     only has an effect when building trace.cpp
-//
-// HC_TRACE_TO_CLIENT [0,1]
-//     controls if trace will output using the TraceLoggingProvider
-//     only has an effect when building trace.cpp
+
+// These defines are not meant to be used by clients at runtime, the
+// HCTraceLevel enum should be used instead
+#define HC_PRIVATE_TRACE_LEVEL_OFF 0
+#define HC_PRIVATE_TRACE_LEVEL_ERROR 1
+#define HC_PRIVATE_TRACE_LEVEL_WARNING 2
+#define HC_PRIVATE_TRACE_LEVEL_IMPORTANT 3
+#define HC_PRIVATE_TRACE_LEVEL_INFORMATION 4
+#define HC_PRIVATE_TRACE_LEVEL_VERBOSE 5
 
 #ifndef HC_TRACE_BUILD_LEVEL
 #define HC_TRACE_BUILD_LEVEL HC_PRIVATE_TRACE_LEVEL_VERBOSE
@@ -53,9 +45,6 @@ typedef enum HCTraceLevel
 #define HC_TRACE_TO_DEBUGGER 1
 #endif
 
-#ifndef HC_TRACE_TO_CLIENT
-#define HC_TRACE_TO_CLIENT 1
-#endif
 
 //------------------------------------------------------------------------------
 // Level enabled macros
@@ -76,98 +65,121 @@ typedef enum HCTraceLevel
 // the values of HC_TRACE_BUILD_LEVEL
 
 #if HC_TRACE_BUILD_LEVEL > HC_PRIVATE_TRACE_LEVEL_OFF
-#define HC_TRACE_ENABLE 1
+    #define HC_TRACE_ENABLE 1
 #else
-#define HC_TRACE_ENABLE 0
+    #define HC_TRACE_ENABLE 0
 #endif
 
 #if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_ERROR
-#define HC_TRACE_ERROR_ENABLE 1
+    #define HC_TRACE_ERROR_ENABLE 1
 #else
-#define HC_TRACE_ERROR_ENABLE 0
+    #define HC_TRACE_ERROR_ENABLE 0
 #endif
-
 
 #if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_WARNING
-#define HC_TRACE_WARNING_ENABLE 1
+    #define HC_TRACE_WARNING_ENABLE 1
 #else
-#define HC_TRACE_WARNING_ENABLE 0
+    #define HC_TRACE_WARNING_ENABLE 0
 #endif
 
-
 #if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_IMPORTANT
-#define HC_TRACE_IMPORTANT_ENABLE 1
+    #define HC_TRACE_IMPORTANT_ENABLE 1
 #else
-#define HC_TRACE_IMPORTANT_ENABLE 0
+    #define HC_TRACE_IMPORTANT_ENABLE 0
 #endif
 
 
 #if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_INFORMATION
-#define HC_TRACE_INFORMATION_ENABLE 1
+    #define HC_TRACE_INFORMATION_ENABLE 1
 #else
-#define HC_TRACE_INFORMATION_ENABLE 0
+    #define HC_TRACE_INFORMATION_ENABLE 0
 #endif
-
 
 #if HC_TRACE_BUILD_LEVEL >= HC_PRIVATE_TRACE_LEVEL_VERBOSE
-#define HC_TRACE_VERBOSE_ENABLE 1
+    #define HC_TRACE_VERBOSE_ENABLE 1
 #else
-#define HC_TRACE_VERBOSE_ENABLE 0
+    #define HC_TRACE_VERBOSE_ENABLE 0
 #endif
 
-//------------------------------------------------------------------------------
-// Client callback
-//------------------------------------------------------------------------------
-// Register callback for tracing so that the client can merge tracing into their
-// own logs
-// These macros are always defined but will compile to nothing if trace is
-// disabled
 
+/// <summary>
+/// Diagnostic level used by tracing
+/// </summary>
+typedef enum HCTraceLevel
+{
+    /// <summary>
+    /// No tracing
+    /// </summary>
+    HCTraceLevel_Off = HC_PRIVATE_TRACE_LEVEL_OFF,
+
+    /// <summary>
+    /// Trace only errors
+    /// </summary>
+    HCTraceLevel_Error = HC_PRIVATE_TRACE_LEVEL_ERROR,
+
+    /// <summary>
+    /// Trace warnings and errors
+    /// </summary>
+    HCTraceLevel_Warning = HC_PRIVATE_TRACE_LEVEL_WARNING,
+
+    /// <summary>
+    /// Trace important, warnings and errors
+    /// </summary>
+    HCTraceLevel_Important = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
+
+    /// <summary>
+    /// Trace info, important, warnings and errors
+    /// </summary>
+    HCTraceLevel_Information = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
+
+    /// <summary>
+    /// Trace everything
+    /// </summary>
+    HCTraceLevel_Verbose = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
+} HCTraceLevel;
+
+/// <summary>
+/// Sets the trace level for the library.  Traces are sent the debug output
+/// </summary>
+/// <param name="traceLevel">Trace level</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCSettingsSetTraceLevel(
+    _In_ HCTraceLevel traceLevel
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Gets the trace level for the library
+/// </summary>
+/// <param name="traceLevel">Trace level</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCSettingsGetTraceLevel(
+    _Out_ HCTraceLevel* traceLevel
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Register callback for tracing so that the client can merge tracing into their
+/// own traces. 
+/// </summary>
 typedef void (HCTraceCallback)(
-    char const* areaName,
-    enum HCTraceLevel level,
-    unsigned int threadId,
-    uint64_t timestamp,
-    char const* message
-);
+    _In_ UTF8CSTR areaName,
+    _In_ enum HCTraceLevel level,
+    _In_ uint32_t threadId,
+    _In_ uint64_t timestamp,
+    _In_ UTF8CSTR message
+    );
 
-STDAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
+/// <summary>
+/// Set client callback for tracing 
+/// </summary>
+/// <param name="callback">Trace callback</param>
+STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback);
 
-//------------------------------------------------------------------------------
-// Trace area macros
-//------------------------------------------------------------------------------
-// These macros are used to set up areas for tracing
-// These macros are always defined but will compile to nothing if trace is
-// disabled
+/// <summary>
+/// Set client callback for tracing 
+/// </summary>
+/// <param name="callback">Trace callback</param>
+STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger);
 
-#if HC_TRACE_ENABLE
-// Defines an area for tracing:
-// name is used as a prefix for all traces in the area
-// verbosity sets the maximum verbosity that will be traced within this area
-// verbosity can be tweaked at runtime by calling HC_TRACE_SET_VERBOSITY(area,
-// level)
-// since this defines a global variable, it should be only used from a .cpp file
-// and each area should be defined only once
-#define HC_DEFINE_TRACE_AREA(area, verbosity) \
-    struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area) = { #area, (verbosity) }
-
-// Declares a trace area. Since DEFINE_TRACE_AREA can only be used once and in a
-// .cpp, this allows to trace in an already defined area from another file
-#define HC_DECLARE_TRACE_AREA(area) \
-    extern struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area)
-
-// Access to the verbosity property of the area for runtime control
-#define HC_TRACE_SET_VERBOSITY(area, level) \
-    HCTraceImplSetAreaVerbosity(&HC_PRIVATE_TRACE_AREA_NAME(area), level)
-
-#define HC_TRACE_GET_VERBOSITY(area) \
-    HCTraceImplGetAreaVerbosity(&HC_PRIVATE_TRACE_AREA_NAME(area))
-#else
-#define HC_DEFINE_TRACE_AREA(name, verbosity)
-#define HC_DECLARE_TRACE_AREA(name)
-#define HC_TRACE_SET_VERBOSITY(area, level)
-#define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel_Off
-#endif
 
 //------------------------------------------------------------------------------
 // Trace macros
@@ -177,75 +189,91 @@ STDAPI_(void) HCTraceSetClientCallback(HCTraceCallback* callback);
 // HC_TRACE_BUILD_LEVEL is not high enough
 
 #if HC_TRACE_ENABLE
-#define HC_TRACE_MESSAGE(area, level, format, ...) \
-    HCTraceImplMessage(&HC_PRIVATE_TRACE_AREA_NAME(area), (level), format, ##__VA_ARGS__)
-
-#ifdef __cplusplus
-#define HC_TRACE_SCOPE(area, level) \
-        auto tsh = HCTraceImplScopeHelper{ &HC_PRIVATE_TRACE_AREA_NAME(area), level, HC_FUNCTION }
+    #define HC_TRACE_MESSAGE(area, level, format, ...) HCTraceImplMessage(&HC_PRIVATE_TRACE_AREA_NAME(area), (level), format, ##__VA_ARGS__)
+    #ifdef __cplusplus
+        #define HC_TRACE_SCOPE(area, level) auto tsh = HCTraceImplScopeHelper{ &HC_PRIVATE_TRACE_AREA_NAME(area), level, HC_FUNCTION }
+    #else
+        #define HC_TRACE_SCOPE(area, level)
+    #endif
 #else
-#define HC_TRACE_SCOPE(area, level)
-#endif
-#else
-#define HC_TRACE_MESSAGE(area, level, ...)
-#define HC_TRACE_MESSAGE_WITH_LOCATION(area, level, format, ...)
-#define HC_TRACE_SCOPE(area, level)
+    #define HC_TRACE_MESSAGE(area, level, ...)
+    #define HC_TRACE_MESSAGE_WITH_LOCATION(area, level, format, ...)
+    #define HC_TRACE_SCOPE(area, level)
 #endif
 
 #if HC_TRACE_ERROR_ENABLE
-#define HC_TRACE_ERROR(area, msg, ...)  \
-    HC_TRACE_MESSAGE(area, HCTraceLevel_Error, msg, ##__VA_ARGS__)
-
-#define HC_TRACE_ERROR_HR(area, failedHr, msg)  \
-    HC_TRACE_ERROR(area, "%hs (hr=0x%08x)", msg, failedHr)
+    #define HC_TRACE_ERROR(area, msg, ...)  HC_TRACE_MESSAGE(area, HCTraceLevel_Error, msg, ##__VA_ARGS__)
+    #define HC_TRACE_ERROR_HR(area, failedHr, msg) HC_TRACE_ERROR(area, "%hs (hr=0x%08x)", msg, failedHr)
 #else
-#define HC_TRACE_ERROR(area, msg, ...)
-#define HC_TRACE_ERROR_HR(area, failedHr, msg)
+    #define HC_TRACE_ERROR(area, msg, ...)
+    #define HC_TRACE_ERROR_HR(area, failedHr, msg)
 #endif
 
 #if HC_TRACE_WARNING_ENABLE
-#define HC_TRACE_WARNING(area, msg, ...) \
-    HC_TRACE_MESSAGE(area, HCTraceLevel_Warning, msg, ##__VA_ARGS__)
-
-#define HC_TRACE_WARNING_HR(area, failedHr, msg)  \
-    HC_TRACE_WARNING(area, "%hs (hr=0x%08x)", msg, failedHr)
+    #define HC_TRACE_WARNING(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Warning, msg, ##__VA_ARGS__)
+    #define HC_TRACE_WARNING_HR(area, failedHr, msg) HC_TRACE_WARNING(area, "%hs (hr=0x%08x)", msg, failedHr)
 #else
-#define HC_TRACE_WARNING(area, msg, ...)
-#define HC_TRACE_WARNING_HR(area, failedHr, msg)
+    #define HC_TRACE_WARNING(area, msg, ...)
+    #define HC_TRACE_WARNING_HR(area, failedHr, msg)
 #endif
 
 #if HC_TRACE_IMPORTANT_ENABLE
-#define HC_TRACE_IMPORTANT(area, msg, ...) \
-    HC_TRACE_MESSAGE(area, HCTraceLevel_Important, msg, ##__VA_ARGS__)
-
-#define HC_TRACE_SCOPE_IMPORTANT(area) \
-    HC_TRACE_SCOPE(area, HCTraceLevel_Important)
+    #define HC_TRACE_IMPORTANT(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Important, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_IMPORTANT(area) HC_TRACE_SCOPE(area, HCTraceLevel_Important)
 #else
-#define HC_TRACE_IMPORTANT(area, msg, ...)
-#define HC_TRACE_SCOPE_IMPORTANT(area)
+    #define HC_TRACE_IMPORTANT(area, msg, ...)
+    #define HC_TRACE_SCOPE_IMPORTANT(area)
 #endif
 
 #if HC_TRACE_INFORMATION_ENABLE
-#define HC_TRACE_INFORMATION(area, msg, ...) \
-    HC_TRACE_MESSAGE(area, HCTraceLevel_Information, msg, ##__VA_ARGS__)
-
-#define HC_TRACE_SCOPE_INFORMATION(area) \
-    HC_TRACE_SCOPE(area, HCTraceLevel_Information)
+    #define HC_TRACE_INFORMATION(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Information, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_INFORMATION(area) HC_TRACE_SCOPE(area, HCTraceLevel_Information)
 #else
-#define HC_TRACE_INFORMATION(area, msg, ...)
-#define HC_TRACE_SCOPE_INFORMATION(area)
+    #define HC_TRACE_INFORMATION(area, msg, ...)
+    #define HC_TRACE_SCOPE_INFORMATION(area)
 #endif
 
 #if HC_TRACE_VERBOSE_ENABLE
-#define HC_TRACE_VERBOSE(area, msg, ...) \
-        HC_TRACE_MESSAGE(area, HCTraceLevel_Verbose, msg, ##__VA_ARGS__)
-
-#define HC_TRACE_SCOPE_VERBOSE(area) \
-    HC_TRACE_SCOPE(area, HCTraceLevel_Verbose)
+    #define HC_TRACE_VERBOSE(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Verbose, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_VERBOSE(area) HC_TRACE_SCOPE(area, HCTraceLevel_Verbose)
 #else
-#define HC_TRACE_VERBOSE(area, msg, ...)
-#define HC_TRACE_SCOPE_VERBOSE(area)
+    #define HC_TRACE_VERBOSE(area, msg, ...)
+    #define HC_TRACE_SCOPE_VERBOSE(area)
 #endif
+
+//------------------------------------------------------------------------------
+// Trace area macros
+//------------------------------------------------------------------------------
+// These macros are used to set up areas for tracing
+// These macros are always defined but will compile to nothing if trace is
+// disabled
+
+#if HC_TRACE_ENABLE
+    // Defines an area for tracing:
+    // name is used as a prefix for all traces in the area
+    // verbosity sets the maximum verbosity that will be traced within this area
+    // verbosity can be tweaked at runtime by calling HC_TRACE_SET_VERBOSITY(area,
+    // level)
+    // since this defines a global variable, it should be only used from a .cpp file
+    // and each area should be defined only once
+    #define HC_DEFINE_TRACE_AREA(area, verbosity) struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area) = { #area, (verbosity) }
+
+    // Declares a trace area. Since DEFINE_TRACE_AREA can only be used once and in a
+    // .cpp, this allows to trace in an already defined area from another file
+    #define HC_DECLARE_TRACE_AREA(area) extern struct HCTraceImplArea HC_PRIVATE_TRACE_AREA_NAME(area)
+
+    // Access to the verbosity property of the area for runtime control
+    #define HC_TRACE_SET_VERBOSITY(area, level) HCTraceImplSetAreaVerbosity(&HC_PRIVATE_TRACE_AREA_NAME(area), level)
+
+    #define HC_TRACE_GET_VERBOSITY(area) HCTraceImplGetAreaVerbosity(&HC_PRIVATE_TRACE_AREA_NAME(area))
+#else
+    #define HC_DEFINE_TRACE_AREA(name, verbosity)
+    #define HC_DECLARE_TRACE_AREA(name)
+    #define HC_TRACE_SET_VERBOSITY(area, level)
+    #define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel_Off
+#endif
+
+
 
 //------------------------------------------------------------------------------
 // Implementation
@@ -285,7 +313,7 @@ STDAPI_(void) HCTraceImplMessage(
     enum HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
-    );
+);
 
 
 #if defined(__cplusplus)

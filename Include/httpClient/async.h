@@ -111,3 +111,5 @@ STDAPI_(void) CancelAsync(
 STDAPI RunAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work);
+
+

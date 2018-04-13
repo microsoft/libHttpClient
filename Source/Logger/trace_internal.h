@@ -4,3 +4,9 @@
 
 void HCTraceImplGlobalInit();
 void HCTraceImplGlobalCleanup();
+
+
+
+
+
+

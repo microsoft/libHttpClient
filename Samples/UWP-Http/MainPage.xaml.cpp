@@ -94,7 +94,7 @@ MainPage::MainPage()
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
     HCGlobalInitialize();
-    HCSettingsSetLogLevel(HCLogLevel::HCLogLevel_Information);
+    HCSettingsSetTraceLevel(HCTraceLevel::HCTraceLevel_Information);
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
@@ -267,6 +267,19 @@ void HttpTestApp::MainPage::UpdateXamlUI(
     }));
 }
 
+void TraceCallback(
+    _In_ UTF8CSTR areaName,
+    _In_ enum HCTraceLevel level,
+    _In_ uint32_t threadId,
+    _In_ uint64_t timestamp,
+    _In_ UTF8CSTR message
+    )
+{
+    // Hook up to your own tracing.  For example:
+    // OutputDebugStringA(message);
+}
+
+
 void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     std::string requestBody = to_utf8string(TextboxRequestString->Text->Data());
@@ -275,6 +288,9 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     std::string requestUrl = to_utf8string(TextboxURL->Text->Data());
     std::string timeout = to_utf8string(TextboxTimeout->Text->Data());
     uint32_t timeoutInt = atoi(timeout.c_str());
+
+    HCTraceSetClientCallback(TraceCallback);
+    HCTraceSetTraceToDebugger(true);
 
     hc_call_handle_t call = nullptr;
     HCHttpCallCreate(&call);
@@ -288,7 +304,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     {
         std::string headerName = header[0];
         std::string headerValue = header[1];
-        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
+        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str(), true);
     }
 
     AsyncBlock* asyncBlock = new AsyncBlock;

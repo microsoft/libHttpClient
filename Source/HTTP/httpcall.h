@@ -11,6 +11,7 @@ typedef struct HC_CALL
         networkErrorCode(S_OK),
         platformNetworkErrorCode(0),
         id(0),
+        traceCall(true),
         retryAllowed(false),
         timeoutInSeconds(0),
         timeoutWindowInSeconds(0),
@@ -36,6 +37,7 @@ typedef struct HC_CALL
     std::shared_ptr<xbox::httpclient::hc_task> task;
 
     uint64_t id;
+    bool traceCall;
     void* context;
     std::atomic<int> refCount;
 
