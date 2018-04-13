@@ -167,31 +167,31 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
         VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
 
-        HCLogLevel level;
+        HCTraceLevel level;
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Off));
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HCLogLevel_Off, level);
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Off));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
+        VERIFY_ARE_EQUAL(HCTraceLevel_Off, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Error));
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HCLogLevel_Error, level);
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Error));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
+        VERIFY_ARE_EQUAL(HCTraceLevel_Error, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Warning));
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HCLogLevel_Warning, level);
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Warning));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
+        VERIFY_ARE_EQUAL(HCTraceLevel_Warning, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Important));
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HCLogLevel_Important, level);
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Important));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
+        VERIFY_ARE_EQUAL(HCTraceLevel_Important, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Information));
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HCLogLevel_Information, level);
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Information));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
+        VERIFY_ARE_EQUAL(HCTraceLevel_Information, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetLogLevel(HCLogLevel_Verbose));
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetLogLevel(&level));
-        VERIFY_ARE_EQUAL(HCLogLevel_Verbose, level);
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Verbose));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
+        VERIFY_ARE_EQUAL(HCTraceLevel_Verbose, level);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetTimeoutWindow(nullptr, 1000));
         uint32_t timeout = 0;
@@ -278,11 +278,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(0, numHeaders);
 
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue", true));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue2"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue2", true));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
@@ -294,8 +294,8 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(1, numHeaders);
 
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue"));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader2", "testValue2"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue", true));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader2", "testValue2", true));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(2, numHeaders);
 
