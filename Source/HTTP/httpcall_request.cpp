@@ -27,8 +27,7 @@ try
     call->method = method;
     call->url = url;
 
-    if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetUrl [ID %llu]: method=%s url=%s",
-        call->id, method, url);
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetUrl [ID %llu]: method=%s url=%s", call->id, method, url); }
 
     return S_OK;
 }
@@ -78,8 +77,7 @@ try
     call->requestBodyBytes.assign(requestBodyBytes, requestBodyBytes + requestBodySize);
     call->requestBodyString.clear();
 
-    if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRequestBodyBytes [ID %llu]: requestBodySize=%lu",
-        call->id, requestBodySize);
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRequestBodyBytes [ID %llu]: requestBodySize=%lu", call->id, requestBodySize); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -168,8 +166,7 @@ try
 
     call->requestHeaders[headerName] = headerValue;
 
-    if (allowTracing && call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetHeader [ID %llu]: %s=%s",
-        call->id, headerName, headerValue);
+    if (allowTracing && call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetHeader [ID %llu]: %s=%s", call->id, headerName, headerValue); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -266,8 +263,7 @@ try
         RETURN_IF_PERFORM_CALLED(call);
         call->retryAfterCacheId = retryAfterCacheId;
 
-        if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryCacheId [ID %llu]: retryAfterCacheId=%d",
-            call->id, retryAfterCacheId);
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryCacheId [ID %llu]: retryAfterCacheId=%d", call->id, retryAfterCacheId); }
     }
     return S_OK;
 }
@@ -293,8 +289,7 @@ try
         RETURN_IF_PERFORM_CALLED(call);
         call->retryAllowed = retryAllowed;
 
-        if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s",
-            call->id, retryAllowed ? "true" : "false");
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetRetryAllowed [ID %llu]: retryAllowed=%s", call->id, retryAllowed ? "true" : "false"); }
     }
     return S_OK;
 }
@@ -367,8 +362,7 @@ try
         RETURN_IF_PERFORM_CALLED(call);
         call->timeoutInSeconds = timeoutInSeconds;
 
-        if (call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetTimeout [ID %llu]: timeoutInSeconds=%u",
-            call->id, timeoutInSeconds);
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetTimeout [ID %llu]: timeoutInSeconds=%u", call->id, timeoutInSeconds); }
     }
 
     return S_OK;
@@ -425,7 +419,7 @@ try
         call->timeoutWindowInSeconds = timeoutWindowInSeconds;
     }
 
-    if (call == nullptr || call->traceCall) HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestTimeoutWindow: %u", timeoutWindowInSeconds);
+    if (call == nullptr || call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestTimeoutWindow: %u", timeoutWindowInSeconds); }
 
     return S_OK;
 }
