@@ -89,7 +89,7 @@ HRESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, u
     HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::exception reached api boundary: %s\n    %s:%u",
         E_FAIL, e.what(), file, line);
 
-    HC_ASSERT(false);
+    ASSERT(false);
     return E_FAIL;
 }
 
@@ -98,7 +98,7 @@ HRESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line)
     HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception reached api boundary\n    %s:%u",
         E_FAIL, file, line);
 
-    HC_ASSERT(false);
+    ASSERT(false);
     return E_FAIL;
 }
 

@@ -77,10 +77,16 @@ typedef std::chrono::steady_clock chrono_clock_t;
 #define ENABLE_ASSERTS 1
 #endif
 
+#ifndef DebugBreak
+#define DebugBreak()
+#endif
+
 #ifdef ENABLE_ASSERTS
-#define HC_ASSERT(x) assert(x);
+#define ASSERT(condition) assert(condition)
+#define NT_VERIFY(condition) ASSERT(condition)
 #else
-#define HC_ASSERT(x)
+#define ASSERT(condition)
+#define NT_VERIFY(condition) condition
 #endif
 
 typedef int32_t function_context;
@@ -120,15 +126,3 @@ HRESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, u
 HRESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_END
-
-#ifndef DebugBreak
-#define DebugBreak()
-#endif
-
-#if DBG
-#define ASSERT(condition) if (!(condition)) DebugBreak()
-#define NT_VERIFY(condition) ASSERT(condition)
-#else
-#define ASSERT(condition)
-#define NT_VERIFY(condition) condition
-#endif // DBG

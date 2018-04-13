@@ -53,7 +53,7 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     if (assertIfNull && httpSingleton == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
-        HC_ASSERT(httpSingleton != nullptr);
+        ASSERT(httpSingleton != nullptr);
     }
 
     return httpSingleton;
