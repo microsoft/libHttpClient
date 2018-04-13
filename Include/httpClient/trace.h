@@ -85,3 +85,63 @@ STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback);
 /// <param name="callback">Trace callback</param>
 STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger);
 
+
+//------------------------------------------------------------------------------
+// Trace macros
+//------------------------------------------------------------------------------
+// These are the macros to be used to log
+// These macros are always defined but will compile to nothing if
+// HC_TRACE_BUILD_LEVEL is not high enough
+
+#if HC_TRACE_ENABLE
+    #define HC_TRACE_MESSAGE(area, level, format, ...) HCTraceImplMessage(&HC_PRIVATE_TRACE_AREA_NAME(area), (level), format, ##__VA_ARGS__)
+    #ifdef __cplusplus
+        #define HC_TRACE_SCOPE(area, level) auto tsh = HCTraceImplScopeHelper{ &HC_PRIVATE_TRACE_AREA_NAME(area), level, HC_FUNCTION }
+    #else
+        #define HC_TRACE_SCOPE(area, level)
+    #endif
+#else
+    #define HC_TRACE_MESSAGE(area, level, ...)
+    #define HC_TRACE_MESSAGE_WITH_LOCATION(area, level, format, ...)
+    #define HC_TRACE_SCOPE(area, level)
+#endif
+
+#if HC_TRACE_ERROR_ENABLE
+    #define HC_TRACE_ERROR(area, msg, ...)  HC_TRACE_MESSAGE(area, HCTraceLevel_Error, msg, ##__VA_ARGS__)
+    #define HC_TRACE_ERROR_HR(area, failedHr, msg) HC_TRACE_ERROR(area, "%hs (hr=0x%08x)", msg, failedHr)
+#else
+    #define HC_TRACE_ERROR(area, msg, ...)
+    #define HC_TRACE_ERROR_HR(area, failedHr, msg)
+#endif
+
+#if HC_TRACE_WARNING_ENABLE
+    #define HC_TRACE_WARNING(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Warning, msg, ##__VA_ARGS__)
+    #define HC_TRACE_WARNING_HR(area, failedHr, msg) HC_TRACE_WARNING(area, "%hs (hr=0x%08x)", msg, failedHr)
+#else
+    #define HC_TRACE_WARNING(area, msg, ...)
+    #define HC_TRACE_WARNING_HR(area, failedHr, msg)
+#endif
+
+#if HC_TRACE_IMPORTANT_ENABLE
+    #define HC_TRACE_IMPORTANT(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Important, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_IMPORTANT(area) HC_TRACE_SCOPE(area, HCTraceLevel_Important)
+#else
+    #define HC_TRACE_IMPORTANT(area, msg, ...)
+    #define HC_TRACE_SCOPE_IMPORTANT(area)
+#endif
+
+#if HC_TRACE_INFORMATION_ENABLE
+    #define HC_TRACE_INFORMATION(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Information, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_INFORMATION(area) HC_TRACE_SCOPE(area, HCTraceLevel_Information)
+#else
+    #define HC_TRACE_INFORMATION(area, msg, ...)
+    #define HC_TRACE_SCOPE_INFORMATION(area)
+#endif
+
+#if HC_TRACE_VERBOSE_ENABLE
+    #define HC_TRACE_VERBOSE(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Verbose, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_VERBOSE(area) HC_TRACE_SCOPE(area, HCTraceLevel_Verbose)
+#else
+    #define HC_TRACE_VERBOSE(area, msg, ...)
+    #define HC_TRACE_SCOPE_VERBOSE(area)
+#endif
