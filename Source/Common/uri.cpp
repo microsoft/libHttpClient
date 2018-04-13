@@ -255,7 +255,7 @@ String Uri::ToString() const
     size_t chunkStart = 0;
     while (true)
     {
-        assert(chunkStart <= urlPart.size());
+        ASSERT(chunkStart <= urlPart.size());
 
         // find the next sequence to handle
         size_t chunkEnd = urlPart.find_first_of("+%", chunkStart);
@@ -265,7 +265,7 @@ String Uri::ToString() const
         }
 
         // copy up to the end of the chunk
-        assert(chunkEnd <= urlPart.size());
+        ASSERT(chunkEnd <= urlPart.size());
         decoded.append(urlPart.data() + chunkStart, urlPart.data() + chunkEnd);
 
         // if there's nothing left to handle
@@ -301,7 +301,7 @@ String Uri::ToString() const
         }
         break;
         default:
-            assert(false);
+            ASSERT(false);
             break;
         }
     }
@@ -321,7 +321,7 @@ String Uri::ToString() const
     size_t chunkStart = 0;
     while (true)
     {
-        assert(chunkStart <= urlPart.size());
+        ASSERT(chunkStart <= urlPart.size());
 
         // find the next sequence to handle
         size_t chunkEnd = urlPart.find('&', chunkStart);
@@ -592,7 +592,7 @@ bool Uri::ParseHost(String const& uri, String::const_iterator& it)
 
 bool Uri::ParsePort(String const& uri, String::const_iterator& it)
 {
-    assert(*it == ':');
+    ASSERT(*it == ':');
     ++it; // Skip the ':'
 
     auto portEnd = it;
@@ -623,7 +623,7 @@ bool Uri::ParsePort(String const& uri, String::const_iterator& it)
 
 bool Uri::ParsePath(String const& uri, String::const_iterator& it)
 {
-    assert(*it == '/');
+    ASSERT(*it == '/');
 
     auto pathEnd = it;
     for (; pathEnd != uri.end() && *pathEnd != '?' && *pathEnd != '#'; ++pathEnd)
@@ -644,7 +644,7 @@ bool Uri::ParseQuery(String const& uri, String::const_iterator& it, bool expectQ
 {
     if (expectQuestion)
     {
-        assert(*it == '?');
+        ASSERT(*it == '?');
         ++it; // Skip the '?'
     }
 
@@ -667,7 +667,7 @@ bool Uri::ParseFragment(String const& uri, String::const_iterator& it, bool expe
 {
     if (expectOctothorpe)
     {
-        assert(*it == '#');
+        ASSERT(*it == '#');
         ++it; // Skip the '#'
     }
 

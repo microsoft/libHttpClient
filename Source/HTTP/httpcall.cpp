@@ -83,7 +83,7 @@ try
     int refCount = --call->refCount;
     if (refCount <= 0)
     {
-        assert(refCount == 0); // should only fire at 0
+        ASSERT(refCount == 0); // should only fire at 0
         delete call;
     }
 

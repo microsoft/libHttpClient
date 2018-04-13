@@ -36,7 +36,7 @@ void FormatHelper(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* for
     int required = std::vsnprintf(nullptr, 0, format, args1);
     va_end(args1);
 
-    assert(required > 0);
+    ASSERT(required > 0);
 
     size_t originalSize = buffer.size();
 
@@ -46,7 +46,7 @@ void FormatHelper(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* for
     int written = std::vsnprintf(reinterpret_cast<char*>(&buffer[originalSize]), buffer.size(), format, args2);
     va_end(args2);
 
-    assert(written == required);
+    ASSERT(written == required);
     //UNREFERENCED_LOCAL(written);
 
     buffer.resize(buffer.size() - 1); // drop null terminator
@@ -104,7 +104,7 @@ char HexEncode(uint8_t v)
     case 15:
         return 'A' + (v - 10);
     default:
-        assert(false);
+        ASSERT(false);
         return '0';
     }
 }

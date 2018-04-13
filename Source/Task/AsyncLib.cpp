@@ -196,7 +196,7 @@ static AsyncState* GetState(_In_ AsyncBlock* asyncBlock)
 
     if (state != nullptr && state->signature != ASYNC_STATE_SIG)
     {
-        DebugBreak();
+        ASSERT(false);
         state = nullptr;
     }
 
@@ -547,21 +547,8 @@ STDAPI GetAsyncResult(
         }
         else if (token != state->token)
         {
-            char buf[100];
-            if (state->function != nullptr)
-            {
-                sprintf_s(
-                    buf,
-                    "Call/Result mismatch.  This AsyncBlock was initiated by '%s'.\r\n",
-                    state->function);
-            }
-            else
-            {
-                sprintf_s(buf, "Call/Result mismatch\r\n");
-            }
-
-            OutputDebugStringA(buf);
-            DebugBreak();
+            // Call/Result mismatch.  This AsyncBlock was initiated by state->function
+            ASSERT(false);
             result = E_INVALIDARG;
         }
         else if (state->providerData.bufferSize == 0)

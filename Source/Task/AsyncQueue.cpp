@@ -402,7 +402,7 @@ struct async_queue_t
         async_queue_t* aq = (async_queue_t*)queue;
         if (queue == nullptr || aq->m_signature != QUEUE_SIGNATURE)
         {
-            DebugBreak();
+            ASSERT(false);
             aq = nullptr;
         }
 

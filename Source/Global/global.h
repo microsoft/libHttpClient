@@ -113,7 +113,7 @@ public:
         }
         else
         {
-            HC_ASSERT(false && "Context not found!");
+            ASSERT(false && "Context not found!");
             return std::shared_ptr<T>();
         }
     }
@@ -121,7 +121,7 @@ public:
     static void cleanup(_In_ std::shared_ptr<http_singleton> httpSingleton)
     {
         std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
-        HC_ASSERT(httpSingleton->m_sharedPtrs.size() == 0);
+        ASSERT(httpSingleton->m_sharedPtrs.size() == 0);
         httpSingleton->m_sharedPtrs.clear();
     }
 
