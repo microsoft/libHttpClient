@@ -24,7 +24,6 @@ HCHttpCallCreate(
 try 
 {
     HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during buffer size query with error: %u", 0);
-    HCTraceLevel hl = HC_TRACE_GET_VERBOSITY(HTTPCLIENT);
 
     if (callHandle == nullptr)
     {

@@ -240,7 +240,7 @@ void xmlhttp_http_task::set_headers(_In_ WCHAR* allResponseHeaders)
         }
     }
 
-    HC_ASSERT(m_headerNames.size() == m_headerValues.size());
+    ASSERT(m_headerNames.size() == m_headerValues.size());
 }
 
 const http_internal_vector<http_internal_string>& xmlhttp_http_task::get_headers_names()
