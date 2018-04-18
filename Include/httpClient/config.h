@@ -25,7 +25,7 @@
     #elif WINAPI_FAMILY == WINAPI_FAMILY_PC_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10
         #define HC_PLATFORM HC_PLATFORM_UWA
     #elif WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
-        #define HC_PLATFROM HC_PLATFORM_XDK
+        #define HC_PLATFORM HC_PLATFORM_XDK
     #endif
 
     #if defined(_WIN64)
@@ -50,18 +50,24 @@
     #if defined(__LP64__)
         #define HC_DATAMODEL HC_DATAMODEL_LP64
     #else
-        #error HC does not support 32 bit builds for Apple platforms
+        #error HC does not support 32 bit builds for Apple platforms.
+    #endif
+#else
+    #if !defined(HC_DATAMODEL)
+        #error libHttpClient does not recognize this platform, please specify the datamodel manually by setting the HC_DATAMODEL macro in your compiler.
     #endif
 #endif
 
 // HC_PLATFORM defines the "os" that libHttpClient is being built for
 #if !defined(HC_PLATFORM)
-#error HC does not recognize this platform
+#pragma warning(libHttpClient does not recognize this platform)
 #define HC_PLATFORM HC_PLATFORM_UNKNOWN
 #endif
 
 // HC_PLATFORM defines the datamodel that libHttpClient is being built for
 #if !defined(HC_DATAMODEL)
-#error HC does not recognize the datamodel used on this platform
+#error libHttpClient does not recognize the datamodel used on this platform.
 #define HC_DATAMODEL HC_DATAMODEL_UNKNOWN
+#elif HC_DATAMODEL != HC_DATAMODEL_ILP32 && HC_DATAMODEL != HC_DATAMODEL_LLP64 && HC_DATAMODEL != HC_DATAMODEL_LP64
+#error HC_DATAMODEL is not set to a valid value, it must be one of HC_DATAMODEL_ILP32, HC_DATAMODEL_LLP64, or HC_DATAMODEL_LP64.
 #endif
