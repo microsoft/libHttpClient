@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
+#include <httpClient/pal.h>
+
 /// <summary>
 /// An async_queue_t contains async work. An async queue has two sides:  a worker side and
 /// a completion side.  Each side can have different rules for how queued calls
