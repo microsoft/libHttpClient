@@ -2,13 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
-#pragma warning(disable: 4062)
-#pragma warning(disable: 4702)
+#pragma warning(disable: 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
+#pragma warning(disable: 4702) // unreachable code
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef _WIN32
+#include <httpClient/config.h>
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWA || HC_PLATFORM == HC_PLATFORM_XDK
 
     #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
@@ -20,16 +22,12 @@
 
     #include <windows.h>
 
-    #ifndef _WIN32_WINNT_WIN10
-    #define _WIN32_WINNT_WIN10 0x0A00
-    #endif
-
     #ifndef HC_XDK_API
-    #define HC_XDK_API (WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE) 
+    #define HC_XDK_API (HC_PLATFORM == HC_PLATFORM_XDK)
     #endif
 
     #ifndef HC_UWP_API
-    #define HC_UWP_API (WINAPI_FAMILY == WINAPI_FAMILY_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10)
+    #define HC_UWP_API (HC_PLATFORM == HC_PLATFORM_UWA)
     #endif
 
     #if HC_UNITTEST_API
@@ -39,7 +37,7 @@
 
 #else 
 
-    // not _WIN32
+    // not WIN32
     typedef int32_t HRESULT;
 
     #define CALLBACK

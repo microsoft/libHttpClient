@@ -79,6 +79,7 @@ include_directories(
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Public_Source_Files
+    ../../../include/httpClient/config.h
     ../../../include/httpClient/httpClient.h
     ../../../include/httpClient/httpProvider.h
     ../../../include/httpClient/mock.h
@@ -89,34 +90,34 @@ set(Public_Source_Files
     ../../../include/httpClient/pal.h
     )
 
-set(Task_Source_Files    
+set(Task_Source_Files
     ../../../Source/Task/AsyncQueue.cpp
     ../../../Source/Task/AsyncLib.cpp
     ../../../Source/Task/CriticalThread.cpp
     )
-    
-set(Global_Source_Files    
+
+set(Global_Source_Files
     ../../../Source/Global/mem.cpp
     ../../../Source/Global/mem.h
     ../../../Source/Global/global_publics.cpp
     ../../../Source/Global/global.cpp
-    ../../../Source/Global/global.h       
+    ../../../Source/Global/global.h
     )
 
 set(WebSocket_Source_Files
     ../../../Source/WebSocket/hcwebsocket.h
     ../../../Source/WebSocket/hcwebsocket.cpp
     )
-    
+
 set(WinRT_WebSocket_Source_Files
     ../../../Source/WebSocket/WinRT/winrt_websocket.cpp
     )
-    
+
 set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/Win32/win32_websocket.cpp
     )
-    
-set(Mock_Source_Files        
+
+set(Mock_Source_Files
     ../../../Source/Mock/mock.cpp
     ../../../Source/Mock/mock.h
     ../../../Source/Mock/mock_publics.cpp
@@ -163,7 +164,7 @@ set(WinHttp_HTTP_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_http_task.cpp
     ../../../Source/HTTP/WinHttp/winhttp_http_task.h
     )
-        
+
 set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_buffer.cpp
     ../../../Source/HTTP/XMLHttp/http_buffer.h
@@ -176,7 +177,7 @@ set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
-    
+
 set(Logger_Source_Files
     ../../../Source/Logger/trace.cpp
     ../../../Source/Logger/trace_internal.h
@@ -261,7 +262,7 @@ if( UWP )
         ${WinRT_WebSocket_Source_Files}
         )
 endif()
-    
+
 if( XDK )
     source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
