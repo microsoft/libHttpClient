@@ -49,10 +49,6 @@
 #define UNREFERENCED_PARAMETER(args)
 #endif
 
-#ifndef max
-#define max(x,y) std::max(x,y)
-#endif
-
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(x) sizeof(x) / sizeof(x[0])
 #endif
@@ -74,20 +70,13 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #if !HC_UNITTEST_API
 #define ENABLE_LOGS 1
-#define ENABLE_ASSERTS 1
 #endif
 
 #ifndef DebugBreak
 #define DebugBreak()
 #endif
 
-#ifdef ENABLE_ASSERTS
 #define ASSERT(condition) assert(condition)
-#define NT_VERIFY(condition) ASSERT(condition)
-#else
-#define ASSERT(condition)
-#define NT_VERIFY(condition) condition
-#endif
 
 typedef int32_t function_context;
 #include <httpClient/httpClient.h>
