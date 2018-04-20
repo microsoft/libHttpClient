@@ -439,12 +439,14 @@ static void EnsureSharedInitialization()
     BOOL pending;
 
     // Only failure modes for InitOnce are usage errors.
-    NT_VERIFY(InitOnceBeginInitialize(&s_sharedInit, 0, &pending, nullptr));
+    BOOL res = InitOnceBeginInitialize(&s_sharedInit, 0, &pending, nullptr);
+    assert(res);
 
     if (pending)
     {
         InitializeListHead(&s_sharedList);
-        NT_VERIFY(InitOnceComplete(&s_sharedInit, 0, nullptr));
+        res = InitOnceComplete(&s_sharedInit, 0, nullptr);
+        assert(res);
     }
 }
 
