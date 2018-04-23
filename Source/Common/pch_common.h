@@ -91,6 +91,10 @@ typedef int32_t function_context;
 HC_DECLARE_TRACE_AREA(HTTPCLIENT);
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
+// Define TRACE for AsyncLib
+#define ASYNC_LIB_TRACE(result, message)	        \
+    HC_TRACE_ERROR_HR(HTTPCLIENT, result, message); \
+
 #define CATCH_RETURN() CATCH_RETURN_IMPL(__FILE__, __LINE__)
 
 #define CATCH_RETURN_IMPL(file, line) \

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "httpClient\asyncQueue.h"
+#include "AsyncQueue.h"
 
 template<class CallbackType, class CallbackDataType>
 struct DefaultThunk
@@ -320,6 +320,12 @@ private:
     SRWLOCK m_lock;
     uint32_t m_nextCookie = 1;
     LIST_ENTRY m_callbackHead;
+
+    // Disable copy ctor and assignment, as these cannot be implemented without 
+    // potentially throwing exceptions
+
+    Callback<CallbackType, CallbackDataType, CallbackThunk>(Callback<CallbackType, CallbackDataType, CallbackThunk>&);
+    Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (Callback<CallbackType, CallbackDataType, CallbackThunk>&);
 
     void Release(_In_ CallbackSharedData* sharedData)
     {
