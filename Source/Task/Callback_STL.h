@@ -41,6 +41,11 @@ public:
     {
         Clear();
     }
+    
+    // Disable copy ctor and assignment, as these cannot be implemented without 
+    // potentially throwing exceptions
+    Callback<CallbackType, CallbackDataType, CallbackThunk>(const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
+    Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;    
 
     //
     // Adds a callback function to this callback.
@@ -319,12 +324,6 @@ private:
     std::shared_mutex m_lock;
     std::atomic<uint32_t> m_nextCookie = 1;
     LIST_ENTRY m_callbackHead;
-
-    // Disable copy ctor and assignment, as these cannot be implemented without 
-    // potentially throwing exceptions
-
-    Callback<CallbackType, CallbackDataType, CallbackThunk>(Callback<CallbackType, CallbackDataType, CallbackThunk>&);
-    Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (Callback<CallbackType, CallbackDataType, CallbackThunk>&);
 
     void Release(_In_ CallbackSharedData* sharedData)
     {
