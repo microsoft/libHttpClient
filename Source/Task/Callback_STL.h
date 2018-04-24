@@ -91,7 +91,7 @@ public:
         *cookie = entry->Cookie;
 
         {
-            std::unique_lock<std::shared_mutex>(m_lock);
+            std::unique_lock<std::mutex> lock(m_lock);
             InsertTailList(&m_callbackHead, &entry->ListEntry);
         }
 
@@ -130,7 +130,7 @@ public:
     //
     void Clear()
     {
-        std::unique_lock<std::shared_mutex>(m_lock);
+        std::unique_lock<std::mutex> lock(m_lock);
         
         PLIST_ENTRY entry = RemoveHeadList(&m_callbackHead);
         while (entry != &m_callbackHead)
@@ -168,7 +168,7 @@ public:
         HRESULT result = S_OK;
 
         {
-            std::shared_lock<std::shared_mutex>(m_lock);
+            std::unique_lock<std::mutex> lock(m_lock);
 
             CallbackSharedData* sharedData = nullptr;
             PLIST_ENTRY entry = m_callbackHead.Flink;
@@ -243,7 +243,7 @@ public:
         size_t cookieCount = 0;
 
         {
-            std::shared_lock<std::shared_mutex>(m_lock);
+            std::unique_lock<std::mutex> lock(m_lock);
 
             // Walk through all the callback entries and grab their
             // cookies.
@@ -321,7 +321,7 @@ private:
         CallbackType* Callback;
     };
 
-    std::shared_mutex m_lock;
+    std::mutex m_lock;
     std::atomic<uint32_t> m_nextCookie = 1;
     LIST_ENTRY m_callbackHead;
 
@@ -363,14 +363,7 @@ private:
 
     CallbackRegistration* Find(_In_ uint32_t cookie, _In_ bool remove)
     {
-        if (remove)
-        {
-            m_lock.lock();
-        }
-        else
-        {
-            m_lock.lock_shared();
-        }
+        std::unique_lock<std::mutex> lock(m_lock);
 
         CallbackRegistration* found = nullptr;
         PLIST_ENTRY entry = m_callbackHead.Flink;
@@ -393,15 +386,6 @@ private:
             }
 
             entry = entry->Flink;
-        }
-
-        if (remove)
-        {
-            m_lock.unlock();
-        }
-        else
-        {
-            m_lock.unlock_shared();
         }
 
         return found;
