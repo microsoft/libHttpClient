@@ -439,14 +439,12 @@ static void EnsureSharedInitialization()
     BOOL pending;
 
     // Only failure modes for InitOnce are usage errors.
-    BOOL res = InitOnceBeginInitialize(&s_sharedInit, 0, &pending, nullptr);
-    assert(res);
+    (void)InitOnceBeginInitialize(&s_sharedInit, 0, &pending, nullptr);
 
     if (pending)
     {
         InitializeListHead(&s_sharedList);
-        res = InitOnceComplete(&s_sharedInit, 0, nullptr);
-        assert(res);
+        (void)InitOnceComplete(&s_sharedInit, 0, nullptr);
     }
 }
 

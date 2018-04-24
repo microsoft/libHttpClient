@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
-#include <httpClient/pal.h>
-
 typedef enum AsyncOp
 {
     /// <summary>
