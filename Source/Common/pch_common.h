@@ -21,8 +21,6 @@
 #else
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
-
-#include <boost/uuid/uuid.hpp>
 #endif
 
 // STL includes

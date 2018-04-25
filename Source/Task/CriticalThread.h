@@ -2,9 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
-// TODO: Need a place for errors, a facility and error code for this.
-#define E_TIME_CRITICAL_THREAD RPC_E_WRONG_THREAD
-
 /// <summary>
 /// Call this to setup a thread as "time critical".  APIs that should not be called from
 /// time critical threads call VerifyNotTimeCriticalThread, which will fail if called

@@ -48,8 +48,8 @@ void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pReques
 
 void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRequestContext)
 {
-    const size_t defaultChunkSize = 64 * 1024;
-    uint64_t safeSize = MIN(pRequestContext->m_requestBodyRemainingToWrite, defaultChunkSize);
+    const uint64_t defaultChunkSize = 64 * 1024;
+    uint64_t safeSize = std::min(pRequestContext->m_requestBodyRemainingToWrite, defaultChunkSize);
 
     const BYTE* requestBody = nullptr;
     uint32_t requestBodyBytes = 0;
