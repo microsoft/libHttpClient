@@ -283,8 +283,7 @@ void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock
     )
 {
-    xmlhttp_http_task* httpTask = new xmlhttp_http_task(call, asyncBlock);
-    HCHttpCallSetContext(call, httpTask); // TODO: cleanup
+    auto httpTask = http_allocate_shared<xmlhttp_http_task>(call, asyncBlock);
     httpTask->perform_async(call, asyncBlock);
 }
 
