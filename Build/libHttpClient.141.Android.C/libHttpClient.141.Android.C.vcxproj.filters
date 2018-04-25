@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
-      <Filter>C++ Source\Common\Win</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
@@ -22,8 +19,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
       <Filter>C++ Source\Global</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinRTHttpClient\http_winrthttpclient.cpp">
-      <Filter>C++ Source\HTTP\WinRT</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\http_android.cpp">
+      <Filter>C++ Source\HTTP\Android</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
       <Filter>C++ Source\HTTP</Filter>
@@ -55,8 +52,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.cpp">
-      <Filter>C++ Source\WebSocket\WinRT</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Android\android_websocket.cpp">
+      <Filter>C++ Source\WebSocket\Android</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
@@ -68,9 +65,6 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h">
       <Filter>C++ Source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
-      <Filter>C++ Source\Common\Win</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
       <Filter>C++ Source\Common</Filter>
@@ -140,17 +134,14 @@
     <Filter Include="C++ Source\Common">
       <UniqueIdentifier>{1712F004-6A0F-3D94-9B4F-7DE3291C8FCC}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\Common\Win">
-      <UniqueIdentifier>{620C63BC-F330-368B-9A98-92B3E2E9EE39}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Source\Global">
       <UniqueIdentifier>{4E3FEF95-F687-3AF2-B0F8-27BF8D347ECB}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
       <UniqueIdentifier>{671D4BEC-03C3-3EEF-A00C-15BE5DB8C4D9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\HTTP\WinRT">
-      <UniqueIdentifier>{190D2A3E-D739-3A4A-BF68-D438AF775EE3}</UniqueIdentifier>
+    <Filter Include="C++ Source\HTTP\Android">
+      <UniqueIdentifier>{47439195-14B8-3882-BDB1-DDD27BDECAB5}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{E1161EC8-651A-3474-9BD3-3DDD67D7CAA8}</UniqueIdentifier>
@@ -164,8 +155,8 @@
     <Filter Include="C++ Source\WebSocket">
       <UniqueIdentifier>{7D79D2D4-8606-3071-A8AD-1D2FA0F8F081}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\WebSocket\WinRT">
-      <UniqueIdentifier>{1E1E8A63-705E-3CFE-AEEC-D3EEB9F2F31D}</UniqueIdentifier>
+    <Filter Include="C++ Source\WebSocket\Android">
+      <UniqueIdentifier>{A39E117A-2700-3618-8ABF-C7B321FE58E8}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
       <UniqueIdentifier>{7CF7EC10-14C1-3DA3-A2DE-D52057AF7DF4}</UniqueIdentifier>

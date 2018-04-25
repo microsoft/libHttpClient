@@ -7,10 +7,10 @@
 using namespace xbox::httpclient;
 
 
-STDAPI 
+STDAPI
 HCWebSocketCreate(
     _Out_ hc_websocket_handle_t* websocket
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr)
@@ -32,11 +32,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketSetProxyUri(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR proxyUri
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     RETURN_IF_WEBSOCKET_CONNECT_CALLED(websocket);
@@ -46,13 +46,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketSetHeader(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR headerName,
     _In_z_ UTF8CSTR headerValue
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
     {
@@ -68,12 +68,12 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketSetFunctions(
     _In_opt_ HCWebSocketMessageFunction messageFunc,
     _In_opt_ HCWebSocketCloseEventFunction closeFunc
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
@@ -86,14 +86,14 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketConnect(
     _In_z_ UTF8CSTR uri,
     _In_z_ UTF8CSTR subProtocol,
     _In_ hc_websocket_handle_t websocket,
     _In_ AsyncBlock* asyncBlock
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     if (uri == nullptr || websocket == nullptr || subProtocol == nullptr)
     {
@@ -122,12 +122,12 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketSendMessage(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR message,
     _In_ AsyncBlock* asyncBlock
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (message == nullptr || websocket == nullptr)
@@ -156,11 +156,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketDisconnect(
     _In_ hc_websocket_handle_t websocket
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     if (websocket == nullptr)
     {
@@ -180,7 +180,7 @@ try
             HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::HCWebSocketCloseStatus_Normal;
             closeFunc(websocket, closeStatus);
 
-            if(closeEventFunc != nullptr)
+            if (closeEventFunc != nullptr)
             {
                 closeEventFunc(websocket, closeStatus);
             }
@@ -197,8 +197,8 @@ CATCH_RETURN()
 
 hc_websocket_handle_t HCWebSocketDuplicateHandle(
     _In_ hc_websocket_handle_t websocket
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     if (websocket == nullptr)
     {
@@ -212,11 +212,11 @@ try
 }
 CATCH_RETURN_WITH(nullptr)
 
-STDAPI 
+STDAPI
 HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     if (websocket == nullptr)
     {
@@ -235,12 +235,12 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCGlobalSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton(true);
@@ -255,15 +255,15 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCGlobalGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
-    if (websocketConnectFunc == nullptr || 
+    if (websocketConnectFunc == nullptr ||
         websocketSendMessageFunc == nullptr ||
         websocketDisconnectFunc == nullptr)
     {
@@ -282,11 +282,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketGetProxyUri(
     _In_ hc_websocket_handle_t websocket,
     _Out_ UTF8CSTR* proxyUri
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || proxyUri == nullptr)
@@ -299,12 +299,12 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketGetHeader(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR headerName,
     _Out_ UTF8CSTR* headerValue
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -325,11 +325,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketGetNumHeaders(
     _In_ hc_websocket_handle_t websocket,
     _Out_ uint32_t* numHeaders
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || numHeaders == nullptr)
@@ -342,13 +342,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketGetHeaderAtIndex(
     _In_ hc_websocket_handle_t websocket,
     _In_ uint32_t headerIndex,
     _Out_ UTF8CSTR* headerName,
     _Out_ UTF8CSTR* headerValue
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -375,11 +375,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCWebSocketGetFunctions(
     _Out_opt_ HCWebSocketMessageFunction* messageFunc,
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton(true);
@@ -400,24 +400,36 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCGetWebSocketConnectResult(
     _In_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
-    return GetAsyncResult(asyncBlock, HCWebSocketConnect, sizeof(WebSocketCompletionResult), result, nullptr);
+    return GetAsyncResult(
+        asyncBlock,
+        reinterpret_cast<void*>(HCWebSocketConnect),
+        sizeof(WebSocketCompletionResult),
+        result,
+        nullptr
+    );
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCGetWebSocketSendMessageResult(
     _In_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
-    return GetAsyncResult(asyncBlock, HCWebSocketSendMessage, sizeof(WebSocketCompletionResult), result, nullptr);
+    return GetAsyncResult(
+        asyncBlock,
+        reinterpret_cast<void*>(HCWebSocketSendMessage),
+        sizeof(WebSocketCompletionResult),
+        result,
+        nullptr
+    );
 }
 CATCH_RETURN()

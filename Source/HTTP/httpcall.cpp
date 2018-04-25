@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "httpcall.h"
+#include <httpClient/asyncProvider.h>
 #include "../mock/mock.h"
 
 using namespace xbox::httpclient;
@@ -96,7 +97,7 @@ HRESULT perform_http_call(
     _In_ AsyncBlock* asyncBlock
     )
 {
-    HRESULT hr = BeginAsync(asyncBlock, call, perform_http_call, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
         [](AsyncOp opCode, const AsyncProviderData* data)
     {
         switch (opCode)
@@ -232,12 +233,12 @@ bool http_call_should_retry(
         lerpScaler = 0; // make unit tests deterministic
 #endif
         double secondsToWaitUncapped = secondsToWaitMin + secondsToWaitDelta * lerpScaler; // lerp between min & max wait
-        double secondsToWait = MIN(secondsToWaitUncapped, MAX_DELAY_TIME_IN_SEC); // cap max wait to 1 min
+        double secondsToWait = std::min(secondsToWaitUncapped, MAX_DELAY_TIME_IN_SEC); // cap max wait to 1 min
         std::chrono::milliseconds waitTime = std::chrono::milliseconds(static_cast<int64_t>(secondsToWait * 1000.0));
         if (retryAfter.count() > 0)
         {
             // Use either the waitTime or Retry-After header, whichever is bigger
-            call->delayBeforeRetry = std::chrono::milliseconds(__max(waitTime.count(), retryAfter.count()));
+            call->delayBeforeRetry = std::chrono::milliseconds(std::max(waitTime.count(), retryAfter.count()));
         }
         else
         {
@@ -340,8 +341,7 @@ void retry_http_call_until_done(
 
     async_queue_handle_t nestedQueue;
     CreateNestedAsyncQueue(retryContext->outerQueue, &nestedQueue);
-    AsyncBlock* nestedBlock = new AsyncBlock;
-    ZeroMemory(nestedBlock, sizeof(AsyncBlock));
+    AsyncBlock* nestedBlock = new AsyncBlock{};
     nestedBlock->queue = nestedQueue;
     nestedBlock->context = retryContext;
 
@@ -398,7 +398,7 @@ try
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
 
-    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, HCHttpCallPerform, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerform), __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
@@ -406,6 +406,14 @@ try
             case AsyncOp_DoWork:
                 retry_http_call_until_done(static_cast<retry_context*>(data->context));
                 return E_PENDING;
+
+            case AsyncOp_GetResult:
+                assert(false);
+                return E_NOTIMPL;
+
+            case AsyncOp_Cancel:
+                assert(false);
+                return E_NOTIMPL;
 
             case AsyncOp_Cleanup:
                 shared_ptr_cache::fetch<retry_context>(data->context, true);

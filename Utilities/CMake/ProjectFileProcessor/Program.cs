@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -138,6 +138,14 @@ namespace ProjectFileProcessor
                 cmake_vcxproj = @"libHttpClient.Win32.C.vcxproj",
                 template = @"template-libHttpClient.140.Win32.C.vcxproj",
                 output = @"libHttpClient.140.Win32.C.vcxproj",
+            });
+
+            //libHttpClient.141.Android.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.Android.C.vcxproj",
+                template = @"template-libHttpClient.141.Android.C.vcxproj",
+                output = @"libHttpClient.141.Android.C.vcxproj",
             });
 
             //libHttpClient.141.XDK.Cpp

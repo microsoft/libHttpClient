@@ -54,7 +54,7 @@ bool StringToUint4(char const* begin, char const* end, uint64_t& v, int32_t base
 void BasicAsciiLowercase(String& s)
 {
     static std::locale const classicLocale = std::locale::classic();
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c)
+    std::transform(s.begin(), s.end(), s.begin(), [](char c)
     {
         if ((c & 0x7F) == c)
         {
