@@ -6,11 +6,9 @@
 #include "AsyncProvider.h"
 #include "AsyncQueue.h"
 
-#include <atomic>
-
 #define ASYNC_STATE_SIG 0x41535445
 
-#ifndef _WIN32
+#if !HC_PLATFORM_IS_MICROSOFT
 using PTP_TIMER = void*;
 #endif
 

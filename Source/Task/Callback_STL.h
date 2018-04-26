@@ -44,6 +44,12 @@ public:
         Clear();
     }
 
+    // Disable copy ctor and assignment, as these cannot be implemented without 
+    // potentially throwing exceptions
+    Callback<CallbackType, CallbackDataType, CallbackThunk>(const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
+
+    Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
+
     //
     // Adds a callback function to this callback.
     //
