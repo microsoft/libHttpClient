@@ -135,6 +135,7 @@ set(Common_Source_Files
     ../../../Source/Common/pch.cpp
     ../../../Source/Common/pch.h
     ../../../Source/Common/pch_common.h
+    ../../../Source/Common/pal_internal.h
     ../../../Source/Common/ResultMacros.h
     ../../../Source/Common/uri.cpp
     ../../../Source/Common/uri.h

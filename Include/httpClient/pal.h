@@ -35,6 +35,8 @@
 #define HC_UWP_API 1
 #endif 
 
+#define E_TIME_CRITICAL_THREAD RPC_E_WRONG_THREAD
+
 #else 
 // not _WIN32
 typedef int32_t HRESULT;
@@ -85,23 +87,7 @@ typedef int32_t HRESULT;
 #define E_PENDING                        _HRESULTYPEDEF_(0x8000000AL)
 #define E_UNEXPECTED                     _HRESULTYPEDEF_(0x8000FFFFL)
 #define E_POINTER                        _HRESULTYPEDEF_(0x80004003L)
-
-#ifndef CONST
-#define CONST const
-#endif
-
-#ifndef MAXUINT
-#define MAXUINT UINT_MAX
-#endif
-
-typedef unsigned char BYTE;
-typedef unsigned long DWORD;
-typedef void *PVOID;
-typedef void VOID;
-
-typedef BYTE BOOLEAN;
-typedef BYTE *PBYTE;
-typedef PVOID HANDLE;
+#define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x8001010EL)
 
 typedef struct _LIST_ENTRY {
     struct _LIST_ENTRY  *Flink;
@@ -269,7 +255,6 @@ typedef struct _LIST_ENTRY {
 #define E_HC_PERFORM_ALREADY_CALLED     MAKE_E_HC(5003L)
 #define E_HC_ALREADY_INITIALISED        MAKE_E_HC(5004L)
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(5005L)
-#define E_HC_TIME_CRITICAL_THREAD       MAKE_E_HC(5006L)
 
 typedef _Null_terminated_ char* UTF8STR;
 typedef _Null_terminated_ const char* UTF8CSTR;

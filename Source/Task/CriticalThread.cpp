@@ -46,7 +46,7 @@ STDAPI VerifyNotTimeCriticalThread()
         return S_OK;
     }
 
-    RETURN_HR(E_HC_TIME_CRITICAL_THREAD);
+    RETURN_HR(E_TIME_CRITICAL_THREAD);
 }
 
 /// <summary>
