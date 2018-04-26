@@ -10,7 +10,7 @@ using namespace xbox::httpclient;
 STDAPI
 HCWebSocketCreate(
     _Out_ hc_websocket_handle_t* websocket
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr)
@@ -36,7 +36,7 @@ STDAPI
 HCWebSocketSetProxyUri(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR proxyUri
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     RETURN_IF_WEBSOCKET_CONNECT_CALLED(websocket);
@@ -51,7 +51,7 @@ HCWebSocketSetHeader(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR headerName,
     _In_z_ UTF8CSTR headerValue
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -72,7 +72,7 @@ STDAPI
 HCWebSocketSetFunctions(
     _In_opt_ HCWebSocketMessageFunction messageFunc,
     _In_opt_ HCWebSocketCloseEventFunction closeFunc
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton(true);
@@ -92,7 +92,7 @@ HCWebSocketConnect(
     _In_z_ UTF8CSTR subProtocol,
     _In_ hc_websocket_handle_t websocket,
     _In_ AsyncBlock* asyncBlock
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (uri == nullptr || websocket == nullptr || subProtocol == nullptr)
@@ -127,7 +127,7 @@ HCWebSocketSendMessage(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR message,
     _In_ AsyncBlock* asyncBlock
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (message == nullptr || websocket == nullptr)
@@ -159,7 +159,7 @@ CATCH_RETURN()
 STDAPI
 HCWebSocketDisconnect(
     _In_ hc_websocket_handle_t websocket
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr)
@@ -197,7 +197,7 @@ CATCH_RETURN()
 
 hc_websocket_handle_t HCWebSocketDuplicateHandle(
     _In_ hc_websocket_handle_t websocket
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr)
@@ -215,7 +215,7 @@ CATCH_RETURN_WITH(nullptr)
 STDAPI
 HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr)
@@ -240,7 +240,7 @@ HCGlobalSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton(true);
@@ -260,7 +260,7 @@ HCGlobalGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocketConnectFunc == nullptr ||
@@ -286,7 +286,7 @@ STDAPI
 HCWebSocketGetProxyUri(
     _In_ hc_websocket_handle_t websocket,
     _Out_ UTF8CSTR* proxyUri
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || proxyUri == nullptr)
@@ -304,7 +304,7 @@ HCWebSocketGetHeader(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR headerName,
     _Out_ UTF8CSTR* headerValue
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -329,7 +329,7 @@ STDAPI
 HCWebSocketGetNumHeaders(
     _In_ hc_websocket_handle_t websocket,
     _Out_ uint32_t* numHeaders
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || numHeaders == nullptr)
@@ -348,7 +348,7 @@ HCWebSocketGetHeaderAtIndex(
     _In_ uint32_t headerIndex,
     _Out_ UTF8CSTR* headerName,
     _Out_ UTF8CSTR* headerValue
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -379,7 +379,7 @@ STDAPI
 HCWebSocketGetFunctions(
     _Out_opt_ HCWebSocketMessageFunction* messageFunc,
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     auto httpSingleton = get_http_singleton(true);
@@ -404,7 +404,7 @@ STDAPI
 HCGetWebSocketConnectResult(
     _In_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     return GetAsyncResult(
@@ -421,7 +421,7 @@ STDAPI
 HCGetWebSocketSendMessageResult(
     _In_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     return GetAsyncResult(

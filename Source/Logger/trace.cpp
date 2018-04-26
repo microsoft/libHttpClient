@@ -43,8 +43,9 @@ int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, 
 
 void OutputDebugStringT(char const* string)
 {
-    // TODO: Shane: abstract this out to a common tracing class.
-//    OutputDebugStringA(string);
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWA || HC_PLATFORM == HC_PLATFORM_XDK
+    OutputDebugStringA(string);
+#endif
 }
 
 
