@@ -55,10 +55,13 @@ void OutputDebugStringT(char const* string)
 class TraceState
 {
 public:
+    TraceState() : m_traceToDebugger(false)
+    {
+    }
+    
     void Init()
     {
         auto previousCount = m_tracingClients++;
-        m_traceToDebugger = false;
         if (previousCount == 0)
         {
             m_initTime = std::chrono::high_resolution_clock::now();

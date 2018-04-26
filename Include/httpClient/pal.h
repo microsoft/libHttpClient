@@ -249,12 +249,12 @@ typedef struct _LIST_ENTRY {
 #define FACILITY_XBOX 2339
 #define MAKE_E_HC(code)                 MAKE_HRESULT(1, FACILITY_XBOX, code)
 
-#define E_HC_BUFFER_TOO_SMALL           MAKE_E_HC(5000L)
-#define E_HC_NOT_INITIALISED            MAKE_E_HC(5001L)
-#define E_HC_FEATURE_NOT_PRESENT        MAKE_E_HC(5002L)
-#define E_HC_PERFORM_ALREADY_CALLED     MAKE_E_HC(5003L)
-#define E_HC_ALREADY_INITIALISED        MAKE_E_HC(5004L)
-#define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(5005L)
+#define E_HC_BUFFER_TOO_SMALL           MAKE_E_HC(0x5000)
+#define E_HC_NOT_INITIALISED            MAKE_E_HC(0x5001)
+#define E_HC_FEATURE_NOT_PRESENT        MAKE_E_HC(0x5002)
+#define E_HC_PERFORM_ALREADY_CALLED     MAKE_E_HC(0x5003)
+#define E_HC_ALREADY_INITIALISED        MAKE_E_HC(0x5004)
+#define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005)
 
 typedef _Null_terminated_ char* UTF8STR;
 typedef _Null_terminated_ const char* UTF8CSTR;
