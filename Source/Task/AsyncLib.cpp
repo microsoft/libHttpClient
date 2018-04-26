@@ -644,7 +644,7 @@ STDAPI GetAsyncResult(
         else if (state->providerData.bufferSize == 0)
         {
             // Caller has not supplied a payload
-            result = E_HC_FEATURE_NOT_PRESENT;
+            result = E_NOT_SUPPORTED;
         }
         else if (buffer == nullptr)
         {
@@ -652,7 +652,7 @@ STDAPI GetAsyncResult(
         }
         else if (bufferSize < state->providerData.bufferSize)
         {
-            return E_HC_BUFFER_TOO_SMALL;
+            return E_INSUFFICIENT_BUFFER;
         }
         else
         {

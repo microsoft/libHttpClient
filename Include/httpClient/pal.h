@@ -35,7 +35,10 @@
 #define HC_UWP_API 1
 #endif 
 
-#define E_TIME_CRITICAL_THREAD RPC_E_WRONG_THREAD
+#define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
+#define E_TIME_CRITICAL_THREAD           RPC_E_WRONG_THREAD
+#define E_NOT_SUPPORTED                  _HRESULTYPEDEF_(0x80070032L)
+#define E_INSUFFICIENT_BUFFER            _HRESULTYPEDEF_(0x8007007AL)
 
 #else 
 // not _WIN32
@@ -88,6 +91,8 @@ typedef int32_t HRESULT;
 #define E_UNEXPECTED                     _HRESULTYPEDEF_(0x8000FFFFL)
 #define E_POINTER                        _HRESULTYPEDEF_(0x80004003L)
 #define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x8001010EL)
+#define E_NOT_SUPPORTED                  _HRESULTYPEDEF_(0x80070032L)
+#define E_INSUFFICIENT_BUFFER            _HRESULTYPEDEF_(0x8007007AL)
 
 typedef struct _LIST_ENTRY {
     struct _LIST_ENTRY  *Flink;
@@ -249,9 +254,7 @@ typedef struct _LIST_ENTRY {
 #define FACILITY_XBOX 2339
 #define MAKE_E_HC(code)                 MAKE_HRESULT(1, FACILITY_XBOX, code)
 
-#define E_HC_BUFFER_TOO_SMALL           MAKE_E_HC(0x5000)
 #define E_HC_NOT_INITIALISED            MAKE_E_HC(0x5001)
-#define E_HC_FEATURE_NOT_PRESENT        MAKE_E_HC(0x5002)
 #define E_HC_PERFORM_ALREADY_CALLED     MAKE_E_HC(0x5003)
 #define E_HC_ALREADY_INITIALISED        MAKE_E_HC(0x5004)
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005)
