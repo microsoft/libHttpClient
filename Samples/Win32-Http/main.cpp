@@ -214,7 +214,7 @@ int main()
     {
         std::string headerName = header[0];
         std::string headerValue = header[1];
-        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
+        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str(), true);
     }
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
