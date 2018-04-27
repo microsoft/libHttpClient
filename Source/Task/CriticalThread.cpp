@@ -4,44 +4,11 @@
 #include "pch.h"
 #include "CriticalThread.h"
 
-static INIT_ONCE s_tlsInit = INIT_ONCE_STATIC_INIT;
-static DWORD s_tlsSlot;
+static uint64_t const CRITICAL_FALSE = 0x00;
+static uint64_t const CRITICAL_TRUE = 0x01;
+static uint64_t const CRITICAL_LOCKED = 0x02;
 
-#define CRITICAL_FALSE       0x00
-#define CRITICAL_TRUE        0x01
-#define CRITICAL_LOCKED      0x02
-
-static HRESULT InitTls()
-{
-    BOOL pending;
-
-    if (!InitOnceBeginInitialize(&s_tlsInit, 0, &pending, nullptr))
-    {
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
-
-    if (pending)
-    {
-        DWORD flags = 0;
-        DWORD error =  NOERROR;
-
-        s_tlsSlot = TlsAlloc();
-        if (s_tlsSlot == TLS_OUT_OF_INDEXES)
-        {
-            flags |= INIT_ONCE_INIT_FAILED;
-            error = GetLastError();
-        }
-
-        if (!InitOnceComplete(&s_tlsInit, flags, nullptr))
-        {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
-
-        return HRESULT_FROM_WIN32(error);
-    }
-
-    return S_OK;
-}
+static thread_local uint64_t tls_threadState = CRITICAL_FALSE;
 
 /// <summary>
 /// Call this to setup a thread as "time critical".  APIs that should not be called from
@@ -50,10 +17,8 @@ static HRESULT InitTls()
 /// </summary>
 STDAPI SetTimeCriticalThread(_In_ bool isTimeCriticalThread)
 {
-    RETURN_IF_FAILED(InitTls());
-
-    ULONG_PTR current = reinterpret_cast<ULONG_PTR>(TlsGetValue(s_tlsSlot));
-    ULONG_PTR value = isTimeCriticalThread ? CRITICAL_TRUE : CRITICAL_FALSE;
+    uint64_t current = tls_threadState;
+    uint64_t value = isTimeCriticalThread ? CRITICAL_TRUE : CRITICAL_FALSE;
 
     if (current & CRITICAL_LOCKED)
     {
@@ -65,8 +30,8 @@ STDAPI SetTimeCriticalThread(_In_ bool isTimeCriticalThread)
         }
     }
 
-    TlsSetValue(s_tlsSlot, reinterpret_cast<PVOID>(value));
-    
+    tls_threadState = value;
+
     return S_OK;
 }
 
@@ -76,20 +41,9 @@ STDAPI SetTimeCriticalThread(_In_ bool isTimeCriticalThread)
 /// </summary>
 STDAPI VerifyNotTimeCriticalThread()
 {
-    BOOL pending;
-    if (!InitOnceBeginInitialize(&s_tlsInit, INIT_ONCE_CHECK_ONLY, &pending, nullptr) || pending)
+    if ((tls_threadState & CRITICAL_TRUE) == 0)
     {
-        // This thread is either still initializing or was never initialized.  It
-        // can't be time critical.
         return S_OK;
-    }
-
-    ULONG_PTR timeCritical = reinterpret_cast<ULONG_PTR>(TlsGetValue(s_tlsSlot));
-
-    if ((timeCritical & CRITICAL_TRUE) == 0)
-    {
-        DWORD error = GetLastError();
-        return HRESULT_FROM_WIN32(error);
     }
 
     RETURN_HR(E_TIME_CRITICAL_THREAD);
@@ -102,10 +56,6 @@ STDAPI VerifyNotTimeCriticalThread()
 /// </summary>
 STDAPI LockTimeCriticalThread()
 {
-    RETURN_IF_FAILED(InitTls());
-
-    ULONG_PTR current = reinterpret_cast<ULONG_PTR>(TlsGetValue(s_tlsSlot)) | CRITICAL_LOCKED;
-    TlsSetValue(s_tlsSlot, reinterpret_cast<PVOID>(current));
-   
+    tls_threadState |= CRITICAL_LOCKED;
     return S_OK;
 }

@@ -98,7 +98,7 @@ std::shared_ptr<T> http_allocate_shared(Args&&... args)
 }
 
 template<typename T, typename... Args>
-std::unique_ptr<T, http_alloc_deleter<T>> http_allocate_unique()
+std::unique_ptr<T, http_alloc_deleter<T>> http_allocate_unique(Args&&... args)
 {
     http_stl_allocator<T> alloc;
     auto p = std::allocator_traits<http_stl_allocator<T>>::allocate(alloc, 1); // malloc memory

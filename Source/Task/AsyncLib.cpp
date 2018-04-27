@@ -8,15 +8,19 @@
 
 #define ASYNC_STATE_SIG 0x41535445
 
+#if !HC_PLATFORM_IS_MICROSOFT
+using PTP_TIMER = void*;
+#endif
+
 // Used by unit tests to verify we cleanup memory correctly.
-DWORD s_AsyncLibGlobalStateCount = 0;
+std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
 
 struct AsyncState
 {
     uint32_t signature = ASYNC_STATE_SIG;
-    std::atomic<uint32_t> refs = 1;
-    std::atomic_bool workScheduled = false;
-    std::atomic_bool timerScheduled = false;
+    std::atomic<uint32_t> refs{ 1 };
+    std::atomic<bool> workScheduled{ false };
+    std::atomic<bool> timerScheduled{ false };
     bool canceled = false;
     AsyncProvider* provider = nullptr;
     AsyncProviderData providerData;
@@ -25,18 +29,34 @@ struct AsyncState
     const void* token = nullptr;
     const char* function = nullptr;
 
-    AsyncState()
+    AsyncState() noexcept
     {
-        InterlockedIncrement(&s_AsyncLibGlobalStateCount);
+        ++s_AsyncLibGlobalStateCount;
     }
 
-    ~AsyncState()
+    void AddRef() noexcept
+    {
+        ++refs;
+    }
+
+    void Release() noexcept
+    {
+        if (--refs == 0)
+        {
+            delete this;
+        }
+    }
+
+private:
+    ~AsyncState() noexcept
     {
         if (timer != nullptr)
         {
+#ifdef _WIN32
             SetThreadpoolTimer(timer, nullptr, 0, 0);
             WaitForThreadpoolTimerCallbacks(timer, TRUE);
             CloseThreadpoolTimer(timer);
+#endif
         }
 
         if (providerData.queue != nullptr)
@@ -46,70 +66,96 @@ struct AsyncState
 
         if (waitEvent != nullptr)
         {
+#ifdef _WIN32
             CloseHandle(waitEvent);
+#endif
         }
 
-        InterlockedDecrement(&s_AsyncLibGlobalStateCount);
-    }
-
-    void AddRef()
-    {
-        refs++;
-    }
-
-    void Release()
-    {
-        if (refs.fetch_sub(1) == 1)
-        {
-            delete this;
-        }
+        --s_AsyncLibGlobalStateCount;
     }
 };
+
+struct AsyncBlockInternal
+{
+    std::atomic<AsyncState*> state;
+    std::atomic<HRESULT> status;
+
+    AsyncBlockInternal(AsyncState* s) :
+        state(s), status(E_PENDING)
+    {}
+};
+static_assert(sizeof(AsyncBlockInternal) <= 2 * sizeof(void*), "Unexpected size for AsyncBlockInternal");
+static_assert(std::alignment_of<AsyncBlockInternal>::value == std::alignment_of<void*>::value,
+    "Unexpected alignment for AsyncBlockInternal");
+static_assert(std::is_trivially_destructible<AsyncBlockInternal>::value,
+    "Unexpected nontrivial destructor for AsyncBlockInternal");
 
 class AsyncStateRef
 {
 public:
-    AsyncStateRef(_In_ AsyncState* state)
+    AsyncStateRef(_In_ AsyncState* state) noexcept
         : m_state(state)
     {
-        m_state->AddRef();
+        if (m_state)
+        {
+            m_state->AddRef();
+        }
     }
-    ~AsyncStateRef()
+    ~AsyncStateRef() noexcept
     {
-        m_state->Release();
+        if (m_state)
+        {
+            m_state->Release();
+        }
+    }
+    AsyncState* operator->() const noexcept
+    {
+        return m_state;
+    }
+    bool operator==(nullptr_t) const noexcept
+    {
+        return m_state == nullptr;
+    }
+    AsyncState* Detach() noexcept
+    {
+        AsyncState* p = m_state;
+        m_state = nullptr;
+        return p;
     }
 private:
-    AsyncState* m_state;
+    AsyncState * m_state;
 };
 
 static void CALLBACK CompletionCallback(_In_ void* context);
 static void CALLBACK WorkerCallback(_In_ void* context);
+#ifdef _WIN32
 static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER);
+#endif
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock);
 static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock);
 static HRESULT AllocState(_In_ AsyncBlock* asyncBlock);
 static void CleanupState(_In_ AsyncBlock* asyncBlock);
 static AsyncState* GetState(_In_ AsyncBlock* asyncBlock);
+static AsyncBlockInternal* GetInternalBlock(_In_ AsyncBlock* asyncBlock);
 
 static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock)
 {
-    std::unique_ptr<AsyncState> state(new (std::nothrow) AsyncState);
+    AsyncStateRef state(new (std::nothrow) AsyncState);
     RETURN_IF_NULL_ALLOC(state);
 
     if (asyncBlock->waitEvent != nullptr)
     {
+#if _WIN32
         RETURN_IF_WIN32_BOOL_FALSE(DuplicateHandle(
-            GetCurrentProcess(), 
-            asyncBlock->waitEvent, 
-            GetCurrentProcess(), 
-            &state->waitEvent, 0, 
-            FALSE, 
+            GetCurrentProcess(),
+            asyncBlock->waitEvent,
+            GetCurrentProcess(),
+            &state->waitEvent, 0,
+            FALSE,
             DUPLICATE_SAME_ACCESS));
-    }
-    else
-    {
-        state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
+#else
+        assert(false);
+#endif
     }
 
     state->providerData.queue = asyncBlock->queue;
@@ -121,16 +167,19 @@ static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock)
     }
     else
     {
+#if _WIN32
         RETURN_IF_FAILED(
             CreateSharedAsyncQueue(
-                (uint32_t)GetCurrentThreadId(),
+            (uint32_t)GetCurrentThreadId(),
                 AsyncQueueDispatchMode_ThreadPool,
                 AsyncQueueDispatchMode_FixedThread,
                 &state->providerData.queue));
+#else
+        RETURN_HR(E_INVALIDARG);
+#endif
     }
 
-    asyncBlock->internalPtr = state.release();
-    asyncBlock->internalStatus = E_PENDING;
+    new (asyncBlock->internal) AsyncBlockInternal{ state.Detach() };
 
     return S_OK;
 }
@@ -141,7 +190,7 @@ static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
     // call, fail.
 
     RETURN_HR_IF(E_INVALIDARG, GetState(asyncBlock) != nullptr);
-    
+
     HRESULT hr = AllocStateNoCompletion(asyncBlock);
 
     if (FAILED(hr))
@@ -151,8 +200,12 @@ static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
 
         if (asyncBlock->waitEvent != nullptr)
         {
+#if _WIN32
             SetEvent(asyncBlock->waitEvent);
             hr = S_OK;
+#else
+            assert(false);
+#endif
         }
 
         if (asyncBlock->callback != nullptr)
@@ -165,9 +218,10 @@ static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
     RETURN_HR(hr);
 }
 
-static void CleanupState(_In_ AsyncBlock* block)
+static void CleanupState(_In_ AsyncBlock* asyncBlock)
 {
-    AsyncState* state = (AsyncState*)InterlockedExchangePointer(&block->internalPtr, nullptr);
+    AsyncState* state = nullptr;
+    GetInternalBlock(asyncBlock)->state.exchange(state);
 
     if (state != nullptr)
     {
@@ -188,11 +242,13 @@ static void CleanupState(_In_ AsyncBlock* block)
 
         state->Release();
     }
+
+    GetInternalBlock(asyncBlock)->~AsyncBlockInternal();
 }
 
 static AsyncState* GetState(_In_ AsyncBlock* asyncBlock)
 {
-    AsyncState* state = (AsyncState*)InterlockedCompareExchangePointer(&asyncBlock->internalPtr, nullptr, nullptr);
+    AsyncState* state = GetInternalBlock(asyncBlock)->state;
 
     if (state != nullptr && state->signature != ASYNC_STATE_SIG)
     {
@@ -203,18 +259,31 @@ static AsyncState* GetState(_In_ AsyncBlock* asyncBlock)
     return state;
 }
 
+static AsyncBlockInternal* GetInternalBlock(_In_ AsyncBlock* asyncBlock)
+{
+    assert(asyncBlock);
+    return reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
+}
+
 static void SignalCompletion(
     _In_ AsyncBlock* asyncBlock)
 {
     AsyncState* state = GetState(asyncBlock);
-    SetEvent(state->waitEvent);
+    if (state->waitEvent)
+    {
+#if _WIN32
+        SetEvent(state->waitEvent);
+#else
+        assert(false);
+#endif
+    }
 
     if (state->providerData.async->callback != nullptr)
     {
         (void)SubmitAsyncCallback(
             state->providerData.queue,
-            AsyncQueueCallbackType_Completion, 
-            asyncBlock, 
+            AsyncQueueCallbackType_Completion,
+            asyncBlock,
             CompletionCallback);
     }
 }
@@ -233,7 +302,7 @@ static void CALLBACK WorkerCallback(
     _In_ void* context)
 {
     AsyncState* state = static_cast<AsyncState*>(context);
-    AsyncBlock* async = state->providerData.async;
+    AsyncBlock* asyncBlock = state->providerData.async;
     state->workScheduled = false;
 
     if (!state->canceled)
@@ -248,14 +317,14 @@ static void CALLBACK WorkerCallback(
         {
             if (SUCCEEDED(result))
             {
-                result = HRESULT_FROM_WIN32(ERROR_INVALID_STATE);
+                result = E_UNEXPECTED;
             }
 
-            HRESULT priorStatus = InterlockedCompareExchange(&async->internalStatus, result, E_PENDING);
-
-            if (priorStatus == E_PENDING)
+            HRESULT previous = E_PENDING;
+            bool swapped = GetInternalBlock(asyncBlock)->status.compare_exchange_strong(previous, result);
+            if (swapped)
             {
-                SignalCompletion(async);
+                SignalCompletion(asyncBlock);
             }
         }
     }
@@ -263,6 +332,7 @@ static void CALLBACK WorkerCallback(
     state->Release();
 }
 
+#if _WIN32
 static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER)
 {
     AsyncState* state = static_cast<AsyncState*>(context);
@@ -287,6 +357,7 @@ static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* contex
         state->Release();
     }
 }
+#endif
 
 //
 // Public APIs
@@ -302,7 +373,7 @@ STDAPI GetAsyncStatus(
     _In_ AsyncBlock* asyncBlock,
     _In_ bool wait)
 {
-    HRESULT result = InterlockedCompareExchange(&asyncBlock->internalStatus, 0xFFFFFFFF, 0xFFFFFFFF);
+    HRESULT result = GetInternalBlock(asyncBlock)->status;
 
     if (result == E_PENDING)
     {
@@ -311,12 +382,17 @@ STDAPI GetAsyncStatus(
 
         if (result == E_PENDING && wait)
         {
+#if _WIN32
             // Don't rely on this returning WAIT_OBJECT_0.  If a callback
             // was invoked that read the results before our wait could wake,
             // it's possible the event was closed.  We should still treat this
             // as a status change.
             (void)WaitForSingleObject(state->waitEvent, INFINITE);
             result = GetAsyncStatus(asyncBlock, false);
+#else
+            assert(false);
+            RETURN_HR(E_INVALIDARG);
+#endif
         }
     }
 
@@ -357,15 +433,17 @@ STDAPI GetAsyncResultSize(
 STDAPI_(void) CancelAsync(
     _In_ AsyncBlock* asyncBlock)
 {
-    HRESULT status = InterlockedCompareExchange(&asyncBlock->internalStatus, E_ABORT, E_PENDING);
+    HRESULT previous = E_PENDING;
+    bool swapped = GetInternalBlock(asyncBlock)->status.compare_exchange_strong(previous, E_ABORT);
 
-    if (status == E_PENDING)
+    if (swapped)
     {
         AsyncState* state = GetState(asyncBlock);
         state->canceled = true;
 
         if (state->timer != nullptr)
         {
+#if _WIN32
             SetThreadpoolTimer(state->timer, nullptr, 0, 0);
             WaitForThreadpoolTimerCallbacks(state->timer, TRUE);
 
@@ -374,6 +452,9 @@ STDAPI_(void) CancelAsync(
                 // The timer callback was never invoked so release this reference
                 state->Release();
             }
+#else
+            assert(false);
+#endif
         }
 
         (void)state->provider(AsyncOp_Cancel, &state->providerData);
@@ -390,15 +471,15 @@ STDAPI RunAsync(
     _In_ AsyncWork* work)
 {
     RETURN_IF_FAILED(BeginAsync(
-        asyncBlock, 
-        work, 
-        RunAsync, 
-        __FUNCTION__, 
+        asyncBlock,
+        reinterpret_cast<void*>(work),
+        reinterpret_cast<void*>(RunAsync),
+        __FUNCTION__,
         [](AsyncOp op, const AsyncProviderData* data)
     {
         if (op == AsyncOp_DoWork)
         {
-            AsyncWork* work = (AsyncWork*)data->context;
+            AsyncWork* work = reinterpret_cast<AsyncWork*>(data->context);
             HRESULT hr = work(data->async);
             CompleteAsync(data->async, hr, 0);
         }
@@ -453,17 +534,21 @@ STDAPI ScheduleAsync(
 
     if (delayInMs != 0 && state->timer == nullptr)
     {
+#if _WIN32
         state->timer = CreateThreadpoolTimer(TimerCallback, state, nullptr);
         RETURN_LAST_ERROR_IF_NULL(state->timer);
+#else
+        assert(false);
+        RETURN_HR(E_INVALIDARG);
+#endif
     }
 
     bool priorScheduled = false;
-    
     state->workScheduled.compare_exchange_strong(priorScheduled, true);
 
     if (priorScheduled)
     {
-        RETURN_HR(HRESULT_FROM_WIN32(ERROR_INVALID_STATE));
+        RETURN_HR(E_UNEXPECTED);
     }
 
     if (delayInMs == 0)
@@ -476,9 +561,13 @@ STDAPI ScheduleAsync(
     }
     else
     {
+#ifdef _WIN32
         int64_t ft = (int64_t)delayInMs * (int64_t)(-10000);
         state->timerScheduled = true;
         SetThreadpoolTimer(state->timer, (PFILETIME)&ft, 0, delayInMs);
+#else
+        RETURN_HR(E_INVALIDARG);
+#endif
     }
 
     // State object is now referenced by the work or timer callback
@@ -504,10 +593,11 @@ STDAPI_(void) CompleteAsync(
         return;
     }
 
-    HRESULT priorStatus = InterlockedCompareExchange(&asyncBlock->internalStatus, result, E_PENDING);
+    HRESULT priorStatus = E_PENDING;
+    bool swapped = GetInternalBlock(asyncBlock)->status.compare_exchange_strong(priorStatus, result);
 
     // If prior status was not pending, we either already completed or were canceled.
-    if (priorStatus == E_PENDING)
+    if (swapped)
     {
         AsyncState* state = GetState(asyncBlock);
         state->providerData.bufferSize = requiredBufferSize;
@@ -548,27 +638,13 @@ STDAPI GetAsyncResult(
         else if (token != state->token)
         {
             // Call/Result mismatch.  This AsyncBlock was initiated by state->function
-            char buf[100];
-            if (state->function != nullptr)
-            {
-                sprintf_s(
-                    buf,
-                    "Call/Result mismatch.  This AsyncBlock was initiated by '%s'.\r\n",
-                    state->function);
-            }
-            else
-            {
-                sprintf_s(buf, "Call/Result mismatch\r\n");
-            }
-
-            result = E_INVALIDARG;
-            ASYNC_LIB_TRACE(result, buf);
             ASSERT(false);
+            result = E_INVALIDARG;
         }
         else if (state->providerData.bufferSize == 0)
         {
             // Caller has not supplied a payload
-            result = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            result = E_NOT_SUPPORTED;
         }
         else if (buffer == nullptr)
         {
@@ -576,7 +652,7 @@ STDAPI GetAsyncResult(
         }
         else if (bufferSize < state->providerData.bufferSize)
         {
-            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+            return E_INSUFFICIENT_BUFFER;
         }
         else
         {

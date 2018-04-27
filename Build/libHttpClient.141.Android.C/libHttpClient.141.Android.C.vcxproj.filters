@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
-      <Filter>C++ Source\Common\Win</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
@@ -22,8 +19,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
       <Filter>C++ Source\Global</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Unittest\http_unittest.cpp">
-      <Filter>C++ Source\HTTP\Unittest</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\http_android.cpp">
+      <Filter>C++ Source\HTTP\Android</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
       <Filter>C++ Source\HTTP</Filter>
@@ -55,26 +52,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Unittest\websocket_unittest.cpp">
-      <Filter>C++ Source\WebSocket\Unittest</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Android\android_websocket.cpp">
+      <Filter>C++ Source\WebSocket\Android</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.cpp">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,9 +65,6 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h">
       <Filter>C++ Source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
-      <Filter>C++ Source\Common\Win</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
       <Filter>C++ Source\Common</Filter>
@@ -123,18 +102,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
       <Filter>C++ Source\WebSocket</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestIncludes_TE.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\UnitTestIncludes.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
@@ -170,17 +137,14 @@
     <Filter Include="C++ Source\Common">
       <UniqueIdentifier>{1712F004-6A0F-3D94-9B4F-7DE3291C8FCC}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\Common\Win">
-      <UniqueIdentifier>{620C63BC-F330-368B-9A98-92B3E2E9EE39}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Source\Global">
       <UniqueIdentifier>{4E3FEF95-F687-3AF2-B0F8-27BF8D347ECB}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
       <UniqueIdentifier>{671D4BEC-03C3-3EEF-A00C-15BE5DB8C4D9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\HTTP\Unittest">
-      <UniqueIdentifier>{7978FA29-9AA1-3A28-930D-03215B9FF202}</UniqueIdentifier>
+    <Filter Include="C++ Source\HTTP\Android">
+      <UniqueIdentifier>{47439195-14B8-3882-BDB1-DDD27BDECAB5}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{E1161EC8-651A-3474-9BD3-3DDD67D7CAA8}</UniqueIdentifier>
@@ -191,20 +155,11 @@
     <Filter Include="C++ Source\Task">
       <UniqueIdentifier>{852BDD0E-ECD3-3233-8860-CD1C1FF871A0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\UnitTests">
-      <UniqueIdentifier>{03E77D73-C3C3-3A1A-99A2-0E8A92B199E3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\UnitTests\Support">
-      <UniqueIdentifier>{4475819C-6AB4-3869-9E4C-D352DE2DDA25}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\UnitTests\Tests">
-      <UniqueIdentifier>{91D1D0DE-93F0-3CF2-8B04-0D4B7EFC673A}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Source\WebSocket">
       <UniqueIdentifier>{7D79D2D4-8606-3071-A8AD-1D2FA0F8F081}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\WebSocket\Unittest">
-      <UniqueIdentifier>{EF3CC542-8E3C-3B03-B28A-3EF6783D9108}</UniqueIdentifier>
+    <Filter Include="C++ Source\WebSocket\Android">
+      <UniqueIdentifier>{A39E117A-2700-3618-8ABF-C7B321FE58E8}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
       <UniqueIdentifier>{7CF7EC10-14C1-3DA3-A2DE-D52057AF7DF4}</UniqueIdentifier>
