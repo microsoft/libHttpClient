@@ -32,7 +32,8 @@ public:
         }
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetNetworkErrorCode(mockCall, E_OUTOFMEMORY, 300));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetStatusCode(mockCall, 400));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetResponseString(mockCall, strResponse));
+        std::string s1 = strResponse;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetResponseBodyBytes(mockCall, (uint8_t*)&s1[0], s1.length()));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(mockCall, "mockHeader", "mockValue"));
         return mockCall;
     }

@@ -163,10 +163,6 @@ set(Unittest_WebSocket_Source_Files
     ../../../Source/WebSocket/Unittest/websocket_unittest.cpp
     )
 
-set(WinRTHttpClient_HTTP_Source_Files
-    ../../../Source/HTTP/WinRTHttpClient/http_winrthttpclient.cpp
-    )
-
 set(WinHttp_HTTP_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_http_task.cpp
     ../../../Source/HTTP/WinHttp/winhttp_http_task.h
@@ -262,13 +258,13 @@ endif()
 
 if( UWP )
     message(STATUS "UWP source group")
-    source_group("C++ Source\\HTTP\\WinRT" FILES ${WinRTHttpClient_HTTP_Source_Files})
+    source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
 
     list(APPEND
         SOURCE_FILES
-        ${WinRTHttpClient_HTTP_Source_Files}
+        ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${WinRT_WebSocket_Source_Files}
         )

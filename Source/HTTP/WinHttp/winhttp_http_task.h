@@ -111,7 +111,7 @@ private:
     msg_body_type m_requestBodyType;
     uint64_t m_requestBodyRemainingToWrite;
     uint64_t m_requestBodyOffset;
-    http_internal_vector<char> m_responseBuffer;
+    http_internal_vector<uint8_t> m_responseBuffer;
 
     http_internal_wstring m_proxyAddress;
     http_internal_wstring m_wProxyName;

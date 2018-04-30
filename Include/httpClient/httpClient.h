@@ -242,7 +242,7 @@ STDAPI HCHttpCallRequestSetUrl(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestSetRequestBodyBytes(
     _In_ hc_call_handle_t call,
-    _In_reads_bytes_(requestBodySize) const BYTE* requestBodyBytes,
+    _In_reads_bytes_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT;
 
@@ -387,6 +387,34 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
 STDAPI HCHttpCallResponseGetResponseString(
     _In_ hc_call_handle_t call,
     _Out_ UTF8CSTR* responseString
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Get the response body buffer size of the HTTP call
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="bufferSize">The response body buffer size of the HTTP call</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
+    _In_ hc_call_handle_t call,
+    _Out_ size_t* bufferSize
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Get the response body buffer of the HTTP call
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="bufferSize">The response body buffer size being passed in</param>
+/// <param name="buffer">The buffer to be written to.</param>
+/// <param name="bufferUser">The actual number of bytes written to the buffer.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseGetResponseBodyBytes(
+    _In_ hc_call_handle_t call,
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) uint8_t* buffer,
+    _Out_opt_ size_t* bufferUsed
     ) HC_NOEXCEPT;
 
 /// <summary>

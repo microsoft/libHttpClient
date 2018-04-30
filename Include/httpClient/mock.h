@@ -61,7 +61,7 @@ STDAPI HCMockAddMock(
     _In_ hc_mock_call_handle call,
     _In_opt_z_ UTF8CSTR method,
     _In_opt_z_ UTF8CSTR url,
-    _In_reads_bytes_opt_(requestBodySize) const PBYTE requestBodyBytes,
+    _In_reads_bytes_opt_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT;
 
@@ -80,11 +80,13 @@ STDAPI HCMockClearMocks() HC_NOEXCEPT;
 /// Set the response body string to return for the mock
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="responseString">the response body string of the HTTP call</param>
+/// <param name="bodyBytes">The response body bytes of the HTTP call.</param>
+/// <param name="bodySize">The length in bytes of the body being set.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCMockResponseSetResponseString(
+STDAPI HCMockResponseSetResponseBodyBytes(
     _In_ hc_mock_call_handle call,
-    _In_z_ UTF8CSTR responseString
+    _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
+    _In_ uint32_t bodySize
     ) HC_NOEXCEPT;
 
 /// <summary>
