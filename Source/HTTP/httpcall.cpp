@@ -430,6 +430,14 @@ try
                 retry_http_call_until_done(static_cast<retry_context*>(data->context));
                 return E_PENDING;
 
+            case AsyncOp_GetResult:
+                assert(false);
+                return E_NOTIMPL;
+
+            case AsyncOp_Cancel:
+                assert(false);
+                return E_NOTIMPL;
+
             case AsyncOp_Cleanup:
                 shared_ptr_cache::fetch<retry_context>(data->context, true);
                 break;
