@@ -35,6 +35,8 @@ http_singleton::http_singleton()
     m_lastMatchingMock = nullptr;
     m_retryAllowed = true;
     m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
+
+    m_callRoutedHandlersContext = 0;
 }
 
 http_singleton::~http_singleton()

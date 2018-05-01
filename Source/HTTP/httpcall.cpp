@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "httpcall.h"
-#include <httpClient/asyncProvider.h>
 #include "../mock/mock.h"
 
 using namespace xbox::httpclient;
@@ -274,7 +273,7 @@ bool http_call_should_retry(
                 httpSingleton->set_retry_state(call->retryAfterCacheId, state);
             }
         }
-		
+
         return true;
     }
 
@@ -373,6 +372,16 @@ void retry_http_call_until_done(
         if (http_call_should_retry(retryContext->call, responseReceivedTime))
         {
             if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", retryContext->call->id, retryContext->call->delayBeforeRetry.count()); }
+
+            auto httpSingleton = get_http_singleton(false);
+            if (httpSingleton != nullptr)
+            {
+                std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+                for (const auto& pair : httpSingleton->m_callRoutedHandlers)
+                {
+                    pair.second(retryContext->call);
+                }
+            }
 
             clear_http_call_response(retryContext->call);
             retry_http_call_until_done(retryContext);

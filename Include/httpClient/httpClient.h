@@ -116,6 +116,33 @@ STDAPI_(void) HCGlobalCleanup() HC_NOEXCEPT;
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT;
 
+/// <summary>
+/// A callback that will be synchronously invoked each time an HTTP call fails but will be automatically be
+/// retried. Can be used to track intermittent failures similar to fiddler.
+/// </summary>
+/// <param name="call">Handle to the HTTP call that failed.</param>
+typedef void
+(STDAPIVCALLTYPE* HCCallRoutedHandler)(
+    _In_ hc_call_handle_t call
+    );
+
+/// <summary>
+/// Adds a callback to be invoked on intermediate http errors (errors that are non-fatal and will
+/// automatically be retried).
+/// </summary>
+/// <param name="handler">The handler to be called.</param>
+/// <returns>A function context that can be used to remove the handler.</returns>
+STDAPI_(function_context) HCAddCallRoutedHandler(
+    _In_ HCCallRoutedHandler handler
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Removes a previously added HCCallRoutedHandler.
+/// </summary>
+/// <param name="handlerContext">Context returned from the HCAddCallRoutedHandler call.</param>
+STDAPI_(void) HCRemoveCallRoutedHandler(
+    _In_ function_context handlerContext
+    ) HC_NOEXCEPT;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Http APIs
@@ -398,7 +425,7 @@ STDAPI HCHttpCallResponseGetResponseString(
 STDAPI HCHttpCallResponseGetStatusCode(
     _In_ hc_call_handle_t call,
     _Out_ uint32_t* statusCode
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Get the network error code of the HTTP call
@@ -642,6 +669,3 @@ hc_websocket_handle_t HCWebSocketDuplicateHandle(
 STDAPI HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
-
-
-
