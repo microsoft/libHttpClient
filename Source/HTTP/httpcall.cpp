@@ -261,6 +261,20 @@ bool http_call_should_retry(
             }
         }
 
+        // Remember result if there was an error and there was a Retry-After header
+        if (call->retryAfterCacheId != 0 &&
+            retryAfter.count() > 0 &&
+            httpStatus > 400)
+        {
+            auto retryAfterTime = retryAfter + responseReceivedTime;
+            http_retry_after_api_state state(retryAfterTime, httpStatus);
+            auto httpSingleton = get_http_singleton(false);
+            if (httpSingleton)
+            {
+                httpSingleton->set_retry_state(call->retryAfterCacheId, state);
+            }
+        }
+		
         return true;
     }
 

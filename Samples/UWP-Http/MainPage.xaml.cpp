@@ -270,10 +270,10 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 void TraceCallback(
     _In_ UTF8CSTR areaName,
     _In_ enum HCTraceLevel level,
-    _In_ uint32_t threadId,
+    _In_ uint64_t threadId,
     _In_ uint64_t timestamp,
     _In_ UTF8CSTR message
-    )
+)
 {
     // Hook up to your own tracing.  For example:
     // OutputDebugStringA(message);
