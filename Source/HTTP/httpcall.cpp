@@ -3,26 +3,25 @@
 
 #include "pch.h"
 #include "httpcall.h"
-#include <httpClient/asyncProvider.h>
 #include "../mock/mock.h"
 
 using namespace xbox::httpclient;
 
 const int MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS = 10000;
 #if HC_UNITTEST_API
-    const int MIN_HTTP_TIMEOUT_IN_MS = 0; // speed up unit tests
+const int MIN_HTTP_TIMEOUT_IN_MS = 0; // speed up unit tests
 #else
-    const int MIN_HTTP_TIMEOUT_IN_MS = 5000;
+const int MIN_HTTP_TIMEOUT_IN_MS = 5000;
 #endif
 const double MAX_DELAY_TIME_IN_SEC = 60.0;
 const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
-STDAPI 
+STDAPI
 HCHttpCallCreate(
     _Out_ hc_call_handle_t* callHandle
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during buffer size query with error: %u", 0);
 
@@ -53,7 +52,7 @@ CATCH_RETURN()
 
 hc_call_handle_t HCHttpCallDuplicateHandle(
     _In_ hc_call_handle_t call
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
@@ -68,11 +67,11 @@ try
 }
 CATCH_RETURN_WITH(nullptr)
 
-STDAPI 
+STDAPI
 HCHttpCallCloseHandle(
     _In_ hc_call_handle_t call
-    ) HC_NOEXCEPT
-try 
+) HC_NOEXCEPT
+try
 {
     if (call == nullptr)
     {
@@ -95,50 +94,50 @@ HRESULT perform_http_call(
     _In_ std::shared_ptr<http_singleton> httpSingleton,
     _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
-    )
+)
 {
-    HRESULT hr = BeginAsync(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, call, perform_http_call, __FUNCTION__,
         [](AsyncOp opCode, const AsyncProviderData* data)
     {
         switch (opCode)
         {
-            case AsyncOp_DoWork:
+        case AsyncOp_DoWork:
+        {
+            hc_call_handle_t call = static_cast<hc_call_handle_t>(data->context);
+            auto httpSingleton = get_http_singleton(false);
+            if (nullptr == httpSingleton)
+                return E_INVALIDARG;
+
+            bool matchedMocks = false;
+            if (httpSingleton->m_mocksEnabled)
             {
-                hc_call_handle_t call = static_cast<hc_call_handle_t>(data->context);
-                auto httpSingleton = get_http_singleton(false);
-                if (nullptr == httpSingleton)
-                    return E_INVALIDARG;
-
-                bool matchedMocks = false;
-                if (httpSingleton->m_mocksEnabled)
+                matchedMocks = Mock_Internal_HCHttpCallPerform(call);
+                if (matchedMocks)
                 {
-                    matchedMocks = Mock_Internal_HCHttpCallPerform(call);
-                    if (matchedMocks)
-                    {
-                        CompleteAsync(data->async, S_OK, 0);
-                    }
+                    CompleteAsync(data->async, S_OK, 0);
                 }
-
-                if (!matchedMocks) // if there wasn't a matched mock, then real call
-                {
-                    HCCallPerformFunction performFunc = httpSingleton->m_performFunc;
-                    if (performFunc != nullptr)
-                    {
-                        try
-                        {
-                            performFunc(call, data->async);
-                        }
-                        catch (...)
-                        {
-                            if (call->traceCall) { HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", static_cast<HC_CALL*>(call)->id); }
-                        }
-                    }
-                }
-
-                return E_PENDING;
             }
 
-            default: return S_OK;
+            if (!matchedMocks) // if there wasn't a matched mock, then real call
+            {
+                HCCallPerformFunction performFunc = httpSingleton->m_performFunc;
+                if (performFunc != nullptr)
+                {
+                    try
+                    {
+                        performFunc(call, data->async);
+                    }
+                    catch (...)
+                    {
+                        if (call->traceCall) { HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", static_cast<HC_CALL*>(call)->id); }
+                    }
+                }
+            }
+
+            return E_PENDING;
+        }
+
+        default: return S_OK;
         }
     });
 
@@ -233,12 +232,12 @@ bool http_call_should_retry(
         lerpScaler = 0; // make unit tests deterministic
 #endif
         double secondsToWaitUncapped = secondsToWaitMin + secondsToWaitDelta * lerpScaler; // lerp between min & max wait
-        double secondsToWait = std::min(secondsToWaitUncapped, MAX_DELAY_TIME_IN_SEC); // cap max wait to 1 min
+        double secondsToWait = MIN(secondsToWaitUncapped, MAX_DELAY_TIME_IN_SEC); // cap max wait to 1 min
         std::chrono::milliseconds waitTime = std::chrono::milliseconds(static_cast<int64_t>(secondsToWait * 1000.0));
         if (retryAfter.count() > 0)
         {
             // Use either the waitTime or Retry-After header, whichever is bigger
-            call->delayBeforeRetry = std::chrono::milliseconds(std::max(waitTime.count(), retryAfter.count()));
+            call->delayBeforeRetry = std::chrono::milliseconds(__max(waitTime.count(), retryAfter.count()));
         }
         else
         {
@@ -261,20 +260,6 @@ bool http_call_should_retry(
             }
         }
 
-        // Remember result if there was an error and there was a Retry-After header
-        if (call->retryAfterCacheId != 0 &&
-            retryAfter.count() > 0 &&
-            httpStatus > 400)
-        {
-            auto retryAfterTime = retryAfter + responseReceivedTime;
-            http_retry_after_api_state state(retryAfterTime, httpStatus);
-            auto httpSingleton = get_http_singleton(false);
-            if (httpSingleton)
-            {
-                httpSingleton->set_retry_state(call->retryAfterCacheId, state);
-            }
-        }
-		
         return true;
     }
 
@@ -285,7 +270,7 @@ bool should_fast_fail(
     _In_ http_retry_after_api_state apiState,
     _In_ HC_CALL* call,
     _In_ const chrono_clock_t::time_point& currentTime
-    )
+)
 {
     if (apiState.statusCode < 400)
     {
@@ -322,7 +307,7 @@ typedef struct retry_context
 
 void retry_http_call_until_done(
     _In_ retry_context* retryContext
-    )
+)
 {
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
@@ -355,7 +340,8 @@ void retry_http_call_until_done(
 
     async_queue_handle_t nestedQueue;
     CreateNestedAsyncQueue(retryContext->outerQueue, &nestedQueue);
-    AsyncBlock* nestedBlock = new AsyncBlock{};
+    AsyncBlock* nestedBlock = new AsyncBlock;
+    ZeroMemory(nestedBlock, sizeof(AsyncBlock));
     nestedBlock->queue = nestedQueue;
     nestedBlock->context = retryContext;
 
@@ -374,6 +360,16 @@ void retry_http_call_until_done(
         {
             if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", retryContext->call->id, retryContext->call->delayBeforeRetry.count()); }
 
+            auto httpSingleton = get_http_singleton(false);
+            if (httpSingleton != nullptr)
+            {
+                std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+                for (const auto& pair : httpSingleton->m_callRoutedHandlers)
+                {
+                    pair.second(retryContext->call);
+                }
+            }
+
             clear_http_call_response(retryContext->call);
             retry_http_call_until_done(retryContext);
         }
@@ -391,11 +387,11 @@ void retry_http_call_until_done(
     }
 }
 
-STDAPI 
+STDAPI
 HCHttpCallPerform(
     _In_ hc_call_handle_t call,
     _In_ AsyncBlock* asyncBlock
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
@@ -412,26 +408,18 @@ try
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
 
-    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerform), __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, HCHttpCallPerform, __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
         {
-            case AsyncOp_DoWork:
-                retry_http_call_until_done(static_cast<retry_context*>(data->context));
-                return E_PENDING;
+        case AsyncOp_DoWork:
+            retry_http_call_until_done(static_cast<retry_context*>(data->context));
+            return E_PENDING;
 
-            case AsyncOp_GetResult:
-                assert(false);
-                return E_NOTIMPL;
-
-            case AsyncOp_Cancel:
-                assert(false);
-                return E_NOTIMPL;
-
-            case AsyncOp_Cleanup:
-                shared_ptr_cache::fetch<retry_context>(data->context, true);
-                break;
+        case AsyncOp_Cleanup:
+            shared_ptr_cache::fetch<retry_context>(data->context, true);
+            break;
         }
 
         return S_OK;
@@ -449,7 +437,7 @@ CATCH_RETURN()
 STDAPI_(uint64_t)
 HCHttpCallGetId(
     _In_ hc_call_handle_t call
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
@@ -464,7 +452,7 @@ STDAPI
 HCHttpCallSetLogging(
     _In_ hc_call_handle_t call,
     _In_ bool logCall
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
@@ -476,11 +464,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallSetContext(
     _In_ hc_call_handle_t call,
     _In_ void* context
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
@@ -494,18 +482,18 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallGetContext(
     _In_ hc_call_handle_t call,
     _In_ void** context
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
     {
         return 0;
     }
-    
+
     *context = call->context;
 
     return S_OK;

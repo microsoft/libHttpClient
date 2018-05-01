@@ -20,7 +20,7 @@ typedef struct http_retry_after_api_state
     http_retry_after_api_state(
         _In_ const chrono_clock_t::time_point& _retryAfterTime,
         _In_ uint32_t _statusCode
-        ) :
+    ) :
         retryAfterTime(_retryAfterTime),
         statusCode(_statusCode)
     {
@@ -42,6 +42,10 @@ typedef struct http_singleton
     void set_retry_state(_In_ uint32_t retryAfterCacheId, _In_ const http_retry_after_api_state& state);
     http_retry_after_api_state get_retry_state(_In_ uint32_t retryAfterCacheId);
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
+
+    std::mutex m_callRoutedHandlersLock;
+    std::atomic<function_context> m_callRoutedHandlersContext;
+    http_internal_unordered_map<function_context, HCCallRoutedHandler> m_callRoutedHandlers;
 
     // HTTP state
     std::atomic<std::uint64_t> m_lastId;
@@ -132,6 +136,3 @@ private:
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
-
-
-

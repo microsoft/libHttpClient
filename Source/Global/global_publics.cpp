@@ -9,7 +9,7 @@
 
 using namespace xbox::httpclient;
 
-STDAPI 
+STDAPI
 HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT
 try
 {
@@ -23,7 +23,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCGlobalInitialize() HC_NOEXCEPT
 try
 {
@@ -43,7 +43,7 @@ CATCH_RETURN_WITH(;)
 STDAPI_(void)
 HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HCCallPerformFunction performFunc
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 {
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
@@ -52,10 +52,10 @@ HCGlobalSetHttpCallPerformFunction(
     httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
-STDAPI 
+STDAPI
 HCGlobalGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc
-    ) HC_NOEXCEPT
+) HC_NOEXCEPT
 try
 {
     if (performFunc == nullptr)
@@ -71,4 +71,35 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+
+STDAPI_(function_context) HCAddCallRoutedHandler(
+    _In_ HCCallRoutedHandler handler
+) HC_NOEXCEPT
+{
+    if (handler == nullptr)
+    {
+        return -1;
+    }
+
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+    auto functionContext = httpSingleton->m_callRoutedHandlersContext++;
+    httpSingleton->m_callRoutedHandlers[functionContext] = handler;
+    return functionContext;
+}
+
+STDAPI_(void) HCRemoveCallRoutedHandler(
+    _In_ function_context handlerContext
+) HC_NOEXCEPT
+{
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr != httpSingleton)
+    {
+        std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+        httpSingleton->m_callRoutedHandlers.erase(handlerContext);
+    }
+}
 
