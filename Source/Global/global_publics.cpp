@@ -52,10 +52,10 @@ HCGlobalSetHttpCallPerformFunction(
     httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
 }
 
-STDAPI
+STDAPI 
 HCGlobalGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (performFunc == nullptr)
@@ -74,7 +74,7 @@ CATCH_RETURN()
 
 STDAPI_(function_context) HCAddCallRoutedHandler(
     _In_ HCCallRoutedHandler handler
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 {
     if (handler == nullptr)
     {
@@ -93,7 +93,7 @@ STDAPI_(function_context) HCAddCallRoutedHandler(
 
 STDAPI_(void) HCRemoveCallRoutedHandler(
     _In_ function_context handlerContext
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 {
     auto httpSingleton = get_http_singleton(true);
     if (nullptr != httpSingleton)

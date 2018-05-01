@@ -71,7 +71,7 @@ STDAPI
 HCHttpCallCloseHandle(
     _In_ hc_call_handle_t call
     ) HC_NOEXCEPT
-try
+try 
 {
     if (call == nullptr)
     {
@@ -137,7 +137,7 @@ HRESULT perform_http_call(
                 return E_PENDING;
             }
 
-        default: return S_OK;
+            default: return S_OK;
         }
     });
 
@@ -321,7 +321,7 @@ typedef struct retry_context
 
 void retry_http_call_until_done(
     _In_ retry_context* retryContext
-)
+    )
 {
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
@@ -461,7 +461,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallSetLogging(
     _In_ hc_call_handle_t call,
     _In_ bool logCall
@@ -495,11 +495,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI
+STDAPI 
 HCHttpCallGetContext(
     _In_ hc_call_handle_t call,
     _In_ void** context
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 try
 {
     if (call == nullptr)
