@@ -93,8 +93,11 @@ static_assert(std::is_trivially_destructible<AsyncBlockInternal>::value,
 class AsyncStateRef
 {
 public:
-    AsyncStateRef(_In_ AsyncState* state) noexcept
-        : m_state(state)
+    AsyncStateRef() noexcept
+        : m_state{ nullptr }
+    {}
+    explicit AsyncStateRef(AsyncState* state) noexcept
+        : m_state{ state }
     {
         if (m_state)
         {
@@ -116,12 +119,29 @@ public:
     {
         return m_state == nullptr;
     }
+    bool operator!=(nullptr_t) const noexcept
+    {
+        return m_state != nullptr;
+    }
+    void Attach(AsyncState* state) noexcept
+    {
+        assert(!m_state);
+        m_state = state;
+    }
     AsyncState* Detach() noexcept
     {
         AsyncState* p = m_state;
         m_state = nullptr;
         return p;
     }
+
+    AsyncStateRef(const AsyncStateRef&) = delete;
+    AsyncStateRef(AsyncStateRef&&) = delete;
+    AsyncStateRef& operator=(const AsyncStateRef&) = delete;
+    AsyncStateRef& operator=(AsyncStateRef&&) = delete;
+
+    AsyncState* get() const { return m_state; }
+
 private:
     AsyncState * m_state;
 };
@@ -134,13 +154,15 @@ static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* contex
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock);
 static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock);
 static HRESULT AllocState(_In_ AsyncBlock* asyncBlock);
-static void CleanupState(_In_ AsyncBlock* asyncBlock);
+static void CleanupState(_In_ AsyncStateRef const& state);
 static AsyncState* GetState(_In_ AsyncBlock* asyncBlock);
 static AsyncBlockInternal* GetInternalBlock(_In_ AsyncBlock* asyncBlock);
 
 static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock)
 {
-    AsyncStateRef state(new (std::nothrow) AsyncState);
+    AsyncStateRef state;
+    state.Attach(new (std::nothrow) AsyncState);
+
     RETURN_IF_NULL_ALLOC(state);
 
     if (asyncBlock->waitEvent != nullptr)
@@ -218,10 +240,8 @@ static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
     RETURN_HR(hr);
 }
 
-static void CleanupState(_In_ AsyncBlock* asyncBlock)
+static void CleanupState(_In_ AsyncStateRef const& state)
 {
-    AsyncState* state = nullptr;
-    GetInternalBlock(asyncBlock)->state.exchange(state);
 
     if (state != nullptr)
     {
@@ -238,12 +258,10 @@ static void CleanupState(_In_ AsyncBlock* asyncBlock)
             return false;
         };
 
-        RemoveAsyncQueueCallbacks(state->providerData.queue, AsyncQueueCallbackType_Work, WorkerCallback, state, removePredicate);
+        RemoveAsyncQueueCallbacks(state->providerData.queue, AsyncQueueCallbackType_Work, WorkerCallback, state.get(), removePredicate);
 
         state->Release();
     }
-
-    GetInternalBlock(asyncBlock)->~AsyncBlockInternal();
 }
 
 static AsyncState* GetState(_In_ AsyncBlock* asyncBlock)
@@ -438,7 +456,8 @@ STDAPI_(void) CancelAsync(
 
     if (swapped)
     {
-        AsyncState* state = GetState(asyncBlock);
+        AsyncStateRef state;
+        state.Attach(GetState(asyncBlock)); // steal ownership from the async block
         state->canceled = true;
 
         if (state->timer != nullptr)
@@ -459,7 +478,9 @@ STDAPI_(void) CancelAsync(
 
         (void)state->provider(AsyncOp_Cancel, &state->providerData);
         SignalCompletion(asyncBlock);
-        CleanupState(asyncBlock);
+        // At this point asyncBlock is unsafe to touch
+
+        CleanupState(state);
     }
 }
 
@@ -530,7 +551,7 @@ STDAPI ScheduleAsync(
     AsyncState* state = GetState(asyncBlock);
     RETURN_HR_IF(E_INVALIDARG, state == nullptr);
 
-    AsyncStateRef ref(state);
+    AsyncStateRef ref{ state };
 
     if (delayInMs != 0 && state->timer == nullptr)
     {
@@ -596,6 +617,8 @@ STDAPI_(void) CompleteAsync(
     HRESULT priorStatus = E_PENDING;
     bool swapped = GetInternalBlock(asyncBlock)->status.compare_exchange_strong(priorStatus, result);
 
+    AsyncStateRef state{ GetState(asyncBlock) };
+
     // If prior status was not pending, we either already completed or were canceled.
     if (swapped)
     {
@@ -603,6 +626,7 @@ STDAPI_(void) CompleteAsync(
         state->providerData.bufferSize = requiredBufferSize;
         SignalCompletion(asyncBlock);
     }
+    // At this point asyncBlock may be unsafe to touch
 
     // If the required buffer is zero, there is no payload and
     // we can clean up.  Also clean up if the status is abort, as that
@@ -610,7 +634,8 @@ STDAPI_(void) CompleteAsync(
 
     if (requiredBufferSize == 0 || priorStatus == E_ABORT)
     {
-        CleanupState(asyncBlock);
+        state->Release(); // drop the reference held by asyncBlock
+        CleanupState(state);
     }
 }
 
@@ -627,7 +652,8 @@ STDAPI GetAsyncResult(
     _Out_opt_ size_t* bufferUsed)
 {
     HRESULT result = GetAsyncStatus(asyncBlock, false);
-    AsyncState* state = GetState(asyncBlock);
+    AsyncStateRef state;
+    state.Attach(GetState(asyncBlock)); // steal the reference from asyncBlock
 
     if (SUCCEEDED(result))
     {
@@ -670,7 +696,7 @@ STDAPI GetAsyncResult(
     // Cleanup state if needed
     if (state != nullptr && result != E_PENDING)
     {
-        CleanupState(asyncBlock);
+        CleanupState(state);
     }
 
     return result;
