@@ -20,7 +20,7 @@ typedef struct http_retry_after_api_state
     http_retry_after_api_state(
         _In_ const chrono_clock_t::time_point& _retryAfterTime,
         _In_ uint32_t _statusCode
-    ) :
+        ) :
         retryAfterTime(_retryAfterTime),
         statusCode(_statusCode)
     {

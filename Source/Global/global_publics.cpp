@@ -9,7 +9,7 @@
 
 using namespace xbox::httpclient;
 
-STDAPI
+STDAPI 
 HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT
 try
 {
@@ -23,7 +23,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI
+STDAPI 
 HCGlobalInitialize() HC_NOEXCEPT
 try
 {
@@ -43,7 +43,7 @@ CATCH_RETURN_WITH(;)
 STDAPI_(void)
 HCGlobalSetHttpCallPerformFunction(
     _In_opt_ HCCallPerformFunction performFunc
-) HC_NOEXCEPT
+    ) HC_NOEXCEPT
 {
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
