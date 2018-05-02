@@ -1,8 +1,6 @@
 ## Welcome!
 
-libHttpClient is still under construction and is not ready to use.  
-You can review the goals below to see what shape the project will have in its final form.
-If you want to contribute to the project, please talk to us to avoid overlap.
+libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API (XSAPI) [https://github.com/Microsoft/xbox-live-api].  If you want to contribute to the project, please talk to us to avoid overlap.
 
 ## Goals
 
@@ -71,7 +69,7 @@ Big things that still need to be done in rough priority order:
 * [Done] WebSocket implementation for UWP & XDK
 * [Done] Prototype XSAPI on top of libHttpClient WebSocket stack
 * [Done] Retry logic
-* API for binary request & response data 
+* [Done] API for binary request & response data 
 * iOS project & iOS implementation calling iOS platform HTTP APIs
 * iOS implementation calling iOS platform WebSocket APIs
 * iOS sample
