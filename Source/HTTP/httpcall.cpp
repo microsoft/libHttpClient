@@ -153,6 +153,7 @@ HRESULT perform_http_call(
 void clear_http_call_response(_In_ hc_call_handle_t call)
 {
     call->responseString.clear();
+    call->responseBodyBytes.clear();
     call->responseHeaders.clear();
     call->statusCode = 0;
     call->networkErrorCode = S_OK;

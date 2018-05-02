@@ -20,7 +20,7 @@ HCMockAddMock(
     _In_ hc_mock_call_handle call,
     _In_opt_z_ UTF8CSTR method,
     _In_opt_z_ UTF8CSTR url,
-    _In_reads_bytes_opt_(requestBodySize) const PBYTE requestBodyBytes,
+    _In_reads_bytes_opt_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT
 try 
@@ -81,12 +81,13 @@ try
 CATCH_RETURN()
 
 STDAPI 
-HCMockResponseSetResponseString(
+HCMockResponseSetResponseBodyBytes(
     _In_ hc_mock_call_handle call,
-    _In_z_ UTF8CSTR responseString
+    _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
+    _In_ uint32_t bodySize
     ) HC_NOEXCEPT
 {
-    return HCHttpCallResponseSetResponseString(call, responseString);
+    return HCHttpCallResponseSetResponseBodyBytes(call, bodyBytes, bodySize);
 }
 
 STDAPI 

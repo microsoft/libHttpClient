@@ -248,13 +248,13 @@ void HttpTestApp::MainPage::UpdateXamlUI(
     )
 {
     std::stringstream ss;
-    ss << L"Network Error: " << errMessage << L" [Code: " << errCode << L"]\r\n";
-    ss << L"StatusCode: " << statusCode << L"\r\n";
+    ss << "Network Error: " << errMessage << " [Code: " << errCode << "]\r\n";
+    ss << "StatusCode: " << statusCode << "\r\n";
     for (int i = 0; i < headers.size(); i++)
     {
-        ss << L"Header[" << i << L"]: " << headers[i][0] << L": " << headers[i][1] << L"\r\n";
+        ss << "Header[" << i << "]: " << headers[i][0] << ": " << headers[i][1] << "\r\n";
     }
-    ss << L"Response: " << responseString << L"\r\n";
+    ss << "Response: " << responseString << "\r\n";
 
     std::string strText = ss.str();
 

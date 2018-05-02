@@ -92,7 +92,7 @@ STDAPI HCHttpCallRequestGetUrl(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyBytes(
     _In_ hc_call_handle_t call,
-    _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
+    _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const uint8_t** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
     ) HC_NOEXCEPT;
 
@@ -260,14 +260,16 @@ STDAPI HCHttpCallRequestGetAssertsForThrottling(
 // 
 
 /// <summary>
-/// Set the response body string of the HTTP call
+/// Set the response body byte buffer of the HTTP call
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="responseString">the response body string of the HTTP call</param>
+/// <param name="bodyBytes">The response body bytes of the HTTP call.</param>
+/// <param name="bodySize">The length in bytes of the body being set.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCHttpCallResponseSetResponseString(
+STDAPI HCHttpCallResponseSetResponseBodyBytes(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR responseString
+    _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
+    _In_ size_t bodySize
     ) HC_NOEXCEPT;
 
 /// <summary>

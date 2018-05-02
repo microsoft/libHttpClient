@@ -322,7 +322,8 @@ public:
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetResponseString(call, "test1"));
+        std::string s1 = "test1";
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetResponseBodyBytes(call, (uint8_t*)&s1[0], s1.length()));
         const CHAR* t1 = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &t1));
         VERIFY_ARE_EQUAL_STR("test1", t1);
