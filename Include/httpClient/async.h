@@ -66,11 +66,6 @@ typedef struct AsyncBlock
     /// Internal use only
     /// </summary>
     unsigned char internal[2 * sizeof(void*)];
-
-    /// <summary>
-    /// Internal use only
-    /// </summary>
-    HRESULT internalStatus;
 } AsyncBlock;
 
 /// <summary>
