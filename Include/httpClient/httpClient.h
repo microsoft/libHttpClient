@@ -121,9 +121,11 @@ STDAPI HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT;
 /// retried. Can be used to track intermittent failures similar to fiddler.
 /// </summary>
 /// <param name="call">Handle to the HTTP call that failed.</param>
+/// <param name="context">Client context pass when the handler was added.</param>
 typedef void
 (STDAPIVCALLTYPE* HCCallRoutedHandler)(
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _In_ void* context
     );
 
 /// <summary>
@@ -131,9 +133,11 @@ typedef void
 /// automatically be retried).
 /// </summary>
 /// <param name="handler">The handler to be called.</param>
+/// <param name="context">Client context to pass to callback function.</param>
 /// <returns>A function context that can be used to remove the handler.</returns>
 STDAPI_(function_context) HCAddCallRoutedHandler(
-    _In_ HCCallRoutedHandler handler
+    _In_ HCCallRoutedHandler handler,
+    _In_ void* context
     ) HC_NOEXCEPT;
 
 /// <summary>

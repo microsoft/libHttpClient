@@ -45,7 +45,7 @@ typedef struct http_singleton
 
     std::mutex m_callRoutedHandlersLock;
     std::atomic<function_context> m_callRoutedHandlersContext;
-    http_internal_unordered_map<function_context, HCCallRoutedHandler> m_callRoutedHandlers;
+    http_internal_unordered_map<function_context, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 
     // HTTP state
     std::atomic<std::uint64_t> m_lastId;
