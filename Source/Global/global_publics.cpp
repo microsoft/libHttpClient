@@ -72,7 +72,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI_(function_context) HCAddCallRoutedHandler(
+STDAPI_(int32_t) HCAddCallRoutedHandler(
     _In_ HCCallRoutedHandler handler,
     _In_ void* context
     ) HC_NOEXCEPT
@@ -93,7 +93,7 @@ STDAPI_(function_context) HCAddCallRoutedHandler(
 }
 
 STDAPI_(void) HCRemoveCallRoutedHandler(
-    _In_ function_context handlerContext
+    _In_ int32_t handlerContext
     ) HC_NOEXCEPT
 {
     auto httpSingleton = get_http_singleton(true);

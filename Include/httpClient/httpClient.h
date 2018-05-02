@@ -134,8 +134,8 @@ typedef void
 /// </summary>
 /// <param name="handler">The handler to be called.</param>
 /// <param name="context">Client context to pass to callback function.</param>
-/// <returns>A function context that can be used to remove the handler.</returns>
-STDAPI_(function_context) HCAddCallRoutedHandler(
+/// <returns>An unique id that can be used to remove the handler.</returns>
+STDAPI_(int32_t) HCAddCallRoutedHandler(
     _In_ HCCallRoutedHandler handler,
     _In_ void* context
     ) HC_NOEXCEPT;
@@ -143,9 +143,9 @@ STDAPI_(function_context) HCAddCallRoutedHandler(
 /// <summary>
 /// Removes a previously added HCCallRoutedHandler.
 /// </summary>
-/// <param name="handlerContext">Context returned from the HCAddCallRoutedHandler call.</param>
+/// <param name="handlerId">Id returned from the HCAddCallRoutedHandler call.</param>
 STDAPI_(void) HCRemoveCallRoutedHandler(
-    _In_ function_context handlerContext
+    _In_ int32_t handlerId
     ) HC_NOEXCEPT;
 
 /////////////////////////////////////////////////////////////////////////////////////////

@@ -262,7 +262,6 @@ typedef struct _LIST_ENTRY {
 typedef _Null_terminated_ char* UTF8STR;
 typedef _Null_terminated_ const char* UTF8CSTR;
 
-typedef int32_t function_context;
 typedef uint32_t hc_memory_type;
 typedef struct HC_WEBSOCKET* hc_websocket_handle_t;
 typedef struct HC_CALL* hc_call_handle_t;
