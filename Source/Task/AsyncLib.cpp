@@ -77,13 +77,9 @@ private:
 
 struct AsyncBlockInternal
 {
-    AsyncState* state;
-    HRESULT status;
+    AsyncState* state = nullptr;
+    HRESULT status = E_PENDING;
     std::atomic_flag lock = ATOMIC_FLAG_INIT;
-
-    AsyncBlockInternal(AsyncState* s) :
-        state(s), status(E_PENDING)
-    {}
 };
 static_assert(sizeof(AsyncBlockInternal) <= sizeof(AsyncBlock::internal),
     "Unexpected size for AsyncBlockInternal");
@@ -139,7 +135,7 @@ public:
     }
     void Attach(AsyncState* state) noexcept
     {
-        assert(!m_state);
+        ASSERT(!m_state);
         m_state = state;
     }
     AsyncState* Detach() noexcept
@@ -161,7 +157,7 @@ public:
     AsyncBlockInternalGuard(AsyncBlock* asyncBlock) noexcept :
         m_internal{ reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal) }
     {
-        assert(m_internal);
+        ASSERT(m_internal);
         while (m_internal->lock.test_and_set()) {}
     }
 
@@ -225,11 +221,11 @@ static void CALLBACK WorkerCallback(_In_ void* context);
 static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER);
 #endif
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state);
-static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock);
+static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal& internal);
 static HRESULT AllocState(_In_ AsyncBlock* asyncBlock);
 static void CleanupState(_In_ AsyncStateRef&& state);
 
-static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock)
+static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal)
 {
     AsyncStateRef state;
     state.Attach(new (std::nothrow) AsyncState);
@@ -247,7 +243,7 @@ static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock)
             FALSE,
             DUPLICATE_SAME_ACCESS));
 #else
-        assert(false);
+        ASSERT(false);
 #endif
     }
     else
@@ -279,10 +275,7 @@ static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock)
 #endif
     }
 
-    // construction is inherently single threaded
-    // (there is nothing we can do if the client tries to use the same
-    // AsyncBlock in 2 calls at the same time)
-    new (asyncBlock->internal) AsyncBlockInternal{ state.Detach() };
+    internal->state = state.Detach();
 
     return S_OK;
 }
@@ -304,31 +297,40 @@ static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
         }
     }
 
-    HRESULT hr = AllocStateNoCompletion(asyncBlock);
+    // Construction is inherently single threaded
+    // (there is nothing we can do if the client tries to use the same
+    // AsyncBlock in 2 calls at the same time)
+    auto internal = new (asyncBlock->internal) AsyncBlockInternal{};
+
+    HRESULT hr = AllocStateNoCompletion(asyncBlock, internal);
 
     if (FAILED(hr))
     {
         // Attempt to complete the call as a failure, and only return
         // a failed HR here if we couldn't complete.
 
+        internal->status = hr;
+
         if (asyncBlock->waitEvent != nullptr)
         {
 #if _WIN32
             SetEvent(asyncBlock->waitEvent);
-            hr = S_OK;
 #else
-            assert(false);
+            ASSERT(false);
 #endif
         }
 
-        if (asyncBlock->callback != nullptr)
+        if (asyncBlock->queue)
         {
-            asyncBlock->callback(asyncBlock);
-            hr = S_OK;
+            hr = SubmitAsyncCallback(
+                asyncBlock->queue,
+                AsyncQueueCallbackType_Completion,
+                asyncBlock,
+                CompletionCallback);
         }
     }
 
-    RETURN_HR(hr);
+    return hr;
 }
 
 static void CleanupState(_In_ AsyncStateRef&& state)
@@ -362,7 +364,7 @@ static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef con
 #if _WIN32
         SetEvent(state->waitEvent);
 #else
-        assert(false);
+        ASSERT(false);
 #endif
     }
 
@@ -476,7 +478,7 @@ STDAPI GetAsyncStatus(
 
     if (result == E_PENDING)
     {
-        assert(state != nullptr);
+        ASSERT(state != nullptr);
         RETURN_HR_IF(E_INVALIDARG, state == nullptr);
 
         if (wait)
@@ -489,7 +491,7 @@ STDAPI GetAsyncStatus(
             (void)WaitForSingleObject(state->waitEvent, INFINITE);
             result = GetAsyncStatus(asyncBlock, false);
 #else
-            assert(false);
+            ASSERT(false);
             RETURN_HR(E_INVALIDARG);
 #endif
         }
@@ -515,7 +517,7 @@ STDAPI GetAsyncResultSize(
 
     if (SUCCEEDED(result))
     {
-        assert(state != nullptr);
+        ASSERT(state != nullptr);
         RETURN_HR_IF(E_INVALIDARG, state == nullptr);
 
         *bufferSize = state->providerData.bufferSize;
@@ -555,7 +557,7 @@ STDAPI_(void) CancelAsync(
             state->Release();
         }
 #else
-        assert(false);
+        ASSERT(false);
 #endif
     }
 
@@ -648,7 +650,7 @@ STDAPI ScheduleAsync(
         state->timer = CreateThreadpoolTimer(TimerCallback, state.Get(), nullptr);
         RETURN_LAST_ERROR_IF_NULL(state->timer);
 #else
-        assert(false);
+        ASSERT(false);
         RETURN_HR(E_INVALIDARG);
 #endif
     }
