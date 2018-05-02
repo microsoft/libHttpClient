@@ -224,7 +224,7 @@ static void CALLBACK WorkerCallback(_In_ void* context);
 #ifdef _WIN32
 static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER);
 #endif
-static void SignalCompletion(_In_ AsyncBlock* asyncBlock);
+static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state);
 static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock);
 static HRESULT AllocState(_In_ AsyncBlock* asyncBlock);
 static void CleanupState(_In_ AsyncStateRef&& state);
@@ -248,6 +248,13 @@ static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock)
             DUPLICATE_SAME_ACCESS));
 #else
         assert(false);
+#endif
+    }
+    else
+    {
+#if _WIN32
+        state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
 #endif
     }
 
@@ -285,10 +292,17 @@ static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
     // If the async block is already associated with another
     // call, fail.
 
-    // There is no way to tell if the AsyncBlockInternal has already been
+    // There is no great way to tell if the AsyncBlockInternal has already been
     // initialized, because uninitialized memory can look like anything.
-    // On the other hand this code is only called from BeginAsync so double init
-    // is a client bug.
+    // Here we rely on the client zeoring out the entirety of the AsyncBlock
+    // object so we can check that AsyncBlock::Internal is all 0
+    for (auto i = 0u; i < sizeof(asyncBlock->internal); ++i)
+    {
+        if (asyncBlock->internal[i] != 0)
+        {
+            return E_INVALIDARG;
+        }
+    }
 
     HRESULT hr = AllocStateNoCompletion(asyncBlock);
 
@@ -341,16 +355,8 @@ static void CleanupState(_In_ AsyncStateRef&& state)
     }
 }
 
-static void SignalCompletion(
-    _In_ AsyncBlock* asyncBlock)
+static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state)
 {
-
-    AsyncStateRef state;
-    {
-        AsyncBlockInternalGuard internal{ asyncBlock };
-        state = internal.GetState();
-    }
-
     if (state->waitEvent)
     {
 #if _WIN32
@@ -412,7 +418,7 @@ static void CALLBACK WorkerCallback(
         }
         if (completedNow)
         {
-            SignalCompletion(asyncBlock);
+            SignalCompletion(asyncBlock, state);
         }
     }
 }
@@ -554,7 +560,7 @@ STDAPI_(void) CancelAsync(
     }
 
     (void)state->provider(AsyncOp_Cancel, &state->providerData);
-    SignalCompletion(asyncBlock);
+    SignalCompletion(asyncBlock, state);
     // At this point asyncBlock is unsafe to touch
 
     CleanupState(std::move(state));
@@ -703,10 +709,7 @@ STDAPI_(void) CompleteAsync(
         AsyncBlockInternalGuard internal{ asyncBlock };
         HRESULT priorStatus = internal.GetStatus();
 
-        if (!internal.TrySetTerminalStatus(result))
-        {
-            completedNow = true;
-        }
+        completedNow = internal.TrySetTerminalStatus(result);
 
         // If the required buffer is zero, there is no payload and we need to
         // clean up now. Also clean up if the status is abort, as that indicates
@@ -727,7 +730,7 @@ STDAPI_(void) CompleteAsync(
     if (completedNow)
     {
         state->providerData.bufferSize = requiredBufferSize;
-        SignalCompletion(asyncBlock);
+        SignalCompletion(asyncBlock, state);
     }
     // At this point asyncBlock may be unsafe to touch
 
@@ -739,7 +742,7 @@ STDAPI_(void) CompleteAsync(
 
 /// <summary>
 /// Returns the result data for the asynchronous operation.  After this call
-/// the async block is completed and no longer associated with the 
+/// the async block is completed and no longer associated with the
 /// operation.
 /// </summary>
 STDAPI GetAsyncResult(
