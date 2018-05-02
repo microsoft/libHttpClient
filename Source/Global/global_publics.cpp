@@ -72,8 +72,9 @@ try
 }
 CATCH_RETURN()
 
-STDAPI_(function_context) HCAddCallRoutedHandler(
-    _In_ HCCallRoutedHandler handler
+STDAPI_(int32_t) HCAddCallRoutedHandler(
+    _In_ HCCallRoutedHandler handler,
+    _In_ void* context
     ) HC_NOEXCEPT
 {
     if (handler == nullptr)
@@ -87,12 +88,12 @@ STDAPI_(function_context) HCAddCallRoutedHandler(
 
     std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
     auto functionContext = httpSingleton->m_callRoutedHandlersContext++;
-    httpSingleton->m_callRoutedHandlers[functionContext] = handler;
+    httpSingleton->m_callRoutedHandlers[functionContext] = std::make_pair(handler, context);
     return functionContext;
 }
 
 STDAPI_(void) HCRemoveCallRoutedHandler(
-    _In_ function_context handlerContext
+    _In_ int32_t handlerContext
     ) HC_NOEXCEPT
 {
     auto httpSingleton = get_http_singleton(true);

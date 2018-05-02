@@ -380,7 +380,7 @@ void retry_http_call_until_done(
                 std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
                 for (const auto& pair : httpSingleton->m_callRoutedHandlers)
                 {
-                    pair.second(retryContext->call);
+                    pair.second.first(retryContext->call, pair.second.second);
                 }
             }
 
