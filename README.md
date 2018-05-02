@@ -28,7 +28,6 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 - Binaries eventually on Nuget.org as **Nuget packages**, and maybe VcPkg
 - Unit tests via TAEF
 - End to end samples for UWP C++, XDK ERA, Win32, iOS, and Android
-- No support for support for cancellation
 - TBD: Does **not require C++/CX** to build on UWP or ERA 
 
 ## HTTP API Usage
@@ -38,12 +37,12 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Optionally call HCMemSetFunctions() to control memory allocations
 1. Call HCGlobalInitialize()
 1. Optionally call HCSettingsSet*()
-1. Call HCHttpCallCreate() to create a new HC_CALL_HANDLE
-1. Call HCHttpCallRequestSet*() to prepare the HC_CALL_HANDLE
-1. Call HCHttpCallPerform() to perform an HTTP call using the HC_CALL_HANDLE.  
+1. Call HCHttpCallCreate() to create a new hc_call_handle_t
+1. Call HCHttpCallRequestSet*() to prepare the hc_call_handle_t
+1. Call HCHttpCallPerform() to perform an HTTP call using the hc_call_handle_t.  
 1. The perform call is asynchronous, so the work will be done on a background thread which calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Work ).  The results will return to the callback on the thread that calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Completion ).
-1. Call HCHttpCallResponseGet*() to get the HTTP response of the HC_CALL_HANDLE
-1. Call HCHttpCallCleanup() to cleanup the HC_CALL_HANDLE
+1. Call HCHttpCallResponseGet*() to get the HTTP response of the hc_call_handle_t
+1. Call HCHttpCallCleanup() to cleanup the hc_call_handle_t
 1. Repeat 4-8 for each new HTTP call
 1. Call HCGlobalCleanup() at shutdown before your memory manager set in step 1 is shutdown
 
