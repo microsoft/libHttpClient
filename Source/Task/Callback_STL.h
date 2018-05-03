@@ -59,13 +59,6 @@ public:
         _In_ CallbackType callback,
         _Out_ uint32_t* cookie)
     {
-        CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;
-
-        if (entry == nullptr)
-        {
-            return E_OUTOFMEMORY;
-        }
-
         if (queue == nullptr)
         {
 #ifdef _WIN32
@@ -77,17 +70,22 @@ public:
 
             if (FAILED(hr))
             {
-                Destroy(entry);
                 return hr;
             }
 #else
-            Destroy(entry);
             RETURN_HR(E_INVALIDARG);
 #endif
         }
         else
         {
             ReferenceAsyncQueue(queue);
+        }
+        
+        CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;
+        
+        if (entry == nullptr)
+        {
+            return E_OUTOFMEMORY;
         }
 
         entry->Queue = queue;
