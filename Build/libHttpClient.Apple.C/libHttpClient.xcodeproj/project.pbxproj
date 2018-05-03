@@ -51,7 +51,7 @@
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = Include/httpClient;
-			dstSubfolderSpec = 7;
+			dstSubfolderSpec = 16;
 			files = (
 				5849105B209B87610006D9E4 /* async.h in CopyFiles */,
 				5849105C209B87630006D9E4 /* asyncProvider.h in CopyFiles */,
@@ -69,7 +69,7 @@
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = Include/json_cpp;
-			dstSubfolderSpec = 7;
+			dstSubfolderSpec = 16;
 			files = (
 				58491065209B87870006D9E4 /* json.h in CopyFiles */,
 			);
@@ -79,7 +79,7 @@
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = Include/json_cpp/details;
-			dstSubfolderSpec = 7;
+			dstSubfolderSpec = 16;
 			files = (
 				58491067209B87960006D9E4 /* asyncrt_utils.h in CopyFiles */,
 				58491068209B87980006D9E4 /* asyncrt_utils.hpp in CopyFiles */,
