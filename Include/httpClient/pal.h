@@ -55,7 +55,15 @@ typedef int32_t HRESULT;
 #endif
 
 #ifndef EXTERN_C
-#define EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+#endif
+
+#ifndef HANDLE
+typedef void* HANDLE;
 #endif
 
 #define SEVERITY_SUCCESS    0

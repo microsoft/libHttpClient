@@ -98,7 +98,7 @@ STDAPI
 HCHttpCallResponseGetStatusCode(
     _In_ hc_call_handle_t call,
     _Out_ uint32_t* statusCode
-    )
+    ) HC_NOEXCEPT
 try 
 {
     if (call == nullptr || statusCode == nullptr)
