@@ -12,13 +12,13 @@ typedef struct HC_CALL
         platformNetworkErrorCode(0),
         id(0),
         traceCall(true),
+        refCount(1),
         retryAllowed(false),
+        retryAfterCacheId(0),
         timeoutInSeconds(0),
         timeoutWindowInSeconds(0),
         retryDelayInSeconds(0),
-        performCalled(false),
-        refCount(1),
-        retryAfterCacheId(0)
+        performCalled(false)
     {
         delayBeforeRetry = std::chrono::milliseconds(0);
     }

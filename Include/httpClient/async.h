@@ -40,6 +40,12 @@ typedef void CALLBACK AsyncCompletionRoutine(_In_ struct AsyncBlock* asyncBlock)
 /// <seealso cref='RunAsync' />
 typedef HRESULT CALLBACK AsyncWork(_In_ struct AsyncBlock* asyncBlock);
 
+#if HC_DATAMODEL == HC_DATAMODEL_ILP32
+#define ASYNCBLOCK_INTERNAL_SIZE 3 * sizeof(void*)
+#else
+#define ASYNCBLOCK_INTERNAL_SIZE 2 * sizeof(void*)
+#endif
+
 typedef struct AsyncBlock
 {
     /// <summary>
@@ -65,7 +71,7 @@ typedef struct AsyncBlock
     /// <summary>
     /// Internal use only
     /// </summary>
-    unsigned char internal[3 * sizeof(void*)];
+    unsigned char internal[ASYNCBLOCK_INTERNAL_SIZE];
 } AsyncBlock;
 
 /// <summary>

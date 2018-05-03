@@ -221,7 +221,7 @@ static void CALLBACK WorkerCallback(_In_ void* context);
 static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER);
 #endif
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state);
-static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal& internal);
+static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal);
 static HRESULT AllocState(_In_ AsyncBlock* asyncBlock);
 static void CleanupState(_In_ AsyncStateRef&& state);
 
