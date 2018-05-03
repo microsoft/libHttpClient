@@ -66,6 +66,24 @@
 		58A7E9B8209ADEB100CC6774 /* global.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = global.cpp; sourceTree = "<group>"; };
 		58A7E9B9209ADEB100CC6774 /* mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mem.cpp; sourceTree = "<group>"; };
 		58A7E9F2209AE03800CC6774 /* ios_websocket.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ios_websocket.cpp; sourceTree = "<group>"; };
+		58A7EA18209AE8BB00CC6774 /* json.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = json.hpp; sourceTree = "<group>"; };
+		58A7EA19209AE8BB00CC6774 /* SafeInt3.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SafeInt3.hpp; sourceTree = "<group>"; };
+		58A7EA1A209AE8BB00CC6774 /* cpprest_compat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cpprest_compat.h; sourceTree = "<group>"; };
+		58A7EA1B209AE8BB00CC6774 /* json_parsing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = json_parsing.hpp; sourceTree = "<group>"; };
+		58A7EA1C209AE8BB00CC6774 /* basic_types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = basic_types.h; sourceTree = "<group>"; };
+		58A7EA1D209AE8BB00CC6774 /* asyncrt_utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = asyncrt_utils.h; sourceTree = "<group>"; };
+		58A7EA1E209AE8BB00CC6774 /* json_serialization.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = json_serialization.hpp; sourceTree = "<group>"; };
+		58A7EA1F209AE8BB00CC6774 /* asyncrt_utils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = asyncrt_utils.hpp; sourceTree = "<group>"; };
+		58A7EA21209AE8BB00CC6774 /* json.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		58A7EA23209AE8BB00CC6774 /* httpProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = httpProvider.h; sourceTree = "<group>"; };
+		58A7EA24209AE8BB00CC6774 /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		58A7EA25209AE8BB00CC6774 /* mock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mock.h; sourceTree = "<group>"; };
+		58A7EA26209AE8BB00CC6774 /* asyncQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = asyncQueue.h; sourceTree = "<group>"; };
+		58A7EA27209AE8BB00CC6774 /* httpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
+		58A7EA28209AE8BB00CC6774 /* async.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = async.h; sourceTree = "<group>"; };
+		58A7EA29209AE8BB00CC6774 /* asyncProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = asyncProvider.h; sourceTree = "<group>"; };
+		58A7EA2A209AE8BB00CC6774 /* trace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = trace.h; sourceTree = "<group>"; };
+		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +100,7 @@
 		58722D05209AD61900B071F7 = {
 			isa = PBXGroup;
 			children = (
+				58A7EA15209AE8BB00CC6774 /* Include */,
 				58A7E971209ADEB100CC6774 /* Source */,
 				58722D0F209AD61900B071F7 /* Products */,
 			);
@@ -209,6 +228,56 @@
 				58A7E9F2209AE03800CC6774 /* ios_websocket.cpp */,
 			);
 			path = iOS;
+			sourceTree = "<group>";
+		};
+		58A7EA15209AE8BB00CC6774 /* Include */ = {
+			isa = PBXGroup;
+			children = (
+				58A7EA22209AE8BB00CC6774 /* httpClient */,
+				58A7EA16209AE8BB00CC6774 /* json_cpp */,
+			);
+			name = Include;
+			path = ../../Include;
+			sourceTree = "<group>";
+		};
+		58A7EA16209AE8BB00CC6774 /* json_cpp */ = {
+			isa = PBXGroup;
+			children = (
+				58A7EA17209AE8BB00CC6774 /* details */,
+				58A7EA21209AE8BB00CC6774 /* json.h */,
+			);
+			path = json_cpp;
+			sourceTree = "<group>";
+		};
+		58A7EA17209AE8BB00CC6774 /* details */ = {
+			isa = PBXGroup;
+			children = (
+				58A7EA1D209AE8BB00CC6774 /* asyncrt_utils.h */,
+				58A7EA1F209AE8BB00CC6774 /* asyncrt_utils.hpp */,
+				58A7EA1C209AE8BB00CC6774 /* basic_types.h */,
+				58A7EA1A209AE8BB00CC6774 /* cpprest_compat.h */,
+				58A7EA1B209AE8BB00CC6774 /* json_parsing.hpp */,
+				58A7EA1E209AE8BB00CC6774 /* json_serialization.hpp */,
+				58A7EA18209AE8BB00CC6774 /* json.hpp */,
+				58A7EA19209AE8BB00CC6774 /* SafeInt3.hpp */,
+			);
+			path = details;
+			sourceTree = "<group>";
+		};
+		58A7EA22209AE8BB00CC6774 /* httpClient */ = {
+			isa = PBXGroup;
+			children = (
+				58A7EA28209AE8BB00CC6774 /* async.h */,
+				58A7EA29209AE8BB00CC6774 /* asyncProvider.h */,
+				58A7EA26209AE8BB00CC6774 /* asyncQueue.h */,
+				58A7EA24209AE8BB00CC6774 /* config.h */,
+				58A7EA27209AE8BB00CC6774 /* httpClient.h */,
+				58A7EA23209AE8BB00CC6774 /* httpProvider.h */,
+				58A7EA25209AE8BB00CC6774 /* mock.h */,
+				58A7EA2B209AE8BB00CC6774 /* pal.h */,
+				58A7EA2A209AE8BB00CC6774 /* trace.h */,
+			);
+			path = httpClient;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
