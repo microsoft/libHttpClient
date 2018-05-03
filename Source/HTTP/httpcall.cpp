@@ -23,8 +23,6 @@ HCHttpCallCreate(
     ) HC_NOEXCEPT
 try 
 {
-    HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during buffer size query with error: %u", 0);
-
     if (callHandle == nullptr)
     {
         return E_INVALIDARG;
