@@ -182,6 +182,14 @@ uint64_t ThisThreadId()
     // in the debugger
 #if HC_PLATFORM_IS_MICROSOFT
     return GetCurrentThreadId();
+#elif HC_PLATFORM == HC_PLATFORM_IOS
+    uint64_t threadId = 0;
+    if (pthread_threadid_np(0, &threadId) != 0)
+    { // MAVA_TODO: test
+        threadId = pthread_mach_thread_np(pthread_self());
+    }
+    
+    return threadId;
 #else
     return pthread_self();
 #endif

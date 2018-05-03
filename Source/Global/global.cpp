@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "../http/httpcall.h"
+#include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
 #include "../WebSocket/hcwebsocket.h"

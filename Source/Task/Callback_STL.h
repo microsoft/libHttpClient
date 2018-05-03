@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AsyncQueue.h"
+#include "asyncQueue.h"
 
 #include <mutex>
 
@@ -81,6 +81,7 @@ public:
                 return hr;
             }
 #else
+            Destroy(entry);
             RETURN_HR(E_INVALIDARG);
 #endif
         }

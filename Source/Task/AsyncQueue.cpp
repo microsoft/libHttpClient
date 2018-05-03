@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.#include "stdafx.h"
 #include "pch.h"
-#include "Async.h"
-#include "AsyncQueue.h"
+#include "async.h"
+#include "asyncQueue.h"
 #include "CriticalThread.h"
 
 #include <mutex>

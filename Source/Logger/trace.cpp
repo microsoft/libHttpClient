@@ -45,6 +45,8 @@ void OutputDebugStringT(char const* string)
 {
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWA || HC_PLATFORM == HC_PLATFORM_XDK
     OutputDebugStringA(string);
+#elif HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM == HC_PLATFORM_IOS
+    printf("%s", string);
 #endif
 }
 

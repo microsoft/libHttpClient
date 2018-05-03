@@ -79,9 +79,13 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #include <httpClient/httpClient.h>
 #include "../Global/mem.h"
+
+#if HC_PLATFORM_IS_MICROSOFT
 #include "Win/utils_win.h"
+#endif
+
 #include "utils.h"
-#include "../global/global.h"
+#include "../Global/global.h"
 #include "trace_internal.h"
 #include "ResultMacros.h"
 #include "EntryList.h"
