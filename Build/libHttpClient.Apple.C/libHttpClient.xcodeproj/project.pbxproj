@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		58A7E9BB209ADEB100CC6774 /* hcwebsocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7E975209ADEB100CC6774 /* hcwebsocket.h */; };
-		58A7E9BD209ADEB100CC6774 /* android_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E979209ADEB100CC6774 /* android_websocket.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
 		58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
@@ -48,7 +47,6 @@
 /* Begin PBXFileReference section */
 		58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient_iOS.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
-		58A7E979209ADEB100CC6774 /* android_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = android_websocket.cpp; sourceTree = "<group>"; };
 		58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hcwebsocket.cpp; sourceTree = "<group>"; };
 		58A7E97E209ADEB100CC6774 /* log_publics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log_publics.cpp; sourceTree = "<group>"; };
 		58A7E97F209ADEB100CC6774 /* trace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = trace.cpp; sourceTree = "<group>"; };
@@ -83,6 +81,7 @@
 		58A7E9B7209ADEB100CC6774 /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; };
 		58A7E9B8209ADEB100CC6774 /* global.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = global.cpp; sourceTree = "<group>"; };
 		58A7E9B9209ADEB100CC6774 /* mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mem.cpp; sourceTree = "<group>"; };
+		58A7E9F2209AE03800CC6774 /* ios_websocket.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ios_websocket.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -130,19 +129,11 @@
 		58A7E972209ADEB100CC6774 /* WebSocket */ = {
 			isa = PBXGroup;
 			children = (
-				58A7E978209ADEB100CC6774 /* Android */,
+				58A7E9F1209AE03800CC6774 /* iOS */,
 				58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */,
 				58A7E975209ADEB100CC6774 /* hcwebsocket.h */,
 			);
 			path = WebSocket;
-			sourceTree = "<group>";
-		};
-		58A7E978209ADEB100CC6774 /* Android */ = {
-			isa = PBXGroup;
-			children = (
-				58A7E979209ADEB100CC6774 /* android_websocket.cpp */,
-			);
-			path = Android;
 			sourceTree = "<group>";
 		};
 		58A7E97D209ADEB100CC6774 /* Logger */ = {
@@ -226,6 +217,14 @@
 				58A7E9B7209ADEB100CC6774 /* mem.h */,
 			);
 			path = Global;
+			sourceTree = "<group>";
+		};
+		58A7E9F1209AE03800CC6774 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				58A7E9F2209AE03800CC6774 /* ios_websocket.cpp */,
+			);
+			path = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -327,7 +326,6 @@
 				58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */,
 				58A7E9E5209ADEB100CC6774 /* httpcall.cpp in Sources */,
 				58A7E9E7209ADEB100CC6774 /* AsyncQueue.cpp in Sources */,
-				58A7E9BD209ADEB100CC6774 /* android_websocket.cpp in Sources */,
 				58A7E9D0209ADEB100CC6774 /* pch.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
