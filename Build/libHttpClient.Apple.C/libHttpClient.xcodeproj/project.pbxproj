@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient_iOS.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,7 +31,7 @@
 		58722D0F209AD61900B071F7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				58722D0E209AD61900B071F7 /* libHttpClient.a */,
+				58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -49,9 +49,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		58722D0D209AD61900B071F7 /* libHttpClient */ = {
+		58722D0D209AD61900B071F7 /* libHttpClient_iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient" */;
+			buildConfigurationList = 58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient_iOS" */;
 			buildPhases = (
 				58722D0A209AD61900B071F7 /* Sources */,
 				58722D0B209AD61900B071F7 /* Frameworks */,
@@ -61,9 +61,9 @@
 			);
 			dependencies = (
 			);
-			name = libHttpClient;
+			name = libHttpClient_iOS;
 			productName = libHttpClient;
-			productReference = 58722D0E209AD61900B071F7 /* libHttpClient.a */;
+			productReference = 58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -91,7 +91,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				58722D0D209AD61900B071F7 /* libHttpClient */,
+				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -248,7 +248,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient" */ = {
+		58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient_iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				58722D18209AD61900B071F7 /* Debug */,
