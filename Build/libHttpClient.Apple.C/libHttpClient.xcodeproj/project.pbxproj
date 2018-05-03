@@ -7,6 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5849105B209B87610006D9E4 /* async.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA28209AE8BB00CC6774 /* async.h */; };
+		5849105C209B87630006D9E4 /* asyncProvider.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA29209AE8BB00CC6774 /* asyncProvider.h */; };
+		5849105D209B87650006D9E4 /* asyncQueue.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA26209AE8BB00CC6774 /* asyncQueue.h */; };
+		5849105E209B87680006D9E4 /* config.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA24209AE8BB00CC6774 /* config.h */; };
+		5849105F209B876B0006D9E4 /* httpClient.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA27209AE8BB00CC6774 /* httpClient.h */; };
+		58491060209B876D0006D9E4 /* httpProvider.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA23209AE8BB00CC6774 /* httpProvider.h */; };
+		58491061209B87700006D9E4 /* mock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA25209AE8BB00CC6774 /* mock.h */; };
+		58491062209B87720006D9E4 /* pal.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA2B209AE8BB00CC6774 /* pal.h */; };
+		58491063209B87750006D9E4 /* trace.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA2A209AE8BB00CC6774 /* trace.h */; };
+		58491065209B87870006D9E4 /* json.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA21209AE8BB00CC6774 /* json.h */; };
+		58491067209B87960006D9E4 /* asyncrt_utils.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA1D209AE8BB00CC6774 /* asyncrt_utils.h */; };
+		58491068209B87980006D9E4 /* asyncrt_utils.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA1F209AE8BB00CC6774 /* asyncrt_utils.hpp */; };
+		58491069209B879B0006D9E4 /* basic_types.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA1C209AE8BB00CC6774 /* basic_types.h */; };
+		5849106A209B879D0006D9E4 /* cpprest_compat.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA1A209AE8BB00CC6774 /* cpprest_compat.h */; };
+		5849106B209B87A10006D9E4 /* json_parsing.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA1B209AE8BB00CC6774 /* json_parsing.hpp */; };
+		5849106C209B87A40006D9E4 /* json_serialization.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA1E209AE8BB00CC6774 /* json_serialization.hpp */; };
+		5849106D209B87A70006D9E4 /* json.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA18209AE8BB00CC6774 /* json.hpp */; };
+		5849106E209B87AA0006D9E4 /* SafeInt3.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 58A7EA19209AE8BB00CC6774 /* SafeInt3.hpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
 		58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
@@ -27,6 +45,54 @@
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
 		58A7E9F3209AE09B00CC6774 /* ios_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9F2209AE03800CC6774 /* ios_websocket.cpp */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5849105A209B87550006D9E4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Include/httpClient;
+			dstSubfolderSpec = 7;
+			files = (
+				5849105B209B87610006D9E4 /* async.h in CopyFiles */,
+				5849105C209B87630006D9E4 /* asyncProvider.h in CopyFiles */,
+				5849105D209B87650006D9E4 /* asyncQueue.h in CopyFiles */,
+				5849105E209B87680006D9E4 /* config.h in CopyFiles */,
+				5849105F209B876B0006D9E4 /* httpClient.h in CopyFiles */,
+				58491060209B876D0006D9E4 /* httpProvider.h in CopyFiles */,
+				58491061209B87700006D9E4 /* mock.h in CopyFiles */,
+				58491062209B87720006D9E4 /* pal.h in CopyFiles */,
+				58491063209B87750006D9E4 /* trace.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		58491064209B877A0006D9E4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Include/json_cpp;
+			dstSubfolderSpec = 7;
+			files = (
+				58491065209B87870006D9E4 /* json.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		58491066209B878A0006D9E4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Include/json_cpp/details;
+			dstSubfolderSpec = 7;
+			files = (
+				58491067209B87960006D9E4 /* asyncrt_utils.h in CopyFiles */,
+				58491068209B87980006D9E4 /* asyncrt_utils.hpp in CopyFiles */,
+				58491069209B879B0006D9E4 /* basic_types.h in CopyFiles */,
+				5849106A209B879D0006D9E4 /* cpprest_compat.h in CopyFiles */,
+				5849106B209B87A10006D9E4 /* json_parsing.hpp in CopyFiles */,
+				5849106C209B87A40006D9E4 /* json_serialization.hpp in CopyFiles */,
+				5849106D209B87A70006D9E4 /* json.hpp in CopyFiles */,
+				5849106E209B87AA0006D9E4 /* SafeInt3.hpp in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient_iOS.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -300,6 +366,9 @@
 				58722D0A209AD61900B071F7 /* Sources */,
 				58722D0B209AD61900B071F7 /* Frameworks */,
 				58722D0C209AD61900B071F7 /* Headers */,
+				5849105A209B87550006D9E4 /* CopyFiles */,
+				58491064209B877A0006D9E4 /* CopyFiles */,
+				58491066209B878A0006D9E4 /* CopyFiles */,
 			);
 			buildRules = (
 			);
