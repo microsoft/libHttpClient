@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "58722D0D209AD61900B071F7"
-               BuildableName = "libHttpClient_iOS.a"
-               BlueprintName = "libHttpClient_iOS"
+               BuildableName = "libHttpClient.a"
+               BlueprintName = "libHttpClient"
                ReferencedContainer = "container:libHttpClient.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -46,8 +46,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "58722D0D209AD61900B071F7"
-            BuildableName = "libHttpClient_iOS.a"
-            BlueprintName = "libHttpClient_iOS"
+            BuildableName = "libHttpClient.a"
+            BlueprintName = "libHttpClient"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -64,8 +64,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "58722D0D209AD61900B071F7"
-            BuildableName = "libHttpClient_iOS.a"
-            BlueprintName = "libHttpClient_iOS"
+            BuildableName = "libHttpClient.a"
+            BlueprintName = "libHttpClient"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

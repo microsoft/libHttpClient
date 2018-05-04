@@ -95,7 +95,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient_iOS.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
 		58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hcwebsocket.cpp; sourceTree = "<group>"; };
 		58A7E97E209ADEB100CC6774 /* log_publics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log_publics.cpp; sourceTree = "<group>"; };
@@ -175,7 +175,7 @@
 		58722D0F209AD61900B071F7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */,
+				58722D0E209AD61900B071F7 /* libHttpClient.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -359,9 +359,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		58722D0D209AD61900B071F7 /* libHttpClient_iOS */ = {
+		58722D0D209AD61900B071F7 /* libHttpClient */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient_iOS" */;
+			buildConfigurationList = 58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient" */;
 			buildPhases = (
 				58722D0A209AD61900B071F7 /* Sources */,
 				58722D0B209AD61900B071F7 /* Frameworks */,
@@ -374,9 +374,9 @@
 			);
 			dependencies = (
 			);
-			name = libHttpClient_iOS;
+			name = libHttpClient;
 			productName = libHttpClient;
-			productReference = 58722D0E209AD61900B071F7 /* libHttpClient_iOS.a */;
+			productReference = 58722D0E209AD61900B071F7 /* libHttpClient.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -404,7 +404,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
+				58722D0D209AD61900B071F7 /* libHttpClient */,
 			);
 		};
 /* End PBXProject section */
@@ -590,7 +590,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient_iOS" */ = {
+		58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				58722D18209AD61900B071F7 /* Debug */,
