@@ -134,6 +134,7 @@ template<class C, class TRAITS = std::char_traits<C>>
 using http_internal_basic_string = std::basic_string<C, TRAITS, http_stl_allocator<C>>;
 
 using http_internal_string = http_internal_basic_string<char>;
+using http_internal_wstring = http_internal_basic_string<wchar_t>;
 
 template<class C, class TRAITS = std::char_traits<C>>
 using http_internal_basic_stringstream = std::basic_stringstream<C, TRAITS, http_stl_allocator<C>>;

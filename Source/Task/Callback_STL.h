@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AsyncQueue.h"
+#include "asyncQueue.h"
 
 #include <mutex>
 
@@ -59,13 +59,6 @@ public:
         _In_ CallbackType callback,
         _Out_ uint32_t* cookie)
     {
-        CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;
-
-        if (entry == nullptr)
-        {
-            return E_OUTOFMEMORY;
-        }
-
         if (queue == nullptr)
         {
 #ifdef _WIN32
@@ -77,7 +70,6 @@ public:
 
             if (FAILED(hr))
             {
-                Destroy(entry);
                 return hr;
             }
 #else
@@ -87,6 +79,13 @@ public:
         else
         {
             ReferenceAsyncQueue(queue);
+        }
+        
+        CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;
+        
+        if (entry == nullptr)
+        {
+            return E_OUTOFMEMORY;
         }
 
         entry->Queue = queue;
