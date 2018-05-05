@@ -6,6 +6,7 @@
 #pragma warning(disable: 4702) // unreachable code
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include <httpClient/config.h>
