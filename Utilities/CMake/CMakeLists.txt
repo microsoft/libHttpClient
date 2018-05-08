@@ -17,6 +17,8 @@ else()
         endif()
     elseif( BUILDWIN32 )
         set (PROJECT_NAME libHttpClient.Win32.C)
+    elseif( BUILDANDROID )
+        set (PROJECT_NAME libHttpClient.Android.C)
     else()
         if( WINRT )
             set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -117,6 +119,10 @@ set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/Win32/win32_websocket.cpp
     )
 
+set(Android_WebSocket_Source_Files
+    ../../../Source/WebSocket/Android/android_websocket.cpp
+    )
+
 set(Mock_Source_Files
     ../../../Source/Mock/mock.cpp
     ../../../Source/Mock/mock.h
@@ -129,6 +135,7 @@ set(Common_Source_Files
     ../../../Source/Common/pch.cpp
     ../../../Source/Common/pch.h
     ../../../Source/Common/pch_common.h
+    ../../../Source/Common/pal_internal.h
     ../../../Source/Common/ResultMacros.h
     ../../../Source/Common/uri.cpp
     ../../../Source/Common/uri.h
@@ -156,14 +163,14 @@ set(Unittest_WebSocket_Source_Files
     ../../../Source/WebSocket/Unittest/websocket_unittest.cpp
     )
 
-set(WinRTHttpClient_HTTP_Source_Files
-    ../../../Source/HTTP/WinRTHttpClient/http_winrthttpclient.cpp
-    )
-
 set(WinHttp_HTTP_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_http_task.cpp
     ../../../Source/HTTP/WinHttp/winhttp_http_task.h
     )
+
+set(Android_HTTP_Source_Files
+   ../../../Source/HTTP/Android/http_android.cpp
+   )
 
 set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_buffer.cpp
@@ -251,13 +258,13 @@ endif()
 
 if( UWP )
     message(STATUS "UWP source group")
-    source_group("C++ Source\\HTTP\\WinRT" FILES ${WinRTHttpClient_HTTP_Source_Files})
+    source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
 
     list(APPEND
         SOURCE_FILES
-        ${WinRTHttpClient_HTTP_Source_Files}
+        ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${WinRT_WebSocket_Source_Files}
         )
@@ -286,6 +293,17 @@ if( BUILDWIN32 )
         ${WinHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${Win32_WebSocket_Source_Files}
+        )
+endif()
+
+if( BUILDANDROID )
+    source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
+    source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
+
+    list(APPEND
+        SOURCE_FILES
+        ${Android_HTTP_Source_Files}
+        ${Android_WebSocket_Source_Files}
         )
 endif()
 

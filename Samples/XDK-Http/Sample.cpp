@@ -171,7 +171,7 @@ Sample::Sample() :
     g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     HCGlobalInitialize();
-    HCSettingsSetLogLevel(HCLogLevel_Verbose);
+    HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
@@ -430,7 +430,7 @@ void Sample::MakeHttpCall()
     {
         std::string headerName = header[0];
         std::string headerValue = header[1];
-        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
+        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str(), true);
     }
 
     AsyncBlock* asyncBlock = new AsyncBlock;

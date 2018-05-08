@@ -111,9 +111,9 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
             }
             break;
 
-            default:
-                stop = true;
-                break;
+        default:
+            stop = true;
+            break;
         }
     }
 
@@ -182,7 +182,7 @@ void ShutdownActiveThreads()
 int main()
 {
     std::string method = "GET";
-    std::string url = "http://www.bing.com/search?q=Microsoft#test1";
+    std::string url = "https://www.bing.com/?rb=0";
     std::string requestBody = "";// "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
@@ -214,7 +214,7 @@ int main()
     {
         std::string headerName = header[0];
         std::string headerValue = header[1];
-        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
+        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str(), true);
     }
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
@@ -238,6 +238,18 @@ int main()
         HCHttpCallResponseGetResponseString(call, &str);
         if (str != nullptr) responseString = str;
         std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
+
+        // Uncomment to write binary file to disk
+        //size_t bufferSize = 0;
+        //HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
+        //uint8_t* buffer = new uint8_t[bufferSize];
+        //size_t bufferUsed = 0;
+        //HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
+        //HANDLE hFile = CreateFile(L"c:\\test\\test.zip", GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+        //DWORD bufferWritten = 0;
+        //WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
+        //CloseHandle(hFile);
+        //delete[] buffer;
 
         HCHttpCallCloseHandle(call);
 

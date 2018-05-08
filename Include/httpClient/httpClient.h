@@ -116,6 +116,37 @@ STDAPI_(void) HCGlobalCleanup() HC_NOEXCEPT;
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT;
 
+/// <summary>
+/// A callback that will be synchronously invoked each time an HTTP call fails but will be automatically be
+/// retried. Can be used to track intermittent failures similar to fiddler.
+/// </summary>
+/// <param name="call">Handle to the HTTP call that failed.</param>
+/// <param name="context">Client context pass when the handler was added.</param>
+typedef void
+(STDAPIVCALLTYPE* HCCallRoutedHandler)(
+    _In_ hc_call_handle_t call,
+    _In_ void* context
+    );
+
+/// <summary>
+/// Adds a callback to be invoked on intermediate http errors (errors that are non-fatal and will
+/// automatically be retried).
+/// </summary>
+/// <param name="handler">The handler to be called.</param>
+/// <param name="context">Client context to pass to callback function.</param>
+/// <returns>An unique id that can be used to remove the handler.</returns>
+STDAPI_(int32_t) HCAddCallRoutedHandler(
+    _In_ HCCallRoutedHandler handler,
+    _In_ void* context
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Removes a previously added HCCallRoutedHandler.
+/// </summary>
+/// <param name="handlerId">Id returned from the HCAddCallRoutedHandler call.</param>
+STDAPI_(void) HCRemoveCallRoutedHandler(
+    _In_ int32_t handlerId
+    ) HC_NOEXCEPT;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Http APIs
@@ -242,7 +273,7 @@ STDAPI HCHttpCallRequestSetUrl(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestSetRequestBodyBytes(
     _In_ hc_call_handle_t call,
-    _In_reads_bytes_(requestBodySize) const BYTE* requestBodyBytes,
+    _In_reads_bytes_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT;
 
@@ -390,6 +421,34 @@ STDAPI HCHttpCallResponseGetResponseString(
     ) HC_NOEXCEPT;
 
 /// <summary>
+/// Get the response body buffer size of the HTTP call
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="bufferSize">The response body buffer size of the HTTP call</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
+    _In_ hc_call_handle_t call,
+    _Out_ size_t* bufferSize
+    ) HC_NOEXCEPT;
+
+/// <summary>
+/// Get the response body buffer of the HTTP call
+/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="bufferSize">The response body buffer size being passed in</param>
+/// <param name="buffer">The buffer to be written to.</param>
+/// <param name="bufferUser">The actual number of bytes written to the buffer.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseGetResponseBodyBytes(
+    _In_ hc_call_handle_t call,
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) uint8_t* buffer,
+    _Out_opt_ size_t* bufferUsed
+    ) HC_NOEXCEPT;
+
+/// <summary>
 /// Get the HTTP status code of the HTTP call response
 /// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
 /// </summary>
@@ -398,7 +457,7 @@ STDAPI HCHttpCallResponseGetResponseString(
 STDAPI HCHttpCallResponseGetStatusCode(
     _In_ hc_call_handle_t call,
     _Out_ uint32_t* statusCode
-    );
+    ) HC_NOEXCEPT;
 
 /// <summary>
 /// Get the network error code of the HTTP call
@@ -642,6 +701,3 @@ hc_websocket_handle_t HCWebSocketDuplicateHandle(
 STDAPI HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
-
-
-

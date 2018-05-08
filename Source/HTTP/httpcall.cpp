@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "httpcall.h"
-#include "../mock/mock.h"
+#include "../Mock/mock.h"
 
 using namespace xbox::httpclient;
 
@@ -23,8 +23,6 @@ HCHttpCallCreate(
     ) HC_NOEXCEPT
 try 
 {
-    HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during buffer size query with error: %u", 0);
-
     if (callHandle == nullptr)
     {
         return E_INVALIDARG;
@@ -96,7 +94,7 @@ HRESULT perform_http_call(
     _In_ AsyncBlock* asyncBlock
     )
 {
-    HRESULT hr = BeginAsync(asyncBlock, call, perform_http_call, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
         [](AsyncOp opCode, const AsyncProviderData* data)
     {
         switch (opCode)
@@ -153,6 +151,7 @@ HRESULT perform_http_call(
 void clear_http_call_response(_In_ hc_call_handle_t call)
 {
     call->responseString.clear();
+    call->responseBodyBytes.clear();
     call->responseHeaders.clear();
     call->statusCode = 0;
     call->networkErrorCode = S_OK;
@@ -232,12 +231,12 @@ bool http_call_should_retry(
         lerpScaler = 0; // make unit tests deterministic
 #endif
         double secondsToWaitUncapped = secondsToWaitMin + secondsToWaitDelta * lerpScaler; // lerp between min & max wait
-        double secondsToWait = MIN(secondsToWaitUncapped, MAX_DELAY_TIME_IN_SEC); // cap max wait to 1 min
+        double secondsToWait = std::min(secondsToWaitUncapped, MAX_DELAY_TIME_IN_SEC); // cap max wait to 1 min
         std::chrono::milliseconds waitTime = std::chrono::milliseconds(static_cast<int64_t>(secondsToWait * 1000.0));
         if (retryAfter.count() > 0)
         {
             // Use either the waitTime or Retry-After header, whichever is bigger
-            call->delayBeforeRetry = std::chrono::milliseconds(__max(waitTime.count(), retryAfter.count()));
+            call->delayBeforeRetry = std::chrono::milliseconds(std::max(waitTime.count(), retryAfter.count()));
         }
         else
         {
@@ -257,6 +256,20 @@ bool http_call_should_retry(
             if (call->delayBeforeRetry.count() < MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS)
             {
                 call->delayBeforeRetry = std::chrono::milliseconds(MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS);
+            }
+        }
+
+        // Remember result if there was an error and there was a Retry-After header
+        if (call->retryAfterCacheId != 0 &&
+            retryAfter.count() > 0 &&
+            httpStatus > 400)
+        {
+            auto retryAfterTime = retryAfter + responseReceivedTime;
+            http_retry_after_api_state state(retryAfterTime, httpStatus);
+            auto httpSingleton = get_http_singleton(false);
+            if (httpSingleton)
+            {
+                httpSingleton->set_retry_state(call->retryAfterCacheId, state);
             }
         }
 
@@ -340,8 +353,7 @@ void retry_http_call_until_done(
 
     async_queue_handle_t nestedQueue;
     CreateNestedAsyncQueue(retryContext->outerQueue, &nestedQueue);
-    AsyncBlock* nestedBlock = new AsyncBlock;
-    ZeroMemory(nestedBlock, sizeof(AsyncBlock));
+    AsyncBlock* nestedBlock = new AsyncBlock{};
     nestedBlock->queue = nestedQueue;
     nestedBlock->context = retryContext;
 
@@ -359,6 +371,16 @@ void retry_http_call_until_done(
         if (http_call_should_retry(retryContext->call, responseReceivedTime))
         {
             if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", retryContext->call->id, retryContext->call->delayBeforeRetry.count()); }
+
+            auto httpSingleton = get_http_singleton(false);
+            if (httpSingleton != nullptr)
+            {
+                std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+                for (const auto& pair : httpSingleton->m_callRoutedHandlers)
+                {
+                    pair.second.first(retryContext->call, pair.second.second);
+                }
+            }
 
             clear_http_call_response(retryContext->call);
             retry_http_call_until_done(retryContext);
@@ -398,7 +420,7 @@ try
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
 
-    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, HCHttpCallPerform, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerform), __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
@@ -406,6 +428,14 @@ try
             case AsyncOp_DoWork:
                 retry_http_call_until_done(static_cast<retry_context*>(data->context));
                 return E_PENDING;
+
+            case AsyncOp_GetResult:
+                assert(false);
+                return E_NOTIMPL;
+
+            case AsyncOp_Cancel:
+                assert(false);
+                return E_NOTIMPL;
 
             case AsyncOp_Cleanup:
                 shared_ptr_cache::fetch<retry_context>(data->context, true);

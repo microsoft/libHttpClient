@@ -123,6 +123,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -138,7 +139,16 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinRTHttpClient\http_winrthttpclient.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_buffer.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_buffer.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_stream.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_stream.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_response_stream.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_response_stream.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />

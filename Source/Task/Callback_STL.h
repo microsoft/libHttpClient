@@ -1,6 +1,8 @@
 #pragma once
 
-#include "AsyncQueue.h"
+#include "asyncQueue.h"
+
+#include <mutex>
 
 template<class CallbackType, class CallbackDataType>
 struct DefaultThunk
@@ -47,24 +49,24 @@ public:
     Callback<CallbackType, CallbackDataType, CallbackThunk>(const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
     Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;    
 
+    // Disable copy ctor and assignment, as these cannot be implemented without 
+    // potentially throwing exceptions
+    Callback<CallbackType, CallbackDataType, CallbackThunk>(const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
+
+    Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
+
     //
     // Adds a callback function to this callback.
     //
     HRESULT Add(
-        _In_opt_ async_queue_handle_t queue, 
-        _In_opt_ void* context, 
-        _In_ CallbackType callback, 
+        _In_opt_ async_queue_handle_t queue,
+        _In_opt_ void* context,
+        _In_ CallbackType callback,
         _Out_ uint32_t* cookie)
     {
-        CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;
-
-        if (entry == nullptr)
-        {
-            return E_OUTOFMEMORY;
-        }
-
         if (queue == nullptr)
         {
+#ifdef _WIN32
             HRESULT hr = CreateSharedAsyncQueue(
                 GetCurrentThreadId(),
                 AsyncQueueDispatchMode_ThreadPool,
@@ -73,13 +75,22 @@ public:
 
             if (FAILED(hr))
             {
-                Destroy(entry);
                 return hr;
             }
+#else
+            RETURN_HR(E_INVALIDARG);
+#endif
         }
         else
         {
             ReferenceAsyncQueue(queue);
+        }
+        
+        CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;
+        
+        if (entry == nullptr)
+        {
+            return E_OUTOFMEMORY;
         }
 
         entry->Queue = queue;
@@ -91,7 +102,7 @@ public:
         *cookie = entry->Cookie;
 
         {
-            std::unique_lock<std::mutex> lock(m_lock);
+            std::lock_guard<std::mutex> lock{ m_lock };
             InsertTailList(&m_callbackHead, &entry->ListEntry);
         }
 
@@ -130,8 +141,8 @@ public:
     //
     void Clear()
     {
-        std::unique_lock<std::mutex> lock(m_lock);
-        
+        std::lock_guard<std::mutex> lock{ m_lock };
+
         PLIST_ENTRY entry = RemoveHeadList(&m_callbackHead);
         while (entry != &m_callbackHead)
         {
@@ -162,15 +173,15 @@ public:
     // S_OK if successful.
     //
     HRESULT Queue(
-        _In_ CallbackDataType* data, 
+        _In_ CallbackDataType* data,
         _In_ bool free)
     {
         HRESULT result = S_OK;
+        CallbackSharedData* sharedData = nullptr;
 
         {
-            std::unique_lock<std::mutex> lock(m_lock);
+            std::lock_guard<std::mutex> lock{ m_lock };
 
-            CallbackSharedData* sharedData = nullptr;
             PLIST_ENTRY entry = m_callbackHead.Flink;
 
             while (entry != &m_callbackHead)
@@ -243,7 +254,7 @@ public:
         size_t cookieCount = 0;
 
         {
-            std::unique_lock<std::mutex> lock(m_lock);
+            std::lock_guard<std::mutex> lock{ m_lock };
 
             // Walk through all the callback entries and grab their
             // cookies.
@@ -322,7 +333,7 @@ private:
     };
 
     std::mutex m_lock;
-    std::atomic<uint32_t> m_nextCookie = 1;
+    std::atomic<uint32_t> m_nextCookie{ 1 };
     LIST_ENTRY m_callbackHead;
 
     void Release(_In_ CallbackSharedData* sharedData)
@@ -363,7 +374,7 @@ private:
 
     CallbackRegistration* Find(_In_ uint32_t cookie, _In_ bool remove)
     {
-        std::unique_lock<std::mutex> lock(m_lock);
+        std::lock_guard<std::mutex> lock{ m_lock };
 
         CallbackRegistration* found = nullptr;
         PLIST_ENTRY entry = m_callbackHead.Flink;
@@ -416,4 +427,3 @@ private:
         invocation->Owner->Destroy(invocation);
     }
 };
-

@@ -98,7 +98,7 @@ std::shared_ptr<T> http_allocate_shared(Args&&... args)
 }
 
 template<typename T, typename... Args>
-std::unique_ptr<T, http_alloc_deleter<T>> http_allocate_unique()
+std::unique_ptr<T, http_alloc_deleter<T>> http_allocate_unique(Args&&... args)
 {
     http_stl_allocator<T> alloc;
     auto p = std::allocator_traits<http_stl_allocator<T>>::allocate(alloc, 1); // malloc memory
@@ -134,6 +134,7 @@ template<class C, class TRAITS = std::char_traits<C>>
 using http_internal_basic_string = std::basic_string<C, TRAITS, http_stl_allocator<C>>;
 
 using http_internal_string = http_internal_basic_string<char>;
+using http_internal_wstring = http_internal_basic_string<wchar_t>;
 
 template<class C, class TRAITS = std::char_traits<C>>
 using http_internal_basic_stringstream = std::basic_stringstream<C, TRAITS, http_stl_allocator<C>>;

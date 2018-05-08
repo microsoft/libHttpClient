@@ -14,7 +14,7 @@
     <ApplicationEnvironment>title</ApplicationEnvironment>
     <ProjectGuid>{CF37BEB2-A66A-42BA-B348-1F07566F4865}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>libHttpClient.141.XDK.C</ProjectName>
+    <ProjectName>libHttpClient.140.XDK.C</ProjectName>
     <RootNamespace>xbox.httpclient</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
@@ -92,6 +92,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>

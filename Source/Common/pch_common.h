@@ -21,8 +21,7 @@
 #else
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
-
-#include <boost/uuid/uuid.hpp>
+#include "pal_internal.h"
 #endif
 
 // STL includes
@@ -78,12 +77,15 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #define ASSERT(condition) assert(condition)
 
-typedef int32_t function_context;
 #include <httpClient/httpClient.h>
-#include "../global/mem.h"
-#include "win/utils_win.h"
+#include "../Global/mem.h"
+
+#if HC_PLATFORM_IS_MICROSOFT
+#include "Win/utils_win.h"
+#endif
+
 #include "utils.h"
-#include "../global/global.h"
+#include "../Global/global.h"
 #include "trace_internal.h"
 #include "ResultMacros.h"
 #include "EntryList.h"

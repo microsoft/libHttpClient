@@ -19,25 +19,77 @@ try
         return E_INVALIDARG;
     }
 
+    if (call->responseString.empty())
+    {
+        call->responseString = http_internal_string(reinterpret_cast<char const*>(call->responseBodyBytes.data()), call->responseBodyBytes.size());
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseGetResponseString [ID %llu]: responseString=%.2048s", call->id, call->responseString.c_str()); }
+    }
     *responseString = call->responseString.c_str();
     return S_OK;
 }
 CATCH_RETURN()
 
-STDAPI 
-HCHttpCallResponseSetResponseString(
+STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR responseString
+    _Out_ size_t* bufferSize
     ) HC_NOEXCEPT
-try 
+try
 {
-    if (call == nullptr || responseString == nullptr)
+    if (call == nullptr || bufferSize == nullptr)
     {
         return E_INVALIDARG;
     }
 
-    call->responseString = responseString;
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseString [ID %llu]: responseString=%.2048s", call->id, responseString); }
+    *bufferSize = call->responseBodyBytes.size();
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI HCHttpCallResponseGetResponseBodyBytes(
+    _In_ hc_call_handle_t call,
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) uint8_t* buffer,
+    _Out_opt_ size_t* bufferUsed
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr || buffer == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+#if HC_PLATFORM_IS_MICROSOFT
+    memcpy_s(buffer, bufferSize, call->responseBodyBytes.data(), call->responseBodyBytes.size());
+#else
+    memcpy(buffer, call->responseBodyBytes.data(), call->responseBodyBytes.size());
+#endif
+
+    if (bufferUsed != nullptr)
+    {
+        *bufferUsed = call->responseBodyBytes.size();
+    }
+    return S_OK;
+}
+CATCH_RETURN()
+
+
+STDAPI 
+HCHttpCallResponseSetResponseBodyBytes(
+    _In_ hc_call_handle_t call,
+    _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
+    _In_ size_t bodySize
+    ) HC_NOEXCEPT
+try 
+{
+    if (call == nullptr || bodyBytes == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    call->responseBodyBytes.assign(bodyBytes, bodyBytes + bodySize);
+    call->responseString.clear();
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%d", call->id, bodySize); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -46,7 +98,7 @@ STDAPI
 HCHttpCallResponseGetStatusCode(
     _In_ hc_call_handle_t call,
     _Out_ uint32_t* statusCode
-    )
+    ) HC_NOEXCEPT
 try 
 {
     if (call == nullptr || statusCode == nullptr)

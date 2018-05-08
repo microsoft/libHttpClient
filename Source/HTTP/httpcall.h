@@ -12,13 +12,13 @@ typedef struct HC_CALL
         platformNetworkErrorCode(0),
         id(0),
         traceCall(true),
+        refCount(1),
         retryAllowed(false),
+        retryAfterCacheId(0),
         timeoutInSeconds(0),
         timeoutWindowInSeconds(0),
         retryDelayInSeconds(0),
-        performCalled(false),
-        refCount(1),
-        retryAfterCacheId(0)
+        performCalled(false)
     {
         delayBeforeRetry = std::chrono::milliseconds(0);
     }
@@ -30,6 +30,7 @@ typedef struct HC_CALL
     http_internal_map<http_internal_string, http_internal_string> requestHeaders;
 
     http_internal_string responseString;
+    http_internal_vector<uint8_t> responseBodyBytes;
     http_internal_map<http_internal_string, http_internal_string> responseHeaders;
     uint32_t statusCode;
     HRESULT networkErrorCode;

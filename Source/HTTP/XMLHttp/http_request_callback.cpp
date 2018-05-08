@@ -77,8 +77,9 @@ HRESULT STDMETHODCALLTYPE http_request_callback::OnResponseReceived(
         HCHttpCallResponseSetHeader(call, headerNames[i].c_str(), headerValues[i].c_str());
     }
 
-    auto const& responseString = m_httpTask->response_buffer().as_string();
-    HCHttpCallResponseSetResponseString(call, responseString.c_str());
+    HCHttpCallResponseSetResponseBodyBytes(call, 
+        m_httpTask->response_buffer().as_buffer().data(), 
+        m_httpTask->response_buffer().as_buffer().size());
 
     HRESULT hr = S_OK;
     if (m_httpTask->has_error())

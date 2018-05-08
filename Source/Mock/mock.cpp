@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "mock.h"
-#include "../http/httpcall.h"
+#include "../HTTP/httpcall.h"
 
 using namespace xbox::httpclient;
 
@@ -127,9 +127,11 @@ bool Mock_Internal_HCHttpCallPerform(
         return false;
     }
 
-    UTF8CSTR str;
-    HCHttpCallResponseGetResponseString(matchingMock, &str);
-    HCHttpCallResponseSetResponseString(originalCall, str);
+    size_t byteBuf;
+    HCHttpCallResponseGetResponseBodyBytesSize(matchingMock, &byteBuf);
+    http_memory_buffer buffer(byteBuf);
+    HCHttpCallResponseGetResponseBodyBytes(matchingMock, byteBuf, static_cast<uint8_t*>(buffer.get()), nullptr);
+    HCHttpCallResponseSetResponseBodyBytes(originalCall, static_cast<uint8_t*>(buffer.get()), byteBuf);
 
     uint32_t code;
     HCHttpCallResponseGetStatusCode(matchingMock, &code);

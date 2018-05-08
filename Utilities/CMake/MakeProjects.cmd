@@ -14,6 +14,8 @@ call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DXDK=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DBUILDWIN32=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
+call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DBUILDANDROID=TRUE
+if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTAEF=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTE=TRUE
@@ -31,6 +33,7 @@ copy %NEW_FOLDER%\libHttpClient.140.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.
 copy %NEW_FOLDER%\libHttpClient.141.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.UWP.C
 copy %NEW_FOLDER%\libHttpClient.141.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.XDK.C
 copy %NEW_FOLDER%\libHttpClient.141.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.Win32.C
+copy %NEW_FOLDER%\libHttpClient.141.Android.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.Android.C
 copy %NEW_FOLDER%\libHttpClient.UnitTest.140.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.140.TAEF
 copy %NEW_FOLDER%\libHttpClient.UnitTest.140.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.140.TE
 

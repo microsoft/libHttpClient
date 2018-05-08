@@ -43,6 +43,10 @@ typedef struct http_singleton
     http_retry_after_api_state get_retry_state(_In_ uint32_t retryAfterCacheId);
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
 
+    std::mutex m_callRoutedHandlersLock;
+    std::atomic<int32_t> m_callRoutedHandlersContext;
+    http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
+
     // HTTP state
     std::atomic<std::uint64_t> m_lastId;
     HCCallPerformFunction m_performFunc;
@@ -132,6 +136,3 @@ private:
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
-
-
-

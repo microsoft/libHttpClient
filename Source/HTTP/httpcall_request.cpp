@@ -59,7 +59,7 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestSetRequestBodyBytes(
     _In_ hc_call_handle_t call,
-    _In_reads_bytes_(requestBodySize) const BYTE* requestBodyBytes,
+    _In_reads_bytes_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT
 try
@@ -104,7 +104,7 @@ HCHttpCallRequestSetRequestBodyString(
 STDAPI 
 HCHttpCallRequestGetRequestBodyBytes(
     _In_ hc_call_handle_t call,
-    _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const BYTE** requestBodyBytes,
+    _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const uint8_t** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
     ) HC_NOEXCEPT
 try 

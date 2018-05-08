@@ -12,6 +12,7 @@ public:
         );
 
     http_internal_string as_string();
+    http_internal_vector<BYTE>& as_buffer() { return m_buffer; }
 
 private:
     http_internal_vector<BYTE> m_buffer;

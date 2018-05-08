@@ -3,8 +3,6 @@
 
 #pragma once
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-
 using String = http_internal_string;
 
 template<class K, class V, class LESS = std::less<K>>
@@ -18,15 +16,6 @@ void BasicAsciiLowercase(String& s);
 
 bool StringToUint(String const& s, uint64_t& v, int32_t base = 0);
 bool StringToUint4(char const* begin, char const* end, uint64_t& v, int32_t base);
-
-template<class TBuffer>
-void AppendFormat(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* format, ...)
-{
-    va_list args{};
-    va_start(args, format);
-    FormatHelper(buffer, format, args);
-    va_end(args);
-}
 
 template<class TBuffer>
 void FormatHelper(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* format, va_list args)
@@ -50,6 +39,15 @@ void FormatHelper(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* for
     //UNREFERENCED_LOCAL(written);
 
     buffer.resize(buffer.size() - 1); // drop null terminator
+}
+
+template<class TBuffer>
+void AppendFormat(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* format, ...)
+{
+    va_list args{};
+    va_start(args, format);
+    FormatHelper(buffer, format, args);
+    va_end(args);
 }
 
 inline
@@ -176,5 +174,25 @@ public:
 
     virtual ~hc_task() {}
 };
+
+inline
+uint64_t ThisThreadId()
+{
+    // use platform specific implementations so that it's easy to look up values
+    // in the debugger
+#if HC_PLATFORM_IS_MICROSOFT
+    return GetCurrentThreadId();
+#elif HC_PLATFORM == HC_PLATFORM_IOS
+    uint64_t threadId = 0;
+    if (pthread_threadid_np(0, &threadId) != 0)
+    {
+        threadId = pthread_mach_thread_np(pthread_self());
+    }
+    
+    return threadId;
+#else
+    return pthread_self();
+#endif
+}
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

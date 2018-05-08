@@ -75,7 +75,6 @@ typedef struct AsyncProviderData
 /// <param name='op'>The async operatiopn to perform.</param>
 /// <param name='data'>Data used to track the async call.</param>
 /// <seealso cref='AsyncProviderData' />
-/// <seealso cref='BeginAsync' />
 typedef HRESULT CALLBACK AsyncProvider(_In_ AsyncOp op, _In_ const AsyncProviderData* data);
 
 /// <summary>
@@ -115,7 +114,7 @@ STDAPI ScheduleAsync(
 /// Called when async work is completed and the results can be returned.
 /// The caller should supply the resulting data payload size.  If the call
 /// has no data payload, pass zero.
-/// </summary
+/// </summary>
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to BeginAsync.</param>
 /// <param name='result'>The resut of the call.  This should not be E_PENDING as that result is reserved for an incomplete call.</param>
 /// <param name='requiredBufferSize'>The required size in bytes of the call result.  If the call has no data to return this should be zero.</param>
