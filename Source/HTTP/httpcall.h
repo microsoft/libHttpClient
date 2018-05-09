@@ -54,8 +54,8 @@ typedef struct HC_CALL
 } HC_CALL;
 
 void Internal_HCHttpCallPerform(
-    _In_ hc_call_handle_t call, 
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     );
 
 

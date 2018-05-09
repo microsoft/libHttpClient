@@ -15,14 +15,14 @@ class xmlhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
     xmlhttp_http_task(
-        _In_ hc_call_handle_t call,
-        _In_ AsyncBlock* asyncBlock
+        _In_ AsyncBlock* asyncBlock,
+        _In_ hc_call_handle_t call
         );
     ~xmlhttp_http_task();
 
     void perform_async(
-        _In_ hc_call_handle_t call,
-        _In_ AsyncBlock* asyncBlock
+        _In_ AsyncBlock* asyncBlock,
+        _In_ hc_call_handle_t call
         );
 
     void set_status_code(_In_ uint32_t statusCode);
