@@ -7,19 +7,21 @@
 using namespace xbox::httpclient;
 
 HRESULT Internal_HCWebSocketConnect(
+    _In_ AsyncBlock* async,
     _In_z_ UTF8CSTR uri,
     _In_z_ UTF8CSTR subProtocol,
-    _In_ hc_websocket_handle_t websocket,
-    _In_ AsyncBlock* async)
+    _In_ hc_websocket_handle_t websocket
+    )
 {
     // TODO
     return S_OK;
 }
 
 HRESULT Internal_HCWebSocketSendMessage(
+    _In_ AsyncBlock* async,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR message,
-    _In_ AsyncBlock* async)
+    _In_z_ UTF8CSTR message
+    )
 {
     // TODO
     return S_OK;
