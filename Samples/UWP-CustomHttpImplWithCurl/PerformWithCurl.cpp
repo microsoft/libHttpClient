@@ -66,9 +66,9 @@ std::wstring to_wstring(const std::string &value)
     return conversion.from_bytes(value);
 }
 
-STDAPI_(void) PerformCallWithCurl(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+void STDAPIVCALLTYPE PerformCallWithCurl(
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     )
 {
     const char* url = nullptr;
@@ -109,7 +109,7 @@ STDAPI_(void) PerformCallWithCurl(
         HCHttpCallResponseSetStatusCode(call, response_code);
         char *ct;
         res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
-        HCHttpCallResponseSetResponseString(call, chunk.memory);
+        HCHttpCallResponseSetResponseBodyBytes(call, (uint8_t*)chunk.memory, chunk.size);
 
         errCode = S_OK;
     }

@@ -55,11 +55,10 @@ win32_handle g_completionReadyHandle;
 
 #define TICKS_PER_SECOND 10000000i64
 
-STDAPI_(void) PerformCallWithCurl(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+void STDAPIVCALLTYPE PerformCallWithCurl(
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     );
-
 
 static std::string to_utf8string(const std::wstring& input)
 {
@@ -306,7 +305,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     {
         std::string headerName = header[0];
         std::string headerValue = header[1];
-        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str());
+        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str(), true);
     }
 
     AsyncBlock* asyncBlock = new AsyncBlock;
@@ -335,6 +334,6 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         delete asyncBlock;
     };
 
-    HCHttpCallPerform(call, asyncBlock);
+    HCHttpCallPerform(asyncBlock, call);
 }
 

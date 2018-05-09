@@ -28,8 +28,8 @@ class winhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
     winhttp_http_task(
-        _In_ hc_call_handle_t call,
-        _In_ AsyncBlock* asyncBlock
+        _In_ AsyncBlock* asyncBlock,
+        _In_ hc_call_handle_t call
         );
     ~winhttp_http_task();
 

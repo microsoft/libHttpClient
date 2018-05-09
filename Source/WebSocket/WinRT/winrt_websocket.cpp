@@ -33,8 +33,9 @@ public:
     }
 
     friend HRESULT WebsocketConnectDoWork(
-        _In_opt_ void* executionRoutineContext,
-        _In_ AsyncBlock* asyncBlock);
+        _In_ AsyncBlock* asyncBlock,
+        _In_opt_ void* executionRoutineContext
+        );
 
     void OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args);
     void OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args);
@@ -136,8 +137,8 @@ http_internal_vector<http_internal_wstring> parse_subprotocols(const http_intern
 }
 
 HRESULT WebsocketConnectDoWork(
-    _In_opt_ void* executionRoutineContext,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_opt_ void* executionRoutineContext
     )
 try
 {
@@ -246,10 +247,10 @@ HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
 }
 
 HRESULT Internal_HCWebSocketConnect(
+    _In_ AsyncBlock* asyncBlock,
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
-    _In_ hc_websocket_handle_t websocket,
-    _In_ AsyncBlock* asyncBlock
+    _In_ hc_websocket_handle_t websocket
     )
 {
     std::shared_ptr<winrt_websocket_task> websocketTask = std::make_shared<winrt_websocket_task>();
@@ -263,7 +264,7 @@ HRESULT Internal_HCWebSocketConnect(
     {
         switch (op)
         {
-            case AsyncOp_DoWork: return WebsocketConnectDoWork(data->context, data->async);
+            case AsyncOp_DoWork: return WebsocketConnectDoWork(data->async, data->context);
             case AsyncOp_GetResult: return WebsocketConnectGetResult(data);
         }
 
@@ -279,9 +280,9 @@ HRESULT Internal_HCWebSocketConnect(
 }
 
 HRESULT Internal_HCWebSocketSendMessage(
+    _In_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ PCSTR message,
-    _In_ AsyncBlock* asyncBlock
+    _In_z_ PCSTR message
     )
 {
     if (message == nullptr)
@@ -332,8 +333,8 @@ struct SendMessageCallbackContent
 };
 
 HRESULT WebsockSendMessageDoWork(
-    _In_opt_ void* executionRoutineContext,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_opt_ void* executionRoutineContext
     )
 try
 {
@@ -451,7 +452,7 @@ void MessageWebSocketSendMessage(
     {
         switch (op)
         {
-            case AsyncOp_DoWork: return WebsockSendMessageDoWork(data->context, data->async);
+            case AsyncOp_DoWork: return WebsockSendMessageDoWork(data->async, data->context);
             case AsyncOp_GetResult: return WebsockSendMessageGetResult(data);
             case AsyncOp_Cleanup: shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, true);
         }

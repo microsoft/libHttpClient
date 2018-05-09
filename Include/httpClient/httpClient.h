@@ -196,12 +196,12 @@ STDAPI HCHttpCallCreate(
 ///
 /// HCHttpCallPerform can only be called once.  Create new hc_call_handle_t to repeat the call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="call">The handle of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallPerform(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -632,10 +632,10 @@ typedef struct WebSocketCompletionResult
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCWebSocketConnect(
+    _In_ AsyncBlock* asyncBlock,
     _In_z_ UTF8CSTR uri,
     _In_z_ UTF8CSTR subProtocol,
-    _In_ hc_websocket_handle_t websocket,
-    _In_ AsyncBlock* asyncBlock
+    _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -657,9 +657,9 @@ STDAPI HCGetWebSocketConnectResult(
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketSendMessage(
+    _In_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR message,
-    _In_ AsyncBlock* asyncBlock
+    _In_z_ UTF8CSTR message
     ) HC_NOEXCEPT;
 
 /// <summary>

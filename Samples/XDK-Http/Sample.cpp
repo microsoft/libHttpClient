@@ -484,7 +484,7 @@ void Sample::MakeHttpCall()
         delete asyncBlock;
     };
 
-    HCHttpCallPerform(call, asyncBlock);
+    HCHttpCallPerform(asyncBlock, call);
 }
 
 

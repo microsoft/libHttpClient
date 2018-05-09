@@ -11,8 +11,8 @@
 #include "http_request_stream.h"
 
 xmlhttp_http_task::xmlhttp_http_task(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     ) :
     m_statusCode(0),
     m_call(call),
@@ -32,8 +32,8 @@ xmlhttp_http_task::~xmlhttp_http_task()
 }
 
 void xmlhttp_http_task::perform_async(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     )
 {
     try
@@ -279,11 +279,11 @@ AsyncBlock* xmlhttp_http_task::async_block()
 }
 
 void Internal_HCHttpCallPerform(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     )
 {
-    auto httpTask = http_allocate_shared<xmlhttp_http_task>(call, asyncBlock);
-    httpTask->perform_async(call, asyncBlock);
+    auto httpTask = http_allocate_shared<xmlhttp_http_task>(asyncBlock, call);
+    httpTask->perform_async(asyncBlock, call);
 }
 
