@@ -34,7 +34,7 @@
     <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib>
     <libHttpClientLib2>$(libHttpClientRoot)lib\$(Platform)\</libHttpClientLib2>
     <libHttpClientLib3>$(libHttpClientRoot)..\..\..\b\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib3>
-	<libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
+    <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
   </PropertyGroup>
   
   <ItemDefinitionGroup>
@@ -45,7 +45,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <Link>
-	  <AdditionalLibraryDirectories>$(libHttpClientLib3);$(libHttpClientLib2);$(libHttpClientLib)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(libHttpClientLib3);$(libHttpClientLib2);$(libHttpClientLib)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
