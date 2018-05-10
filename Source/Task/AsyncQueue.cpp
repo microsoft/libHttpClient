@@ -445,7 +445,7 @@ struct async_queue_t
         _In_ AsyncQueueCallbackSubmitted* callback,
         _Out_ uint32_t* token)
     {
-        return m_callbackSubmitted.Add(nullptr, context, callback, token);
+        return m_callbackSubmitted.Add(this, context, callback, token);
     }
 
     void RemoveCallback(

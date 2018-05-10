@@ -1,0 +1,21 @@
+// Copyright (c) Microsoft Corporation
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#pragma once
+#import <Foundation/Foundation.h>
+
+class ios_http : public xbox::httpclient::hc_task
+{
+public:
+    ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call);
+    void initiate_request();
+private:
+    void completion_handler(NSData *data, NSURLResponse *response, NSError *error);
+    
+    hc_call_handle_t m_call;
+    AsyncBlock* m_asyncBlock;
+    
+    //HC_TASK_HANDLE m_task;
+    NSURLSession* m_session;
+    NSURLSessionTask* m_sessionTask;
+};
