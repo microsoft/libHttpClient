@@ -775,14 +775,15 @@ STDAPI GetAsyncResult(
             char buf[100];
             if (state->function != nullptr)
             {
-                sprintf_s(
+                snprintf(
                     buf,
+                    sizeof(buf),
                     "Call/Result mismatch.  This AsyncBlock was initiated by '%s'.\r\n",
                     state->function);
             }
             else
             {
-                sprintf_s(buf, "Call/Result mismatch\r\n");
+                snprintf(buf, sizeof(buf), "Call/Result mismatch\r\n");
             }
 
             result = E_INVALIDARG;
