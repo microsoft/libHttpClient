@@ -6,8 +6,8 @@
 #include "../global/global.h"
 
 void Internal_HCHttpCallPerform(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     )
 {
     CompleteAsync(asyncBlock, S_OK, 0);

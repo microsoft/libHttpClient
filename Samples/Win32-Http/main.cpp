@@ -278,7 +278,7 @@ int main()
         delete asyncBlock;
     };
 
-    HCHttpCallPerform(call, asyncBlock);
+    HCHttpCallPerform(asyncBlock, call);
 
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 

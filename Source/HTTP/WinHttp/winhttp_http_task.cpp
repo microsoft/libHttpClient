@@ -14,8 +14,8 @@
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 winhttp_http_task::winhttp_http_task(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     ) :
     m_call(call),
     m_asyncBlock(asyncBlock),
@@ -825,11 +825,11 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 
 
 void Internal_HCHttpCallPerform(
-    _In_ hc_call_handle_t call,
-    _In_ AsyncBlock* asyncBlock
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
     )
 {
-    xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(call, asyncBlock);
+    xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(asyncBlock, call);
     HCHttpCallSetContext(call, httpTask); // TODO: cleanup 
     httpTask->perform_async();
 }
