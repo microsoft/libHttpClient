@@ -1,7 +1,6 @@
 #pragma once
 
-#include "asyncQueue.h"
-
+#include <AsyncQueue.h>
 #include <mutex>
 
 template<class CallbackType, class CallbackDataType>
@@ -43,12 +42,11 @@ public:
     {
         Clear();
     }
-
+    
     // Disable copy ctor and assignment, as these cannot be implemented without 
     // potentially throwing exceptions
     Callback<CallbackType, CallbackDataType, CallbackThunk>(const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
-
-    Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;
+    Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;    
 
     //
     // Adds a callback function to this callback.
@@ -62,16 +60,11 @@ public:
         if (queue == nullptr)
         {
 #ifdef _WIN32
-            HRESULT hr = CreateSharedAsyncQueue(
+            RETURN_IF_FAILED(CreateSharedAsyncQueue(
                 GetCurrentThreadId(),
                 AsyncQueueDispatchMode_ThreadPool,
                 AsyncQueueDispatchMode_FixedThread,
-                &queue);
-
-            if (FAILED(hr))
-            {
-                return hr;
-            }
+                &queue));
 #else
             RETURN_HR(E_INVALIDARG);
 #endif
@@ -85,7 +78,7 @@ public:
         
         if (entry == nullptr)
         {
-            return E_OUTOFMEMORY;
+            RETURN_HR(E_OUTOFMEMORY);
         }
 
         entry->Queue = queue;
