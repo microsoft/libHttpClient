@@ -209,6 +209,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\Win\win_logger.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />

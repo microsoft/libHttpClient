@@ -41,16 +41,6 @@ int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, 
     return vsnprintf(buffer, SIZE, format, varArgs);
 }
 
-void OutputDebugStringT(char const* string)
-{
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWA || HC_PLATFORM == HC_PLATFORM_XDK
-    OutputDebugStringA(string);
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM == HC_PLATFORM_IOS
-    printf("%s", string);
-#endif
-}
-
-
 //------------------------------------------------------------------------------
 // Trace implementation
 //------------------------------------------------------------------------------
@@ -157,7 +147,7 @@ void TraceMessageToDebugger(
     char outputBuffer[BUFFER_SIZE] = {};
     // [threadId][level][time][area] message
     auto written = stprintf_s(outputBuffer, "[%04X][%s][%02d:%02d:%02d.%03u][%s] %s",
-        threadId,
+        (uint32_t)threadId,
         traceLevelNames[static_cast<size_t>(level)],
         fmtTime.tm_hour,
         fmtTime.tm_min,
@@ -182,7 +172,7 @@ void TraceMessageToDebugger(
         return;
     }
 
-    OutputDebugStringT(outputBuffer);
+    Internal_HCTraceMessage(areaName, level, outputBuffer);
 }
 
 void TraceMessageToClient(

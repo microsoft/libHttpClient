@@ -191,6 +191,13 @@ set(Logger_Source_Files
     ../../../Source/Logger/log_publics.cpp
     )
 
+set(Windows_Logger_Source_Files
+   ../../../Source/Logger/Win/win_logger.cpp
+   )
+
+set(Android_Logger_Source_Files
+	../../../Source/Logger/Android/android_logger.cpp
+	)
 
 set(UnitTests_Source_Files_Support
     ../../../Tests/UnitTests/Support/DefineTestMacros.h
@@ -252,6 +259,7 @@ if( UNITTEST )
         SOURCE_FILES
         ${Unittest_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+		${Windows_Logger_Source_Files}
         ${Unittest_WebSocket_Source_Files}
         )
 endif()
@@ -266,6 +274,7 @@ if( UWP )
         SOURCE_FILES
         ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+		${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
         )
 endif()
@@ -279,6 +288,7 @@ if( XDK )
         SOURCE_FILES
         ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+		${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
         )
 endif()
@@ -292,6 +302,7 @@ if( BUILDWIN32 )
         SOURCE_FILES
         ${WinHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${Windows_Logger_Source_Files}
         ${Win32_WebSocket_Source_Files}
         )
 endif()
@@ -303,6 +314,7 @@ if( BUILDANDROID )
     list(APPEND
         SOURCE_FILES
         ${Android_HTTP_Source_Files}
+        ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
         )
 endif()

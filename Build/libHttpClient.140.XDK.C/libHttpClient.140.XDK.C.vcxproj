@@ -14,7 +14,7 @@
     <ApplicationEnvironment>title</ApplicationEnvironment>
     <ProjectGuid>{CF37BEB2-A66A-42BA-B348-1F07566F4865}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>libHttpClient.140.XDK.C</ProjectName>
+    <ProjectName>libHttpClient.141.XDK.C</ProjectName>
     <RootNamespace>xbox.httpclient</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
@@ -122,6 +122,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\Win\win_logger.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />
