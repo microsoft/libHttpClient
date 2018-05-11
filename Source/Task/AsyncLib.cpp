@@ -2,15 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include <httpClient/async.h>
-#include <httpClient/asyncProvider.h>
-#include <httpClient/asyncQueue.h>
 
 #define ASYNC_STATE_SIG 0x41535445
-
-#if !HC_PLATFORM_IS_MICROSOFT
-using PTP_TIMER = void*;
-#endif
 
 // Used by unit tests to verify we cleanup memory correctly.
 std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
@@ -24,8 +17,12 @@ struct AsyncState
     bool canceled = false;
     AsyncProvider* provider = nullptr;
     AsyncProviderData providerData;
+
+#ifdef _WIN32
     HANDLE waitEvent = nullptr;
     PTP_TIMER timer = nullptr;
+#endif
+
     const void* token = nullptr;
     const char* function = nullptr;
 
@@ -50,26 +47,26 @@ struct AsyncState
 private:
     ~AsyncState() noexcept
     {
+#ifdef _WIN32
         if (timer != nullptr)
         {
-#ifdef _WIN32
             SetThreadpoolTimer(timer, nullptr, 0, 0);
             WaitForThreadpoolTimerCallbacks(timer, TRUE);
             CloseThreadpoolTimer(timer);
-#endif
         }
+#endif
 
         if (providerData.queue != nullptr)
         {
             CloseAsyncQueue(providerData.queue);
         }
 
+#ifdef _WIN32
         if (waitEvent != nullptr)
         {
-#ifdef _WIN32
             CloseHandle(waitEvent);
-#endif
         }
+#endif
 
         --s_AsyncLibGlobalStateCount;
     }
@@ -217,15 +214,16 @@ private:
 
 static void CALLBACK CompletionCallback(_In_ void* context);
 static void CALLBACK WorkerCallback(_In_ void* context);
+static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state);
+static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal);
+static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock);
+static void CleanupState(_Inout_ AsyncStateRef&& state);
+
 #ifdef _WIN32
 static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER);
 #endif
-static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state);
-static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal);
-static HRESULT AllocState(_In_ AsyncBlock* asyncBlock);
-static void CleanupState(_In_ AsyncStateRef&& state);
 
-static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal)
+static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal)
 {
     AsyncStateRef state;
     state.Attach(new (std::nothrow) AsyncState);
@@ -280,7 +278,7 @@ static HRESULT AllocStateNoCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncBlo
     return S_OK;
 }
 
-static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
+static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock)
 {
     // If the async block is already associated with another
     // call, fail.
@@ -333,7 +331,7 @@ static HRESULT AllocState(_In_ AsyncBlock* asyncBlock)
     return hr;
 }
 
-static void CleanupState(_In_ AsyncStateRef&& state)
+static void CleanupState(_Inout_ AsyncStateRef&& state)
 {
 
     if (state != nullptr)
@@ -359,22 +357,25 @@ static void CleanupState(_In_ AsyncStateRef&& state)
 
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state)
 {
+#if _WIN32
     if (state->waitEvent)
     {
-#if _WIN32
         SetEvent(state->waitEvent);
-#else
-        ASSERT(false);
-#endif
     }
+#endif
 
     if (state->providerData.async->callback != nullptr)
     {
-        (void)SubmitAsyncCallback(
+        HRESULT hr = SubmitAsyncCallback(
             state->providerData.queue,
             AsyncQueueCallbackType_Completion,
             asyncBlock,
             CompletionCallback);
+
+        if (FAILED(hr))
+        {
+            FAIL_FAST_MSG("Failed to submit competion callback: 0x%08x", hr);
+        }
     }
 }
 
@@ -532,7 +533,7 @@ STDAPI GetAsyncResultSize(
 /// signaled.
 /// </summary>
 STDAPI_(void) CancelAsync(
-    _In_ AsyncBlock* asyncBlock)
+    _Inout_ AsyncBlock* asyncBlock)
 {
     AsyncStateRef state;
     {
@@ -545,9 +546,9 @@ STDAPI_(void) CancelAsync(
         state->canceled = true;
     }
 
+#if _WIN32
     if (state->timer != nullptr)
     {
-#if _WIN32
         SetThreadpoolTimer(state->timer, nullptr, 0, 0);
         WaitForThreadpoolTimerCallbacks(state->timer, TRUE);
 
@@ -556,10 +557,8 @@ STDAPI_(void) CancelAsync(
             // The timer callback was never invoked so release this reference
             state->Release();
         }
-#else
-        ASSERT(false);
-#endif
     }
+#endif
 
     (void)state->provider(AsyncOp_Cancel, &state->providerData);
     SignalCompletion(asyncBlock, state);
@@ -572,7 +571,7 @@ STDAPI_(void) CancelAsync(
 /// Runs the given callback asynchronously.
 /// </summary>
 STDAPI RunAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work)
 {
     RETURN_IF_FAILED(BeginAsync(
@@ -605,14 +604,13 @@ STDAPI RunAsync(
 /// returns.
 /// </summary>
 STDAPI BeginAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ const void* token,
     _In_opt_ const char* function,
     _In_ AsyncProvider* provider)
 {
     RETURN_IF_FAILED(AllocState(asyncBlock));
-    // TODO on failure, mark the AsyncBlock failed
 
     AsyncStateRef state;
     {
@@ -644,11 +642,14 @@ STDAPI ScheduleAsync(
     }
     RETURN_HR_IF(E_INVALIDARG, state == nullptr);
 
-    if (delayInMs != 0 && state->timer == nullptr)
+    if (delayInMs != 0)
     {
 #if _WIN32
-        state->timer = CreateThreadpoolTimer(TimerCallback, state.Get(), nullptr);
-        RETURN_LAST_ERROR_IF_NULL(state->timer);
+        if (state->timer == nullptr)
+        {
+            state->timer = CreateThreadpoolTimer(TimerCallback, state.Get(), nullptr);
+            RETURN_LAST_ERROR_IF_NULL(state->timer);
+        }
 #else
         ASSERT(false);
         RETURN_HR(E_INVALIDARG);
@@ -693,7 +694,7 @@ STDAPI ScheduleAsync(
 /// has no data payload, pass zero.
 /// </summary
 STDAPI_(void) CompleteAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ HRESULT result,
     _In_ size_t requiredBufferSize)
 {
@@ -748,7 +749,7 @@ STDAPI_(void) CompleteAsync(
 /// operation.
 /// </summary>
 STDAPI GetAsyncResult(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ const void* token,
     _In_ size_t bufferSize,
     _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) void* buffer,
@@ -799,7 +800,7 @@ STDAPI GetAsyncResult(
         }
         else if (bufferSize < state->providerData.bufferSize)
         {
-            return E_INSUFFICIENT_BUFFER;
+            return E_NOT_SUFFICIENT_BUFFER;
         }
         else
         {

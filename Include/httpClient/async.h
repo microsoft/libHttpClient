@@ -29,7 +29,7 @@ struct AsyncBlock;
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
 /// <seealso cref='AsyncBlock' />
-typedef void CALLBACK AsyncCompletionRoutine(_In_ struct AsyncBlock* asyncBlock);
+typedef void CALLBACK AsyncCompletionRoutine(_Inout_ struct AsyncBlock* asyncBlock);
 
 /// <summary>
 /// Callback routine that is invoked on a worker asynchronously when RunAsync is called.
@@ -38,13 +38,7 @@ typedef void CALLBACK AsyncCompletionRoutine(_In_ struct AsyncBlock* asyncBlock)
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to RunAsync.</param>
 /// <seealso cref='AsyncBlock' />
 /// <seealso cref='RunAsync' />
-typedef HRESULT CALLBACK AsyncWork(_In_ struct AsyncBlock* asyncBlock);
-
-#if HC_DATAMODEL == HC_DATAMODEL_ILP32
-#define ASYNCBLOCK_INTERNAL_SIZE 3 * sizeof(void*)
-#else
-#define ASYNCBLOCK_INTERNAL_SIZE 2 * sizeof(void*)
-#endif
+typedef HRESULT CALLBACK AsyncWork(_Inout_ struct AsyncBlock* asyncBlock);
 
 typedef struct AsyncBlock
 {
@@ -71,7 +65,7 @@ typedef struct AsyncBlock
     /// <summary>
     /// Internal use only
     /// </summary>
-    unsigned char internal[ASYNCBLOCK_INTERNAL_SIZE];
+    unsigned char internal[sizeof(void*) * 4];
 } AsyncBlock;
 
 /// <summary>
@@ -102,7 +96,7 @@ STDAPI GetAsyncResultSize(
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
 STDAPI_(void) CancelAsync(
-    _In_ AsyncBlock* asyncBlock);
+    _Inout_ AsyncBlock* asyncBlock);
 
 /// <summary>
 /// Runs the given callback asynchronously.
@@ -110,7 +104,7 @@ STDAPI_(void) CancelAsync(
 /// <param name='asyncBlock'>A pointer to an async block that is used to track the async call.</param>
 /// <param name='work'>A pointer to a callback function to run asynchronously.</param>
 STDAPI RunAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ AsyncWork* work);
 
 

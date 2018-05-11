@@ -10,3 +10,8 @@
 #define RETURN_HR_IF(hr, condition)                             do { if (condition) { RETURN_HR(hr); }} while (0, 0)
 #define RETURN_LAST_ERROR_IF(condition)                         do { if (condition) { RETURN_LAST_ERROR()); }} while (0, 0)
 #define RETURN_LAST_ERROR_IF_NULL(ptr)                          do { if ((ptr) == nullptr) { RETURN_LAST_ERROR(); }} while (0, 0)
+
+#define FAIL_FAST_MSG(fmt, ...)                        \
+    HC_TRACE_ERROR(HTTPCLIENT, fmt, ##__VA_ARGS__);    \
+    ASSERT(false);                                     \
+
