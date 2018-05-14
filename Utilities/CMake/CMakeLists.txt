@@ -196,8 +196,8 @@ set(Windows_Logger_Source_Files
    )
 
 set(Android_Logger_Source_Files
-	../../../Source/Logger/Android/android_logger.cpp
-	)
+    ../../../Source/Logger/Android/android_logger.cpp
+    )
 
 set(UnitTests_Source_Files_Support
     ../../../Tests/UnitTests/Support/DefineTestMacros.h

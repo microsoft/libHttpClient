@@ -1,10 +1,12 @@
+#include "pch.h"
+
 #include <Android/log.h>
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
 
 void Internal_HCTraceMessage(const char* areaName, HCTraceLevel traceLevel, const char* message)
 {
-    int androidLogPriority = ANDROID_LOG_UNKNOWN;
+    int32_t androidLogPriority = ANDROID_LOG_UNKNOWN;
 
     switch (traceLevel) {
         case HCTraceLevel_Off:
