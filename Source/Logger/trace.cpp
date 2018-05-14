@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
+#include <inttypes.h>
 
 #include "utils.h"
 
@@ -146,8 +147,8 @@ void TraceMessageToDebugger(
 
     char outputBuffer[BUFFER_SIZE] = {};
     // [threadId][level][time][area] message
-    auto written = stprintf_s(outputBuffer, "[%04X][%s][%02d:%02d:%02d.%03u][%s] %s",
-        (uint32_t)threadId,
+    auto written = stprintf_s(outputBuffer, "[%04" PRIX64 "][%s][%02d:%02d:%02d.%03u][%s] %s",
+        threadId,
         traceLevelNames[static_cast<size_t>(level)],
         fmtTime.tm_hour,
         fmtTime.tm_min,
