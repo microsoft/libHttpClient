@@ -4,8 +4,8 @@
 #include "pch.h"
 #include "CriticalThread.h"
 
-static uint64_t const CRITICAL_FALSE = 0x00;
-static uint64_t const CRITICAL_TRUE = 0x01;
+static uint64_t const CRITICAL_FALSE  = 0x00;
+static uint64_t const CRITICAL_TRUE   = 0x01;
 static uint64_t const CRITICAL_LOCKED = 0x02;
 
 static thread_local uint64_t tls_threadState = CRITICAL_FALSE;

@@ -219,6 +219,8 @@ set(TE_UnitTests_Source_Files
     )
 
 set(UnitTests_Source_Files_Tests
+    ../../../Tests/UnitTests/Tests/AsyncBlockTests.cpp
+    ../../../Tests/UnitTests/Tests/AsyncQueueTests.cpp
     ../../../Tests/UnitTests/Tests/HttpTests.cpp
     ../../../Tests/UnitTests/Tests/MockTests.cpp
     ../../../Tests/UnitTests/Tests/GlobalTests.cpp

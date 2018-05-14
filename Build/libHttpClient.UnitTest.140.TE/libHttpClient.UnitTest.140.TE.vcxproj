@@ -227,6 +227,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestIncludes_TE.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\UnitTestIncludes.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\AsyncBlockTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\AsyncQueueTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
