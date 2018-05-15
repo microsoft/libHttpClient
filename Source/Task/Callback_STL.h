@@ -1,6 +1,6 @@
 #pragma once
 
-#include <AsyncQueue.h>
+#include <httpClient/asyncQueue.h>
 #include <mutex>
 
 template<class CallbackType, class CallbackDataType>

@@ -34,6 +34,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp">
       <Filter>C++ Source\HTTP</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\Win\win_logger.cpp">
+      <Filter>C++ Source\Logger\Win</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp">
       <Filter>C++ Source\Logger</Filter>
     </ClCompile>
@@ -196,6 +199,9 @@
     </Filter>
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{4FAC39B2-DCB4-3476-AEEF-548A5C43612D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Logger\Win">
+      <UniqueIdentifier>{11DB47ED-9A1E-3493-8CA8-5F3BE24F13F1}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
       <UniqueIdentifier>{C0ACC726-EADB-3E39-A64F-BAC759C6BEDE}</UniqueIdentifier>
