@@ -59,10 +59,7 @@ private:
 #endif
         }
 
-        if (providerData.queue != nullptr)
-        {
-            CloseAsyncQueue(providerData.queue);
-        }
+        CloseAsyncQueue(providerData.queue);
 
         if (waitEvent != nullptr)
         {

@@ -534,6 +534,12 @@ STDAPI CreateNestedAsyncQueue(
     _In_ async_queue_handle_t parentQueue,
     _Out_ async_queue_handle_t* queue)
 {
+    if (parentQueue == nullptr)
+    {
+        *queue = nullptr;
+        return S_OK;
+    }
+
     async_queue_t* parent = async_queue_t::GetQueue(parentQueue);
     if (parent == nullptr)
     {
@@ -638,10 +644,13 @@ STDAPI_(bool) IsAsyncQueueEmpty(
 STDAPI_(void) CloseAsyncQueue(
     _In_ async_queue_handle_t queue)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
-    if (aq != nullptr)
+    if (queue != nullptr)
     {
-        aq->Release();
+        async_queue_t* aq = async_queue_t::GetQueue(queue);
+        if (aq != nullptr)
+        {
+            aq->Release();
+        }
     }
 }
 
