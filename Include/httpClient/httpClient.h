@@ -94,6 +94,10 @@ STDAPI HCMemGetFunctions(
 // Global APIs
 // 
 
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+STDAPI HCInitializeJavaEnvironment(void* context) HC_NOEXCEPT;
+#endif
+
 /// <summary>
 /// Initializes the library instance.
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions()
