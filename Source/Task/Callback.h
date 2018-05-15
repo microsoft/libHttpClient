@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AsyncQueue.h"
+#include <AsyncQueue.h>
 
 template<class CallbackType, class CallbackDataType>
 struct DefaultThunk

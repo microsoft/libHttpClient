@@ -1,13 +1,11 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.#include "stdafx.h"
 #include "pch.h"
-#include "async.h"
-#include "asyncQueue.h"
 #include "CriticalThread.h"
 
 #include <mutex>
 
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
 #include "Callback.h"
 #else
 #include "Callback_STL.h"
@@ -15,10 +13,6 @@
 
 static uint32_t const QUEUE_SIGNATURE = 0x41515545;
 static uint64_t const INVALID_SHARE_ID = 0xFFFFFFFFFFFFFFFF;
-
-#if !HC_PLATFORM_IS_MICROSOFT
-using PTP_WORK = void*;
-#endif
 
 // Support for shared queues
 static LIST_ENTRY s_sharedList;
@@ -68,33 +62,25 @@ public:
             }
         }
 
+#ifdef _WIN32
+
         if (m_event != nullptr)
         {
-#if HC_PLATFORM_IS_MICROSOFT
             CloseHandle(m_event);
-#else
-            assert(false);
-#endif
         }
 
         if (m_apcThread != nullptr)
         {
-#if HC_PLATFORM_IS_MICROSOFT
             CloseHandle(m_apcThread);
-#else
-            assert(false);
-#endif
         }
 
         if (m_work != nullptr)
         {
-#if HC_PLATFORM_IS_MICROSOFT
             WaitForThreadpoolWorkCallbacks(m_work, TRUE);
             CloseThreadpoolWork(m_work);
-#else
-            assert(false);
-#endif
         }
+
+#endif
     }
 
     HRESULT Initialize(async_queue_handle_t owner, AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
@@ -111,7 +97,7 @@ public:
             break;
 
         case AsyncQueueDispatchMode_FixedThread:
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
             RETURN_IF_WIN32_BOOL_FALSE(DuplicateHandle(
                 GetCurrentProcess(),
                 GetCurrentThread(),
@@ -125,7 +111,7 @@ public:
             break;
 
         case AsyncQueueDispatchMode_ThreadPool:
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
             m_work = CreateThreadpoolWork(TPCallback, this, nullptr);
             RETURN_LAST_ERROR_IF_NULL(m_work);
 #else
@@ -134,7 +120,7 @@ public:
             break;
         }
 
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
         m_event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
         RETURN_LAST_ERROR_IF_NULL(m_event);
 #endif
@@ -159,7 +145,7 @@ public:
         {
             std::lock_guard<std::mutex> lock(m_cs);
             InsertTailList(&m_queueHead, &entry->entry);
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
             SetEvent(m_event);
 #endif
             (*refsPointer)++;
@@ -167,39 +153,36 @@ public:
             m_isCallbackQueued = true;
         }
 
-        if (queueCallback)
+        switch (m_dispatchMode)
         {
-            switch (m_dispatchMode)
+        case AsyncQueueDispatchMode_Manual:
+            // nothing
+            break;
+
+        case AsyncQueueDispatchMode_FixedThread:
+#ifdef _WIN32
+            if (queueCallback && QueueUserAPC(APCCallback, m_apcThread, (ULONG_PTR)this) == 0)
             {
-            case AsyncQueueDispatchMode_Manual:
-                // nothing
-                break;
-
-            case AsyncQueueDispatchMode_FixedThread:
-#if HC_PLATFORM_IS_MICROSOFT
-                if (QueueUserAPC(APCCallback, m_apcThread, (ULONG_PTR)this) == 0)
-                {
-                    HRESULT result = HRESULT_FROM_WIN32(GetLastError());
-                    std::lock_guard<std::mutex> lock(m_cs);
-                    (*refsPointer)--;
-                    RemoveEntryList(&entry->entry);
-                    m_isCallbackQueued = false;
-                    delete entry;
-                    return result;
-                }
-#else
-                assert(false);
-#endif
-                break;
-
-            case AsyncQueueDispatchMode_ThreadPool:
-#if HC_PLATFORM_IS_MICROSOFT
-                SubmitThreadpoolWork(m_work);
-#else
-                assert(false);
-#endif
-                break;
+                HRESULT result = HRESULT_FROM_WIN32(GetLastError());
+                std::lock_guard<std::mutex> lock(m_cs);
+                (*refsPointer)--;
+                RemoveEntryList(&entry->entry);
+                m_isCallbackQueued = false;
+                delete entry;
+                return result;
             }
+#else
+            ASSERT(false);
+#endif
+            break;
+
+        case AsyncQueueDispatchMode_ThreadPool:
+#ifdef _WIN32
+            SubmitThreadpoolWork(m_work);
+#else
+            ASSERT(false);
+#endif
+            break;
         }
 
         AsyncQueueCallbackSubmittedData data;
@@ -238,7 +221,7 @@ public:
             }
             else
             {
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
                 ResetEvent(m_event);
 #endif
                 if (dispatcher != AsyncQueueDispatchMode_Manual)
@@ -294,32 +277,29 @@ public:
             isEmpty = m_queueHead.Flink == &m_queueHead;
             if (isEmpty)
             {
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
                 ResetEvent(m_event);
 #endif
             }
         }
 
-        if (isEmpty && m_dispatchMode == AsyncQueueDispatchMode_FixedThread)
+#ifdef _WIN32
+        if (isEmpty && 
+            m_dispatchMode == AsyncQueueDispatchMode_FixedThread && 
+            GetThreadId(m_apcThread) == GetCurrentThreadId())
         {
-#if HC_PLATFORM_IS_MICROSOFT
-            if (GetThreadId(m_apcThread) == GetCurrentThreadId())
-            {
-                SleepEx(0, TRUE);
-            }
-#else
-            assert(false);
-#endif
+            SleepEx(0, TRUE);
         }
+#endif
     }
 
     bool Wait(uint32_t timeout)
     {
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
         uint32_t w = WaitForSingleObject(m_event, timeout);
         return (w == WAIT_OBJECT_0);
 #else
-        assert(false);
+        ASSERT(false);
         return true;
 #endif
     }
@@ -330,13 +310,16 @@ private:
     AsyncQueueCallbackType m_type = AsyncQueueCallbackType_Work;
     AsyncQueueDispatchMode m_dispatchMode = AsyncQueueDispatchMode_Manual;
     SubmitCallback* m_callbackSubmitted = nullptr;
-    HANDLE m_apcThread = nullptr;
-    PTP_WORK m_work = nullptr;
-    HANDLE m_event = nullptr;
     bool m_isCallbackQueued = false;
     std::atomic<uint32_t> m_processingCallback{ 0 };
     std::mutex m_cs;
     LIST_ENTRY m_queueHead;
+
+#ifdef _WIN32
+    HANDLE m_apcThread = nullptr;
+    PTP_WORK m_work = nullptr;
+    HANDLE m_event = nullptr;
+#endif
 
     struct QueueEntry
     {
@@ -346,7 +329,7 @@ private:
         AsyncQueueCallback* callback;
     };
 
-#if HC_PLATFORM_IS_MICROSOFT
+#ifdef _WIN32
     static void CALLBACK APCCallback(ULONG_PTR context)
     {
         Queue* queue = (Queue*)context;
@@ -358,7 +341,7 @@ private:
         // Prevent any callbacks from declaring this thread as time critical.
         (void)LockTimeCriticalThread();
         Queue* queue = (Queue*)context;
-        queue->DrainQueue(AsyncQueueDispatchMode_ThreadPool);
+        queue->DrainOneItem(AsyncQueueDispatchMode_ThreadPool);
     }
 #endif
 };
@@ -559,12 +542,6 @@ STDAPI CreateSharedAsyncQueue(
     _In_ AsyncQueueDispatchMode completionMode,
     _Out_ async_queue_handle_t* queue)
 {
-#pragma warning(suppress:4309) // 'static_cast': truncation of constant value
-    if (id == static_cast<uint32_t>(INVALID_SHARE_ID)) // truncate to 32bit
-    {
-        RETURN_HR(E_INVALIDARG);
-    }
-
     EnsureSharedInitialization();
     std::lock_guard<std::mutex> lock(s_sharedCs);
     uint64_t queueId = MAKE_SHARED_ID(id, workerMode, completionMode);

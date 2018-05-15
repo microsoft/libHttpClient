@@ -92,7 +92,7 @@ typedef HRESULT CALLBACK AsyncProvider(_In_ AsyncOp op, _In_ const AsyncProvider
 /// <param name='functionName'>An optional string that names the function providing the async call.  This is typically the __FUNCTION__ compiler macro.</param>
 /// <param name='provider'>The function callback to invoke to implement the async call.</param>
 STDAPI BeginAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ const void* token,
     _In_opt_ const char* functionName,
@@ -119,7 +119,7 @@ STDAPI ScheduleAsync(
 /// <param name='result'>The resut of the call.  This should not be E_PENDING as that result is reserved for an incomplete call.</param>
 /// <param name='requiredBufferSize'>The required size in bytes of the call result.  If the call has no data to return this should be zero.</param>
 STDAPI_(void) CompleteAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ HRESULT result,
     _In_ size_t requiredBufferSize);
 
@@ -135,7 +135,7 @@ STDAPI_(void) CompleteAsync(
 /// <param name='buffer'>A pointer to the result buffer.</param>
 /// <param name='bufferUsed'>An optional pointer that contains the number of bytes written to the buffer.  This is defined as the requiredResultSize passed to CompleteAsync.</param>
 STDAPI GetAsyncResult(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ const void* token,
     _In_ size_t bufferSize,
     _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) void* buffer,

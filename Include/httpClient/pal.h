@@ -37,9 +37,18 @@
 #endif 
 
 #define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
-#define E_TIME_CRITICAL_THREAD           RPC_E_WRONG_THREAD
+
+#ifndef E_TIME_CRITICAL_THREAD
+#define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x800701A0L)
+#endif
+
+#ifndef E_NOT_SUPPORTED
 #define E_NOT_SUPPORTED                  _HRESULTYPEDEF_(0x80070032L)
-#define E_INSUFFICIENT_BUFFER            _HRESULTYPEDEF_(0x8007007AL)
+#endif
+
+#ifndef E_NOT_SUFFICIENT_BUFFER
+#define E_NOT_SUFFICIENT_BUFFER          _HRESULTYPEDEF_(0x8007007AL)
+#endif
 
 #else 
 // not _WIN32
@@ -101,7 +110,7 @@ typedef void* HANDLE;
 #define E_POINTER                        _HRESULTYPEDEF_(0x80004003L)
 #define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x8001010EL)
 #define E_NOT_SUPPORTED                  _HRESULTYPEDEF_(0x80070032L)
-#define E_INSUFFICIENT_BUFFER            _HRESULTYPEDEF_(0x8007007AL)
+#define E_NOT_SUFFICIENT_BUFFER          _HRESULTYPEDEF_(0x8007007AL)
 
 typedef struct _LIST_ENTRY {
     struct _LIST_ENTRY  *Flink;

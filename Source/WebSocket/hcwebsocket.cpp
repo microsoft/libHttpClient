@@ -62,8 +62,6 @@ try
 
     websocket->connectHeaders[headerName] = headerValue;
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketSetHeader [ID %llu]: %s=%s",
-        websocket->id, headerName, headerValue);
     return S_OK;
 }
 CATCH_RETURN()

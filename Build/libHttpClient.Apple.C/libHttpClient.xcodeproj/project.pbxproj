@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
 		58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
@@ -30,6 +31,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_logger.cpp; sourceTree = "<group>"; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
 		58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hcwebsocket.cpp; sourceTree = "<group>"; };
@@ -99,6 +101,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5839C51A20AA2454006ACBD3 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
 		58722D05209AD61900B071F7 = {
 			isa = PBXGroup;
 			children = (
@@ -144,6 +154,7 @@
 		58A7E97D209ADEB100CC6774 /* Logger */ = {
 			isa = PBXGroup;
 			children = (
+				5839C51A20AA2454006ACBD3 /* iOS */,
 				58A7E97E209ADEB100CC6774 /* log_publics.cpp */,
 				58A7E980209ADEB100CC6774 /* trace_internal.h */,
 				58A7E97F209ADEB100CC6774 /* trace.cpp */,
@@ -350,6 +361,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */,
+				5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */,
 				58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */,
 				58A7E9CE209ADEB100CC6774 /* uri.cpp in Sources */,
 				58A7E9EB209ADEB100CC6774 /* AsyncLib.cpp in Sources */,
