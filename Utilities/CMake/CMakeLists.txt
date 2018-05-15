@@ -191,6 +191,13 @@ set(Logger_Source_Files
     ../../../Source/Logger/log_publics.cpp
     )
 
+set(Windows_Logger_Source_Files
+   ../../../Source/Logger/Win/win_logger.cpp
+   )
+
+set(Android_Logger_Source_Files
+    ../../../Source/Logger/Android/android_logger.cpp
+    )
 
 set(UnitTests_Source_Files_Support
     ../../../Tests/UnitTests/Support/DefineTestMacros.h
@@ -250,10 +257,12 @@ if( UNITTEST )
     source_group("C++ Source\\HTTP\\Unittest" FILES ${Unittest_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\Unittest" FILES ${Unittest_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
+    source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${Unittest_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${Windows_Logger_Source_Files}
         ${Unittest_WebSocket_Source_Files}
         )
 endif()
@@ -263,11 +272,13 @@ if( UWP )
     source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
+    source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
 
     list(APPEND
         SOURCE_FILES
         ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
         )
 endif()
@@ -276,11 +287,13 @@ if( XDK )
     source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
+    source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
 
     list(APPEND
         SOURCE_FILES
         ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
         )
 endif()
@@ -289,11 +302,13 @@ if( BUILDWIN32 )
     source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\Win32" FILES ${Win32_WebSocket_Source_Files})
+    source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
 
     list(APPEND
         SOURCE_FILES
         ${WinHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
+        ${Windows_Logger_Source_Files}
         ${Win32_WebSocket_Source_Files}
         )
 endif()
@@ -301,10 +316,12 @@ endif()
 if( BUILDANDROID )
     source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
+    source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
 
     list(APPEND
         SOURCE_FILES
         ${Android_HTTP_Source_Files}
+        ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
         )
 endif()
