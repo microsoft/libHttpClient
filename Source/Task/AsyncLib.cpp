@@ -56,10 +56,7 @@ private:
         }
 #endif
 
-        if (providerData.queue != nullptr)
-        {
-            CloseAsyncQueue(providerData.queue);
-        }
+        CloseAsyncQueue(providerData.queue);
 
 #ifdef _WIN32
         if (waitEvent != nullptr)
