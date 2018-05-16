@@ -111,6 +111,13 @@ STDAPI CreateNestedAsyncQueue(
     _In_ async_queue_handle_t parentQueue,
     _Out_ async_queue_handle_t* queue);
 
+STDAPI CreateCompositeAsyncQueue(
+    _In_ async_queue_handle_t workerSourceQueue,
+    _In_ AsyncQueueCallbackType workerSourceCallbackType,
+    _In_ async_queue_handle_t completionSourceQueue,
+    _In_ AsyncQueueCallbackType completionSourceCallbackType,
+    _Out_ async_queue_handle_t* queue);
+
 /// <summary>
 /// Increments the reference count on the async queue.  Call CloseAsyncQueue
 /// to decrement.

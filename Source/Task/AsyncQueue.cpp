@@ -350,17 +350,24 @@ struct async_queue_t
 {
     ~async_queue_t()
     {
-        if (m_parent != nullptr)
+        if (m_workSource != nullptr)
         {
-            CloseAsyncQueue(m_parent);
+            CloseAsyncQueue(m_workSource);
         }
         else
         {
-            if (m_work != nullptr)
+            if (m_completionSource != nullptr)
             {
                 delete m_work;
             }
+        }
 
+        if (m_completionSource != nullptr)
+        {
+            CloseAsyncQueue(m_completionSource);
+        }
+        else
+        {
             if (m_completion != nullptr)
             {
                 delete m_completion;
@@ -368,12 +375,25 @@ struct async_queue_t
         }
     }
 
-    void Initialize(async_queue_t* parent)
+    void Initialize(
+        _In_ async_queue_t* workerSource,
+        _In_ AsyncQueueCallbackType workerSourceCallbackType,
+        _In_ async_queue_t* completionSource,
+        _In_ AsyncQueueCallbackType completionSourceCallbackType)
     {
-        m_work = parent->m_work;
-        m_completion = parent->m_work;  // N.B. When creating a child queue its completions share the work queue
-        m_parent = parent;
-        m_parent->AddRef();
+        Queue* work = workerSourceCallbackType == AsyncQueueCallbackType_Work ?
+            workerSource->m_work : workerSource->m_completion;
+        Queue* completion = completionSourceCallbackType == AsyncQueueCallbackType_Work ?
+            completionSource->m_work : completionSource->m_completion;
+
+        m_work = work;
+        m_completion = completion;
+
+        m_workSource = workerSource;
+        m_workSource->AddRef();
+
+        m_completionSource = completionSource;
+        m_completionSource->AddRef();
     }
 
     HRESULT Initialize(AsyncQueueDispatchMode workMode, AsyncQueueDispatchMode completionMode)
@@ -478,7 +498,8 @@ private:
     SubmitCallback m_callbackSubmitted;
     Queue* m_work = nullptr;
     Queue* m_completion = nullptr;
-    async_queue_t* m_parent = nullptr;
+    async_queue_t* m_workSource = nullptr;
+    async_queue_t* m_completionSource = nullptr;
 };
 
 static void EnsureSharedInitialization()
@@ -517,8 +538,27 @@ STDAPI CreateNestedAsyncQueue(
     _In_ async_queue_handle_t parentQueue,
     _Out_ async_queue_handle_t* queue)
 {
-    async_queue_t* parent = async_queue_t::GetQueue(parentQueue);
-    if (parent == nullptr)
+    return CreateCompositeAsyncQueue(
+        parentQueue,
+        AsyncQueueCallbackType_Work,
+        parentQueue,
+        AsyncQueueCallbackType_Work,
+        queue);
+}
+
+/// <summary>
+/// Creates an async queue by composing elements of 2 other queues.
+/// </summary>
+STDAPI CreateCompositeAsyncQueue(
+    _In_ async_queue_handle_t workerSourceQueue,
+    _In_ AsyncQueueCallbackType workerSourceCallbackType,
+    _In_ async_queue_handle_t completionSourceQueue,
+    _In_ AsyncQueueCallbackType completionSourceCallbackType,
+    _Out_ async_queue_handle_t* queue)
+{
+    async_queue_t* workerSource = async_queue_t::GetQueue(workerSourceQueue);
+    async_queue_t* completionSource = async_queue_t::GetQueue(completionSourceQueue);
+    if (workerSource == nullptr || completionSource == nullptr)
     {
         RETURN_HR(E_INVALIDARG);
     }
@@ -526,7 +566,7 @@ STDAPI CreateNestedAsyncQueue(
     async_queue_t* aq = new (std::nothrow) async_queue_t;
     RETURN_IF_NULL_ALLOC(aq);
 
-    aq->Initialize(parent);
+    aq->Initialize(workerSource, workerSourceCallbackType, completionSource, completionSourceCallbackType);
 
     *queue = aq;
     return S_OK;
