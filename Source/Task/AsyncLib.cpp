@@ -21,6 +21,10 @@ struct AsyncState
 #ifdef _WIN32
     HANDLE waitEvent = nullptr;
     PTP_TIMER timer = nullptr;
+#else
+    std::mutex waitMutex;
+    std::condition_variable waitCondition;
+    bool waitSatisfied;
 #endif
 
     const void* token = nullptr;
@@ -215,7 +219,8 @@ private:
 static void CALLBACK CompletionCallbackForAsyncState(_In_ void* context);
 static void CALLBACK CompletionCallbackForAsyncBlock(_In_ void* context);
 static void CALLBACK WorkerCallback(_In_ void* context);
-static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state);
+static void SignalCompletion(_In_ AsyncStateRef const& state);
+static void SignalWait(_In_ AsyncStateRef const& state);
 static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal);
 static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
@@ -358,7 +363,7 @@ static void CleanupState(_Inout_ AsyncStateRef&& state)
     }
 }
 
-static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state)
+static void SignalCompletion(_In_ AsyncStateRef const& state)
 {
     if (state->providerData.async->callback != nullptr)
     {
@@ -379,11 +384,25 @@ static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef con
             FAIL_FAST_MSG("Failed to submit competion callback: 0x%08x", hr);
         }
     }
+    else
+    {
+        SignalWait(state);
+    }
+}
+
+static void SignalWait(_In_ AsyncStateRef const& state)
+{
 #if _WIN32
-    else if (state->waitEvent)
+    if (state->waitEvent)
     {
         SetEvent(state->waitEvent);
     }
+#else
+    {
+        std::lock_guard<std::mutex> lock(state->waitMutex);
+        state->waitSatisfied = true;
+    }
+    state->waitCondition.notify_all();
 #endif
 }
 
@@ -414,12 +433,8 @@ static void CALLBACK CompletionCallbackForAsyncState(
     {
         asyncBlock->callback(asyncBlock);
     }
-#if _WIN32
-    if (state->waitEvent)
-    {
-        SetEvent(state->waitEvent);
-    }
-#endif
+
+    SignalWait(state);
 }
 
 static void CALLBACK WorkerCallback(
@@ -454,7 +469,7 @@ static void CALLBACK WorkerCallback(
         }
         if (completedNow)
         {
-            SignalCompletion(asyncBlock, state);
+            SignalCompletion(state);
         }
     }
 }
@@ -510,22 +525,28 @@ STDAPI GetAsyncStatus(
         state = internal.GetState();
     }
 
-    if (result == E_PENDING)
+    // If we are being asked to wait, always check the wait state before
+    // looking at the hresult.  Our wait waits until the completion runs
+    // so we may need to wait past when the status is set.
+
+    if (wait)
     {
-        ASSERT(state != nullptr);
-        RETURN_HR_IF(E_INVALIDARG, state == nullptr);
-
-        if (wait)
+        if (state == nullptr)
         {
-#if _WIN32
-            DWORD wait;
+            ASSERT(result != E_PENDING);
+            RETURN_HR_IF(E_INVALIDARG, result == E_PENDING);
+        }
+        else
+        {
 
+#if _WIN32
+            DWORD waitResult;
             do
             {
-                wait = WaitForSingleObjectEx(state->waitEvent, INFINITE, TRUE);
-            } while (wait == WAIT_IO_COMPLETION);
+                waitResult = WaitForSingleObjectEx(state->waitEvent, INFINITE, TRUE);
+            } while (waitResult == WAIT_IO_COMPLETION);
 
-            if (wait == WAIT_OBJECT_0)
+            if (waitResult == WAIT_OBJECT_0)
             {
                 result = GetAsyncStatus(asyncBlock, false);
             }
@@ -534,8 +555,15 @@ STDAPI GetAsyncStatus(
                 result = HRESULT_FROM_WIN32(GetLastError());
             }
 #else
-            ASSERT(false);
-            RETURN_HR(E_INVALIDARG);
+            std::unique_lock<std::mutex> lock(state->waitMutex);
+
+            if (!state->waitSatisfied)
+            {
+                AsyncState* s = state.Get();
+                state->waitCondition.wait(lock, [s] { return s->waitSatisfied; });
+            }
+
+            result = GetAsyncStatus(asyncBlock, false);
 #endif
         }
     }
@@ -603,7 +631,7 @@ STDAPI_(void) CancelAsync(
 #endif
 
     (void)state->provider(AsyncOp_Cancel, &state->providerData);
-    SignalCompletion(asyncBlock, state);
+    SignalCompletion(state);
     // At this point asyncBlock is unsafe to touch
 
     CleanupState(std::move(state));
@@ -775,7 +803,7 @@ STDAPI_(void) CompleteAsync(
     if (completedNow)
     {
         state->providerData.bufferSize = requiredBufferSize;
-        SignalCompletion(asyncBlock, state);
+        SignalCompletion(state);
     }
     // At this point asyncBlock may be unsafe to touch
 
