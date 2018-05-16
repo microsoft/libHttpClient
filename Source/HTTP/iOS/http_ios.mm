@@ -3,15 +3,14 @@
 #include "pch.h"
 #include "http_ios.h"
 
-
 ios_http::ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
-m_call(call),
-m_asyncBlock(asyncBlock)
+    m_call(call),
+    m_asyncBlock(asyncBlock)
 {
     NSURLSessionConfiguration* configuration = NSURLSessionConfiguration.ephemeralSessionConfiguration;
 
     uint32_t timeoutInSeconds = 0;
-    if (HCHttpCallRequestGetTimeout(m_call, &timeoutInSeconds) != S_OK)
+    if (FAILED(HCHttpCallRequestGetTimeout(m_call, &timeoutInSeconds)))
     {
         // default to 60 to match other default ios behaviour
         timeoutInSeconds = 60;
@@ -25,20 +24,16 @@ m_asyncBlock(asyncBlock)
 
 void ios_http::completion_handler(NSData *data, NSURLResponse *response, NSError *error)
 {
+    ASSERT([response isKindOfClass:[NSHTTPURLResponse class]]);
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
+    
     if (error)
     {
-        // TODO: handle errors better
+        // TODO: handle errors
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
         return;
     }
-    
-    if(![response isKindOfClass:[NSHTTPURLResponse class]])
-    {
-        // something has gone horribly wrong, we should always get a NSHTTPURLResponse
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return;
-    }
-    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
+
     uint32_t statusCode = (uint32_t)[httpResponse statusCode];
     
     HCHttpCallResponseSetStatusCode(m_call, statusCode);
@@ -61,10 +56,10 @@ void ios_http::initiate_request()
 {
     const char* urlCString = nullptr;
     const char* methodCString = nullptr;
-    if (HCHttpCallRequestGetUrl(m_call, &methodCString, &urlCString) != S_OK)
+    if (FAILED(HCHttpCallRequestGetUrl(m_call, &methodCString, &urlCString)))
     {
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return; //TODO: actually use helpful error codes
+        return; //TODO: handle errors better
     }
     
     NSString* urlString = [[NSString alloc] initWithUTF8String:urlCString];
@@ -76,35 +71,31 @@ void ios_http::initiate_request()
     [request setHTTPMethod:methodString];
     
     uint32_t numHeaders = 0;
-    if (HCHttpCallRequestGetNumHeaders(m_call, &numHeaders) != S_OK)
+    if (FAILED(HCHttpCallRequestGetNumHeaders(m_call, &numHeaders)))
     {
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return; //TODO add error codes
+        return; //TODO: errors
     }
-    if (numHeaders > 0)
+    
+    for(uint32_t i=0; i<numHeaders; ++i)
     {
-        //TODO: user agent?????
-        for(uint32_t i=0; i<numHeaders; ++i)
+        const char* headerName;
+        const char* headerValue;
+        if (SUCCEEDED(HCHttpCallRequestGetHeaderAtIndex(m_call, i, &headerName, &headerValue)))
         {
-            const char* headerName;
-            const char* headerValue;
-            if (HCHttpCallRequestGetHeaderAtIndex(m_call, i, &headerName, &headerValue) == S_OK && headerName != nullptr && headerValue != nullptr)
-            {
-                NSString* headerNameString = [[NSString alloc] initWithUTF8String:headerName];
-                NSString* headerValueString = [[NSString alloc] initWithUTF8String:headerValue];
-                
-                [request addValue:headerValueString forHTTPHeaderField:headerNameString];
-            }
+            NSString* headerNameString = [[NSString alloc] initWithUTF8String:headerName];
+            NSString* headerValueString = [[NSString alloc] initWithUTF8String:headerValue];
+            
+            [request addValue:headerValueString forHTTPHeaderField:headerNameString];
         }
     }
     
-    
     const BYTE* requestBody = nullptr;
     uint32_t requestBodySize = 0;
-    if(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize) != S_OK)
+    if(FAILED(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize)))
     {
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return; //TODO: add error codes
+        return; //TODO: errors
     }
     
     if (requestBodySize == 0)
@@ -112,7 +103,7 @@ void ios_http::initiate_request()
         m_sessionTask = [m_session dataTaskWithRequest:request completionHandler:
                          ^(NSData *data, NSURLResponse *response, NSError *error)
                          {
-                         this->completion_handler(data, response, error);
+                             this->completion_handler(data, response, error);
                          }];
     }
     else
@@ -122,7 +113,7 @@ void ios_http::initiate_request()
         m_sessionTask = [m_session uploadTaskWithRequest:request fromData:data completionHandler:
                          ^(NSData *data, NSURLResponse *response, NSError *error)
                          {
-                         this->completion_handler(data, response, error);
+                             this->completion_handler(data, response, error);
                          }];
     }
     
@@ -132,9 +123,9 @@ void ios_http::initiate_request()
 
 
 void Internal_HCHttpCallPerform(
-                                _In_ AsyncBlock* asyncBlock,
-                                _In_ hc_call_handle_t call
-                                )
+    _In_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call
+    )
 {
     ios_http* httpTask = new ios_http(asyncBlock, call);
     HCHttpCallSetContext(call, httpTask);

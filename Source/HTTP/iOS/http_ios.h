@@ -4,7 +4,7 @@
 #pragma once
 #import <Foundation/Foundation.h>
 
-class ios_http : public xbox::httpclient::hc_task
+class ios_http
 {
 public:
     ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call);
@@ -12,10 +12,9 @@ public:
 private:
     void completion_handler(NSData *data, NSURLResponse *response, NSError *error);
     
-    hc_call_handle_t m_call;
-    AsyncBlock* m_asyncBlock;
+    hc_call_handle_t m_call; // non owning
+    AsyncBlock* m_asyncBlock; // non owning
     
-    //HC_TASK_HANDLE m_task;
     NSURLSession* m_session;
     NSURLSessionTask* m_sessionTask;
 };
