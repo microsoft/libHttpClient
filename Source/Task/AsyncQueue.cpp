@@ -356,7 +356,7 @@ struct async_queue_t
         }
         else
         {
-            if (m_completionSource != nullptr)
+            if (m_work != nullptr)
             {
                 delete m_work;
             }
