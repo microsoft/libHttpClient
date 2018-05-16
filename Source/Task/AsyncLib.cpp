@@ -212,7 +212,8 @@ private:
     AsyncBlockInternal * const m_internal;
 };
 
-static void CALLBACK CompletionCallback(_In_ void* context);
+static void CALLBACK CompletionCallbackForAsyncState(_In_ void* context);
+static void CALLBACK CompletionCallbackForAsyncBlock(_In_ void* context);
 static void CALLBACK WorkerCallback(_In_ void* context);
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state);
 static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal);
@@ -309,7 +310,17 @@ static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock)
 
         internal->status = hr;
 
-        if (asyncBlock->waitEvent != nullptr)
+        if (asyncBlock->queue != nullptr && asyncBlock->callback != nullptr)
+        {
+            hr = SubmitAsyncCallback(
+                asyncBlock->queue,
+                AsyncQueueCallbackType_Completion,
+                asyncBlock,
+                CompletionCallbackForAsyncBlock);
+        }
+
+        // The completion callback will signal the event
+        if (FAILED(hr) && asyncBlock->waitEvent != nullptr)
         {
 #if _WIN32
             SetEvent(asyncBlock->waitEvent);
@@ -318,14 +329,6 @@ static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock)
 #endif
         }
 
-        if (asyncBlock->queue)
-        {
-            hr = SubmitAsyncCallback(
-                asyncBlock->queue,
-                AsyncQueueCallbackType_Completion,
-                asyncBlock,
-                CompletionCallback);
-        }
     }
 
     return hr;
@@ -357,36 +360,66 @@ static void CleanupState(_Inout_ AsyncStateRef&& state)
 
 static void SignalCompletion(_In_ AsyncBlock* asyncBlock, _In_ AsyncStateRef const& state)
 {
+    if (state->providerData.async->callback != nullptr)
+    {
+        AsyncStateRef callbackState(state.Get());
+
+        HRESULT hr = SubmitAsyncCallback(
+            state->providerData.queue,
+            AsyncQueueCallbackType_Completion,
+            callbackState.Get(),
+            CompletionCallbackForAsyncState);
+
+        if (SUCCEEDED(hr))
+        {
+            callbackState.Detach();
+        }
+        else
+        {
+            FAIL_FAST_MSG("Failed to submit competion callback: 0x%08x", hr);
+        }
+    }
+#if _WIN32
+    else if (state->waitEvent)
+    {
+        SetEvent(state->waitEvent);
+    }
+#endif
+}
+
+static void CALLBACK CompletionCallbackForAsyncBlock(
+    _In_ void* context)
+{
+    AsyncBlock* asyncBlock = static_cast<AsyncBlock*>(context);
+    if (asyncBlock->callback != nullptr)
+    {
+        asyncBlock->callback(asyncBlock);
+    }
+#if _WIN32
+    if (asyncBlock->waitEvent)
+    {
+        SetEvent(asyncBlock->waitEvent);
+    }
+#endif
+}
+
+static void CALLBACK CompletionCallbackForAsyncState(
+    _In_ void* context)
+{
+    AsyncStateRef state;
+    state.Attach(static_cast<AsyncState*>(context));
+
+    AsyncBlock* asyncBlock = state->providerData.async;
+    if (asyncBlock->callback != nullptr)
+    {
+        asyncBlock->callback(asyncBlock);
+    }
 #if _WIN32
     if (state->waitEvent)
     {
         SetEvent(state->waitEvent);
     }
 #endif
-
-    if (state->providerData.async->callback != nullptr)
-    {
-        HRESULT hr = SubmitAsyncCallback(
-            state->providerData.queue,
-            AsyncQueueCallbackType_Completion,
-            asyncBlock,
-            CompletionCallback);
-
-        if (FAILED(hr))
-        {
-            FAIL_FAST_MSG("Failed to submit competion callback: 0x%08x", hr);
-        }
-    }
-}
-
-static void CALLBACK CompletionCallback(
-    _In_ void* context)
-{
-    AsyncBlock* asyncBlock = (AsyncBlock*)context;
-    if (asyncBlock->callback != nullptr)
-    {
-        asyncBlock->callback(asyncBlock);
-    }
 }
 
 static void CALLBACK WorkerCallback(
@@ -485,12 +518,21 @@ STDAPI GetAsyncStatus(
         if (wait)
         {
 #if _WIN32
-            // Don't rely on this returning WAIT_OBJECT_0.  If a callback
-            // was invoked that read the results before our wait could wake,
-            // it's possible the event was closed.  We should still treat this
-            // as a status change.
-            (void)WaitForSingleObject(state->waitEvent, INFINITE);
-            result = GetAsyncStatus(asyncBlock, false);
+            DWORD wait;
+
+            do
+            {
+                wait = WaitForSingleObjectEx(state->waitEvent, INFINITE, TRUE);
+            } while (wait == WAIT_IO_COMPLETION);
+
+            if (wait == WAIT_OBJECT_0)
+            {
+                result = GetAsyncStatus(asyncBlock, false);
+            }
+            else
+            {
+                result = HRESULT_FROM_WIN32(GetLastError());
+            }
 #else
             ASSERT(false);
             RETURN_HR(E_INVALIDARG);
