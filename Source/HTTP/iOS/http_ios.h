@@ -4,13 +4,16 @@
 #pragma once
 #import <Foundation/Foundation.h>
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
 class ios_http
 {
 public:
     ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call);
     void initiate_request();
+
 private:
-    void completion_handler(NSData *data, NSURLResponse *response, NSError *error);
+    void completion_handler(NSData* data, NSURLResponse* response, NSError* error);
     
     hc_call_handle_t m_call; // non owning
     AsyncBlock* m_asyncBlock; // non owning
@@ -18,3 +21,5 @@ private:
     NSURLSession* m_session;
     NSURLSessionTask* m_sessionTask;
 };
+
+NAMESPACE_XBOX_HTTP_CLIENT_END

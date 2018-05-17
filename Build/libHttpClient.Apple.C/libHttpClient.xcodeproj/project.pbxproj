@@ -27,7 +27,6 @@
 		58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
 		58A7E9F3209AE09B00CC6774 /* ios_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9F2209AE03800CC6774 /* ios_websocket.cpp */; };
-		A529DDBD20A4C88F00D50640 /* http_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = A529DDBC20A4C88F00D50640 /* http_ios.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -205,8 +204,8 @@
 		58A7E998209ADEB100CC6774 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				58A7E999209ADEB100CC6774 /* http_ios.mm */,
 				A529DDBC20A4C88F00D50640 /* http_ios.h */,
+				58A7E999209ADEB100CC6774 /* http_ios.mm */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -301,7 +300,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A529DDBD20A4C88F00D50640 /* http_ios.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

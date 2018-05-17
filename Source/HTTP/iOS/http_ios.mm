@@ -1,11 +1,15 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #include "pch.h"
 #include "http_ios.h"
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
 ios_http::ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
     m_call(call),
-    m_asyncBlock(asyncBlock)
+    m_asyncBlock(asyncBlock),
+    m_sessionTask(nil)
 {
     NSURLSessionConfiguration* configuration = NSURLSessionConfiguration.ephemeralSessionConfiguration;
 
@@ -22,10 +26,10 @@ ios_http::ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
     m_session = [NSURLSession sessionWithConfiguration:configuration];
 }
 
-void ios_http::completion_handler(NSData *data, NSURLResponse *response, NSError *error)
+void ios_http::completion_handler(NSData* data, NSURLResponse* response, NSError* error)
 {
-    ASSERT([response isKindOfClass:[NSHTTPURLResponse class]]);
-    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
+    assert([response isKindOfClass:[NSHTTPURLResponse class]]);
+    NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
     
     if (error)
     {
@@ -34,17 +38,17 @@ void ios_http::completion_handler(NSData *data, NSURLResponse *response, NSError
         return;
     }
 
-    uint32_t statusCode = (uint32_t)[httpResponse statusCode];
+    uint32_t statusCode = static_cast<uint32_t>([httpResponse statusCode]);
     
     HCHttpCallResponseSetStatusCode(m_call, statusCode);
     
-    NSDictionary *headers = [httpResponse allHeaderFields];
-    for (NSString *key in headers)
+    NSDictionary* headers = [httpResponse allHeaderFields];
+    for (NSString* key in headers)
     {
-        NSString *value = headers[key];
+        NSString* value = headers[key];
         
-        const char *keyCString = [key cStringUsingEncoding:NSUTF8StringEncoding];
-        const char *valueCString = [value cStringUsingEncoding:NSUTF8StringEncoding];
+        char const* keyCString = [key cStringUsingEncoding:NSUTF8StringEncoding];
+        char const* valueCString = [value cStringUsingEncoding:NSUTF8StringEncoding];
         HCHttpCallResponseSetHeader(m_call, keyCString, valueCString);
     }
 
@@ -54,8 +58,8 @@ void ios_http::completion_handler(NSData *data, NSURLResponse *response, NSError
 
 void ios_http::initiate_request()
 {
-    const char* urlCString = nullptr;
-    const char* methodCString = nullptr;
+    char const* urlCString = nullptr;
+    char const* methodCString = nullptr;
     if (FAILED(HCHttpCallRequestGetUrl(m_call, &methodCString, &urlCString)))
     {
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
@@ -77,10 +81,10 @@ void ios_http::initiate_request()
         return; //TODO: errors
     }
     
-    for(uint32_t i=0; i<numHeaders; ++i)
+    for (uint32_t i = 0; i<numHeaders; ++i)
     {
-        const char* headerName;
-        const char* headerValue;
+        char const* headerName;
+        char const* headerValue;
         if (SUCCEEDED(HCHttpCallRequestGetHeaderAtIndex(m_call, i, &headerName, &headerValue)))
         {
             NSString* headerNameString = [[NSString alloc] initWithUTF8String:headerName];
@@ -90,9 +94,9 @@ void ios_http::initiate_request()
         }
     }
     
-    const BYTE* requestBody = nullptr;
+    uint8_t const* requestBody = nullptr;
     uint32_t requestBodySize = 0;
-    if(FAILED(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize)))
+    if (FAILED(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize)))
     {
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
         return; //TODO: errors
@@ -101,7 +105,7 @@ void ios_http::initiate_request()
     if (requestBodySize == 0)
     {
         m_sessionTask = [m_session dataTaskWithRequest:request completionHandler:
-                         ^(NSData *data, NSURLResponse *response, NSError *error)
+                         ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
                              this->completion_handler(data, response, error);
                          }];
@@ -111,7 +115,7 @@ void ios_http::initiate_request()
         NSData* data = [NSData dataWithBytes:requestBody length:requestBodySize];
         
         m_sessionTask = [m_session uploadTaskWithRequest:request fromData:data completionHandler:
-                         ^(NSData *data, NSURLResponse *response, NSError *error)
+                         ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
                              this->completion_handler(data, response, error);
                          }];
@@ -120,15 +124,15 @@ void ios_http::initiate_request()
     [m_sessionTask resume];
 }
 
-
+NAMESPACE_XBOX_HTTP_CLIENT_END
 
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
-    )
+)
 {
-    ios_http* httpTask = new ios_http(asyncBlock, call);
-    HCHttpCallSetContext(call, httpTask);
+    std::unique_ptr<xbox::httpclient::ios_http> httpTask(new xbox::httpclient::ios_http(asyncBlock, call));
+    HCHttpCallSetContext(call, &httpTask);
     httpTask->initiate_request();
+    httpTask.release();
 }
-
