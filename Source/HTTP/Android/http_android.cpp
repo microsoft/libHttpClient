@@ -45,6 +45,13 @@ void Internal_HCHttpCallPerform(
     const uint8_t* requestBody = nullptr;
     uint32_t requestBodySize = 0;
 
+    HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
+    if (requestBodySize > 0) {
+        const char* contentType = nullptr;
+        HCHttpCallRequestGetHeader(call, "Content-Type", &contentType);
+        httpRequest.SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
+    }
+
     // TODO: Set request body
     HC_TRACE_INFORMATION(HTTPCLIENT, "Executing HTTP request");
     httpRequest.ExecuteRequest();

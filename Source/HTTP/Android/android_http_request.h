@@ -18,7 +18,6 @@ public:
     uint32_t GetResponseHeaderCount();
     std::string GetHeaderNameAtIndex(uint32_t index);
     std::string GetHeaderValueAtIndex(uint32_t index);
-    uint64_t GetResponseSize();
     void ProcessResponseBody(hc_call_handle_t call);
 
     static HRESULT InitializeJavaEnvironment(JavaVM* javaVM);

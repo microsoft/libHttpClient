@@ -11,8 +11,11 @@
 /* static */ HRESULT HttpRequest::InitializeJavaEnvironment(JavaVM* javaVM) {
     // TODO: Return an HRESULT or another error type?
     s_javaVM = javaVM;
+
+    // TODO: This needs to be changed to GetEnv instead of attach current thread; we must be on
+    // a java thread for this to work.
     JNIEnv* jniEnv = nullptr;
-    jint threadAttached = s_javaVM->AttachCurrentThread(&jniEnv, nullptr);
+    s_javaVM->AttachCurrentThread(&jniEnv, nullptr);
 
     // TODO: Check that the thread is attached.
     // TODO: Check that class was found.
@@ -54,9 +57,8 @@
 }
 
 HttpRequest::HttpRequest() : m_jniEnv(nullptr), m_httpRequestInstance(nullptr), m_httpResponseInstance(nullptr) {
-    jint threadAttached = s_javaVM->AttachCurrentThread(&m_jniEnv, nullptr);
-
     // TODO: move to an initialize thread so that we can return an error and push failures up the stack?
+    s_javaVM->AttachCurrentThread(&m_jniEnv, nullptr);
     jmethodID httpRequestCtor = m_jniEnv->GetMethodID(s_httpRequestClass, "<init>", "()V");
     m_httpRequestInstance = m_jniEnv->NewObject(s_httpRequestClass, httpRequestCtor);
 }
@@ -103,44 +105,6 @@ void HttpRequest::ExecuteRequest() {
     // be detected and bubbled back up.
     jmethodID httpRequestExecuteMethod = m_jniEnv->GetMethodID(s_httpRequestClass, "doRequest", "()Lcom/xbox/httpclient/HttpClientResponse;");
     m_httpResponseInstance = m_jniEnv->CallObjectMethod(m_httpRequestInstance, httpRequestExecuteMethod);
-
-    jmethodID httpResponseStatusMethod = m_jniEnv->GetMethodID(s_httpResponseClass, "getResponseCode", "()I");
-    jint responseStatus = m_jniEnv->CallIntMethod(m_httpResponseInstance, httpResponseStatusMethod);
-
-//    LOGV("Response code: %d", responseStatus);
-//    responseCode = (int)responseStatus;
-
-    jmethodID httpResponssNumHeadersMethod = m_jniEnv->GetMethodID(s_httpResponseClass, "getNumHeaders", "()I");
-    jint numHeaders = m_jniEnv->CallIntMethod(m_httpResponseInstance, httpResponssNumHeadersMethod);
-
-//    LOGV("Header Count: %d", numHeaders);
-
-    jmethodID httpRepsonseGetHeaderName = m_jniEnv->GetMethodID(s_httpResponseClass, "getHeaderNameAtIndex", "(I)Ljava/lang/String;");
-    jmethodID httpRepsonseGetHeaderValue = m_jniEnv->GetMethodID(s_httpResponseClass, "getHeaderValueAtIndex", "(I)Ljava/lang/String;");
-    for (uint32_t i = 0; i < numHeaders; i++)
-    {
-        jstring headerName = (jstring)m_jniEnv->CallObjectMethod(m_httpResponseInstance, httpRepsonseGetHeaderName, i);
-        jstring headerValue = (jstring)m_jniEnv->CallObjectMethod(m_httpResponseInstance, httpRepsonseGetHeaderValue, i);
-
-        const char* nameCstr = m_jniEnv->GetStringUTFChars(headerName, NULL);
-        const char* valueCstr = m_jniEnv->GetStringUTFChars(headerValue, NULL);
-
-//        LOGV("Header at index %d, %s: %s", i, nameCstr, valueCstr);
-
-        m_jniEnv->ReleaseStringUTFChars(headerName, nameCstr);
-        m_jniEnv->ReleaseStringUTFChars(headerValue, valueCstr);
-    }
-
-    jmethodID httpResonseGetSize = m_jniEnv->GetMethodID(s_httpResponseClass, "getResponseBodyBytesSize", "()J");
-    jlong responseSize = m_jniEnv->CallLongMethod(m_httpResponseInstance, httpResonseGetSize);
-//    LOGV("Response Length: %d", (jint)responseSize);
-//    m_responseSize = (uint64_t)responseSize;
-
-    //    jmethodID httpResonseGetString = m_jniEnv->GetMethodID(m_httpResponseClass, "getResponseString", "()Ljava/lang/String;");
-    //    jstring responseString = (jstring)m_jniEnv->CallObjectMethod(callResponse, httpResonseGetString);
-    //    const char* responseCStr = m_jniEnv->GetStringUTFChars(responseString, NULL);
-    //    LOGV("Response String: %s", responseCStr);
-    //    m_jniEnv->ReleaseStringUTFChars(responseString, responseCStr);
 }
 
 void HttpRequest::ProcessResponseBody(hc_call_handle_t call) 
@@ -148,13 +112,16 @@ void HttpRequest::ProcessResponseBody(hc_call_handle_t call)
     jmethodID httpResponseBodyMethod = m_jniEnv->GetMethodID(s_httpResponseClass, "getResponseBodyBytes", "()[B");
     jbyteArray responseBody = (jbyteArray)m_jniEnv->CallObjectMethod(m_httpResponseInstance, httpResponseBodyMethod);
 
-    int bodySize = m_jniEnv->GetArrayLength(responseBody);
-    if (bodySize > 0) 
+    if (responseBody != nullptr) 
     {
-        uint8_t* bodyBuffer = new uint8_t[bodySize];
-        m_jniEnv->GetByteArrayRegion(responseBody, 0, bodySize, reinterpret_cast<jbyte*>(bodyBuffer));
+        int bodySize = m_jniEnv->GetArrayLength(responseBody);
+        if (bodySize > 0)
+        {
+            uint8_t* bodyBuffer = new uint8_t[bodySize];
+            m_jniEnv->GetByteArrayRegion(responseBody, 0, bodySize, reinterpret_cast<jbyte*>(bodyBuffer));
 
-        HCHttpCallResponseSetResponseBodyBytes(call, bodyBuffer, bodySize);
+            HCHttpCallResponseSetResponseBodyBytes(call, bodyBuffer, bodySize);
+        }
     }
 }
 
@@ -206,11 +173,6 @@ std::string HttpRequest::GetHeaderValueAtIndex(uint32_t index) {
     {
         return nullptr;
     }
-}
-
-uint64_t HttpRequest::GetResponseSize() {
-    // TODO:
-    return 0;
 }
 
 HttpRequest::~HttpRequest() {
