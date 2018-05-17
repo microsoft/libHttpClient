@@ -193,12 +193,6 @@
     </Filter>
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{4FAC39B2-DCB4-3476-AEEF-548A5C43612D}</UniqueIdentifier>
-<<<<<<< HEAD
-=======
-    </Filter>
-    <Filter Include="C++ Source\Logger\Win">
-      <UniqueIdentifier>{11DB47ED-9A1E-3493-8CA8-5F3BE24F13F1}</UniqueIdentifier>
->>>>>>> master
     </Filter>
     <Filter Include="C++ Source\Mock">
       <UniqueIdentifier>{C0ACC726-EADB-3E39-A64F-BAC759C6BEDE}</UniqueIdentifier>
