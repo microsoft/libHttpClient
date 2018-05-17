@@ -414,12 +414,14 @@ static void CALLBACK CompletionCallbackForAsyncBlock(
     {
         asyncBlock->callback(asyncBlock);
     }
-#if _WIN32
     if (asyncBlock->waitEvent)
     {
+#if _WIN32
         SetEvent(asyncBlock->waitEvent);
-    }
+#else
+        ASSERT(false);
 #endif
+    }
 }
 
 static void CALLBACK CompletionCallbackForAsyncState(
@@ -538,7 +540,6 @@ STDAPI GetAsyncStatus(
         }
         else
         {
-
 #if _WIN32
             DWORD waitResult;
             do
@@ -555,12 +556,14 @@ STDAPI GetAsyncStatus(
                 result = HRESULT_FROM_WIN32(GetLastError());
             }
 #else
-            std::unique_lock<std::mutex> lock(state->waitMutex);
-
-            if (!state->waitSatisfied)
             {
-                AsyncState* s = state.Get();
-                state->waitCondition.wait(lock, [s] { return s->waitSatisfied; });
+                std::unique_lock<std::mutex> lock(state->waitMutex);
+
+                if (!state->waitSatisfied)
+                {
+                    AsyncState* s = state.Get();
+                    state->waitCondition.wait(lock, [s] { return s->waitSatisfied; });
+                }
             }
 
             result = GetAsyncStatus(asyncBlock, false);

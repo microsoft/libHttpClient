@@ -48,7 +48,9 @@ typedef struct AsyncBlock
     async_queue_handle_t queue;
 
     /// <summary>
-    /// Optional event to wait on
+    /// Optional event to wait on.  This will be signale
+    /// when the async operation is complete and after
+    /// any completion callback has run
     /// </summary>
     HANDLE waitEvent;
 
@@ -72,7 +74,9 @@ typedef struct AsyncBlock
 /// Returns the status of the asynchronous operation, optionally waiting
 /// for it to complete.  Once complete, you may call GetAsyncResult if
 /// the async call has a resulting data payload. If it doesn't, calling
-/// GetAsyncResult is unneeded.
+/// GetAsyncResult is unneeded.  If a completion callback was set into
+/// the asyncBlock, a wait will wait until the completion callback has
+/// returned.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
 /// <param name='wait'>If true, GetAsyncStatus waits until the async call either completes or is canceled.</param>
