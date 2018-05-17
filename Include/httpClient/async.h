@@ -48,7 +48,7 @@ typedef struct AsyncBlock
     async_queue_handle_t queue;
 
     /// <summary>
-    /// Optional event to wait on.  This will be signal
+    /// Optional event to wait on.  This will be signaled
     /// when the async operation is complete and after
     /// any completion callback has run
     /// </summary>
