@@ -6,10 +6,10 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-ios_http::ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
+ios_http_task::ios_http_task(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
     m_call(call),
     m_asyncBlock(asyncBlock),
-    m_sessionTask(nil)
+    m_sessionTask(nullptr)
 {
     NSURLSessionConfiguration* configuration = NSURLSessionConfiguration.ephemeralSessionConfiguration;
 
@@ -26,18 +26,19 @@ ios_http::ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
     m_session = [NSURLSession sessionWithConfiguration:configuration];
 }
 
-void ios_http::completion_handler(NSData* data, NSURLResponse* response, NSError* error)
+void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NSError* error)
 {
-    assert([response isKindOfClass:[NSHTTPURLResponse class]]);
-    NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
-    
     if (error)
     {
         uint32_t errorCode = static_cast<uint32_t>([error code]);
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %u] error from NSURLRequest code: %u", HCHttpCallGetId(m_call), errorCode);
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, errorCode);
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
         return;
     }
+    
+    assert([response isKindOfClass:[NSHTTPURLResponse class]]);
+    NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
 
     uint32_t statusCode = static_cast<uint32_t>([httpResponse statusCode]);
     
@@ -57,7 +58,7 @@ void ios_http::completion_handler(NSData* data, NSURLResponse* response, NSError
     CompleteAsync(m_asyncBlock, S_OK, 0);
 }
 
-void ios_http::initiate_request()
+bool ios_http_task::initiate_request()
 {
     char const* urlCString = nullptr;
     char const* methodCString = nullptr;
@@ -65,7 +66,7 @@ void ios_http::initiate_request()
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return;
+        return false;
     }
     
     NSString* urlString = [[NSString alloc] initWithUTF8String:urlCString];
@@ -81,7 +82,7 @@ void ios_http::initiate_request()
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return;
+        return false;
     }
     
     for (uint32_t i = 0; i<numHeaders; ++i)
@@ -103,7 +104,7 @@ void ios_http::initiate_request()
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return;
+        return false;
     }
     
     if (requestBodySize == 0)
@@ -111,7 +112,7 @@ void ios_http::initiate_request()
         m_sessionTask = [m_session dataTaskWithRequest:request completionHandler:
                          ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
-                             std::unique_ptr<ios_http> me{this};
+                             std::unique_ptr<ios_http_task> me{this};
                              me->completion_handler(data, response, error);
                          }];
     }
@@ -122,12 +123,13 @@ void ios_http::initiate_request()
         m_sessionTask = [m_session uploadTaskWithRequest:request fromData:data completionHandler:
                          ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
-                             std::unique_ptr<ios_http> me{this};
+                             std::unique_ptr<ios_http_task> me{this};
                              me->completion_handler(data, response, error);
                          }];
     }
     
     [m_sessionTask resume];
+    return true;
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
@@ -137,8 +139,10 @@ void Internal_HCHttpCallPerform(
     _In_ hc_call_handle_t call
 )
 {
-    std::unique_ptr<xbox::httpclient::ios_http> httpTask(new xbox::httpclient::ios_http(asyncBlock, call));
+    std::unique_ptr<xbox::httpclient::ios_http_task> httpTask(new xbox::httpclient::ios_http_task(asyncBlock, call));
     HCHttpCallSetContext(call, &httpTask);
-    httpTask->initiate_request();
-    httpTask.release();
+    if (httpTask->initiate_request())
+    {
+         httpTask.release();
+    }
 }

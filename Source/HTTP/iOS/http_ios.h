@@ -6,11 +6,11 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-class ios_http
+class ios_http_task
 {
 public:
-    ios_http(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call);
-    void initiate_request();
+    ios_http_task(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call);
+    bool initiate_request();
 
 private:
     void completion_handler(NSData* data, NSURLResponse* response, NSError* error);
