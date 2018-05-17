@@ -107,7 +107,8 @@ void ios_http::initiate_request()
         m_sessionTask = [m_session dataTaskWithRequest:request completionHandler:
                          ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
-                             this->completion_handler(data, response, error);
+                             std::unique_ptr<ios_http> me{this};
+                             me->completion_handler(data, response, error);
                          }];
     }
     else
@@ -117,7 +118,8 @@ void ios_http::initiate_request()
         m_sessionTask = [m_session uploadTaskWithRequest:request fromData:data completionHandler:
                          ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
-                             this->completion_handler(data, response, error);
+                             std::unique_ptr<ios_http> me{this};
+                             me->completion_handler(data, response, error);
                          }];
     }
     
