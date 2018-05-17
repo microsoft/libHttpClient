@@ -13,7 +13,7 @@ http_request_stream::http_request_stream() :
 }
 
 HRESULT http_request_stream::init(
-    _In_reads_bytes_(cb) const BYTE* requestBody,
+    _In_reads_bytes_(requestBodyBytes) const BYTE* requestBody,
     _In_ uint32_t requestBodyBytes
     )
 {

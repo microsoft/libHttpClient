@@ -237,6 +237,7 @@ public:
             (*entry->refsPointer)--;
             m_processingCallback--;
             delete entry;
+            return true;
         }
 
         return entry != nullptr;
@@ -444,7 +445,7 @@ struct async_queue_t
     }
 
     HRESULT AddCallback(
-        _In_ void* context,
+        _In_opt_ void* context,
         _In_ AsyncQueueCallbackSubmitted* callback,
         _Out_ uint32_t* token)
     {
