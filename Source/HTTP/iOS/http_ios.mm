@@ -33,8 +33,9 @@ void ios_http::completion_handler(NSData* data, NSURLResponse* response, NSError
     
     if (error)
     {
-        // TODO: handle errors
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        uint32_t errorCode = static_cast<uint32_t>([error code]);
+        HCHttpCallResponseSetNetworkErrorCode(m_call, errorCode, errorCode);
+        CompleteAsync(m_asyncBlock, errorCode, 0);
         return;
     }
 
@@ -62,8 +63,9 @@ void ios_http::initiate_request()
     char const* methodCString = nullptr;
     if (FAILED(HCHttpCallRequestGetUrl(m_call, &methodCString, &urlCString)))
     {
+        HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, E_FAIL);
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return; //TODO: handle errors better
+        return;
     }
     
     NSString* urlString = [[NSString alloc] initWithUTF8String:urlCString];
@@ -77,9 +79,9 @@ void ios_http::initiate_request()
     uint32_t numHeaders = 0;
     if (FAILED(HCHttpCallRequestGetNumHeaders(m_call, &numHeaders)))
     {
+        HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, E_FAIL);
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return; //TODO: errors
-    }
+        return;    }
     
     for (uint32_t i = 0; i<numHeaders; ++i)
     {
@@ -98,8 +100,9 @@ void ios_http::initiate_request()
     uint32_t requestBodySize = 0;
     if (FAILED(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize)))
     {
+        HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, E_FAIL);
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
-        return; //TODO: errors
+        return;
     }
     
     if (requestBodySize == 0)
