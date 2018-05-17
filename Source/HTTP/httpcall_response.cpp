@@ -89,7 +89,7 @@ try
     call->responseBodyBytes.assign(bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%d", call->id, bodySize); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%llu", call->id, bodySize); }
     return S_OK;
 }
 CATCH_RETURN()

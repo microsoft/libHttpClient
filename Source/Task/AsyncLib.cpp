@@ -773,9 +773,10 @@ STDAPI GetAsyncResult(
         {
             // Call/Result mismatch.  This AsyncBlock was initiated by state->function
             char buf[100];
+            int sprintfResult;
             if (state->function != nullptr)
             {
-                snprintf(
+                sprintfResult = snprintf(
                     buf,
                     sizeof(buf),
                     "Call/Result mismatch.  This AsyncBlock was initiated by '%s'.\r\n",
@@ -783,12 +784,13 @@ STDAPI GetAsyncResult(
             }
             else
             {
-                snprintf(buf, sizeof(buf), "Call/Result mismatch\r\n");
+                sprintfResult = snprintf(buf, sizeof(buf), "Call/Result mismatch\r\n");
             }
 
             result = E_INVALIDARG;
             ASYNC_LIB_TRACE(result, buf);
             ASSERT(false);
+            ASSERT(sprintfResult > 0);
         }
         else if (state->providerData.bufferSize == 0)
         {

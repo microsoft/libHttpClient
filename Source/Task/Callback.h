@@ -74,7 +74,7 @@ public:
 
             if (FAILED(hr))
             {
-                Destroy(entry);
+                delete entry;
                 return hr;
             }
         }
