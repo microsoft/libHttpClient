@@ -6,7 +6,7 @@
 #include "android_http_request.h"
 
 STDAPI
-HCInitializeJavaEnvironment(void* context) HC_NOEXCEPT
+Internal_HCHttpCallInitialize(void* context) HC_NOEXCEPT
 try {
     return HttpRequest::InitializeJavaEnvironment(reinterpret_cast<JavaVM*>(context));
 }

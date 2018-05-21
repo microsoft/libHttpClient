@@ -17,8 +17,10 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton()
+http_singleton::http_singleton(void* context)
 {
+    Internal_HCHttpCallInitialize(context);
+
     m_lastId = 0;
     m_performFunc = Internal_HCHttpCallPerform;
 
@@ -61,13 +63,13 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     return httpSingleton;
 }
 
-HRESULT init_http_singleton()
+HRESULT init_http_singleton(void* context)
 {
     HRESULT hr = S_OK;
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
-        auto newSingleton = http_allocate_shared<http_singleton>();
+        auto newSingleton = http_allocate_shared<http_singleton>(context);
         std::atomic_compare_exchange_strong(
             &g_httpSingleton_atomicReadsOnly,
             &httpSingleton,

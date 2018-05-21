@@ -24,11 +24,11 @@ try
 CATCH_RETURN()
 
 STDAPI 
-HCGlobalInitialize() HC_NOEXCEPT
+HCGlobalInitialize(_In_opt_ void* context) HC_NOEXCEPT
 try
 {
     HCTraceImplGlobalInit();
-    return xbox::httpclient::init_http_singleton();
+    return xbox::httpclient::init_http_singleton(context);
 }
 CATCH_RETURN()
 

@@ -9,51 +9,69 @@
 /* static */ jclass HttpRequest::s_httpResponseClass = nullptr;
 
 /* static */ HRESULT HttpRequest::InitializeJavaEnvironment(JavaVM* javaVM) {
-    // TODO: Return an HRESULT or another error type?
     s_javaVM = javaVM;
-
-    // TODO: This needs to be changed to GetEnv instead of attach current thread; we must be on
-    // a java thread for this to work.
     JNIEnv* jniEnv = nullptr;
-    s_javaVM->AttachCurrentThread(&jniEnv, nullptr);
-
-    // TODO: Check that the thread is attached.
-    // TODO: Check that class was found.
 
     // Java classes can only be resolved when we are on a Java-initiated thread; when we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
-    // This call should be made on JNI_Onload or another java thread and we will cache a global reference
+    // This call should be made on JNI_OnLoad or another java thread and we will cache a global reference
     // to the classes we will use for making HTTP requests.
-    jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
+    jint result = s_javaVM->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
 
-    if (localHttpRequest == nullptr) {
-        return E_FAIL;
+    if (result == JNI_OK) 
+    {
+        jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
+
+        if (localHttpRequest == nullptr) 
+        {
+            return E_FAIL;
+        }
+
+        jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
+
+        if (localHttpResponse == nullptr) 
+        {
+            return E_FAIL;
+        }
+
+        s_httpRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
+        s_httpResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
+        return S_OK;
     }
 
-    jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
-
-    if (localHttpResponse == nullptr) {
-        return E_FAIL;
-    }
-
-    s_httpRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
-    s_httpResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));   
-
-    HC_TRACE_INFORMATION(HTTPCLIENT, "Successfully initialized java environment. %d %d", s_httpRequestClass, s_httpResponseClass);
-    
-//    s_javaVM->DetachCurrentThread();
-
-    return S_OK;
+    return E_FAIL;
 }
 
-/* static */ void HttpRequest::CleanupJavaEnvironment() {
+/* static */ void HttpRequest::CleanupJavaEnvironment() 
+{
     JNIEnv* jniEnv = nullptr;
-    jint threadAttached = s_javaVM->AttachCurrentThread(&jniEnv, nullptr);
+    bool isThreadAttached = false;
+    jint getEnvResult = s_javaVM->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
 
-    jniEnv->DeleteGlobalRef(s_httpRequestClass);
-    jniEnv->DeleteGlobalRef(s_httpResponseClass);
+    if (getEnvResult == JNI_EDETACHED) 
+    {
+        jint attachThreadResult = s_javaVM->AttachCurrentThread(&jniEnv, nullptr);
 
-    s_javaVM->DetachCurrentThread();
+        if (attachThreadResult == JNI_OK) 
+        {
+            isThreadAttached = true;
+        }
+        else 
+        {
+            // TOOD: Throw?
+        }
+    }
+
+    if (jniEnv != nullptr) 
+    {
+        jniEnv->DeleteGlobalRef(s_httpRequestClass);
+        jniEnv->DeleteGlobalRef(s_httpResponseClass);
+    }
+
+    if (isThreadAttached) 
+    {
+        s_javaVM->DetachCurrentThread();
+    }
 }
 
 HttpRequest::HttpRequest() : m_jniEnv(nullptr), m_httpRequestInstance(nullptr), m_httpResponseInstance(nullptr) {

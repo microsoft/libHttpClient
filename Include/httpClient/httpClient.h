@@ -94,17 +94,13 @@ STDAPI HCMemGetFunctions(
 // Global APIs
 // 
 
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
-STDAPI HCInitializeJavaEnvironment(void* context) HC_NOEXCEPT;
-#endif
-
 /// <summary>
 /// Initializes the library instance.
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions()
 /// Should have a corresponding call to HCGlobalCleanup().
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCGlobalInitialize() HC_NOEXCEPT;
+STDAPI HCGlobalInitialize(_In_opt_ void* context) HC_NOEXCEPT;
 
 /// <summary>
 /// Immediately reclaims all resources associated with the library.
