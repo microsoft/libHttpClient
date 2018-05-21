@@ -12,7 +12,7 @@
     s_javaVM = javaVM;
     JNIEnv* jniEnv = nullptr;
 
-    // Java classes can only be resolved when we are on a Java-initiated thread; when we are on
+    // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
     // This call should be made on JNI_OnLoad or another java thread and we will cache a global reference
     // to the classes we will use for making HTTP requests.

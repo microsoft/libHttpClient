@@ -17,9 +17,7 @@ void Internal_HCHttpCallPerform(
     _In_ hc_call_handle_t call
     )
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "Initializing HTTP request");
     HttpRequest httpRequest;
-
     const char* requestUrl = nullptr;
     const char* requestMethod = nullptr;
 
@@ -28,15 +26,12 @@ void Internal_HCHttpCallPerform(
 
     uint32_t numHeaders = 0;
     HCHttpCallRequestGetNumHeaders(call, &numHeaders);
-    HC_TRACE_INFORMATION(HTTPCLIENT, "Found %d headers", numHeaders);
 
     for (uint32_t i = 0; i < numHeaders; i++) {
         const char* headerName = nullptr;
         const char* headerValue = nullptr;
 
-        // TODO: Check the HRESULT?
         HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
-        HC_TRACE_INFORMATION(HTTPCLIENT, "Header %d: %s: %s", i, headerName, headerValue);
         httpRequest.AddHeader(headerName, headerValue);
     }
 
@@ -50,8 +45,8 @@ void Internal_HCHttpCallPerform(
         httpRequest.SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
     }
 
-    // TODO: Set request body
     HC_TRACE_INFORMATION(HTTPCLIENT, "Executing HTTP request");
+    // TODO: Have this check for any java exceptions and potentially pass EFAIL?
     httpRequest.ExecuteRequest();
 
     HCHttpCallResponseSetStatusCode(call, httpRequest.GetResponseCode());

@@ -79,12 +79,11 @@
     <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Source\HTTP\Android\android_http_request.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -99,6 +98,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\http_android.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
@@ -126,7 +127,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
-    <ClInclude Include="..\..\Source\HTTP\Android\android_http_request.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
