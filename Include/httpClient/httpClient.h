@@ -100,7 +100,7 @@ STDAPI HCMemGetFunctions(
 /// Should have a corresponding call to HCGlobalCleanup().
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCGlobalInitialize(_In_opt_ void* context) HC_NOEXCEPT;
+STDAPI HCGlobalInitialize(_In_opt_ void* context = nullptr) HC_NOEXCEPT;
 
 /// <summary>
 /// Immediately reclaims all resources associated with the library.

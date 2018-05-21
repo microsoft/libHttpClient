@@ -823,6 +823,10 @@ void winhttp_http_task::perform_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
+void Internal_HCHttpCallInitialize(void* context)
+{
+    // No-op
+}
 
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,

@@ -53,7 +53,7 @@ typedef struct HC_CALL
     bool performCalled;
 } HC_CALL;
 
-STDAPI Internal_HCHttpCallInitialize(void* context) HC_NOEXCEPT;
+void Internal_HCHttpCallInitialize(void* context);
 
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,

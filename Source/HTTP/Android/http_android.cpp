@@ -5,19 +5,26 @@
 #include <httpClient/httpClient.h>
 #include "android_http_request.h"
 
-STDAPI
-Internal_HCHttpCallInitialize(void* context) HC_NOEXCEPT
-try {
-    return HttpRequest::InitializeJavaEnvironment(reinterpret_cast<JavaVM*>(context));
+void Internal_HCHttpCallInitialize(void* context)
+{
+    HttpRequest::InitializeJavaEnvironment(reinterpret_cast<JavaVM*>(context));
 }
-CATCH_RETURN();
 
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )
 {
+    HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_HCHttpCallPerform");
     HttpRequest httpRequest;
+    HRESULT result = httpRequest.Initialize();
+
+    if (!SUCCEEDED(result))
+    {
+        CompleteAsync(asyncBlock, result, 0);
+        return;
+    }
+
     const char* requestUrl = nullptr;
     const char* requestMethod = nullptr;
 
@@ -39,7 +46,8 @@ void Internal_HCHttpCallPerform(
     uint32_t requestBodySize = 0;
 
     HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
-    if (requestBodySize > 0) {
+    if (requestBodySize > 0) 
+    {
         const char* contentType = nullptr;
         HCHttpCallRequestGetHeader(call, "Content-Type", &contentType);
         httpRequest.SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
@@ -47,7 +55,13 @@ void Internal_HCHttpCallPerform(
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "Executing HTTP request");
     // TODO: Have this check for any java exceptions and potentially pass EFAIL?
-    httpRequest.ExecuteRequest();
+    result = httpRequest.ExecuteRequest();
+
+    if (!SUCCEEDED(result)) 
+    { 
+        CompleteAsync(asyncBlock, result, 0);
+        return;
+    }
 
     HCHttpCallResponseSetStatusCode(call, httpRequest.GetResponseCode());
 
