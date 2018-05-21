@@ -276,6 +276,7 @@ typedef struct _LIST_ENTRY {
 #define E_HC_PERFORM_ALREADY_CALLED     MAKE_E_HC(0x5003)
 #define E_HC_ALREADY_INITIALISED        MAKE_E_HC(0x5004)
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005)
+#define E_HC_WRONG_THREAD               MAKE_E_HC(0x5006)
 
 typedef _Null_terminated_ char* UTF8STR;
 typedef _Null_terminated_ const char* UTF8CSTR;

@@ -18,8 +18,6 @@ void Internal_HCHttpCallPerform(
     )
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "Initializing HTTP request");
-
-    // TODO
     HttpRequest httpRequest;
 
     const char* requestUrl = nullptr;

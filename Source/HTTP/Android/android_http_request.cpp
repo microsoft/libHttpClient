@@ -18,28 +18,29 @@
     // to the classes we will use for making HTTP requests.
     jint result = s_javaVM->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
 
-    if (result == JNI_OK) 
+    if (result != JNI_OK) 
     {
-        jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
-
-        if (localHttpRequest == nullptr) 
-        {
-            return E_FAIL;
-        }
-
-        jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
-
-        if (localHttpResponse == nullptr) 
-        {
-            return E_FAIL;
-        }
-
-        s_httpRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
-        s_httpResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
-        return S_OK;
+        HC_TRACE_ERROR(HTTPCLIENT, "Failed to initialize because JavaVM is not attached to a java thread.");
+        return E_HC_WRONG_THREAD;
     }
 
-    return E_FAIL;
+    jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
+
+    if (localHttpRequest == nullptr) 
+    {
+        return E_FAIL;
+    }
+
+    jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
+
+    if (localHttpResponse == nullptr) 
+    {
+        return E_FAIL;
+    }
+
+    s_httpRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
+    s_httpResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
+    return S_OK;
 }
 
 /* static */ void HttpRequest::CleanupJavaEnvironment() 
