@@ -15,7 +15,6 @@ public class HttpClientRequest {
     private Request.Builder requestBuilder;
 
     public HttpClientRequest() {
-        Log.i("HttpClientRequest", "ctor");
         requestBuilder = new Request.Builder();
     }
 
@@ -24,7 +23,6 @@ public class HttpClientRequest {
     }
 
     public void setHttpUrl(String url) {
-		Log.i("HttpRequestClient", "Setting url to " + url);
         this.requestBuilder = this.requestBuilder.url(url);
     }
 
@@ -37,20 +35,17 @@ public class HttpClientRequest {
     }
 
     public void setHttpHeader(String name, String value) {
-		Log.i("HttpClientRequest", "Setting header: " + name + " value: " + value);
         this.requestBuilder = requestBuilder.addHeader(name, value);
     }
 
     public HttpClientResponse doRequest() {
-		Log.i("HttpRequestClient", "executing request");
         OkHttpClient client = new OkHttpClient.Builder().build();
 
         try {
             Response response = client.newCall(this.requestBuilder.build()).execute();
-            Log.i("HttpRequestClient", "HTTP request succeeded");
-            return new HttpClientResponse(response);
+            return new HttpClientResponse(response); 
         } catch (IOException e) {
-            Log.e("HttpRequestClient", "Failed to execute request");
-            return new HttpClientResponse(null);
+            Log.e("HttpRequestClient", "Failed to execute request", e);
+            return null;
         }
     }}

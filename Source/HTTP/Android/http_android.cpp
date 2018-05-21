@@ -53,8 +53,6 @@ void Internal_HCHttpCallPerform(
         httpRequest.SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "Executing HTTP request");
-    // TODO: Have this check for any java exceptions and potentially pass EFAIL?
     result = httpRequest.ExecuteRequest();
 
     if (!SUCCEEDED(result)) 
