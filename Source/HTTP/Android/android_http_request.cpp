@@ -25,16 +25,19 @@
     }
 
     jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
-
     if (localHttpRequest == nullptr) 
     {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest class");
+        // TODO: [For Pull Request]: Right now with where InitializeJavaEnvironment is called this HRESULT is never
+        // bubbled all the way up to HCGlobalInitialize. Should this throw a custom exception object instead? Or
+        // is there a more appropriate place to call the Java initialization function?
         return E_FAIL;
     }
 
     jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
-
     if (localHttpResponse == nullptr) 
     {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientResponse class");        
         return E_FAIL;
     }
 
@@ -61,7 +64,7 @@
         }
         else 
         {
-            // TOOD: Throw?
+            HC_TRACE_ERROR(HTTPCLIENT, "Could not attach to java thread to dispose of global class references");
         }
     }
 
@@ -89,10 +92,9 @@ HRESULT HttpRequest::Initialize()
     if (SUCCEEDED(result)) 
     {
         jmethodID httpRequestCtor = jniEnv->GetMethodID(s_httpRequestClass, "<init>", "()V");
-
         if (httpRequestCtor == nullptr) 
         {
-            // TODO: Return something specific to implementation not found?
+            HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest constructor");
             return E_FAIL;
         }
 
@@ -209,10 +211,7 @@ HRESULT HttpRequest::ExecuteRequest() {
 
     if (SUCCEEDED(result))
     {
-        // TODO: This can trigger a security exception if the app isn't configured for accessing the internet. Tweak the function so this can
-        // be detected and bubbled back up.
         jmethodID httpRequestExecuteMethod = jniEnv->GetMethodID(s_httpRequestClass, "doRequest", "()Lcom/xbox/httpclient/HttpClientResponse;");
-
         if (httpRequestExecuteMethod == nullptr)
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.doRequest");
@@ -220,6 +219,12 @@ HRESULT HttpRequest::ExecuteRequest() {
         }
 
         m_httpResponseInstance = jniEnv->CallObjectMethod(m_httpRequestInstance, httpRequestExecuteMethod);
+
+        if (m_httpResponseInstance == nullptr) 
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "Http request failed");
+            return E_FAIL;
+        }
     }
 
     return result;
