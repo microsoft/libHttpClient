@@ -5,9 +5,14 @@
 #include <httpClient/httpClient.h>
 #include "android_http_request.h"
 
-void Internal_HCHttpCallInitialize(void* context)
+HRESULT Internal_HCHttpPlatformInitialize(void* context)
 {
-    HttpRequest::InitializeJavaEnvironment(reinterpret_cast<JavaVM*>(context));
+    return HttpRequest::InitializeJavaEnvironment(reinterpret_cast<JavaVM*>(context));
+}
+
+HRESULT Interal_HCHttpPlatformCleanup() 
+{
+    return HttpRequest::CleanupJavaEnvironment();
 }
 
 void Internal_HCHttpCallPerform(
@@ -44,15 +49,17 @@ void Internal_HCHttpCallPerform(
     }
 
     const uint8_t* requestBody = nullptr;
+    const char* contentType = nullptr;
     uint32_t requestBodySize = 0;
 
     HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
-    if (requestBodySize > 0) 
+
+    if (requestBodySize > 0)
     {
-        const char* contentType = nullptr;
         HCHttpCallRequestGetHeader(call, "Content-Type", &contentType);
-        httpRequest.SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
     }
+
+    httpRequest.SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
 
     result = httpRequest.ExecuteRequest();
 

@@ -27,11 +27,11 @@ public class HttpClientRequest {
     }
 
     public void setHttpMethodAndBody(String method, String contentType, byte[] body) {
-    	if ("GET".equals(method)) {
+        if (body == null || body.length == 0) {
             this.requestBuilder = this.requestBuilder.method(method, null);
-    	} else {
+        } else {
             this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(MediaType.parse(contentType), body));
-    	}
+        }
     }
 
     public void setHttpHeader(String name, String value) {

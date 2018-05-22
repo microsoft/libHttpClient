@@ -23,14 +23,14 @@ public:
     HRESULT ProcessResponseBody(hc_call_handle_t call);
 
     static HRESULT InitializeJavaEnvironment(JavaVM* javaVM);
-    static void CleanupJavaEnvironment();
+    static HRESULT CleanupJavaEnvironment();
 private:
     HRESULT GetJniEnv(JNIEnv**);
 
     jobject m_httpRequestInstance;
     jobject m_httpResponseInstance;
 
-    static JavaVM* s_javaVM;
+    static JavaVM* s_javaVm;
     static jclass s_httpRequestClass;
     static jclass s_httpResponseClass;
 };

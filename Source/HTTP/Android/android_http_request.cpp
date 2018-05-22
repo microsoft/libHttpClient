@@ -1,23 +1,26 @@
 #include "pch.h"
 
 #include "android_http_request.h"
-
 #include <httpClient/httpClient.h>
+#include <vector>
 
-/* static */ JavaVM* HttpRequest::s_javaVM = nullptr;
-/* static */ jclass HttpRequest::s_httpRequestClass = nullptr;
-/* static */ jclass HttpRequest::s_httpResponseClass = nullptr;
+JavaVM* HttpRequest::s_javaVm = nullptr;
+jclass HttpRequest::s_httpRequestClass = nullptr;
+jclass HttpRequest::s_httpResponseClass = nullptr;
 
-/* static */ HRESULT HttpRequest::InitializeJavaEnvironment(JavaVM* javaVM) 
+HRESULT HttpRequest::InitializeJavaEnvironment(JavaVM* javaVm) 
 {
-    s_javaVM = javaVM;
+    assert(javaVm != nullptr);
+    assert(s_javaVm == nullptr);
+
+    s_javaVm = javaVm;
     JNIEnv* jniEnv = nullptr;
 
     // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
     // This call should be made on JNI_OnLoad or another java thread and we will cache a global reference
     // to the classes we will use for making HTTP requests.
-    jint result = s_javaVM->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+    jint result = s_javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
 
     if (result != JNI_OK) 
     {
@@ -38,7 +41,7 @@
     jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
     if (localHttpResponse == nullptr) 
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientResponse class");        
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientResponse class");
         return E_FAIL;
     }
 
@@ -47,17 +50,15 @@
     return S_OK;
 }
 
-/* static */ void HttpRequest::CleanupJavaEnvironment() 
+HRESULT HttpRequest::CleanupJavaEnvironment() 
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HttpRequest::CleanupJavaEnvironment");
-
     JNIEnv* jniEnv = nullptr;
     bool isThreadAttached = false;
-    jint getEnvResult = s_javaVM->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+    jint getEnvResult = s_javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
 
     if (getEnvResult == JNI_EDETACHED) 
     {
-        jint attachThreadResult = s_javaVM->AttachCurrentThread(&jniEnv, nullptr);
+        jint attachThreadResult = s_javaVm->AttachCurrentThread(&jniEnv, nullptr);
 
         if (attachThreadResult == JNI_OK) 
         {
@@ -66,19 +67,25 @@
         else 
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Could not attach to java thread to dispose of global class references");
+            return E_FAIL;
         }
     }
 
     if (jniEnv != nullptr) 
     {
         jniEnv->DeleteGlobalRef(s_httpRequestClass);
+        s_httpRequestClass = nullptr;
         jniEnv->DeleteGlobalRef(s_httpResponseClass);
+        s_httpResponseClass = nullptr;
     }
 
     if (isThreadAttached) 
     {
-        s_javaVM->DetachCurrentThread();
+        s_javaVm->DetachCurrentThread();
     }
+
+    s_javaVm = nullptr;
+    return S_OK;
 }
 
 HttpRequest::HttpRequest() : m_httpRequestInstance(nullptr), m_httpResponseInstance(nullptr) 
@@ -112,12 +119,12 @@ HRESULT HttpRequest::Initialize()
 
 HRESULT HttpRequest::GetJniEnv(JNIEnv** jniEnv) 
 {
-    if (s_javaVM == nullptr) 
+    if (s_javaVm == nullptr)
     {
         return E_HC_NOT_INITIALISED;
     }
 
-    jint jniResult = s_javaVM->GetEnv(reinterpret_cast<void**>(jniEnv), JNI_VERSION_1_6);
+    jint jniResult = s_javaVm->GetEnv(reinterpret_cast<void**>(jniEnv), JNI_VERSION_1_6);
 
     if (jniResult != JNI_OK) 
     {
@@ -197,16 +204,25 @@ HRESULT HttpRequest::SetMethodAndBody(const char* method, const char* contentTyp
 
     jstring methodJstr = jniEnv->NewStringUTF(method);
     jstring contentTypeJstr = jniEnv->NewStringUTF(contentType);
-    jbyteArray bodyArray = jniEnv->NewByteArray(bodySize);
-
-    void *tempPrimitive = jniEnv->GetPrimitiveArrayCritical(bodyArray, 0);
-    memcpy(tempPrimitive, body, bodySize);
-    jniEnv->ReleasePrimitiveArrayCritical(bodyArray, tempPrimitive, 0);
+    jbyteArray bodyArray = nullptr;
+    
+    if (bodySize > 0)
+    {        
+        bodyArray = jniEnv->NewByteArray(bodySize);
+        void *tempPrimitive = jniEnv->GetPrimitiveArrayCritical(bodyArray, 0);
+        memcpy(tempPrimitive, body, bodySize);
+        jniEnv->ReleasePrimitiveArrayCritical(bodyArray, tempPrimitive, 0);
+    }
 
     jniEnv->CallVoidMethod(m_httpRequestInstance, httpRequestSetBody, methodJstr, contentTypeJstr, bodyArray);
 
     jniEnv->DeleteLocalRef(methodJstr);
-    jniEnv->DeleteLocalRef(contentTypeJstr);
+
+    if (contentTypeJstr != nullptr)
+    {
+        jniEnv->DeleteLocalRef(contentTypeJstr);
+    }
+
     return S_OK;
 }
 
@@ -260,10 +276,10 @@ HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call)
         int bodySize = jniEnv->GetArrayLength(responseBody);
         if (bodySize > 0)
         {
-            uint8_t* bodyBuffer = new uint8_t[bodySize];
-            jniEnv->GetByteArrayRegion(responseBody, 0, bodySize, reinterpret_cast<jbyte*>(bodyBuffer));
+            http_internal_vector<uint8_t> bodyBuffer(bodySize);
+            jniEnv->GetByteArrayRegion(responseBody, 0, bodySize, reinterpret_cast<jbyte*>(bodyBuffer.data()));
 
-            HCHttpCallResponseSetResponseBodyBytes(call, bodyBuffer, bodySize);
+            HCHttpCallResponseSetResponseBodyBytes(call, bodyBuffer.data(), bodyBuffer.size());
         }
     }
 

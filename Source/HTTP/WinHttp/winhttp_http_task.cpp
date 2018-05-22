@@ -823,9 +823,16 @@ void winhttp_http_task::perform_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-void Internal_HCHttpCallInitialize(void* context)
+HRESULT Internal_HCHttpPlatformInitialize(void* context)
 {
     // No-op
+    assert(context == nullptr);
+    return S_OK;
+}
+
+HRESULT Interal_HCHttpPlatformCleanup()
+{
+    return S_OK;
 }
 
 void Internal_HCHttpCallPerform(

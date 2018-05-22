@@ -53,7 +53,9 @@ typedef struct HC_CALL
     bool performCalled;
 } HC_CALL;
 
-void Internal_HCHttpCallInitialize(void* context);
+HRESULT Internal_HCHttpPlatformInitialize(void* context);
+
+HRESULT Interal_HCHttpPlatformCleanup();
 
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,

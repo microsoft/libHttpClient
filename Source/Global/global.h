@@ -32,7 +32,7 @@ typedef struct http_retry_after_api_state
 
 typedef struct http_singleton
 {
-    http_singleton(void* context);
+    http_singleton();
     ~http_singleton();
 
     std::mutex m_singletonLock;
