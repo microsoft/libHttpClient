@@ -134,7 +134,7 @@ bool ios_http_task::initiate_request()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-void Internal_HCHttpCallPerform(
+void Internal_HCHttpCallPerformAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
 )

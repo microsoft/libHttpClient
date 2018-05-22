@@ -80,7 +80,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         while (true)
         {
@@ -139,7 +139,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -176,7 +176,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock2, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock2, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -237,7 +237,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -274,7 +274,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock2, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock2, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -312,7 +312,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock3, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock3, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -350,7 +350,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock4, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock4, call));
 
         while (true)
         {
@@ -412,7 +412,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -450,7 +450,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock2, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock2, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -489,7 +489,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock3, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock3, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)

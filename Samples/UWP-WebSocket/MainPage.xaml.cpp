@@ -280,7 +280,7 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
         delete asyncBlock;
     };
 
-    hr = HCWebSocketConnect(asyncBlock, requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket);
+    hr = HCWebSocketConnectAsync(asyncBlock, requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket);
     LogToUI(format_string("HCWebSocketConnect: %d", hr));
 
 }
@@ -303,7 +303,7 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
         delete asyncBlock;
     };
 
-    HRESULT hr = HCWebSocketSendMessage(asyncBlock, m_websocket, requestBody.c_str());
+    HRESULT hr = HCWebSocketSendMessageAsync(asyncBlock, m_websocket, requestBody.c_str());
     LogToUI(format_string("HCWebSocketSendMessage: %d", hr));
 }
 

@@ -73,7 +73,7 @@ void Internal_HCWebSocketCloseEvent(
 
 
 bool g_HCWebSocketConnect_Called = false;
-HRESULT Test_Internal_HCWebSocketConnect(
+HRESULT Test_Internal_HCWebSocketConnectAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
@@ -85,7 +85,7 @@ HRESULT Test_Internal_HCWebSocketConnect(
 }
 
 bool g_HCWebSocketSendMessage_Called = false;
-HRESULT Test_Internal_HCWebSocketSendMessage(
+HRESULT Test_Internal_HCWebSocketSendMessageAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message
@@ -163,7 +163,7 @@ public:
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalSetWebSocketFunctions(Test_Internal_HCWebSocketConnect, Test_Internal_HCWebSocketSendMessage, Test_Internal_HCWebSocketDisconnect));
+        VERIFY_ARE_EQUAL(S_OK, HCGlobalSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketDisconnect));
         VERIFY_ARE_EQUAL(S_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
@@ -181,11 +181,11 @@ public:
         VERIFY_ARE_EQUAL_STR("1234", proxy);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketConnect_Called);
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnect(nullptr, "test", "subProtoTest", websocket));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync(nullptr, "test", "subProtoTest", websocket));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketConnect_Called);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketSendMessage_Called);
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSendMessage(nullptr, websocket, "test"));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSendMessageAsync(nullptr, websocket, "test"));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketSendMessage_Called);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketDisconnect_Called);

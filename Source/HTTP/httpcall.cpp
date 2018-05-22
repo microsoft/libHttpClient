@@ -109,7 +109,7 @@ HRESULT perform_http_call(
                 bool matchedMocks = false;
                 if (httpSingleton->m_mocksEnabled)
                 {
-                    matchedMocks = Mock_Internal_HCHttpCallPerform(call);
+                    matchedMocks = Mock_Internal_HCHttpCallPerformAsync(call);
                     if (matchedMocks)
                     {
                         CompleteAsync(data->async, S_OK, 0);
@@ -400,7 +400,7 @@ void retry_http_call_until_done(
 }
 
 STDAPI 
-HCHttpCallPerform(
+HCHttpCallPerformAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     ) HC_NOEXCEPT
@@ -420,7 +420,7 @@ try
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
 
-    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerform), __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
