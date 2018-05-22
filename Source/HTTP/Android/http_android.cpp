@@ -34,7 +34,8 @@ void Internal_HCHttpCallPerform(
     uint32_t numHeaders = 0;
     HCHttpCallRequestGetNumHeaders(call, &numHeaders);
 
-    for (uint32_t i = 0; i < numHeaders; i++) {
+    for (uint32_t i = 0; i < numHeaders; i++) 
+    {
         const char* headerName = nullptr;
         const char* headerValue = nullptr;
 
@@ -63,7 +64,8 @@ void Internal_HCHttpCallPerform(
 
     HCHttpCallResponseSetStatusCode(call, httpRequest.GetResponseCode());
 
-    for (uint32_t i = 0; i < httpRequest.GetResponseHeaderCount(); i++) {
+    for (uint32_t i = 0; i < httpRequest.GetResponseHeaderCount(); i++) 
+    {
         std::string headerName = httpRequest.GetHeaderNameAtIndex(i);
         std::string headerValue = httpRequest.GetHeaderValueAtIndex(i);
         HCHttpCallResponseSetHeader(call, headerName.c_str(), headerValue.c_str());

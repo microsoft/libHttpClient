@@ -14,49 +14,48 @@ class HttpClientResponse
         this.okHttpResponse = sourceResponse;
     }
 
-	public boolean succeeded() {
+    public boolean succeeded() {
         return this.okHttpResponse.isSuccessful();
-	}
+    }
 
-	public int getNumHeaders() {
+    public int getNumHeaders() {
         return this.okHttpResponse.headers().size();
-	}
+    }
 
     public String getHeaderNameAtIndex(int index) {
-		if (index >= 0 && index < this.okHttpResponse.headers().size()) {
+        if (index >= 0 && index < this.okHttpResponse.headers().size()) {
             return this.okHttpResponse.headers().name(index);
-		} else {
+        } else {
             return null;
-		}
-	}
+        }
+    }
 
-	public String getHeaderValueAtIndex(int index) {
-		if (index >= 0 && index < this.okHttpResponse.headers().size()) {
+    public String getHeaderValueAtIndex(int index) {
+        if (index >= 0 && index < this.okHttpResponse.headers().size()) {
             return this.okHttpResponse.headers().value(index);
-		} else {
+        } else {
             return null;
-		}
-	}
+        }
+    }
 
-	public String getResponseString() {
-	    try {
+    public String getResponseString() {
+        try {
             return this.okHttpResponse.body().string();
-		} catch (IOException e) {
+        } catch (IOException e) {
             return null;
-		}
-	}
+        }
+    }
 
-	public byte[] getResponseBodyBytes() {
-		try {
-			byte[] responseBodyBytes = this.okHttpResponse.body().bytes();
+    public byte[] getResponseBodyBytes() {
+        try {
+            byte[] responseBodyBytes = this.okHttpResponse.body().bytes();
             return responseBodyBytes;
-
-		} catch (IOException e) {
+        } catch (IOException e) {
             return null;
-		}
-	}
+        }
+    }
 
-	public int getResponseCode() {
+    public int getResponseCode() {
         return okHttpResponse.code();
-	}
+    }
 }

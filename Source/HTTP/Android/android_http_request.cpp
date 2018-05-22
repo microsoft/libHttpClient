@@ -8,7 +8,8 @@
 /* static */ jclass HttpRequest::s_httpRequestClass = nullptr;
 /* static */ jclass HttpRequest::s_httpResponseClass = nullptr;
 
-/* static */ HRESULT HttpRequest::InitializeJavaEnvironment(JavaVM* javaVM) {
+/* static */ HRESULT HttpRequest::InitializeJavaEnvironment(JavaVM* javaVM) 
+{
     s_javaVM = javaVM;
     JNIEnv* jniEnv = nullptr;
 
@@ -21,7 +22,7 @@
     if (result != JNI_OK) 
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Failed to initialize because JavaVM is not attached to a java thread.");
-        return E_HC_WRONG_THREAD;
+        return E_FAIL;
     }
 
     jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
@@ -81,6 +82,10 @@
 }
 
 HttpRequest::HttpRequest() : m_httpRequestInstance(nullptr), m_httpResponseInstance(nullptr) 
+{
+}
+
+HttpRequest::~HttpRequest()
 {
 }
 
@@ -205,7 +210,8 @@ HRESULT HttpRequest::SetMethodAndBody(const char* method, const char* contentTyp
     return S_OK;
 }
 
-HRESULT HttpRequest::ExecuteRequest() {
+HRESULT HttpRequest::ExecuteRequest() 
+{
     JNIEnv* jniEnv = nullptr;
     HRESULT result = GetJniEnv(&jniEnv);
 
@@ -274,7 +280,6 @@ uint32_t HttpRequest::GetResponseCode()
         return result;
     }
 
-    // TODO: Verify that the response completed and didn't have an error
     jmethodID httpResponseStatusMethod = jniEnv->GetMethodID(s_httpResponseClass, "getResponseCode", "()I");
     jint responseStatus = jniEnv->CallIntMethod(m_httpResponseInstance, httpResponseStatusMethod);
     return (uint32_t)responseStatus;
@@ -290,7 +295,6 @@ uint32_t HttpRequest::GetResponseHeaderCount()
         return result;
     }
 
-    // TODO: Verify that the response completed and didn't have an error
     jmethodID httpResponssNumHeadersMethod = jniEnv->GetMethodID(s_httpResponseClass, "getNumHeaders", "()I");
     jint numHeaders = jniEnv->CallIntMethod(m_httpResponseInstance, httpResponssNumHeadersMethod);
     return (uint32_t)numHeaders;
@@ -303,7 +307,7 @@ std::string HttpRequest::GetHeaderNameAtIndex(uint32_t index)
 
     if (!SUCCEEDED(result))
     {
-//        return result;
+        return nullptr;
     }
 
     if (m_httpResponseInstance != nullptr)
@@ -330,7 +334,7 @@ std::string HttpRequest::GetHeaderValueAtIndex(uint32_t index)
 
     if (!SUCCEEDED(result))
     {
-        //        return result;
+        return nullptr;
     }
 
     if (m_httpResponseInstance != nullptr)
@@ -348,10 +352,4 @@ std::string HttpRequest::GetHeaderValueAtIndex(uint32_t index)
     {
         return nullptr;
     }
-}
-
-HttpRequest::~HttpRequest() 
-{
-    // TODO: Dispose local jobjects?
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HttpRequest dtor");
 }
