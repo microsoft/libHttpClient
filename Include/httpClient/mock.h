@@ -23,7 +23,7 @@ STDAPI HCMockCallCreate(
 
 /// <summary>
 /// Configures libHttpClient to return mock response instead of making a network call 
-/// when HCHttpCallPerform() is called. To define a mock response, create a new 
+/// when HCHttpCallPerformAsync() is called. To define a mock response, create a new 
 /// HC_MOCK_CALL_HANDLE with HCMockCallCreate() that represents the mock.
 /// Then use HCMockResponseSet*() to set the mock response.
 /// 
@@ -37,9 +37,9 @@ STDAPI HCMockCallCreate(
 /// 
 /// You can set multiple active mock responses by calling HCMockAddMock() multiple 
 /// times with a set of mock responses. If the HTTP call matches against a set mock responses, 
-/// they will be executed in order for each subsequent call to HCHttpCallPerform(). When the 
+/// they will be executed in order for each subsequent call to HCHttpCallPerformAsync(). When the 
 /// last matching mock response is hit, the last matching mock response will be repeated on 
-/// each subsequent call to HCHttpCallPerform().
+/// each subsequent call to HCHttpCallPerformAsync().
 /// </summary>
 /// <param name="call">This HC_MOCK_CALL_HANDLE that represents the mock that has been configured 
 /// accordingly using HCMockResponseSet*()</param>

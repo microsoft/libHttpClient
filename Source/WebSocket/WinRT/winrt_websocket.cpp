@@ -246,7 +246,7 @@ HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
     return S_OK;
 }
 
-HRESULT Internal_HCWebSocketConnect(
+HRESULT Internal_HCWebSocketConnectAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
@@ -259,7 +259,7 @@ HRESULT Internal_HCWebSocketConnect(
     websocket->subProtocol = subProtocol;
     websocket->task = std::dynamic_pointer_cast<xbox::httpclient::hc_task>(websocketTask);
 
-    HRESULT hr = BeginAsync(asyncBlock, websocket, HCWebSocketConnect, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, websocket, HCWebSocketConnectAsync, __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
@@ -279,7 +279,7 @@ HRESULT Internal_HCWebSocketConnect(
     return hr;
 }
 
-HRESULT Internal_HCWebSocketSendMessage(
+HRESULT Internal_HCWebSocketSendMessageAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message
@@ -447,7 +447,7 @@ void MessageWebSocketSendMessage(
     callbackContext->websocketTask = websocketTask;
     void* rawMsg = shared_ptr_cache::store<SendMessageCallbackContent>(callbackContext);
 
-    HRESULT hr = BeginAsync(msg->m_asyncBlock, rawMsg, HCWebSocketSendMessage, __FUNCTION__,
+    HRESULT hr = BeginAsync(msg->m_asyncBlock, rawMsg, HCWebSocketSendMessageAsync, __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)

@@ -157,7 +157,7 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
 ///
 /// First create a HTTP handle using HCHttpCallCreate()
 /// Then call HCHttpCallRequestSet*() to prepare the hc_call_handle_t
-/// Then call HCHttpCallPerform() to perform HTTP call using the hc_call_handle_t.
+/// Then call HCHttpCallPerformAsync() to perform HTTP call using the hc_call_handle_t.
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 ///
 /// The perform call is asynchronous, so the work will be done on a background thread which calls 
@@ -181,7 +181,7 @@ STDAPI HCHttpCallCreate(
 ///
 /// First create a HTTP handle using HCHttpCallCreate()
 /// Then call HCHttpCallRequestSet*() to prepare the hc_call_handle_t
-/// Then call HCHttpCallPerform() to perform HTTP call using the hc_call_handle_t.
+/// Then call HCHttpCallPerformAsync() to perform HTTP call using the hc_call_handle_t.
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 ///
 /// The perform call is asynchronous, so the work will be done on a background thread which calls 
@@ -194,12 +194,12 @@ STDAPI HCHttpCallCreate(
 /// When the hc_call_handle_t is no longer needed, call HCHttpCallCloseHandle() to free the 
 /// memory associated with the hc_call_handle_t
 ///
-/// HCHttpCallPerform can only be called once.  Create new hc_call_handle_t to repeat the call.
+/// HCHttpCallPerformAsync can only be called once.  Create new hc_call_handle_t to repeat the call.
 /// </summary>
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <param name="call">The handle of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCHttpCallPerform(
+STDAPI HCHttpCallPerformAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     ) HC_NOEXCEPT;
@@ -251,7 +251,7 @@ STDAPI HCHttpCallSetTracing(
 
 /// <summary>
 /// Sets the url and method for the HTTP call
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="method">Method for the HTTP call</param>
@@ -265,7 +265,7 @@ STDAPI HCHttpCallRequestSetUrl(
 
 /// <summary>
 /// Set the request body bytes of the HTTP call
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="requestBodyBytes">The request body bytes of the HTTP call.</param>
@@ -279,7 +279,7 @@ STDAPI HCHttpCallRequestSetRequestBodyBytes(
 
 /// <summary>
 /// Set the request body string of the HTTP call
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="requestBodyString">The request body string of the HTTP call.</param>
@@ -291,7 +291,7 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
 
 /// <summary>
 /// Set a request header for the HTTP call
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerName">request header name for the HTTP call</param>
@@ -308,7 +308,7 @@ STDAPI HCHttpCallRequestSetHeader(
 /// <summary>
 /// Sets if retry is allowed for this HTTP call
 /// Defaults to true 
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="retryAllowed">If retry is allowed for this HTTP call</param>
@@ -320,7 +320,7 @@ STDAPI HCHttpCallRequestSetRetryAllowed(
 
 /// <summary>
 /// ID number of this REST endpoint used to cache the Retry-After header for fast fail.
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail.  1-1000 are reserved for XSAPI</param>
@@ -333,7 +333,7 @@ STDAPI HCHttpCallRequestSetRetryCacheId(
 /// <summary>
 /// Sets the timeout for this HTTP call.
 /// Defaults to 30 seconds
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="timeoutInSeconds">The timeout for this HTTP call.</param>
@@ -365,7 +365,7 @@ STDAPI HCHttpCallRequestSetTimeout(
 /// 503 (Service Unavailable)
 /// 504 (Gateway Timeout)
 ///
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="retryDelayInSeconds">The retry delay in seconds</param>
@@ -390,7 +390,7 @@ STDAPI HCHttpCallRequestSetRetryDelay(
 /// 503 (Service Unavailable)
 /// 504 (Gateway Timeout)
 ///
-/// This must be called prior to calling HCHttpCallPerform.
+/// This must be called prior to calling HCHttpCallPerformAsync.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
 /// <param name="timeoutWindowInSeconds">The timeout window in seconds</param>
@@ -407,7 +407,7 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
 
 /// <summary>
 /// Get the response body string of the HTTP call
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="responseString">
@@ -422,7 +422,7 @@ STDAPI HCHttpCallResponseGetResponseString(
 
 /// <summary>
 /// Get the response body buffer size of the HTTP call
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="bufferSize">The response body buffer size of the HTTP call</param>
@@ -434,7 +434,7 @@ STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
 
 /// <summary>
 /// Get the response body buffer of the HTTP call
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="bufferSize">The response body buffer size being passed in</param>
@@ -450,7 +450,7 @@ STDAPI HCHttpCallResponseGetResponseBodyBytes(
 
 /// <summary>
 /// Get the HTTP status code of the HTTP call response
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="statusCode">the HTTP status code of the HTTP call response</param>
@@ -461,7 +461,7 @@ STDAPI HCHttpCallResponseGetStatusCode(
 
 /// <summary>
 /// Get the network error code of the HTTP call
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="networkErrorCode">The network error code of the HTTP call. Possible values are S_OK, or E_FAIL.</param>
@@ -475,7 +475,7 @@ STDAPI HCHttpCallResponseGetNetworkErrorCode(
 
 /// <summary>
 /// Get a response header for the HTTP call for a given header name
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerName">Response header name for the HTTP call
@@ -494,7 +494,7 @@ STDAPI HCHttpCallResponseGetHeader(
 
 /// <summary>
 /// Gets the number of response headers in the HTTP call
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="numHeaders">The number of response headers in the HTTP call</param>
@@ -507,7 +507,7 @@ STDAPI HCHttpCallResponseGetNumHeaders(
 /// <summary>
 /// Gets the response headers at specific zero based index in the HTTP call.
 /// Use HCHttpCallResponseGetNumHeaders() to know how many response headers there are in the HTTP call.
-/// This can only be called after calling HCHttpCallPerform when the HTTP task is completed.
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerIndex">Specific zero based index of the response header</param>
@@ -536,8 +536,8 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
 /// Setup the handler functions with HCWebSocketSetFunctions()
 /// Create a WebSocket handle using HCWebSocketCreate()
 /// Call HCWebSocketSetProxyUri() and HCWebSocketSetHeader() to prepare the hc_websocket_handle_t
-/// Call HCWebSocketConnect() to connect the WebSocket using the hc_websocket_handle_t.
-/// Call HCWebSocketSendMessage() to send a message to the WebSocket using the hc_websocket_handle_t.
+/// Call HCWebSocketConnectAsync() to connect the WebSocket using the hc_websocket_handle_t.
+/// Call HCWebSocketSendMessageAsync() to send a message to the WebSocket using the hc_websocket_handle_t.
 /// Call HCWebSocketDisconnect() to disconnect the WebSocket using the hc_websocket_handle_t.
 /// Call HCWebSocketCloseHandle() when done with the hc_websocket_handle_t to free the associated memory
 /// </summary>
@@ -549,7 +549,7 @@ STDAPI HCWebSocketCreate(
 
 /// <summary>
 /// Set the proxy URI for the WebSocket
-/// This must be called prior to calling HCWebSocketConnect.
+/// This must be called prior to calling HCWebSocketConnectAsync.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="proxyUri">The proxy URI for the WebSocket</param>
@@ -561,7 +561,7 @@ STDAPI HCWebSocketSetProxyUri(
 
 /// <summary>
 /// Set a header for the WebSocket
-/// This must be called prior to calling HCWebSocketConnect.
+/// This must be called prior to calling HCWebSocketConnectAsync.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="headerName">Header name for the WebSocket</param>
@@ -608,7 +608,7 @@ STDAPI HCWebSocketSetFunctions(
 
 
 /// <summary>
-/// Used by HCWebSocketConnect() and HCWebSocketSendMessage()
+/// Used by HCWebSocketConnectAsync() and HCWebSocketSendMessageAsync()
 /// </summary>
 typedef struct WebSocketCompletionResult
 {
@@ -631,7 +631,7 @@ typedef struct WebSocketCompletionResult
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCWebSocketConnect(
+STDAPI HCWebSocketConnectAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_z_ UTF8CSTR uri,
     _In_z_ UTF8CSTR subProtocol,
@@ -656,7 +656,7 @@ STDAPI HCGetWebSocketConnectResult(
 /// <param name="message">The message to send</param>
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCWebSocketSendMessage(
+STDAPI HCWebSocketSendMessageAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
     _In_z_ UTF8CSTR message

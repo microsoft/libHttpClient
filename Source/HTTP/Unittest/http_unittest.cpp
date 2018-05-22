@@ -5,7 +5,7 @@
 #include "httpClient/httpClient.h"
 #include "../global/global.h"
 
-void Internal_HCHttpCallPerform(
+void Internal_HCHttpCallPerformAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )

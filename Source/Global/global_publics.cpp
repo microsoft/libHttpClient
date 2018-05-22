@@ -49,7 +49,7 @@ HCGlobalSetHttpCallPerformFunction(
     if (nullptr == httpSingleton)
         return;
 
-    httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
+    httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerformAsync : performFunc;
 }
 
 STDAPI 
