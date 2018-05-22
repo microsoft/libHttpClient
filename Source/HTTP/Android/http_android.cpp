@@ -5,23 +5,17 @@
 #include <httpClient/httpClient.h>
 #include "android_http_request.h"
 
-HRESULT Internal_HCHttpPlatformInitialize(void* context)
-{
-    return HttpRequest::InitializeJavaEnvironment(reinterpret_cast<JavaVM*>(context));
-}
-
-HRESULT Interal_HCHttpPlatformCleanup() 
-{
-    return HttpRequest::CleanupJavaEnvironment();
-}
-
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _In_opt_ void* context
     )
 {
+    assert(context != nullptr);
     HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_HCHttpCallPerform");
-    HttpRequest httpRequest;
+
+    HCPlatformContext* platformContext = reinterpret_cast<HCPlatformContext*>(context);
+    HttpRequest httpRequest(platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass());
     HRESULT result = httpRequest.Initialize();
 
     if (!SUCCEEDED(result))

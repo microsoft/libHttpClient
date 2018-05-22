@@ -4,91 +4,12 @@
 #include <httpClient/httpClient.h>
 #include <vector>
 
-JavaVM* HttpRequest::s_javaVm = nullptr;
-jclass HttpRequest::s_httpRequestClass = nullptr;
-jclass HttpRequest::s_httpResponseClass = nullptr;
-
-HRESULT HttpRequest::InitializeJavaEnvironment(JavaVM* javaVm) 
-{
-    assert(javaVm != nullptr);
-    assert(s_javaVm == nullptr);
-
-    s_javaVm = javaVm;
-    JNIEnv* jniEnv = nullptr;
-
-    // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
-    // a C++ background thread and attach to Java we do not have the full class-loader information.
-    // This call should be made on JNI_OnLoad or another java thread and we will cache a global reference
-    // to the classes we will use for making HTTP requests.
-    jint result = s_javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
-
-    if (result != JNI_OK) 
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "Failed to initialize because JavaVM is not attached to a java thread.");
-        return E_FAIL;
-    }
-
-    jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
-    if (localHttpRequest == nullptr) 
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest class");
-        // TODO: [For Pull Request]: Right now with where InitializeJavaEnvironment is called this HRESULT is never
-        // bubbled all the way up to HCGlobalInitialize. Should this throw a custom exception object instead? Or
-        // is there a more appropriate place to call the Java initialization function?
-        return E_FAIL;
-    }
-
-    jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
-    if (localHttpResponse == nullptr) 
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientResponse class");
-        return E_FAIL;
-    }
-
-    s_httpRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
-    s_httpResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
-    return S_OK;
-}
-
-HRESULT HttpRequest::CleanupJavaEnvironment() 
-{
-    JNIEnv* jniEnv = nullptr;
-    bool isThreadAttached = false;
-    jint getEnvResult = s_javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
-
-    if (getEnvResult == JNI_EDETACHED) 
-    {
-        jint attachThreadResult = s_javaVm->AttachCurrentThread(&jniEnv, nullptr);
-
-        if (attachThreadResult == JNI_OK) 
-        {
-            isThreadAttached = true;
-        }
-        else 
-        {
-            HC_TRACE_ERROR(HTTPCLIENT, "Could not attach to java thread to dispose of global class references");
-            return E_FAIL;
-        }
-    }
-
-    if (jniEnv != nullptr) 
-    {
-        jniEnv->DeleteGlobalRef(s_httpRequestClass);
-        s_httpRequestClass = nullptr;
-        jniEnv->DeleteGlobalRef(s_httpResponseClass);
-        s_httpResponseClass = nullptr;
-    }
-
-    if (isThreadAttached) 
-    {
-        s_javaVm->DetachCurrentThread();
-    }
-
-    s_javaVm = nullptr;
-    return S_OK;
-}
-
-HttpRequest::HttpRequest() : m_httpRequestInstance(nullptr), m_httpResponseInstance(nullptr) 
+HttpRequest::HttpRequest(JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass) :
+    m_httpRequestInstance(nullptr), 
+    m_httpResponseInstance(nullptr),
+    m_javaVm(javaVm),
+    m_httpRequestClass(httpRequestClass),
+    m_httpResponseClass(httpResponseClass)
 {
 }
 
@@ -103,14 +24,14 @@ HRESULT HttpRequest::Initialize()
 
     if (SUCCEEDED(result)) 
     {
-        jmethodID httpRequestCtor = jniEnv->GetMethodID(s_httpRequestClass, "<init>", "()V");
+        jmethodID httpRequestCtor = jniEnv->GetMethodID(m_httpRequestClass, "<init>", "()V");
         if (httpRequestCtor == nullptr) 
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest constructor");
             return E_FAIL;
         }
 
-        m_httpRequestInstance = jniEnv->NewObject(s_httpRequestClass, httpRequestCtor);
+        m_httpRequestInstance = jniEnv->NewObject(m_httpRequestClass, httpRequestCtor);
         return S_OK;
     }
 
@@ -119,12 +40,12 @@ HRESULT HttpRequest::Initialize()
 
 HRESULT HttpRequest::GetJniEnv(JNIEnv** jniEnv) 
 {
-    if (s_javaVm == nullptr)
+    if (m_javaVm == nullptr)
     {
         return E_HC_NOT_INITIALISED;
     }
 
-    jint jniResult = s_javaVm->GetEnv(reinterpret_cast<void**>(jniEnv), JNI_VERSION_1_6);
+    jint jniResult = m_javaVm->GetEnv(reinterpret_cast<void**>(jniEnv), JNI_VERSION_1_6);
 
     if (jniResult != JNI_OK) 
     {
@@ -145,7 +66,7 @@ HRESULT HttpRequest::SetUrl(const char* url)
         return result;
     }
 
-    jmethodID httpRequestSetUrlMethod = jniEnv->GetMethodID(s_httpRequestClass, "setHttpUrl", "(Ljava/lang/String;)V");
+    jmethodID httpRequestSetUrlMethod = jniEnv->GetMethodID(m_httpRequestClass, "setHttpUrl", "(Ljava/lang/String;)V");
     if (httpRequestSetUrlMethod == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.setHttpUrl");
@@ -169,7 +90,7 @@ HRESULT HttpRequest::AddHeader(const char* headerName, const char* headerValue)
         return result;
     }
 
-    jmethodID httpRequestAddHeaderMethod = jniEnv->GetMethodID(s_httpRequestClass, "setHttpHeader", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID httpRequestAddHeaderMethod = jniEnv->GetMethodID(m_httpRequestClass, "setHttpHeader", "(Ljava/lang/String;Ljava/lang/String;)V");
     if (httpRequestAddHeaderMethod == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.setHttpHeader");
@@ -195,7 +116,7 @@ HRESULT HttpRequest::SetMethodAndBody(const char* method, const char* contentTyp
         return result;
     }
 
-    jmethodID httpRequestSetBody = jniEnv->GetMethodID(s_httpRequestClass, "setHttpMethodAndBody", "(Ljava/lang/String;Ljava/lang/String;[B)V");
+    jmethodID httpRequestSetBody = jniEnv->GetMethodID(m_httpRequestClass, "setHttpMethodAndBody", "(Ljava/lang/String;Ljava/lang/String;[B)V");
     if (httpRequestSetBody == nullptr) 
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.setHttpMethodAndBody");
@@ -233,7 +154,7 @@ HRESULT HttpRequest::ExecuteRequest()
 
     if (SUCCEEDED(result))
     {
-        jmethodID httpRequestExecuteMethod = jniEnv->GetMethodID(s_httpRequestClass, "doRequest", "()Lcom/xbox/httpclient/HttpClientResponse;");
+        jmethodID httpRequestExecuteMethod = jniEnv->GetMethodID(m_httpRequestClass, "doRequest", "()Lcom/xbox/httpclient/HttpClientResponse;");
         if (httpRequestExecuteMethod == nullptr)
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.doRequest");
@@ -262,7 +183,7 @@ HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call)
         return result;
     }
 
-    jmethodID httpResponseBodyMethod = jniEnv->GetMethodID(s_httpResponseClass, "getResponseBodyBytes", "()[B");
+    jmethodID httpResponseBodyMethod = jniEnv->GetMethodID(m_httpResponseClass, "getResponseBodyBytes", "()[B");
     if (httpResponseBodyMethod == nullptr) 
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.getResponseBodyBytes");
@@ -296,7 +217,7 @@ uint32_t HttpRequest::GetResponseCode()
         return result;
     }
 
-    jmethodID httpResponseStatusMethod = jniEnv->GetMethodID(s_httpResponseClass, "getResponseCode", "()I");
+    jmethodID httpResponseStatusMethod = jniEnv->GetMethodID(m_httpResponseClass, "getResponseCode", "()I");
     jint responseStatus = jniEnv->CallIntMethod(m_httpResponseInstance, httpResponseStatusMethod);
     return (uint32_t)responseStatus;
 }
@@ -311,7 +232,7 @@ uint32_t HttpRequest::GetResponseHeaderCount()
         return result;
     }
 
-    jmethodID httpResponssNumHeadersMethod = jniEnv->GetMethodID(s_httpResponseClass, "getNumHeaders", "()I");
+    jmethodID httpResponssNumHeadersMethod = jniEnv->GetMethodID(m_httpResponseClass, "getNumHeaders", "()I");
     jint numHeaders = jniEnv->CallIntMethod(m_httpResponseInstance, httpResponssNumHeadersMethod);
     return (uint32_t)numHeaders;
 }
@@ -328,7 +249,7 @@ std::string HttpRequest::GetHeaderNameAtIndex(uint32_t index)
 
     if (m_httpResponseInstance != nullptr)
     {
-        jmethodID httpRepsonseGetHeaderName = jniEnv->GetMethodID(s_httpResponseClass, "getHeaderNameAtIndex", "(I)Ljava/lang/String;");
+        jmethodID httpRepsonseGetHeaderName = jniEnv->GetMethodID(m_httpResponseClass, "getHeaderNameAtIndex", "(I)Ljava/lang/String;");
         jstring headerName = (jstring)jniEnv->CallObjectMethod(m_httpResponseInstance, httpRepsonseGetHeaderName, index);
         const char* nameCstr = jniEnv->GetStringUTFChars(headerName, NULL);
 
@@ -355,7 +276,7 @@ std::string HttpRequest::GetHeaderValueAtIndex(uint32_t index)
 
     if (m_httpResponseInstance != nullptr)
     {
-        jmethodID httpRepsonseGetHeaderValue = jniEnv->GetMethodID(s_httpResponseClass, "getHeaderValueAtIndex", "(I)Ljava/lang/String;");
+        jmethodID httpRepsonseGetHeaderValue = jniEnv->GetMethodID(m_httpResponseClass, "getHeaderValueAtIndex", "(I)Ljava/lang/String;");
         jstring headerValue = (jstring)jniEnv->CallObjectMethod(m_httpResponseInstance, httpRepsonseGetHeaderValue, index);
         const char* valueCstr = jniEnv->GetStringUTFChars(headerValue, NULL);
 

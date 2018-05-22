@@ -172,6 +172,7 @@ set(Android_HTTP_Source_Files
    ../../../Source/HTTP/Android/http_android.cpp
    ../../../Source/HTTP/Android/android_http_request.cpp
    ../../../Source/HTTP/Android/android_http_request.h
+   ../../../Source/HTTP/Android/android_platform_context.cpp
    )
 
 set(XMLHttp_HTTP_Source_Files

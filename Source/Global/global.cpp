@@ -17,10 +17,11 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton()
+http_singleton::http_singleton(HCPlatformContext* context)
 {
     m_lastId = 0;
     m_performFunc = Internal_HCHttpCallPerform;
+    m_platformContext = std::shared_ptr<HCPlatformContext>(context);
 
     m_websocketMessageFunc = nullptr;
     m_websocketCloseEventFunc = nullptr;
@@ -68,11 +69,12 @@ HRESULT init_http_singleton(void* context)
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
-        hr = Internal_HCHttpPlatformInitialize(context);
+        HCPlatformContext* platformContext = nullptr;
+        hr = Internal_HCHttpPlatformInitialize(context, &platformContext);
         
         if (SUCCEEDED(hr))
         {
-            auto newSingleton = http_allocate_shared<http_singleton>();
+            auto newSingleton = http_allocate_shared<http_singleton>(platformContext);
             std::atomic_compare_exchange_strong(
                 &g_httpSingleton_atomicReadsOnly,
                 &httpSingleton,
@@ -108,8 +110,6 @@ void cleanup_http_singleton()
             std::this_thread::sleep_for(std::chrono::milliseconds{ 10 });
         }
         // httpSingleton will be destroyed on this thread now
-
-        Interal_HCHttpPlatformCleanup();
     }
 }
 

@@ -12,10 +12,12 @@
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
+/// <param name="context">Optional platform-specific context for the call</param>
 typedef void
 (STDAPIVCALLTYPE* HCCallPerformFunction)(
     _In_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _In_opt_ void* context
     );
 
 /// <summary>

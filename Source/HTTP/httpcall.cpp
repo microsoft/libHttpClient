@@ -123,7 +123,7 @@ HRESULT perform_http_call(
                     {
                         try
                         {
-                            performFunc(data->async, call);
+                            performFunc(data->async, call, httpSingleton->m_platformContext.get());
                         }
                         catch (...)
                         {

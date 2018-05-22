@@ -4,7 +4,7 @@
 
 class HttpRequest {
 public:
-    HttpRequest();
+    HttpRequest(JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass);
     virtual ~HttpRequest();
 
     HRESULT Initialize();
@@ -21,16 +21,13 @@ public:
     std::string GetHeaderNameAtIndex(uint32_t index);
     std::string GetHeaderValueAtIndex(uint32_t index);
     HRESULT ProcessResponseBody(hc_call_handle_t call);
-
-    static HRESULT InitializeJavaEnvironment(JavaVM* javaVM);
-    static HRESULT CleanupJavaEnvironment();
 private:
     HRESULT GetJniEnv(JNIEnv**);
 
     jobject m_httpRequestInstance;
     jobject m_httpResponseInstance;
 
-    static JavaVM* s_javaVm;
-    static jclass s_httpRequestClass;
-    static jclass s_httpResponseClass;
+    JavaVM* m_javaVm;
+    jclass m_httpRequestClass;
+    jclass m_httpResponseClass;
 };
