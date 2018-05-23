@@ -101,6 +101,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_platform_context.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_platform_context.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\http_android.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />

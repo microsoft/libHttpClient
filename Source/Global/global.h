@@ -32,7 +32,7 @@ typedef struct http_retry_after_api_state
 
 typedef struct http_singleton
 {
-    http_singleton(HCPlatformContext* context);
+    http_singleton(IHCPlatformContext* context);
     ~http_singleton();
 
     std::mutex m_singletonLock;
@@ -56,7 +56,7 @@ typedef struct http_singleton
     uint32_t m_retryDelayInSeconds;
 
     // Platform-specific context for calls
-    std::shared_ptr<HCPlatformContext> m_platformContext;
+    std::unique_ptr<IHCPlatformContext> m_platformContext;
 
     // WebSocket state
     HCWebSocketMessageFunction m_websocketMessageFunc;

@@ -11,10 +11,6 @@
 
 #include <httpClient/config.h>
 
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "jni.h"
-#endif
-
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWA || HC_PLATFORM == HC_PLATFORM_XDK
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -264,35 +260,6 @@ typedef struct _LIST_ENTRY {
 #ifndef _Null_terminated_
 #define _Null_terminated_ 
 #endif
-
-#endif
-
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
-
-class HCPlatformContext
-{
-public:
-    HCPlatformContext(JavaVM* javaVm, jclass requestClass, jclass responseClass);
-    virtual ~HCPlatformContext();
-
-    JavaVM* GetJavaVm() { return m_javaVm;  }
-    jclass GetHttpRequestClass() { return m_httpRequestClass; }
-    jclass GetHttpResponseClass() { return m_httpResponseClass;  }
-
-private:
-    JavaVM* m_javaVm;
-    jclass m_httpRequestClass;
-    jclass m_httpResponseClass;
-};
-
-#else
-
-struct HCPlatformContext 
-{ 
-    // The compiler does not like this class being completely empty,
-    // so define an empty context pointer.
-    void* emptyContext;
-};
 
 #endif
 

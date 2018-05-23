@@ -1,11 +1,12 @@
 #include "pch.h"
 
-#include "httpClient/pal.h"
+#include "android_platform_context.h"
 #include <httpClient/httpClient.h>
 
-HRESULT Internal_HCHttpPlatformInitialize(void* context, HCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
 {
-    JavaVM* javaVm = reinterpret_cast<JavaVM*>(context);
+    assert(initialContext != nullptr);
+    JavaVM* javaVm = reinterpret_cast<JavaVM*>(initialContext);
     JNIEnv* jniEnv = nullptr;
     // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
@@ -39,20 +40,20 @@ HRESULT Internal_HCHttpPlatformInitialize(void* context, HCPlatformContext** pla
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
 
-    *platformContext = new HCPlatformContext(javaVm, globalRequestClass, globalResponseClass);
+    *platformContext = new AndroidPlatformContext(javaVm, globalRequestClass, globalResponseClass);
     return S_OK;
 }
 
-HCPlatformContext::HCPlatformContext(JavaVM* javaVm, jclass requestClass, jclass responseClass) :
-    m_javaVm { javaVm },
-    m_httpRequestClass { requestClass },
-    m_httpResponseClass { responseClass }
+AndroidPlatformContext::AndroidPlatformContext(JavaVM* javaVm, jclass requestClass, jclass responseClass) :
+    m_javaVm{ javaVm },
+    m_httpRequestClass{ requestClass },
+    m_httpResponseClass{ responseClass }
 {
+    assert(m_javaVm != nullptr);
 }
 
-HCPlatformContext::~HCPlatformContext()
+AndroidPlatformContext::~AndroidPlatformContext()
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "~HCPlatformContext");
     JNIEnv* jniEnv = nullptr;
     bool isThreadAttached = false;
     jint getEnvResult = m_javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
@@ -73,8 +74,8 @@ HCPlatformContext::~HCPlatformContext()
 
     if (jniEnv != nullptr)
     {
-        jniEnv->DeleteGlobalRef(m_httpRequestClass);        
-        jniEnv->DeleteGlobalRef(m_httpResponseClass);        
+        jniEnv->DeleteGlobalRef(m_httpRequestClass);
+        jniEnv->DeleteGlobalRef(m_httpResponseClass);
     }
 
     if (isThreadAttached)

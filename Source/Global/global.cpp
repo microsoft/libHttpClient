@@ -17,11 +17,11 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton(HCPlatformContext* context)
+http_singleton::http_singleton(IHCPlatformContext* initialContext) :
+    m_platformContext{ initialContext }
 {
     m_lastId = 0;
     m_performFunc = Internal_HCHttpCallPerform;
-    m_platformContext = std::shared_ptr<HCPlatformContext>(context);
 
     m_websocketMessageFunc = nullptr;
     m_websocketCloseEventFunc = nullptr;
@@ -69,23 +69,23 @@ HRESULT init_http_singleton(void* context)
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
-        HCPlatformContext* platformContext = nullptr;
-        hr = Internal_HCHttpPlatformInitialize(context, &platformContext);
+        IHCPlatformContext* platformContext = nullptr;
+        HRESULT hr = IHCPlatformContext::InitializeHttpPlatformContext(context, &platformContext);
         
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr)) 
         {
             auto newSingleton = http_allocate_shared<http_singleton>(platformContext);
-            std::atomic_compare_exchange_strong(
-                &g_httpSingleton_atomicReadsOnly,
-                &httpSingleton,
-                newSingleton
-            );
+                std::atomic_compare_exchange_strong(
+                    &g_httpSingleton_atomicReadsOnly,
+                    &httpSingleton,
+                    newSingleton
+                );
 
-            if (newSingleton == nullptr)
-            {
-                hr = E_OUTOFMEMORY;
-            }
-            // At this point there is a singleton (ours or someone else's)
+                if (newSingleton == nullptr)
+                {
+                    hr = E_OUTOFMEMORY;
+                }
+                // At this point there is a singleton (ours or someone else's)
         }
     }
 

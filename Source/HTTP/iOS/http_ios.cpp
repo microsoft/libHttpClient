@@ -5,10 +5,10 @@
 #if HC_PLATFORM == HC_PLATFORM_IOS
 #include <httpClient/httpClient.h>
 
-HRESULT Internal_HCHttpPlatformInitialize(void* context, HCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(context == nullptr);
+    assert(initialContext == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }

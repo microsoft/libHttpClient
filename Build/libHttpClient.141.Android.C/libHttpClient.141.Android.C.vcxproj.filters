@@ -102,6 +102,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.h">
       <Filter>C++ Source\HTTP\Android</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_platform_context.h">
+      <Filter>C++ Source\HTTP\Android</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h">
       <Filter>C++ Source\HTTP</Filter>
     </ClInclude>

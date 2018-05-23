@@ -4,17 +4,15 @@
 #if ANDROID_API
 #include <httpClient/httpClient.h>
 #include "android_http_request.h"
+#include "android_platform_context.h"
 
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call,
-    _In_opt_ void* context
+    _In_ hc_call_handle_t call
     )
 {
-    assert(context != nullptr);
-    HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_HCHttpCallPerform");
-
-    HCPlatformContext* platformContext = reinterpret_cast<HCPlatformContext*>(context);
+    auto httpSingleton = xbox::httpclient::get_http_singleton(true);
+    AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
     HttpRequest httpRequest(platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass());
     HRESULT result = httpRequest.Initialize();
 

@@ -823,22 +823,19 @@ void winhttp_http_task::perform_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT Internal_HCHttpPlatformInitialize(void* context, HCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(context == nullptr);
+    assert(initialContext == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }
 
 void Internal_HCHttpCallPerform(
     _In_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call,
-    _In_opt_ void* context
+    _In_ hc_call_handle_t call
     )
 {
-    assert(context == nullptr);
-
     xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(asyncBlock, call);
     HCHttpCallSetContext(call, httpTask); // TODO: cleanup 
     httpTask->perform_async();

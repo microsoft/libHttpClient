@@ -11,6 +11,7 @@ HttpRequest::HttpRequest(JavaVM* javaVm, jclass httpRequestClass, jclass httpRes
     m_httpRequestClass(httpRequestClass),
     m_httpResponseClass(httpResponseClass)
 {
+    assert(m_javaVm);
 }
 
 HttpRequest::~HttpRequest()
@@ -42,6 +43,7 @@ HRESULT HttpRequest::GetJniEnv(JNIEnv** jniEnv)
 {
     if (m_javaVm == nullptr)
     {
+        HC_TRACE_ERROR(HTTPCLIENT, "javaVm is null");
         return E_HC_NOT_INITIALISED;
     }
 
