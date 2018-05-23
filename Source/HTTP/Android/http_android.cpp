@@ -59,6 +59,7 @@ void Internal_HCHttpCallPerform(
 
     if (!SUCCEEDED(result)) 
     { 
+        HCHttpCallResponseSetNetworkErrorCode(call, result, static_cast<uint32_t>(result));
         CompleteAsync(asyncBlock, result, 0);
         return;
     }

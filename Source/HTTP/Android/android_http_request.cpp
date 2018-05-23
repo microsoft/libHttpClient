@@ -128,7 +128,7 @@ HRESULT HttpRequest::SetMethodAndBody(const char* method, const char* contentTyp
     jbyteArray bodyArray = nullptr;
     
     if (bodySize > 0)
-    {        
+    {
         bodyArray = jniEnv->NewByteArray(bodySize);
         void *tempPrimitive = jniEnv->GetPrimitiveArrayCritical(bodyArray, 0);
         memcpy(tempPrimitive, body, bodySize);

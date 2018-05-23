@@ -53,9 +53,6 @@ typedef struct HC_CALL
     bool performCalled;
 } HC_CALL;
 
-// Forward declaration for platform-specific context
-class HCPlatformContext;
-
 HRESULT Internal_HCHttpPlatformInitialize(void* context, HCPlatformContext** platformContext);
 
 void Internal_HCHttpCallPerform(

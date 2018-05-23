@@ -287,7 +287,12 @@ private:
 
 #else
 
-class HCPlatformContext { };
+struct HCPlatformContext 
+{ 
+    // The compiler does not like this class being completely empty,
+    // so define an empty context pointer.
+    void* emptyContext;
+};
 
 #endif
 
