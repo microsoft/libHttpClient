@@ -101,28 +101,28 @@ public:
         VERIFY_ARE_EQUAL(false, g_memFreeCalled);
     }
 
-    DEFINE_TEST_CASE(TestGlobalInit)
+    DEFINE_TEST_CASE(TestInit)
     {
-        DEFINE_TEST_CASE_PROPERTIES(TestGlobalInit);
+        DEFINE_TEST_CASE_PROPERTIES(TestInit);
 
         VERIFY_IS_NULL(get_http_singleton(false));
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         VERIFY_IS_NOT_NULL(get_http_singleton(false));
-        HCGlobalCleanup();
+        HCCleanup();
         VERIFY_IS_NULL(get_http_singleton(false));
     }
 
-    DEFINE_TEST_CASE(TestGlobalPerformCallback)
+    DEFINE_TEST_CASE(TestPerformCallback)
     {
-        DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestGlobalPerformCallback);
+        DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestPerformCallback);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         g_PerformCallbackCalled = false;
         HCCallPerformFunction func = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalGetHttpCallPerformFunction(&func));
+        VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&func));
         VERIFY_IS_NOT_NULL(func);
 
-        HCGlobalSetHttpCallPerformFunction(&PerformCallback);
+        HCSetHttpCallPerformFunction(&PerformCallback);
         hc_call_handle_t call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
@@ -159,13 +159,13 @@ public:
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         CloseAsyncQueue(queue);
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestSettings)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
 
         HCTraceLevel level;
 
@@ -202,25 +202,25 @@ public:
         uint32_t retryDelayInSeconds = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetRetryDelay(nullptr, &retryDelayInSeconds));
 
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestCall)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestCall);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_IS_NOT_NULL(call);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestRequest)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequest);
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
@@ -263,14 +263,14 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetRetryDelay(call, &retryDelayInSeconds));
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
 
     DEFINE_TEST_CASE(TestRequestHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
@@ -311,14 +311,14 @@ public:
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestResponse)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponse);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
@@ -342,14 +342,14 @@ public:
         VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestResponseHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         hc_call_handle_t call = nullptr;
         HCHttpCallCreate(&call);
 
@@ -390,7 +390,7 @@ public:
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
-        HCGlobalCleanup();
+        HCCleanup();
     }
 };
 

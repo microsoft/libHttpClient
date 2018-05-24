@@ -8,7 +8,7 @@
 
 
     /// <summary>
-/// The callback definition used by HCGlobalSetHttpCallPerformFunction().
+/// The callback definition used by HCSetHttpCallPerformFunction().
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
@@ -27,19 +27,19 @@ typedef void
 /// <param name="performFunc">A callback that implements HTTP perform function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-STDAPI_(void) HCGlobalSetHttpCallPerformFunction(
+STDAPI_(void) HCSetHttpCallPerformFunction(
     _In_opt_ HCCallPerformFunction performFunc
     ) HC_NOEXCEPT;
 
 /// <summary>
 /// Returns the current HCCallPerformFunction callback which implements the HTTP 
 /// perform function on the current platform. This can be used along with 
-/// HCGlobalSetHttpCallPerformFunction() to monitor all HTTP calls.
+/// HCSetHttpCallPerformFunction() to monitor all HTTP calls.
 /// </summary>
 /// <param name="performFunc">Set to the current HTTP perform function. Returns the default 
 /// routine if not previously set</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCGlobalGetHttpCallPerformFunction(
+STDAPI HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc
     ) HC_NOEXCEPT;
 
@@ -368,7 +368,7 @@ typedef HRESULT
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
-HCGlobalSetWebSocketFunctions(
+HCSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
@@ -385,7 +385,7 @@ HCGlobalSetWebSocketFunctions(
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
-HCGlobalGetWebSocketFunctions(
+HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc

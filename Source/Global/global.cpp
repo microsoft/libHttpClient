@@ -55,7 +55,7 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (assertIfNull && httpSingleton == nullptr)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
+        HC_TRACE_ERROR(HTTPCLIENT, "Call HCInitialize() fist");
         ASSERT(httpSingleton != nullptr);
     }
 

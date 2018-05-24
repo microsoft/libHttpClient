@@ -234,7 +234,7 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCGlobalSetWebSocketFunctions(
+HCSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
@@ -254,7 +254,7 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCGlobalGetWebSocketFunctions(
+HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc

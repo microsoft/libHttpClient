@@ -18,12 +18,12 @@ DEFINE_TEST_CLASS(GlobalTests)
 public:
     DEFINE_TEST_CLASS_PROPS(GlobalTests);
 
-    DEFINE_TEST_CASE(TestGlobalFns)
+    DEFINE_TEST_CASE(TestFns)
     {
-        DEFINE_TEST_CASE_PROPERTIES(TestGlobalFns);
+        DEFINE_TEST_CASE_PROPERTIES(TestFns);
 
         PCSTR ver;
-        HCGlobalGetLibVersion(&ver);
+        HCGetLibVersion(&ver);
         VERIFY_ARE_EQUAL_STR("1.0.0.0", ver);
 
 #pragma warning(disable: 4800)

@@ -55,8 +55,8 @@ typedef void
 
 /// <summary>
 /// Optionally sets the memory hook functions to allow callers to control route memory 
-/// allocations to their own memory manager. This must be called before HCGlobalInitialize() 
-/// and can not be called again until HCGlobalCleanup()
+/// allocations to their own memory manager. This must be called before HCInitialize() 
+/// and can not be called again until HCCleanup()
 ///
 /// This method allows the application to install custom memory allocation routines in order 
 /// to service all requests for new memory buffers instead of using default allocation routines.
@@ -99,15 +99,15 @@ STDAPI HCMemGetFunctions(
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions()
 /// Should have a corresponding call to HCGlobalCleanup().
 /// </summary>
-/// <param name="context">Client context for platform-specific initialization</param>
+/// <param name="context">Client context for platform-specific initialization.  Pass in the JavaVM on Android, and nullptr on other platforms</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCGlobalInitialize(_In_opt_ void* context = nullptr) HC_NOEXCEPT;
+STDAPI HCInitialize(_In_opt_ void* context) HC_NOEXCEPT;
 
 /// <summary>
 /// Immediately reclaims all resources associated with the library.
 /// If you called HCMemSetFunctions(), call this before shutting down your app's memory manager.
 /// </summary>
-STDAPI_(void) HCGlobalCleanup() HC_NOEXCEPT;
+STDAPI_(void) HCCleanup() HC_NOEXCEPT;
 
 /// <summary>
 /// Returns the version of the library
@@ -115,7 +115,7 @@ STDAPI_(void) HCGlobalCleanup() HC_NOEXCEPT;
 /// <param name="version">The version of the library in the format of release_year.release_month.date.rev.  
 /// For example, 2017.07.20170710.01</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT;
+STDAPI HCGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT;
 
 /// <summary>
 /// A callback that will be synchronously invoked each time an HTTP call fails but will be automatically be

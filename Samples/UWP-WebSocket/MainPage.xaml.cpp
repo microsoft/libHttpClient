@@ -108,7 +108,7 @@ MainPage::MainPage()
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
 
-    HCGlobalInitialize();
+    HCInitialize();
     HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
     uint32_t sharedAsyncQueueId = 0;
@@ -131,7 +131,7 @@ MainPage::MainPage()
 
 MainPage::~MainPage()
 {
-    HCGlobalCleanup();
+    HCCleanup();
 }
 
 std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::string headersList)

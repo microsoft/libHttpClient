@@ -10,7 +10,7 @@
 using namespace xbox::httpclient;
 
 STDAPI 
-HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT
+HCGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT
 try
 {
     if (version == nullptr)
@@ -24,7 +24,7 @@ try
 CATCH_RETURN()
 
 STDAPI 
-HCGlobalInitialize(_In_opt_ void* context) HC_NOEXCEPT
+HCInitialize(_In_opt_ void* context) HC_NOEXCEPT
 try
 {
     HCTraceImplGlobalInit();
@@ -32,16 +32,16 @@ try
 }
 CATCH_RETURN()
 
-STDAPI_(void) HCGlobalCleanup() HC_NOEXCEPT
+STDAPI_(void) HCCleanup() HC_NOEXCEPT
 try
 {
     xbox::httpclient::cleanup_http_singleton();
-    HCTraceImplGlobalCleanup();
+    HCTraceImplCleanup();
 }
 CATCH_RETURN_WITH(;)
 
 STDAPI_(void)
-HCGlobalSetHttpCallPerformFunction(
+HCSetHttpCallPerformFunction(
     _In_opt_ HCCallPerformFunction performFunc
     ) HC_NOEXCEPT
 {
@@ -53,7 +53,7 @@ HCGlobalSetHttpCallPerformFunction(
 }
 
 STDAPI 
-HCGlobalGetHttpCallPerformFunction(
+HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc
     ) HC_NOEXCEPT
 try
