@@ -6,7 +6,7 @@
 #include "android_http_request.h"
 #include "android_platform_context.h"
 
-void Internal_HCHttpCallPerform(
+void Internal_HCHttpCallPerformAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )

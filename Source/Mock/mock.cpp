@@ -116,7 +116,7 @@ HC_CALL* GetMatchingMock(
     return matchingMock;
 }
 
-bool Mock_Internal_HCHttpCallPerform(
+bool Mock_Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t originalCallHandle
     )
 {

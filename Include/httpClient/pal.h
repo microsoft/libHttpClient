@@ -38,16 +38,28 @@
 
 #define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
 
+// Windows defines these as an inline function so they cannot be
+// used in a switch statement.  On compilers >= 1900 (VS 2017) the
+// function is marked constexpr and we can keep them as-is.
+
+#if _MSC_VER < 1900
+#undef E_TIME_CRITICAL_THREAD
+#undef E_NOT_SUFFICIENT_BUFFER
+#endif
+
 #ifndef E_TIME_CRITICAL_THREAD
-#define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x800701A0L)
+#ifndef ERROR_TIME_CRITICAL_THREAD
+#define ERROR_TIME_CRITICAL_THREAD 0x1A0
+#endif
+#define E_TIME_CRITICAL_THREAD           __HRESULT_FROM_WIN32(ERROR_TIME_CRITICAL_THREAD)
 #endif
 
 #ifndef E_NOT_SUPPORTED
-#define E_NOT_SUPPORTED                  _HRESULTYPEDEF_(0x80070032L)
+#define E_NOT_SUPPORTED                  __HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED)
 #endif
 
 #ifndef E_NOT_SUFFICIENT_BUFFER
-#define E_NOT_SUFFICIENT_BUFFER          _HRESULTYPEDEF_(0x8007007AL)
+#define E_NOT_SUFFICIENT_BUFFER          __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)
 #endif
 
 #else 
@@ -108,7 +120,7 @@ typedef void* HANDLE;
 #define E_PENDING                        _HRESULTYPEDEF_(0x8000000AL)
 #define E_UNEXPECTED                     _HRESULTYPEDEF_(0x8000FFFFL)
 #define E_POINTER                        _HRESULTYPEDEF_(0x80004003L)
-#define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x8001010EL)
+#define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x800701A0L)
 #define E_NOT_SUPPORTED                  _HRESULTYPEDEF_(0x80070032L)
 #define E_NOT_SUFFICIENT_BUFFER          _HRESULTYPEDEF_(0x8007007AL)
 

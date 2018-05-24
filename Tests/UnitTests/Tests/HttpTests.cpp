@@ -149,7 +149,7 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         while (true)
         {

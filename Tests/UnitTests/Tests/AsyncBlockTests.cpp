@@ -420,4 +420,28 @@ public:
         CancelAsync(&async);
         CloseAsyncQueue(async.queue);
     }
+
+    DEFINE_TEST_CASE(VerifyWaitForCompletion)
+    {
+        AsyncBlock async = {};
+        FactorialCallData data = {};
+        DWORD result = 0;
+
+        CompletionThunk cb([&](AsyncBlock* async)
+        {
+            Sleep(2000);
+            VERIFY_SUCCEEDED(FactorialResult(async, &result));
+        });
+
+        async.context = &cb;
+        async.callback = CompletionThunk::Callback;
+
+        data.value = 5;
+
+        VERIFY_SUCCEEDED(FactorialAsync(&data, &async));
+        VERIFY_SUCCEEDED(GetAsyncStatus(&async, true));
+
+        VERIFY_ARE_EQUAL(data.result, result);
+        VERIFY_ARE_EQUAL(data.result, (DWORD)120);
+    }
 };

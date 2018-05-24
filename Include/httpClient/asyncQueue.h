@@ -112,6 +112,21 @@ STDAPI CreateNestedAsyncQueue(
     _Out_ async_queue_handle_t* queue);
 
 /// <summary>
+/// Creates an async queue by composing elements of 2 other queues.
+/// </summary>
+/// <param name='workerSourceQueue'>"work" callbacks will be called on this queue.</param>
+/// <param name='workerSourceCallbackType'>Determines if "work" callbacks will be called as "work" or completion callbacks on workerSourceQueue.</param>
+/// <param name='completionSourceQueue'>"completion" callbacks will be called on this queue.</param>
+/// <param name='completionSourceCallbackType'>Determines if "completion" callbacks will be called as "work" or completion callbacks on completionSourceQueue.</param>
+/// <param name='queue'>The newly created queue.</param>
+STDAPI CreateCompositeAsyncQueue(
+    _In_ async_queue_handle_t workerSourceQueue,
+    _In_ AsyncQueueCallbackType workerSourceCallbackType,
+    _In_ async_queue_handle_t completionSourceQueue,
+    _In_ AsyncQueueCallbackType completionSourceCallbackType,
+    _Out_ async_queue_handle_t* queue);
+
+/// <summary>
 /// Increments the reference count on the async queue.  Call CloseAsyncQueue
 /// to decrement.
 /// </summary>
