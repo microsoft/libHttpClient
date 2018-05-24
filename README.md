@@ -35,7 +35,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 [See public header](../../tree/master/Include/httpClient/httpClient.h)
 
 1. Optionally call HCMemSetFunctions() to control memory allocations
-1. Call HCGlobalInitialize()
+1. Call HCInitialize()
 1. Optionally call HCSettingsSet*()
 1. Call HCHttpCallCreate() to create a new hc_call_handle_t
 1. Call HCHttpCallRequestSet*() to prepare the hc_call_handle_t
@@ -44,12 +44,12 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the hc_call_handle_t
 1. Call HCHttpCallCleanup() to cleanup the hc_call_handle_t
 1. Repeat 4-8 for each new HTTP call
-1. Call HCGlobalCleanup() at shutdown before your memory manager set in step 1 is shutdown
+1. Call HCCleanup() at shutdown before your memory manager set in step 1 is shutdown
 
 ## Behavior control
 
 * On UWP, XDK ERA, iOS, and Android, HCHttpCallPerform() will call native platform APIs
-* Optionally call HCGlobalSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
+* Optionally call HCSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl how to use this callback plus Curl https://github.com/curl/curl to make an HTTP implementation using Curl.
 
 ## TODO
