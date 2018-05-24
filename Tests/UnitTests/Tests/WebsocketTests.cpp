@@ -112,7 +112,7 @@ public:
 
     DEFINE_TEST_CASE(TestGlobalCallbacks)
     {
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         //g_PerformMessageCallbackCalled = false;
         //g_PerformCloseCallbackCalled = false;
 
@@ -126,7 +126,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetFunctions(&messageFunc, &closeFunc));
         VERIFY_IS_NOT_NULL(messageFunc);
         VERIFY_IS_NOT_NULL(closeFunc);
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestCloseHandles)
@@ -134,7 +134,7 @@ public:
         g_memAllocCalled = false;
         g_memFreeCalled = false;
         VERIFY_ARE_EQUAL(S_OK, HCMemSetFunctions(&MemAlloc, &MemFree));
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
 
         hc_websocket_handle_t websocket;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket));
@@ -148,23 +148,23 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
         VERIFY_ARE_EQUAL(true, g_memFreeCalled);
 
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestConnect)
     {
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
 
         HCWebSocketConnectFunction websocketConnectFunc = nullptr;
         HCWebSocketSendMessageFunction websocketSendMessageFunc = nullptr;
         HCWebSocketDisconnectFunction websocketDisconnectFunc = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketDisconnect));
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketDisconnect));
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
@@ -193,14 +193,14 @@ public:
         VERIFY_ARE_EQUAL(true, g_HCWebSocketDisconnect_Called);
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
 
     DEFINE_TEST_CASE(TestRequestHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
         hc_websocket_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&call));
 
@@ -241,7 +241,7 @@ public:
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(call));
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
 };

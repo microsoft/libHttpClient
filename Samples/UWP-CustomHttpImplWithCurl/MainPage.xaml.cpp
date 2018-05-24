@@ -101,7 +101,7 @@ MainPage::MainPage()
     g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
-    HCGlobalInitialize();
+    HCInitialize();
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
@@ -114,7 +114,7 @@ MainPage::MainPage()
     StartBackgroundThread();
 
     curl_global_init(CURL_GLOBAL_ALL);
-    HCGlobalSetHttpCallPerformFunction(PerformCallWithCurl);
+    HCSetHttpCallPerformFunction(PerformCallWithCurl);
 
     TextboxURL->Text = L"http://www.bing.com";
     TextboxHeaders->Text = L"User-Agent: XboxServicesAPI; x-xbl-contract-version: 1";
@@ -125,7 +125,7 @@ MainPage::MainPage()
 
 MainPage::~MainPage()
 {
-    HCGlobalCleanup();
+    HCCleanup();
 }
 
 std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::string headersList)

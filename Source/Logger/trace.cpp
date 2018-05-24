@@ -273,12 +273,12 @@ HCTraceImplScopeHelper::~HCTraceImplScopeHelper()
 
 // trace_internal.h
 
-void HCTraceImplGlobalInit()
+void HCTraceImplInit()
 {
     GetTraceState().Init();
 }
 
-void HCTraceImplGlobalCleanup()
+void HCTraceImplCleanup()
 {
     GetTraceState().Cleanup();
 }
