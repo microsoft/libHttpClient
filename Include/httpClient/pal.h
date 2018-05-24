@@ -39,27 +39,23 @@
 #define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
 
 // Windows defines these as an inline function so they cannot be
-// used in a switch statement.  On compilers >= 1900 (VS 2017) the
-// function is marked constexpr and we can keep them as-is.
-
-#if _MSC_VER < 1900
+// used in a switch statement. (It would work if we required c++17 support)
 #undef E_TIME_CRITICAL_THREAD
 #undef E_NOT_SUFFICIENT_BUFFER
-#endif
 
 #ifndef E_TIME_CRITICAL_THREAD
 #ifndef ERROR_TIME_CRITICAL_THREAD
 #define ERROR_TIME_CRITICAL_THREAD 0x1A0
 #endif
-#define E_TIME_CRITICAL_THREAD           __HRESULT_FROM_WIN32(ERROR_TIME_CRITICAL_THREAD)
+#define E_TIME_CRITICAL_THREAD           __HRESULT_FROM_WIN32(ERROR_TIME_CRITICAL_THREAD) // 0x800701A0
 #endif
 
 #ifndef E_NOT_SUPPORTED
-#define E_NOT_SUPPORTED                  __HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED)
+#define E_NOT_SUPPORTED                  __HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED) // 0x80070032
 #endif
 
 #ifndef E_NOT_SUFFICIENT_BUFFER
-#define E_NOT_SUFFICIENT_BUFFER          __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)
+#define E_NOT_SUFFICIENT_BUFFER          __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) // 0x8007007A
 #endif
 
 #else 

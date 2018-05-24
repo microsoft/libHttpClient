@@ -36,7 +36,7 @@ void FormatHelper(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* for
     va_end(args2);
 
     ASSERT(written == required);
-    //UNREFERENCED_LOCAL(written);
+    UNREFERENCED_PARAMETER(written);
 
     buffer.resize(buffer.size() - 1); // drop null terminator
 }
