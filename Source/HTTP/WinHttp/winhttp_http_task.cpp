@@ -823,6 +823,13 @@ void winhttp_http_task::perform_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+{
+    // No-op
+    assert(initialContext == nullptr);
+    *platformContext = nullptr;
+    return S_OK;
+}
 
 void Internal_HCHttpCallPerformAsync(
     _In_ AsyncBlock* asyncBlock,

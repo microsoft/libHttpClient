@@ -15,7 +15,7 @@
 typedef void
 (STDAPIVCALLTYPE* HCCallPerformFunction)(
     _In_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call    
     );
 
 /// <summary>

@@ -53,6 +53,10 @@ Output-Build.txt
 **/*.opendb
 **/*.coveragexml
 
+# VS Temp files for Android Projects
+**/.gradle/*
+**/app/build/*
+
 **/Durango/
 **/XboxOne.x64/
 Samples/**/bin/

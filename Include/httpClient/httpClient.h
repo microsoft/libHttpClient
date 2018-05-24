@@ -99,8 +99,9 @@ STDAPI HCMemGetFunctions(
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions()
 /// Should have a corresponding call to HCGlobalCleanup().
 /// </summary>
+/// <param name="context">Client context for platform-specific initialization</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCGlobalInitialize() HC_NOEXCEPT;
+STDAPI HCGlobalInitialize(_In_opt_ void* context = nullptr) HC_NOEXCEPT;
 
 /// <summary>
 /// Immediately reclaims all resources associated with the library.
