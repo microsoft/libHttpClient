@@ -42,7 +42,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleGenericMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
@@ -97,7 +97,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         hc_call_handle_t mockCall = CreateMockCall("Mock1", true, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
@@ -195,7 +195,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlBodyMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         hc_call_handle_t mockCall = CreateMockCall("Mock1", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
@@ -368,7 +368,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleMultiSpecificUrlBodyMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         hc_call_handle_t mockCall1 = CreateMockCall("Mock1", true, true);
         hc_call_handle_t mockCall2 = CreateMockCall("Mock2", true, true);

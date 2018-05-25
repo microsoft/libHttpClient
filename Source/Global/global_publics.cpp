@@ -27,7 +27,7 @@ STDAPI
 HCInitialize(_In_opt_ void* context) HC_NOEXCEPT
 try
 {
-    HCTraceImplGlobalInit();
+    HCTraceImplInit();
     return xbox::httpclient::init_http_singleton(context);
 }
 CATCH_RETURN()
