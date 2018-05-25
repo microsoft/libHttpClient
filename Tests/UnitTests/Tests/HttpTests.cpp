@@ -106,7 +106,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestInit);
 
         VERIFY_IS_NULL(get_http_singleton(false));
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         VERIFY_IS_NOT_NULL(get_http_singleton(false));
         HCCleanup();
         VERIFY_IS_NULL(get_http_singleton(false));
@@ -116,7 +116,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestPerformCallback);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         g_PerformCallbackCalled = false;
         HCCallPerformFunction func = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&func));
@@ -165,7 +165,7 @@ public:
     DEFINE_TEST_CASE(TestSettings)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestSettings);
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         HCTraceLevel level;
 
@@ -209,7 +209,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestCall);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_IS_NOT_NULL(call);
@@ -220,7 +220,7 @@ public:
     DEFINE_TEST_CASE(TestRequest)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequest);
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
@@ -270,7 +270,7 @@ public:
     DEFINE_TEST_CASE(TestRequestHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
@@ -318,7 +318,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponse);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
@@ -349,7 +349,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
 
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_call_handle_t call = nullptr;
         HCHttpCallCreate(&call);
 

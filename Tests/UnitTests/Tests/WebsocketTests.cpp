@@ -112,7 +112,7 @@ public:
 
     DEFINE_TEST_CASE(TestGlobalCallbacks)
     {
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         //g_PerformMessageCallbackCalled = false;
         //g_PerformCloseCallbackCalled = false;
 
@@ -134,7 +134,7 @@ public:
         g_memAllocCalled = false;
         g_memFreeCalled = false;
         VERIFY_ARE_EQUAL(S_OK, HCMemSetFunctions(&MemAlloc, &MemFree));
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         hc_websocket_handle_t websocket;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket));
@@ -153,7 +153,7 @@ public:
 
     DEFINE_TEST_CASE(TestConnect)
     {
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         HCWebSocketConnectFunction websocketConnectFunc = nullptr;
         HCWebSocketSendMessageFunction websocketSendMessageFunc = nullptr;
@@ -200,7 +200,7 @@ public:
     DEFINE_TEST_CASE(TestRequestHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_websocket_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&call));
 
