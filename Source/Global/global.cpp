@@ -70,7 +70,7 @@ HRESULT init_http_singleton(void* context)
     if (!httpSingleton)
     {
         IHCPlatformContext* platformContext = nullptr;
-        HRESULT hr = IHCPlatformContext::InitializeHttpPlatformContext(context, &platformContext);
+        hr = IHCPlatformContext::InitializeHttpPlatformContext(context, &platformContext);
         
         if (SUCCEEDED(hr)) 
         {
