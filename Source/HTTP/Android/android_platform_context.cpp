@@ -6,7 +6,7 @@
 HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
 {
     assert(initialContext != nullptr);
-    JavaVM* javaVm = reinterpret_cast<JavaVM*>(initialContext);
+    JavaVM* javaVm = static_cast<JavaVM*>(initialContext);
     JNIEnv* jniEnv = nullptr;
     // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
@@ -24,9 +24,6 @@ HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, 
     if (localHttpRequest == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest class");
-        // TODO: [For Pull Request]: Right now with where InitializeJavaEnvironment is called this HRESULT is never
-        // bubbled all the way up to HCGlobalInitialize. Should this throw a custom exception object instead? Or
-        // is there a more appropriate place to call the Java initialization function?
         return E_FAIL;
     }
 
