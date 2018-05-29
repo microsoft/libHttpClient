@@ -591,10 +591,7 @@ STDAPI GetAsyncResultSize(
 
     if (SUCCEEDED(result))
     {
-        ASSERT(state != nullptr);
-        RETURN_HR_IF(E_INVALIDARG, state == nullptr);
-
-        *bufferSize = state->providerData.bufferSize;
+        *bufferSize = state == nullptr ? 0 : state->providerData.bufferSize;
     }
 
     return result;
@@ -840,7 +837,10 @@ STDAPI GetAsyncResult(
     {
         if (state == nullptr)
         {
-            result = E_INVALIDARG;
+            if (bufferUsed != nullptr)
+            {
+                *bufferUsed = 0;
+            }
         }
         else if (token != state->token)
         {
