@@ -4,9 +4,9 @@
 #include <httpClient/httpClient.h>
 #include <vector>
 
-HttpRequest::HttpRequest(JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass) :
+HttpRequest::HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass) :
     m_httpRequestInstance(nullptr), 
-    m_httpResponseInstance(nullptr),
+    m_asyncBlock(asyncBlock),
     m_javaVm(javaVm),
     m_httpRequestClass(httpRequestClass),
     m_httpResponseClass(httpResponseClass)
@@ -149,33 +149,60 @@ HRESULT HttpRequest::SetMethodAndBody(const char* method, const char* contentTyp
     return S_OK;
 }
 
-HRESULT HttpRequest::ExecuteRequest() 
+HRESULT HttpRequest::ExecuteAsync(hc_call_handle_t call) 
 {
     JNIEnv* jniEnv = nullptr;
     HRESULT result = GetJniEnv(&jniEnv);
 
     if (SUCCEEDED(result))
     {
-        jmethodID httpRequestExecuteMethod = jniEnv->GetMethodID(m_httpRequestClass, "doRequest", "()Lcom/xbox/httpclient/HttpClientResponse;");
-        if (httpRequestExecuteMethod == nullptr)
+        jmethodID httpRequestExecuteAsyncMethod = jniEnv->GetMethodID(m_httpRequestClass, "doRequestAsync", "(J)V");
+        if (httpRequestExecuteAsyncMethod == nullptr)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.doRequest");
+            HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClient.doRequestAsync");
             return E_FAIL;
         }
 
-        m_httpResponseInstance = jniEnv->CallObjectMethod(m_httpRequestInstance, httpRequestExecuteMethod);
-
-        if (m_httpResponseInstance == nullptr) 
-        {
-            HC_TRACE_ERROR(HTTPCLIENT, "Http request failed");
-            return E_FAIL;
-        }
+        jniEnv->CallVoidMethod(m_httpRequestInstance, httpRequestExecuteAsyncMethod, reinterpret_cast<jlong>(call));
     }
 
     return result;
 }
 
-HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call) 
+HRESULT HttpRequest::ProcessResponse(hc_call_handle_t call, jobject response) 
+{
+    JNIEnv* jniEnv = nullptr;
+    HRESULT result = GetJniEnv(&jniEnv);
+
+    if (!SUCCEEDED(result))
+    {
+        return result;
+    }
+
+    jmethodID httpResponseStatusMethod = jniEnv->GetMethodID(m_httpResponseClass, "getResponseCode", "()I");
+    jint responseStatus = jniEnv->CallIntMethod(response, httpResponseStatusMethod);
+
+    HCHttpCallResponseSetStatusCode(call, (uint32_t)responseStatus);
+
+    jmethodID httpRepsonseGetHeaderName = jniEnv->GetMethodID(m_httpResponseClass, "getHeaderNameAtIndex", "(I)Ljava/lang/String;");
+    jmethodID httpRepsonseGetHeaderValue = jniEnv->GetMethodID(m_httpResponseClass, "getHeaderValueAtIndex", "(I)Ljava/lang/String;");
+
+    for (uint32_t i = 0; i < GetResponseHeaderCount(response); i++)
+    {
+        jstring headerName = (jstring)jniEnv->CallObjectMethod(response, httpRepsonseGetHeaderName, i);
+        jstring headerValue = (jstring)jniEnv->CallObjectMethod(response, httpRepsonseGetHeaderValue, i);
+        const char* nameCstr = jniEnv->GetStringUTFChars(headerName, NULL);
+        const char* valueCstr = jniEnv->GetStringUTFChars(headerValue, NULL);
+
+        HCHttpCallResponseSetHeader(call, nameCstr, valueCstr);
+        jniEnv->ReleaseStringUTFChars(headerName, nameCstr);
+        jniEnv->ReleaseStringUTFChars(headerValue, valueCstr);
+    }
+
+    return ProcessResponseBody(call, response);
+}
+
+HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call, jobject repsonse) 
 {
     JNIEnv* jniEnv = nullptr;
     HRESULT result = GetJniEnv(&jniEnv);
@@ -192,7 +219,7 @@ HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call)
         return E_FAIL;
     }
 
-    jbyteArray responseBody = (jbyteArray)jniEnv->CallObjectMethod(m_httpResponseInstance, httpResponseBodyMethod);
+    jbyteArray responseBody = (jbyteArray)jniEnv->CallObjectMethod(repsonse, httpResponseBodyMethod);
 
     if (responseBody != nullptr) 
     {
@@ -209,22 +236,7 @@ HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call)
     return S_OK;
 }
 
-uint32_t HttpRequest::GetResponseCode() 
-{
-    JNIEnv* jniEnv = nullptr;
-    HRESULT result = GetJniEnv(&jniEnv);
-
-    if (!SUCCEEDED(result))
-    {
-        return result;
-    }
-
-    jmethodID httpResponseStatusMethod = jniEnv->GetMethodID(m_httpResponseClass, "getResponseCode", "()I");
-    jint responseStatus = jniEnv->CallIntMethod(m_httpResponseInstance, httpResponseStatusMethod);
-    return (uint32_t)responseStatus;
-}
-
-uint32_t HttpRequest::GetResponseHeaderCount() 
+uint32_t HttpRequest::GetResponseHeaderCount(jobject response) 
 {
     JNIEnv* jniEnv = nullptr;
     HRESULT result = GetJniEnv(&jniEnv);
@@ -235,60 +247,7 @@ uint32_t HttpRequest::GetResponseHeaderCount()
     }
 
     jmethodID httpResponssNumHeadersMethod = jniEnv->GetMethodID(m_httpResponseClass, "getNumHeaders", "()I");
-    jint numHeaders = jniEnv->CallIntMethod(m_httpResponseInstance, httpResponssNumHeadersMethod);
+    jint numHeaders = jniEnv->CallIntMethod(response, httpResponssNumHeadersMethod);
     return (uint32_t)numHeaders;
 }
 
-std::string HttpRequest::GetHeaderNameAtIndex(uint32_t index) 
-{
-    JNIEnv* jniEnv = nullptr;
-    HRESULT result = GetJniEnv(&jniEnv);
-
-    if (!SUCCEEDED(result))
-    {
-        return nullptr;
-    }
-
-    if (m_httpResponseInstance != nullptr)
-    {
-        jmethodID httpRepsonseGetHeaderName = jniEnv->GetMethodID(m_httpResponseClass, "getHeaderNameAtIndex", "(I)Ljava/lang/String;");
-        jstring headerName = (jstring)jniEnv->CallObjectMethod(m_httpResponseInstance, httpRepsonseGetHeaderName, index);
-        const char* nameCstr = jniEnv->GetStringUTFChars(headerName, NULL);
-
-        std::string headerStr(nameCstr);
-        jniEnv->ReleaseStringUTFChars(headerName, nameCstr);
-
-        return headerStr;
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-std::string HttpRequest::GetHeaderValueAtIndex(uint32_t index) 
-{
-    JNIEnv* jniEnv = nullptr;
-    HRESULT result = GetJniEnv(&jniEnv);
-
-    if (!SUCCEEDED(result))
-    {
-        return nullptr;
-    }
-
-    if (m_httpResponseInstance != nullptr)
-    {
-        jmethodID httpRepsonseGetHeaderValue = jniEnv->GetMethodID(m_httpResponseClass, "getHeaderValueAtIndex", "(I)Ljava/lang/String;");
-        jstring headerValue = (jstring)jniEnv->CallObjectMethod(m_httpResponseInstance, httpRepsonseGetHeaderValue, index);
-        const char* valueCstr = jniEnv->GetStringUTFChars(headerValue, NULL);
-
-        std::string valueStr(valueCstr);
-        jniEnv->ReleaseStringUTFChars(headerValue, valueCstr);
-
-        return valueStr;
-    }
-    else
-    {
-        return nullptr;
-    }
-}

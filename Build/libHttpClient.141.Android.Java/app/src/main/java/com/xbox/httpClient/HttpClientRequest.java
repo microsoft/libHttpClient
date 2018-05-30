@@ -4,6 +4,8 @@ import android.util.Log;
 
 import java.io.IOException;
 
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -38,14 +40,23 @@ public class HttpClientRequest {
         this.requestBuilder = requestBuilder.addHeader(name, value);
     }
 
-    public HttpClientResponse doRequest() {
-        OkHttpClient client = new OkHttpClient.Builder().build();
+    public void doRequestAsync(final long sourceCall) {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .retryOnConnectionFailure(false) // Explicitly disable retries; retry logic will be managed by native code in libHttpClient
+                .build();
+        client.newCall(this.requestBuilder.build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(final Call call, IOException e) {
+                Log.e("HttpRequestClient", "Failed to execute async request", e);
+                OnRequestCompleted(sourceCall, null);
+            }
 
-        try {
-            Response response = client.newCall(this.requestBuilder.build()).execute();
-            return new HttpClientResponse(response); 
-        } catch (IOException e) {
-            Log.e("HttpRequestClient", "Failed to execute request", e);
-            return null;
-        }
-    }}
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
+                OnRequestCompleted(sourceCall, new HttpClientResponse(response));
+            }
+        });
+    }
+
+    private native void OnRequestCompleted(long call, HttpClientResponse response);
+}

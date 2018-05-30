@@ -6,6 +6,29 @@
 #include "android_http_request.h"
 #include "android_platform_context.h"
 
+extern "C"
+{
+
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(JNIEnv* env, jobject instance, jlong call, jobject response)
+{
+    hc_call_handle_t sourceCall = reinterpret_cast<hc_call_handle_t>(call);
+    HttpRequest* request = nullptr;
+    HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
+    std::unique_ptr<HttpRequest> sourceRequest{ request };
+
+    if (response == nullptr) 
+    {
+        CompleteAsync(sourceRequest->GetAsyncBlock(), E_FAIL, 0);
+    }
+    else 
+    {
+        HRESULT result = sourceRequest->ProcessResponse(sourceCall, response);
+        CompleteAsync(sourceRequest->GetAsyncBlock(), result, 0);
+    }
+}
+
+}
+
 void Internal_HCHttpCallPerformAsync(
     _In_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
@@ -13,8 +36,8 @@ void Internal_HCHttpCallPerformAsync(
 {
     auto httpSingleton = xbox::httpclient::get_http_singleton(true);
     AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
-    HttpRequest httpRequest(platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass());
-    HRESULT result = httpRequest.Initialize();
+    std::unique_ptr<HttpRequest> httpRequest{ new HttpRequest(asyncBlock, platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass()) };
+    HRESULT result = httpRequest->Initialize();
 
     if (!SUCCEEDED(result))
     {
@@ -26,7 +49,7 @@ void Internal_HCHttpCallPerformAsync(
     const char* requestMethod = nullptr;
 
     HCHttpCallRequestGetUrl(call, &requestMethod, &requestUrl);
-    httpRequest.SetUrl(requestUrl);
+    httpRequest->SetUrl(requestUrl);
 
     uint32_t numHeaders = 0;
     HCHttpCallRequestGetNumHeaders(call, &numHeaders);
@@ -37,7 +60,7 @@ void Internal_HCHttpCallPerformAsync(
         const char* headerValue = nullptr;
 
         HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
-        httpRequest.AddHeader(headerName, headerValue);
+        httpRequest->AddHeader(headerName, headerValue);
     }
 
     const uint8_t* requestBody = nullptr;
@@ -51,29 +74,19 @@ void Internal_HCHttpCallPerformAsync(
         HCHttpCallRequestGetHeader(call, "Content-Type", &contentType);
     }
 
-    httpRequest.SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
+    httpRequest->SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
 
-    result = httpRequest.ExecuteRequest();
+    HCHttpCallSetContext(call, httpRequest.get());
+    result = httpRequest->ExecuteAsync(call);
 
-    if (!SUCCEEDED(result)) 
-    { 
-        HCHttpCallResponseSetNetworkErrorCode(call, result, static_cast<uint32_t>(result));
-        CompleteAsync(asyncBlock, result, 0);
-        return;
-    }
-
-    HCHttpCallResponseSetStatusCode(call, httpRequest.GetResponseCode());
-
-    for (uint32_t i = 0; i < httpRequest.GetResponseHeaderCount(); i++) 
+    if (SUCCEEDED(result))
     {
-        std::string headerName = httpRequest.GetHeaderNameAtIndex(i);
-        std::string headerValue = httpRequest.GetHeaderValueAtIndex(i);
-        HCHttpCallResponseSetHeader(call, headerName.c_str(), headerValue.c_str());
+        httpRequest.release();
     }
-
-    httpRequest.ProcessResponseBody(call);
-
-    CompleteAsync(asyncBlock, S_OK, 0);
+    else
+    { 
+        CompleteAsync(asyncBlock, E_FAIL, 0);
+    }
 }
 
 #endif
