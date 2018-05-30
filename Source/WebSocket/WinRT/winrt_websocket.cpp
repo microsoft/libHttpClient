@@ -224,7 +224,7 @@ try
             HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu] connect complete", websocket->id);
         }
 
-        CompleteAsync(asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
+        CompleteAsync(asyncBlock, websocketTask->m_connectAsyncOpResult, sizeof(WebSocketCompletionResult));
     });
 
     return E_PENDING;
