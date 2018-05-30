@@ -12,9 +12,9 @@ extern "C"
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(JNIEnv* env, jobject instance, jlong call, jobject response)
 {
     hc_call_handle_t sourceCall = reinterpret_cast<hc_call_handle_t>(call);
-    HttpRequest* sourceRequest = nullptr;
-
-    HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&sourceRequest));
+    HttpRequest* request = nullptr;
+    HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
+    std::unique_ptr<HttpRequest> sourceRequest{ request };
 
     if (response == nullptr) 
     {
@@ -25,8 +25,6 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
         HRESULT result = sourceRequest->ProcessResponse(sourceCall, response);
         CompleteAsync(sourceRequest->GetAsyncBlock(), result, 0);
     }
-
-    delete sourceRequest;
 }
 
 }
@@ -38,7 +36,7 @@ void Internal_HCHttpCallPerformAsync(
 {
     auto httpSingleton = xbox::httpclient::get_http_singleton(true);
     AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
-    HttpRequest* httpRequest = new HttpRequest(asyncBlock, platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass());
+    std::unique_ptr<HttpRequest> httpRequest{ new HttpRequest(asyncBlock, platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass()) };
     HRESULT result = httpRequest->Initialize();
 
     if (!SUCCEEDED(result))
@@ -78,13 +76,16 @@ void Internal_HCHttpCallPerformAsync(
 
     httpRequest->SetMethodAndBody(requestMethod, contentType, requestBody, requestBodySize);
 
-    HCHttpCallSetContext(call, httpRequest);
+    HCHttpCallSetContext(call, httpRequest.get());
     result = httpRequest->ExecuteAsync(call);
 
-    if (!SUCCEEDED(result)) 
+    if (SUCCEEDED(result))
+    {
+        httpRequest.release();
+    }
+    else
     { 
         CompleteAsync(asyncBlock, E_FAIL, 0);
-        return;
     }
 }
 

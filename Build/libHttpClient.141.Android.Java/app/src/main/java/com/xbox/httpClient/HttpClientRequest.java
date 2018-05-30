@@ -42,8 +42,8 @@ public class HttpClientRequest {
 
     public void doRequestAsync(final long sourceCall) {
         OkHttpClient client = new OkHttpClient.Builder()
-        		.retryOnConnectionFailure(false) // Explicitly disable retries; retry logic will be managed by native code in libHttpClient
-        		.build();
+                .retryOnConnectionFailure(false) // Explicitly disable retries; retry logic will be managed by native code in libHttpClient
+                .build();
         client.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(final Call call, IOException e) {
