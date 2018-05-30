@@ -57,7 +57,6 @@ public:
     ReceiveContext^ m_context;
 
     IAsyncAction^ m_connectAsyncOp;
-    AsyncStatus m_connectAsyncOpStatus;
 
     std::mutex m_outgoingMessageQueueLock;
     std::queue<std::shared_ptr<websocket_outgoing_message>> m_outgoingMessageQueue;
@@ -225,7 +224,7 @@ try
             HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu] connect complete", websocket->id);
         }
 
-        CompleteAsync(asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
+        CompleteAsync(asyncBlock, websocketTask->m_connectAsyncOpResult, sizeof(WebSocketCompletionResult));
     });
 
     return E_PENDING;
@@ -254,7 +253,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
     )
 {
     std::shared_ptr<winrt_websocket_task> websocketTask = std::make_shared<winrt_websocket_task>();
-    websocketTask->m_websocketHandle = websocket;
+    websocketTask->m_websocketHandle = HCWebSocketDuplicateHandle(websocket);
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
     websocket->task = std::dynamic_pointer_cast<xbox::httpclient::hc_task>(websocketTask);
@@ -266,6 +265,11 @@ HRESULT Internal_HCWebSocketConnectAsync(
         {
             case AsyncOp_DoWork: return WebsocketConnectDoWork(data->async, data->context);
             case AsyncOp_GetResult: return WebsocketConnectGetResult(data);
+            case AsyncOp_Cleanup:
+            {
+                HCWebSocketCloseHandle(static_cast<hc_websocket_handle_t>(data->context));
+                break;
+            }
         }
 
         return S_OK;
@@ -445,16 +449,21 @@ void MessageWebSocketSendMessage(
     std::shared_ptr<SendMessageCallbackContent> callbackContext = std::make_shared<SendMessageCallbackContent>();
     callbackContext->nextMessage = msg;
     callbackContext->websocketTask = websocketTask;
-    void* rawMsg = shared_ptr_cache::store<SendMessageCallbackContent>(callbackContext);
+    void* rawContext = shared_ptr_cache::store<SendMessageCallbackContent>(callbackContext);
+    HCWebSocketDuplicateHandle(websocketTask->m_websocketHandle);
 
-    HRESULT hr = BeginAsync(msg->m_asyncBlock, rawMsg, HCWebSocketSendMessageAsync, __FUNCTION__,
+    HRESULT hr = BeginAsync(msg->m_asyncBlock, rawContext, HCWebSocketSendMessageAsync, __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
         {
             case AsyncOp_DoWork: return WebsockSendMessageDoWork(data->async, data->context);
             case AsyncOp_GetResult: return WebsockSendMessageGetResult(data);
-            case AsyncOp_Cleanup: shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, true);
+            case AsyncOp_Cleanup: 
+            {
+                HCWebSocketCloseHandle(shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, true)->websocketTask->m_websocketHandle);
+                break;
+            }
         }
 
         return S_OK;
