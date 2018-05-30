@@ -4,28 +4,27 @@
 
 class HttpRequest {
 public:
-    HttpRequest(JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass);
+    HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass);
     virtual ~HttpRequest();
 
     HRESULT Initialize();
+    AsyncBlock* GetAsyncBlock() { return m_asyncBlock; }
 
     // Request Functions
     HRESULT SetUrl(const char* url);
     HRESULT SetMethodAndBody(const char* method, const char* contentType, const uint8_t* body, uint32_t bodySize);
     HRESULT AddHeader(const char* headerName, const char* headerValue);
-    HRESULT ExecuteRequest();
+    HRESULT ExecuteAsync(hc_call_handle_t call);
 
-    // Response Functions
-    uint32_t GetResponseCode();
-    uint32_t GetResponseHeaderCount();
-    std::string GetHeaderNameAtIndex(uint32_t index);
-    std::string GetHeaderValueAtIndex(uint32_t index);
-    HRESULT ProcessResponseBody(hc_call_handle_t call);
+    HRESULT ProcessResponse(hc_call_handle_t call, jobject response);
+
 private:
     HRESULT GetJniEnv(JNIEnv**);
+    uint32_t GetResponseHeaderCount(jobject response);
+    HRESULT ProcessResponseBody(hc_call_handle_t call, jobject response);
 
     jobject m_httpRequestInstance;
-    jobject m_httpResponseInstance;
+    AsyncBlock* m_asyncBlock;
 
     JavaVM* m_javaVm;
     jclass m_httpRequestClass;
