@@ -108,7 +108,7 @@ MainPage::MainPage()
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
 
-    HCInitialize();
+    HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
     uint32_t sharedAsyncQueueId = 0;

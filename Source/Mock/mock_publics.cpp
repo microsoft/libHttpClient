@@ -18,8 +18,8 @@ HCMockCallCreate(
 STDAPI 
 HCMockAddMock(
     _In_ hc_mock_call_handle call,
-    _In_opt_z_ UTF8CSTR method,
-    _In_opt_z_ UTF8CSTR url,
+    _In_opt_z_ const char* method,
+    _In_opt_z_ const char* url,
     _In_reads_bytes_opt_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT
@@ -112,8 +112,8 @@ HCMockResponseSetNetworkErrorCode(
 STDAPI 
 HCMockResponseSetHeader(
     _In_ hc_mock_call_handle call,
-    _In_z_ UTF8CSTR headerName,
-    _In_z_ UTF8CSTR headerValue
+    _In_z_ const char* headerName,
+    _In_z_ const char* headerValue
     ) HC_NOEXCEPT
 {
     return HCHttpCallResponseSetHeader(call, headerName, headerValue);
