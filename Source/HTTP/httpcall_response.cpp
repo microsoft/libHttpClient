@@ -10,7 +10,7 @@ using namespace xbox::httpclient;
 STDAPI 
 HCHttpCallResponseGetResponseString(
     _In_ hc_call_handle_t call,
-    _Out_ UTF8CSTR* responseString
+    _Out_ const char** responseString
     ) HC_NOEXCEPT
 try
 {
@@ -171,8 +171,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallResponseGetHeader(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR headerName,
-    _Out_ UTF8CSTR* headerValue
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT
 try 
 {
@@ -215,8 +215,8 @@ STDAPI
 HCHttpCallResponseGetHeaderAtIndex(
     _In_ hc_call_handle_t call,
     _In_ uint32_t headerIndex,
-    _Out_ UTF8CSTR* headerName,
-    _Out_ UTF8CSTR* headerValue
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT
 try
 {
@@ -247,8 +247,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallResponseSetHeader(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR headerName,
-    _In_z_ UTF8CSTR headerValue
+    _In_z_ const char* headerName,
+    _In_z_ const char* headerValue
     ) HC_NOEXCEPT
 try 
 {

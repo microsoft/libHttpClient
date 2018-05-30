@@ -10,7 +10,7 @@
 using namespace xbox::httpclient;
 
 STDAPI 
-HCGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT
+HCGetLibVersion(_Outptr_ const char** version) HC_NOEXCEPT
 try
 {
     if (version == nullptr)

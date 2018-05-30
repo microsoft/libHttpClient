@@ -193,7 +193,7 @@ int main()
     header.push_back("1.0");
     headers.push_back(header);
 
-    HCInitialize();
+    HCInitialize(nullptr);
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(

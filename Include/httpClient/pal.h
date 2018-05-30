@@ -285,9 +285,6 @@ typedef struct _LIST_ENTRY {
 #define E_HC_ALREADY_INITIALISED        MAKE_E_HC(0x5004)
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005)
 
-typedef _Null_terminated_ char* UTF8STR; // This typedef doesn't ensure type safety, but is a hint that the string is UTF-8 encoded
-typedef _Null_terminated_ const char* UTF8CSTR; // This typedef doesn't ensure type safety, but is a hint that the string is UTF-8 encoded
-
 typedef uint32_t hc_memory_type;
 typedef struct HC_WEBSOCKET* hc_websocket_handle_t;
 typedef struct HC_CALL* hc_call_handle_t;

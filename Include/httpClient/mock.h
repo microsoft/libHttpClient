@@ -44,10 +44,10 @@ STDAPI HCMockCallCreate(
 /// <param name="call">This HC_MOCK_CALL_HANDLE that represents the mock that has been configured 
 /// accordingly using HCMockResponseSet*()</param>
 /// <param name="method">
-/// If you want the mock to only apply to a specific URL, pass in a method and URL. 
+/// If you want the mock to only apply to a specific URL, pass in a UTF-8 encoded method and URL. 
 /// </param>
 /// <param name="url">
-/// If you want the mock to only apply to a specific URL, pass in a method and URL. 
+/// If you want the mock to only apply to a specific URL, pass in a UTF-8 encoded method and URL. 
 /// </param>
 /// <param name="requestBodyBytes">
 /// If you want the mock to only apply to a specific URL & request string, 
@@ -59,8 +59,8 @@ STDAPI HCMockCallCreate(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockAddMock(
     _In_ hc_mock_call_handle call,
-    _In_opt_z_ UTF8CSTR method,
-    _In_opt_z_ UTF8CSTR url,
+    _In_opt_z_ const char* method,
+    _In_opt_z_ const char* url,
     _In_reads_bytes_opt_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
     ) HC_NOEXCEPT;
@@ -117,13 +117,13 @@ STDAPI HCMockResponseSetNetworkErrorCode(
 /// Set a response header to return for the mock
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerName">Response header name for the HTTP call</param>
-/// <param name="headerValue">Response header value for the HTTP call</param>
+/// <param name="headerName">UTF-8 encoded response header name for the HTTP call</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockResponseSetHeader(
     _In_ hc_mock_call_handle call,
-    _In_z_ UTF8CSTR headerName,
-    _In_z_ UTF8CSTR headerValue
+    _In_z_ const char* headerName,
+    _In_z_ const char* headerValue
     ) HC_NOEXCEPT;
 
 

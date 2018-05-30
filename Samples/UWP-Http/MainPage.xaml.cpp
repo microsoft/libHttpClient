@@ -93,7 +93,7 @@ MainPage::MainPage()
     g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
-    HCInitialize();
+    HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel::HCTraceLevel_Information);
 
     uint32_t sharedAsyncQueueId = 0;
@@ -268,11 +268,11 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 }
 
 void TraceCallback(
-    _In_ UTF8CSTR areaName,
+    _In_z_ const char* areaName,
     _In_ enum HCTraceLevel level,
     _In_ uint64_t threadId,
     _In_ uint64_t timestamp,
-    _In_ UTF8CSTR message
+    _In_z_ const char* message
 )
 {
     // Hook up to your own tracing.  For example:
