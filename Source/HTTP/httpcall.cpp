@@ -89,7 +89,7 @@ try
 CATCH_RETURN()
 
 HRESULT perform_http_call(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ std::shared_ptr<http_singleton> httpSingleton,
     _In_ hc_call_handle_t call
     )
@@ -401,7 +401,7 @@ void retry_http_call_until_done(
 
 STDAPI 
 HCHttpCallPerformAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     ) HC_NOEXCEPT
 try

@@ -6,7 +6,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-ios_http_task::ios_http_task(_In_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
+ios_http_task::ios_http_task(_Inout_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
     m_call(call),
     m_asyncBlock(asyncBlock),
     m_sessionTask(nullptr)
@@ -143,7 +143,7 @@ HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, 
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
 )
 {
