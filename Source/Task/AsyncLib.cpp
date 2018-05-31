@@ -3,6 +3,96 @@
 
 #include "pch.h"
 
+using PlatformTimerCallback = void(_In_opt_ void*);
+
+// this class is implemented in platform specific files
+class PlatformTimer
+{
+public:
+    PlatformTimer(void* context, PlatformTimerCallback* callback);
+    ~PlatformTimer();
+
+    bool Valid() const noexcept;
+
+    void Start(uint32_t delayInMs);
+    void Cancel();
+
+    void* const m_context;
+    PlatformTimerCallback* const m_callback;
+
+private:
+#if defined(_WIN32)
+    static void CALLBACK TimerCallback(
+        _In_ PTP_CALLBACK_INSTANCE,
+        _In_ void* context,
+        _In_ PTP_TIMER timer
+    ) noexcept;
+    PTP_TIMER m_timer = nullptr;
+#elif defined(__APPLE__)
+
+#else
+
+#endif
+};
+
+// Windows impl
+PlatformTimer::PlatformTimer(void* context, PlatformTimerCallback* callback) :
+    m_context{ context },
+    m_callback{ callback },
+    m_timer{ CreateThreadpoolTimer(TimerCallback, this, nullptr) }
+{}
+
+PlatformTimer::~PlatformTimer()
+{
+    if (m_timer)
+    {
+        SetThreadpoolTimer(m_timer, nullptr, 0, 0);
+        WaitForThreadpoolTimerCallbacks(m_timer, TRUE);
+        CloseThreadpoolTimer(m_timer);
+    }
+}
+
+bool PlatformTimer::Valid() const noexcept
+{
+    return m_timer != nullptr;
+}
+
+void PlatformTimer::Start(uint32_t delayInMs)
+{
+    int32_t delayHns = static_cast<int32_t>(delayInMs) * -10000;
+    LARGE_INTEGER li{};
+    li.QuadPart = delayHns;
+
+    FILETIME ft{};
+    ft.dwHighDateTime = li.HighPart;
+    ft.dwLowDateTime = li.LowPart;
+
+    SetThreadpoolTimer(m_timer, &ft, 0, delayInMs);
+}
+
+void PlatformTimer::Cancel()
+{
+    if (m_timer != nullptr)
+    {
+        SetThreadpoolTimer(m_timer, nullptr, 0, 0);
+        WaitForThreadpoolTimerCallbacks(m_timer, TRUE);
+    }
+}
+
+void CALLBACK PlatformTimer::TimerCallback(
+    _In_ PTP_CALLBACK_INSTANCE,
+    _In_ void* context,
+    _In_ PTP_TIMER timer
+) noexcept
+{
+    auto pt = static_cast<PlatformTimer*>(context);
+
+    assert(timer == pt->m_timer);
+    UNREFERENCED_PARAMETER(timer);
+
+    pt->m_callback(pt->m_context);
+}
+
 #define ASYNC_STATE_SIG 0x41535445
 
 // Used by unit tests to verify we cleanup memory correctly.
@@ -17,10 +107,10 @@ struct AsyncState
     bool canceled = false;
     AsyncProvider* provider = nullptr;
     AsyncProviderData providerData;
+    PlatformTimer timer;
 
 #ifdef _WIN32
     HANDLE waitEvent = nullptr;
-    PTP_TIMER timer = nullptr;
 #else
     std::mutex waitMutex;
     std::condition_variable waitCondition;
@@ -30,7 +120,8 @@ struct AsyncState
     const void* token = nullptr;
     const char* function = nullptr;
 
-    AsyncState() noexcept
+    AsyncState() noexcept :
+        timer{ this, TimerCallback }
     {
         ++s_AsyncLibGlobalStateCount;
     }
@@ -49,17 +140,10 @@ struct AsyncState
     }
 
 private:
+    static void TimerCallback(_In_ void* context) noexcept;
+
     ~AsyncState() noexcept
     {
-#ifdef _WIN32
-        if (timer != nullptr)
-        {
-            SetThreadpoolTimer(timer, nullptr, 0, 0);
-            WaitForThreadpoolTimerCallbacks(timer, TRUE);
-            CloseThreadpoolTimer(timer);
-        }
-#endif
-
         if (providerData.queue != nullptr)
         {
             CloseAsyncQueue(providerData.queue);
@@ -149,7 +233,7 @@ public:
     AsyncState* Get() const { return m_state; }
 
 private:
-    AsyncState * m_state;
+    AsyncState* m_state;
 };
 
 class AsyncBlockInternalGuard
@@ -225,9 +309,37 @@ static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ Async
 static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
 
-#ifdef _WIN32
-static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER);
-#endif
+void AsyncState::TimerCallback(void* context) noexcept
+{
+    AsyncStateRef state;
+    state.Attach(static_cast<AsyncState*>(context));
+
+    bool timerStillScheduled = true;
+    if (state->timerScheduled.compare_exchange_strong(timerStillScheduled, false))
+    {
+        return; // the timer has been cancelled
+    }
+
+    if (state->canceled)
+    {
+        return;
+    }
+
+    HRESULT hr = SubmitAsyncCallback(
+        state->providerData.queue,
+        AsyncQueueCallbackType_Work,
+        state.Get(),
+        WorkerCallback);
+
+    if (SUCCEEDED(hr))
+    {
+        state.Detach(); // state is still in use so let it go
+    }
+    else
+    {
+        CompleteAsync(state->providerData.async, hr, 0);
+    }
+}
 
 static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal)
 {
@@ -476,35 +588,6 @@ static void CALLBACK WorkerCallback(
     }
 }
 
-#if _WIN32
-static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER)
-{
-    AsyncStateRef state;
-    state.Attach(static_cast<AsyncState*>(context));
-    state->timerScheduled = false;
-
-    if (state->canceled)
-    {
-        return;
-    }
-
-    HRESULT hr = SubmitAsyncCallback(
-        state->providerData.queue,
-        AsyncQueueCallbackType_Work,
-        state.Get(),
-        WorkerCallback);
-
-    if (SUCCEEDED(hr))
-    {
-        state.Detach(); // state is still in use so let it go
-    }
-    else
-    {
-        CompleteAsync(state->providerData.async, hr, 0);
-    }
-}
-#endif
-
 //
 // Public APIs
 //
@@ -616,19 +699,14 @@ STDAPI_(void) CancelAsync(
         state->canceled = true;
     }
 
-#if _WIN32
-    if (state->timer != nullptr)
+    state->timer.Cancel();
+    bool timerWasScheduled = true;
+    state->timerScheduled.compare_exchange_strong(timerWasScheduled, false);
+    if (timerWasScheduled)
     {
-        SetThreadpoolTimer(state->timer, nullptr, 0, 0);
-        WaitForThreadpoolTimerCallbacks(state->timer, TRUE);
-
-        if (state->timerScheduled)
-        {
-            // The timer callback was never invoked so release this reference
-            state->Release();
-        }
+        // The timer callback was never invoked so release this reference
+        state->Release();
     }
-#endif
 
     (void)state->provider(AsyncOp_Cancel, &state->providerData);
     SignalCompletion(state);
@@ -712,18 +790,9 @@ STDAPI ScheduleAsync(
     }
     RETURN_HR_IF(E_INVALIDARG, state == nullptr);
 
-    if (delayInMs != 0)
+    if (delayInMs != 0 && !state->timer.Valid())
     {
-#if _WIN32
-        if (state->timer == nullptr)
-        {
-            state->timer = CreateThreadpoolTimer(TimerCallback, state.Get(), nullptr);
-            RETURN_LAST_ERROR_IF_NULL(state->timer);
-        }
-#else
-        ASSERT(false);
-        RETURN_HR(E_INVALIDARG);
-#endif
+        RETURN_HR(E_FAIL);
     }
 
     bool priorScheduled = false;
@@ -744,13 +813,8 @@ STDAPI ScheduleAsync(
     }
     else
     {
-#ifdef _WIN32
-        int64_t ft = (int64_t)delayInMs * (int64_t)(-10000);
         state->timerScheduled = true;
-        SetThreadpoolTimer(state->timer, (PFILETIME)&ft, 0, delayInMs);
-#else
-        RETURN_HR(E_INVALIDARG);
-#endif
+        state->timer.Start(delayInMs);
     }
 
     // State object is now referenced by the work or timer callback
