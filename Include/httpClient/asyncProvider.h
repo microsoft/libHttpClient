@@ -107,7 +107,7 @@ STDAPI BeginAsync(
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to BeginAsync.</param>
 /// <param name='delayInMs'>How long the system should wait before scheduling the async call with the async queue.</param>
 STDAPI ScheduleAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ uint32_t delayInMs);
 
 /// <summary>

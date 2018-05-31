@@ -14,7 +14,7 @@
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 winhttp_http_task::winhttp_http_task(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     ) :
     m_call(call),
@@ -832,7 +832,7 @@ HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, 
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )
 {
