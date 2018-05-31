@@ -1,5 +1,12 @@
 #pragma once
 
+#if defined(_WIN32)
+#elif defined(__APPLE__)
+#else
+#include <mutex>
+#include <thread>
+#endif
+
 using PlatformTimerCallback = void(_In_opt_ void*);
 
 // this class is implemented in platform specific files
@@ -28,6 +35,6 @@ private:
 #elif defined(__APPLE__)
 
 #else
-
+    std::mutex m_mutex;
 #endif
 };
