@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
@@ -61,6 +61,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer_win32.cpp">
+      <Filter>C++ Source\Task\Android</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Android\android_websocket.cpp">
       <Filter>C++ Source\WebSocket\Android</Filter>
     </ClCompile>
@@ -114,6 +117,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.h">
       <Filter>C++ Source\Mock</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
       <Filter>C++ Source\WebSocket</Filter>
     </ClInclude>
@@ -147,40 +153,43 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{9EDD462E-58B3-3103-9A25-1792279ABFBD}</UniqueIdentifier>
+      <UniqueIdentifier>{4DC377D3-9D3A-36A3-980D-D4138ABD2A36}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{CACB4215-671D-369A-A6C9-8BF5DD066CBF}</UniqueIdentifier>
+      <UniqueIdentifier>{49D96037-600B-383C-88CB-674ACEBA2B7A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{D59A063A-F2F9-3930-A3ED-D8612D19F846}</UniqueIdentifier>
+      <UniqueIdentifier>{6FDF959D-0731-3F9D-A2D5-6204D65FF124}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{6358DC25-ED78-3218-8558-DD915280FFE3}</UniqueIdentifier>
+      <UniqueIdentifier>{0B247D0B-25BB-32B3-B9F4-14803EFB79B7}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP\Android">
-      <UniqueIdentifier>{9AB74CE9-D135-375B-99E2-0A6795A3A8DF}</UniqueIdentifier>
+      <UniqueIdentifier>{662D38DF-0883-3EE0-970D-13F29B5DFA6A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{2E2D9A80-FD3A-3912-AABE-C3919B5AB15B}</UniqueIdentifier>
+      <UniqueIdentifier>{AA389D75-766D-31D0-9F23-593F8450458C}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger\Android">
-      <UniqueIdentifier>{D02EFC6D-0C24-325C-80FD-E7FFA8F92EA3}</UniqueIdentifier>
+      <UniqueIdentifier>{9A64EB65-BC9A-32D8-A395-A7D614515EA0}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{2E83F532-4B93-3376-BA0C-E3AC8D338D67}</UniqueIdentifier>
+      <UniqueIdentifier>{517812C9-287A-3D86-8FAE-3B24D360F611}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{507A750E-E8EF-3637-BFB3-55341E3E682D}</UniqueIdentifier>
+      <UniqueIdentifier>{54F2379A-D939-3E3A-AB68-D696A66B2F87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Task\Android">
+      <UniqueIdentifier>{9AB98779-7766-38F3-8E46-7470327D4832}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{90E9E5AE-4F60-3F15-A5C2-A8C7D9FA8207}</UniqueIdentifier>
+      <UniqueIdentifier>{D1933E6D-6296-3845-BD78-9B6666C5BF9B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket\Android">
-      <UniqueIdentifier>{E26E8D86-C597-36D8-B494-1258E8C4BFD4}</UniqueIdentifier>
+      <UniqueIdentifier>{7DA46850-5E2D-3E84-904C-21191480F9A4}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{B41C2EAB-0A4B-3A60-8477-E8DF1FC6F7A4}</UniqueIdentifier>
+      <UniqueIdentifier>{CE937D69-22BE-3128-8816-A31C2303F1E8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
