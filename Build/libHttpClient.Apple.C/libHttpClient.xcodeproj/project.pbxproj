@@ -27,9 +27,7 @@
 		58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
 		58A7E9F3209AE09B00CC6774 /* ios_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9F2209AE03800CC6774 /* ios_websocket.cpp */; };
-		A5304E1C20C0AB9D000667A3 /* timer.h in Headers */ = {isa = PBXBuildFile; fileRef = A5304E1B20C0AB9D000667A3 /* timer.h */; };
 		A5304E1F20C0AC2C000667A3 /* ios_timer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E1E20C0AC2C000667A3 /* ios_timer.mm */; };
-		A5304E2220C0C169000667A3 /* ios_timer_target.h in Headers */ = {isa = PBXBuildFile; fileRef = A5304E2020C0C169000667A3 /* ios_timer_target.h */; };
 		A5304E2320C0C169000667A3 /* ios_timer_target.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E2120C0C169000667A3 /* ios_timer_target.mm */; };
 /* End PBXBuildFile section */
 
@@ -320,8 +318,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A5304E1C20C0AB9D000667A3 /* timer.h in Headers */,
-				A5304E2220C0C169000667A3 /* ios_timer_target.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
