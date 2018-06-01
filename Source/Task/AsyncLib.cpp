@@ -227,7 +227,7 @@ void AsyncState::TimerCallback(void* context) noexcept
     state.Attach(static_cast<AsyncState*>(context));
 
     bool timerStillScheduled = true;
-    if (state->timerScheduled.compare_exchange_strong(timerStillScheduled, false))
+    if (!state->timerScheduled.compare_exchange_strong(timerStillScheduled, false))
     {
         return; // the timer has been cancelled
     }
