@@ -2,6 +2,11 @@
 
 using PlatformTimerCallback = void(_In_opt_ void*);
 
+#if defined (__APPLE__)
+struct TimerWrapper;
+struct TargetWrapper;
+#endif
+
 // this class is implemented in platform specific files
 class PlatformTimer
 {
@@ -26,7 +31,8 @@ private:
     ) noexcept;
     PTP_TIMER m_timer = nullptr;
 #elif defined(__APPLE__)
-
+    TimerWrapper* m_timerWrapper;
+    TargetWrapper* m_targetWrapper;
 #else
     friend class TimerQueue;
     void OnDeadline() noexcept;
