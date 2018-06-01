@@ -63,10 +63,11 @@ bool TimerQueue::LazyInit() noexcept
     {
         try
         {
-            std::thread([this]()
+            std::thread t([this]()
             {
                 Worker();
             });
+            t.detach();
 
             m_initialized = true;
         }
