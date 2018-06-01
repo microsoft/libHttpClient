@@ -17,7 +17,7 @@ struct TargetWrapper
     ios_timer_target* target;
 };
 
-PlatformTimer::PlatformTimer(void* context, PlatformTimerCallback* callback) :
+PlatformTimer::PlatformTimer(void* context, PlatformTimerCallback* callback) noexcept :
     m_context{ context },
     m_callback{ callback },
     m_timerWrapper{ new TimerWrapper},
@@ -27,7 +27,7 @@ PlatformTimer::PlatformTimer(void* context, PlatformTimerCallback* callback) :
     m_timerWrapper->timer = nullptr;
 }
 
-PlatformTimer::~PlatformTimer()
+PlatformTimer::~PlatformTimer() noexcept
 {
     if (m_timerWrapper->timer != nullptr && m_timerWrapper->timer.valid)
     {
@@ -40,7 +40,7 @@ bool PlatformTimer::Valid() const noexcept
     return true;
 }
 
-void PlatformTimer::Start(uint32_t delayInMs)
+void PlatformTimer::Start(uint32_t delayInMs) noexcept
 {
     if (m_timerWrapper->timer != nullptr && m_timerWrapper->timer.valid)
     {
@@ -53,7 +53,7 @@ void PlatformTimer::Start(uint32_t delayInMs)
     }
 }
 
-void PlatformTimer::Cancel()
+void PlatformTimer::Cancel() noexcept
 {
     if (m_timerWrapper != nullptr && m_timerWrapper->timer.valid)
     {
