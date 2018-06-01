@@ -11,13 +11,13 @@ struct TargetWrapper;
 class PlatformTimer
 {
 public:
-    PlatformTimer(void* context, PlatformTimerCallback* callback);
-    ~PlatformTimer();
+    PlatformTimer(void* context, PlatformTimerCallback* callback) noexcept;
+    ~PlatformTimer() noexcept;
 
     bool Valid() const noexcept;
 
-    void Start(uint32_t delayInMs);
-    void Cancel();
+    void Start(uint32_t delayInMs) noexcept;
+    void Cancel() noexcept;
 
     void* const m_context;
     PlatformTimerCallback* const m_callback;
@@ -34,6 +34,9 @@ private:
     TimerWrapper* m_timerWrapper;
     TargetWrapper* m_targetWrapper;
 #else
-    std::mutex m_mutex;
+    friend class TimerQueue;
+    void OnDeadline() noexcept;
+
+    bool const m_valid;
 #endif
 };

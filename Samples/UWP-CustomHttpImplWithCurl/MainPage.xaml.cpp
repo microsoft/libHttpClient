@@ -56,7 +56,7 @@ win32_handle g_completionReadyHandle;
 #define TICKS_PER_SECOND 10000000i64
 
 void STDAPIVCALLTYPE PerformCallWithCurl(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     );
 
