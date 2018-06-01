@@ -104,7 +104,7 @@ set(Task_Windows_Source_Files
     )
 
 set(Task_Android_Source_Files
-    ../../../Source/Task/timer_win32.cpp
+    ../../../Source/Task/timer_cpp.cpp
     )
 
 set(Global_Source_Files
