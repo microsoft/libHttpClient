@@ -440,7 +440,7 @@ STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="bufferSize">The response body buffer size being passed in</param>
 /// <param name="buffer">The buffer to be written to.</param>
-/// <param name="bufferUser">The actual number of bytes written to the buffer.</param>
+/// <param name="bufferUsed">The actual number of bytes written to the buffer.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseGetResponseBodyBytes(
     _In_ hc_call_handle_t call,

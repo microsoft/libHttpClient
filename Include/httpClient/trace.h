@@ -175,9 +175,9 @@ typedef void (HCTraceCallback)(
 STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback);
 
 /// <summary>
-/// Set client callback for tracing 
+/// Sets or unsets if the trace is sent to the debugger.
 /// </summary>
-/// <param name="callback">Trace callback</param>
+/// <param name="traceToDebugger">If True, sends the trace to the debugger.</param>
 STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger);
 
 
