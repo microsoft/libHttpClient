@@ -95,6 +95,8 @@ void TimerQueue::Remove(PlatformTimer const* timer) noexcept
 {
     std::lock_guard<std::mutex> lock{ m_mutex };
 
+    // since m_queue is a heap, removing elements is non trivial, instead we
+    // just clean the timer pointer and the entry will be popped eventually
     for (auto& entry : m_queue)
     {
         if (entry.Timer == timer)
@@ -143,11 +145,13 @@ void TimerQueue::Worker() noexcept
 
 TimerEntry const& TimerQueue::Peek() const noexcept
 {
+    // assume lock is held
     return m_queue.front();
 }
 
 TimerEntry TimerQueue::Pop() noexcept
 {
+    // assume lock is held
     TimerEntry e = m_queue.front();
     std::pop_heap(m_queue.begin(), m_queue.end(), TimerEntryComparator{});
     m_queue.pop_back();
