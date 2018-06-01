@@ -51,10 +51,11 @@ void PlatformTimer::Start(uint32_t delayInMs) noexcept
     }
     else
     {
-        m_timerWrapper->timer = [NSTimer scheduledTimerWithTimeInterval: delayInMs / 1000.0
+        m_timerWrapper->timer = [NSTimer scheduledTimerWithTimeInterval:delayInMs / 1000.0
                                                                  target:m_targetWrapper->target
                                                                selector:@selector(timerFireMethod:)
-                                                               userInfo:[NSValue valueWithPointer:this] repeats:false];
+                                                               userInfo:[NSValue valueWithPointer:this]
+                                                                repeats:false];
     }
 }
 
