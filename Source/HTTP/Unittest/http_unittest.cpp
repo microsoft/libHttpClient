@@ -14,7 +14,7 @@ HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, 
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )
 {

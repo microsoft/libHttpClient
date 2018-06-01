@@ -151,7 +151,7 @@ private:
 class AsyncBlockInternalGuard
 {
 public:
-    AsyncBlockInternalGuard(AsyncBlock* asyncBlock) noexcept :
+    AsyncBlockInternalGuard(_Inout_ AsyncBlock* asyncBlock) noexcept :
         m_internal{ reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal) }
     {
         ASSERT(m_internal);
@@ -217,7 +217,7 @@ static void CALLBACK CompletionCallbackForAsyncBlock(_In_ void* context);
 static void CALLBACK WorkerCallback(_In_ void* context);
 static void SignalCompletion(_In_ AsyncStateRef const& state);
 static void SignalWait(_In_ AsyncStateRef const& state);
-static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal);
+static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal);
 static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
 
@@ -253,7 +253,7 @@ void AsyncState::TimerCallback(void* context) noexcept
     }
 }
 
-static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal)
+static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal)
 {
     AsyncStateRef state;
     state.Attach(new (std::nothrow) AsyncState);
@@ -511,7 +511,7 @@ static void CALLBACK WorkerCallback(
 /// GetAsyncResult is unneeded.
 /// </summary>
 STDAPI GetAsyncStatus(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ bool wait)
 {
     HRESULT result = E_PENDING;
@@ -573,7 +573,7 @@ STDAPI GetAsyncStatus(
 /// Returns the required size of the buffer to pass to GetAsyncResult.
 /// </summary>
 STDAPI GetAsyncResultSize(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize)
 {
     HRESULT result = E_PENDING;
@@ -692,7 +692,7 @@ STDAPI BeginAsync(
 /// before it schedules work.
 /// </summary>
 STDAPI ScheduleAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ uint32_t delayInMs)
 {
     AsyncStateRef state;

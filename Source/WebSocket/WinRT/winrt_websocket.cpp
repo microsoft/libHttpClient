@@ -33,7 +33,7 @@ public:
     }
 
     friend HRESULT WebsocketConnectDoWork(
-        _In_ AsyncBlock* asyncBlock,
+        _Inout_ AsyncBlock* asyncBlock,
         _In_opt_ void* executionRoutineContext
         );
 
@@ -136,7 +136,7 @@ http_internal_vector<http_internal_wstring> parse_subprotocols(const http_intern
 }
 
 HRESULT WebsocketConnectDoWork(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* executionRoutineContext
     )
 try
@@ -246,7 +246,7 @@ HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
 }
 
 HRESULT Internal_HCWebSocketConnectAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ hc_websocket_handle_t websocket
@@ -284,7 +284,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
 }
 
 HRESULT Internal_HCWebSocketSendMessageAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message
     )
@@ -337,7 +337,7 @@ struct SendMessageCallbackContent
 };
 
 HRESULT WebsockSendMessageDoWork(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* executionRoutineContext
     )
 try
