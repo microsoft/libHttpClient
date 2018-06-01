@@ -29,7 +29,7 @@ private:
         _In_ void* context,
         _In_ PTP_TIMER timer
     ) noexcept;
-    PTP_TIMER m_timer = nullptr;
+    PTP_TIMER m_timer;
 #elif defined(__APPLE__)
     TimerWrapper* m_timerWrapper;
     TargetWrapper* m_targetWrapper;
