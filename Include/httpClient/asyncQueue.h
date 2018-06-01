@@ -9,6 +9,9 @@
 /// </summary>
 typedef struct async_queue_t* async_queue_handle_t;
 
+/// <summary>
+/// Describes how async callbacks are processed.
+/// </summary>
 typedef enum AsyncQueueDispatchMode
 {
     /// <summary>
@@ -29,6 +32,9 @@ typedef enum AsyncQueueDispatchMode
     AsyncQueueDispatchMode_ThreadPool
 } AsyncQueueDispatchMode;
 
+/// <summary>
+/// Describes the tye of async callback.
+/// </summary>
 typedef enum AsyncQueueCallbackType
 {
     /// <summary>
@@ -89,8 +95,8 @@ STDAPI CreateAsyncQueue(
 /// when done with the shared instance.
 /// </summary>
 /// <param name='id'>An ID to identify the shared queue.  All calls with the same ID and work/completion dispatch moders will share the same queue.</param>
-/// <param name='workDispatchMode'>The dispatch mode for the "work" side of the queue.</param>
-/// <param name='completionDispatchMode'>The dispatch mode for the "completion" side of the queue.</param>
+/// <param name='workerMode'>The dispatch mode for the "work" side of the queue.</param>
+/// <param name='completionMode'>The dispatch mode for the "completion" side of the queue.</param>
 /// <param name='queue'>The shared queue.</param>
 STDAPI CreateSharedAsyncQueue(
     _In_ uint32_t id,
