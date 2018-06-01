@@ -96,6 +96,15 @@ set(Task_Source_Files
     ../../../Source/Task/AsyncQueue.cpp
     ../../../Source/Task/AsyncLib.cpp
     ../../../Source/Task/CriticalThread.cpp
+    ../../../Source/Task/timer.h
+    )
+
+set(Task_Windows_Source_Files
+    ../../../Source/Task/timer_win32.cpp
+    )
+
+set(Task_Android_Source_Files
+    ../../../Source/Task/timer_win32.cpp
     )
 
 set(Global_Source_Files
@@ -262,8 +271,10 @@ if( UNITTEST )
     source_group("C++ Source\\WebSocket\\Unittest" FILES ${Unittest_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
+    source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
     list(APPEND
         SOURCE_FILES
+        ${Task_Windows_Source_Files}
         ${Unittest_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
@@ -277,9 +288,11 @@ if( UWP )
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
+    source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
 
     list(APPEND
         SOURCE_FILES
+        ${Task_Windows_Source_Files}
         ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
@@ -292,9 +305,11 @@ if( XDK )
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
+    source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
 
     list(APPEND
         SOURCE_FILES
+        ${Task_Windows_Source_Files}
         ${XMLHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
@@ -307,9 +322,11 @@ if( BUILDWIN32 )
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\Win32" FILES ${Win32_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
+    source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
 
     list(APPEND
         SOURCE_FILES
+        ${Task_Windows_Source_Files}
         ${WinHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
@@ -321,9 +338,11 @@ if( BUILDANDROID )
     source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
+    source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
 
     list(APPEND
         SOURCE_FILES
+        ${Task_Android_Source_Files}
         ${Android_HTTP_Source_Files}
         ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
