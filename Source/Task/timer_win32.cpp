@@ -5,14 +5,13 @@
 
 #include "timer.h"
 
-// Windows impl
-PlatformTimer::PlatformTimer(void* context, PlatformTimerCallback* callback) :
+PlatformTimer::PlatformTimer(void* context, PlatformTimerCallback* callback) noexcept :
     m_context{ context },
     m_callback{ callback },
     m_timer{ CreateThreadpoolTimer(TimerCallback, this, nullptr) }
 {}
 
-PlatformTimer::~PlatformTimer()
+PlatformTimer::~PlatformTimer() noexcept
 {
     if (m_timer)
     {
@@ -27,7 +26,7 @@ bool PlatformTimer::Valid() const noexcept
     return m_timer != nullptr;
 }
 
-void PlatformTimer::Start(uint32_t delayInMs)
+void PlatformTimer::Start(uint32_t delayInMs) noexcept
 {
     int32_t delayHns = static_cast<int32_t>(delayInMs) * -10000;
     LARGE_INTEGER li{};
@@ -40,7 +39,7 @@ void PlatformTimer::Start(uint32_t delayInMs)
     SetThreadpoolTimer(m_timer, &ft, 0, delayInMs);
 }
 
-void PlatformTimer::Cancel()
+void PlatformTimer::Cancel() noexcept
 {
     if (m_timer != nullptr)
     {

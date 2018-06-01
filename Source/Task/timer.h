@@ -1,25 +1,18 @@
 #pragma once
 
-#if defined(_WIN32)
-#elif defined(__APPLE__)
-#else
-#include <mutex>
-#include <thread>
-#endif
-
 using PlatformTimerCallback = void(_In_opt_ void*);
 
 // this class is implemented in platform specific files
 class PlatformTimer
 {
 public:
-    PlatformTimer(void* context, PlatformTimerCallback* callback);
-    ~PlatformTimer();
+    PlatformTimer(void* context, PlatformTimerCallback* callback) noexcept;
+    ~PlatformTimer() noexcept;
 
     bool Valid() const noexcept;
 
-    void Start(uint32_t delayInMs);
-    void Cancel();
+    void Start(uint32_t delayInMs) noexcept;
+    void Cancel() noexcept;
 
     void* const m_context;
     PlatformTimerCallback* const m_callback;
@@ -35,6 +28,9 @@ private:
 #elif defined(__APPLE__)
 
 #else
-    std::mutex m_mutex;
+    friend class TimerQueue;
+    void OnDeadline() noexcept;
+
+    bool const m_valid;
 #endif
 };
