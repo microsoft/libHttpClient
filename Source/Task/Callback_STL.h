@@ -71,7 +71,7 @@ public:
         }
         else
         {
-            DuplicateAsyncQueueHandle(queue);
+            queue = DuplicateAsyncQueueHandle(queue);
         }
         
         CallbackRegistration* entry = new (std::nothrow) CallbackRegistration;

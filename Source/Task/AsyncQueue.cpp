@@ -590,7 +590,7 @@ STDAPI CreateSharedAsyncQueue(
 
     if (q != nullptr)
     {
-        DuplicateAsyncQueueHandle(q);
+        q = DuplicateAsyncQueueHandle(q);
         *queue = q;
     }
     else
