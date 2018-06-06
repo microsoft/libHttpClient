@@ -206,7 +206,7 @@ STDAPI HCHttpCallPerformAsync(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Increments the reference count on the call object.
+/// Duplicates the hc_call_handle_t object.  Use HCHttpCallCloseHandle to close it.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <returns>Returns the duplicated handle.</returns>

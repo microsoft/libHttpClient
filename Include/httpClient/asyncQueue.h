@@ -133,11 +133,11 @@ STDAPI CreateCompositeAsyncQueue(
     _Out_ async_queue_handle_t* queue);
 
 /// <summary>
-/// Increments the reference count on the async queue.  Call CloseAsyncQueue
-/// to decrement.
+/// Duplicates the async_queue_handle_t object.  Use CloseAsyncQueue to close it.
 /// </summary>
 /// <param name='queue'>The queue to reference.</param>
-STDAPI_(void) ReferenceAsyncQueue(
+/// <returns>Returns the duplicated handle.</returns>
+STDAPI_(async_queue_handle_t) DuplicateAsyncQueueHandle(
     _In_ async_queue_handle_t queue);
 
 /// <summary>
