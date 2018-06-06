@@ -287,7 +287,7 @@ static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ As
 
     if (state->providerData.queue != nullptr)
     {
-        ReferenceAsyncQueue(state->providerData.queue);
+        state->providerData.queue = DuplicateAsyncQueueHandle(state->providerData.queue);
     }
     else
     {

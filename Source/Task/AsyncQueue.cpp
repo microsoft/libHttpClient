@@ -590,7 +590,7 @@ STDAPI CreateSharedAsyncQueue(
 
     if (q != nullptr)
     {
-        ReferenceAsyncQueue(q);
+        q = DuplicateAsyncQueueHandle(q);
         *queue = q;
     }
     else
@@ -707,11 +707,12 @@ STDAPI_(void) RemoveAsyncQueueCallbacks(
 //
 // Increments the refcount on the queue
 //
-STDAPI_(void) ReferenceAsyncQueue(
+STDAPI_(async_queue_handle_t) DuplicateAsyncQueueHandle(
     _In_ async_queue_handle_t queue)
 {
     async_queue_t* aq = async_queue_t::GetQueue(queue);
     aq->AddRef();
+    return queue;
 }
 
 //

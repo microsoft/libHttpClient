@@ -80,7 +80,7 @@ public:
         }
         else
         {
-            ReferenceAsyncQueue(queue);
+            queue = DuplicateAsyncQueueHandle(queue);
         }
 
         entry->Queue = queue;
