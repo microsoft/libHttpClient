@@ -56,9 +56,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 
 Big things that still need to be done in rough priority order:
 
-* iOS implementation calling iOS platform WebSocket APIs
 * iOS sample
-* Android implementation calling Android platform WebSocket APIs
 * Android sample
 
 ## How to clone repo
