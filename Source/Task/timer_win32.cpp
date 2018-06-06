@@ -28,7 +28,7 @@ bool PlatformTimer::Valid() const noexcept
 
 void PlatformTimer::Start(uint32_t delayInMs) noexcept
 {
-    int32_t delayHns = static_cast<int32_t>(delayInMs) * -10000;
+    int64_t delayHns = static_cast<int64_t>(delayInMs) * -10000;
     LARGE_INTEGER li{};
     li.QuadPart = delayHns;
 
