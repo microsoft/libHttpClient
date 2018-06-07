@@ -52,13 +52,6 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 * Optionally call HCSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl how to use this callback plus Curl https://github.com/curl/curl to make an HTTP implementation using Curl.
 
-## TODO
-
-Big things that still need to be done in rough priority order:
-
-* iOS sample
-* Android sample
-
 ## How to clone repo
 
 This repo contains submodules.  There are two ways to make sure you get submodules.
