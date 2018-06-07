@@ -60,11 +60,6 @@ typedef struct AsyncBlock
     /// <summary>
     /// Internal use only
     /// </summary>
-    HANDLE internalHandle;
-
-    /// <summary>
-    /// Internal use only
-    /// </summary>
     unsigned char internal[sizeof(void*) * 4];
 } AsyncBlock;
 

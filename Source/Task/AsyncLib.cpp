@@ -259,28 +259,10 @@ static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ As
     state.Attach(new (std::nothrow) AsyncState);
 
     RETURN_IF_NULL_ALLOC(state);
-
-    if (asyncBlock->internalHandle != nullptr)
-    {
 #if _WIN32
-        RETURN_IF_WIN32_BOOL_FALSE(DuplicateHandle(
-            GetCurrentProcess(),
-            asyncBlock->internalHandle,
-            GetCurrentProcess(),
-            &state->waitEvent, 0,
-            FALSE,
-            DUPLICATE_SAME_ACCESS));
-#else
-        ASSERT(false);
+    state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+    RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
 #endif
-    }
-    else
-    {
-#if _WIN32
-        state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
-#endif
-    }
 
     state->providerData.queue = asyncBlock->queue;
     state->providerData.async = asyncBlock;
@@ -347,17 +329,6 @@ static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock)
                 asyncBlock,
                 CompletionCallbackForAsyncBlock);
         }
-
-        // The completion callback will signal the event
-        if (FAILED(hr) && asyncBlock->internalHandle != nullptr)
-        {
-#if _WIN32
-            SetEvent(asyncBlock->internalHandle);
-#else
-            ASSERT(false);
-#endif
-        }
-
     }
 
     return hr;
@@ -437,14 +408,6 @@ static void CALLBACK CompletionCallbackForAsyncBlock(
     if (asyncBlock->callback != nullptr)
     {
         asyncBlock->callback(asyncBlock);
-    }
-    if (asyncBlock->internalHandle)
-    {
-#if _WIN32
-        SetEvent(asyncBlock->internalHandle);
-#else
-        ASSERT(false);
-#endif
     }
 }
 
