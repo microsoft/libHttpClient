@@ -48,13 +48,6 @@ typedef struct AsyncBlock
     async_queue_handle_t queue;
 
     /// <summary>
-    /// Optional event to wait on.  This will be signaled
-    /// when the async operation is complete and after
-    /// any completion callback has run
-    /// </summary>
-    HANDLE waitEvent;
-
-    /// <summary>
     /// Optional context pointer to pass to the callback
     /// </summary>
     void* context;
@@ -63,6 +56,11 @@ typedef struct AsyncBlock
     /// Optional callback that will be invoked when the call completes
     /// </summary>
     AsyncCompletionRoutine* callback;
+
+    /// <summary>
+    /// Internal use only
+    /// </summary>
+    HANDLE internalHandle;
 
     /// <summary>
     /// Internal use only
