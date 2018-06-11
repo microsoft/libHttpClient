@@ -351,8 +351,11 @@ void retry_http_call_until_done(
         }
     }
 
-    async_queue_handle_t nestedQueue;
-    CreateNestedAsyncQueue(retryContext->outerQueue, &nestedQueue);
+    async_queue_handle_t nestedQueue = nullptr;
+    if (retryContext->outerQueue != nullptr)
+    {
+        CreateNestedAsyncQueue(retryContext->outerQueue, &nestedQueue);
+    }
     AsyncBlock* nestedBlock = new AsyncBlock{};
     nestedBlock->queue = nestedQueue;
     nestedBlock->context = retryContext;
@@ -365,7 +368,10 @@ void retry_http_call_until_done(
         uint32_t timeoutWindowInSeconds = 0;
         HCHttpCallRequestGetTimeoutWindow(retryContext->call, &timeoutWindowInSeconds);
 
-        CloseAsyncQueue(nestedAsyncBlock->queue);
+        if (nestedAsyncBlock->queue != nullptr)
+        {
+            CloseAsyncQueue(nestedAsyncBlock->queue);
+        }
         delete nestedAsyncBlock;
 
         if (http_call_should_retry(retryContext->call, responseReceivedTime))
