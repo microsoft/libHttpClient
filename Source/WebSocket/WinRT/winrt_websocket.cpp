@@ -233,6 +233,7 @@ try
     catch (Platform::Exception^ e)
     {
         HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: ConnectAsync failed = 0x%0.8x", websocketTask->m_websocketHandle->id, e->HResult);
+        return e->HResult;
     }
 
     return E_PENDING;
@@ -403,6 +404,7 @@ try
     catch (Platform::Exception^ e)
     {
         HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: Send failed = 0x%0.8x", websocketTask->m_websocketHandle->id, e->HResult);
+        return e->HResult;
     }
 
     return E_PENDING;
