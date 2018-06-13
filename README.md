@@ -28,7 +28,6 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 - Binaries eventually on Nuget.org as **Nuget packages**, and maybe VcPkg
 - Unit tests via TAEF
 - End to end samples for UWP C++, XDK ERA, Win32, iOS, and Android
-- TBD: Does **not require C++/CX** to build on UWP or ERA 
 
 ## HTTP API Usage
 
