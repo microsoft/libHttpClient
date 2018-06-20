@@ -43,7 +43,7 @@ set
 :finalize
 if "%1" == "local" goto skipEmail
 set MSGTITLE="BUILD: %BUILD_SOURCEVERSIONAUTHOR% %BUILD_DEFINITIONNAME% %BUILD_SOURCEBRANCH% = %agent.jobstatus%"
-set MSGBODY="%TFS_DROPLOCATION%    https://microsoft.visualstudio.com/OS/_build/index?buildId=%BUILD_BUILDID%&_a=summary"
+set MSGBODY="%TFS_DROPLOCATION%    https://microsoft.visualstudio.com/DefaultCollection/Xbox.Services/_build/index?buildId=%BUILD_BUILDID%&_a=summary"
 call \\scratch2\scratch\jasonsa\tools\send-build-email.cmd %MSGTITLE% %MSGBODY% 
 :skipEmail
 
