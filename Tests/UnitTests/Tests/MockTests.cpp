@@ -42,7 +42,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleGenericMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         hc_call_handle_t call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
@@ -80,7 +80,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         while (true)
         {
@@ -90,14 +90,14 @@ public:
         VERIFY_ARE_EQUAL(true, g_gotCall);
 
         CloseAsyncQueue(queue);
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(ExampleSingleSpecificUrlMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         hc_call_handle_t mockCall = CreateMockCall("Mock1", true, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
@@ -139,7 +139,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -176,7 +176,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock2, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock2, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -188,14 +188,14 @@ public:
         g_gotCall = false;
 
         CloseAsyncQueue(queue);
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(ExampleSingleSpecificUrlBodyMock)
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlBodyMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         hc_call_handle_t mockCall = CreateMockCall("Mock1", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
@@ -237,7 +237,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -274,7 +274,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock2, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock2, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -312,7 +312,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock3, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock3, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -350,7 +350,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock4, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock4, call));
 
         while (true)
         {
@@ -360,7 +360,7 @@ public:
         g_gotCall = false;
 
         CloseAsyncQueue(queue);
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
 
@@ -368,7 +368,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleMultiSpecificUrlBodyMock);
 
-        VERIFY_ARE_EQUAL(S_OK, HCGlobalInitialize());
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         hc_call_handle_t mockCall1 = CreateMockCall("Mock1", true, true);
         hc_call_handle_t mockCall2 = CreateMockCall("Mock2", true, true);
@@ -412,7 +412,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -450,7 +450,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock2, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock2, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -489,7 +489,7 @@ public:
             g_gotCall = true;
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerform(asyncBlock3, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock3, call));
 
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
@@ -501,7 +501,7 @@ public:
         g_gotCall = false;
 
         CloseAsyncQueue(queue);
-        HCGlobalCleanup();
+        HCCleanup();
     }
 
 };

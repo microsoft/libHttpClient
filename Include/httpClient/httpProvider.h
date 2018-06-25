@@ -8,14 +8,14 @@
 
 
     /// <summary>
-/// The callback definition used by HCGlobalSetHttpCallPerformFunction().
+/// The callback definition used by HCSetHttpCallPerformFunction().
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 typedef void
 (STDAPIVCALLTYPE* HCCallPerformFunction)(
-    _In_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_ hc_call_handle_t call    
     );
 
 /// <summary>
@@ -27,19 +27,19 @@ typedef void
 /// <param name="performFunc">A callback that implements HTTP perform function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-STDAPI_(void) HCGlobalSetHttpCallPerformFunction(
+STDAPI_(void) HCSetHttpCallPerformFunction(
     _In_opt_ HCCallPerformFunction performFunc
     ) HC_NOEXCEPT;
 
 /// <summary>
 /// Returns the current HCCallPerformFunction callback which implements the HTTP 
 /// perform function on the current platform. This can be used along with 
-/// HCGlobalSetHttpCallPerformFunction() to monitor all HTTP calls.
+/// HCSetHttpCallPerformFunction() to monitor all HTTP calls.
 /// </summary>
 /// <param name="performFunc">Set to the current HTTP perform function. Returns the default 
 /// routine if not previously set</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCGlobalGetHttpCallPerformFunction(
+STDAPI HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc
     ) HC_NOEXCEPT;
 
@@ -74,13 +74,13 @@ STDAPI HCHttpCallSetContext(
 /// Gets the url and method for the HTTP call
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="method">Method for the HTTP call</param>
-/// <param name="url">URL for the HTTP call</param>
+/// <param name="method">UTF-8 encoded method for the HTTP call</param>
+/// <param name="url">UTF-8 encoded URL for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetUrl(
     _In_ hc_call_handle_t call,
-    _Outptr_ UTF8CSTR* method,
-    _Outptr_ UTF8CSTR* url
+    _Outptr_ const char** method,
+    _Outptr_ const char** url
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -100,24 +100,24 @@ STDAPI HCHttpCallRequestGetRequestBodyBytes(
 /// Get the request body bytes of the HTTP call
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="requestBody">The request body of the HTTP call</param>
+/// <param name="requestBody">The UTF-8 encoded request body of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyString(
     _In_ hc_call_handle_t call,
-    _Outptr_ UTF8CSTR* requestBody
+    _Outptr_ const char** requestBody
     ) HC_NOEXCEPT;
 
 /// <summary>
 /// Get a request header for the HTTP call for a given header name
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerName">request header name for the HTTP call</param>
-/// <param name="headerValue">request header value for the HTTP call</param>
+/// <param name="headerName">UTF-8 encoded request header name for the HTTP call</param>
+/// <param name="headerValue">UTF-8 encoded request header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetHeader(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR headerName,
-    _Out_ UTF8CSTR* headerValue
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -137,14 +137,14 @@ STDAPI HCHttpCallRequestGetNumHeaders(
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="headerIndex">Specific zero based index of the request header</param>
-/// <param name="headerName">Request header name for the HTTP call</param>
-/// <param name="headerValue">Request header value for the HTTP call</param>
+/// <param name="headerName">UTF-8 encoded request header name for the HTTP call</param>
+/// <param name="headerValue">UTF-8 encoded request header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetHeaderAtIndex(
     _In_ hc_call_handle_t call,
     _In_ uint32_t headerIndex,
-    _Out_ UTF8CSTR* headerName,
-    _Out_ UTF8CSTR* headerValue
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -300,13 +300,13 @@ STDAPI HCHttpCallResponseSetNetworkErrorCode(
 /// Set a response header for the HTTP call
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerName">Response header name for the HTTP call</param>
-/// <param name="headerValue">Response header value for the HTTP call</param>
+/// <param name="headerName">UTF-8 encoded response header name for the HTTP call</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetHeader(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR headerName,
-    _In_z_ UTF8CSTR headerValue
+    _In_z_ const char* headerName,
+    _In_z_ const char* headerValue
     ) HC_NOEXCEPT;
 
 
@@ -318,16 +318,16 @@ STDAPI HCHttpCallResponseSetHeader(
 /// Function to connects to the WebSocket.  This API returns immediately and will spin up a thread under the covers.
 /// On UWP and XDK, the thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket
 /// </summary>
-/// <param name="uri">The URI to connect to</param>
-/// <param name="subProtocol">The subProtocol to connect to</param>
+/// <param name="uri">The UTF-8 encoded URI to connect to</param>
+/// <param name="subProtocol">The UTF-8 encoded subProtocol to connect to</param>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketConnectFunction)(
-    _In_ AsyncBlock* asyncBlock,
-    _In_z_ UTF8CSTR uri,
-    _In_z_ UTF8CSTR subProtocol,
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_z_ const char* uri,
+    _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket
     );
 
@@ -335,14 +335,14 @@ typedef HRESULT
 /// Send message the WebSocket
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
-/// <param name="message">The message to send</param>
+/// <param name="message">The UTF-8 encoded message to send</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketSendMessageFunction)(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR message
+    _In_z_ const char* message
     );
 
 /// <summary>
@@ -368,7 +368,7 @@ typedef HRESULT
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
-HCGlobalSetWebSocketFunctions(
+HCSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
@@ -385,7 +385,7 @@ HCGlobalSetWebSocketFunctions(
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
-HCGlobalGetWebSocketFunctions(
+HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
@@ -395,26 +395,26 @@ HCGlobalGetWebSocketFunctions(
 /// Get the proxy URI for the WebSocket
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="proxyUri">The proxy URI for the WebSocket</param>
+/// <param name="proxyUri">The UTF-8 encoded proxy URI for the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetProxyUri(
     _In_ hc_websocket_handle_t websocket,
-    _Out_ UTF8CSTR* proxyUri
+    _Out_ const char** proxyUri
     ) HC_NOEXCEPT;
 
 /// <summary>
 /// Get a header for the WebSocket
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="headerName">Header name for the WebSocket</param>
-/// <param name="headerValue">Header value for the WebSocket</param>
+/// <param name="headerName">UTF-8 encoded header name for the WebSocket</param>
+/// <param name="headerValue">UTF-8 encoded header value for the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetHeader(
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR headerName,
-    _Out_ UTF8CSTR* headerValue
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -435,15 +435,15 @@ HCWebSocketGetNumHeaders(
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="headerIndex">Specific zero based index of the header</param>
-/// <param name="headerName">Header name for the HTTP call</param>
-/// <param name="headerValue">Header value for the HTTP call</param>
+/// <param name="headerName">UTF-8 encoded header name for the HTTP call</param>
+/// <param name="headerValue">UTF-8 encoded header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetHeaderAtIndex(
     _In_ hc_websocket_handle_t websocket,
     _In_ uint32_t headerIndex,
-    _Out_ UTF8CSTR* headerName,
-    _Out_ UTF8CSTR* headerValue
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
 ) HC_NOEXCEPT;
 
 /// <summary>

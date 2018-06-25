@@ -10,7 +10,7 @@
 using namespace xbox::httpclient;
 
 STDAPI 
-HCGlobalGetLibVersion(_Outptr_ UTF8CSTR* version) HC_NOEXCEPT
+HCGetLibVersion(_Outptr_ const char** version) HC_NOEXCEPT
 try
 {
     if (version == nullptr)
@@ -24,24 +24,24 @@ try
 CATCH_RETURN()
 
 STDAPI 
-HCGlobalInitialize() HC_NOEXCEPT
+HCInitialize(_In_opt_ void* context) HC_NOEXCEPT
 try
 {
-    HCTraceImplGlobalInit();
-    return xbox::httpclient::init_http_singleton();
+    HCTraceImplInit();
+    return xbox::httpclient::init_http_singleton(context);
 }
 CATCH_RETURN()
 
-STDAPI_(void) HCGlobalCleanup() HC_NOEXCEPT
+STDAPI_(void) HCCleanup() HC_NOEXCEPT
 try
 {
     xbox::httpclient::cleanup_http_singleton();
-    HCTraceImplGlobalCleanup();
+    HCTraceImplCleanup();
 }
 CATCH_RETURN_WITH(;)
 
 STDAPI_(void)
-HCGlobalSetHttpCallPerformFunction(
+HCSetHttpCallPerformFunction(
     _In_opt_ HCCallPerformFunction performFunc
     ) HC_NOEXCEPT
 {
@@ -49,11 +49,11 @@ HCGlobalSetHttpCallPerformFunction(
     if (nullptr == httpSingleton)
         return;
 
-    httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerform : performFunc;
+    httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerformAsync : performFunc;
 }
 
 STDAPI 
-HCGlobalGetHttpCallPerformFunction(
+HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc
     ) HC_NOEXCEPT
 try

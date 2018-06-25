@@ -93,7 +93,7 @@ MainPage::MainPage()
     g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
-    HCGlobalInitialize();
+    HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel::HCTraceLevel_Information);
 
     uint32_t sharedAsyncQueueId = 0;
@@ -115,7 +115,7 @@ MainPage::MainPage()
 
 MainPage::~MainPage()
 {
-    HCGlobalCleanup();
+    HCCleanup();
 }
 
 std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::string headersList)
@@ -268,11 +268,11 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 }
 
 void TraceCallback(
-    _In_ UTF8CSTR areaName,
+    _In_z_ const char* areaName,
     _In_ enum HCTraceLevel level,
     _In_ uint64_t threadId,
     _In_ uint64_t timestamp,
-    _In_ UTF8CSTR message
+    _In_z_ const char* message
 )
 {
     // Hook up to your own tracing.  For example:
@@ -332,7 +332,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         delete asyncBlock;
     };
 
-    HCHttpCallPerform(asyncBlock, call);
+    HCHttpCallPerformAsync(asyncBlock, call);
 }
 
 

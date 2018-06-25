@@ -46,7 +46,7 @@
 #endif
 
 #ifndef _WIN32
-#define UNREFERENCED_PARAMETER(args)
+#define UNREFERENCED_PARAMETER(args) (void)(args);
 #endif
 
 #ifndef ARRAYSIZE

@@ -161,11 +161,11 @@ STDAPI HCSettingsGetTraceLevel(
 /// own traces. 
 /// </summary>
 typedef void (HCTraceCallback)(
-    _In_ UTF8CSTR areaName,
+    _In_z_ const char* areaName,
     _In_ enum HCTraceLevel level,
     _In_ uint64_t threadId,
     _In_ uint64_t timestamp,
-    _In_ UTF8CSTR message
+    _In_z_ const char* message
     );
 
 /// <summary>
@@ -175,9 +175,9 @@ typedef void (HCTraceCallback)(
 STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback);
 
 /// <summary>
-/// Set client callback for tracing 
+/// Sets or unsets if the trace is sent to the debugger.
 /// </summary>
-/// <param name="callback">Trace callback</param>
+/// <param name="traceToDebugger">If True, sends the trace to the debugger.</param>
 STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger);
 
 

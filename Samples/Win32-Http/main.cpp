@@ -193,7 +193,7 @@ int main()
     header.push_back("1.0");
     headers.push_back(header);
 
-    HCGlobalInitialize();
+    HCInitialize(nullptr);
 
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
@@ -278,12 +278,12 @@ int main()
         delete asyncBlock;
     };
 
-    HCHttpCallPerform(asyncBlock, call);
+    HCHttpCallPerformAsync(asyncBlock, call);
 
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 
     ShutdownActiveThreads();
-    HCGlobalCleanup();
+    HCCleanup();
 
     return 0;
 }

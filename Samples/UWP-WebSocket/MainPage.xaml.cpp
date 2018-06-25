@@ -108,7 +108,7 @@ MainPage::MainPage()
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
 
-    HCGlobalInitialize();
+    HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
     uint32_t sharedAsyncQueueId = 0;
@@ -131,7 +131,7 @@ MainPage::MainPage()
 
 MainPage::~MainPage()
 {
-    HCGlobalCleanup();
+    HCCleanup();
 }
 
 std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::string headersList)
@@ -280,7 +280,7 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
         delete asyncBlock;
     };
 
-    hr = HCWebSocketConnect(asyncBlock, requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket);
+    hr = HCWebSocketConnectAsync(asyncBlock, requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket);
     LogToUI(format_string("HCWebSocketConnect: %d", hr));
 
 }
@@ -303,7 +303,7 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
         delete asyncBlock;
     };
 
-    HRESULT hr = HCWebSocketSendMessage(asyncBlock, m_websocket, requestBody.c_str());
+    HRESULT hr = HCWebSocketSendMessageAsync(asyncBlock, m_websocket, requestBody.c_str());
     LogToUI(format_string("HCWebSocketSendMessage: %d", hr));
 }
 

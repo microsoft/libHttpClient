@@ -33,7 +33,7 @@
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
     <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib>
     <libHttpClientLib2>$(libHttpClientRoot)lib\$(Platform)\</libHttpClientLib2>
-    <libHttpClientLib3>$(libHttpClientRoot)..\..\..\b\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib3>
+    <libHttpClientLib3>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib3>
     <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
   </PropertyGroup>
   

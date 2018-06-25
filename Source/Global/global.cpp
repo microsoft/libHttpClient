@@ -17,16 +17,17 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton()
+http_singleton::http_singleton(IHCPlatformContext* initialContext) :
+    m_platformContext{ initialContext }
 {
     m_lastId = 0;
-    m_performFunc = Internal_HCHttpCallPerform;
+    m_performFunc = Internal_HCHttpCallPerformAsync;
 
     m_websocketMessageFunc = nullptr;
     m_websocketCloseEventFunc = nullptr;
 
-    m_websocketConnectFunc = Internal_HCWebSocketConnect;
-    m_websocketSendMessageFunc = Internal_HCWebSocketSendMessage;
+    m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
+    m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
     m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
 
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
@@ -54,31 +55,38 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (assertIfNull && httpSingleton == nullptr)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "Call HCGlobalInitialize() fist");
+        HC_TRACE_ERROR(HTTPCLIENT, "Call HCInitialize() fist");
         ASSERT(httpSingleton != nullptr);
     }
 
     return httpSingleton;
 }
 
-HRESULT init_http_singleton()
+HRESULT init_http_singleton(void* context)
 {
     HRESULT hr = S_OK;
+
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
-        auto newSingleton = http_allocate_shared<http_singleton>();
-        std::atomic_compare_exchange_strong(
-            &g_httpSingleton_atomicReadsOnly,
-            &httpSingleton,
-            newSingleton
-        );
-
-        if (newSingleton == nullptr)
+        IHCPlatformContext* platformContext = nullptr;
+        hr = IHCPlatformContext::InitializeHttpPlatformContext(context, &platformContext);
+        
+        if (SUCCEEDED(hr)) 
         {
-            hr = E_OUTOFMEMORY;
+            auto newSingleton = http_allocate_shared<http_singleton>(platformContext);
+                std::atomic_compare_exchange_strong(
+                    &g_httpSingleton_atomicReadsOnly,
+                    &httpSingleton,
+                    newSingleton
+                );
+
+                if (newSingleton == nullptr)
+                {
+                    hr = E_OUTOFMEMORY;
+                }
+                // At this point there is a singleton (ours or someone else's)
         }
-        // At this point there is a singleton (ours or someone else's)
     }
 
     return hr;

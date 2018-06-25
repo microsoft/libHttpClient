@@ -79,11 +79,12 @@
     <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer_cpp.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp" >
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -98,6 +99,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_platform_context.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_platform_context.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\http_android.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
@@ -113,6 +118,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Android\android_websocket.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />

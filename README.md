@@ -1,6 +1,6 @@
 ## Welcome!
 
-libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API (XSAPI) [https://github.com/Microsoft/xbox-live-api].  If you want to contribute to the project, please talk to us to avoid overlap.
+libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API (XSAPI) [https://github.com/Microsoft/xbox-live-api] and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
 
 ## Goals
 
@@ -28,14 +28,13 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 - Binaries eventually on Nuget.org as **Nuget packages**, and maybe VcPkg
 - Unit tests via TAEF
 - End to end samples for UWP C++, XDK ERA, Win32, iOS, and Android
-- TBD: Does **not require C++/CX** to build on UWP or ERA 
 
 ## HTTP API Usage
 
 [See public header](../../tree/master/Include/httpClient/httpClient.h)
 
 1. Optionally call HCMemSetFunctions() to control memory allocations
-1. Call HCGlobalInitialize()
+1. Call HCInitialize()
 1. Optionally call HCSettingsSet*()
 1. Call HCHttpCallCreate() to create a new hc_call_handle_t
 1. Call HCHttpCallRequestSet*() to prepare the hc_call_handle_t
@@ -44,22 +43,13 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the hc_call_handle_t
 1. Call HCHttpCallCleanup() to cleanup the hc_call_handle_t
 1. Repeat 4-8 for each new HTTP call
-1. Call HCGlobalCleanup() at shutdown before your memory manager set in step 1 is shutdown
+1. Call HCCleanup() at shutdown before your memory manager set in step 1 is shutdown
 
 ## Behavior control
 
 * On UWP, XDK ERA, iOS, and Android, HCHttpCallPerform() will call native platform APIs
-* Optionally call HCGlobalSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
+* Optionally call HCSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl how to use this callback plus Curl https://github.com/curl/curl to make an HTTP implementation using Curl.
-
-## TODO
-
-Big things that still need to be done in rough priority order:
-
-* iOS implementation calling iOS platform WebSocket APIs
-* iOS sample
-* Android implementation calling Android platform WebSocket APIs
-* Android sample
 
 ## How to clone repo
 
@@ -80,7 +70,7 @@ Note that using GitHub's feature to "Download Zip" does not contain the submodul
 
 Is there a feature missing that you'd like to see, or have you found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](../../issues).  
 
-Big or small we'd like to take your contributions back to help improve the Xbox Live Service API for everyone.
+Big or small we'd like to take your contributions back to help improve the libHttpClient for game devs.
 
 ## Having Trouble?
 

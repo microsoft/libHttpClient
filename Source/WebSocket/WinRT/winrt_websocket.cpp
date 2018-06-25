@@ -33,7 +33,7 @@ public:
     }
 
     friend HRESULT WebsocketConnectDoWork(
-        _In_ AsyncBlock* asyncBlock,
+        _Inout_ AsyncBlock* asyncBlock,
         _In_opt_ void* executionRoutineContext
         );
 
@@ -57,7 +57,6 @@ public:
     ReceiveContext^ m_context;
 
     IAsyncAction^ m_connectAsyncOp;
-    AsyncStatus m_connectAsyncOpStatus;
 
     std::mutex m_outgoingMessageQueueLock;
     std::queue<std::shared_ptr<websocket_outgoing_message>> m_outgoingMessageQueue;
@@ -137,7 +136,7 @@ http_internal_vector<http_internal_wstring> parse_subprotocols(const http_intern
 }
 
 HRESULT WebsocketConnectDoWork(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* executionRoutineContext
     )
 try
@@ -188,45 +187,54 @@ try
     websocketTask->m_messageWebSocket->Closed += ref new TypedEventHandler<IWebSocket^, WebSocketClosedEventArgs^>(websocketTask->m_context, &ReceiveContext::OnClosed);
 
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: connecting to %s", websocket->id, websocket->uri.c_str());
-    websocketTask->m_connectAsyncOp = websocketTask->m_messageWebSocket->ConnectAsync(cxUri);
 
-    websocketTask->m_connectAsyncOp->Completed = ref new AsyncActionCompletedHandler(
-        [websocket, websocketTask, asyncBlock](
-            Windows::Foundation::IAsyncAction^ asyncOp, 
-            Windows::Foundation::AsyncStatus status)
+    try
     {
-        UNREFERENCED_PARAMETER(status);
-        try
+        websocketTask->m_connectAsyncOp = websocketTask->m_messageWebSocket->ConnectAsync(cxUri);
+
+        websocketTask->m_connectAsyncOp->Completed = ref new AsyncActionCompletedHandler(
+            [websocket, websocketTask, asyncBlock](
+                Windows::Foundation::IAsyncAction^ asyncOp,
+                Windows::Foundation::AsyncStatus status)
         {
-            websocketTask->m_messageDataWriter = ref new DataWriter(websocketTask->m_messageWebSocket->OutputStream);
-            if (status == Windows::Foundation::AsyncStatus::Error)
+            UNREFERENCED_PARAMETER(status);
+            try
+            {
+                websocketTask->m_messageDataWriter = ref new DataWriter(websocketTask->m_messageWebSocket->OutputStream);
+                if (status == Windows::Foundation::AsyncStatus::Error)
+                {
+                    websocketTask->m_connectAsyncOpResult = E_FAIL;
+                }
+                else
+                {
+                    websocketTask->m_connectAsyncOpResult = S_OK;
+                }
+            }
+            catch (Platform::Exception^ e)
+            {
+                websocketTask->m_connectAsyncOpResult = e->HResult;
+            }
+            catch (...)
             {
                 websocketTask->m_connectAsyncOpResult = E_FAIL;
             }
+            if (FAILED(websocketTask->m_connectAsyncOpResult))
+            {
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: connect failed 0x%0.8x", websocket->id, websocketTask->m_connectAsyncOpResult);
+            }
             else
             {
-                websocketTask->m_connectAsyncOpResult = S_OK;
+                HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu] connect complete", websocket->id);
             }
-        }
-        catch (Platform::Exception^ e)
-        {
-            websocketTask->m_connectAsyncOpResult = e->HResult;
-        }
-        catch (...)
-        {
-            websocketTask->m_connectAsyncOpResult = E_FAIL;
-        }
-        if (FAILED(websocketTask->m_connectAsyncOpResult))
-        {
-            HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: connect failed 0x%0.8x", websocket->id, websocketTask->m_connectAsyncOpResult);
-        }
-        else
-        {
-            HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu] connect complete", websocket->id);
-        }
 
-        CompleteAsync(asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
-    });
+            CompleteAsync(asyncBlock, websocketTask->m_connectAsyncOpResult, sizeof(WebSocketCompletionResult));
+        });
+    }
+    catch (Platform::Exception^ e)
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: ConnectAsync failed = 0x%0.8x", websocketTask->m_websocketHandle->id, e->HResult);
+        return e->HResult;
+    }
 
     return E_PENDING;
 }
@@ -246,26 +254,31 @@ HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
     return S_OK;
 }
 
-HRESULT Internal_HCWebSocketConnect(
-    _In_ AsyncBlock* asyncBlock,
+HRESULT Internal_HCWebSocketConnectAsync(
+    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ hc_websocket_handle_t websocket
     )
 {
     std::shared_ptr<winrt_websocket_task> websocketTask = std::make_shared<winrt_websocket_task>();
-    websocketTask->m_websocketHandle = websocket;
+    websocketTask->m_websocketHandle = HCWebSocketDuplicateHandle(websocket);
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
     websocket->task = std::dynamic_pointer_cast<xbox::httpclient::hc_task>(websocketTask);
 
-    HRESULT hr = BeginAsync(asyncBlock, websocket, HCWebSocketConnect, __FUNCTION__,
+    HRESULT hr = BeginAsync(asyncBlock, websocket, HCWebSocketConnectAsync, __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
         {
             case AsyncOp_DoWork: return WebsocketConnectDoWork(data->async, data->context);
             case AsyncOp_GetResult: return WebsocketConnectGetResult(data);
+            case AsyncOp_Cleanup:
+            {
+                HCWebSocketCloseHandle(static_cast<hc_websocket_handle_t>(data->context));
+                break;
+            }
         }
 
         return S_OK;
@@ -279,8 +292,8 @@ HRESULT Internal_HCWebSocketConnect(
     return hr;
 }
 
-HRESULT Internal_HCWebSocketSendMessage(
-    _In_ AsyncBlock* asyncBlock,
+HRESULT Internal_HCWebSocketSendMessageAsync(
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message
     )
@@ -333,7 +346,7 @@ struct SendMessageCallbackContent
 };
 
 HRESULT WebsockSendMessageDoWork(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* executionRoutineContext
     )
 try
@@ -346,44 +359,53 @@ try
     }
 
     auto websocketTask = sendMsgContext->websocketTask;
-    auto websocket = websocketTask->m_websocketHandle;
-    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Send message executing", websocket->id);
 
-    auto msg = sendMsgContext->nextMessage;
-    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] [%s]", websocket->id, msg->m_id, msg->m_message.c_str());
-
-    websocketTask->m_messageWebSocket->Control->MessageType = SocketMessageType::Utf8;
-    unsigned char* uchar = reinterpret_cast<unsigned char*>(const_cast<char*>(msg->m_message.c_str()));
-    websocketTask->m_messageDataWriter->WriteBytes(Platform::ArrayReference<unsigned char>(uchar, static_cast<unsigned int>(msg->m_message.length())));
-
-    msg->m_storeAsyncOp = websocketTask->m_messageDataWriter->StoreAsync();
-
-    msg->m_storeAsyncOp->Completed = ref new AsyncOperationCompletedHandler<unsigned int>(
-        [websocketTask, msg, asyncBlock](Windows::Foundation::IAsyncOperation<unsigned int>^ asyncOp, Windows::Foundation::AsyncStatus status)
+    try
     {
-        try
-        {
-            msg->m_storeAsyncOpStatus = status;
-            unsigned int result = asyncOp->GetResults();
-            HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] send complete = %d", websocketTask->m_websocketHandle->id, msg->m_id, result);
-            msg->m_storeAsyncResult = result;
-        }
-        catch (Platform::Exception^ ex)
-        {
-            msg->m_storeAsyncResult = ex->HResult;
-        }
-        catch (...)
-        {
-            msg->m_storeAsyncResult = E_FAIL;
-        }
+        auto websocket = websocketTask->m_websocketHandle;
+        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Send message executing", websocket->id);
 
-        if (FAILED(msg->m_storeAsyncResult))
+        auto msg = sendMsgContext->nextMessage;
+        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] [%s]", websocket->id, msg->m_id, msg->m_message.c_str());
+
+        websocketTask->m_messageWebSocket->Control->MessageType = SocketMessageType::Utf8;
+        unsigned char* uchar = reinterpret_cast<unsigned char*>(const_cast<char*>(msg->m_message.c_str()));
+        websocketTask->m_messageDataWriter->WriteBytes(Platform::ArrayReference<unsigned char>(uchar, static_cast<unsigned int>(msg->m_message.length())));
+
+        msg->m_storeAsyncOp = websocketTask->m_messageDataWriter->StoreAsync();
+
+        msg->m_storeAsyncOp->Completed = ref new AsyncOperationCompletedHandler<unsigned int>(
+            [websocketTask, msg, asyncBlock](Windows::Foundation::IAsyncOperation<unsigned int>^ asyncOp, Windows::Foundation::AsyncStatus status)
         {
-            HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] send failed = 0x%0.8x", websocketTask->m_websocketHandle->id, msg->m_id, msg->m_storeAsyncResult);
-        }
-        CompleteAsync(asyncBlock, msg->m_storeAsyncResult, sizeof(WebSocketCompletionResult));
-        MessageWebSocketSendMessage(websocketTask);
-    });
+            try
+            {
+                msg->m_storeAsyncOpStatus = status;
+                unsigned int result = asyncOp->GetResults();
+                HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] send complete = %d", websocketTask->m_websocketHandle->id, msg->m_id, result);
+                msg->m_storeAsyncResult = result;
+            }
+            catch (Platform::Exception^ ex)
+            {
+                msg->m_storeAsyncResult = ex->HResult;
+            }
+            catch (...)
+            {
+                msg->m_storeAsyncResult = E_FAIL;
+            }
+
+            if (FAILED(msg->m_storeAsyncResult))
+            {
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] send failed = 0x%0.8x", websocketTask->m_websocketHandle->id, msg->m_id, msg->m_storeAsyncResult);
+            }
+            CompleteAsync(asyncBlock, msg->m_storeAsyncResult, sizeof(WebSocketCompletionResult));
+            MessageWebSocketSendMessage(websocketTask);
+        });
+    }
+    catch (Platform::Exception^ e)
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: Send failed = 0x%0.8x", websocketTask->m_websocketHandle->id, e->HResult);
+        return e->HResult;
+    }
 
     return E_PENDING;
 }
@@ -445,16 +467,21 @@ void MessageWebSocketSendMessage(
     std::shared_ptr<SendMessageCallbackContent> callbackContext = std::make_shared<SendMessageCallbackContent>();
     callbackContext->nextMessage = msg;
     callbackContext->websocketTask = websocketTask;
-    void* rawMsg = shared_ptr_cache::store<SendMessageCallbackContent>(callbackContext);
+    void* rawContext = shared_ptr_cache::store<SendMessageCallbackContent>(callbackContext);
+    HCWebSocketDuplicateHandle(websocketTask->m_websocketHandle);
 
-    HRESULT hr = BeginAsync(msg->m_asyncBlock, rawMsg, HCWebSocketSendMessage, __FUNCTION__,
+    HRESULT hr = BeginAsync(msg->m_asyncBlock, rawContext, HCWebSocketSendMessageAsync, __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
     {
         switch (op)
         {
             case AsyncOp_DoWork: return WebsockSendMessageDoWork(data->async, data->context);
             case AsyncOp_GetResult: return WebsockSendMessageGetResult(data);
-            case AsyncOp_Cleanup: shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, true);
+            case AsyncOp_Cleanup: 
+            {
+                HCWebSocketCloseHandle(shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, true)->websocketTask->m_websocketHandle);
+                break;
+            }
         }
 
         return S_OK;

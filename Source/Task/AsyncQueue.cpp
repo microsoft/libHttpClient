@@ -449,7 +449,7 @@ struct async_queue_t
         _In_ AsyncQueueCallbackSubmitted* callback,
         _Out_ uint32_t* token)
     {
-        return m_callbackSubmitted.Add(nullptr, context, callback, token);
+        return m_callbackSubmitted.Add(this, context, callback, token);
     }
 
     void RemoveCallback(
@@ -590,7 +590,7 @@ STDAPI CreateSharedAsyncQueue(
 
     if (q != nullptr)
     {
-        ReferenceAsyncQueue(q);
+        q = DuplicateAsyncQueueHandle(q);
         *queue = q;
     }
     else
@@ -707,11 +707,12 @@ STDAPI_(void) RemoveAsyncQueueCallbacks(
 //
 // Increments the refcount on the queue
 //
-STDAPI_(void) ReferenceAsyncQueue(
+STDAPI_(async_queue_handle_t) DuplicateAsyncQueueHandle(
     _In_ async_queue_handle_t queue)
 {
     async_queue_t* aq = async_queue_t::GetQueue(queue);
     aq->AddRef();
+    return queue;
 }
 
 //

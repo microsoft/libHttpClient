@@ -5,8 +5,16 @@
 #include "httpClient/httpClient.h"
 #include "../global/global.h"
 
-void Internal_HCHttpCallPerform(
-    _In_ AsyncBlock* asyncBlock,
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+{
+    // No-op
+    assert(initialContext == nullptr);
+    *platformContext = nullptr;
+    return S_OK;
+}
+
+void Internal_HCHttpCallPerformAsync(
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )
 {

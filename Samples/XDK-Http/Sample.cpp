@@ -170,7 +170,7 @@ Sample::Sample() :
     g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
     g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
-    HCGlobalInitialize();
+    HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
     uint32_t sharedAsyncQueueId = 0;
@@ -484,7 +484,7 @@ void Sample::MakeHttpCall()
         delete asyncBlock;
     };
 
-    HCHttpCallPerform(asyncBlock, call);
+    HCHttpCallPerformAsync(asyncBlock, call);
 }
 
 

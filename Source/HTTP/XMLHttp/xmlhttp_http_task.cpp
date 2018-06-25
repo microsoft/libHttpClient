@@ -11,7 +11,7 @@
 #include "http_request_stream.h"
 
 xmlhttp_http_task::xmlhttp_http_task(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     ) :
     m_statusCode(0),
@@ -32,7 +32,7 @@ xmlhttp_http_task::~xmlhttp_http_task()
 }
 
 void xmlhttp_http_task::perform_async(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )
 {
@@ -278,8 +278,17 @@ AsyncBlock* xmlhttp_http_task::async_block()
     return m_asyncBlock;
 }
 
-void Internal_HCHttpCallPerform(
-    _In_ AsyncBlock* asyncBlock,
+
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+{
+    // No-op
+    assert(initialContext == nullptr);
+    *platformContext = nullptr;
+    return S_OK;
+}
+
+void Internal_HCHttpCallPerformAsync(
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     )
 {

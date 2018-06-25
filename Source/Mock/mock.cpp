@@ -116,7 +116,7 @@ HC_CALL* GetMatchingMock(
     return matchingMock;
 }
 
-bool Mock_Internal_HCHttpCallPerform(
+bool Mock_Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t originalCallHandle
     )
 {
@@ -144,8 +144,8 @@ bool Mock_Internal_HCHttpCallPerform(
     uint32_t numheaders;
     HCHttpCallResponseGetNumHeaders(matchingMock, &numheaders);
 
-    UTF8CSTR str1;
-    UTF8CSTR str2;
+    const char* str1;
+    const char* str2;
     for (uint32_t i = 0; i < numheaders; i++)
     {
         HCHttpCallResponseGetHeaderAtIndex(matchingMock, i, &str1, &str2);

@@ -202,7 +202,7 @@ public:
         
         for(int idx = 0; idx < 10; idx++)
         {
-            ReferenceAsyncQueue(queue);
+            queue = DuplicateAsyncQueueHandle(queue);
         }
 
         for(int idx = 0; idx < 11; idx++)

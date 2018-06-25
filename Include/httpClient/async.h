@@ -48,13 +48,6 @@ typedef struct AsyncBlock
     async_queue_handle_t queue;
 
     /// <summary>
-    /// Optional event to wait on.  This will be signaled
-    /// when the async operation is complete and after
-    /// any completion callback has run
-    /// </summary>
-    HANDLE waitEvent;
-
-    /// <summary>
     /// Optional context pointer to pass to the callback
     /// </summary>
     void* context;
@@ -81,7 +74,7 @@ typedef struct AsyncBlock
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
 /// <param name='wait'>If true, GetAsyncStatus waits until the async call either completes or is canceled.</param>
 STDAPI GetAsyncStatus(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ bool wait);
 
 /// <summary>
@@ -90,7 +83,7 @@ STDAPI GetAsyncStatus(
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to the async call.</param>
 /// <param name='bufferSize'>The required size of the buffer in bytes needed to hold the results.</param>
 STDAPI GetAsyncResultSize(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize);
 
 /// <summary>

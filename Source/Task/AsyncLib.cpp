@@ -3,6 +3,8 @@
 
 #include "pch.h"
 
+#include "timer.h"
+
 #define ASYNC_STATE_SIG 0x41535445
 
 // Used by unit tests to verify we cleanup memory correctly.
@@ -17,10 +19,10 @@ struct AsyncState
     bool canceled = false;
     AsyncProvider* provider = nullptr;
     AsyncProviderData providerData;
+    PlatformTimer timer;
 
 #ifdef _WIN32
     HANDLE waitEvent = nullptr;
-    PTP_TIMER timer = nullptr;
 #else
     std::mutex waitMutex;
     std::condition_variable waitCondition;
@@ -30,7 +32,8 @@ struct AsyncState
     const void* token = nullptr;
     const char* function = nullptr;
 
-    AsyncState() noexcept
+    AsyncState() noexcept :
+        timer{ this, TimerCallback }
     {
         ++s_AsyncLibGlobalStateCount;
     }
@@ -49,17 +52,10 @@ struct AsyncState
     }
 
 private:
+    static void TimerCallback(_In_ void* context) noexcept;
+
     ~AsyncState() noexcept
     {
-#ifdef _WIN32
-        if (timer != nullptr)
-        {
-            SetThreadpoolTimer(timer, nullptr, 0, 0);
-            WaitForThreadpoolTimerCallbacks(timer, TRUE);
-            CloseThreadpoolTimer(timer);
-        }
-#endif
-
         if (providerData.queue != nullptr)
         {
             CloseAsyncQueue(providerData.queue);
@@ -149,13 +145,13 @@ public:
     AsyncState* Get() const { return m_state; }
 
 private:
-    AsyncState * m_state;
+    AsyncState* m_state;
 };
 
 class AsyncBlockInternalGuard
 {
 public:
-    AsyncBlockInternalGuard(AsyncBlock* asyncBlock) noexcept :
+    AsyncBlockInternalGuard(_Inout_ AsyncBlock* asyncBlock) noexcept :
         m_internal{ reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal) }
     {
         ASSERT(m_internal);
@@ -221,49 +217,59 @@ static void CALLBACK CompletionCallbackForAsyncBlock(_In_ void* context);
 static void CALLBACK WorkerCallback(_In_ void* context);
 static void SignalCompletion(_In_ AsyncStateRef const& state);
 static void SignalWait(_In_ AsyncStateRef const& state);
-static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal);
+static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal);
 static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
 
-#ifdef _WIN32
-static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER);
-#endif
+void AsyncState::TimerCallback(void* context) noexcept
+{
+    AsyncStateRef state;
+    state.Attach(static_cast<AsyncState*>(context));
 
-static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _In_ AsyncBlockInternal* internal)
+    bool timerStillScheduled = true;
+    if (!state->timerScheduled.compare_exchange_strong(timerStillScheduled, false))
+    {
+        return; // the timer has been cancelled
+    }
+
+    if (state->canceled)
+    {
+        return;
+    }
+
+    HRESULT hr = SubmitAsyncCallback(
+        state->providerData.queue,
+        AsyncQueueCallbackType_Work,
+        state.Get(),
+        WorkerCallback);
+
+    if (SUCCEEDED(hr))
+    {
+        state.Detach(); // state is still in use so let it go
+    }
+    else
+    {
+        CompleteAsync(state->providerData.async, hr, 0);
+    }
+}
+
+static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal)
 {
     AsyncStateRef state;
     state.Attach(new (std::nothrow) AsyncState);
 
     RETURN_IF_NULL_ALLOC(state);
-
-    if (asyncBlock->waitEvent != nullptr)
-    {
 #if _WIN32
-        RETURN_IF_WIN32_BOOL_FALSE(DuplicateHandle(
-            GetCurrentProcess(),
-            asyncBlock->waitEvent,
-            GetCurrentProcess(),
-            &state->waitEvent, 0,
-            FALSE,
-            DUPLICATE_SAME_ACCESS));
-#else
-        ASSERT(false);
+    state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+    RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
 #endif
-    }
-    else
-    {
-#if _WIN32
-        state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
-#endif
-    }
 
     state->providerData.queue = asyncBlock->queue;
     state->providerData.async = asyncBlock;
 
     if (state->providerData.queue != nullptr)
     {
-        ReferenceAsyncQueue(state->providerData.queue);
+        state->providerData.queue = DuplicateAsyncQueueHandle(state->providerData.queue);
     }
     else
     {
@@ -323,17 +329,6 @@ static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock)
                 asyncBlock,
                 CompletionCallbackForAsyncBlock);
         }
-
-        // The completion callback will signal the event
-        if (FAILED(hr) && asyncBlock->waitEvent != nullptr)
-        {
-#if _WIN32
-            SetEvent(asyncBlock->waitEvent);
-#else
-            ASSERT(false);
-#endif
-        }
-
     }
 
     return hr;
@@ -414,14 +409,6 @@ static void CALLBACK CompletionCallbackForAsyncBlock(
     {
         asyncBlock->callback(asyncBlock);
     }
-    if (asyncBlock->waitEvent)
-    {
-#if _WIN32
-        SetEvent(asyncBlock->waitEvent);
-#else
-        ASSERT(false);
-#endif
-    }
 }
 
 static void CALLBACK CompletionCallbackForAsyncState(
@@ -476,35 +463,6 @@ static void CALLBACK WorkerCallback(
     }
 }
 
-#if _WIN32
-static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* context, _In_ PTP_TIMER)
-{
-    AsyncStateRef state;
-    state.Attach(static_cast<AsyncState*>(context));
-    state->timerScheduled = false;
-
-    if (state->canceled)
-    {
-        return;
-    }
-
-    HRESULT hr = SubmitAsyncCallback(
-        state->providerData.queue,
-        AsyncQueueCallbackType_Work,
-        state.Get(),
-        WorkerCallback);
-
-    if (SUCCEEDED(hr))
-    {
-        state.Detach(); // state is still in use so let it go
-    }
-    else
-    {
-        CompleteAsync(state->providerData.async, hr, 0);
-    }
-}
-#endif
-
 //
 // Public APIs
 //
@@ -516,7 +474,7 @@ static void CALLBACK TimerCallback(_In_ PTP_CALLBACK_INSTANCE, _In_ void* contex
 /// GetAsyncResult is unneeded.
 /// </summary>
 STDAPI GetAsyncStatus(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ bool wait)
 {
     HRESULT result = E_PENDING;
@@ -578,7 +536,7 @@ STDAPI GetAsyncStatus(
 /// Returns the required size of the buffer to pass to GetAsyncResult.
 /// </summary>
 STDAPI GetAsyncResultSize(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize)
 {
     HRESULT result = E_PENDING;
@@ -591,10 +549,7 @@ STDAPI GetAsyncResultSize(
 
     if (SUCCEEDED(result))
     {
-        ASSERT(state != nullptr);
-        RETURN_HR_IF(E_INVALIDARG, state == nullptr);
-
-        *bufferSize = state->providerData.bufferSize;
+        *bufferSize = state == nullptr ? 0 : state->providerData.bufferSize;
     }
 
     return result;
@@ -619,19 +574,14 @@ STDAPI_(void) CancelAsync(
         state->canceled = true;
     }
 
-#if _WIN32
-    if (state->timer != nullptr)
+    state->timer.Cancel();
+    bool timerWasScheduled = true;
+    state->timerScheduled.compare_exchange_strong(timerWasScheduled, false);
+    if (timerWasScheduled)
     {
-        SetThreadpoolTimer(state->timer, nullptr, 0, 0);
-        WaitForThreadpoolTimerCallbacks(state->timer, TRUE);
-
-        if (state->timerScheduled)
-        {
-            // The timer callback was never invoked so release this reference
-            state->Release();
-        }
+        // The timer callback was never invoked so release this reference
+        state->Release();
     }
-#endif
 
     (void)state->provider(AsyncOp_Cancel, &state->providerData);
     SignalCompletion(state);
@@ -705,7 +655,7 @@ STDAPI BeginAsync(
 /// before it schedules work.
 /// </summary>
 STDAPI ScheduleAsync(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ uint32_t delayInMs)
 {
     AsyncStateRef state;
@@ -715,18 +665,9 @@ STDAPI ScheduleAsync(
     }
     RETURN_HR_IF(E_INVALIDARG, state == nullptr);
 
-    if (delayInMs != 0)
+    if (delayInMs != 0 && !state->timer.Valid())
     {
-#if _WIN32
-        if (state->timer == nullptr)
-        {
-            state->timer = CreateThreadpoolTimer(TimerCallback, state.Get(), nullptr);
-            RETURN_LAST_ERROR_IF_NULL(state->timer);
-        }
-#else
-        ASSERT(false);
-        RETURN_HR(E_INVALIDARG);
-#endif
+        RETURN_HR(E_FAIL);
     }
 
     bool priorScheduled = false;
@@ -747,13 +688,8 @@ STDAPI ScheduleAsync(
     }
     else
     {
-#ifdef _WIN32
-        int64_t ft = (int64_t)delayInMs * (int64_t)(-10000);
         state->timerScheduled = true;
-        SetThreadpoolTimer(state->timer, (PFILETIME)&ft, 0, delayInMs);
-#else
-        RETURN_HR(E_INVALIDARG);
-#endif
+        state->timer.Start(delayInMs);
     }
 
     // State object is now referenced by the work or timer callback
@@ -840,7 +776,10 @@ STDAPI GetAsyncResult(
     {
         if (state == nullptr)
         {
-            result = E_INVALIDARG;
+            if (bufferUsed != nullptr)
+            {
+                *bufferUsed = 0;
+            }
         }
         else if (token != state->token)
         {

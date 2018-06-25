@@ -9,8 +9,8 @@ using namespace xbox::httpclient;
 STDAPI 
 HCHttpCallRequestSetUrl(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR method,
-    _In_z_ UTF8CSTR url
+    _In_z_ const char* method,
+    _In_z_ const char* url
     ) HC_NOEXCEPT
 try 
 {
@@ -36,8 +36,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestGetUrl(
     _In_ hc_call_handle_t call,
-    _Outptr_ UTF8CSTR* method,
-    _Outptr_ UTF8CSTR* url
+    _Outptr_ const char** method,
+    _Outptr_ const char** url
     ) HC_NOEXCEPT
 try
 {
@@ -85,7 +85,7 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestSetRequestBodyString(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR requestBodyString
+    _In_z_ const char* requestBodyString
 ) HC_NOEXCEPT
 {
     if (requestBodyString == nullptr)
@@ -131,7 +131,7 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestGetRequestBodyString(
     _In_ hc_call_handle_t call,
-    _Outptr_ UTF8CSTR* requestBody
+    _Outptr_ const char** requestBody
 ) HC_NOEXCEPT
 try
 {
@@ -152,8 +152,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestSetHeader(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR headerName,
-    _In_z_ UTF8CSTR headerValue,
+    _In_z_ const char* headerName,
+    _In_z_ const char* headerValue,
     _In_ bool allowTracing
     ) HC_NOEXCEPT
 try 
@@ -174,8 +174,8 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallRequestGetHeader(
     _In_ hc_call_handle_t call,
-    _In_z_ UTF8CSTR headerName,
-    _Out_ UTF8CSTR* headerValue
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT
 try 
 {
@@ -218,8 +218,8 @@ STDAPI
 HCHttpCallRequestGetHeaderAtIndex(
     _In_ hc_call_handle_t call,
     _In_ uint32_t headerIndex,
-    _Out_ UTF8CSTR* headerName,
-    _Out_ UTF8CSTR* headerValue
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT
 try
 {

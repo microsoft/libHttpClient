@@ -35,7 +35,7 @@ CATCH_RETURN()
 STDAPI
 HCWebSocketSetProxyUri(
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR proxyUri
+    _In_z_ const char* proxyUri
     ) HC_NOEXCEPT
 try
 {
@@ -49,8 +49,8 @@ CATCH_RETURN()
 STDAPI
 HCWebSocketSetHeader(
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR headerName,
-    _In_z_ UTF8CSTR headerValue
+    _In_z_ const char* headerName,
+    _In_z_ const char* headerValue
     ) HC_NOEXCEPT
 try
 {
@@ -85,10 +85,10 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCWebSocketConnect(
-    _In_ AsyncBlock* asyncBlock,
-    _In_z_ UTF8CSTR uri,
-    _In_z_ UTF8CSTR subProtocol,
+HCWebSocketConnectAsync(
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_z_ const char* uri,
+    _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT
 try
@@ -121,10 +121,10 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCWebSocketSendMessage(
-    _In_ AsyncBlock* asyncBlock,
+HCWebSocketSendMessageAsync(
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR message
+    _In_z_ const char* message
     ) HC_NOEXCEPT
 try
 {
@@ -234,7 +234,7 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCGlobalSetWebSocketFunctions(
+HCSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
@@ -245,8 +245,8 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    httpSingleton->m_websocketConnectFunc = (websocketConnectFunc) ? websocketConnectFunc : Internal_HCWebSocketConnect;
-    httpSingleton->m_websocketSendMessageFunc = (websocketSendMessageFunc) ? websocketSendMessageFunc : Internal_HCWebSocketSendMessage;
+    httpSingleton->m_websocketConnectFunc = (websocketConnectFunc) ? websocketConnectFunc : Internal_HCWebSocketConnectAsync;
+    httpSingleton->m_websocketSendMessageFunc = (websocketSendMessageFunc) ? websocketSendMessageFunc : Internal_HCWebSocketSendMessageAsync;
     httpSingleton->m_websocketDisconnectFunc = (websocketDisconnectFunc) ? websocketDisconnectFunc : Internal_HCWebSocketDisconnect;
 
     return S_OK;
@@ -254,7 +254,7 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCGlobalGetWebSocketFunctions(
+HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
@@ -283,7 +283,7 @@ CATCH_RETURN()
 STDAPI
 HCWebSocketGetProxyUri(
     _In_ hc_websocket_handle_t websocket,
-    _Out_ UTF8CSTR* proxyUri
+    _Out_ const char** proxyUri
     ) HC_NOEXCEPT
 try
 {
@@ -300,8 +300,8 @@ CATCH_RETURN()
 STDAPI
 HCWebSocketGetHeader(
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ UTF8CSTR headerName,
-    _Out_ UTF8CSTR* headerValue
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT
 try
 {
@@ -344,8 +344,8 @@ STDAPI
 HCWebSocketGetHeaderAtIndex(
     _In_ hc_websocket_handle_t websocket,
     _In_ uint32_t headerIndex,
-    _Out_ UTF8CSTR* headerName,
-    _Out_ UTF8CSTR* headerValue
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
     ) HC_NOEXCEPT
 try
 {
@@ -400,14 +400,14 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketConnectResult(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT
 try
 {
     return GetAsyncResult(
         asyncBlock,
-        reinterpret_cast<void*>(HCWebSocketConnect),
+        reinterpret_cast<void*>(HCWebSocketConnectAsync),
         sizeof(WebSocketCompletionResult),
         result,
         nullptr
@@ -417,14 +417,14 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketSendMessageResult(
-    _In_ AsyncBlock* asyncBlock,
+    _Inout_ AsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT
 try
 {
     return GetAsyncResult(
         asyncBlock,
-        reinterpret_cast<void*>(HCWebSocketSendMessage),
+        reinterpret_cast<void*>(HCWebSocketSendMessageAsync),
         sizeof(WebSocketCompletionResult),
         result,
         nullptr
