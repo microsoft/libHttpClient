@@ -444,18 +444,18 @@ struct async_queue_t
         return q->AppendItem(&m_refs, callback, context);
     }
 
-    HRESULT AddCallback(
+    HRESULT RegisterCallback(
         _In_opt_ void* context,
         _In_ AsyncQueueCallbackSubmitted* callback,
-        _Out_ uint32_t* token)
+        _Out_ registration_token_t* token)
     {
-        return m_callbackSubmitted.Add(this, context, callback, token);
+        return m_callbackSubmitted.Register(this, context, callback, token);
     }
 
-    void RemoveCallback(
-        _In_ uint32_t token)
+    void UnregisterCallback(
+        _In_ registration_token_t token)
     {
-        m_callbackSubmitted.Remove(token);
+        m_callbackSubmitted.Unregister(token);
     }
 
     void MakeShared(_In_ uint64_t shareId)
@@ -716,15 +716,15 @@ STDAPI_(async_queue_handle_t) DuplicateAsyncQueueHandle(
 }
 
 //
-// Adds a callback that will be called when a new callback
+// Registers a callback that will be called when a new callback
 // is submitted. The callback will be directly invoked when
 // the call is submitted.
 //
-STDAPI AddAsyncQueueCallbackSubmitted(
+STDAPI RegisterAsyncQueueCallbackSubmitted(
     _In_ async_queue_handle_t queue,
     _In_opt_ void* context,
     _In_ AsyncQueueCallbackSubmitted* callback,
-    _Out_ uint32_t* token)
+    _Out_ registration_token_t* token)
 {
     async_queue_t* aq = async_queue_t::GetQueue(queue);
     if (aq == nullptr)
@@ -732,19 +732,19 @@ STDAPI AddAsyncQueueCallbackSubmitted(
         RETURN_HR(E_INVALIDARG);
     }
 
-    RETURN_HR(aq->AddCallback(context, callback, token));
+    RETURN_HR(aq->RegisterCallback(context, callback, token));
 }
 
 //
-// Removes a previously added callback.
+// Unregisters a previously added callback.
 //
-STDAPI_(void) RemoveAsyncQueueCallbackSubmitted(
+STDAPI_(void) UnregisterAsyncQueueCallbackSubmitted(
     _In_ async_queue_handle_t queue,
-    _In_ uint32_t token)
+    _In_ registration_token_t token)
 {
     async_queue_t* aq = async_queue_t::GetQueue(queue);
     if (aq != nullptr)
     {
-        aq->RemoveCallback(token);
+        aq->UnregisterCallback(token);
     }
 }

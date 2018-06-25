@@ -3,6 +3,12 @@
 #pragma once
 
 /// <summary>
+/// A token returned when registering a callback to identify the registration. This token
+/// is later used to unregister the callback.
+/// </summary>
+typedef uint64_t registration_token_t;
+
+/// <summary>
 /// An async_queue_t contains async work. An async queue has two sides:  a worker side and
 /// a completion side.  Each side can have different rules for how queued calls
 /// are dispatched.
@@ -212,24 +218,24 @@ STDAPI_(void) RemoveAsyncQueueCallbacks(
     _In_ AsyncQueueRemovePredicate* removePredicate);
 
 /// <summary>
-/// Adds a callback that will be invoked whenever a callback
+/// Registers a callback that will be invoked whenever a callback
 /// is submitted to this queue.
 /// </summary>
-/// <param name='queue'>The queue to add the submit callback to.</param>
+/// <param name='queue'>The queue to register the submit callback to.</param>
 /// <param name='context'>An optional context pointer to be passed to the submit callback.</param>
 /// <param name='callback'>A callback that will be invoked when a new callback is submitted to the queue.</param>
-/// <param name='token'>A token used in a later call to RemoveAsyncCallbackSubmitted to remove the callback.</param>
-STDAPI AddAsyncQueueCallbackSubmitted(
+/// <param name='token'>A token used in a later call to UnregisterAsyncCallbackSubmitted to remove the callback.</param>
+STDAPI RegisterAsyncQueueCallbackSubmitted(
     _In_ async_queue_handle_t queue,
     _In_opt_ void* context,
     _In_ AsyncQueueCallbackSubmitted* callback,
-    _Out_ uint32_t* token);
+    _Out_ registration_token_t* token);
 
 /// <summary>
-/// Removes a previously added callback.
+/// Unregisters a previously registered callback.
 /// </summary>
-/// <param name='queue'>The queue to remvoe the submit callback from.</param>
-/// <param name='token'>The token returned from AddAsyncQueueCallbackSubmitted.</param>
-STDAPI_(void) RemoveAsyncQueueCallbackSubmitted(
+/// <param name='queue'>The queue to remove the submit callback from.</param>
+/// <param name='token'>The token returned from RegisterAsyncQueueCallbackSubmitted.</param>
+STDAPI_(void) UnregisterAsyncQueueCallbackSubmitted(
     _In_ async_queue_handle_t queue,
-    _In_ uint32_t token);
+    _In_ registration_token_t token);

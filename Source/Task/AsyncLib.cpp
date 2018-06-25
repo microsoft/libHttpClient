@@ -29,8 +29,8 @@ struct AsyncState
     bool waitSatisfied;
 #endif
 
-    const void* token = nullptr;
-    const char* function = nullptr;
+    const void* identity = nullptr;
+    const char* identityName = nullptr;
 
     AsyncState() noexcept :
         timer{ this, TimerCallback }
@@ -629,8 +629,8 @@ STDAPI RunAsync(
 STDAPI BeginAsync(
     _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_opt_ const void* token,
-    _In_opt_ const char* function,
+    _In_opt_ const void* identity,
+    _In_opt_ const char* identityName,
     _In_ AsyncProvider* provider)
 {
     RETURN_IF_FAILED(AllocState(asyncBlock));
@@ -642,8 +642,8 @@ STDAPI BeginAsync(
     }
     state->provider = provider;
     state->providerData.context = context;
-    state->token = token;
-    state->function = function;
+    state->identity = identity;
+    state->identityName = identityName;
 
     return S_OK;
 }
@@ -759,7 +759,7 @@ STDAPI_(void) CompleteAsync(
 /// </summary>
 STDAPI GetAsyncResult(
     _Inout_ AsyncBlock* asyncBlock,
-    _In_opt_ const void* token,
+    _In_opt_ const void* identity,
     _In_ size_t bufferSize,
     _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) void* buffer,
     _Out_opt_ size_t* bufferUsed)
@@ -781,18 +781,18 @@ STDAPI GetAsyncResult(
                 *bufferUsed = 0;
             }
         }
-        else if (token != state->token)
+        else if (identity != state->identity)
         {
-            // Call/Result mismatch.  This AsyncBlock was initiated by state->function
+            // Call/Result mismatch.  This AsyncBlock was initiated by state->identityName
             char buf[100];
             int sprintfResult;
-            if (state->function != nullptr)
+            if (state->identityName != nullptr)
             {
                 sprintfResult = snprintf(
                     buf,
                     sizeof(buf),
                     "Call/Result mismatch.  This AsyncBlock was initiated by '%s'.\r\n",
-                    state->function);
+                    state->identityName);
             }
             else
             {

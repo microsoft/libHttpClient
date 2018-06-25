@@ -88,14 +88,14 @@ typedef HRESULT CALLBACK AsyncProvider(_In_ AsyncOp op, _In_ const AsyncProvider
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that holds data for the call.</param>
 /// <param name='context'>An optional context pointer that will be stored in the AsyncProviderData object passed back to the AsyncProvider callback.</param>
-/// <param name='token'>An optional arbitrary token that can be used to identify this call.</param>
-/// <param name='functionName'>An optional string that names the function providing the async call.  This is typically the __FUNCTION__ compiler macro.</param>
+/// <param name='identity'>An optional arbitrary pointer that can be used to identify this call.</param>
+/// <param name='identityName'>An optional string that names the async call.  This is typically the __FUNCTION__ compiler macro.</param>
 /// <param name='provider'>The function callback to invoke to implement the async call.</param>
 STDAPI BeginAsync(
     _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_opt_ const void* token,
-    _In_opt_ const char* functionName,
+    _In_opt_ const void* identity,
+    _In_opt_ const char* identityName,
     _In_ AsyncProvider* provider);
 
 /// <summary>
@@ -130,13 +130,13 @@ STDAPI_(void) CompleteAsync(
 /// BeginAsync.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the AsyncBlock that was passed to BeginAsync.</param>
-/// <param name='token'>An optional token used to match this result call with a prior BeginAsync call. If a token was passed to BeginAsync, the same token must be passed here.</param>
+/// <param name='identity'>An optional pointer used to match this result call with a prior BeginAsync call. If an identity pointer was passed to BeginAsync, the same pointer must be passed here.</param>
 /// <param name='bufferSize'>The size of the provided buffer, in bytes.</param>
 /// <param name='buffer'>A pointer to the result buffer.</param>
 /// <param name='bufferUsed'>An optional pointer that contains the number of bytes written to the buffer.  This is defined as the requiredResultSize passed to CompleteAsync.</param>
 STDAPI GetAsyncResult(
     _Inout_ AsyncBlock* asyncBlock,
-    _In_opt_ const void* token,
+    _In_opt_ const void* identity,
     _In_ size_t bufferSize,
     _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) void* buffer,
     _Out_opt_ size_t* bufferUsed);
