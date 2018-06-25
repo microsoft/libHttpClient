@@ -372,7 +372,7 @@ public:
     DEFINE_TEST_CASE(VerifySubmittedCallback)
     {
         AutoQueueHandle queue;
-        uint32_t token;
+        registration_token_t token;
         const DWORD workCount = 4;
         const DWORD completeCount = 7;
 
@@ -386,7 +386,7 @@ public:
 
         VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode_Manual, &queue));
 
-        VERIFY_SUCCEEDED(AddAsyncQueueCallbackSubmitted(queue, &submitCount, [](void* cxt, async_queue_handle_t, AsyncQueueCallbackType type)
+        VERIFY_SUCCEEDED(RegisterAsyncQueueCallbackSubmitted(queue, &submitCount, [](void* cxt, async_queue_handle_t, AsyncQueueCallbackType type)
         {
             SubmitCount* s = (SubmitCount*)cxt;
             if (type == AsyncQueueCallbackType_Work)
@@ -414,6 +414,6 @@ public:
         VERIFY_ARE_EQUAL(submitCount.Work, workCount);
         VERIFY_ARE_EQUAL(submitCount.Completion, completeCount);
 
-        RemoveAsyncQueueCallbackSubmitted(queue, token);
+        UnregisterAsyncQueueCallbackSubmitted(queue, token);
     }
 };
