@@ -49,13 +49,13 @@ public:
     Callback<CallbackType, CallbackDataType, CallbackThunk>& operator= (const Callback<CallbackType, CallbackDataType, CallbackThunk>&) = delete;    
 
     //
-    // Adds a callback function to this callback.
+    // Registers a callback function to this callback.
     //
-    HRESULT Add(
+    HRESULT Register(
         _In_opt_ async_queue_handle_t queue,
         _In_opt_ void* context,
         _In_ CallbackType callback,
-        _Out_ uint32_t* cookie)
+        _Out_ registration_token_t* token)
     {
         if (queue == nullptr)
         {
@@ -82,12 +82,12 @@ public:
         }
 
         entry->Queue = queue;
-        entry->Cookie = m_nextCookie.fetch_add(1);
+        entry->Token = m_nextToken.fetch_add(1);
         entry->Context = context;
         entry->Callback = callback;
         entry->Refs = 1;
 
-        *cookie = entry->Cookie;
+        *token = entry->Token;
 
         {
             std::lock_guard<std::mutex> lock{ m_lock };
@@ -98,11 +98,11 @@ public:
     }
 
     //
-    // Removes a callback for the given cookie.
+    // Unregisters a callback for the given token.
     //
-    void Remove(_In_ uint32_t cookie)
+    void Unregister(_In_ registration_token_t token)
     {
-        CallbackRegistration* remove = Find(cookie, true);
+        CallbackRegistration* remove = Find(token, true);
 
         if (remove != nullptr)
         {
@@ -196,7 +196,7 @@ public:
 
                 CallbackRegistration* cb = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
                 invocation->Owner = this;
-                invocation->Cookie = cb->Cookie;
+                invocation->Token = cb->Token;
 
                 if (free)
                 {
@@ -238,49 +238,49 @@ public:
     HRESULT Invoke(
         _In_ CallbackDataType* data)
     {
-        uint32_t* cookies = nullptr;
-        size_t cookieCount = 0;
+        registration_token_t* tokens = nullptr;
+        size_t tokenCount = 0;
 
         {
             std::lock_guard<std::mutex> lock{ m_lock };
 
             // Walk through all the callback entries and grab their
-            // cookies.
+            // tokens.
 
             PLIST_ENTRY entry = m_callbackHead.Flink;
             while (entry != &m_callbackHead)
             {
-                cookieCount++;
+                tokenCount++;
                 entry = entry->Flink;
             }
 
-            if (cookieCount != 0)
+            if (tokenCount != 0)
             {
-                cookies = new (std::nothrow) uint32_t[cookieCount];
+                tokens = new (std::nothrow) registration_token_t[tokenCount];
 
-                if (cookies != nullptr)
+                if (tokens != nullptr)
                 {
                     entry = m_callbackHead.Flink;
-                    cookieCount = 0;
+                    tokenCount = 0;
                     while (entry != &m_callbackHead)
                     {
                         CallbackRegistration* cb = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
-                        cookies[cookieCount] = cb->Cookie;
-                        cookieCount++;
+                        tokens[tokenCount] = cb->Token;
+                        tokenCount++;
                         entry = entry->Flink;
                     }
                 }
             }
         }
 
-        if (cookieCount != 0 && cookies == nullptr)
+        if (tokenCount != 0 && tokens == nullptr)
         {
             return E_OUTOFMEMORY;
         }
 
-        for (uint32_t idx = 0; idx < cookieCount; idx++)
+        for (uint32_t idx = 0; idx < tokenCount; idx++)
         {
-            CallbackRegistration* cb = Find(cookies[idx], false);
+            CallbackRegistration* cb = Find(tokens[idx], false);
             if (cb != nullptr)
             {
                 CallbackThunk thunk;
@@ -289,7 +289,7 @@ public:
             }
         }
 
-        delete[] cookies;
+        delete[] tokens;
 
         return S_OK;
     }
@@ -305,7 +305,7 @@ private:
     struct CallbackInvocation
     {
         Callback<CallbackType, CallbackDataType, CallbackThunk>* Owner;
-        uint32_t Cookie;
+        registration_token_t Token;
         CallbackDataType Data;
         CallbackSharedData *SharedData;
     };
@@ -313,7 +313,7 @@ private:
     struct CallbackRegistration
     {
         LIST_ENTRY ListEntry;
-        uint32_t Cookie;
+        registration_token_t Token;
         std::atomic<uint32_t> Refs;
         async_queue_handle_t Queue;
         void* Context;
@@ -321,7 +321,7 @@ private:
     };
 
     std::mutex m_lock;
-    std::atomic<uint32_t> m_nextCookie{ 1 };
+    std::atomic<registration_token_t> m_nextToken{ 1 };
     LIST_ENTRY m_callbackHead;
 
     void Release(_In_ CallbackSharedData* sharedData)
@@ -360,7 +360,7 @@ private:
         delete invocation;
     }
 
-    CallbackRegistration* Find(_In_ uint32_t cookie, _In_ bool remove)
+    CallbackRegistration* Find(_In_ registration_token_t token, _In_ bool remove)
     {
         std::lock_guard<std::mutex> lock{ m_lock };
 
@@ -369,7 +369,7 @@ private:
         while (entry != &m_callbackHead)
         {
             CallbackRegistration* ce = CONTAINING_RECORD(entry, CallbackRegistration, ListEntry);
-            if (ce->Cookie == cookie)
+            if (ce->Token == token)
             {
                 found = ce;
 
@@ -393,7 +393,7 @@ private:
     static void CALLBACK OnQueueCallback(_In_ void* context)
     {
         CallbackInvocation* invocation = reinterpret_cast<CallbackInvocation*>(context);
-        CallbackRegistration* entry = invocation->Owner->Find(invocation->Cookie, false);
+        CallbackRegistration* entry = invocation->Owner->Find(invocation->Token, false);
         if (entry != nullptr)
         {
             CallbackDataType* payload;
