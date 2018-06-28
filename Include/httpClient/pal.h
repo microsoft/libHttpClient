@@ -229,6 +229,10 @@ typedef struct _LIST_ENTRY {
 #define _Ret_maybenull_
 #endif
 
+#ifndef _Ret_z_
+#define _Ret_z_
+#endif
+
 #ifndef _Post_writable_byte_size_
 #define _Post_writable_byte_size_(X)
 #endif
