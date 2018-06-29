@@ -165,6 +165,10 @@ typedef struct _LIST_ENTRY {
 #define _In_reads_(size) 
 #endif
 
+#ifndef _In_reads_z_
+#define _In_reads_z_(size) 
+#endif
+
 #ifndef _In_reads_bytes_opt_
 #define _In_reads_bytes_opt_(size) 
 #endif
