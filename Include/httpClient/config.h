@@ -50,7 +50,7 @@
     #if defined(__LP64__)
         #define HC_DATAMODEL HC_DATAMODEL_LP64
     #else
-        #error HC does not support 32 bit builds for Apple platforms.
+        #define HC_DATAMODEL HC_DATAMODEL_ILP32
     #endif
 #else
     #if !defined(HC_DATAMODEL)
