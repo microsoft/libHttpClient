@@ -133,10 +133,6 @@ typedef struct _LIST_ENTRY {
 #define CONTAINING_RECORD(address, type, field) \
         ((type *)((char*)(address) - (uintptr_t)(&((type *)0)->field)))
 
-#ifndef _Field_z_
-#define _Field_z_ 
-#endif
-
 #ifndef _Field_size_
 #define _Field_size_(bytes) 
 #endif
@@ -151,6 +147,10 @@ typedef struct _LIST_ENTRY {
 
 #ifndef _Field_size_opt_
 #define _Field_size_opt_(bytes)
+#endif
+
+#ifndef _Field_z_
+#define _Field_z_ 
 #endif
 
 #ifndef _In_
