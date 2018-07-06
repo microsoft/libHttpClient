@@ -44,10 +44,10 @@ private:
     hc_websocket_handle_t m_websocket;
 };
 
-class winrt_websocket_task : public xbox::httpclient::hc_task
+class winrt_websocket_impl : public hc_websocket_impl
 {
 public:
-    winrt_websocket_task() : m_connectAsyncOpResult(S_OK)
+    winrt_websocket_impl() : m_connectAsyncOpResult(S_OK)
     {
     }
 
@@ -64,7 +64,7 @@ public:
 };
 
 void MessageWebSocketSendMessage(
-    _In_ std::shared_ptr<winrt_websocket_task> websocketTask
+    _In_ std::shared_ptr<winrt_websocket_impl> websocketTask
     );
 
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)
@@ -144,7 +144,7 @@ try
     hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(executionRoutineContext);
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Connect executing", websocket->id);
 
-    std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
     websocketTask->m_messageWebSocket = ref new MessageWebSocket();
 
     uint32_t numHeaders = 0;
@@ -243,7 +243,7 @@ CATCH_RETURN()
 HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
 {
     hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(data->context);
-    std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
 
     WebSocketCompletionResult result = {};
     result.websocket = websocket;
@@ -261,11 +261,11 @@ HRESULT Internal_HCWebSocketConnectAsync(
     _In_ hc_websocket_handle_t websocket
     )
 {
-    std::shared_ptr<winrt_websocket_task> websocketTask = std::make_shared<winrt_websocket_task>();
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
     websocketTask->m_websocketHandle = HCWebSocketDuplicateHandle(websocket);
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
-    websocket->task = std::dynamic_pointer_cast<xbox::httpclient::hc_task>(websocketTask);
+    websocket->impl = std::dynamic_pointer_cast<hc_websocket_impl>(websocketTask);
 
     HRESULT hr = BeginAsync(asyncBlock, websocket, HCWebSocketConnectAsync, __FUNCTION__,
         [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
@@ -306,7 +306,7 @@ HRESULT Internal_HCWebSocketSendMessageAsync(
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
-    std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
 
     std::shared_ptr<websocket_outgoing_message> msg = std::make_shared<websocket_outgoing_message>();
     msg->m_message = message;
@@ -342,7 +342,7 @@ HRESULT Internal_HCWebSocketSendMessageAsync(
 struct SendMessageCallbackContent
 {
     std::shared_ptr<websocket_outgoing_message> nextMessage;
-    std::shared_ptr<winrt_websocket_task> websocketTask;
+    std::shared_ptr<winrt_websocket_impl> websocketTask;
 };
 
 HRESULT WebsockSendMessageDoWork(
@@ -446,7 +446,7 @@ HRESULT WebsockSendMessageGetResult(_In_ const AsyncProviderData* data)
 }
 
 void MessageWebSocketSendMessage(
-    _In_ std::shared_ptr<winrt_websocket_task> websocketTask
+    _In_ std::shared_ptr<winrt_websocket_impl> websocketTask
     )
 {
     std::shared_ptr<websocket_outgoing_message> msg;
@@ -504,10 +504,10 @@ HRESULT Internal_HCWebSocketDisconnect(
         return E_INVALIDARG;
     }
 
-    std::shared_ptr<winrt_websocket_task> websocketTask = std::dynamic_pointer_cast<winrt_websocket_task>(websocket->task);
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
     if (websocketTask == nullptr || websocketTask->m_messageWebSocket == nullptr)
     {
-        return E_HC_NOT_INITIALISED;
+        return E_UNEXPECTED;
     }
 
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
