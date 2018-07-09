@@ -4,6 +4,13 @@
 #pragma once
 #include "pch.h"
 
+// Base class for platform specific implementations
+struct hc_websocket_impl 
+{
+    hc_websocket_impl() {}
+    virtual ~hc_websocket_impl() {}
+};
+
 typedef struct HC_WEBSOCKET
 {
     HC_WEBSOCKET() :
@@ -20,7 +27,7 @@ typedef struct HC_WEBSOCKET
     http_internal_string proxyUri;
     http_internal_string uri;
     http_internal_string subProtocol;
-    std::shared_ptr<xbox::httpclient::hc_task> task;
+    std::shared_ptr<hc_websocket_impl> impl;
 } HC_WEBSOCKET;
 
 HRESULT Internal_HCWebSocketConnectAsync(

@@ -1,3 +1,6 @@
 [submodule "Samples/Kits/DirectXTK"]
 	path = Samples/Kits/DirectXTK
 	url = https://github.com/jasonsandlin/DirectXTK.git
+[submodule "External/websocketpp"]
+	path = External/websocketpp
+	url = https://github.com/zaphoyd/websocketpp

@@ -195,4 +195,9 @@ uint64_t ThisThreadId()
 #endif
 }
 
+static inline int str_icmp(const http_internal_string& left, const http_internal_string& right)
+{
+    return _stricmp(left.c_str(), right.c_str());
+}
+
 NAMESPACE_XBOX_HTTP_CLIENT_END
