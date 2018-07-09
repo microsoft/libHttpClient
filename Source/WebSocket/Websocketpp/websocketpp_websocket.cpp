@@ -27,6 +27,8 @@
 #pragma warning( pop )
 #endif
 
+#define SUB_PROTOCOL_HEADER "Sec-WebSocket-Protocol"
+
 using namespace xbox::httpclient;
 
 struct websocket_outgoing_message
@@ -53,7 +55,9 @@ public:
     wspp_websocket_impl(hc_websocket_handle_t hcHandle)
         : m_state(CREATED),
         m_numSends(0),
-        m_uri(hcHandle->uri)
+        m_uri(hcHandle->uri),
+        m_backgroundAsync(nullptr),
+        m_backgroundQueue(nullptr)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
         , m_opensslFailed(false)
 #endif
@@ -66,7 +70,8 @@ public:
         _ASSERTE(m_state < DESTROYED);
 
         // Now, what states could we be in?
-        switch (m_state) {
+        switch (m_state)
+        {
         case DESTROYED:
             // This should be impossible
             std::abort();
@@ -96,12 +101,8 @@ public:
 
         // At this point, there should be no more references to me.
         m_state = DESTROYED;
+        CloseAsyncQueue(m_backgroundQueue);
     }
-
-    //std::shared_ptr<wspp_websocket_impl> shared_from_this()
-    //{
-    //    return std::static_pointer_cast<wspp_websocket_impl>(hc_task::shared_from_this());
-    //}
 
     HRESULT connect(AsyncBlock* async)
     {
@@ -302,14 +303,14 @@ private:
         const auto& headers = m_hcWebsocketHandle->connectHeaders;
         for (const auto & header : headers)
         {
-            if (!str_icmp(header.first, m_subProtocolHeader))
+            if (!str_icmp(header.first, SUB_PROTOCOL_HEADER))
             {
                 con->append_header(header.first.data(), header.second.data());
             }
         }
 
         // Add any specified subprotocols.
-        if (headers.find(m_subProtocolHeader) != headers.end())
+        if (headers.find(SUB_PROTOCOL_HEADER) != headers.end())
         {
             con->add_subprotocol(m_hcWebsocketHandle->subProtocol.data(), ec);
             if (ec.value())
@@ -331,29 +332,34 @@ private:
             }
         }
 
+        struct connect_context
+        {
+            connect_context(websocketpp::client<WebsocketConfigType>& _client) : client(std::move(_client)) {}
+            websocketpp::client<WebsocketConfigType>& client;
+        };
+        auto context = http_allocate_shared<connect_context>(client);
+
         // TODO does this thread continue past connect? Should I create a new AsyncBlock or use the one provided to connect?
         m_backgroundAsync = new (xbox::httpclient::http_memory::mem_alloc(sizeof(AsyncBlock))) AsyncBlock{};
-        m_backgroundAsync->queue = DuplicateAsyncQueueHandle(async->queue);
+        // TODO maybe add an API to set the queue that is used for the ASIO background work. For now just
+        // using the queue the user provides to the connect API for all background work.
+        m_backgroundQueue = DuplicateAsyncQueueHandle(async->queue);
+        m_backgroundAsync->queue = m_backgroundQueue;
+        m_backgroundAsync->context = shared_ptr_cache::store(context);
         m_backgroundAsync->callback = [](AsyncBlock* async)
         {
             xbox::httpclient::http_memory::mem_free(async);
         };
 
-        struct connect_context
-        {
-            connect_context(websocketpp::client<WebsocketConfigType>& _client) : client(std::move(_client)) {}
-            websocketpp::client<WebsocketConfigType>& client; 
-        };
-        auto context = http_allocate_shared<connect_context>(client);
+        // Initialize the 'connect' AsyncBlock here, but the actually work will happen on the ASIO background thread below
+        auto hr = BeginAsync(async, nullptr, nullptr, __FUNCTION__, nullptr);
 
-        // TODO probably need to mark connect async block as begun
-
-        auto hr = BeginAsync(m_backgroundAsync, this, shared_ptr_cache::store(context), __FUNCTION__,
-            [](AsyncOp op, const AsyncProviderData* data)
+        if (SUCCEEDED(hr))
         {
-            auto context = shared_ptr_cache::fetch<connect_context>(data->context, op == AsyncOp_Cleanup);
-            if (op == AsyncOp_DoWork)
+            hr = RunAsync(m_backgroundAsync, [](AsyncBlock* async)
             {
+                auto context = shared_ptr_cache::fetch<connect_context>(async->context);
+
 #if defined(__ANDROID__)
                 crossplat::get_jvm_env();
 #endif
@@ -367,14 +373,11 @@ private:
                 // at all and will be reported as leaks.
                 // See http://www.openssl.org/support/faq.html#PROG13
                 ERR_remove_thread_state(nullptr);
-            }
-            return S_OK;
-        });
 
-        if (SUCCEEDED(hr))
-        {
-            ScheduleAsync(m_backgroundAsync, 0);
+                return S_OK;
+            });
         }
+
         return hr;
     }
 
@@ -469,50 +472,42 @@ private:
 
         // Can't join thread directly since it is the current thread.
         AsyncBlock* async = new (xbox::httpclient::http_memory::mem_alloc(sizeof(AsyncBlock))) AsyncBlock {};
+        async->queue = m_backgroundQueue;
+        async->context = this;
         async->callback = [](AsyncBlock* async)
         {
             xbox::httpclient::http_memory::mem_free(async);
         };
 
-        auto hr = BeginAsync(async, this, nullptr, __FUNCTION__, 
-            [](AsyncOp op, const AsyncProviderData* data)
+        RunAsync(async, [](AsyncBlock* async)
         {
-            if (op == AsyncOp_DoWork)
+            auto pThis = reinterpret_cast<wspp_websocket_impl*>(async->context);
+
+            auto &client = pThis->m_client->client<WebsocketConfigType>();
+            const auto &connection = client.get_con_from_hdl(pThis->m_con);
+            const auto &closeCode = connection->get_local_close_code();
+            const auto &reason = connection->get_local_close_reason();
+            const auto &ec = connection->get_ec();
+
+            // Wait for background thread to finish
+            (void)GetAsyncStatus(pThis->m_backgroundAsync, true);
+
+            // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
+            pThis->m_client.reset();
+
+            HCWebSocketCloseEventFunction closeFunc = nullptr;
+            HCWebSocketGetFunctions(nullptr, &closeFunc);
+            if (closeFunc != nullptr)
             {
-                auto pThis = reinterpret_cast<wspp_websocket_impl*>(data->context);
-
-                auto &client = pThis->m_client->client<WebsocketConfigType>();
-                const auto &connection = client.get_con_from_hdl(pThis->m_con);
-                const auto &closeCode = connection->get_local_close_code();
-                const auto &reason = connection->get_local_close_reason();
-                const auto &ec = connection->get_ec();
-
-                // Wait for background thread to finish
-                (void) GetAsyncStatus(pThis->m_backgroundAsync, true);
-
-                // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
-                pThis->m_client.reset();
-
-                HCWebSocketCloseEventFunction closeFunc = nullptr;
-                HCWebSocketGetFunctions(nullptr, &closeFunc);
-                if (closeFunc != nullptr)
-                {
-                    closeFunc(pThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(closeCode));
-                }
-
-                // Wait to change state to closed until the very end because 'this' may be cleaned up
-                // after the state reaches closed
-                pThis->m_state = CLOSED; 
-
-                CompleteAsync(data->async, S_OK, 0);
+                closeFunc(pThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(closeCode));
             }
+
+            // Wait to change state to closed until the very end because 'this' may be cleaned up
+            // after the state reaches closed
+            pThis->m_state = CLOSED;
+
             return S_OK;
         });
-
-        if (SUCCEEDED(hr))
-        {
-            ScheduleAsync(async, 0);
-        }
     }
 
     // Wrappers for the different types of websocketpp clients.
@@ -543,6 +538,7 @@ private:
         }
         virtual bool is_tls_client() const = 0;
     };
+
     struct websocketpp_client : websocketpp_client_base
     {
         websocketpp::client<websocketpp::config::asio_client> & non_tls_client() override
@@ -552,6 +548,7 @@ private:
         bool is_tls_client() const override { return false; }
         websocketpp::client<websocketpp::config::asio_client> m_client;
     };
+
     struct websocketpp_tls_client : websocketpp_client_base
     {
         websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
@@ -564,6 +561,7 @@ private:
 
     // Asio client has a long running "run" task that we need to provide a thread for
     AsyncBlock* m_backgroundAsync;
+    async_queue_handle_t m_backgroundQueue;
 
     websocketpp::connection_hdl m_con;
 
@@ -593,11 +591,7 @@ private:
     hc_websocket_handle_t m_hcWebsocketHandle;
 
     Uri m_uri;
-
-    const static http_internal_string m_subProtocolHeader;
 };
-
-const http_internal_string wspp_websocket_impl::m_subProtocolHeader = "Sec-WebSocket-Protocol";
 
 HRESULT Internal_HCWebSocketConnectAsync(
     _Inout_ AsyncBlock* async,

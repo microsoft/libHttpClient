@@ -125,7 +125,7 @@ set(WinRT_WebSocket_Source_Files
     )
 
 set(Win32_WebSocket_Source_Files
-    ../../../Source/WebSocket/Win32/win32_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
     )
 
 set(Android_WebSocket_Source_Files
