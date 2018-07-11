@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "../HCWebSocket.h"
 #include "uri.h"
+#include "x509_cert_utilities.hpp"
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
@@ -135,8 +136,7 @@ public:
                     }
                     if (m_opensslFailed)
                     {
-                        // TODO we will need to add this functionality for mobile.
-                        //return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(m_uri.host()));
+                        return xbox::httpclient::verify_cert_chain_platform_specific(verifyCtx, m_uri.Host());
                     }
 #endif
                     asio::ssl::rfc2818_verification rfc2818(m_uri.Host().data());
@@ -259,6 +259,7 @@ private:
         {
             _ASSERTE(m_state == CONNECTING);
             m_state = CONNECTED;
+            set_connection_error<WebsocketConfigType>();
             CompleteAsync(async, S_OK, sizeof(WebSocketCompletionResult));
         });
 
@@ -266,7 +267,8 @@ private:
         {
             _ASSERTE(m_state == CONNECTING);
             shutdown_wspp_impl<WebsocketConfigType>();
-            CompleteAsync(async, E_FAIL, sizeof(WebSocketCompletionResult));
+            set_connection_error<WebsocketConfigType>();
+            CompleteAsync(async, S_OK, sizeof(WebSocketCompletionResult));
         });
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
@@ -288,6 +290,15 @@ private:
             shutdown_wspp_impl<WebsocketConfigType>();
         });
 
+        // Set User Agent specified by the user. This needs to happen before any connection is created
+        const auto& headers = m_hcWebsocketHandle->connectHeaders;
+
+        auto user_agent_it = headers.find(websocketpp::user_agent);
+        if (user_agent_it != headers.end())
+        {
+            client.set_user_agent(user_agent_it->second.data());
+        }
+
         // Get the connection handle to save for later, have to create temporary
         // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
@@ -300,17 +311,17 @@ private:
         }
 
         // Add any request headers specified by the user.
-        const auto& headers = m_hcWebsocketHandle->connectHeaders;
         for (const auto & header : headers)
         {
-            if (!str_icmp(header.first, SUB_PROTOCOL_HEADER))
+            // Subprotocols are handled seperately below
+            if (str_icmp(header.first, SUB_PROTOCOL_HEADER) != 0)
             {
                 con->append_header(header.first.data(), header.second.data());
             }
         }
 
         // Add any specified subprotocols.
-        if (headers.find(SUB_PROTOCOL_HEADER) != headers.end())
+        if (!m_hcWebsocketHandle->subProtocol.empty())
         {
             con->add_subprotocol(m_hcWebsocketHandle->subProtocol.data(), ec);
             if (ec.value())
@@ -321,10 +332,9 @@ private:
         }
 
         // Setup proxy options.
-        const auto &proxy = m_hcWebsocketHandle->proxyUri;
-        if (!proxy.empty())
+        if (!m_hcWebsocketHandle->proxyUri.empty())
         {
-            con->set_proxy(proxy.data(), ec);
+            con->set_proxy(m_hcWebsocketHandle->proxyUri.data(), ec);
             if (ec)
             {
                 HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", m_hcWebsocketHandle->id);
@@ -339,7 +349,6 @@ private:
         };
         auto context = http_allocate_shared<connect_context>(client);
 
-        // TODO does this thread continue past connect? Should I create a new AsyncBlock or use the one provided to connect?
         m_backgroundAsync = new (xbox::httpclient::http_memory::mem_alloc(sizeof(AsyncBlock))) AsyncBlock{};
         // TODO maybe add an API to set the queue that is used for the ASIO background work. For now just
         // using the queue the user provides to the connect API for all background work.
@@ -352,10 +361,24 @@ private:
         };
 
         // Initialize the 'connect' AsyncBlock here, but the actually work will happen on the ASIO background thread below
-        auto hr = BeginAsync(async, nullptr, nullptr, __FUNCTION__, nullptr);
+        auto hr = BeginAsync(async, this, HCWebSocketConnectAsync, __FUNCTION__,
+            [](AsyncOp op, const AsyncProviderData* data)
+        {
+            if (op == AsyncOp_GetResult)
+            {
+                auto context = static_cast<wspp_websocket_impl*>(data->context);
+                auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                result->platformErrorCode = context->m_connectError.value();
+                result->errorCode = context->m_connectError ? E_FAIL : S_OK;
+            }
+            return S_OK;
+        });
 
         if (SUCCEEDED(hr))
         {
+            m_state = CONNECTING;
+            client.connect(con);
+
             hr = RunAsync(m_backgroundAsync, [](AsyncBlock* async)
             {
                 auto context = shared_ptr_cache::fetch<connect_context>(async->context);
@@ -436,7 +459,7 @@ private:
             m_outgoingMessageQueue.pop();
         }
 
-        auto hr = BeginAsync(sendContext->message.async, shared_ptr_cache::store(sendContext), nullptr, __FUNCTION__,
+        auto hr = BeginAsync(sendContext->message.async, shared_ptr_cache::store(sendContext), HCWebSocketSendMessageAsync, __FUNCTION__,
             [](AsyncOp op, const AsyncProviderData* data)
         {
             WebSocketCompletionResult* result;
@@ -468,6 +491,8 @@ private:
     void shutdown_wspp_impl()
     {
         auto &client = m_client->client<WebsocketConfigType>();
+        const auto &connection = client.get_con_from_hdl(m_con);
+        m_closeCode = connection->get_local_close_code();
         client.stop_perpetual();
 
         // Can't join thread directly since it is the current thread.
@@ -483,12 +508,6 @@ private:
         {
             auto pThis = reinterpret_cast<wspp_websocket_impl*>(async->context);
 
-            auto &client = pThis->m_client->client<WebsocketConfigType>();
-            const auto &connection = client.get_con_from_hdl(pThis->m_con);
-            const auto &closeCode = connection->get_local_close_code();
-            const auto &reason = connection->get_local_close_reason();
-            const auto &ec = connection->get_ec();
-
             // Wait for background thread to finish
             (void)GetAsyncStatus(pThis->m_backgroundAsync, true);
 
@@ -499,7 +518,7 @@ private:
             HCWebSocketGetFunctions(nullptr, &closeFunc);
             if (closeFunc != nullptr)
             {
-                closeFunc(pThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(closeCode));
+                closeFunc(pThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(pThis->m_closeCode));
             }
 
             // Wait to change state to closed until the very end because 'this' may be cleaned up
@@ -508,6 +527,14 @@ private:
 
             return S_OK;
         });
+    }
+
+    template <typename WebsocketConfigType>
+    inline void set_connection_error()
+    {
+        auto &client = m_client->client<WebsocketConfigType>();
+        const auto &connection = client.get_con_from_hdl(m_con);
+        m_connectError = connection->get_ec();
     }
 
     // Wrappers for the different types of websocketpp clients.
@@ -566,6 +593,7 @@ private:
     websocketpp::connection_hdl m_con;
 
     websocketpp::lib::error_code m_connectError;
+    websocketpp::close::status::value m_closeCode;
 
     // Used to safe guard the wspp client.
     std::mutex m_wsppClientLock;
