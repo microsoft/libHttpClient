@@ -24,6 +24,7 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ProjectVersion>1.0</ProjectVersion>
     <ProjectGuid>{eef4b78b-7d2b-4a54-9944-5953d7df5b51}</ProjectGuid>
+    <AndroidAPILevel>android-23</AndroidAPILevel>
     <TargetExt>.aar</TargetExt>
     <_PackagingProjectWithoutNativeComponent>true</_PackagingProjectWithoutNativeComponent>
     <LaunchActivity Condition="'$(LaunchActivity)' == ''">com.libHttpClient.libHttpClient</LaunchActivity>
