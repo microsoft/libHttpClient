@@ -227,7 +227,7 @@ try
                 HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu] connect complete", websocket->id);
             }
 
-            CompleteAsync(asyncBlock, websocketTask->m_connectAsyncOpResult, sizeof(WebSocketCompletionResult));
+            CompleteAsync(asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
         });
     }
     catch (Platform::Exception^ e)

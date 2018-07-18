@@ -71,8 +71,8 @@ HRESULT init_http_singleton(void* context)
     {
         IHCPlatformContext* platformContext = nullptr;
         hr = IHCPlatformContext::InitializeHttpPlatformContext(context, &platformContext);
-        
-        if (SUCCEEDED(hr)) 
+
+        if (SUCCEEDED(hr))
         {
             auto newSingleton = http_allocate_shared<http_singleton>(platformContext);
                 std::atomic_compare_exchange_strong(
