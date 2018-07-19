@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <string.h>
-
 using String = http_internal_string;
 
 template<class K, class V, class LESS = std::less<K>>
@@ -194,15 +192,6 @@ uint64_t ThisThreadId()
     return threadId;
 #else
     return pthread_self();
-#endif
-}
-
-static inline int str_icmp(const http_internal_string& left, const http_internal_string& right)
-{
-#if HC_PLATFORM_IS_MICROSOFT
-    return _stricmp(left.c_str(), right.c_str());
-#else
-    return strcasecmp(left.c_str(), right.c_str());
 #endif
 }
 
