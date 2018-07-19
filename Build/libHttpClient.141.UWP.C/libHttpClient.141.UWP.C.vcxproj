@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{CF37BEB2-A66A-42BA-B348-1F07566F4865}</ProjectGuid>
+    <ProjectGuid>{30753B00-85F9-43E0-B0E0-A5A5F3E4B62A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
@@ -69,7 +69,7 @@
       <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories> 
+      <AdditionalIncludeDirectories>
        $(ProjectDir);
        $(ProjectDir)..\..\Source\Common;
        $(ProjectDir)..\..\Source\Logger;
