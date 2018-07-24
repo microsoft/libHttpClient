@@ -36,6 +36,9 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
+    <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\External\packages')">$(BuildRoot)\..\Tools\packages</PackagesRoot>
+    <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\..\..\External\Packages')">$(BuildRoot)\..\..\External\Packages</PackagesRoot>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
@@ -72,7 +75,7 @@
        $(ProjectDir)..\..\Include;
        $(ProjectDir)..\..\Include\httpClient;
        $(ProjectDir)..\..\External\websocketpp;
-       $(ProjectDir)..\..\External\Packages\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\include;
+       $(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\include;
        %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
