@@ -6,7 +6,9 @@
 #include "uri.h"
 
 #include <httpClient/trace.h>
+#if !HC_XDK_API && !HC_UWP_API
 #include <winhttp.h>
+#endif
 
 http_internal_string utf8_from_utf16(const http_internal_wstring& utf16)
 {
@@ -114,6 +116,8 @@ http_internal_wstring utf16_from_utf8(_In_reads_(size) const char* utf8, size_t 
     return utf16;
 }
 
+#if !HC_XDK_API && !HC_UWP_API
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpclient::Uri& proxyUri)
@@ -180,3 +184,5 @@ proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpcli
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
+
+#endif
