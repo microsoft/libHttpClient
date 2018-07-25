@@ -341,6 +341,24 @@ private:
                 return E_FAIL;
             }
         }
+#if _WIN32
+        else
+        {
+            // On windows platforms use the IE proxy if the user didn't specify one
+            Uri proxyUri;
+            auto proxyType = get_ie_proxy_info(proxy_protocol::websocket, proxyUri);
+
+            if (proxyType == proxy_type::named_proxy)
+            {
+                con->set_proxy(proxyUri.FullPath().data(), ec);
+                if (ec)
+                {
+                    HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", m_hcWebsocketHandle->id);
+                    return E_FAIL;
+                }
+            }
+        }
+#endif
 
         struct connect_context
         {

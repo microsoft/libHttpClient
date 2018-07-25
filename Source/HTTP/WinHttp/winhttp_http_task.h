@@ -16,14 +16,6 @@ enum msg_body_type
     transfer_encoding_chunked
 };
 
-enum proxy_type
-{
-    no_proxy,
-    default_proxy,
-    autodiscover_proxy,
-    named_proxy
-};
-
 class winhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
@@ -81,8 +73,6 @@ private:
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
 
-    void get_ie_proxy_info(_In_ bool isSecure);
-
     void get_proxy_name(
         _Out_ DWORD* pAccessType,
         _Out_ const wchar_t** pwProxyName
@@ -113,7 +103,7 @@ private:
     uint64_t m_requestBodyOffset;
     http_internal_vector<uint8_t> m_responseBuffer;
 
-    http_internal_wstring m_proxyAddress;
+    xbox::httpclient::Uri m_proxyUri;
     http_internal_wstring m_wProxyName;
     proxy_type m_proxyType;
 };
