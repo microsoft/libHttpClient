@@ -45,7 +45,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalLibraryDirectories>$(libHttpClientLib3);$(libHttpClientLib2);$(libHttpClientLib)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(libHttpClientLib3);$(libHttpClientLib2);$(libHttpClientLib);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
@@ -53,4 +53,23 @@
       <AdditionalDependencies>$(libHttpClientLibName);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'">
+    <Link>
+      <AdditionalDependencies>Crypt32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <PropertyGroup Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'">
+   <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
+   <LibHttpPackagesRoot Condition="'$(LibHttpPackagesRoot)'=='' AND Exists('$(BuildRoot)\External\packages')">$(BuildRoot)External\packages\</LibHttpPackagesRoot>
+   <LibHttpPackagesRoot Condition="'$(LibHttpPackagesRoot)'=='' AND Exists('$(BuildRoot)\..\..\External\Packages')">$(BuildRoot)\..\..External\Packages\</LibHttpPackagesRoot>
+  </PropertyGroup>
+  
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
+  
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
+  
 </Project>
