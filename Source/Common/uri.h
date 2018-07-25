@@ -8,6 +8,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 class Uri
 {
 public:
+    Uri();
     explicit Uri(String const& uri);
 
     bool IsValid() const;
