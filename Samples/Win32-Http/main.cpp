@@ -64,7 +64,7 @@ DWORD g_defaultIdealProcessor = 0;
 DWORD g_numActiveThreads = 0;
 
 async_queue_handle_t g_queue;
-uint32_t g_callbackToken;
+registration_token_t g_callbackToken;
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
@@ -120,7 +120,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
     return 0;
 }
 
-void HandleAsyncQueueCallback(
+void CALLBACK HandleAsyncQueueCallback(
     _In_ void* context,
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
@@ -201,7 +201,7 @@ int main()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &g_queue);
-    AddAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+    RegisterAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
 
     StartBackgroundThread();
 
