@@ -8,6 +8,9 @@
 #include <httpClient/async.h>
 #include <httpClient/asyncQueue.h>
 
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#include "jni.h"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Memory APIs
@@ -702,3 +705,17 @@ hc_websocket_handle_t HCWebSocketDuplicateHandle(
 STDAPI HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
+
+/// <summary>
+/// Used to wrap the JavaVM and ApplicationContext on Android devices.
+/// </summary>
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+typedef struct _HC_PLATFORM_INIT_ARGS {
+	JavaVM *JavaVM;
+	jobject ApplicationContext;
+} HC_PLATFORM_INIT_ARGS;
+#else 
+typedef struct _HC_PLATFORM_INIT_ARGS {
+	void* dummy;
+} HC_PLATFORM_INIT_ARGS;
+#endif

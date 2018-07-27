@@ -296,6 +296,7 @@ typedef struct _LIST_ENTRY {
 #define E_HC_PERFORM_ALREADY_CALLED     MAKE_E_HC(0x5003)
 #define E_HC_ALREADY_INITIALISED        MAKE_E_HC(0x5004)
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005)
+#define E_HC_NO_NETWORK                 MAKE_E_HC(0x5006)
 
 typedef uint32_t hc_memory_type;
 typedef struct HC_WEBSOCKET* hc_websocket_handle_t;

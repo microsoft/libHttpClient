@@ -32,8 +32,14 @@ void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NS
     {
         uint32_t errorCode = static_cast<uint32_t>([error code]);
         HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %u] error from NSURLRequest code: %u", HCHttpCallGetId(m_call), errorCode);
-        HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, errorCode);
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        HRESULT errorResult = E_FAIL;
+        if ([error code] == NSURLErrorNotConnectedToInternet)
+        {
+            errorResult = E_HC_NO_NETWORK;
+        }
+
+        HCHttpCallResponseSetNetworkErrorCode(m_call, errorResult, errorCode);
+        CompleteAsync(m_asyncBlock, errorResult, 0);
         return;
     }
     
