@@ -8,6 +8,6 @@
 
   <PropertyGroup>
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
-    <PackagesRoot Condition="'$(LibHttpPackagesRoot)'==''">$(BuildRoot)External\packages\</PackagesRoot>
+    <PackagesRoot Condition="'$(PackagesRoot)'==''">$(BuildRoot)External\packages\</PackagesRoot>
   </PropertyGroup>
 </Project>
