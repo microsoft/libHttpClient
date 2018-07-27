@@ -36,10 +36,8 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
-    <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\External\packages')">$(BuildRoot)\External\packages</PackagesRoot>
-    <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\..\..\External\Packages')">$(BuildRoot)\..\..\External\Packages</PackagesRoot>
   </PropertyGroup>
+  <Import Project="..\libHttpClientSettings.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -56,19 +54,20 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(PackagesRoot)\asio-cpp.1.10.2.0\build\native\asio-cpp.targets" Condition="Exists('$(PackagesRoot)\asio-cpp.1.10.2.0\build\native\asio-cpp.targets')" />
+    <Import Project="$(PackagesRoot)\asio-cpp.1.10.2.0\build\native\asio-cpp.targets" />
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='StaticLibrary'">HC_WIN32_API;HC_API_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='DynamicLibrary'">HC_WIN32_API;HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories> 
+      <AdditionalIncludeDirectories>
        $(ProjectDir);
        $(ProjectDir)..\..\Source\Common;
        $(ProjectDir)..\..\Source\Logger;
