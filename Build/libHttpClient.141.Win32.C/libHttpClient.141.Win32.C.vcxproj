@@ -67,7 +67,7 @@
       <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories> 
        $(ProjectDir);
        $(ProjectDir)..\..\Source\Common;
        $(ProjectDir)..\..\Source\Logger;
