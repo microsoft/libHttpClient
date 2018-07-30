@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <Import Project="$(LibHttpClientRoot)Build\libHttpClientSettings.props" />
+
   <PropertyGroup Condition="'$(ApplicationType)'!='Windows Store' AND '$(Platform)'!='Durango'">
     <HCLibPlatformType>Win32</HCLibPlatformType>
   </PropertyGroup>
@@ -20,14 +22,14 @@
   <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">
     <libHttpClientDefine>HC_XDK_API</libHttpClientDefine>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">
     <HCLibToolset>141</HCLibToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(PlatformToolset)'=='v140'">
     <HCLibToolset>140</HCLibToolset>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
@@ -36,7 +38,7 @@
     <libHttpClientLib3>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib3>
     <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
   </PropertyGroup>
-  
+
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>$(libHttpClientDefine);HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -60,16 +62,10 @@
     </Link>
   </ItemDefinitionGroup>
 
-  <PropertyGroup Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'">
-   <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
-   <LibHttpPackagesRoot Condition="'$(LibHttpPackagesRoot)'=='' AND Exists('$(BuildRoot)\External\packages')">$(BuildRoot)External\packages\</LibHttpPackagesRoot>
-   <LibHttpPackagesRoot Condition="'$(LibHttpPackagesRoot)'=='' AND Exists('$(BuildRoot)\..\..\External\Packages')">$(BuildRoot)\..\..External\Packages\</LibHttpPackagesRoot>
-  </PropertyGroup>
-  
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
-  
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(LibHttpPackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
-  
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
+
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
+  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
+
 </Project>
