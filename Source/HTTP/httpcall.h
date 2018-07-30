@@ -4,10 +4,12 @@
 #pragma once
 #include "pch.h"
 
-struct CaseInsensitiveStringCompare
+struct http_header_compare
 {
     bool operator()(http_internal_string const& l, http_internal_string const& r) const;
 };
+
+using http_header_map = http_internal_map<http_internal_string, http_internal_string, http_header_compare>;
 
 typedef struct HC_CALL
 {
@@ -32,11 +34,11 @@ typedef struct HC_CALL
     http_internal_string url;
     http_internal_vector<uint8_t> requestBodyBytes;
     http_internal_string requestBodyString;
-    http_internal_map<http_internal_string, http_internal_string, CaseInsensitiveStringCompare> requestHeaders;
+    http_header_map requestHeaders;
 
     http_internal_string responseString;
     http_internal_vector<uint8_t> responseBodyBytes;
-    http_internal_map<http_internal_string, http_internal_string, CaseInsensitiveStringCompare> responseHeaders;
+    http_header_map responseHeaders;
     uint32_t statusCode;
     HRESULT networkErrorCode;
     uint32_t platformNetworkErrorCode;
