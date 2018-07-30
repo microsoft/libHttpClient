@@ -532,3 +532,8 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+
+bool CaseInsensitiveStringCompare::operator()(http_internal_string const& l, http_internal_string const& r) const
+{
+    return str_icmp(l, r) < 0;
+}
