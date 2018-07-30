@@ -8,7 +8,7 @@ HttpRequest::HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jobject applica
     m_httpRequestInstance(nullptr), 
     m_asyncBlock(asyncBlock),
     m_javaVm(javaVm),
-	m_applicationContext(applicationContext),
+    m_applicationContext(applicationContext),
     m_httpRequestClass(httpRequestClass),
     m_httpResponseClass(httpResponseClass)
 {

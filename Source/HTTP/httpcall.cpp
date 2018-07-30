@@ -193,10 +193,10 @@ bool http_call_should_retry(
         return false;
     }
 
-	if (call->networkErrorCode == E_HC_NO_NETWORK)
-	{
-		return false;
-	}
+    if (call->networkErrorCode == E_HC_NO_NETWORK)
+    {
+        return false;
+    }
 
     auto httpStatus = call->statusCode;
 

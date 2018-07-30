@@ -711,11 +711,11 @@ STDAPI HCWebSocketCloseHandle(
 /// </summary>
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 typedef struct _HC_PLATFORM_INIT_ARGS {
-	JavaVM *JavaVM;
-	jobject ApplicationContext;
+    JavaVM *JavaVM;
+    jobject ApplicationContext;
 } HC_PLATFORM_INIT_ARGS;
 #else 
 typedef struct _HC_PLATFORM_INIT_ARGS {
-	void* dummy;
+    void* dummy;
 } HC_PLATFORM_INIT_ARGS;
 #endif
