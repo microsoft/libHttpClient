@@ -36,7 +36,16 @@ void Internal_HCHttpCallPerformAsync(
 {
     auto httpSingleton = xbox::httpclient::get_http_singleton(true);
     AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
-    std::unique_ptr<HttpRequest> httpRequest{ new HttpRequest(asyncBlock, platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass()) };
+    std::unique_ptr<HttpRequest> httpRequest{
+        new HttpRequest(
+            asyncBlock,
+            platformContext->GetJavaVm(),
+            platformContext->GetApplicationContext(),
+            platformContext->GetHttpRequestClass(),
+            platformContext->GetHttpResponseClass()
+        )
+    };
+
     HRESULT result = httpRequest->Initialize();
 
     if (!SUCCEEDED(result))
