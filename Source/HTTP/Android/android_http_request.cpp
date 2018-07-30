@@ -24,7 +24,6 @@ HRESULT HttpRequest::Initialize()
     JNIEnv* jniEnv = nullptr;
     HRESULT result = GetJniEnv(&jniEnv);
 
-
     if (SUCCEEDED(result)) 
     {
         jmethodID networkAvailabilityFunc = jniEnv->GetStaticMethodID(m_httpRequestClass, "isNetworkAvailable", "(Landroid/content/Context;)Z");
