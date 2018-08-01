@@ -65,7 +65,7 @@ class IHCPlatformContext
 public:
     virtual ~IHCPlatformContext() = default;
 
-    static HRESULT InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext);
+    static HRESULT InitializeHttpPlatformContext(HcInitArgs* args, IHCPlatformContext** platformContext);
 };
 
 void Internal_HCHttpCallPerformAsync(
