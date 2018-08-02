@@ -64,5 +64,5 @@ private:
     std::unique_ptr<DX::TextConsole>            m_console;
 
     async_queue_handle_t m_queue;
-    uint32_t m_callbackToken;
+    registration_token_t m_callbackToken;
 };

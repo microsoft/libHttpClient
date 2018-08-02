@@ -64,8 +64,8 @@ static std::wstring to_utf16string(const std::string& input)
     return utfConverter.from_bytes(input);
 }
 
-void HandleAsyncQueueCallback(
-    _In_ void* context,
+void CALLBACK HandleAsyncQueueCallback(
+    _In_opt_ void* context,
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
     )
@@ -102,7 +102,7 @@ MainPage::MainPage()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &m_queue);
-    AddAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    RegisterAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
@@ -250,7 +250,7 @@ void HttpTestApp::MainPage::UpdateXamlUI(
     std::stringstream ss;
     ss << "Network Error: " << errMessage << " [Code: " << errCode << "]\r\n";
     ss << "StatusCode: " << statusCode << "\r\n";
-    for (int i = 0; i < headers.size(); i++)
+    for (size_t i = 0; i < headers.size(); i++)
     {
         ss << "Header[" << i << "]: " << headers[i][0] << ": " << headers[i][1] << "\r\n";
     }
