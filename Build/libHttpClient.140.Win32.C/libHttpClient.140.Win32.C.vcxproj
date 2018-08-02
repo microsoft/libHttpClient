@@ -165,11 +165,16 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
+    <ClInclude Include="..\..\Source\Task\Callback.h" />
+    <ClInclude Include="..\..\Source\Task\Callback_STL.h" />
+    <ClInclude Include="..\..\Source\Task\CriticalThread.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

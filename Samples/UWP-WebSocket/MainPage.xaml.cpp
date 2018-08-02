@@ -274,13 +274,13 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(asyncBlock, &result);
+        HCGetWebSocketConnectResult(&result, asyncBlock);
 
         g_MainPage->LogToUI(format_string("HCWebSocketConnect complete: %d, %d", result.errorCode, result.platformErrorCode));
         delete asyncBlock;
     };
 
-    hr = HCWebSocketConnectAsync(asyncBlock, requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket);
+    hr = HCWebSocketConnectAsync(requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket, asyncBlock);
     LogToUI(format_string("HCWebSocketConnect: %d", hr));
 
 }
@@ -297,13 +297,13 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(asyncBlock, &result);
+        HCGetWebSocketConnectResult(&result, asyncBlock);
 
         g_MainPage->LogToUI(format_string("HCWebSocketSendMessage complete: %d, %d", result.errorCode, result.platformErrorCode));
         delete asyncBlock;
     };
 
-    HRESULT hr = HCWebSocketSendMessageAsync(asyncBlock, m_websocket, requestBody.c_str());
+    HRESULT hr = HCWebSocketSendMessageAsync(m_websocket, requestBody.c_str(), asyncBlock);
     LogToUI(format_string("HCWebSocketSendMessage: %d", hr));
 }
 

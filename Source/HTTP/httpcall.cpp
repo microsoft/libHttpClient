@@ -89,9 +89,9 @@ try
 CATCH_RETURN()
 
 HRESULT perform_http_call(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ std::shared_ptr<http_singleton> httpSingleton,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     HRESULT hr = BeginAsync(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
@@ -123,7 +123,7 @@ HRESULT perform_http_call(
                     {
                         try
                         {
-                            performFunc(data->async, call);
+                            performFunc(call, data->async);
                         }
                         catch (...)
                         {
@@ -409,7 +409,7 @@ void retry_http_call_until_done(
         }
     };
 
-    HRESULT hr = perform_http_call(nestedBlock, httpSingleton, retryContext->call);
+    HRESULT hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
     if (FAILED(hr))
     {
         CompleteAsync(retryContext->outerAsyncBlock, hr, 0);
@@ -419,8 +419,8 @@ void retry_http_call_until_done(
 
 STDAPI 
 HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {

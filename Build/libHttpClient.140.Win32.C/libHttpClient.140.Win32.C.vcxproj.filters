@@ -150,6 +150,15 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Task\Callback.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Task\Callback_STL.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Task\CriticalThread.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
@@ -194,5 +203,8 @@
     <Filter Include="C++ Public Includes">
       <UniqueIdentifier>{CE937D69-22BE-3128-8816-A31C2303F1E8}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

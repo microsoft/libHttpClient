@@ -218,8 +218,8 @@ STDAPI HCHttpCallCreate(
 /// <param name="call">The handle of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -650,10 +650,10 @@ typedef struct WebSocketCompletionResult
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCWebSocketConnectAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket
+    _In_ hc_websocket_handle_t websocket,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -663,8 +663,8 @@ STDAPI HCWebSocketConnectAsync(
 /// <param name="result">Pointer to the result payload</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCGetWebSocketConnectResult(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _In_ WebSocketCompletionResult* result,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -675,9 +675,9 @@ STDAPI HCGetWebSocketConnectResult(
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketSendMessageAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ const char* message
+    _In_z_ const char* message,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -687,8 +687,8 @@ STDAPI HCWebSocketSendMessageAsync(
 /// <param name="result">Pointer to the result payload</param>
 /// <returns>Returns the duplicated handle.</returns>
 STDAPI HCGetWebSocketSendMessageResult(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _In_ WebSocketCompletionResult* result,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>

@@ -775,8 +775,8 @@ HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCP
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(asyncBlock, call);

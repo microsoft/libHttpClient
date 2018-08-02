@@ -56,8 +56,8 @@ win32_handle g_completionReadyHandle;
 #define TICKS_PER_SECOND 10000000i64
 
 void STDAPIVCALLTYPE PerformCallWithCurl(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     );
 
 static std::string to_utf8string(const std::wstring& input)
@@ -334,6 +334,6 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         delete asyncBlock;
     };
 
-    HCHttpCallPerformAsync(asyncBlock, call);
+    HCHttpCallPerformAsync(call, asyncBlock);
 }
 

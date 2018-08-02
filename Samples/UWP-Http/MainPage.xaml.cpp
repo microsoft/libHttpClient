@@ -332,7 +332,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         delete asyncBlock;
     };
 
-    HCHttpCallPerformAsync(asyncBlock, call);
+    HCHttpCallPerformAsync(call, asyncBlock);
 }
 
 
