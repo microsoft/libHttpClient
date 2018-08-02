@@ -33,7 +33,7 @@ void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NS
         uint32_t errorCode = static_cast<uint32_t>([error code]);
         HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %u] error from NSURLRequest code: %u", HCHttpCallGetId(m_call), errorCode);
         HRESULT errorResult = E_FAIL;
-        if ([error code] == NSURLErrorNotConnectedToInternet)
+        if ([[error domain] isEqualToString:NSURLErrorDomain] && [error code] == NSURLErrorNotConnectedToInternet)
         {
             errorResult = E_HC_NO_NETWORK;
         }
@@ -140,10 +140,10 @@ bool ios_http_task::initiate_request()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(initialContext == nullptr);
+    assert(args == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }

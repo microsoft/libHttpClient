@@ -3,11 +3,10 @@
 #include "android_platform_context.h"
 #include <httpClient/httpClient.h>
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
-    assert(initialContext != nullptr);
-    HC_PLATFORM_INIT_ARGS* initArgs = static_cast<HC_PLATFORM_INIT_ARGS*>(initialContext);
-    JavaVM* javaVm = initArgs->JavaVM;
+    assert(args != nullptr);
+    JavaVM* javaVm = args->JavaVM;
     JNIEnv* jniEnv = nullptr;
     // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
@@ -38,7 +37,7 @@ HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, 
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
 
-    *platformContext = new AndroidPlatformContext(javaVm, initArgs->ApplicationContext, globalRequestClass, globalResponseClass);
+    *platformContext = new AndroidPlatformContext(javaVm, args->ApplicationContext, globalRequestClass, globalResponseClass);
     return S_OK;
 }
 
