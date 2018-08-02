@@ -255,10 +255,10 @@ HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
 }
 
 HRESULT Internal_HCWebSocketConnectAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
-    _In_ hc_websocket_handle_t websocket
+    _In_ hc_websocket_handle_t websocket,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
@@ -293,9 +293,9 @@ HRESULT Internal_HCWebSocketConnectAsync(
 }
 
 HRESULT Internal_HCWebSocketSendMessageAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ PCSTR message
+    _In_z_ PCSTR message,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     if (message == nullptr)

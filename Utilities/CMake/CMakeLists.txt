@@ -97,6 +97,9 @@ set(Task_Source_Files
     ../../../Source/Task/AsyncLib.cpp
     ../../../Source/Task/CriticalThread.cpp
     ../../../Source/Task/timer.h
+    ../../../Source/Task/Callback.h
+    ../../../Source/Task/Callback_STL.h
+    ../../../Source/Task/CriticalThread.h
     )
 
 set(Task_Windows_Source_Files

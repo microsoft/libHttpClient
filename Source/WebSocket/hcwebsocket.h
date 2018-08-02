@@ -31,16 +31,16 @@ typedef struct HC_WEBSOCKET
 } HC_WEBSOCKET;
 
 HRESULT Internal_HCWebSocketConnectAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket
+    _In_ hc_websocket_handle_t websocket,
+    _Inout_ AsyncBlock* asyncBlock
     );
 
 HRESULT Internal_HCWebSocketSendMessageAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ const char* message
+    _In_z_ const char* message,
+    _Inout_ AsyncBlock* asyncBlock
     );
 
 HRESULT Internal_HCWebSocketDisconnect(

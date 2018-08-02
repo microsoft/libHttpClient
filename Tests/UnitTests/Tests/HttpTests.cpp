@@ -46,8 +46,8 @@ void STDAPIVCALLTYPE MemFree(
 
 static bool g_PerformCallbackCalled = false;
 static void STDAPIVCALLTYPE PerformCallback(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     g_PerformCallbackCalled = true;
@@ -149,7 +149,7 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             delete asyncBlock;
         };
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(asyncBlock, call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(call, asyncBlock));
 
         while (true)
         {

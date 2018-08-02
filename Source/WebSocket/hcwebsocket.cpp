@@ -86,10 +86,10 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketConnectAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket
+    _In_ hc_websocket_handle_t websocket,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
@@ -108,7 +108,7 @@ try
         try
         {
             websocket->connectCalled = true;
-            connectFunc(asyncBlock, uri, subProtocol, websocket);
+            connectFunc(uri, subProtocol, websocket, asyncBlock);
         }
         catch (...)
         {
@@ -122,9 +122,9 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketSendMessageAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ const char* message
+    _In_z_ const char* message,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
@@ -142,7 +142,7 @@ try
     {
         try
         {
-            sendFunc(asyncBlock, websocket, message);
+            sendFunc(websocket, message, asyncBlock);
         }
         catch (...)
         {
@@ -417,8 +417,8 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketSendMessageResult(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _In_ WebSocketCompletionResult* result,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
