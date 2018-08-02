@@ -101,12 +101,12 @@ STDAPI HCMemGetFunctions(
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
 /// </summary>
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
-typedef struct HcInitArgsStruct {
+typedef struct HCInitArgs {
     JavaVM *JavaVM;
     jobject ApplicationContext;
 } HCInitArgs;
 #else 
-typedef struct HcInitArgsStruct {
+typedef struct HCInitArgs {
     void* dummy;
 } HCInitArgs;
 #endif
