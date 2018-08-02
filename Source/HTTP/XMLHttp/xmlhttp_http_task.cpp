@@ -279,10 +279,10 @@ AsyncBlock* xmlhttp_http_task::async_block()
 }
 
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(initialContext == nullptr);
+    assert(args == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }
