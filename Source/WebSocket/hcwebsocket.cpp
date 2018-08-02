@@ -400,8 +400,8 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketConnectResult(
-    _In_ WebSocketCompletionResult* result,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT
 try
 {

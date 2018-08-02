@@ -214,8 +214,8 @@ STDAPI HCHttpCallCreate(
 ///
 /// HCHttpCallPerformAsync can only be called once.  Create new hc_call_handle_t to repeat the call.
 /// </summary>
-/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <param name="call">The handle of the HTTP call</param>
+/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
@@ -663,8 +663,8 @@ STDAPI HCWebSocketConnectAsync(
 /// <param name="result">Pointer to the result payload</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCGetWebSocketConnectResult(
-    _In_ WebSocketCompletionResult* result,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
 /// <summary>
