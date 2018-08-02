@@ -62,7 +62,7 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     return httpSingleton;
 }
 
-HRESULT init_http_singleton(HcInitArgs* args)
+HRESULT init_http_singleton(HCInitArgs* args)
 {
     HRESULT hr = S_OK;
 

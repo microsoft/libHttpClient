@@ -3,7 +3,7 @@
 #include "android_platform_context.h"
 #include <httpClient/httpClient.h>
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HcInitArgs* args, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     assert(args != nullptr);
     JavaVM* javaVm = args->JavaVM;

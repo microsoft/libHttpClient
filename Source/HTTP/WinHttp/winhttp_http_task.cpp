@@ -766,7 +766,7 @@ void winhttp_http_task::perform_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HcInitArgs* args, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     // No-op
     assert(args == nullptr);

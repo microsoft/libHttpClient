@@ -140,10 +140,10 @@ bool ios_http_task::initiate_request()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(initialContext == nullptr);
+    assert(args == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }

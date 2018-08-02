@@ -104,11 +104,11 @@ STDAPI HCMemGetFunctions(
 typedef struct HcInitArgsStruct {
     JavaVM *JavaVM;
     jobject ApplicationContext;
-} HcInitArgs;
+} HCInitArgs;
 #else 
 typedef struct HcInitArgsStruct {
     void* dummy;
-} HcInitArgs;
+} HCInitArgs;
 #endif
 
 /// <summary>
@@ -118,7 +118,7 @@ typedef struct HcInitArgsStruct {
 /// </summary>
 /// <param name="context">Client context for platform-specific initialization.  Pass in the JavaVM on Android, and nullptr on other platforms</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCInitialize(_In_opt_ HcInitArgs* args) HC_NOEXCEPT;
+STDAPI HCInitialize(_In_opt_ HCInitArgs* args) HC_NOEXCEPT;
 
 /// <summary>
 /// Immediately reclaims all resources associated with the library.

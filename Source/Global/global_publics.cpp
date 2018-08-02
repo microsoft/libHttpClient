@@ -24,7 +24,7 @@ try
 CATCH_RETURN()
 
 STDAPI 
-HCInitialize(_In_opt_ HcInitArgs* args) HC_NOEXCEPT
+HCInitialize(_In_opt_ HCInitArgs* args) HC_NOEXCEPT
 try
 {
     HCTraceImplInit();
