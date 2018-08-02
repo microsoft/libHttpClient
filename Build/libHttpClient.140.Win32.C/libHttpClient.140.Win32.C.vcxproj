@@ -54,7 +54,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(PackagesRoot)\asio-cpp.1.10.2.0\build\native\asio-cpp.targets" />
+    <Import Project="$(PackagesRoot)\asio-cpp.1.10.2.0\build\native\asio-cpp.targets" Condition="Exists('$(PackagesRoot)\asio-cpp.1.10.2.0\build\native\asio-cpp.targets')" />
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -67,7 +67,7 @@
       <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories> 
+      <AdditionalIncludeDirectories>
        $(ProjectDir);
        $(ProjectDir)..\..\Source\Common;
        $(ProjectDir)..\..\Source\Logger;
