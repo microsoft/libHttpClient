@@ -687,8 +687,8 @@ STDAPI HCWebSocketSendMessageAsync(
 /// <param name="result">Pointer to the result payload</param>
 /// <returns>Returns the duplicated handle.</returns>
 STDAPI HCGetWebSocketSendMessageResult(
-    _In_ WebSocketCompletionResult* result,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
 /// <summary>
