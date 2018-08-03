@@ -78,7 +78,7 @@ typedef struct http_singleton
 
 
 std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull);
-HRESULT init_http_singleton(void* context);
+HRESULT init_http_singleton(HCInitArgs* args);
 void cleanup_http_singleton();
 
 

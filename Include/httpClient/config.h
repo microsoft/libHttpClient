@@ -3,7 +3,7 @@
 // These macros define the "os"s that libHttpClient knows about
 #define HC_PLATFORM_UNKNOWN 0
 #define HC_PLATFORM_WIN32 1
-#define HC_PLATFORM_UWA 2
+#define HC_PLATFORM_UWP 2
 #define HC_PLATFORM_XDK 3
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
@@ -23,7 +23,7 @@
     #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         #define HC_PLATFORM HC_PLATFORM_WIN32
     #elif WINAPI_FAMILY == WINAPI_FAMILY_PC_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10
-        #define HC_PLATFORM HC_PLATFORM_UWA
+        #define HC_PLATFORM HC_PLATFORM_UWP
     #elif WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
         #define HC_PLATFORM HC_PLATFORM_XDK
     #endif
@@ -50,7 +50,7 @@
     #if defined(__LP64__)
         #define HC_DATAMODEL HC_DATAMODEL_LP64
     #else
-        #error HC does not support 32 bit builds for Apple platforms.
+        #define HC_DATAMODEL HC_DATAMODEL_ILP32
     #endif
 #else
     #if !defined(HC_DATAMODEL)
@@ -73,4 +73,4 @@
 #endif
 
 #define HC_PLATFORM_IS_MICROSOFT \
-   (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWA || HC_PLATFORM == HC_PLATFORM_XDK)
+   (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK)

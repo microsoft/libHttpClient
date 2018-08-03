@@ -14,8 +14,8 @@
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 typedef void
 (STDAPIVCALLTYPE* HCCallPerformFunction)(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call    
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     );
 
 /// <summary>
@@ -325,10 +325,10 @@ STDAPI HCHttpCallResponseSetHeader(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketConnectFunction)(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket
+    _In_ hc_websocket_handle_t websocket,
+    _Inout_ AsyncBlock* asyncBlock
     );
 
 /// <summary>
@@ -340,9 +340,9 @@ typedef HRESULT
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (STDAPIVCALLTYPE* HCWebSocketSendMessageFunction)(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ const char* message
+    _In_z_ const char* message,
+    _Inout_ AsyncBlock* asyncBlock
     );
 
 /// <summary>

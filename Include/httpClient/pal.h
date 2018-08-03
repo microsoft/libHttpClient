@@ -11,7 +11,7 @@
 
 #include <httpClient/config.h>
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWA || HC_PLATFORM == HC_PLATFORM_XDK
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -28,7 +28,7 @@
 #endif
 
 #ifndef HC_UWP_API
-#define HC_UWP_API (HC_PLATFORM == HC_PLATFORM_UWA)
+#define HC_UWP_API (HC_PLATFORM == HC_PLATFORM_UWP)
 #endif
 
 #if HC_UNITTEST_API
@@ -133,110 +133,6 @@ typedef struct _LIST_ENTRY {
 #define CONTAINING_RECORD(address, type, field) \
         ((type *)((char*)(address) - (uintptr_t)(&((type *)0)->field)))
 
-#ifndef _Printf_format_string_
-#define _Printf_format_string_ 
-#endif
-
-#ifndef _Post_invalid_
-#define _Post_invalid_ 
-#endif
-
-#ifndef _In_
-#define _In_
-#endif
-
-#ifndef _In_opt_
-#define _In_opt_ 
-#endif
-
-#ifndef _In_z_
-#define _In_z_ 
-#endif
-
-#ifndef _In_opt_z_
-#define _In_opt_z_ 
-#endif
-
-#ifndef _In_reads_bytes_
-#define _In_reads_bytes_(size) 
-#endif
-
-#ifndef _In_reads_
-#define _In_reads_(size) 
-#endif
-
-#ifndef _In_reads_bytes_opt_
-#define _In_reads_bytes_opt_(size) 
-#endif
-
-#ifndef _Inout_
-#define _Inout_ 
-#endif
-
-#ifndef _Inout_updates_bytes_
-#define _Inout_updates_bytes_(size)
-#endif
-
-#ifndef _Out_
-#define _Out_ 
-#endif
-
-#ifndef _Out_range_
-#define _Out_range_(x, y)  
-#endif
-
-#ifndef _Out_opt_
-#define _Out_opt_ 
-#endif
-
-#ifndef _Out_writes_
-#define _Out_writes_(bytes)
-#endif
-
-#ifndef _Out_writes_z_
-#define _Out_writes_z_(bytes)
-#endif
-
-#ifndef _Out_writes_bytes_
-#define _Out_writes_bytes_(bytes)
-#endif
-
-#ifndef _Out_writes_to_
-#define _Out_writes_to_(bytes, buffer)
-#endif
-
-#ifndef _Out_writes_to_opt_
-#define _Out_writes_to_opt_(buffersize, size)
-#endif
-
-#ifndef _Out_writes_bytes_opt_
-#define _Out_writes_bytes_opt_(size)
-#endif
-
-#ifndef _Out_writes_bytes_to_opt_
-#define _Out_writes_bytes_to_opt_(size, buffer)
-#endif
-
-#ifndef _Outptr_
-#define _Outptr_ 
-#endif
-
-#ifndef _Outptr_result_bytebuffer_maybenull_
-#define _Outptr_result_bytebuffer_maybenull_(size)
-#endif
-
-#ifndef _Ret_maybenull_
-#define _Ret_maybenull_
-#endif
-
-#ifndef _Post_writable_byte_size_
-#define _Post_writable_byte_size_(X)
-#endif
-
-#ifndef _Field_z_
-#define _Field_z_ 
-#endif
-
 #ifndef _Field_size_
 #define _Field_size_(bytes) 
 #endif
@@ -247,6 +143,126 @@ typedef struct _LIST_ENTRY {
 
 #ifndef _Field_size_bytes_opt_
 #define _Field_size_bytes_opt_(bytes) 
+#endif
+
+#ifndef _Field_size_opt_
+#define _Field_size_opt_(bytes)
+#endif
+
+#ifndef _Field_z_
+#define _Field_z_ 
+#endif
+
+#ifndef _In_
+#define _In_
+#endif
+
+#ifndef _In_opt_
+#define _In_opt_ 
+#endif
+
+#ifndef _In_opt_z_
+#define _In_opt_z_ 
+#endif
+
+#ifndef _In_reads_
+#define _In_reads_(size) 
+#endif
+
+#ifndef _In_reads_bytes_
+#define _In_reads_bytes_(size) 
+#endif
+
+#ifndef _In_reads_bytes_opt_
+#define _In_reads_bytes_opt_(size) 
+#endif
+
+#ifndef _In_reads_z_
+#define _In_reads_z_(size) 
+#endif
+
+#ifndef _In_z_
+#define _In_z_ 
+#endif
+
+#ifndef _Inout_
+#define _Inout_ 
+#endif
+
+#ifndef _Inout_updates_bytes_
+#define _Inout_updates_bytes_(size)
+#endif
+
+#ifndef _Null_terminated_
+#define _Null_terminated_ 
+#endif
+
+#ifndef _Out_
+#define _Out_ 
+#endif
+
+#ifndef _Out_opt_
+#define _Out_opt_ 
+#endif
+
+#ifndef _Out_range_
+#define _Out_range_(x, y)  
+#endif
+
+#ifndef _Out_writes_
+#define _Out_writes_(bytes)
+#endif
+
+#ifndef _Out_writes_bytes_
+#define _Out_writes_bytes_(bytes)
+#endif
+
+#ifndef _Out_writes_bytes_opt_
+#define _Out_writes_bytes_opt_(size)
+#endif
+
+#ifndef _Out_writes_bytes_to_opt_
+#define _Out_writes_bytes_to_opt_(size, buffer)
+#endif
+
+#ifndef _Out_writes_to_
+#define _Out_writes_to_(bytes, buffer)
+#endif
+
+#ifndef _Out_writes_to_opt_
+#define _Out_writes_to_opt_(buffersize, size)
+#endif
+
+#ifndef _Out_writes_z_
+#define _Out_writes_z_(bytes)
+#endif
+
+#ifndef _Outptr_
+#define _Outptr_ 
+#endif
+
+#ifndef _Outptr_result_bytebuffer_maybenull_
+#define _Outptr_result_bytebuffer_maybenull_(size)
+#endif
+
+#ifndef _Post_invalid_
+#define _Post_invalid_ 
+#endif
+
+#ifndef _Post_writable_byte_size_
+#define _Post_writable_byte_size_(X)
+#endif
+
+#ifndef _Printf_format_string_
+#define _Printf_format_string_ 
+#endif
+
+#ifndef _Ret_maybenull_
+#define _Ret_maybenull_
+#endif
+
+#ifndef _Ret_z_
+#define _Ret_z_
 #endif
 
 #ifndef __analysis_assume
@@ -265,10 +281,6 @@ typedef struct _LIST_ENTRY {
 #define STDAPI_(type)           EXTERN_C type STDAPIVCALLTYPE
 #endif
 
-#ifndef _Null_terminated_
-#define _Null_terminated_ 
-#endif
-
 #endif
 
 #ifdef __cplusplus
@@ -284,6 +296,7 @@ typedef struct _LIST_ENTRY {
 #define E_HC_PERFORM_ALREADY_CALLED     MAKE_E_HC(0x5003)
 #define E_HC_ALREADY_INITIALISED        MAKE_E_HC(0x5004)
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005)
+#define E_HC_NO_NETWORK                 MAKE_E_HC(0x5006)
 
 typedef uint32_t hc_memory_type;
 typedef struct HC_WEBSOCKET* hc_websocket_handle_t;

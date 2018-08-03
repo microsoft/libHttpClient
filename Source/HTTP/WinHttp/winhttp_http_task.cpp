@@ -434,22 +434,21 @@ void winhttp_http_task::get_proxy_name(
         {
             *pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
 
-            xbox::httpclient::Uri cProxyUri(utf8_from_utf16(m_proxyAddress));
-            http_internal_wstring wProxyHost = utf16_from_utf8(cProxyUri.Host());
+            http_internal_wstring wProxyHost = utf16_from_utf8(m_proxyUri.Host());
 
             // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
-            if (cProxyUri.IsPortDefault())
+            if (m_proxyUri.IsPortDefault())
             {
                 m_wProxyName = wProxyHost;
                 *pwProxyName = m_wProxyName.c_str();
             }
             else
             {
-                if (cProxyUri.Port() > 0)
+                if (m_proxyUri.Port() > 0)
                 {
                     http_internal_basic_stringstream<wchar_t> ss;
                     ss.imbue(std::locale::classic());
-                    ss << wProxyHost << L":" << cProxyUri.Port();
+                    ss << wProxyHost << L":" << m_proxyUri.Port();
                     m_wProxyName = ss.str();
                     *pwProxyName = m_wProxyName.c_str();
                 }
@@ -508,62 +507,6 @@ void winhttp_http_task::set_autodiscover_proxy(
     }
 }
 
-void winhttp_http_task::get_ie_proxy_info(_In_ bool isSecure)
-{
-    WINHTTP_CURRENT_USER_IE_PROXY_CONFIG config = { 0 };
-    if (!WinHttpGetIEProxyConfigForCurrentUser(&config))
-    {
-        return;
-    }
-
-    if (config.fAutoDetect)
-    {
-        m_proxyType = proxy_type::autodiscover_proxy;
-    }
-    else if (config.lpszProxy != nullptr)
-    {
-        // something like "http=127.0.0.1:8888;https=127.0.0.1:8888", or "localhost:80"
-        http_internal_wstring proxyConfig = config.lpszProxy;
-        if (proxyConfig.find(L";") == http_internal_wstring::npos)
-        {
-            m_proxyAddress = proxyConfig;
-        }
-        else
-        {
-            wchar_t* next_token;
-            wchar_t* token = wcstok_s(config.lpszProxy, L";", &next_token);
-
-            while (token != nullptr)
-            {
-                http_internal_wstring wToken = token;
-                if (!isSecure && wToken.find(L"http=") == 0)
-                {
-                    m_proxyAddress = wToken.substr(5);
-                }
-                if (isSecure && wToken.find(L"https=") == 0)
-                {
-                    m_proxyAddress = wToken.substr(6);
-                }
-                token = wcstok_s(nullptr, L";", &next_token);
-            }
-        }
-
-        if (!m_proxyAddress.empty())
-        {
-            if (m_proxyAddress.find(L"://") == http_internal_wstring::npos)
-            {
-                m_proxyAddress = L"http://" + m_proxyAddress;
-            }
-        }
-
-        m_proxyType = (m_proxyAddress.empty()) ? proxy_type::no_proxy : proxy_type::named_proxy;
-    }
-    else
-    {
-        m_proxyType = proxy_type::no_proxy;
-    }
-}
-
 HRESULT winhttp_http_task::connect(
     _In_ const xbox::httpclient::Uri& cUri
     )
@@ -575,7 +518,7 @@ HRESULT winhttp_http_task::connect(
         return E_FAIL;
     }
 
-    get_ie_proxy_info(cUri.IsSecure());
+    m_proxyType = get_ie_proxy_info(cUri.IsSecure() ? proxy_protocol::https : proxy_protocol::http, m_proxyUri);
 
     DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     const wchar_t* wProxyName = nullptr;
@@ -823,17 +766,17 @@ void winhttp_http_task::perform_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(initialContext == nullptr);
+    assert(args == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(asyncBlock, call);

@@ -9,6 +9,9 @@ static uint64_t const CRITICAL_TRUE   = 0x01;
 static uint64_t const CRITICAL_LOCKED = 0x02;
 
 static thread_local uint64_t tls_threadState = CRITICAL_FALSE;
+// On 32-bit devices TLS is supported iOS9+ while on the 32-bit simulator TLS is supported iOS10+
+// To run 32-bit on the simulator you'll need to update the deployment target to iOS10
+// To run 32-bit on iOS9 then you'll need a physical device
 
 /// <summary>
 /// Call this to setup a thread as "time critical".  APIs that should not be called from
