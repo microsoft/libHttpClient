@@ -540,23 +540,18 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallGetRequestUrl(
-	_In_ hc_call_handle_t call,
-	_Out_ const char** url
-	) HC_NOEXCEPT
+    _In_ hc_call_handle_t call,
+    _Out_ const char** url
+    ) HC_NOEXCEPT
 try
 {
-	if (call == nullptr)
-	{
-		return E_INVALIDARG;
-	}
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
 
-	if (call->url.empty())
-	{
-		*url = nullptr;
-	}
-
-	*url = call->url.data();
-	return S_OK;
+    *url = call->url.data();
+    return S_OK;
 }
 CATCH_RETURN()
 

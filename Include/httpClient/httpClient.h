@@ -272,9 +272,9 @@ STDAPI HCHttpCallSetTracing(
 /// </param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallGetRequestUrl(
-	_In_ hc_call_handle_t call,
-	_Out_ const char** url
-	) HC_NOEXCEPT;
+    _In_ hc_call_handle_t call,
+    _Out_ const char** url
+    ) HC_NOEXCEPT;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs
