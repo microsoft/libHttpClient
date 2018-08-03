@@ -524,11 +524,33 @@ try
 {
     if (call == nullptr)
     {
-        return 0;
+        return E_INVALIDARG;
     }
     
     *context = call->context;
 
     return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI 
+HCHttpCallGetRequestUrl(
+	_In_ hc_call_handle_t call,
+	_Out_ const char** url
+	) HC_NOEXCEPT
+try
+{
+	if (call == nullptr)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (call->url.empty())
+	{
+		*url = nullptr;
+	}
+
+	*url = call->url.data();
+	return S_OK;
 }
 CATCH_RETURN()
