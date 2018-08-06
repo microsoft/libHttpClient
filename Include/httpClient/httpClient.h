@@ -262,6 +262,19 @@ STDAPI HCHttpCallSetTracing(
     _In_ bool traceCall
     ) HC_NOEXCEPT;
 
+/// <summary>
+/// Gets the request url for the HTTP call
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="url">
+/// The UTF-8 encoded url body string of the HTTP call
+/// The memory for the returned string pointer remains valid for the life of the hc_call_handle_t object until HCHttpCallCloseHandle() is called on it.
+/// </param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallGetRequestUrl(
+    _In_ hc_call_handle_t call,
+    _Out_ const char** url
+    ) HC_NOEXCEPT;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs
