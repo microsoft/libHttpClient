@@ -6,6 +6,7 @@
 #endif
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
+#include "utils.h"
 #include "http_request_callback.h"
 #include "http_response_stream.h"
 #include "http_request_stream.h"
@@ -99,7 +100,7 @@ void xmlhttp_http_task::perform_async(
         m_hRequest->SetProperty(XHR_PROP_ONDATA_THRESHOLD, XHR_PROP_ONDATA_NEVER);
 #endif
 
-        m_hRequest->SetRequestHeader(L"User-Agent", L"libHttpClient/1.0.0.0");
+        bool userAgentSet = false;
         for (uint32_t i = 0; i < numHeaders; i++)
         {
             const char* iHeaderName;
@@ -107,8 +108,18 @@ void xmlhttp_http_task::perform_async(
             HCHttpCallRequestGetHeaderAtIndex(call, i, &iHeaderName, &iHeaderValue);
             if (iHeaderName != nullptr && iHeaderValue != nullptr)
             {
+                if (xbox::httpclient::str_icmp(iHeaderName, "User-Agent") == 0)
+                {
+                    userAgentSet = true;
+                }
+
                 hr = m_hRequest->SetRequestHeader(utf16_from_utf8(iHeaderName).c_str(), utf16_from_utf8(iHeaderValue).c_str());
             }
+        }
+
+        if (!userAgentSet)
+        {
+            m_hRequest->SetRequestHeader(L"User-Agent", L"libHttpClient/1.0.0.0");
         }
 
         hr = m_hRequest->SetCustomResponseStream(Microsoft::WRL::Make<http_response_stream>(httpTask).Get());
