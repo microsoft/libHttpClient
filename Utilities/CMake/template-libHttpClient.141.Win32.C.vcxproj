@@ -54,7 +54,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(PackagesRoot)\asio-cpp.1.10.2.0\build\native\asio-cpp.targets" />
+    <Import Condition="exists('$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets')" Project="$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets" />
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -74,7 +74,7 @@
        $(ProjectDir)..\..\Include;
        $(ProjectDir)..\..\Include\httpClient;
        $(ProjectDir)..\..\External\websocketpp;
-       $(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\include;
+       $(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\include;
        %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
@@ -116,5 +116,11 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets'))" />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
