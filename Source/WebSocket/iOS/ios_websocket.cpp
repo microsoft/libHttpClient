@@ -10,11 +10,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
-<<<<<<< HEAD
-    _Inout_ AsyncBlock* asyncBlock
-=======
     _Inout_ AsyncBlock* async
->>>>>>> master
     )
 {
     // TODO
@@ -24,11 +20,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
 HRESULT Internal_HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
-<<<<<<< HEAD
-    _Inout_ AsyncBlock* asyncBlock
-=======
     _Inout_ AsyncBlock* async
->>>>>>> master
     )
 {
     // TODO
