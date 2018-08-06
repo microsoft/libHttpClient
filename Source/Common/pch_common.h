@@ -53,6 +53,10 @@
 #define UNREFERENCED_PARAMETER(args) (void)(args);
 #endif
 
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(x) sizeof(x) / sizeof(x[0])
 #endif

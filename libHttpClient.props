@@ -25,6 +25,10 @@
 
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">
     <HCLibToolset>141</HCLibToolset>
+    <Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x86>
+    <Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x64>
+    <Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x86>
+    <Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x64>
   </PropertyGroup>
   <PropertyGroup Condition="'$(PlatformToolset)'=='v140'">
     <HCLibToolset>140</HCLibToolset>
@@ -62,10 +66,10 @@
     </Link>
   </ItemDefinitionGroup>
 
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
-
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
-  <Import Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'" Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
-
+  <ImportGroup Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'">
+    <Import Project="$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.targets" />
+    <Import Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
+    <Import Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
+  </ImportGroup>
+  
 </Project>

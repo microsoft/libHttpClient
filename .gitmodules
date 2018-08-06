@@ -4,3 +4,9 @@
 [submodule "External/websocketpp"]
 	path = External/websocketpp
 	url = https://github.com/zaphoyd/websocketpp
+[submodule "External/asio"]
+	path = External/asio
+	url = https://github.com/chriskohlhoff/asio
+[submodule "External/openssl"]
+	path = External/openssl
+	url = https://github.com/openssl/openssl
