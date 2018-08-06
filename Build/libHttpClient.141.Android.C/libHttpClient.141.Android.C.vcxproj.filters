@@ -162,43 +162,43 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
+      <UniqueIdentifier>{3BF546C7-965A-3A1D-BEBA-D3190F1FF9AF}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{6D290126-3831-3A04-903B-F2ADD104D81C}</UniqueIdentifier>
+      <UniqueIdentifier>{764C3192-BC27-33B8-98B9-E20B5F425C05}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{B5E18BF5-6C51-323C-96A0-81422D9D6069}</UniqueIdentifier>
+      <UniqueIdentifier>{7DD2F0D0-7383-38BC-AA17-E85065313474}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{6DAD9E7F-080C-3264-920E-77D0AFFE8CC9}</UniqueIdentifier>
+      <UniqueIdentifier>{B58793F0-BC35-3331-B13F-2EE2605081EA}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP\Android">
-      <UniqueIdentifier>{932FF9B4-0F6C-3D9E-ADD7-F607B9EE46A9}</UniqueIdentifier>
+      <UniqueIdentifier>{F91DE522-DBB6-367C-8F80-67AD431AA28A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>
+      <UniqueIdentifier>{71783E7D-3C5B-300D-A046-A57EBA6D8B10}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger\Android">
-      <UniqueIdentifier>{E49AC6C7-8BA8-3732-A533-988ED3333337}</UniqueIdentifier>
+      <UniqueIdentifier>{F580C1CD-2E97-35AC-88BC-73254C68612F}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{ECB59FD8-67C4-354A-90B2-DFC893C0F2E5}</UniqueIdentifier>
+      <UniqueIdentifier>{C15CE35A-55F1-3429-A1DF-77F39D9BF1B9}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{09ED63FC-76E4-368A-B7E4-40A1D70ABD31}</UniqueIdentifier>
+      <UniqueIdentifier>{DEE62B2B-E1B2-31CF-926E-4B6C5925528C}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task\Android">
-      <UniqueIdentifier>{B95AC387-5C11-3C0C-A361-6B40BA6CF75D}</UniqueIdentifier>
+      <UniqueIdentifier>{65AF722F-8DEC-3295-BBEC-6DA446FAFAC2}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{09CB3AE4-1639-3274-BB94-99AAC498EA50}</UniqueIdentifier>
+      <UniqueIdentifier>{814945C5-8A18-3D47-B523-34C0DB471BCE}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket\Android">
-      <UniqueIdentifier>{2D9BF097-B06F-328B-93C8-5B6D9227F412}</UniqueIdentifier>
+      <UniqueIdentifier>{7A1227DE-0EC9-3DB5-AF8C-2BD6ED540C82}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
+      <UniqueIdentifier>{E8E4ABAA-BEA5-328F-B713-A5BDDA6DF86F}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
