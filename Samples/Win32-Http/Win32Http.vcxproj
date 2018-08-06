@@ -171,7 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Build\libHttpClient.140.Win32.C\libHttpClient.140.Win32.C.vcxproj">
-      <Project>{bd57c607-e104-4505-8a43-3d152f016f16}</Project>
+      <Project>{BD57C607-E104-4505-8A43-3D152F016F16}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

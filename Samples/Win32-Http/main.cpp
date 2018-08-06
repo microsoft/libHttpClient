@@ -182,7 +182,7 @@ void ShutdownActiveThreads()
 int main()
 {
     std::string method = "GET";
-    std::string url = "https://www.bing.com/?rb=0";
+    std::string url = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Tests/TestWebApplication/appsettings.Development.json";
     std::string requestBody = "";// "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
@@ -262,6 +262,17 @@ int main()
         {
             printf_s("Header[%d] '%s'='%s'\r\n", i, header[0].c_str(), header[1].c_str());
             i++;
+        }
+
+        if (responseString.length() > 0)
+        {
+            // Returned string starts with a BOM strip it out.
+            uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
+            if (responseString.find(reinterpret_cast<char*>(BOM)) == 0)
+            {
+                responseString = responseString.substr(3);
+            }
+            web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
         }
 
         if (responseString.length() > 200)
