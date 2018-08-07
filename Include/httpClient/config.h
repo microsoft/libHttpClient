@@ -43,7 +43,7 @@
     #endif
 #elif defined(__APPLE__)
     #include <TargetConditionals.h>
-    #if TARGET_OS_IPHONE == 1
+    #if TARGET_OS_MAC == 1
         #define HC_PLATFORM HC_PLATFORM_IOS
     #endif
 
