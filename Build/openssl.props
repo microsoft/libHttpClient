@@ -3,7 +3,7 @@
   <PropertyGroup>
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
     <opensslSourceRoot>$(BuildRoot)External\openssl\</opensslSourceRoot>
-    <generatedHeaders>$(BuildRoot)External\generatedFiles\</generatedHeaders>
+    <generatedHeaders>$(BuildRoot)External\generatedHeaders\</generatedHeaders>
     <libcryptoPath>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\libcrypto\</libcryptoPath>
     <libsslPath>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\libssl\</libsslPath>
   </PropertyGroup>
