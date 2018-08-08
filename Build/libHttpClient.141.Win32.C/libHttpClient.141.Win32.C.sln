@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.26430.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.141.Win32.C", "libHttpClient.141.Win32.C.vcxproj", "{CF37BEB2-A66A-42BA-B348-1F07566F4865}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssl", "..\libssl\libssl.vcxproj", "{CF4C3985-3F37-45B6-95F7-7602C53F1F21}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcrypto", "..\libcrypto\libcrypto.vcxproj", "{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -27,8 +31,31 @@ Global
 		{CF37BEB2-A66A-42BA-B348-1F07566F4865}.Release|x64.Build.0 = Release|x64
 		{CF37BEB2-A66A-42BA-B348-1F07566F4865}.Release|x86.ActiveCfg = Release|Win32
 		{CF37BEB2-A66A-42BA-B348-1F07566F4865}.Release|x86.Build.0 = Release|Win32
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Debug|ARM.ActiveCfg = Debug|Win32
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Debug|x64.ActiveCfg = Debug|x64
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Debug|x64.Build.0 = Debug|x64
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Debug|x86.ActiveCfg = Debug|Win32
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Debug|x86.Build.0 = Debug|Win32
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Release|ARM.ActiveCfg = Release|Win32
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Release|x64.ActiveCfg = Release|x64
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Release|x64.Build.0 = Release|x64
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Release|x86.ActiveCfg = Release|Win32
+		{CF4C3985-3F37-45B6-95F7-7602C53F1F21}.Release|x86.Build.0 = Release|Win32
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Debug|ARM.ActiveCfg = Debug|Win32
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Debug|x64.ActiveCfg = Debug|x64
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Debug|x64.Build.0 = Debug|x64
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Debug|x86.ActiveCfg = Debug|Win32
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Debug|x86.Build.0 = Debug|Win32
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Release|ARM.ActiveCfg = Release|Win32
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Release|x64.ActiveCfg = Release|x64
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Release|x64.Build.0 = Release|x64
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Release|x86.ActiveCfg = Release|Win32
+		{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2451D7B1-1B99-409F-AE43-25849B4BD89F}
 	EndGlobalSection
 EndGlobal
