@@ -56,7 +56,8 @@
         $(opensslSourceRoot)crypto\include\;
         $(opensslSourceRoot)crypto\modes\;
         $(opensslSourceRoot)include\;
-        $(generatedHeaders)win32;
+        $(generatedHeaders)win32\;
+        $(generatedHeaders)win32\internal\;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>

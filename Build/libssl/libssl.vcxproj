@@ -56,7 +56,8 @@
         $(opensslSourceRoot)ssl\record\;
         $(opensslSourceRoot)ssl\statem\;
         $(opensslSourceRoot)include\;
-        $(generatedHeaders)win32;
+        $(generatedHeaders)win32\;
+        $(generatedHeaders)win32\internal\;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
