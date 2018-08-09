@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,13 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>libHttpClient.UnitTest.140.TAEF</ProjectName>
+    <ProjectName>libHttpClient.UnitTest.141.TAEF</ProjectName>
     <ProjectGuid>{15F89B6A-312D-49A6-BBA6-CFD9242DB58E}</ProjectGuid>
     <RootNamespace>libHttpClient.Test</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <LinkIncremental>false</LinkIncremental>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
@@ -39,25 +39,17 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)'=='Debug'">
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)'=='Release'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.internal.props))\libHttpClient.internal.props" />
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalOptions>/bigobj /Zm512 /GS %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>
-       $(ProjectDir);
-       $(ProjectDir)..\..\Source\Common;
-       $(ProjectDir)..\..\Source\Logger;
-       $(ProjectDir)..\..\Tests\UnitTests\Support;
-       $(ProjectDir)..\..\Tests\UnitTests;
-       $(ProjectDir)..\..\Include;
-       $(ProjectDir)..\..\Include\httpClient;
-      c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;
-      %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;
+      %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64'">C:\Program Files (x86)\Windows Kits\10\Testing\Development\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -68,13 +60,13 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>USING_TAEF;DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;HC_UNITTEST_API;HC_API_NONE;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USING_TAEF;DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAsWinRT>true</CompileAsWinRT>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalUsingDirectories>$(WindowsSdkDir_10)UnionMetadata;$(VCInstallDir)lib\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>$(WindowsSdkDir_10)UnionMetadata;$(VCToolsInstallDir)lib\x86\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -177,8 +169,6 @@
   </ItemGroup>
   <PropertyGroup>
     <ProjectFolder>Microsoft.Xbox.System.UnitTest</ProjectFolder>
-    <OutDir>$(ProjectDir)..\..\Binaries\$(Configuration)\$(Platform)\$(ProjectName)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
     <LocalDebuggerCommand>C:\Program Files (x86)\Windows Kits\10\Testing\Runtimes\TAEF\x64\TE.exe</LocalDebuggerCommand>
     <LocalDebuggerCommandArguments>$(TargetPath) /inproc</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>

@@ -37,7 +37,6 @@
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
-  <Import Project="..\libHttpClientSettings.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -54,33 +53,20 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Condition="exists('$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets')" Project="$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.internal.props))\libHttpClient.internal.props" />
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='StaticLibrary'">HC_WIN32_API;HC_API_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='DynamicLibrary'">HC_WIN32_API;HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories> 
-       $(ProjectDir);
-       $(ProjectDir)..\..\Source\Common;
-       $(ProjectDir)..\..\Source\Logger;
-       $(ProjectDir)..\..\Include;
-       $(ProjectDir)..\..\Include\httpClient;
-       $(ProjectDir)..\..\External\websocketpp;
-       $(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\include;
-       %(AdditionalIncludeDirectories)
-      </AdditionalIncludeDirectories>
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;Pathcch.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
@@ -107,11 +93,6 @@
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Release'">true</FullProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
-  <PropertyGroup>
-    <ProjectFolder>$(MSBuildProjectName)</ProjectFolder>
-    <OutDir>$(ProjectDir)..\..\Binaries\$(Configuration)\$(Platform)\$(ProjectFolder)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
-  </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
@@ -172,13 +153,12 @@
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="$(libHttpClientRoot)Build\libcrypto.Win32\libcrypto.vcxproj">
+      <Project>{c043de35-beed-4fe1-b9d2-b15cb051cc3c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(libHttpClientRoot)Build\libssl.Win32\libssl.vcxproj">
+      <Project>{cf4c3985-3f37-45b6-95f7-7602c53f1f21}</Project>
+    </ProjectReference>
   </ItemGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)asio-cpp.1.10.2.0\build\native\asio-cpp.targets'))" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

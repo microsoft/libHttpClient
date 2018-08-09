@@ -72,6 +72,9 @@ void LOG_EXCEPTION_AND_FAIL(
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_SECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::seconds(__seconds))
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_MILLISECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::milliseconds(__seconds))
 
+#ifdef VERIFY_THROWS_CX
+#undef VERIFY_THROWS_CX
+#endif
 #define VERIFY_THROWS_CX(__operation, __exception)                                                                                                                          \
 {                                                                                                                                                                           \
     bool __exceptionHit = false;                                                                                                                                            \
