@@ -123,3 +123,6 @@ ARM/
 xbox-live-samples/
 Tests/StressUnitTest/
 *.pdb
+
+#Allow OpenSSL generated headers
+!External/generatedHeaders/**

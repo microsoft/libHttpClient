@@ -34,8 +34,8 @@ copy %NEW_FOLDER%\libHttpClient.141.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.14
 copy %NEW_FOLDER%\libHttpClient.141.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.XDK.C
 copy %NEW_FOLDER%\libHttpClient.141.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.Win32.C
 copy %NEW_FOLDER%\libHttpClient.141.Android.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.Android.C
-copy %NEW_FOLDER%\libHttpClient.UnitTest.140.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.140.TAEF
-copy %NEW_FOLDER%\libHttpClient.UnitTest.140.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.140.TE
+copy %NEW_FOLDER%\libHttpClient.UnitTest.141.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.141.TAEF
+copy %NEW_FOLDER%\libHttpClient.UnitTest.141.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.141.TE
 
 :skipCopy
 

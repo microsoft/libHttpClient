@@ -1,84 +1,69 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <Import Project="$(LibHttpClientRoot)Build\libHttpClientSettings.props" />
-
-  <PropertyGroup Condition="'$(ApplicationType)'!='Windows Store' AND '$(Platform)'!='Durango'">
-    <HCLibPlatformType>Win32</HCLibPlatformType>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(ApplicationType)'!='Windows Store' AND '$(Platform)'=='Durango'">
-    <HCLibPlatformType>XDK</HCLibPlatformType>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
     <HCLibPlatformType>UWP</HCLibPlatformType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(ApplicationType)'=='Windows Store'">
     <libHttpClientDefine>HC_UWP_API</libHttpClientDefine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango'">
+    <HCLibPlatformType>Win32</HCLibPlatformType>  
     <libHttpClientDefine>HC_WIN32_API</libHttpClientDefine>
+    <useWsppWebsockets>true</useWsppWebsockets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">
+    <HCLibPlatformType>XDK</HCLibPlatformType>
     <libHttpClientDefine>HC_XDK_API</libHttpClientDefine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ApplicationType)'=='Android'">
+    <HCLibPlatformType>Android</HCLibPlatformType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">
     <HCLibToolset>141</HCLibToolset>
-    <Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x86>
-    <Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-openssl-v140-windesktop-msvcstl-static-rt-dyn-x64>
-    <Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x86>
-    <Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-zlib-v140-windesktop-msvcstl-static-rt-dyn-x64>
   </PropertyGroup>
   <PropertyGroup Condition="'$(PlatformToolset)'=='v140'">
     <HCLibToolset>140</HCLibToolset>
   </PropertyGroup>
-
-  <PropertyGroup>
-    <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
-    <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
-    <libHttpClientLib>$(libHttpClientRoot)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib>
-    <libHttpClientLib2>$(libHttpClientRoot)lib\$(Platform)\</libHttpClientLib2>
-    <libHttpClientLib3>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientLib3>
-    <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
+  <PropertyGroup Condition="$(PlatformToolset.Contains('Clang'))">
+    <HCLibToolset>140</HCLibToolset>
   </PropertyGroup>
 
-  <ItemDefinitionGroup>
+  <PropertyGroup>      
+    <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
+    <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
+    <libHttpClientPath>$(libHttpClientRoot)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPath>
+    <libHttpClientPathBuildMachine>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPathBuildMachine>
+    <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
+    <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
+  </PropertyGroup>
+  
+  <!--Import hc_settings file after defining props so that they can be overriden-->
+  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
+    
+  <Import Project="$(libHttpClientRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)' == 'true'"/>
+  <ItemDefinitionGroup Label="ImportLibHttpClient" Condition="!('$(SkipLibHttpClientImport)' == 'true')">
     <ClCompile>
-      <PreprocessorDefinitions>$(libHttpClientDefine);HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>
+        $(libHttpClientDefine);
+        HC_API_EXPORT;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(libHttpClientInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup>
     <Link>
-      <AdditionalLibraryDirectories>$(libHttpClientLib3);$(libHttpClientLib2);$(libHttpClientLib);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(libHttpClientPath);
+        $(libHttpClientPathBuildMachine);
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+        $(libHttpClientLibName);
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(HCLibPlatformType)' == 'Win32'">
+        winhttp.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup>
-    <Link>
-      <AdditionalDependencies>$(libHttpClientLibName);%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-
-  <ItemDefinitionGroup Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'">
-    <Link>
-      <AdditionalDependencies>Crypt32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-
-  <ImportGroup Condition="'$(libHttpClientDefine)'=='HC_WIN32_API'">
-    <Import Condition="Exists('$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.targets')" Project="$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.targets" />
-    <Import Condition="Exists('$(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets')" Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets" />
-    <Import Condition="Exists('$(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets')" Project="$(PackagesRoot)\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets" />
-  </ImportGroup>
-  
-  <Target Name="EnsureNuGetPackageBuildImportsFromProps" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="'$(libHttpClientDefine)'=='HC_WIN32_API' And !Exists('$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.static.rt-dyn.targets'))" />
-    <Error Condition="'$(libHttpClientDefine)'=='HC_WIN32_API' And !Exists('$(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x86.targets'))" />
-    <Error Condition="'$(libHttpClientDefine)'=='HC_WIN32_API' And !Exists('$(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.targets'))" />
-  </Target>
-
 </Project>

@@ -98,9 +98,20 @@ public:
     {
         Assert::IsTrue(expected == actual);
     }
+
+    static void AreEqual(HRESULT expected, HRESULT actual)
+    {
+        Assert::AreEqual((int)expected, (int)actual);
+    }
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
+
+#define VERIFY_SUCCEEDED(x) \
+    xbox::httpclienttest::AssertHelper::AreEqual(S_OK, (HRESULT)x)
+
+#define VERIFY_FAIL() \
+    Assert::Fail()
 
 #define VERIFY_ARE_EQUAL_UINT(expected, actual) \
     Assert::IsTrue(static_cast<uint64_t>(expected) == static_cast<uint64_t>(actual))
@@ -109,10 +120,10 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
     Assert::IsTrue(static_cast<int64_t>(expected) == static_cast<int64_t>(actual))
 
 #define VERIFY_ARE_EQUAL(expected,actual) \
-    AssertHelper::AreEqual((double)expected,(double)actual)
+    xbox::httpclienttest::AssertHelper::AreEqual((double)expected,(double)actual)
 
 #define VERIFY_ARE_EQUAL_STR(expected,actual) \
-    AssertHelper::AreEqual(expected,actual)
+    xbox::httpclienttest::AssertHelper::AreEqual(expected,actual)
 
 #define VERIFY_ARE_EQUAL_STR_IGNORE_CASE(expected,actual) \
     Assert::AreEqual(expected, actual, true)

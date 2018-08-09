@@ -40,17 +40,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.internal.props))\libHttpClient.internal.props" />
   </ImportGroup>
-  <PropertyGroup>
-    <ProjectFolder>$(MSBuildProjectName)</ProjectFolder>
-    <OutDir>$(ProjectDir)..\..\Binaries\$(Configuration)\$(Platform)\$(ProjectFolder)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
-  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='StaticLibrary'">HC_XDK_API;HC_API_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='DynamicLibrary'">HC_XDK_API;HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions>_VARIADIC_MAX=10;ENABLE_INTSAFE_SIGNED_FUNCTIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
@@ -60,13 +54,6 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">Level4</WarningLevel>
       <MinimalRebuild>false</MinimalRebuild>
       <CompileAsWinRT>true</CompileAsWinRT>
-      <AdditionalIncludeDirectories>
-       $(ProjectDir);
-       $(ProjectDir)..\..\Source\Common;
-       $(ProjectDir)..\..\Source\Logger;
-       $(ProjectDir)..\..\Include;
-       $(ProjectDir)..\..\Include\httpClient;
-      %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
