@@ -30,15 +30,13 @@
 
   <PropertyGroup>      
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
-    <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>
-    <libHttpClientPath>$(libHttpClientRoot)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPath>
+    <libHttpClientOutDir>$(libHttpClientRoot)</libHttpClientOutDir>
+    <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>    
+    <libHttpClientPath>$(libHttpClientOutDir)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPath>
     <libHttpClientPathBuildMachine>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPathBuildMachine>
     <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
   </PropertyGroup>
-  
-  <!--Import hc_settings file after defining props so that they can be overriden-->
-  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
     
   <Import Project="$(libHttpClientRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)' == 'true'"/>
   <ItemDefinitionGroup Label="ImportLibHttpClient" Condition="!('$(SkipLibHttpClientImport)' == 'true')">
@@ -66,4 +64,7 @@
       </AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+
+  <!--Import hc_settings file after defining props so that they can be overriden-->
+  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
 </Project>

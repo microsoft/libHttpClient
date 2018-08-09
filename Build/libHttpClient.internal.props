@@ -4,10 +4,8 @@
     <SkipLibHttpClientImport>true</SkipLibHttpClientImport>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.props))\libHttpClient.props" />
-    
+  <Import Project="libHttpClient.paths.props"/>    
   <PropertyGroup Label="LibHttpClientLibProps">
-    <OutDir>$(libHttpClientPath)</OutDir>
-    <IntDir>$(libHttpClientRoot)Obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
     <IsUnitTestProj Condition="$(ProjectName.Contains('UnitTest'))">true</IsUnitTestProj>
   </PropertyGroup>
   <PropertyGroup Label="LibHttpClientUnitTestProps" Condition="'$(IsUnitTestProj)' == 'true'">
