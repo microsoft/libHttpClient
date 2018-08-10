@@ -4,6 +4,6 @@
     <BuildRoot>$(libHttpClientOutDir)</BuildRoot>  
     <BuildRoot Condition="'$(BuildRoot)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
     <OutDir>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\$(ProjectName)\</OutDir>
-    <IntDir>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(BuildRoot)Obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
   </PropertyGroup>
  </Project>

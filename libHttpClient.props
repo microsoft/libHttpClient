@@ -31,40 +31,32 @@
   <PropertyGroup>      
     <libHttpClientRoot>$(MSBuildThisFileDirectory)</libHttpClientRoot>
     <libHttpClientOutDir>$(libHttpClientRoot)</libHttpClientOutDir>
-    <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>    
+  </PropertyGroup>
+
+  <!--Import hc_settings file after defining props so that they can be overriden-->
+  <PropertyGroup>      
+    <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
+  </PropertyGroup> 
+  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
+  
+  <PropertyGroup>      
+    <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>        
     <libHttpClientPath>$(libHttpClientOutDir)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPath>
     <libHttpClientPathBuildMachine>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPathBuildMachine>
     <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
-    <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
   </PropertyGroup>
-    
+   
   <Import Project="$(libHttpClientRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)' == 'true'"/>
   <ItemDefinitionGroup Label="ImportLibHttpClient" Condition="!('$(SkipLibHttpClientImport)' == 'true')">
     <ClCompile>
-      <PreprocessorDefinitions>
-        $(libHttpClientDefine);
-        HC_API_EXPORT;
-        %(PreprocessorDefinitions)
-      </PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(libHttpClientDefine);HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(libHttpClientInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>
-        $(libHttpClientPath);
-        $(libHttpClientPathBuildMachine);
-        %(AdditionalLibraryDirectories)
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>
-        $(libHttpClientLibName);
-        %(AdditionalDependencies)
-      </AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(HCLibPlatformType)' == 'Win32'">
-        winhttp.lib;
-        %(AdditionalDependencies)
-      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(libHttpClientPath);$(libHttpClientPathBuildMachine);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(libHttpClientLibName);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(HCLibPlatformType)' == 'Win32'">winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
-  <!--Import hc_settings file after defining props so that they can be overriden-->
-  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
 </Project>
