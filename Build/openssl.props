@@ -9,24 +9,11 @@
   </PropertyGroup>
   <ItemDefinitionGroup Label="ImportOpenSSL" Condition="'$(ProjectName)' != 'libcrypto' AND '$(ProjectName)' != 'libssl'">
     <ClCompile>
-      <AdditionalIncludeDirectories>
-        %(AdditionalIncludeDirectories);
-        $(opensslSourceRoot)include;
-        $(generatedHeaders)win32
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)win32</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>
-        %(AdditionalDependencies);
-        Crypt32.lib;
-        libssl.lib;
-        libcrypto.lib
-      </AdditionalDependencies>
-      <AdditionalLibraryDirectories>
-        %(AdditionalLibraryDirectories);
-        $(libcryptoPath);
-        $(libsslPath)
-      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies);Crypt32.lib;libssl.lib;libcrypto.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(libcryptoPath);$(libsslPath)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
 </Project>
