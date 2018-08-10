@@ -9,11 +9,11 @@
     <opensslSourceRoot>$(BuildRoot)External\openssl\</opensslSourceRoot>
     <generatedHeaders>$(BuildRoot)External\generatedHeaders\</generatedHeaders>
     <libcryptoName>libcrypto.$(platformType)</libcryptoName>
-    <libsllName>libssl.$(platformType)</libsllName>
+    <libsslName>libssl.$(platformType)</libsslName>
     <opensslOutdir>$(libHttpClientOutDir)</opensslOutdir>
     <opensslOutdir Condition="'$(opensslOutdir)' == ''">$(BuildRoot)</opensslOutdir>     
     <libcryptoPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libcryptoName)\</libcryptoPath>
-    <libsslPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libsllName)\</libsslPath>
+    <libsslPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libsslName)\</libsslPath>
   </PropertyGroup>
   <ItemDefinitionGroup Label="ImportOpenSSL" Condition="'$(ProjectName)' != 'libcrypto' AND '$(ProjectName)' != 'libssl'">
     <ClCompile>

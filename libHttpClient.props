@@ -17,6 +17,7 @@
   <PropertyGroup Condition="'$(ApplicationType)'=='Android'">
     <HCLibPlatformType>Android</HCLibPlatformType>
     <libHttpClientDefine>HC_ANDROID_API</libHttpClientDefine>
+    <useWsppWebsockets>true</useWsppWebsockets>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">
