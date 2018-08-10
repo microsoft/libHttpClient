@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="PlatformType">
+    <platformType Condition="'$(ApplicationType)' == 'Android'">Android</platformType>
+    <platformType Condition="'$(ApplicationType)' == ''">Win32</platformType>
+  </PropertyGroup>  
   <PropertyGroup>
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
     <opensslSourceRoot>$(BuildRoot)External\openssl\</opensslSourceRoot>
     <generatedHeaders>$(BuildRoot)External\generatedHeaders\</generatedHeaders>
-    <libcryptoPath>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\libcrypto\</libcryptoPath>
-    <libsslPath>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\libssl\</libsslPath>
+    <libcryptoName>libcrypto.$(platformType)</libcryptoName>
+    <libsllName>libssl.$(platformType)</libsllName>
+    <libcryptoPath>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\$(libcryptoName)\</libcryptoPath>
+    <libsslPath>$(BuildRoot)Binaries\$(Configuration)\$(Platform)\$(libsllName)\</libsslPath>
   </PropertyGroup>
   <ItemDefinitionGroup Label="ImportOpenSSL" Condition="'$(ProjectName)' != 'libcrypto' AND '$(ProjectName)' != 'libssl'">
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)$(HCLibPlatformType)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies);Crypt32.lib;libssl.lib;libcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(platformType)' == 'Win32'">%(AdditionalDependencies);Crypt32.lib;$(libsslName).lib;$(libcryptoName).lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(platformType)' == 'Android'">%(AdditionalDependencies);$(libsslName).a;$(libcryptoName).a</AdditionalDependencies>  
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(libcryptoPath);$(libsslPath)</AdditionalLibraryDirectories>
-    </Link>
+    </Link>      
   </ItemDefinitionGroup>
 </Project>

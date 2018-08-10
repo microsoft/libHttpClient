@@ -16,6 +16,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='Android'">
     <HCLibPlatformType>Android</HCLibPlatformType>
+    <libHttpClientDefine>HC_ANDROID_API</libHttpClientDefine>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PlatformToolset)'=='v141'">
@@ -58,5 +59,4 @@
       <AdditionalDependencies Condition="'$(HCLibPlatformType)' == 'Win32'">winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-
 </Project>
