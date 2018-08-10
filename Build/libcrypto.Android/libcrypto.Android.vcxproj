@@ -58,11 +58,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), openssl.props))\openssl.props" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.paths.props))\libHttpClient.paths.props" />
   </ImportGroup>
-  <PropertyGroup>
-    <OutDir>$(libcryptoPath)</OutDir>
-    <IntDir>$(BuildRoot)Obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
-  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>

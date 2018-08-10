@@ -95,10 +95,10 @@
   </ItemDefinitionGroup>
 ****INSERTFILES****
   <ItemGroup>
-    <ProjectReference Include="$(libHttpClientRoot)Build\libcrypto.Win32\libcrypto.vcxproj">
+    <ProjectReference Include="..\libcrypto.Win32\libcrypto.Win32.vcxproj">
       <Project>{c043de35-beed-4fe1-b9d2-b15cb051cc3c}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(libHttpClientRoot)Build\libssl.Win32\libssl.vcxproj">
+    <ProjectReference Include="..\libssl.Win32\libssl.Win32.vcxproj">
       <Project>{cf4c3985-3f37-45b6-95f7-7602c53f1f21}</Project>
     </ProjectReference>
   </ItemGroup>
