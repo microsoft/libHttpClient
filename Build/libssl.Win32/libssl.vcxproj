@@ -34,7 +34,7 @@
     <Import Project="..\openssl.props" />
   </ImportGroup>
   <PropertyGroup>
-    <OutDir>$(libcryptoPath)</OutDir>
+    <OutDir>$(libsslPath)</OutDir>
     <IntDir>$(BuildRoot)Obj\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
