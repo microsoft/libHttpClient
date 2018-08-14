@@ -36,8 +36,11 @@
   <!--Import hc_settings file after defining props so that they can be overriden-->
   <PropertyGroup>      
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
-  </PropertyGroup> 
-  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
+  </PropertyGroup>
+  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile)) AND '$(HCSettingsImported)' != 'true'" />
+  <PropertyGroup>
+    <HCSettingsImported>true</HCSettingsImported>
+  </PropertyGroup>
   
   <PropertyGroup>      
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>        
