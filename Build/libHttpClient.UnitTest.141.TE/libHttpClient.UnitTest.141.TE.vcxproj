@@ -43,7 +43,6 @@
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
-  
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3092CCC9-DB6E-4199-95CC-4959950B95FA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -51,6 +50,8 @@
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>libHttpClient.UnitTest.141.TE</ProjectName>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <HCLibPlatformType>UWP</HCLibPlatformType>
+    <HCLibImpl>true</HCLibImpl>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -239,8 +240,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
-  </ItemGroup>
-  <ItemGroup>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -32,11 +32,8 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\openssl.props" />
+    <Import Project="..\libHttpClient.paths.props" />
   </ImportGroup>
-  <PropertyGroup>
-    <OutDir>$(libsslPath)</OutDir>
-    <IntDir>$(BuildRoot)Obj\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <UseDebugLibraries>true</UseDebugLibraries>
     <Optimization>Disabled</Optimization>
@@ -52,13 +49,11 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
         $(opensslSourceRoot);
         $(opensslSourceRoot)ssl\record\;
         $(opensslSourceRoot)ssl\statem\;
-        $(opensslSourceRoot)include\;
-        $(generatedHeaders)win32\;
-        $(generatedHeaders)win32\internal\;
-        %(AdditionalIncludeDirectories)
+        $(opensslGeneratedHeaders)internal\
       </AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
       <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164;4244;4267</DisableSpecificWarnings>

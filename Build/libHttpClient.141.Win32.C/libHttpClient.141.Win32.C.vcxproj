@@ -36,6 +36,8 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <HCLibPlatformType>Win32</HCLibPlatformType>
+    <HCLibImpl>true</HCLibImpl>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
@@ -151,14 +153,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
   </ItemGroup>
   <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="$(libHttpClientRoot)Build\libcrypto.Win32\libcrypto.vcxproj">
-      <Project>{c043de35-beed-4fe1-b9d2-b15cb051cc3c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="$(libHttpClientRoot)Build\libssl.Win32\libssl.vcxproj">
-      <Project>{cf4c3985-3f37-45b6-95f7-7602c53f1f21}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
