@@ -23,6 +23,8 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <GenerateManifest>false</GenerateManifest>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <HCLibPlatformType>XDK</HCLibPlatformType>
+    <HCLibImpl>true</HCLibImpl>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <PlatformToolset>v141</PlatformToolset>
