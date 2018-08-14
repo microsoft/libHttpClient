@@ -10,6 +10,10 @@
   </PropertyGroup>
   <ItemDefinitionGroup Label="LibHttpClientLibItemDefinition">
     <ClCompile>
+      <PreprocessorDefinitions>
+        $(libHttpClientDefine);
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
         $(libHttpClientInclude)httpClient;
         $(HCBuildRoot)Source\Common;

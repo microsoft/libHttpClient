@@ -360,7 +360,6 @@ if( TAEF )
     source_group("C++ Source\\UnitTests\\Support" FILES ${Taef_UnitTests_Source_Files})
     list(APPEND
         SOURCE_FILES
-        ${Win32_WebSocket_Source_Files}
         ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${Taef_UnitTests_Source_Files}
@@ -374,7 +373,6 @@ if( TE )
     source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
     list(APPEND
         SOURCE_FILES
-        ${Win32_WebSocket_Source_Files}
         ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${TE_UnitTests_Source_Files}
