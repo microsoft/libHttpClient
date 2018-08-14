@@ -56,7 +56,6 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <CppLanguageStandard>c++1y</CppLanguageStandard>
-      <AdditionalOptions>-D ANDROID_API=1 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions>-Wno-unknown-pragmas %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions>-Wno-pragma-once-outside-header %(AdditionalOptions)</AdditionalOptions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
