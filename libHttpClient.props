@@ -7,8 +7,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango'">
     <HCLibPlatformType>Win32</HCLibPlatformType>  
-    <libHttpClientDefine>HC_WIN32_API</libHttpClientDefine>
-    <useWsppWebsockets>true</useWsppWebsockets>
+    <libHttpClientDefine Condition="'$(libHttpClientDefine)' == ''">HC_WIN32_API</libHttpClientDefine>
+    <useWsppWebsockets Condition="'$(useWsppWebsockets)' == ''">true</useWsppWebsockets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">
     <HCLibPlatformType>XDK</HCLibPlatformType>
@@ -45,7 +45,7 @@
     <libHttpClientPathBuildMachine>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPathBuildMachine>
     <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
   </PropertyGroup>
-   
+    
   <Import Project="$(libHttpClientRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)' == 'true'"/>
   <ItemDefinitionGroup Label="ImportLibHttpClient" Condition="!('$(SkipLibHttpClientImport)' == 'true')">
     <ClCompile>

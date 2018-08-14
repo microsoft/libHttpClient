@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(ConfigurationType)' == 'StaticLibrary'">
     <SkipLibHttpClientImport>true</SkipLibHttpClientImport>
   </PropertyGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.props))\libHttpClient.props" />
-  <Import Project="libHttpClient.paths.props"/>    
   <PropertyGroup Label="LibHttpClientLibProps">
     <IsUnitTestProj Condition="$(ProjectName.Contains('UnitTest'))">true</IsUnitTestProj>
   </PropertyGroup>
   <PropertyGroup Label="LibHttpClientUnitTestProps" Condition="'$(IsUnitTestProj)' == 'true'">
     <libHttpClientDefine>HC_UNITTEST_API</libHttpClientDefine>
+    <useWsppWebsockets>false</useWsppWebsockets>
   </PropertyGroup>
+    
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.props))\libHttpClient.props" />
+  <Import Project="libHttpClient.paths.props"/>    
   <ItemDefinitionGroup Label="LibHttpClientLibItemDefinition">
     <ClCompile>
       <PreprocessorDefinitions>
