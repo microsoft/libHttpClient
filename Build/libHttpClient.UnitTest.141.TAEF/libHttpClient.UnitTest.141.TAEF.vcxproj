@@ -29,7 +29,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <LinkIncremental>false</LinkIncremental>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
-    <HCLibPlatformType>UWP</HCLibPlatformType>
+    <HCLibPlatformType>Win32</HCLibPlatformType>
     <HCLibImpl>true</HCLibImpl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">

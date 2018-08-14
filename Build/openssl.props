@@ -12,7 +12,7 @@
     <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\win32\</opensslGeneratedHeaders>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(ProjectName)'!='libssl' and '$(ProjectName)'!='libcrypto'">
+  <ItemGroup Condition="'$(ProjectName)'!='libssl' and '$(ProjectName)'!='libcrypto' and '$(ConfigurationType)'!='StaticLibrary'">
     <ProjectReference Include="$(HCBuildRoot)Build\libssl.Win32\libssl.vcxproj">
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</ProjectId>
     </ProjectReference>
