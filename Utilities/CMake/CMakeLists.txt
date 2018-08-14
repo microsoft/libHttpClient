@@ -133,7 +133,8 @@ set(Win32_WebSocket_Source_Files
     )
 
 set(Android_WebSocket_Source_Files
-    ../../../Source/WebSocket/Android/android_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
     )
 
 set(Mock_Source_Files
@@ -159,6 +160,11 @@ set(Common_Source_Files
 set(Common_Windows_Source_Files
     ../../../Source/Common/Win/utils_win.cpp
     ../../../Source/Common/Win/utils_win.h
+    )
+    
+set(Common_Android_Source_Files
+    ../../../Source/Common/Android/utils_android.cpp
+    ../../../Source/Common/Android/utils_android.h
     )
 
 set(HTTP_Source_Files
@@ -343,6 +349,7 @@ if( BUILDANDROID )
     source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
     source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
+    source_group("C++ Source\\Common\\Android" FILES ${Common_Android_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -350,6 +357,7 @@ if( BUILDANDROID )
         ${Android_HTTP_Source_Files}
         ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
+        ${Common_Android_Source_Files}
         )
 endif()
 

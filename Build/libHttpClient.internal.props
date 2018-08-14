@@ -24,6 +24,7 @@
         $(libHttpClientInclude)httpClient;
         $(libHttpClientRoot)Source\Common;
         $(libHttpClientRoot)Source\Logger;
+        $(libHttpClientRoot)Source\Websocket;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(useWsppWebsockets)' == 'true'">
