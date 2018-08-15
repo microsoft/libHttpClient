@@ -24,9 +24,8 @@
     <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
   </PropertyGroup>
 
-  <Import Project="$(MSBuildThisFileDirectory)Build\libHttpClient.root.props" />
-
   <PropertyGroup>
+    <HCBuildRoot Condition="'$(HCBuildRoot)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
     <libHttpClientInclude>$(HCBuildRoot)Include\</libHttpClientInclude>
   </PropertyGroup>
 
@@ -53,7 +52,7 @@
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Android'">{5e0ce391-1ac5-4930-921e-2577a4b5c530}</ProjectId>
     </ProjectReference>
   </ItemGroup>
-   
+
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(libHttpClientInclude)</AdditionalIncludeDirectories>

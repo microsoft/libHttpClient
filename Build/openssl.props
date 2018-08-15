@@ -4,10 +4,8 @@
     InitialTargets="SSLBuildDebug"
 -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
-  <Import Project="$(MSBuildThisFileDirectory)libHttpClient.root.props" Condition="'$(HCRootPropsImported)'!='true'" />
-
   <PropertyGroup>
+    <HCBuildRoot Condition="'$(HCBuildRoot)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
     <libcryptoName>libcrypto.$(HCLibPlatformType)</libcryptoName>
     <libsslName>libssl.$(HCLibPlatformType)</libsslName>
     <opensslSourceRoot>$(HCBuildRoot)External\openssl\</opensslSourceRoot>
