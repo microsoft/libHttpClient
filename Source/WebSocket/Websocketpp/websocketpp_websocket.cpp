@@ -370,8 +370,6 @@ private:
         auto context = http_allocate_shared<connect_context>(client);
 
         m_backgroundAsync = new (xbox::httpclient::http_memory::mem_alloc(sizeof(AsyncBlock))) AsyncBlock{};
-        // TODO 1808 - doc that maybe add an API to set the queue that is used for the ASIO background work. For now just
-        // using the queue the user provides to the connect API for all background work.
         m_backgroundQueue = DuplicateAsyncQueueHandle(async->queue);
         m_backgroundAsync->queue = m_backgroundQueue;
         m_backgroundAsync->context = shared_ptr_cache::store(context);

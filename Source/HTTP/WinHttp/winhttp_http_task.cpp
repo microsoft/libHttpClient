@@ -11,6 +11,8 @@
 
 #define CRLF L"\r\n"
 
+using namespace xbox::httpclient;
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 winhttp_http_task::winhttp_http_task(
@@ -110,8 +112,7 @@ void winhttp_http_task::callback_status_request_error(
     const DWORD errorCode = error_result->dwError;
     HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", HCHttpCallGetId(pRequestContext->m_call), error_result->dwResult, error_result->dwError);
     HCHttpCallResponseSetNetworkErrorCode(pRequestContext->m_call, E_FAIL, errorCode);
-    CompleteAsync(pRequestContext->m_asyncBlock, E_FAIL, 0);
-
+    pRequestContext->complete_async(E_FAIL);
 }
 
 void winhttp_http_task::callback_status_sendrequest_complete(
@@ -291,8 +292,8 @@ void winhttp_http_task::callback_status_data_available(
                 pRequestContext->m_responseBuffer.data(),
                 pRequestContext->m_responseBuffer.size()
                 );
-        }        
-        CompleteAsync(pRequestContext->m_asyncBlock, S_OK, 0);
+        }
+        pRequestContext->complete_async(S_OK);
     }
 }
 
@@ -316,11 +317,12 @@ void winhttp_http_task::callback_status_read_complete(
                 pRequestContext->m_responseBuffer.size()
                 );
         }
-        CompleteAsync(pRequestContext->m_asyncBlock, S_OK, 0);
-        return;
+        pRequestContext->complete_async(S_OK);
     }
-
-    read_next_response_chunk(pRequestContext, bytesRead);
+    else
+    {
+        read_next_response_chunk(pRequestContext, bytesRead);
+    }
 }
 
 
@@ -735,7 +737,7 @@ void winhttp_http_task::perform_async()
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
             HRESULT hrTranslated = (SUCCEEDED(hr)) ? S_OK : E_FAIL;
             HCHttpCallResponseSetNetworkErrorCode(m_call, hrTranslated, hr);
-            CompleteAsync(m_asyncBlock, hr, 0);
+            complete_async(hr);
             return;
         }
     }
@@ -745,7 +747,7 @@ void winhttp_http_task::perform_async()
             E_OUTOFMEMORY, e.what());
 
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_OUTOFMEMORY, static_cast<uint32_t>(E_OUTOFMEMORY));
-        CompleteAsync(m_asyncBlock, E_OUTOFMEMORY, 0);
+        complete_async(E_OUTOFMEMORY);
     }
     catch (std::exception const& e)
     {
@@ -753,15 +755,23 @@ void winhttp_http_task::perform_async()
             E_FAIL, e.what());
 
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, static_cast<uint32_t>(E_FAIL));
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        complete_async(E_FAIL);
     }
     catch (...)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception in winhttp_http_task", E_FAIL);
 
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, static_cast<uint32_t>(E_FAIL));
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        complete_async(E_FAIL);
     }
+}
+
+void winhttp_http_task::complete_async(_In_ HRESULT result)
+{
+    CompleteAsync(m_asyncBlock, result, 0);
+    HCHttpCallSetContext(m_call, nullptr);
+    this->~winhttp_http_task();
+    http_memory::mem_free(this);
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
@@ -779,8 +789,8 @@ void Internal_HCHttpCallPerformAsync(
     _Inout_ AsyncBlock* asyncBlock
     )
 {
-    xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(asyncBlock, call);
-    HCHttpCallSetContext(call, httpTask); // TODO 1808: cleanup memory
+    xbox::httpclient::winhttp_http_task* httpTask = new (http_memory::mem_alloc(sizeof(winhttp_http_task))) xbox::httpclient::winhttp_http_task(asyncBlock, call);
+    HCHttpCallSetContext(call, httpTask);
     httpTask->perform_async();
 }
 
