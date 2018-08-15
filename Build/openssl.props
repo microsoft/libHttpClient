@@ -1,22 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--Project
+<Project
     ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
     InitialTargets="SSLBuildDebug"
--->
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+>
+<!--Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"-->
   <PropertyGroup>
-    <HCBuildRoot Condition="'$(HCBuildRoot)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
+    <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
     <libcryptoName>libcrypto.$(HCLibPlatformType)</libcryptoName>
     <libsslName>libssl.$(HCLibPlatformType)</libsslName>
     <opensslSourceRoot>$(HCBuildRoot)External\openssl\</opensslSourceRoot>
     <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\$(HCLibPlatformType)\</opensslGeneratedHeaders>
+    <doref>lol nope</doref>
+    <doref Condition="'$(ConfigurationType)'!='StaticLibrary'">true</doref>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(ProjectName)'!='$(lybcryptoName)' and '$(ProjectName)'!='$(libsslName)' and '$(ConfigurationType)'!='StaticLibrary'">
+  <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary'">
     <ProjectReference Include="$(HCBuildRoot)Build\$(libsslName)\$(libsslName).vcxproj">
+        <ProjectId Condition="'$(HCLibPlatformType)' == 'Android'">{51b9c654-fbc9-4224-8751-d7d0c05b7bc9}</ProjectId>
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</ProjectId>
     </ProjectReference>
     <ProjectReference Include="$(HCBuildRoot)Build\$(libcryptoName)\$(libcryptoName).vcxproj">
+        <ProjectId Condition="'$(HCLibPlatformType)' == 'Android'">{315bc43e-e422-4d47-a2dc-300a334a3497}</ProjectId>
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}</ProjectId>
     </ProjectReference>
   </ItemGroup>
@@ -43,6 +47,7 @@
     <Message Importance="High" Text="    Configuration                = '$(Configuration)'" />
     <Message Importance="High" Text="    Platform                     = '$(Platform)'" />
     <Message Importance="High" Text="    ConfigurationType            = '$(ConfigurationType)'" />
+    <Message Importance="High" Text="        doref                    = '$(doref)'" />
     <Message Importance="High" Text="    HCLibPlatformType            = '$(HCLibPlatformType)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
