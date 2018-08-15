@@ -41,7 +41,7 @@
     <ApplicationType>Android</ApplicationType>
     <ApplicationTypeRevision>3.0</ApplicationTypeRevision>
     <AndroidAPILevel>android-19</AndroidAPILevel>
-    <HCLibPlatformType>Win32</HCLibPlatformType>
+    <HCLibPlatformType>Android</HCLibPlatformType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup>
@@ -75,7 +75,7 @@
       </AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalOptions>-D DSO_DLFCN -D HAVE_DLFCN_H -D NDEBUG -D OPENSSL_THREADS -D OPENSSL_NO_STATIC_ENGINE -D OPENSSL_PIC -D OPENSSL_USE_NODELETE -D OPENSSLDIR='"THIS_SHOULD_NOT_BE_USED"'  -D ENGINESDIR='"THIS_SHOULD_NOT_BE_USED"' -D UNICODE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-D DSO_DLFCN -D HAVE_DLFCN_H -D NDEBUG -D OPENSSL_THREADS -D OPENSSL_NO_STATIC_ENGINE -D OPENSSL_PIC -D OPENSSL_USE_NODELETE -D OPENSSLDIR='"THIS_SHOULD_NOT_BE_USED"' -D ENGINESDIR='"THIS_SHOULD_NOT_BE_USED"' -D UNICODE %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
