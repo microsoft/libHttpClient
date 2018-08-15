@@ -3,7 +3,7 @@
 
 #pragma once
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
+#if defined(__APPLE__) || defined(HC_ANDROID_API) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
 
 #if defined(_WIN32)
 #pragma warning(push)
@@ -26,8 +26,9 @@
 
 #include <vector>
 
-#if defined(ANDROID) || defined(__ANDROID__)
+#if defined(HC_ANDROID_API)
 #include <jni.h>
+#include "Android/utils_android.h"
 #endif
 
 #if defined(__APPLE__)
@@ -101,9 +102,7 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
     return verify_result;
 }
 
-#if defined(ANDROID) || defined(__ANDROID__)
-using namespace crossplat;
-
+#if defined(HC_ANDROID_API)
 /// <summary>
 /// Helper function to check return value and see if any exceptions
 /// occurred when calling a JNI function.
@@ -142,7 +141,7 @@ static bool jni_failed(JNIEnv *env, const jmethodID &result)
 #define CHECK_JMID(env, mid) if(jni_failed(env, mid)) return false;
 #define CHECK_JNI(env) if(jni_failed(env)) return false;
 
-bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName)
+static bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &certChain, const http_internal_string &hostName)
 {
     JNIEnv* env = get_jvm_env();
 

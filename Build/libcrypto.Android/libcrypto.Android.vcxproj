@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
+    <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
+      <Platform>ARM</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
+    <ProjectConfiguration Include="Release|ARM">
       <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -17,38 +25,42 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}</ProjectGuid>
-    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{315bc43e-e422-4d47-a2dc-300a334a3497}</ProjectGuid>
+    <Keyword>Android</Keyword>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <ApplicationType>Android</ApplicationType>
+    <ApplicationTypeRevision>3.0</ApplicationTypeRevision>
+    <AndroidAPILevel>android-19</AndroidAPILevel>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-    <LinkIncremental>true</LinkIncremental>
-  </PropertyGroup>  
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <AdditionalOptions>-D _DEBUG -D DEBUG %(AdditionalOptions)</AdditionalOptions>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <AdditionalOptions>-D NDEBUG %(AdditionalOptions)</AdditionalOptions>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\openssl.props" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), openssl.props))\openssl.props" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.paths.props))\libHttpClient.paths.props" />
   </ImportGroup>
-  <PropertyGroup>
-    <OutDir>$(libcryptoPath)</OutDir>
-    <IntDir>$(BuildRoot)Obj\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <Optimization>Disabled</Optimization>
-    <PreprocessorDefinitions>_DEBUG;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    <LinkIncremental>true</LinkIncremental>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <Optimization>MaxSpeed</Optimization>
-    <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    <LinkIncremental>false</LinkIncremental>
-  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>
@@ -56,32 +68,13 @@
         $(opensslSourceRoot)crypto\include\;
         $(opensslSourceRoot)crypto\modes\;
         $(opensslSourceRoot)include\;
-        $(generatedHeaders)win32\;
-        $(generatedHeaders)win32\internal\;
+        $(generatedHeaders)android\;
+        $(generatedHeaders)android\internal\;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
-      <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
-      <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164;4244;4267</DisableSpecificWarnings>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>
-        WIN32;
-        WIN32_LEAN_AND_MEAN;
-        _LIB;
-        DSO_WIN32;
-        ENGINESDIR="THIS_SHOULD_NOT_BE_USED";
-        L_ENDIAN;
-        OPENSSL_THREADS;
-        OPENSSL_NO_DYNAMIC_ENGINE;
-        OPENSSL_PIC;
-        OPENSSL_SYS_WIN32;
-        OPENSSLDIR="THIS_SHOULD_NOT_BE_USED";
-        UNICODE;
-        _CRT_SECURE_NO_DEPRECATE;
-        _UNICODE;
-        _WINSOCK_DEPRECATED_NO_WARNINGS;
-        %(PreprocessorDefinitions)
-      </PreprocessorDefinitions>
+      <AdditionalOptions>-D DSO_DLFCN -D HAVE_DLFCN_H -D NDEBUG -D OPENSSL_THREADS -D OPENSSL_NO_STATIC_ENGINE -D OPENSSL_PIC -D OPENSSL_USE_NODELETE -D OPENSSLDIR='"THIS_SHOULD_NOT_BE_USED"'  -D ENGINESDIR='"THIS_SHOULD_NOT_BE_USED"' -D UNICODE %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -347,7 +340,6 @@
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\eck_prn.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_mont.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nist.c" />
-    <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nistz256.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_oct.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_smpl.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecx_meth.c" />
@@ -534,9 +526,7 @@
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\bio_pk7.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_asn1.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_attr.c" />
-    <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_dgst.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_doit.c" />
-    <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_enc.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_lib.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_mime.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_smime.c" />
@@ -686,8 +676,6 @@
     <ClCompile Include="$(opensslSourceRoot)crypto\x509\x_req.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\x509\x_x509.c" />
     <ClCompile Include="$(opensslSourceRoot)crypto\x509\x_x509a.c" />
-    <ClCompile Include="$(opensslSourceRoot)engines\e_capi.c" />
-    <ClCompile Include="$(opensslSourceRoot)engines\e_padlock.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

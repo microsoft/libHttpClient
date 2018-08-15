@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
-#if ANDROID_API
 #include <httpClient/httpClient.h>
 #include "android_http_request.h"
 #include "android_platform_context.h"
@@ -97,5 +96,3 @@ void Internal_HCHttpCallPerformAsync(
         CompleteAsync(asyncBlock, E_FAIL, 0);
     }
 }
-
-#endif

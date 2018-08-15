@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "../HCWebSocket.h"
+#include "hcwebsocket.h"
 #include "uri.h"
 #include "x509_cert_utilities.hpp"
 
@@ -54,21 +54,19 @@ private:
 
 public:
     wspp_websocket_impl(hc_websocket_handle_t hcHandle)
-        : m_state(CREATED),
+        : m_backgroundAsync(nullptr),
+        m_backgroundQueue(nullptr),
+        m_state(CREATED),
         m_numSends(0),
-        m_uri(hcHandle->uri),
-        m_backgroundAsync(nullptr),
-        m_backgroundQueue(nullptr)
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
-        , m_opensslFailed(false)
-#endif
+        m_opensslFailed(false),
+        m_uri(hcHandle->uri)
     {
         m_hcWebsocketHandle = HCWebSocketDuplicateHandle(hcHandle);
     }
 
     ~wspp_websocket_impl()
     {
-        _ASSERTE(m_state < DESTROYED);
+        ASSERT(m_state < DESTROYED);
 
         // Now, what states could we be in?
         switch (m_state)
@@ -120,12 +118,10 @@ public:
                 sslContext->set_options(asio::ssl::context::default_workarounds);
                 sslContext->set_verify_mode(asio::ssl::context::verify_peer);
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
+
                 m_opensslFailed = false;
-#endif
                 sslContext->set_verify_callback([this](bool preverified, asio::ssl::verify_context &verifyCtx)
                 {
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
                     // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                     // stores keychains. If OpenSSL fails we will doing verification at the
                     // end using the whole certificate chain so wait until the 'leaf' cert.
@@ -138,7 +134,6 @@ public:
                     {
                         return xbox::httpclient::verify_cert_chain_platform_specific(verifyCtx, m_uri.Host());
                     }
-#endif
                     asio::ssl::rfc2818_verification rfc2818(m_uri.Host().data());
                     return rfc2818(preverified, verifyCtx);
                 });
@@ -149,7 +144,14 @@ public:
                 // See http://www.openssl.org/support/faq.html#PROG13
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
+#ifdef HC_ANDROID_API
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"     
                 ERR_remove_thread_state(nullptr);
+#pragma clang diagnostic pop
+#else 
+                ERR_remove_thread_state(nullptr);
+#endif // HC_ANDROID_API
 
                 return sslContext;
             });
@@ -254,10 +256,10 @@ private:
         client.init_asio();
         client.start_perpetual();
 
-        _ASSERTE(m_state == CREATED);
+        ASSERT(m_state == CREATED);
         client.set_open_handler([this, async](websocketpp::connection_hdl)
         {
-            _ASSERTE(m_state == CONNECTING);
+            ASSERT(m_state == CONNECTING);
             m_state = CONNECTED;
             set_connection_error<WebsocketConfigType>();
             CompleteAsync(async, S_OK, sizeof(WebSocketCompletionResult));
@@ -265,7 +267,7 @@ private:
 
         client.set_fail_handler([this, async](websocketpp::connection_hdl)
         {
-            _ASSERTE(m_state == CONNECTING);
+            ASSERT(m_state == CONNECTING);
             shutdown_wspp_impl<WebsocketConfigType>();
             set_connection_error<WebsocketConfigType>();
             CompleteAsync(async, S_OK, sizeof(WebSocketCompletionResult));
@@ -278,7 +280,7 @@ private:
 
             if (messageFunc != nullptr)
             {
-                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                ASSERT(m_state >= CONNECTED && m_state < CLOSED);
                 auto& payload = msg->get_raw_payload();
                 messageFunc(m_hcWebsocketHandle, payload.data());
             }
@@ -286,7 +288,7 @@ private:
 
         client.set_close_handler([this](websocketpp::connection_hdl)
         {
-            _ASSERTE(m_state != CLOSED);
+            ASSERT(m_state != CLOSED);
             shutdown_wspp_impl<WebsocketConfigType>();
         });
 
@@ -341,7 +343,7 @@ private:
                 return E_FAIL;
             }
         }
-#if _WIN32
+#if HC_WIN32_API
         else
         {
             // On windows platforms use the IE proxy if the user didn't specify one
@@ -362,7 +364,7 @@ private:
 
         struct connect_context
         {
-            connect_context(websocketpp::client<WebsocketConfigType>& _client) : client(std::move(_client)) {}
+            connect_context(websocketpp::client<WebsocketConfigType>& _client) : client(_client) {}
             websocketpp::client<WebsocketConfigType>& client;
         };
         auto context = http_allocate_shared<connect_context>(client);
@@ -379,7 +381,7 @@ private:
         };
 
         // Initialize the 'connect' AsyncBlock here, but the actually work will happen on the ASIO background thread below
-        auto hr = BeginAsync(async, this, HCWebSocketConnectAsync, __FUNCTION__,
+        auto hr = BeginAsync(async, this, (void*)HCWebSocketConnectAsync, __FUNCTION__,
             [](AsyncOp op, const AsyncProviderData* data)
         {
             if (op == AsyncOp_GetResult)
@@ -401,19 +403,26 @@ private:
             {
                 auto context = shared_ptr_cache::fetch<connect_context>(async->context);
 
-#if defined(__ANDROID__)
-                crossplat::get_jvm_env();
+#if defined(HC_ANDROID_API)
+                get_jvm_env();
 #endif
                 context->client.run();
-#if defined(__ANDROID__)
-                crossplat::JVM.load()->DetachCurrentThread();
+#if defined(HC_ANDROID_API)
+                JVM.load()->DetachCurrentThread();
 #endif
 
                 // OpenSSL stores some per thread state that never will be cleaned up until
                 // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                 // at all and will be reported as leaks.
                 // See http://www.openssl.org/support/faq.html#PROG13
+#ifdef HC_ANDROID_API
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"     
                 ERR_remove_thread_state(nullptr);
+#pragma clang diagnostic pop
+#else 
+                ERR_remove_thread_state(nullptr);
+#endif // HC_ANDROID_API
 
                 return S_OK;
             });
@@ -477,7 +486,7 @@ private:
             m_outgoingMessageQueue.pop();
         }
 
-        auto hr = BeginAsync(sendContext->message.async, shared_ptr_cache::store(sendContext), HCWebSocketSendMessageAsync, __FUNCTION__,
+        auto hr = BeginAsync(sendContext->message.async, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](AsyncOp op, const AsyncProviderData* data)
         {
             WebSocketCompletionResult* result;
@@ -630,9 +639,7 @@ private:
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
     bool m_opensslFailed;
-#endif
 
     hc_websocket_handle_t m_hcWebsocketHandle;
 

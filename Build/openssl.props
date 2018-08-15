@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="PlatformType">
+    <platformType Condition="'$(ApplicationType)' == 'Android'">Android</platformType>
+    <platformType Condition="'$(ApplicationType)' == ''">Win32</platformType>
+  </PropertyGroup>  
   <PropertyGroup>
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
   </PropertyGroup>
@@ -11,18 +15,21 @@
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
     <opensslSourceRoot>$(BuildRoot)External\openssl\</opensslSourceRoot>
     <generatedHeaders>$(BuildRoot)External\generatedHeaders\</generatedHeaders>
+    <libcryptoName>libcrypto.$(platformType)</libcryptoName>
+    <libsslName>libssl.$(platformType)</libsslName>
     <opensslOutdir>$(libHttpClientOutDir)</opensslOutdir>
-    <opensslOutdir Condition="'$(opensslOutdir)' == ''">$(BuildRoot)</opensslOutdir>
-    <libcryptoPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\libcrypto\</libcryptoPath>
-    <libsslPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\libssl\</libsslPath>
+    <opensslOutdir Condition="'$(opensslOutdir)' == ''">$(BuildRoot)</opensslOutdir>     
+    <libcryptoPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libcryptoName)\</libcryptoPath>
+    <libsslPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libsslName)\</libsslPath>
   </PropertyGroup>
   <ItemDefinitionGroup Label="ImportOpenSSL" Condition="'$(ProjectName)' != 'libcrypto' AND '$(ProjectName)' != 'libssl'">
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)$(HCLibPlatformType)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies);Crypt32.lib;libssl.lib;libcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(platformType)' == 'Win32'">%(AdditionalDependencies);Crypt32.lib;$(libsslName).lib;$(libcryptoName).lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(platformType)' == 'Android'">%(AdditionalDependencies);$(libsslName).a;$(libcryptoName).a</AdditionalDependencies>  
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(libcryptoPath);$(libsslPath)</AdditionalLibraryDirectories>
-    </Link>
+    </Link>      
   </ItemDefinitionGroup>
 </Project>
