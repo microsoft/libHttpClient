@@ -11,21 +11,21 @@
     <libcryptoName>libcrypto.$(HCLibPlatformType)</libcryptoName>
     <libsslName>libssl.$(HCLibPlatformType)</libsslName>
     <opensslSourceRoot>$(HCBuildRoot)External\openssl\</opensslSourceRoot>
-    <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\win32\</opensslGeneratedHeaders>
+    <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\$(HCLibPlatformType)\</opensslGeneratedHeaders>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(ProjectName)'!='$(lybcryptoName)' and '$(ProjectName)'!='$(libsslName)' and '$(ConfigurationType)'!='StaticLibrary'">
     <ProjectReference Include="$(HCBuildRoot)Build\$(libsslName)\$(libsslName).vcxproj">
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</ProjectId>
     </ProjectReference>
-    <ProjectReference Include="$(HCBuildRoot)Build\$(lybcryptoName)\$(lybcryptoName).vcxproj">
+    <ProjectReference Include="$(HCBuildRoot)Build\$(libcryptoName)\$(libcryptoName).vcxproj">
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}</ProjectId>
     </ProjectReference>
   </ItemGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(opensslGeneratedHeaders)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);Crypt32.lib</AdditionalDependencies>
