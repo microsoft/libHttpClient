@@ -8,25 +8,27 @@
   <Import Project="$(MSBuildThisFileDirectory)libHttpClient.root.props" Condition="'$(HCRootPropsImported)'!='true'" />
 
   <PropertyGroup>
+    <libcryptoName>libcrypto.$(HCLibPlatformType)</libcryptoName>
+    <libsslName>libssl.$(HCLibPlatformType)</libsslName>
     <opensslSourceRoot>$(HCBuildRoot)External\openssl\</opensslSourceRoot>
     <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\win32\</opensslGeneratedHeaders>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(ProjectName)'!='libssl' and '$(ProjectName)'!='libcrypto' and '$(ConfigurationType)'!='StaticLibrary'">
-    <ProjectReference Include="$(HCBuildRoot)Build\libssl.Win32\libssl.vcxproj">
+  <ItemGroup Condition="'$(ProjectName)'!='$(lybcryptoName)' and '$(ProjectName)'!='$(libsslName)' and '$(ConfigurationType)'!='StaticLibrary'">
+    <ProjectReference Include="$(HCBuildRoot)Build\$(libsslName)\$(libsslName).vcxproj">
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</ProjectId>
     </ProjectReference>
-    <ProjectReference Include="$(HCBuildRoot)Build\libcrypto.Win32\libcrypto.vcxproj">
+    <ProjectReference Include="$(HCBuildRoot)Build\$(lybcryptoName)\$(lybcryptoName).vcxproj">
         <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}</ProjectId>
     </ProjectReference>
   </ItemGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(opensslGeneratedHeaders)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)win32</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies);Crypt32.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);Crypt32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 

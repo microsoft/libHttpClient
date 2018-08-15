@@ -64,11 +64,14 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer_cpp.cpp">
       <Filter>C++ Source\Task\Android</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Android\android_websocket.cpp">
-      <Filter>C++ Source\WebSocket\Android</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
+      <Filter>C++ Source\WebSocket\Websocketpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Common\Android\utils_android.cpp">
+      <Filter>C++ Source\Common\Android</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +162,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
+      <Filter>C++ Source\WebSocket\Websocketpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common\Android\utils_android.h">
+      <Filter>C++ Source\Common\Android</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
@@ -194,11 +203,14 @@
     <Filter Include="C++ Source\WebSocket">
       <UniqueIdentifier>{814945C5-8A18-3D47-B523-34C0DB471BCE}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\WebSocket\Android">
-      <UniqueIdentifier>{7A1227DE-0EC9-3DB5-AF8C-2BD6ED540C82}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Public Includes">
       <UniqueIdentifier>{E8E4ABAA-BEA5-328F-B713-A5BDDA6DF86F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\WebSocket\Websocketpp">
+      <UniqueIdentifier>{154bf37e-9957-4bb8-939a-0c012becf329}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Common\Android">
+      <UniqueIdentifier>{19520915-142e-4d1f-9e39-eeffa6aa9ae2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

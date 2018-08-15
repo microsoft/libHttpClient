@@ -58,14 +58,22 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <CppLanguageStandard>c++1y</CppLanguageStandard>
-      <AdditionalOptions>-D ANDROID_API=1 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions>-Wno-unknown-pragmas %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions>-Wno-pragma-once-outside-header %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 ****INSERTFILES****
+  <ItemGroup>
+    <ProjectReference Include="..\libcrypto.Android\libcrypto.Android.vcxproj">
+      <Project>{315bc43e-e422-4d47-a2dc-300a334a3497}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libssl.Android\libssl.Android.vcxproj">
+      <Project>{51b9c654-fbc9-4224-8751-d7d0c05b7bc9}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

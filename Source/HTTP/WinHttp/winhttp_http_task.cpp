@@ -780,7 +780,7 @@ void Internal_HCHttpCallPerformAsync(
     )
 {
     xbox::httpclient::winhttp_http_task* httpTask = new xbox::httpclient::winhttp_http_task(asyncBlock, call);
-    HCHttpCallSetContext(call, httpTask); // TODO: cleanup 
+    HCHttpCallSetContext(call, httpTask); // TODO 1808: cleanup memory
     httpTask->perform_async();
 }
 
