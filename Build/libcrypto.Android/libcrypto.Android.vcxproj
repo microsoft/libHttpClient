@@ -65,13 +65,11 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
         $(opensslSourceRoot);
         $(opensslSourceRoot)crypto\include\;
         $(opensslSourceRoot)crypto\modes\;
-        $(opensslSourceRoot)include\;
-        $(generatedHeaders)android\;
-        $(generatedHeaders)android\internal\;
-        %(AdditionalIncludeDirectories)
+        $(opensslGeneratedHeaders)internal\
       </AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
