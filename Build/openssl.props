@@ -5,6 +5,13 @@
     <platformType Condition="'$(ApplicationType)' == ''">Win32</platformType>
   </PropertyGroup>  
   <PropertyGroup>
+    <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
+  </PropertyGroup>
+  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile)) AND '$(HCSettingsImported)' != 'true'" />
+  <PropertyGroup>
+    <HCSettingsImported>true</HCSettingsImported>
+  </PropertyGroup>   
+  <PropertyGroup>
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
     <opensslSourceRoot>$(BuildRoot)External\openssl\</opensslSourceRoot>
     <generatedHeaders>$(BuildRoot)External\generatedHeaders\</generatedHeaders>

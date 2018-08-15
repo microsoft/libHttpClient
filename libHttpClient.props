@@ -7,8 +7,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango'">
     <HCLibPlatformType>Win32</HCLibPlatformType>  
-    <libHttpClientDefine>HC_WIN32_API</libHttpClientDefine>
-    <useWsppWebsockets>true</useWsppWebsockets>
+    <libHttpClientDefine Condition="'$(libHttpClientDefine)' == ''">HC_WIN32_API</libHttpClientDefine>
+    <useWsppWebsockets Condition="'$(useWsppWebsockets)' == ''">true</useWsppWebsockets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">
     <HCLibPlatformType>XDK</HCLibPlatformType>
@@ -38,8 +38,11 @@
   <!--Import hc_settings file after defining props so that they can be overriden-->
   <PropertyGroup>      
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
-  </PropertyGroup> 
-  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
+  </PropertyGroup>
+  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile)) AND '$(HCSettingsImported)' != 'true'" />
+  <PropertyGroup>
+    <HCSettingsImported>true</HCSettingsImported>
+  </PropertyGroup>
   
   <PropertyGroup>      
     <libHttpClientInclude>$(libHttpClientRoot)include\</libHttpClientInclude>        
@@ -47,7 +50,7 @@
     <libHttpClientPathBuildMachine>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPathBuildMachine>
     <libHttpClientLibName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C.lib</libHttpClientLibName>
   </PropertyGroup>
-   
+    
   <Import Project="$(libHttpClientRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)' == 'true'"/>
   <ItemDefinitionGroup Label="ImportLibHttpClient" Condition="!('$(SkipLibHttpClientImport)' == 'true')">
     <ClCompile>
