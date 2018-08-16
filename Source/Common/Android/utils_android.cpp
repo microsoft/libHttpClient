@@ -6,6 +6,9 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+// TODO this code needs reworking as it does not quite do the right thing at the moment
+std::atomic<JavaVM*> JVM{ nullptr };
+
 static void abort_if_no_jvm()
 {
     if (JVM == nullptr)
