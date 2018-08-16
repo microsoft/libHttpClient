@@ -66,6 +66,13 @@ If you already cloned the repo, you can initialize submodules with:
 
 Note that using GitHub's feature to "Download Zip" does not contain the submodules and will not properly build.  Please clone recursively instead.
 
+## How to build
+
+If you are building libHttpClient from the xcode project, run the config script first.
+
+    ./Utilities/configureApple
+    
+
 ## Contribute Back!
 
 Is there a feature missing that you'd like to see, or have you found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](../../issues).  
