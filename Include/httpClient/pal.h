@@ -58,7 +58,12 @@
 #define E_NOT_SUFFICIENT_BUFFER          __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) // 0x8007007A
 #endif
 
-#else 
+#else
+
+#ifndef HC_ANDROID_API
+#define HC_ANDROID_API (HC_PLATFORM == HC_PLATFORM_ANDROID)
+#endif
+
 // not _WIN32
 typedef int32_t HRESULT;
 

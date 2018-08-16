@@ -1,42 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.props))\libHttpClient.props" />
+  <Import Project="libHttpClient.paths.props"/>
   <PropertyGroup Label="LibHttpClientLibProps">
-    <SkipLibHttpClientImport>true</SkipLibHttpClientImport>
     <IsUnitTestProj Condition="$(ProjectName.Contains('UnitTest'))">true</IsUnitTestProj>
   </PropertyGroup>
   <PropertyGroup Label="LibHttpClientUnitTestProps" Condition="'$(IsUnitTestProj)' == 'true'">
     <libHttpClientDefine>HC_UNITTEST_API</libHttpClientDefine>
-    <useWsppWebsockets>false</useWsppWebsockets>
   </PropertyGroup>
-    
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.props))\libHttpClient.props" />
-  <Import Project="libHttpClient.paths.props"/>    
   <ItemDefinitionGroup Label="LibHttpClientLibItemDefinition">
     <ClCompile>
       <PreprocessorDefinitions>
         $(libHttpClientDefine);
-        HC_API_NONE;
         %(PreprocessorDefinitions)
       </PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
-        $(ProjectDir);
-        $(libHttpClientInclude);
         $(libHttpClientInclude)httpClient;
-        $(libHttpClientRoot)Source\Common;
-        $(libHttpClientRoot)Source\Logger;
-        $(libHttpClientRoot)Source\Websocket;
+        $(HCBuildRoot)Source\Common;
+        $(HCBuildRoot)Source\Logger;
+        $(HCBuildRoot)Source\WebSocket;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(useWsppWebsockets)' == 'true'">
-        $(libHttpClientRoot)External\asio\asio\include;
-        $(libHttpClientRoot)External\websocketpp;
+        $(HCBuildRoot)External\asio\asio\include;
+        $(HCBuildRoot)External\websocketpp;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
         <AdditionalIncludeDirectories Condition="'$(IsUnitTestProj)' == 'true'">
-        $(libHttpClientRoot)Tests\UnitTests\Support;
-        $(libHttpClientRoot)Tests\UnitTests;
+        $(HCBuildRoot)Tests\UnitTests\Support;
+        $(HCBuildRoot)Tests\UnitTests;
         %(AdditionalIncludeDirectories)
         </AdditionalIncludeDirectories>
     </ClCompile>
-  </ItemDefinitionGroup>   
+  </ItemDefinitionGroup>
 </Project>

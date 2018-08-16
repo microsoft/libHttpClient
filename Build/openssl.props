@@ -1,35 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--Project
+    ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+    InitialTargets="SSLBuildDebug"
+-->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup Label="PlatformType">
-    <platformType Condition="'$(ApplicationType)' == 'Android'">Android</platformType>
-    <platformType Condition="'$(ApplicationType)' == ''">Win32</platformType>
-  </PropertyGroup>  
   <PropertyGroup>
-    <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
+    <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
+    <libcryptoName>libcrypto.$(HCLibPlatformType)</libcryptoName>
+    <libsslName>libssl.$(HCLibPlatformType)</libsslName>
+    <opensslSourceRoot>$(HCBuildRoot)External\openssl\</opensslSourceRoot>
+    <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\$(HCLibPlatformType)\</opensslGeneratedHeaders>
   </PropertyGroup>
-  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile)) AND '$(HCSettingsImported)' != 'true'" />
-  <PropertyGroup>
-    <HCSettingsImported>true</HCSettingsImported>
-  </PropertyGroup>   
-  <PropertyGroup>
-    <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
-    <opensslSourceRoot>$(BuildRoot)External\openssl\</opensslSourceRoot>
-    <generatedHeaders>$(BuildRoot)External\generatedHeaders\</generatedHeaders>
-    <libcryptoName>libcrypto.$(platformType)</libcryptoName>
-    <libsslName>libssl.$(platformType)</libsslName>
-    <opensslOutdir>$(libHttpClientOutDir)</opensslOutdir>
-    <opensslOutdir Condition="'$(opensslOutdir)' == ''">$(BuildRoot)</opensslOutdir>     
-    <libcryptoPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libcryptoName)\</libcryptoPath>
-    <libsslPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libsslName)\</libsslPath>
-  </PropertyGroup>
-  <ItemDefinitionGroup Label="ImportOpenSSL" Condition="'$(ProjectName)' != 'libcrypto' AND '$(ProjectName)' != 'libssl'">
+
+  <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary'">
+    <ProjectReference Include="$(HCBuildRoot)Build\$(libsslName)\$(libsslName).vcxproj">
+        <ProjectId Condition="'$(HCLibPlatformType)' == 'Android'">{51b9c654-fbc9-4224-8751-d7d0c05b7bc9}</ProjectId>
+        <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</ProjectId>
+    </ProjectReference>
+    <ProjectReference Include="$(HCBuildRoot)Build\$(libcryptoName)\$(libcryptoName).vcxproj">
+        <ProjectId Condition="'$(HCLibPlatformType)' == 'Android'">{315bc43e-e422-4d47-a2dc-300a334a3497}</ProjectId>
+        <ProjectId Condition="'$(HCLibPlatformType)' == 'Win32'">{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}</ProjectId>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(generatedHeaders)$(HCLibPlatformType)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(opensslGeneratedHeaders)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(platformType)' == 'Win32'">%(AdditionalDependencies);Crypt32.lib;$(libsslName).lib;$(libcryptoName).lib</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(platformType)' == 'Android'">%(AdditionalDependencies);$(libsslName).a;$(libcryptoName).a</AdditionalDependencies>  
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(libcryptoPath);$(libsslPath)</AdditionalLibraryDirectories>
-    </Link>      
+      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);Crypt32.lib</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
+
+  <Target Name="SSLBuildDebug">
+    <PropertyGroup>
+      <!-- Useful constants -->
+      <Dir>$([System.IO.Path]::DirectorySeparatorChar)</Dir>
+      <N>%0D%0A</N>
+      <T>%09</T>
+    </PropertyGroup>
+
+    <Message Importance="High" Text="SSLBuildDebug" />
+    <Message Importance="High" Text="    ProjectName                  = '$(ProjectName)'" />
+    <Message Importance="High" Text="    Configuration                = '$(Configuration)'" />
+    <Message Importance="High" Text="    Platform                     = '$(Platform)'" />
+    <Message Importance="High" Text="    ConfigurationType            = '$(ConfigurationType)'" />
+    <Message Importance="High" Text="    HCLibPlatformType            = '$(HCLibPlatformType)'" />
+    <Message Importance="High" Text=" " />
+    <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
+    <Message Importance="High" Text="    XES_OUTDIR                   = '$(XES_OUTDIR)'" />
+    <Message Importance="High" Text=" " />
+    <Message Importance="High" Text="    HCBuildRoot                  = '$(HCBuildRoot)'" />
+    <Message Importance="High" Text=" " />
+    <!--Message Importance="High" Text="  ClCompile$(N)    Identity = '%(ClCompile.Identity)'$(N)    AdditionalIncludeDirectories = '%(ClCompile.AdditionalIncludeDirectories)'$(N)    AdditionalDependencies = '%(ClCompile.AdditionalDependencies)'$(N)" /-->
+  </Target>
 </Project>

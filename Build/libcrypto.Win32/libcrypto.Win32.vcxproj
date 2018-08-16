@@ -27,7 +27,7 @@
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <LinkIncremental>true</LinkIncremental>
-    <ProjectName>libcrypto.Win32</ProjectName>
+    <HCLibPlatformType>Win32</HCLibPlatformType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
@@ -50,13 +50,11 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
         $(opensslSourceRoot);
         $(opensslSourceRoot)crypto\include\;
         $(opensslSourceRoot)crypto\modes\;
-        $(opensslSourceRoot)include\;
-        $(generatedHeaders)win32\;
-        $(generatedHeaders)win32\internal\;
-        %(AdditionalIncludeDirectories)
+        $(opensslGeneratedHeaders)internal\
       </AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
       <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164;4244;4267</DisableSpecificWarnings>
