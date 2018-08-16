@@ -10,8 +10,6 @@
     <libsslName>libssl.$(HCLibPlatformType)</libsslName>
     <opensslSourceRoot>$(HCBuildRoot)External\openssl\</opensslSourceRoot>
     <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\$(HCLibPlatformType)\</opensslGeneratedHeaders>
-    <doref>lol nope</doref>
-    <doref Condition="'$(ConfigurationType)'!='StaticLibrary'">true</doref>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary'">
@@ -47,7 +45,6 @@
     <Message Importance="High" Text="    Configuration                = '$(Configuration)'" />
     <Message Importance="High" Text="    Platform                     = '$(Platform)'" />
     <Message Importance="High" Text="    ConfigurationType            = '$(ConfigurationType)'" />
-    <Message Importance="High" Text="        doref                    = '$(doref)'" />
     <Message Importance="High" Text="    HCLibPlatformType            = '$(HCLibPlatformType)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
