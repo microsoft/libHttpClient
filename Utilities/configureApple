@@ -1,0 +1,4 @@
+#!/bin/bash
+#Run this script to configure libHttpClient for apple devices
+
+(cd External/openssl && ./config && make)
