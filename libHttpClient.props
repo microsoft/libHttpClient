@@ -27,7 +27,7 @@
     <HCLibToolset>140</HCLibToolset>
   </PropertyGroup>
   <PropertyGroup Condition="$(PlatformToolset.Contains('Clang'))">
-    <HCLibToolset>140</HCLibToolset>
+    <HCLibToolset>141</HCLibToolset>
   </PropertyGroup>
 
   <PropertyGroup>      

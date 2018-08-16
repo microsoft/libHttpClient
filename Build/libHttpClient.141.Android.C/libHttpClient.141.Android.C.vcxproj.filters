@@ -67,12 +67,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
-      <Filter>C++ Source\WebSocket\Websocketpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Common\Android\utils_android.cpp">
-      <Filter>C++ Source\Common\Android</Filter>
-    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h">
@@ -162,12 +158,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
-      <Filter>C++ Source\WebSocket\Websocketpp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Common\Android\utils_android.h">
-      <Filter>C++ Source\Common\Android</Filter>
-    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">

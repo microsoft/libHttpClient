@@ -3,6 +3,8 @@
   <PropertyGroup Label="PlatformType">
     <platformType Condition="'$(ApplicationType)' == 'Android'">Android</platformType>
     <platformType Condition="'$(ApplicationType)' == ''">Win32</platformType>
+    <opensslToolset Condition="'$(PlatformToolset)' == 'v140'">140</opensslToolset>
+    <opensslToolset Condition="'$(PlatformToolset)' == 'v141'">141</opensslToolset>
   </PropertyGroup>  
   <PropertyGroup>
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
@@ -15,8 +17,8 @@
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</BuildRoot>
     <opensslSourceRoot>$(BuildRoot)External\openssl\</opensslSourceRoot>
     <generatedHeaders>$(BuildRoot)External\generatedHeaders\</generatedHeaders>
-    <libcryptoName>libcrypto.$(platformType)</libcryptoName>
-    <libsslName>libssl.$(platformType)</libsslName>
+    <libcryptoName>libcrypto.$(opensslToolset).$(platformType)</libcryptoName>
+    <libsslName>libssl.$(opensslToolset).$(platformType)</libsslName>
     <opensslOutdir>$(libHttpClientOutDir)</opensslOutdir>
     <opensslOutdir Condition="'$(opensslOutdir)' == ''">$(BuildRoot)</opensslOutdir>     
     <libcryptoPath>$(opensslOutdir)Binaries\$(Configuration)\$(Platform)\$(libcryptoName)\</libcryptoPath>
