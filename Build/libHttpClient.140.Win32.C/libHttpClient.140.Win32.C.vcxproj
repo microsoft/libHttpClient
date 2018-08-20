@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -153,12 +153,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libcrypto.140.Win32\libcrypto.140.Win32.vcxproj">
-      <Project>{23267e56-66d8-4c44-9a36-63b311d76370}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\libssl.140.Win32\libssl.140.Win32.vcxproj">
-      <Project>{362e6095-e83f-48fd-b64a-78f454d748f2}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
