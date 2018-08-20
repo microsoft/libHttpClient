@@ -42,6 +42,7 @@
     <ApplicationTypeRevision>3.0</ApplicationTypeRevision>
     <AndroidAPILevel>android-19</AndroidAPILevel>
     <ProjectName>libssl.141.Android</ProjectName>
+    <HCLibPlatformType>Android</HCLibPlatformType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup>
@@ -65,13 +66,11 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
         $(opensslSourceRoot);
         $(opensslSourceRoot)ssl\record\;
         $(opensslSourceRoot)ssl\statem\;
-        $(opensslSourceRoot)include\;
-        $(generatedHeaders)win32\;
-        $(generatedHeaders)win32\internal\;
-        %(AdditionalIncludeDirectories)
+        $(opensslGeneratedHeaders)internal\
       </AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>

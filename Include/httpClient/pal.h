@@ -58,7 +58,12 @@
 #define E_NOT_SUFFICIENT_BUFFER          __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) // 0x8007007A
 #endif
 
-#else 
+#else
+
+#ifndef HC_ANDROID_API
+#define HC_ANDROID_API (HC_PLATFORM == HC_PLATFORM_ANDROID)
+#endif
+
 // not _WIN32
 typedef int32_t HRESULT;
 
@@ -104,26 +109,52 @@ typedef void* HANDLE;
 #define MAKE_SCODE(sev,fac,code) \
         ((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 
-#define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
+#define FACILITY_WIN32                   7
+#define FACILITY_INTERNET                12
+#define FACILITY_HTTP                    25
 
-#define S_OK                             ((HRESULT)0L)
-#define E_NOTIMPL                        _HRESULTYPEDEF_(0x80004001L)
-#define E_OUTOFMEMORY                    _HRESULTYPEDEF_(0x8007000EL)
-#define E_INVALIDARG                     _HRESULTYPEDEF_(0x80070057L)
-#define E_ABORT                          _HRESULTYPEDEF_(0x80004004L)
-#define E_FAIL                           _HRESULTYPEDEF_(0x80004005L)
-#define E_ACCESSDENIED                   _HRESULTYPEDEF_(0x80070005L)
-#define E_PENDING                        _HRESULTYPEDEF_(0x8000000AL)
-#define E_UNEXPECTED                     _HRESULTYPEDEF_(0x8000FFFFL)
-#define E_POINTER                        _HRESULTYPEDEF_(0x80004003L)
-#define E_TIME_CRITICAL_THREAD           _HRESULTYPEDEF_(0x800701A0L)
-#define E_NOT_SUPPORTED                  _HRESULTYPEDEF_(0x80070032L)
-#define E_NOT_SUFFICIENT_BUFFER          _HRESULTYPEDEF_(0x8007007AL)
+#define _HRESULT_TYPEDEF_(_sc) ((HRESULT)_sc)
+#define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
+#define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? ((HRESULT)(x)) : ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
+
+#define S_OK                                    ((HRESULT)0L)
+#define E_NOTIMPL                               _HRESULTYPEDEF_(0x80004001L)
+#define E_OUTOFMEMORY                           _HRESULTYPEDEF_(0x8007000EL)
+#define E_INVALIDARG                            _HRESULTYPEDEF_(0x80070057L)
+#define E_ABORT                                 _HRESULTYPEDEF_(0x80004004L)
+#define E_FAIL                                  _HRESULTYPEDEF_(0x80004005L)
+#define E_ACCESSDENIED                          _HRESULTYPEDEF_(0x80070005L)
+#define E_PENDING                               _HRESULTYPEDEF_(0x8000000AL)
+#define E_UNEXPECTED                            _HRESULTYPEDEF_(0x8000FFFFL)
+#define E_POINTER                               _HRESULTYPEDEF_(0x80004003L)
+#define E_TIME_CRITICAL_THREAD                  _HRESULTYPEDEF_(0x800701A0L)
+#define E_NOT_SUPPORTED                         _HRESULTYPEDEF_(0x80070032L)
+#define E_NOT_SUFFICIENT_BUFFER                 _HRESULTYPEDEF_(0x8007007AL)
+#define E_NOINTERFACE                           _HRESULTYPEDEF_(0x80004002L)
+#define E_BOUNDS                                _HRESULTYPEDEF_(0x8000000BL)
+#define HTTP_E_STATUS_GATEWAY_TIMEOUT           _HRESULTYPEDEF_(0x801901F8L)
+#define HTTP_E_STATUS_NOT_FOUND                 _HRESULTYPEDEF_(0x80190194L)
+#define HTTP_E_STATUS_PRECOND_FAILED            _HRESULTYPEDEF_(0x8019019CL)
+#define HTTP_E_STATUS_REQUEST_TIMEOUT           _HRESULTYPEDEF_(0x80190198L)
+#define HTTP_E_STATUS_SERVICE_UNAVAIL           _HRESULTYPEDEF_(0x801901F7L)
+#define HTTP_E_STATUS_UNEXPECTED                _HRESULTYPEDEF_(0x80190001L)
+#define HTTP_E_STATUS_UNEXPECTED_SERVER_ERROR   _HRESULTYPEDEF_(0x80190005L)
+#define ONL_E_ACTION_REQUIRED                   _HRESULTYPEDEF_(0x8086000CL)
+#define WEB_E_INVALID_JSON_STRING               _HRESULTYPEDEF_(0x83750007L)
+#define WEB_E_UNEXPECTED_CONTENT                _HRESULTYPEDEF_(0x83750005L)
+
+#define ERROR_ARITHMETIC_OVERFLOW               534L
+#define ERROR_BAD_CONFIGURATION                 1610L
+#define ERROR_BAD_LENGTH                        24L
+#define ERROR_CANCELLED                         1223L
+#define ERROR_NO_SUCH_USER                      1317L
 
 typedef struct _LIST_ENTRY {
     struct _LIST_ENTRY  *Flink;
     struct _LIST_ENTRY  *Blink;
 } LIST_ENTRY, *PLIST_ENTRY;
+
+#define ZeroMemory(Destination,Length) memset((Destination),0,(Length))
 
 //
 // Calculate the address of the base of the structure given its type, and an
@@ -239,6 +270,10 @@ typedef struct _LIST_ENTRY {
 
 #ifndef _Outptr_
 #define _Outptr_ 
+#endif
+
+#ifndef _Outptr_result_maybenull_
+#define _Outptr_result_maybenull_
 #endif
 
 #ifndef _Outptr_result_bytebuffer_maybenull_

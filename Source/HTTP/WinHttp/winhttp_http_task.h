@@ -73,6 +73,8 @@ private:
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
 
+    void complete_async(_In_ HRESULT result);
+
     void get_proxy_name(
         _Out_ DWORD* pAccessType,
         _Out_ const wchar_t** pwProxyName
