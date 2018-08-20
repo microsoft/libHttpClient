@@ -43,6 +43,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
+
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3092CCC9-DB6E-4199-95CC-4959950B95FA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -240,6 +241,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
+  </ItemGroup>
+  <ItemGroup>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

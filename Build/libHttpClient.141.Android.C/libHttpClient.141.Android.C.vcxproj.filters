@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.cpp">
+      <Filter>C++ Source\Common\Android</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
       <Filter>C++ Source\Common</Filter>
     </ClCompile>
@@ -64,17 +67,17 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer_cpp.cpp">
       <Filter>C++ Source\Task\Android</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
+      <Filter>C++ Source\WebSocket\Android</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
-      <Filter>C++ Source\WebSocket\Websocketpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Common\Android\utils_android.cpp">
-      <Filter>C++ Source\Common\Android</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.h">
+      <Filter>C++ Source\Common\Android</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
@@ -132,6 +135,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer.h">
       <Filter>C++ Source\Task</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
+      <Filter>C++ Source\WebSocket\Android</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
       <Filter>C++ Source\WebSocket</Filter>
     </ClInclude>
@@ -162,55 +168,49 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
-      <Filter>C++ Source\WebSocket\Websocketpp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Common\Android\utils_android.h">
-      <Filter>C++ Source\Common\Android</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{3BF546C7-965A-3A1D-BEBA-D3190F1FF9AF}</UniqueIdentifier>
+      <UniqueIdentifier>{85E51936-22C2-3583-86D9-B638217D0C7A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{764C3192-BC27-33B8-98B9-E20B5F425C05}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{7DD2F0D0-7383-38BC-AA17-E85065313474}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{B58793F0-BC35-3331-B13F-2EE2605081EA}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\HTTP\Android">
-      <UniqueIdentifier>{F91DE522-DBB6-367C-8F80-67AD431AA28A}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{71783E7D-3C5B-300D-A046-A57EBA6D8B10}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Logger\Android">
-      <UniqueIdentifier>{F580C1CD-2E97-35AC-88BC-73254C68612F}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{C15CE35A-55F1-3429-A1DF-77F39D9BF1B9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{DEE62B2B-E1B2-31CF-926E-4B6C5925528C}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Task\Android">
-      <UniqueIdentifier>{65AF722F-8DEC-3295-BBEC-6DA446FAFAC2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{814945C5-8A18-3D47-B523-34C0DB471BCE}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{E8E4ABAA-BEA5-328F-B713-A5BDDA6DF86F}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\WebSocket\Websocketpp">
-      <UniqueIdentifier>{154bf37e-9957-4bb8-939a-0c012becf329}</UniqueIdentifier>
+      <UniqueIdentifier>{1E82CF86-C9E8-3B21-9CBF-0A0B6AE61DD8}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common\Android">
-      <UniqueIdentifier>{19520915-142e-4d1f-9e39-eeffa6aa9ae2}</UniqueIdentifier>
+      <UniqueIdentifier>{4E898E7A-4EC1-31B7-8767-25EA1D6FA1B4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Global">
+      <UniqueIdentifier>{8C35B4A2-1B9F-3D62-96D0-FFB233AA19A7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP">
+      <UniqueIdentifier>{026C4B3F-3D4C-3E71-B451-12966F95AE4D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\Android">
+      <UniqueIdentifier>{DFBB5D55-D11E-3479-84FE-A9F6F7D3957C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Logger">
+      <UniqueIdentifier>{0D1FDFAD-B8A7-34A7-8F11-FE3E25DA758B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Logger\Android">
+      <UniqueIdentifier>{9349A526-8102-38D9-BC2E-81B8D226CF3D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Mock">
+      <UniqueIdentifier>{CB4C32A4-0AD9-3DE2-95C4-D3A23BAEFF0D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Task">
+      <UniqueIdentifier>{EE1B1BF8-2B09-3303-86B3-BDC10C34DA2F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Task\Android">
+      <UniqueIdentifier>{3A624990-0986-32DA-BE8A-7B6E2C6E144F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\WebSocket">
+      <UniqueIdentifier>{CE3116D1-0464-39B1-9ED6-5005959BB3CC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\WebSocket\Android">
+      <UniqueIdentifier>{244453B1-9536-3723-AE2A-16C5901EE428}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Public Includes">
+      <UniqueIdentifier>{C2C20477-FEDD-3905-AF5B-08FA4AE915C8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

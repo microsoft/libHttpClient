@@ -152,5 +152,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
   </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
