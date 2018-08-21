@@ -39,7 +39,6 @@ int main()
         &queue);
 
     std::string url = "wss://echo.websocket.org";
-    
 
     hc_websocket_handle_t websocket;
     HRESULT hr = HCWebSocketCreate(&websocket);
@@ -69,12 +68,16 @@ int main()
         HCGetWebSocketSendMessageResult(asyncBlock, &result);
 
         printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+        SetEvent(g_eventHandle);
         delete asyncBlock;
     };
 
     std::string requestString = "This message should be echoed!";
     printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", requestString.data());
     hr = HCWebSocketSendMessageAsync(websocket, requestString.data(), asyncBlock);
+    
+    // Wait for send to complete sucessfully and then wait again for response to be received.
+    WaitForSingleObject(g_eventHandle, INFINITE);
     WaitForSingleObject(g_eventHandle, INFINITE);
 
     printf_s("Calling HCWebSocketDisconnect...\n");
