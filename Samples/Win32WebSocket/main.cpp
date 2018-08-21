@@ -73,7 +73,7 @@ int main()
     };
 
     std::string requestString = "This message should be echoed!";
-    printf_s("Calling HCWebSocketSend and waiting for response...\n");
+    printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", requestString.data());
     hr = HCWebSocketSendMessageAsync(websocket, requestString.data(), asyncBlock);
     WaitForSingleObject(g_eventHandle, INFINITE);
 
