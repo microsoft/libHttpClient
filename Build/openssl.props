@@ -8,7 +8,7 @@
     <opensslToolset Condition="'$(PlatformToolset)' == 'v140'">140</opensslToolset>
     <opensslToolset Condition="'$(PlatformToolset)' == 'v141'">141</opensslToolset>
     <opensslToolset Condition="'$(HCLibPlatformType)' == 'Android'">141</opensslToolset>
-  </PropertyGroup>  
+  </PropertyGroup>
   <PropertyGroup>
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
     <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
@@ -20,7 +20,7 @@
   <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile)) AND '$(HCSettingsImported)' != 'true'" />
   <PropertyGroup>
     <HCSettingsImported>true</HCSettingsImported>
-  </PropertyGroup>   
+  </PropertyGroup>
 
   <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary'">
     <ProjectReference Include="$(HCBuildRoot)Build\$(libsslName)\$(libsslName).vcxproj">
@@ -56,6 +56,7 @@
     <Message Importance="High" Text="    ProjectName                  = '$(ProjectName)'" />
     <Message Importance="High" Text="    Configuration                = '$(Configuration)'" />
     <Message Importance="High" Text="    Platform                     = '$(Platform)'" />
+    <Message Importance="High" Text="    PlatformToolset              = '$(PlatformToolset)'" />
     <Message Importance="High" Text="    ConfigurationType            = '$(ConfigurationType)'" />
     <Message Importance="High" Text="    HCLibPlatformType            = '$(HCLibPlatformType)'" />
     <Message Importance="High" Text=" " />
@@ -63,6 +64,7 @@
     <Message Importance="High" Text="    XES_OUTDIR                   = '$(XES_OUTDIR)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    HCBuildRoot                  = '$(HCBuildRoot)'" />
+    <Message Importance="High" Text="    opensslToolset               = '$(opensslToolset)'" />
     <Message Importance="High" Text=" " />
     <!--Message Importance="High" Text="  ClCompile$(N)    Identity = '%(ClCompile.Identity)'$(N)    AdditionalIncludeDirectories = '%(ClCompile.AdditionalIncludeDirectories)'$(N)    AdditionalDependencies = '%(ClCompile.AdditionalDependencies)'$(N)" /-->
   </Target>
