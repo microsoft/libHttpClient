@@ -297,7 +297,7 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(asyncBlock, &result);
+        HCGetWebSocketSendMessageResult(asyncBlock, &result);
 
         g_MainPage->LogToUI(format_string("HCWebSocketSendMessage complete: %d, %d", result.errorCode, result.platformErrorCode));
         delete asyncBlock;
