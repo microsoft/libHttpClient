@@ -60,8 +60,8 @@
 
 #else
 
-#ifndef HC_ANDROID_API
-#define HC_ANDROID_API (HC_PLATFORM == HC_PLATFORM_ANDROID)
+#if !defined(HC_ANDROID_API) && HC_PLATFORM == HC_PLATFORM_ANDROID
+#define HC_ANDROID_API
 #endif
 
 // not _WIN32
