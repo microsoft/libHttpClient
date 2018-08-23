@@ -144,7 +144,7 @@ public:
                 // See http://www.openssl.org/support/faq.html#PROG13
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
-#ifdef HC_ANDROID_API
+#if HC_ANDROID_API
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"     
                 ERR_remove_thread_state(nullptr);
@@ -401,11 +401,11 @@ private:
             {
                 auto context = shared_ptr_cache::fetch<connect_context>(async->context);
 
-#if defined(HC_ANDROID_API)
+#if HC_ANDROID_API
                 get_jvm_env();
 #endif
                 context->client.run();
-#if defined(HC_ANDROID_API)
+#if HC_ANDROID_API
                 JVM.load()->DetachCurrentThread();
 #endif
 
@@ -413,7 +413,7 @@ private:
                 // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                 // at all and will be reported as leaks.
                 // See http://www.openssl.org/support/faq.html#PROG13
-#ifdef HC_ANDROID_API
+#if HC_ANDROID_API
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"     
                 ERR_remove_thread_state(nullptr);

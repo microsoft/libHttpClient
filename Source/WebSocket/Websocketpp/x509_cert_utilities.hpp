@@ -26,7 +26,7 @@
 
 #include <vector>
 
-#if defined(HC_ANDROID_API)
+#if HC_ANDROID_API
 #include <jni.h>
 #include "Android/utils_android.h"
 #endif
@@ -102,7 +102,7 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
     return verify_result;
 }
 
-#if defined(HC_ANDROID_API)
+#if HC_ANDROID_API
 /// <summary>
 /// Helper function to check return value and see if any exceptions
 /// occurred when calling a JNI function.
