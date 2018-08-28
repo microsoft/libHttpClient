@@ -47,7 +47,12 @@
 		7DB100D1211927DF00AE22F5 /* uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E98F209ADEB100CC6774 /* uri.cpp */; };
 		7DB100D2211927DF00AE22F5 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E987209ADEB100CC6774 /* utils.cpp */; };
 		7DB100DE2119F91B00AE22F5 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
-		9C86ED0F212DD85B007D0B54 /* ios_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C86ED0E212DD85B007D0B54 /* ios_websocket.cpp */; };
+		9C3B253A212F25C90080AEC6 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C3B2538212F25C90080AEC6 /* libcrypto.a */; };
+		9C3B253B212F25C90080AEC6 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C3B2539212F25C90080AEC6 /* libssl.a */; };
+		9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
+		9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
+		9C3B2542212F29CF0080AEC6 /* x509_cert_utilities.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */; };
+		9C3B2543212F29CF0080AEC6 /* x509_cert_utilities.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */; };
 		A5304E1F20C0AC2C000667A3 /* ios_timer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E1E20C0AC2C000667A3 /* ios_timer.mm */; };
 		A5304E2320C0C169000667A3 /* ios_timer_target.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E2120C0C169000667A3 /* ios_timer_target.mm */; };
 /* End PBXBuildFile section */
@@ -110,7 +115,11 @@
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* liblibHttpClient_Macos.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblibHttpClient_Macos.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		7DB100DA2119383400AE22F5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		9C86ED0E212DD85B007D0B54 /* ios_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_websocket.cpp; sourceTree = "<group>"; };
+		9C3B2535212F238F0080AEC6 /* libopenssl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libopenssl.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		9C3B2538212F25C90080AEC6 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../External/generatedHeaders/iOS/lib/libcrypto.a; sourceTree = "<group>"; };
+		9C3B2539212F25C90080AEC6 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../External/generatedHeaders/iOS/lib/libssl.a; sourceTree = "<group>"; };
+		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
+		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
 		9CD2D90221249497009C60EC /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../External/openssl/libcrypto.a; sourceTree = "<group>"; };
 		9CD2D90321249497009C60EC /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../External/openssl/libssl.a; sourceTree = "<group>"; };
 		A529DDBC20A4C88F00D50640 /* http_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_ios.h; sourceTree = "<group>"; };
@@ -125,6 +134,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9C3B253A212F25C90080AEC6 /* libcrypto.a in Frameworks */,
+				9C3B253B212F25C90080AEC6 /* libssl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -183,7 +194,7 @@
 		58A7E972209ADEB100CC6774 /* WebSocket */ = {
 			isa = PBXGroup;
 			children = (
-				9C86ED0D212DD85B007D0B54 /* iOS */,
+				9C3B253D212F29CF0080AEC6 /* Websocketpp */,
 				58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */,
 				58A7E975209ADEB100CC6774 /* hcwebsocket.h */,
 			);
@@ -330,6 +341,9 @@
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9C3B2538212F25C90080AEC6 /* libcrypto.a */,
+				9C3B2539212F25C90080AEC6 /* libssl.a */,
+				9C3B2535212F238F0080AEC6 /* libopenssl.a */,
 				9CD2D90221249497009C60EC /* libcrypto.a */,
 				9CD2D90321249497009C60EC /* libssl.a */,
 				7DB100DA2119383400AE22F5 /* Foundation.framework */,
@@ -337,12 +351,13 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		9C86ED0D212DD85B007D0B54 /* iOS */ = {
+		9C3B253D212F29CF0080AEC6 /* Websocketpp */ = {
 			isa = PBXGroup;
 			children = (
-				9C86ED0E212DD85B007D0B54 /* ios_websocket.cpp */,
+				9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */,
+				9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */,
 			);
-			path = iOS;
+			path = Websocketpp;
 			sourceTree = "<group>";
 		};
 		A5304E1D20C0AC10000667A3 /* iOS */ = {
@@ -362,6 +377,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9C3B2542212F29CF0080AEC6 /* x509_cert_utilities.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -369,6 +385,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9C3B2543212F29CF0080AEC6 /* x509_cert_utilities.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,6 +396,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient" */;
 			buildPhases = (
+				9C3B2537212F25AB0080AEC6 /* ShellScript */,
 				58722D0A209AD61900B071F7 /* Sources */,
 				58722D0B209AD61900B071F7 /* Frameworks */,
 				58722D0C209AD61900B071F7 /* Headers */,
@@ -443,6 +461,22 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		9C3B2537212F25AB0080AEC6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set | grep ARCH\nset -x\n\nOPENSSL_SRC=\"$SRCROOT/../../External/openssl\"\nOPENSSL_TMP=\"$OPENSSL_SRC/tmp\"\nLIB_OUTPUT=\"$SRCROOT/../../External/generatedHeaders/iOS\"\n\nmkdir -p \"$OPENSSL_TMP\"\nmkdir -p \"$LIB_OUTPUT/lib\"\nmkdir -p \"$LIB_OUTPUT/include\"\n\n# check whether libcrypto.a already exists - we'll only build if it does not\nif [ -f  \"$LIB_OUTPUT/lib/libcrypto.a\" ]; then\necho \"***** Using previously-built libary $TARGET_BUILD_DIR/libcrypto.a - skipping build *****\"\necho \"***** To force a rebuild clean project and clean dependencies *****\"\nexit 0;\nelse\necho \"***** No previously-built libary present at $TARGET_BUILD_DIR/libcrypto.a - performing build *****\"\nfi\n\n# figure out the right set of build architectures for this run\nBUILDARCHS=\"$ARCHS\"\n\necho \"***** creating universal binary for architectures: $BUILDARCHS *****\"\n\nif [ \"$SDKROOT\" != \"\" ]; then\nISYSROOT=\"-isysroot $SDKROOT\"\nfi\n\ncd $OPENSSL_SRC\nfor BUILDARCH in $BUILDARCHS\ndo\necho \"***** BUILDING UNIVERSAL ARCH $BUILDARCH ******\"\nmake clean\n\nif [ \"$BUILDARCH\" == \"x86_64\" ]; then\n./Configure darwin64-x86_64-cc --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nelif [ \"$BUILDARCH\" == \"i386\"]; then\n./Configure darwin-386-cc --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nelif [ \"$BUILDARCH\" == \"arm64\"]; then\nexport CC=clang;\nexport CROSS_TOP=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer\nexport CROSS_SDK=iPhoneOS.sdk\nexport PATH=\"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH\"\n\n./Configure ios64-cross --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nelse\nexport CC=clang;\nexport CROSS_TOP=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer\nexport CROSS_SDK=iPhoneOS.sdk\nexport PATH=\"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH\"\n\n./Configure ios-cross --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nfi\n\n# installs openssl for this flavor\nmake install\n\necho \"***** renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a *****\"\ncp \"$OPENSSL_TMP\"/lib/libcrypto.a \"$CONFIGURATION_TEMP_DIR\"/$BUILDARCH-libcrypto.a\ncp \"$OPENSSL_TMP\"/lib/libssl.a \"$CONFIGURATION_TEMP_DIR\"/$BUILDARCH-libssl.a\ndone\n\n# combines each flavor's library into one universal library\n\necho \"***** creating universallibraries in $TARGET_BUILD_DIR *****\"\nmkdir -p \"$TARGET_BUILD_DIR\"\nlipo -create \"$CONFIGURATION_TEMP_DIR/\"*-libcrypto.a -output \"$LIB_OUTPUT/lib/libcrypto.a\"\nlipo -create \"$CONFIGURATION_TEMP_DIR/\"*-libssl.a -output \"$LIB_OUTPUT/lib/libssl.a\"\ncp -r \"$OPENSSL_TMP/include/\"* \"$LIB_OUTPUT/include/\"\n\necho \"***** executing ranlib on libraries in $TARGET_BUILD_DIR *****\"\nranlib \"$LIB_OUTPUT/lib/libcrypto.a\"\nranlib \"$LIB_OUTPUT/lib/libssl.a\"\n\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		58722D0A209AD61900B071F7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -459,8 +493,8 @@
 				58A7E9C5209ADEB100CC6774 /* mock.cpp in Sources */,
 				58A7E9D4209ADEB100CC6774 /* httpcall_response.cpp in Sources */,
 				58A7E9E6209ADEB100CC6774 /* CriticalThread.cpp in Sources */,
+				9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				58A7E9D5209ADEB100CC6774 /* http_ios.mm in Sources */,
-				9C86ED0F212DD85B007D0B54 /* ios_websocket.cpp in Sources */,
 				58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */,
 				58A7E9E2209ADEB100CC6774 /* httpcall_request.cpp in Sources */,
 				58A7E9C3209ADEB100CC6774 /* mock_publics.cpp in Sources */,
@@ -488,6 +522,7 @@
 				7DB100C32119276B00AE22F5 /* httpcall_response.cpp in Sources */,
 				7DB100C42119276B00AE22F5 /* httpcall.cpp in Sources */,
 				7DB100C52119276B00AE22F5 /* ios_logger.cpp in Sources */,
+				9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				7DB100C62119276B00AE22F5 /* log_publics.cpp in Sources */,
 				7DB100C72119276B00AE22F5 /* trace.cpp in Sources */,
 				7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */,
@@ -627,10 +662,10 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../External/openssl/include",
+					"$(SRCROOT)/../../External/generatedHeaders/iOS/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../External/generatedHeaders/iOS/lib";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -649,10 +684,10 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../External/openssl/include",
+					"$(SRCROOT)/../../External/generatedHeaders/iOS/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../External/generatedHeaders/iOS/lib";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -671,10 +706,10 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../External/openssl/include",
+					"$(SRCROOT)/../../External/generatedHeaders/iOS/include",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../External/generatedHeaders/iOS/lib";
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -695,10 +730,10 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../External/openssl/include",
+					"$(SRCROOT)/../../External/generatedHeaders/iOS/include",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../External/generatedHeaders/iOS/lib";
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";

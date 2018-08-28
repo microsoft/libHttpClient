@@ -338,7 +338,7 @@ namespace {
     };
 }
 
-bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName)
+static bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &certChain, const http_internal_string &hostName)
 {
     // Build up CFArrayRef with all the certificates.
     // All this code is basically just to get into the correct structures for the Apple APIs.
