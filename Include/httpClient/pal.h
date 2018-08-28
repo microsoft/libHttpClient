@@ -174,6 +174,7 @@ typedef void* HANDLE;
 #define ERROR_BAD_LENGTH                        24L
 #define ERROR_CANCELLED                         1223L
 #define ERROR_NO_SUCH_USER                      1317L
+#define ERROR_RESOURCE_DATA_NOT_FOUND           1812L
 
 typedef struct _LIST_ENTRY {
     struct _LIST_ENTRY  *Flink;
