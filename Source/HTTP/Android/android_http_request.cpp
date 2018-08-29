@@ -17,6 +17,14 @@ HttpRequest::HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jobject applica
 
 HttpRequest::~HttpRequest()
 {
+    JNIEnv* jniEnv = nullptr;
+    HRESULT result = GetJniEnv(&jniEnv);
+    
+    if (SUCCEEDED(result) && m_httpRequestInstance != nullptr)
+    {
+        jniEnv->DeleteGlobalRef(m_httpRequestInstance);
+        m_httpRequestInstance = nullptr;
+    }
 }
 
 HRESULT HttpRequest::Initialize() 
@@ -47,7 +55,10 @@ HRESULT HttpRequest::Initialize()
             return E_FAIL;
         }
 
-        m_httpRequestInstance = jniEnv->NewObject(m_httpRequestClass, httpRequestCtor);
+        jobject requestInstance = jniEnv->NewObject(m_httpRequestClass, httpRequestCtor);
+        m_httpRequestInstance = jniEnv->NewGlobalRef(requestInstance);
+        jniEnv->DeleteLocalRef(requestInstance);
+
         return S_OK;
     }
 
@@ -156,6 +167,11 @@ HRESULT HttpRequest::SetMethodAndBody(const char* method, const char* contentTyp
 
     jniEnv->DeleteLocalRef(methodJstr);
 
+    if (bodyArray != nullptr) 
+    {
+        jniEnv->DeleteLocalRef(bodyArray);
+    }
+
     if (contentTypeJstr != nullptr)
     {
         jniEnv->DeleteLocalRef(contentTypeJstr);
@@ -248,6 +264,7 @@ HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call, jobject repsonse
         }
     }
 
+    jniEnv->DeleteLocalRef(responseBody);
     return S_OK;
 }
 
