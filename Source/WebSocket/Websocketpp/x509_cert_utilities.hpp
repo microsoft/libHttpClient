@@ -3,7 +3,9 @@
 
 #pragma once
 
-#if defined(__APPLE__) || defined(HC_ANDROID_API) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
+#include <config.h>
+
+#if (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
 
 #if defined(_WIN32)
 #pragma warning(push)
@@ -26,12 +28,12 @@
 
 #include <vector>
 
-#if HC_ANDROID_API
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include <jni.h>
 #include "Android/utils_android.h"
 #endif
 
-#if defined(__APPLE__)
+#if HC_PLATFORM == HC_PLATFORM_IOS
 #include <CoreFoundation/CFData.h>
 #include <Security/SecBase.h>
 #include <Security/SecCertificate.h>
@@ -39,7 +41,7 @@
 #include <Security/SecTrust.h>
 #endif
 
-#if defined(_WIN32)
+#if HC_PLATFORM_IS_MICROSOFT
 #include <type_traits>
 #include <wincrypt.h>
 #endif
@@ -92,7 +94,7 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
     auto verify_result = verify_X509_cert_chain(certChain, hostName);
 
     // The Windows Crypto APIs don't do host name checks, use Boost's implementation.
-#if defined(_WIN32)
+#if HC_PLATFORM_IS_MICROSOFT
     if (verify_result)
     {
         asio::ssl::rfc2818_verification rfc2818(hostName.data());
@@ -102,7 +104,7 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
     return verify_result;
 }
 
-#if HC_ANDROID_API
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
 /// <summary>
 /// Helper function to check return value and see if any exceptions
 /// occurred when calling a JNI function.
@@ -110,7 +112,7 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
 /// <returns><c>true</c> if JNI call failed, <c>false</c> otherwise.</returns>
 static bool jni_failed(JNIEnv *env)
 {
-    if(env->ExceptionOccurred())
+    if (env->ExceptionOccurred())
     {
         // Clear exception otherwise no other JNI functions can be called.
         // In the future if we improve error reporting the exception message
@@ -123,7 +125,7 @@ static bool jni_failed(JNIEnv *env)
 template <typename T>
 static bool jni_failed(JNIEnv *env, const java_local_ref<T> &result)
 {
-    if(jni_failed(env) || !result)
+    if (jni_failed(env) || !result)
     {
         return true;
     }
@@ -131,15 +133,16 @@ static bool jni_failed(JNIEnv *env, const java_local_ref<T> &result)
 }
 static bool jni_failed(JNIEnv *env, const jmethodID &result)
 {
-    if(jni_failed(env) || result == nullptr)
+    if (jni_failed(env) || result == nullptr)
     {
         return true;
     }
     return false;
 }
-#define CHECK_JREF(env, obj) if(jni_failed<decltype(obj)::element_type>(env, obj)) return false;
-#define CHECK_JMID(env, mid) if(jni_failed(env, mid)) return false;
-#define CHECK_JNI(env) if(jni_failed(env)) return false;
+#define NO_OP do {} while(false)
+#define CHECK_JREF(env, obj) if (jni_failed<decltype(obj)::element_type>(env, obj)) {return false;} NO_OP
+#define CHECK_JMID(env, mid) if (jni_failed(env, mid)) {return false;} NO_OP
+#define CHECK_JNI(env) if (jni_failed(env)) {return false;} NO_OP
 
 static bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &certChain, const http_internal_string &hostName)
 {
