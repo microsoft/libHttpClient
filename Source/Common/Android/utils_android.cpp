@@ -3,31 +3,32 @@
 
 #include "pch.h"
 #include "utils_android.h"
+#include "../HTTP/Android/android_platform_context.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-// TODO this code needs reworking as it does not quite do the right thing at the moment
-std::atomic<JavaVM*> JVM{ nullptr };
-
-static void abort_if_no_jvm()
-{
-    if (JVM == nullptr)
-    {
-        std::abort();
-    }
-}
-
 JNIEnv* get_jvm_env()
 {
-    abort_if_no_jvm();
-    JNIEnv* env = nullptr;
-    auto result = JVM.load()->AttachCurrentThread(&env, nullptr);
-    if (result != JNI_OK)
+    auto httpSingleton = xbox::httpclient::get_http_singleton(true);
+    AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
+    JavaVM* javaVm = platformContext->GetJavaVm();
+
+    if (javaVm == nullptr)
     {
-        throw std::runtime_error("Could not attach to JVM");
+        HC_TRACE_ERROR(HTTPCLIENT, "javaVm is null");
+        throw std::runtime_error("JavaVm is null");
     }
 
-    return env;
+    JNIEnv* jniEnv = nullptr;
+    jint jniResult = javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+
+    if (jniResult != JNI_OK)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not initialize HTTP request object, JavaVM is not attached to a java thread. %d", jniResult);
+        throw std::runtime_error("This thread is not attached to a the JavaVm");
+    }
+
+    return jniEnv;
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

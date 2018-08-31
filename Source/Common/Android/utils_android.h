@@ -5,7 +5,6 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-extern std::atomic<JavaVM*> JVM;
 JNIEnv* get_jvm_env();
 
 struct java_local_ref_deleter

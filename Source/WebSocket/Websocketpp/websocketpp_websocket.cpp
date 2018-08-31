@@ -144,7 +144,7 @@ public:
                 // See http://www.openssl.org/support/faq.html#PROG13
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
-#if HC_ANDROID_API
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"     
                 ERR_remove_thread_state(nullptr);
@@ -343,7 +343,7 @@ private:
                 return E_FAIL;
             }
         }
-#if HC_WIN32_API
+#if HC_PLATFORM_IS_MICROSOFT
         else
         {
             // On windows platforms use the IE proxy if the user didn't specify one
@@ -401,21 +401,15 @@ private:
             {
                 auto context = shared_ptr_cache::fetch<connect_context>(async->context);
 
-#if HC_ANDROID_API
-                get_jvm_env();
-#endif
                 context->client.run();
-#if HC_ANDROID_API
-                JVM.load()->DetachCurrentThread();
-#endif
 
                 // OpenSSL stores some per thread state that never will be cleaned up until
                 // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                 // at all and will be reported as leaks.
                 // See http://www.openssl.org/support/faq.html#PROG13
-#if HC_ANDROID_API
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"     
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
                 ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
 #else 
