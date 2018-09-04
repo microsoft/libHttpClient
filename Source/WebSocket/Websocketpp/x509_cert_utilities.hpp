@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "config.h"
+#include <httpClient/config.h>
 
 #if (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
 
