@@ -49,6 +49,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcrypto.141.Android", "Bu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Win32WebSocket", "Samples\Win32WebSocket\Win32WebSocket.vcxproj", "{591520A6-680D-4AD7-AACB-8C2C877F8BAE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK_XboxOneXDK_2017", "Samples\Kits\DirectXTK\DirectXTK_XboxOneXDK_2017.vcxproj", "{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -500,6 +502,27 @@ Global
 		{591520A6-680D-4AD7-AACB-8C2C877F8BAE}.Release|x64.Build.0 = Release|x64
 		{591520A6-680D-4AD7-AACB-8C2C877F8BAE}.Release|x86.ActiveCfg = Release|Win32
 		{591520A6-680D-4AD7-AACB-8C2C877F8BAE}.Release|x86.Build.0 = Release|Win32
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Debug|Any CPU.ActiveCfg = Debug|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Debug|ARM.ActiveCfg = Debug|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Debug|ARM64.ActiveCfg = Debug|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Debug|Durango.ActiveCfg = Debug|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Debug|Durango.Build.0 = Debug|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Debug|x64.ActiveCfg = Debug|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Debug|x86.ActiveCfg = Debug|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Profile|Any CPU.ActiveCfg = Profile|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Profile|ARM.ActiveCfg = Profile|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Profile|ARM64.ActiveCfg = Profile|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Profile|Durango.ActiveCfg = Profile|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Profile|Durango.Build.0 = Profile|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Profile|x64.ActiveCfg = Profile|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Profile|x86.ActiveCfg = Profile|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Release|Any CPU.ActiveCfg = Release|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Release|ARM.ActiveCfg = Release|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Release|ARM64.ActiveCfg = Release|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Release|Durango.ActiveCfg = Release|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Release|Durango.Build.0 = Release|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Release|x64.ActiveCfg = Release|Durango
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2}.Release|x86.ActiveCfg = Release|Durango
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -523,6 +546,7 @@ Global
 		{51B9C654-FBC9-4224-8751-D7D0C05B7BC9} = {C1BDC490-C10E-4DF8-B614-54164FD28340}
 		{315BC43E-E422-4D47-A2DC-300A334A3497} = {C1BDC490-C10E-4DF8-B614-54164FD28340}
 		{591520A6-680D-4AD7-AACB-8C2C877F8BAE} = {CADB9561-440F-4B5F-BC40-4D569EBF1903}
+		{4FDFDCCD-EE2E-415C-B458-1E8FDB0D85F2} = {33FC8ACB-E656-416C-A642-59E3EA1F35F9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {973E1528-6B80-4A7E-9534-56E9481AF63A}
