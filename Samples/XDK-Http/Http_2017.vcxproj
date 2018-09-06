@@ -24,7 +24,6 @@
     <PlatformToolset>v141</PlatformToolset>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <TargetRuntime>Native</TargetRuntime>
-    <HCLibPlatformType>XDK</HCLibPlatformType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Durango'" Label="Configuration">
@@ -207,9 +206,6 @@
     <Image Include="Assets\WideLogo.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Build\libHttpClient.141.XDK.C\libHttpClient.141.XDK.C.vcxproj">
-      <Project>{57c681f7-280f-45b8-9fa9-d556c24f2053}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\Kits\DirectXTK\DirectXTK_XboxOneXDK_2017.vcxproj">
       <Project>{4fdfdccd-ee2e-415c-b458-1e8fdb0d85f2}</Project>
     </ProjectReference>
