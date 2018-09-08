@@ -17,7 +17,6 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-    m_performFunc = Internal_HCHttpCallPerformAsync;
 
     m_websocketMessageFunc = nullptr;
     m_websocketCloseEventFunc = nullptr;
