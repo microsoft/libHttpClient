@@ -16,8 +16,16 @@ import okhttp3.Response;
 import okhttp3.RequestBody;
 
 public class HttpClientRequest {
+    private static OkHttpClient OK_CLIENT;
+
     private Request okHttpRequest;
     private Request.Builder requestBuilder;
+
+    static {
+        OK_CLIENT = new OkHttpClient.Builder()
+                .retryOnConnectionFailure(false) // Explicitly disable retries; retry logic will be managed by native code in libHttpClient
+                .build();
+    }
 
     public HttpClientRequest() {
         requestBuilder = new Request.Builder();
@@ -50,10 +58,7 @@ public class HttpClientRequest {
     }
 
     public void doRequestAsync(final long sourceCall) {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .retryOnConnectionFailure(false) // Explicitly disable retries; retry logic will be managed by native code in libHttpClient
-                .build();
-        client.newCall(this.requestBuilder.build()).enqueue(new Callback() {
+        OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(final Call call, IOException e) {
                 Log.e("HttpRequestClient", "Failed to execute async request", e);
