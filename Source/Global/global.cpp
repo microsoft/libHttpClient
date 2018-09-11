@@ -17,14 +17,7 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton(IHCPlatformContext* initialContext) :
-    m_platformContext{ initialContext }
-{
-    m_lastId = 0;
-    m_performFunc = Internal_HCHttpCallPerformAsync;
 
-    m_websocketMessageFunc = nullptr;
-    m_websocketCloseEventFunc = nullptr;
 
     m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
