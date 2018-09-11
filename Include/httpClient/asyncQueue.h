@@ -180,16 +180,20 @@ STDAPI_(void) CloseAsyncQueue(
     _In_ async_queue_handle_t queue);
 
 /// <summary>
-/// Submits a callback to the queue for the given callback
+/// Submits a callback to the queue for the given callback.  The callback will be added
+/// to the queue immediately if delayMs is zero.  If non-zero, the callback will be added
+/// after delayMs milliseconds.
 /// type.
 /// </summary>
 /// <param name='queue'>The queue to submit the callback to.</param>
 /// <param name='type'>The type of callback.</param>
+/// <param name='delayMs'>The number of milliseconds to delay before submitting the callback to the queue.</param>
 /// <param name='callbackContext'>An optional context pointer that will be passed to the callback.</param>
 /// <param name='callback'>A pointer to the callback function.</param>
 STDAPI SubmitAsyncCallback(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
+    _In_ uint32_t delayMs,
     _In_opt_ void* callbackContext,
     _In_ AsyncQueueCallback* callback);
 

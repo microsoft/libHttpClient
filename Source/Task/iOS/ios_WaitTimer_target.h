@@ -3,7 +3,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface ios_timer_target : NSObject
+@interface ios_WaitTimer_target : NSObject
 
 - (void)timerFireMethod:(NSTimer*)timer;
 

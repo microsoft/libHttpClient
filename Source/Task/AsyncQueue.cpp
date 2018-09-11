@@ -1,18 +1,11 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.#include "stdafx.h"
 #include "pch.h"
-#include "CriticalThread.h"
-
-#include <mutex>
-
-#ifdef _WIN32
-#include "Callback.h"
-#else
-#include "Callback_STL.h"
-#endif
+#include "WaitTimer.h"
 
 static uint32_t const QUEUE_SIGNATURE = 0x41515545;
 static uint64_t const INVALID_SHARE_ID = 0xFFFFFFFFFFFFFFFF;
+static uint32_t const SUBMIT_CALLBACK_MAX = 32;
 
 // Support for shared queues
 static LIST_ENTRY s_sharedList;
@@ -22,21 +15,94 @@ static std::once_flag s_onceFlag;
 #define MAKE_SHARED_ID(threadId, workMode, completionMode) \
     (uint64_t)(((uint64_t)workMode) << 48 | ((uint64_t)completionMode) << 32 | threadId)
 
-struct AsyncQueueCallbackSubmittedData
+class SubmitCallback
 {
-    async_queue_handle_t queue;
-    AsyncQueueCallbackType type;
-};
+public:
 
-struct AsyncQueueCallbackSubmittedThunk
-{
-    void operator()(AsyncQueueCallbackSubmitted* callback, void* context, AsyncQueueCallbackSubmittedData* data)
+    SubmitCallback(_In_ async_queue_handle_t queue)
+        : m_queue(queue)
+        , m_callbackCount(0)
     {
-        callback(context, data->queue, data->type);
     }
-};
 
-typedef Callback<AsyncQueueCallbackSubmitted, AsyncQueueCallbackSubmittedData, AsyncQueueCallbackSubmittedThunk> SubmitCallback;
+    HRESULT Register(_In_ void* context, _In_ AsyncQueueCallbackSubmitted* callback, _Out_ registration_token_t* token)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_callbackCount == SUBMIT_CALLBACK_MAX)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+        m_callbacks[m_callbackCount].Token = ++m_nextToken;
+        m_callbacks[m_callbackCount].Context = context;
+        m_callbacks[m_callbackCount].Callback = callback;
+        *token = m_callbacks[m_callbackCount].Token;
+        m_callbackCount++;
+        
+        return S_OK;
+    }
+
+    void Unregister(_In_ registration_token_t token)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        bool shuffling = false;
+
+        for(uint32_t idx = 0; idx < SUBMIT_CALLBACK_MAX - 1; idx++)
+        {
+            if (!shuffling && m_callbacks[idx].Token == token)
+            {
+                shuffling = true;
+            }
+
+            if (shuffling)
+            {
+                m_callbacks[idx] = m_callbacks[idx + 1];
+            }
+        }
+
+        if (shuffling || m_callbacks[SUBMIT_CALLBACK_MAX - 1].Token == token)
+        {
+            m_callbackCount--;
+        }
+    }
+
+    void Invoke(_In_ AsyncQueueCallbackType type)
+    {
+        CallbackRegistration callbacks[SUBMIT_CALLBACK_MAX];
+        uint32_t callbackCount;
+
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_callbackCount == 0)
+            {
+                return;
+            }
+
+            callbackCount = m_callbackCount;
+            memcpy(callbacks, m_callbacks, sizeof(CallbackRegistration) * callbackCount);
+        }
+
+        for(uint32_t idx = 0; idx < callbackCount; idx++)
+        {
+            callbacks[idx].Callback(callbacks[idx].Context, m_queue, type);
+        }
+    }
+
+private:
+
+    struct CallbackRegistration
+    {
+        registration_token_t Token;
+        void* Context;
+        AsyncQueueCallbackSubmitted* Callback;
+    };
+
+    std::atomic<registration_token_t> m_nextToken;
+    CallbackRegistration m_callbacks[SUBMIT_CALLBACK_MAX];
+    uint32_t m_callbackCount;
+    std::mutex m_mutex;
+    async_queue_handle_t m_queue;
+};
 
 class Queue
 {
@@ -45,29 +111,20 @@ public:
     Queue()
     {
         InitializeListHead(&m_queueHead);
+        InitializeListHead(&m_pendingHead);
     }
 
     ~Queue()
     {
+        m_timer.Cancel();
+
         {
             std::lock_guard<std::mutex> lock(m_cs);
-            PLIST_ENTRY listEntry = RemoveHeadList(&m_queueHead);
-
-            while (listEntry != &m_queueHead)
-            {
-                QueueEntry* entry = CONTAINING_RECORD(listEntry, QueueEntry, entry);
-                (*entry->refsPointer)--;
-                delete entry;
-                listEntry = RemoveHeadList(&m_queueHead);
-            }
+            DrainQueue(&m_queueHead);
+            DrainQueue(&m_pendingHead);
         }
 
 #ifdef _WIN32
-
-        if (m_event != nullptr)
-        {
-            CloseHandle(m_event);
-        }
 
         if (m_apcThread != nullptr)
         {
@@ -83,12 +140,17 @@ public:
 #endif
     }
 
-    HRESULT Initialize(async_queue_handle_t owner, AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
+    HRESULT Initialize(AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
     {
-        m_owner = owner;
         m_type = type;
         m_callbackSubmitted = submitCallback;
         m_dispatchMode = mode;
+
+        RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
+        {
+            Queue* pthis = static_cast<Queue*>(context);
+            pthis->SubmitPendingCallback();
+        }));
 
         switch (mode)
         {
@@ -120,16 +182,12 @@ public:
             break;
         }
 
-#ifdef _WIN32
-        m_event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        RETURN_LAST_ERROR_IF_NULL(m_event);
-#endif
-
         return S_OK;
     }
 
     HRESULT AppendItem(
         std::atomic<uint32_t>* refsPointer,
+        uint32_t waitMs,
         AsyncQueueCallback* callback,
         void* context)
     {
@@ -139,58 +197,32 @@ public:
         entry->refsPointer = refsPointer;
         entry->callback = callback;
         entry->context = context;
+        (*entry->refsPointer)++;
 
-        bool queueCallback;
-
+        if (waitMs == 0)
         {
+            entry->enqueueTime = 0;
+
+            // Owns the entry -- on error will delete
+            return AppendEntry(entry);
+        }
+        else
+        {
+            entry->enqueueTime = m_timer.GetAbsoluteTime(waitMs);
+
             std::lock_guard<std::mutex> lock(m_cs);
-            InsertTailList(&m_queueHead, &entry->entry);
-#ifdef _WIN32
-            SetEvent(m_event);
-#endif
-            (*refsPointer)++;
-            queueCallback = !m_isCallbackQueued;
-            m_isCallbackQueued = true;
-        }
+            InsertTailList(&m_pendingHead, &entry->entry);
 
-        switch (m_dispatchMode)
-        {
-        case AsyncQueueDispatchMode_Manual:
-            // nothing
-            break;
-
-        case AsyncQueueDispatchMode_FixedThread:
-#ifdef _WIN32
-            if (queueCallback && QueueUserAPC(APCCallback, m_apcThread, (ULONG_PTR)this) == 0)
+            // If the entry's enqueue time is < our current time, 
+            // update the timer.
+            if (entry->enqueueTime < m_timerDue)
             {
-                HRESULT result = HRESULT_FROM_WIN32(GetLastError());
-                std::lock_guard<std::mutex> lock(m_cs);
-                (*refsPointer)--;
-                RemoveEntryList(&entry->entry);
-                m_isCallbackQueued = false;
-                delete entry;
-                return result;
+                m_timerDue = entry->enqueueTime;
+                m_timer.Start(entry->enqueueTime);
             }
-#else
-            ASSERT(false);
-#endif
-            break;
 
-        case AsyncQueueDispatchMode_ThreadPool:
-#ifdef _WIN32
-            SubmitThreadpoolWork(m_work);
-#else
-            ASSERT(false);
-#endif
-            break;
+            return S_OK;
         }
-
-        AsyncQueueCallbackSubmittedData data;
-        data.queue = m_owner;
-        data.type = m_type;
-        (void)m_callbackSubmitted->Invoke(&data);
-
-        return S_OK;
     }
 
     bool IsEmpty()
@@ -200,13 +232,18 @@ public:
 
         if (empty)
         {
+            empty = m_pendingHead.Flink == &m_pendingHead;
+        }
+
+        if (empty)
+        {
             empty = (m_processingCallback == 0);
         }
 
         return empty;
     }
 
-    bool DrainOneItem(AsyncQueueDispatchMode dispatcher)
+    bool DrainOneItem()
     {
         QueueEntry* entry = nullptr;
 
@@ -221,13 +258,8 @@ public:
             }
             else
             {
-#ifdef _WIN32
-                ResetEvent(m_event);
-#endif
-                if (dispatcher != AsyncQueueDispatchMode_Manual)
-                {
-                    m_isCallbackQueued = false;
-                }
+                m_hasItems = false;
+                m_event.notify_all();
             }
         }
 
@@ -243,9 +275,9 @@ public:
         return entry != nullptr;
     }
 
-    void DrainQueue(AsyncQueueDispatchMode dispatcher)
+    void DrainQueue()
     {
-        while (DrainOneItem(dispatcher))
+        while (DrainOneItem())
         {
             // Do nothing.
         }
@@ -276,11 +308,33 @@ public:
             }
 
             isEmpty = m_queueHead.Flink == &m_queueHead;
+
             if (isEmpty)
             {
-#ifdef _WIN32
-                ResetEvent(m_event);
-#endif
+                m_hasItems = false;
+                m_event.notify_all();
+            }
+
+            entry = m_pendingHead.Flink;
+            bool removedPendingItem = false;
+
+            while (entry != &m_pendingHead)
+            {
+                QueueEntry* candidate = CONTAINING_RECORD(entry, QueueEntry, entry);
+                entry = entry->Flink;
+
+                if (candidate->callback == searchCallback && removePredicate(predicateContext, candidate->context))
+                {
+                    RemoveEntryList(&candidate->entry);
+                    (*candidate->refsPointer)--;
+                    delete candidate;
+                    removedPendingItem = true;
+                }
+            }
+
+            if (removedPendingItem)
+            {
+                ScheduleNextPendingCallbackNoLock(nullptr);
             }
         }
 
@@ -296,30 +350,31 @@ public:
 
     bool Wait(uint32_t timeout)
     {
-#ifdef _WIN32
-        uint32_t w = WaitForSingleObject(m_event, timeout);
-        return (w == WAIT_OBJECT_0);
-#else
-        ASSERT(false);
-        return true;
-#endif
+        std::unique_lock<std::mutex> lock(m_cs);
+        if (!m_hasItems)
+        {
+            m_event.wait_for(lock, std::chrono::milliseconds(timeout));
+        }
+        return m_hasItems;
     }
 
 private:
 
-    async_queue_handle_t m_owner = nullptr;
     AsyncQueueCallbackType m_type = AsyncQueueCallbackType_Work;
     AsyncQueueDispatchMode m_dispatchMode = AsyncQueueDispatchMode_Manual;
     SubmitCallback* m_callbackSubmitted = nullptr;
-    bool m_isCallbackQueued = false;
+    bool m_hasItems = false;
     std::atomic<uint32_t> m_processingCallback{ 0 };
+    std::condition_variable m_event;
     std::mutex m_cs;
     LIST_ENTRY m_queueHead;
+    LIST_ENTRY m_pendingHead;
+    WaitTimer m_timer;
+    uint64_t m_timerDue = UINT64_MAX;
 
 #ifdef _WIN32
     HANDLE m_apcThread = nullptr;
     PTP_WORK m_work = nullptr;
-    HANDLE m_event = nullptr;
 #endif
 
     struct QueueEntry
@@ -328,27 +383,152 @@ private:
         std::atomic<uint32_t>* refsPointer;
         void* context;
         AsyncQueueCallback* callback;
+        uint64_t enqueueTime;
     };
 
 #ifdef _WIN32
     static void CALLBACK APCCallback(ULONG_PTR context)
     {
         Queue* queue = (Queue*)context;
-        queue->DrainQueue(AsyncQueueDispatchMode_FixedThread);
+        queue->DrainOneItem();
     }
 
     static void CALLBACK TPCallback(PTP_CALLBACK_INSTANCE, void* context, PTP_WORK)
     {
-        // Prevent any callbacks from declaring this thread as time critical.
-        (void)LockTimeCriticalThread();
+        // Prevent any callbacks from declaring this thread as time sensitive.
+        ASYNC_LIB_LOCK_TIME_SENSITIVE_THREAD();
         Queue* queue = (Queue*)context;
-        queue->DrainOneItem(AsyncQueueDispatchMode_ThreadPool);
+        queue->DrainOneItem();
     }
 #endif
+
+    // Appends the given entry to the active queue.  The entry should already
+    // be add-refd, and this API owns the lifetime of the entry.  If the
+    // API fails, the entry will be released and deleted.
+    HRESULT AppendEntry(
+        QueueEntry* entry)
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_cs);
+            InsertTailList(&m_queueHead, &entry->entry);
+            m_hasItems = true;
+            m_event.notify_all();
+        }
+
+        switch (m_dispatchMode)
+        {
+        case AsyncQueueDispatchMode_Manual:
+            // nothing
+            break;
+
+        case AsyncQueueDispatchMode_FixedThread:
+#ifdef _WIN32
+            if (QueueUserAPC(APCCallback, m_apcThread, (ULONG_PTR)this) == 0)
+            {
+                HRESULT result = HRESULT_FROM_WIN32(GetLastError());
+                std::lock_guard<std::mutex> lock(m_cs);
+                (*entry->refsPointer)--;
+                RemoveEntryList(&entry->entry);
+                delete entry;
+                return result;
+            }
+#else
+            ASSERT(false);
+#endif
+            break;
+
+        case AsyncQueueDispatchMode_ThreadPool:
+#ifdef _WIN32
+            SubmitThreadpoolWork(m_work);
+#else
+            ASSERT(false);
+#endif
+            break;
+        }
+
+        m_callbackSubmitted->Invoke(m_type);
+        return S_OK;
+    }
+
+    void DrainQueue(PLIST_ENTRY head)
+    {
+        PLIST_ENTRY listEntry = RemoveHeadList(head);
+        while (listEntry != head)
+        {
+            QueueEntry* entry = CONTAINING_RECORD(listEntry, QueueEntry, entry);
+            (*entry->refsPointer)--;
+            delete entry;
+            listEntry = RemoveHeadList(head);
+        }
+    }
+
+    // Examines the pending callback list, optionally popping the entry off the
+    // list that matches m_timerDue, and schedules the timer for the next entry.
+    // this assumes m_cs is held.
+    void ScheduleNextPendingCallbackNoLock(_Out_opt_ QueueEntry** dueEntry)
+    {
+        QueueEntry* nextItem = nullptr;
+        PLIST_ENTRY entry = m_pendingHead.Flink;
+
+        if (dueEntry != nullptr)
+        {
+            *dueEntry = nullptr;
+        }
+        
+        while(entry != &m_pendingHead)
+        {
+            QueueEntry* candidate = CONTAINING_RECORD(entry, QueueEntry, entry);
+            entry = entry->Flink;
+            if (dueEntry != nullptr && candidate->enqueueTime == m_timerDue)
+            {
+                RemoveEntryList(&candidate->entry);
+                *dueEntry = candidate;
+            }
+            else if (nextItem == nullptr || nextItem->enqueueTime > candidate->enqueueTime)
+            {
+                nextItem = candidate;
+            }
+        }
+
+        if (nextItem != nullptr)
+        {
+            m_timerDue = nextItem->enqueueTime;
+            m_timer.Start(m_timerDue);
+        }
+        else
+        {
+            m_timerDue = UINT64_MAX;
+            m_timer.Cancel();
+        }
+    }
+
+    void SubmitPendingCallback()
+    {
+        QueueEntry* dueEntry;
+
+        {
+            std::lock_guard<std::mutex> lock(m_cs);
+            ScheduleNextPendingCallbackNoLock(&dueEntry);
+        }
+
+        if (dueEntry != nullptr)
+        {
+            HRESULT hr = AppendEntry(dueEntry);
+            if (FAILED(hr))
+            {
+                FAIL_FAST_MSG("Failed to append due entry: 0x%08x", hr);
+            }
+        }
+    }
 };
 
 struct async_queue_t
 {
+    async_queue_t()
+        : m_callbackSubmitted(this)
+    {
+    }
+
     ~async_queue_t()
     {
         if (m_workSource != nullptr)
@@ -401,11 +581,11 @@ struct async_queue_t
     {
         m_work = new (std::nothrow) Queue;
         RETURN_IF_NULL_ALLOC(m_work);
-        RETURN_IF_FAILED(m_work->Initialize(this, AsyncQueueCallbackType_Work, workMode, &m_callbackSubmitted));
+        RETURN_IF_FAILED(m_work->Initialize(AsyncQueueCallbackType_Work, workMode, &m_callbackSubmitted));
 
         m_completion = new (std::nothrow) Queue;
         RETURN_IF_NULL_ALLOC(m_completion);
-        RETURN_IF_FAILED(m_completion->Initialize(this, AsyncQueueCallbackType_Completion, completionMode, &m_callbackSubmitted));
+        RETURN_IF_FAILED(m_completion->Initialize(AsyncQueueCallbackType_Completion, completionMode, &m_callbackSubmitted));
 
         return S_OK;
     }
@@ -417,7 +597,7 @@ struct async_queue_t
 
     void Release()
     {
-        if (m_refs.fetch_sub(1) == 0)
+        if (m_refs.fetch_sub(1) == 1)
         {
             if (m_shareId != INVALID_SHARE_ID)
             {
@@ -437,11 +617,12 @@ struct async_queue_t
 
     HRESULT AppendItem(
         AsyncQueueCallbackType type,
+        uint32_t delayMs,
         AsyncQueueCallback* callback,
         void* context)
     {
         Queue* q = GetSide(type);
-        return q->AppendItem(&m_refs, callback, context);
+        return q->AppendItem(&m_refs, delayMs, callback, context);
     }
 
     HRESULT RegisterCallback(
@@ -449,7 +630,7 @@ struct async_queue_t
         _In_ AsyncQueueCallbackSubmitted* callback,
         _Out_ registration_token_t* token)
     {
-        return m_callbackSubmitted.Register(this, context, callback, token);
+        return m_callbackSubmitted.Register(context, callback, token);
     }
 
     void UnregisterCallback(
@@ -621,11 +802,11 @@ STDAPI_(bool) DispatchAsyncQueue(
 
     Queue* q = aq->GetSide(type);
 
-    bool found = q->DrainOneItem(AsyncQueueDispatchMode_Manual);
+    bool found = q->DrainOneItem();
     if (!found && timeoutInMs != 0)
     {
         found = q->Wait(timeoutInMs);
-        if (found) q->DrainOneItem(AsyncQueueDispatchMode_Manual);
+        if (found) q->DrainOneItem();
     }
 
     return found;
@@ -669,6 +850,7 @@ STDAPI_(void) CloseAsyncQueue(
 STDAPI SubmitAsyncCallback(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
+    _In_ uint32_t delayMs,
     _In_opt_ void* callbackContext,
     _In_ AsyncQueueCallback* callback)
 {
@@ -678,7 +860,7 @@ STDAPI SubmitAsyncCallback(
         RETURN_HR(E_INVALIDARG);
     }
 
-    RETURN_HR(aq->AppendItem(type, callback, callbackContext));
+    RETURN_HR(aq->AppendItem(type, delayMs, callback, callbackContext));
 }
 
 /// <summary>
