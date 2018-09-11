@@ -7,6 +7,9 @@
 #pragma warning(disable: 4242) 
 
 #ifdef _WIN32
+#define _SCL_SECURE_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 // If you wish to build your application for a previous Windows platform, include WinSDKVer.h and
 // set the _WIN32_WINNT macro to the platform you wish to support before including SDKDDKVer.h.
 #include <SDKDDKVer.h>
@@ -17,6 +20,7 @@
 #endif
 #define NOMINMAX
 
+#include <WinSock2.h>
 #include <windows.h>
 #else
 #define __STDC_LIMIT_MACROS
@@ -47,6 +51,10 @@
 
 #ifndef _WIN32
 #define UNREFERENCED_PARAMETER(args) (void)(args);
+#endif
+
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
 #endif
 
 #ifndef ARRAYSIZE

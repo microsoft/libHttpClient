@@ -4,10 +4,11 @@
 #include <httpClient/httpClient.h>
 #include <vector>
 
-HttpRequest::HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass) :
+HttpRequest::HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jobject applicationContext, jclass httpRequestClass, jclass httpResponseClass) :
     m_httpRequestInstance(nullptr), 
     m_asyncBlock(asyncBlock),
     m_javaVm(javaVm),
+    m_applicationContext(applicationContext),
     m_httpRequestClass(httpRequestClass),
     m_httpResponseClass(httpResponseClass)
 {
@@ -16,6 +17,14 @@ HttpRequest::HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jclass httpRequ
 
 HttpRequest::~HttpRequest()
 {
+    JNIEnv* jniEnv = nullptr;
+    HRESULT result = GetJniEnv(&jniEnv);
+    
+    if (SUCCEEDED(result) && m_httpRequestInstance != nullptr)
+    {
+        jniEnv->DeleteGlobalRef(m_httpRequestInstance);
+        m_httpRequestInstance = nullptr;
+    }
 }
 
 HRESULT HttpRequest::Initialize() 
@@ -25,6 +34,20 @@ HRESULT HttpRequest::Initialize()
 
     if (SUCCEEDED(result)) 
     {
+        jmethodID networkAvailabilityFunc = jniEnv->GetStaticMethodID(m_httpRequestClass, "isNetworkAvailable", "(Landroid/content/Context;)Z");
+        if (networkAvailabilityFunc == nullptr)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "Could not find isNetworkAvailable static method");
+            return E_FAIL;
+        }
+
+        jboolean isNetworkAvailable = jniEnv->CallStaticBooleanMethod(m_httpRequestClass, networkAvailabilityFunc, m_applicationContext);
+        if (!isNetworkAvailable)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "Could not initialize HttpRequest - no network available");
+            return E_HC_NO_NETWORK;
+        }
+
         jmethodID httpRequestCtor = jniEnv->GetMethodID(m_httpRequestClass, "<init>", "()V");
         if (httpRequestCtor == nullptr) 
         {
@@ -32,7 +55,10 @@ HRESULT HttpRequest::Initialize()
             return E_FAIL;
         }
 
-        m_httpRequestInstance = jniEnv->NewObject(m_httpRequestClass, httpRequestCtor);
+        jobject requestInstance = jniEnv->NewObject(m_httpRequestClass, httpRequestCtor);
+        m_httpRequestInstance = jniEnv->NewGlobalRef(requestInstance);
+        jniEnv->DeleteLocalRef(requestInstance);
+
         return S_OK;
     }
 
@@ -141,6 +167,11 @@ HRESULT HttpRequest::SetMethodAndBody(const char* method, const char* contentTyp
 
     jniEnv->DeleteLocalRef(methodJstr);
 
+    if (bodyArray != nullptr) 
+    {
+        jniEnv->DeleteLocalRef(bodyArray);
+    }
+
     if (contentTypeJstr != nullptr)
     {
         jniEnv->DeleteLocalRef(contentTypeJstr);
@@ -233,6 +264,7 @@ HRESULT HttpRequest::ProcessResponseBody(hc_call_handle_t call, jobject repsonse
         }
     }
 
+    jniEnv->DeleteLocalRef(responseBody);
     return S_OK;
 }
 

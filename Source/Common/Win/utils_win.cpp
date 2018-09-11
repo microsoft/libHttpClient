@@ -3,8 +3,12 @@
 
 #include "pch.h"
 #include "utils_win.h"
+#include "uri.h"
 
 #include <httpClient/trace.h>
+#if !HC_XDK_API && !HC_UWP_API
+#include <winhttp.h>
+#endif
 
 http_internal_string utf8_from_utf16(const http_internal_wstring& utf16)
 {
@@ -111,3 +115,74 @@ http_internal_wstring utf16_from_utf8(_In_reads_(size) const char* utf8, size_t 
 
     return utf16;
 }
+
+#if !HC_XDK_API && !HC_UWP_API
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpclient::Uri& proxyUri)
+{
+    proxy_type proxyType = proxy_type::no_proxy;
+
+    WINHTTP_CURRENT_USER_IE_PROXY_CONFIG config = { 0 };
+    if (!WinHttpGetIEProxyConfigForCurrentUser(&config))
+    {
+        return proxyType;
+    }
+
+    if (config.fAutoDetect)
+    {
+        proxyType = proxy_type::autodiscover_proxy;
+    }
+    else if (config.lpszProxy != nullptr)
+    {
+        http_internal_wstring proxyAddress;
+
+        // something like "http=127.0.0.1:8888;https=127.0.0.1:8888", or "localhost:80"
+        http_internal_wstring proxyConfig = config.lpszProxy;
+        if (proxyConfig.find(L"=") == http_internal_wstring::npos)
+        {
+            proxyAddress = proxyConfig;
+        }
+        else
+        {
+            static http_internal_unordered_map<proxy_protocol, http_internal_wstring> protocolsMap =
+            {
+                { proxy_protocol::http, L"http" },
+                { proxy_protocol::https, L"https" },
+                { proxy_protocol::websocket, L"socks" },
+                { proxy_protocol::ftp, L"ftp" }
+            };
+
+            auto protocolString = protocolsMap[protocol];
+
+            auto pos = proxyConfig.find(protocolString);
+            if (pos != http_internal_wstring::npos)
+            {
+                proxyAddress = proxyConfig.substr(pos + protocolString.length() + 1);
+                proxyAddress = proxyAddress.substr(0, proxyConfig.find(';', pos));
+            }
+        }
+
+        if (!proxyAddress.empty())
+        {
+            if (proxyAddress.find(L"://") == http_internal_wstring::npos)
+            {
+                proxyAddress = L"http://" + proxyAddress;
+            }
+        }
+
+        proxyType = (proxyAddress.empty()) ? proxy_type::no_proxy : proxy_type::named_proxy;
+        proxyUri = Uri(utf8_from_utf16(proxyAddress));
+    }
+    else
+    {
+        proxyType = proxy_type::no_proxy;
+    }
+
+    return proxyType;
+}
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
+
+#endif

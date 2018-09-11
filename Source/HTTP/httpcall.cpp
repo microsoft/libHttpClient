@@ -89,9 +89,9 @@ try
 CATCH_RETURN()
 
 HRESULT perform_http_call(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ std::shared_ptr<http_singleton> httpSingleton,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     HRESULT hr = BeginAsync(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
@@ -123,7 +123,7 @@ HRESULT perform_http_call(
                     {
                         try
                         {
-                            performFunc(data->async, call);
+                            performFunc(call, data->async);
                         }
                         catch (...)
                         {
@@ -189,6 +189,11 @@ bool http_call_should_retry(
     _In_ const chrono_clock_t::time_point& responseReceivedTime)
 {
     if (!call->retryAllowed)
+    {
+        return false;
+    }
+
+    if (call->networkErrorCode == E_HC_NO_NETWORK)
     {
         return false;
     }
@@ -404,7 +409,7 @@ void retry_http_call_until_done(
         }
     };
 
-    HRESULT hr = perform_http_call(nestedBlock, httpSingleton, retryContext->call);
+    HRESULT hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
     if (FAILED(hr))
     {
         CompleteAsync(retryContext->outerAsyncBlock, hr, 0);
@@ -414,8 +419,8 @@ void retry_http_call_until_done(
 
 STDAPI 
 HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
@@ -524,7 +529,7 @@ try
 {
     if (call == nullptr)
     {
-        return 0;
+        return E_INVALIDARG;
     }
     
     *context = call->context;
@@ -532,3 +537,25 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+
+STDAPI 
+HCHttpCallGetRequestUrl(
+    _In_ hc_call_handle_t call,
+    _Out_ const char** url
+    ) HC_NOEXCEPT
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *url = call->url.data();
+    return S_OK;
+}
+CATCH_RETURN()
+
+bool http_header_compare::operator()(http_internal_string const& l, http_internal_string const& r) const
+{
+    return str_icmp(l, r) < 0;
+}

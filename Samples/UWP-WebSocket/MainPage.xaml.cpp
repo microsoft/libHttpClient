@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "MainPage.xaml.h"
 #include <httpClient\httpClient.h>
 
@@ -76,7 +76,7 @@ std::string format_string(_Printf_format_string_ char const* format, ...)
     return message;
 }
 
-void HandleAsyncQueueCallback(
+void CALLBACK HandleAsyncQueueCallback(
     _In_ void* context,
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
@@ -117,7 +117,7 @@ MainPage::MainPage()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &m_queue);
-    AddAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    RegisterAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
@@ -280,7 +280,7 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
         delete asyncBlock;
     };
 
-    hr = HCWebSocketConnectAsync(asyncBlock, requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket);
+    hr = HCWebSocketConnectAsync(requestUrl.c_str(), requestSubprotocol.c_str(), m_websocket, asyncBlock);
     LogToUI(format_string("HCWebSocketConnect: %d", hr));
 
 }
@@ -297,13 +297,13 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(asyncBlock, &result);
+        HCGetWebSocketSendMessageResult(asyncBlock, &result);
 
         g_MainPage->LogToUI(format_string("HCWebSocketSendMessage complete: %d, %d", result.errorCode, result.platformErrorCode));
         delete asyncBlock;
     };
 
-    HRESULT hr = HCWebSocketSendMessageAsync(asyncBlock, m_websocket, requestBody.c_str());
+    HRESULT hr = HCWebSocketSendMessageAsync(m_websocket, requestBody.c_str(), asyncBlock);
     LogToUI(format_string("HCWebSocketSendMessage: %d", hr));
 }
 

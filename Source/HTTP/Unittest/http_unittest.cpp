@@ -5,17 +5,17 @@
 #include "httpClient/httpClient.h"
 #include "../global/global.h"
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(initialContext == nullptr);
+    assert(args == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     CompleteAsync(asyncBlock, S_OK, 0);

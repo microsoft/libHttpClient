@@ -56,8 +56,8 @@ win32_handle g_completionReadyHandle;
 #define TICKS_PER_SECOND 10000000i64
 
 void STDAPIVCALLTYPE PerformCallWithCurl(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     );
 
 static std::string to_utf8string(const std::wstring& input)
@@ -72,8 +72,8 @@ static std::wstring to_utf16string(const std::string& input)
     return utfConverter.from_bytes(input);
 }
 
-void HandleAsyncQueueCallback(
-    _In_ void* context,
+void CALLBACK HandleAsyncQueueCallback(
+    _In_opt_ void* context,
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
     )
@@ -109,7 +109,7 @@ MainPage::MainPage()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &m_queue);
-    AddAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    RegisterAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
@@ -259,7 +259,7 @@ void HttpTestApp::MainPage::UpdateXamlUI(
     std::stringstream ss;
     ss << L"Network Error: " << errMessage << L" [Code: " << errCode << L"]\r\n";
     ss << L"StatusCode: " << statusCode << L"\r\n";
-    for (int i = 0; i < headers.size(); i++)
+    for (size_t i = 0; i < headers.size(); i++)
     {
         ss << L"Header[" << i << L"]: " << headers[i][0] << L": " << headers[i][1] << L"\r\n";
     }
@@ -334,6 +334,6 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         delete asyncBlock;
     };
 
-    HCHttpCallPerformAsync(asyncBlock, call);
+    HCHttpCallPerformAsync(call, asyncBlock);
 }
 

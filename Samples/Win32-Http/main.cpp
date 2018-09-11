@@ -64,7 +64,7 @@ DWORD g_defaultIdealProcessor = 0;
 DWORD g_numActiveThreads = 0;
 
 async_queue_handle_t g_queue;
-uint32_t g_callbackToken;
+registration_token_t g_callbackToken;
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
@@ -120,7 +120,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
     return 0;
 }
 
-void HandleAsyncQueueCallback(
+void CALLBACK HandleAsyncQueueCallback(
     _In_ void* context,
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type
@@ -182,7 +182,7 @@ void ShutdownActiveThreads()
 int main()
 {
     std::string method = "GET";
-    std::string url = "https://www.bing.com/?rb=0";
+    std::string url = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Tests/TestWebApplication/appsettings.Development.json";
     std::string requestBody = "";// "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
@@ -201,7 +201,7 @@ int main()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &g_queue);
-    AddAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+    RegisterAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
 
     StartBackgroundThread();
 
@@ -264,6 +264,17 @@ int main()
             i++;
         }
 
+        if (responseString.length() > 0)
+        {
+            // Returned string starts with a BOM strip it out.
+            uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
+            if (responseString.find(reinterpret_cast<char*>(BOM)) == 0)
+            {
+                responseString = responseString.substr(3);
+            }
+            web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
+        }
+
         if (responseString.length() > 200)
         {
             std::string subResponseString = responseString.substr(0, 200);
@@ -278,7 +289,7 @@ int main()
         delete asyncBlock;
     };
 
-    HCHttpCallPerformAsync(asyncBlock, call);
+    HCHttpCallPerformAsync(call, asyncBlock);
 
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 

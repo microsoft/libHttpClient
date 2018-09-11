@@ -188,20 +188,20 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.110.XDK.C.vcxproj",
             });
 
-            //libHttpClient.UnitTest.140.TAEF
+            //libHttpClient.UnitTest.141.TAEF
             fileNodes.Add(new FileNode
             {
-                cmake_vcxproj = @"libHttpClient.UnitTest.140.TAEF.vcxproj",
-                template = @"template-libHttpClient.UnitTest.140.TAEF.vcxproj",
-                output = @"libHttpClient.UnitTest.140.TAEF.vcxproj",
+                cmake_vcxproj = @"libHttpClient.UnitTest.141.TAEF.vcxproj",
+                template = @"template-libHttpClient.UnitTest.141.TAEF.vcxproj",
+                output = @"libHttpClient.UnitTest.141.TAEF.vcxproj",
             });
 
-            //libHttpClient.UnitTest.140.TE
+            //libHttpClient.UnitTest.141.TE
             fileNodes.Add(new FileNode
             {
-                cmake_vcxproj = @"libHttpClient.UnitTest.140.TE.vcxproj",
-                template = @"template-libHttpClient.UnitTest.140.TE.vcxproj",
-                output = @"libHttpClient.UnitTest.140.TE.vcxproj",
+                cmake_vcxproj = @"libHttpClient.UnitTest.141.TE.vcxproj",
+                template = @"template-libHttpClient.UnitTest.141.TE.vcxproj",
+                output = @"libHttpClient.UnitTest.141.TE.vcxproj",
             });
 
             //libHttpClient.110.XDK.Ship.Cpp

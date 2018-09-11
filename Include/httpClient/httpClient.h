@@ -8,6 +8,9 @@
 #include <httpClient/async.h>
 #include <httpClient/asyncQueue.h>
 
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#include "jni.h"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Memory APIs
@@ -95,13 +98,27 @@ STDAPI HCMemGetFunctions(
 // 
 
 /// <summary>
+/// Used to wrap the JavaVM and ApplicationContext on Android devices.
+/// </summary>
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+typedef struct HCInitArgs {
+    JavaVM *JavaVM;
+    jobject ApplicationContext;
+} HCInitArgs;
+#else 
+typedef struct HCInitArgs {
+    void* dummy;
+} HCInitArgs;
+#endif
+
+/// <summary>
 /// Initializes the library instance.
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions()
 /// Should have a corresponding call to HCGlobalCleanup().
 /// </summary>
 /// <param name="context">Client context for platform-specific initialization.  Pass in the JavaVM on Android, and nullptr on other platforms</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI HCInitialize(_In_opt_ void* context) HC_NOEXCEPT;
+STDAPI HCInitialize(_In_opt_ HCInitArgs* args) HC_NOEXCEPT;
 
 /// <summary>
 /// Immediately reclaims all resources associated with the library.
@@ -197,12 +214,12 @@ STDAPI HCHttpCallCreate(
 ///
 /// HCHttpCallPerformAsync can only be called once.  Create new hc_call_handle_t to repeat the call.
 /// </summary>
-/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <param name="call">The handle of the HTTP call</param>
+/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -245,6 +262,19 @@ STDAPI HCHttpCallSetTracing(
     _In_ bool traceCall
     ) HC_NOEXCEPT;
 
+/// <summary>
+/// Gets the request url for the HTTP call
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="url">
+/// The UTF-8 encoded url body string of the HTTP call
+/// The memory for the returned string pointer remains valid for the life of the hc_call_handle_t object until HCHttpCallCloseHandle() is called on it.
+/// </param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallGetRequestUrl(
+    _In_ hc_call_handle_t call,
+    _Out_ const char** url
+    ) HC_NOEXCEPT;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs
@@ -625,7 +655,11 @@ typedef struct WebSocketCompletionResult
 
 /// <summary>
 /// Connects to the WebSocket.
-/// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket
+/// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket.
+/// On Win32, iOS, and Android, all background work (including initial connection process) will be added to the queue
+/// in the provided AsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
+/// caller to dispatch that queue for as long as the websocket connection is active. Note that work for 
+/// HCWebSocketSendMessageAsync calls can be assigned to a seperate queue if desired.
 /// </summary>
 /// <param name="uri">The UTF-8 encoded URI to connect to</param>
 /// <param name="subProtocol">The UTF-8 encoded subProtocol to connect to</param>
@@ -633,10 +667,10 @@ typedef struct WebSocketCompletionResult
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCWebSocketConnectAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket
+    _In_ hc_websocket_handle_t websocket,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -658,9 +692,9 @@ STDAPI HCGetWebSocketConnectResult(
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketSendMessageAsync(
-    _Inout_ AsyncBlock* asyncBlock,
     _In_ hc_websocket_handle_t websocket,
-    _In_z_ const char* message
+    _In_z_ const char* message,
+    _Inout_ AsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>

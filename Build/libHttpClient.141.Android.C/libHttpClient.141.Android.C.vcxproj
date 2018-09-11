@@ -17,20 +17,30 @@
       <Configuration>Release</Configuration>
       <Platform>ARM64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5e0ce391-1ac5-4930-921e-2577a4b5c530}</ProjectGuid>
     <Keyword>Android</Keyword>
     <PlatformToolset>Clang_5_0</PlatformToolset>
-    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <AndroidAPILevel>android-19</AndroidAPILevel>
     <RootNamespace>libHttpClient_141_Android_C</RootNamespace>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>Android</ApplicationType>
     <ApplicationTypeRevision>3.0</ApplicationTypeRevision>
+    <HCLibPlatformType>Android</HCLibPlatformType>
+    <HCLibImpl>true</HCLibImpl>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup>
-    <UseOfStl>c++_static</UseOfStl>
+    <UseOfStl>c++_shared</UseOfStl>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
@@ -40,46 +50,25 @@
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings" />
-  <ImportGroup Label="Shared" />
-  <ImportGroup Label="PropertySheets" />
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
-  </PropertyGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.internal.props))\libHttpClient.internal.props" />
+  </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>
-        $(ProjectDir);
-        $(ProjectDir)..\..\Source\Common;
-        $(ProjectDir)..\..\Source\Logger;
-        $(ProjectDir)..\..\Include;
-        $(ProjectDir)..\..\Include\httpClient;
-        %(AdditionalIncludeDirectories)
-      </AdditionalIncludeDirectories>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <CppLanguageStandard>c++1y</CppLanguageStandard>
-      <AdditionalOptions>-D ANDROID_API=1 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions>-Wno-unknown-pragmas %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions>-Wno-pragma-once-outside-header %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
-  <PropertyGroup>
-    <ProjectFolder>$(MSBuildProjectName)</ProjectFolder>
-    <OutDir>$(ProjectDir)..\..\Binaries\$(Configuration)\$(Platform)\$(ProjectFolder)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
-  </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer_cpp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
@@ -117,9 +106,14 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\Callback.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\Callback_STL.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Android\android_websocket.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer_cpp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />

@@ -1921,9 +1921,11 @@ public:
     _ASYNCRTIMP utility::istream_t& __cdecl operator >> (utility::istream_t &is, json::value &val);
 }}
 
+#ifndef NO_JSON_CPP_IMPL
 #include "details/asyncrt_utils.hpp"
 #include "details/json_parsing.hpp"
 #include "details/json_serialization.hpp"
 #include "details/json.hpp"
+#endif
 
 #endif

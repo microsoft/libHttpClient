@@ -24,11 +24,11 @@ try
 CATCH_RETURN()
 
 STDAPI 
-HCInitialize(_In_opt_ void* context) HC_NOEXCEPT
+HCInitialize(_In_opt_ HCInitArgs* args) HC_NOEXCEPT
 try
 {
     HCTraceImplInit();
-    return xbox::httpclient::init_http_singleton(context);
+    return xbox::httpclient::init_http_singleton(args);
 }
 CATCH_RETURN()
 

@@ -136,16 +136,16 @@ public:
 
         VERIFY_SUCCEEDED(CreateSharedAsyncQueue(1, AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_FixedThread, &queue1));
         VERIFY_SUCCEEDED(CreateSharedAsyncQueue(1, AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_FixedThread, &queue1b));
-        VERIFY_ARE_EQUAL(queue1.Handle(), queue1b.Handle());
+        VERIFY_ARE_EQUAL((uint64)queue1.Handle(), (uint64)queue1b.Handle());
 
         VERIFY_SUCCEEDED(CreateSharedAsyncQueue(2, AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_FixedThread, &queue2));
         VERIFY_SUCCEEDED(CreateSharedAsyncQueue(2, AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode_FixedThread, &queue2b));
         VERIFY_SUCCEEDED(CreateSharedAsyncQueue(2, AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_Manual, &queue2c));
-        VERIFY_ARE_NOT_EQUAL(queue2.Handle(), queue2b.Handle());
-        VERIFY_ARE_NOT_EQUAL(queue2.Handle(), queue2c.Handle());
-        VERIFY_ARE_NOT_EQUAL(queue2b.Handle(), queue2c.Handle());
+        VERIFY_ARE_NOT_EQUAL((uint64)queue2.Handle(), (uint64)queue2b.Handle());
+        VERIFY_ARE_NOT_EQUAL((uint64)queue2.Handle(), (uint64)queue2c.Handle());
+        VERIFY_ARE_NOT_EQUAL((uint64)queue2b.Handle(), (uint64)queue2c.Handle());
 
-        VERIFY_ARE_NOT_EQUAL(queue1.Handle(), queue2.Handle());
+        VERIFY_ARE_NOT_EQUAL((uint64)queue1.Handle(), (uint64)queue2.Handle());
     }
 
     DEFINE_TEST_CASE(VerifyNestedQueue)
@@ -189,7 +189,7 @@ public:
         UINT64 ticks = GetTickCount64();
         while(!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work)) 
         {
-            VERIFY_IS_LESS_THAN(GetTickCount64() - ticks, (UINT64)1000);
+            VERIFY_IS_TRUE(GetTickCount64() - ticks < (UINT64)1000);
             Sleep(100);
         }      
     }
@@ -293,7 +293,7 @@ public:
         UINT64 ticks = GetTickCount64();
         while(!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion)) 
         {
-            VERIFY_IS_LESS_THAN(GetTickCount64() - ticks, (UINT64)1000);
+            VERIFY_IS_TRUE(GetTickCount64() - ticks < (UINT64)1000);
             Sleep(100);
         }
 
@@ -314,14 +314,14 @@ public:
         ticks = GetTickCount64();
         while(!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion)) 
         {
-            VERIFY_IS_LESS_THAN(GetTickCount64() - ticks, (UINT64)1000);
+            VERIFY_IS_TRUE(GetTickCount64() - ticks < (UINT64)1000);
             SleepEx(100, TRUE);
         }
 
         ticks = GetTickCount64();
         while(!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work)) 
         {
-            VERIFY_IS_LESS_THAN(GetTickCount64() - ticks, (UINT64)1000);
+            VERIFY_IS_TRUE(GetTickCount64() - ticks < (UINT64)1000);
             SleepEx(100, TRUE);
         }
 

@@ -4,9 +4,9 @@ if( SHIP )
     set (PROJECT_NAME libHttpClient.Ship)
 elseif( UNITTEST )
     if( TAEF )
-        set (PROJECT_NAME libHttpClient.UnitTest.140.TAEF)
+        set (PROJECT_NAME libHttpClient.UnitTest.141.TAEF)
     elseif( TE )
-        set (PROJECT_NAME libHttpClient.UnitTest.140.TE)
+        set (PROJECT_NAME libHttpClient.UnitTest.141.TE)
     endif()
 else()
     if( XDK )
@@ -97,6 +97,9 @@ set(Task_Source_Files
     ../../../Source/Task/AsyncLib.cpp
     ../../../Source/Task/CriticalThread.cpp
     ../../../Source/Task/timer.h
+    ../../../Source/Task/Callback.h
+    ../../../Source/Task/Callback_STL.h
+    ../../../Source/Task/CriticalThread.h
     )
 
 set(Task_Windows_Source_Files
@@ -125,11 +128,13 @@ set(WinRT_WebSocket_Source_Files
     )
 
 set(Win32_WebSocket_Source_Files
-    ../../../Source/WebSocket/Win32/win32_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
     )
 
 set(Android_WebSocket_Source_Files
-    ../../../Source/WebSocket/Android/android_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
     )
 
 set(Mock_Source_Files
@@ -155,6 +160,11 @@ set(Common_Source_Files
 set(Common_Windows_Source_Files
     ../../../Source/Common/Win/utils_win.cpp
     ../../../Source/Common/Win/utils_win.h
+    )
+    
+set(Common_Android_Source_Files
+    ../../../Source/Common/Android/utils_android.cpp
+    ../../../Source/Common/Android/utils_android.h
     )
 
 set(HTTP_Source_Files
@@ -320,7 +330,7 @@ endif()
 if( BUILDWIN32 )
     source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
-    source_group("C++ Source\\WebSocket\\Win32" FILES ${Win32_WebSocket_Source_Files})
+    source_group("C++ Source\\WebSocket\\Websocketpp" FILES ${Win32_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
 
@@ -339,6 +349,7 @@ if( BUILDANDROID )
     source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
     source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
+    source_group("C++ Source\\Common\\Android" FILES ${Common_Android_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -346,6 +357,7 @@ if( BUILDANDROID )
         ${Android_HTTP_Source_Files}
         ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
+        ${Common_Android_Source_Files}
         )
 endif()
 

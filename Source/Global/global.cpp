@@ -62,7 +62,7 @@ std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
     return httpSingleton;
 }
 
-HRESULT init_http_singleton(void* context)
+HRESULT init_http_singleton(HCInitArgs* args)
 {
     HRESULT hr = S_OK;
 
@@ -70,9 +70,9 @@ HRESULT init_http_singleton(void* context)
     if (!httpSingleton)
     {
         IHCPlatformContext* platformContext = nullptr;
-        hr = IHCPlatformContext::InitializeHttpPlatformContext(context, &platformContext);
-        
-        if (SUCCEEDED(hr)) 
+        hr = IHCPlatformContext::InitializeHttpPlatformContext(args, &platformContext);
+
+        if (SUCCEEDED(hr))
         {
             auto newSingleton = http_allocate_shared<http_singleton>(platformContext);
                 std::atomic_compare_exchange_strong(

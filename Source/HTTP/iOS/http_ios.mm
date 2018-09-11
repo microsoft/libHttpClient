@@ -32,8 +32,14 @@ void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NS
     {
         uint32_t errorCode = static_cast<uint32_t>([error code]);
         HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %u] error from NSURLRequest code: %u", HCHttpCallGetId(m_call), errorCode);
-        HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, errorCode);
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        HRESULT errorResult = E_FAIL;
+        if ([[error domain] isEqualToString:NSURLErrorDomain] && [error code] == NSURLErrorNotConnectedToInternet)
+        {
+            errorResult = E_HC_NO_NETWORK;
+        }
+
+        HCHttpCallResponseSetNetworkErrorCode(m_call, errorResult, errorCode);
+        CompleteAsync(m_asyncBlock, errorResult, 0);
         return;
     }
     
@@ -134,17 +140,17 @@ bool ios_http_task::initiate_request()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(void* initialContext, IHCPlatformContext** platformContext)
+HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
 {
     // No-op
-    assert(initialContext == nullptr);
+    assert(args == nullptr);
     *platformContext = nullptr;
     return S_OK;
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
 )
 {
     std::unique_ptr<xbox::httpclient::ios_http_task> httpTask(new xbox::httpclient::ios_http_task(asyncBlock, call));

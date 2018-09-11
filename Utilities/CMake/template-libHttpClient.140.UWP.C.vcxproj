@@ -39,8 +39,10 @@
     <AppContainerApplication>true</AppContainerApplication>
     <GenerateManifest>false</GenerateManifest>
     <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformMinVersion>10.0.10586.0</WindowsTargetPlatformMinVersion>
+    <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <HCLibPlatformType>UWP</HCLibPlatformType>
+    <HCLibImpl>true</HCLibImpl>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
@@ -58,30 +60,20 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.internal.props))\libHttpClient.internal.props" />
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='StaticLibrary'">HC_UWP_API;HC_API_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(ConfigurationType)'=='DynamicLibrary'">HC_UWP_API;HC_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories> 
-       $(ProjectDir);
-       $(ProjectDir)..\..\Source\Common;
-       $(ProjectDir)..\..\Source\Logger;
-       $(ProjectDir)..\..\Include;
-       $(ProjectDir)..\..\Include\httpClient;
-       %(AdditionalIncludeDirectories)
-      </AdditionalIncludeDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;Pathcch.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
@@ -112,11 +104,6 @@
       <FullProgramDatabaseFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</FullProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
-  <PropertyGroup>
-    <ProjectFolder>$(MSBuildProjectName)</ProjectFolder>
-    <OutDir>$(ProjectDir)..\..\Binaries\$(Configuration)\$(Platform)\$(ProjectFolder)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\Obj\$(Configuration)\$(Platform)\$(ProjectFolder)\</IntDir>
-  </PropertyGroup>
 ****INSERTFILES****
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

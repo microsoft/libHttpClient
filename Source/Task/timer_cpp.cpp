@@ -114,7 +114,7 @@ void TimerQueue::Worker() noexcept
         while (!m_queue.empty())
         {
             Deadline next = Peek().When;
-            if (std::chrono::high_resolution_clock::now() > next)
+            if (std::chrono::high_resolution_clock::now() < next)
             {
                 break;
             }

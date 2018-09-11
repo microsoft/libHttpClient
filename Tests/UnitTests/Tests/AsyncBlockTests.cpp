@@ -20,7 +20,7 @@ public:
     {
     }
 
-    static void Callback(AsyncBlock* async)
+    static void CALLBACK Callback(AsyncBlock* async)
     {
         const CompletionThunk* pthis = static_cast<CompletionThunk*>(async->context);
         pthis->_func(async);
@@ -39,7 +39,7 @@ public:
     {
     }
 
-    static HRESULT Callback(AsyncBlock* async)
+    static HRESULT CALLBACK Callback(AsyncBlock* async)
     {
         const WorkThunk* pthis = static_cast<WorkThunk*>(async->context);
         return pthis->_func(async);
@@ -63,7 +63,7 @@ private:
         std::vector<AsyncOp> opCodes;
     };
 
-    static HRESULT FactorialWorkerSimple(AsyncOp opCode, const AsyncProviderData* data)
+    static HRESULT CALLBACK FactorialWorkerSimple(AsyncOp opCode, const AsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
 
@@ -94,7 +94,7 @@ private:
         return S_OK;
     }
 
-    static HRESULT FactorialWorkerDistributed(AsyncOp opCode, const AsyncProviderData* data)
+    static HRESULT CALLBACK FactorialWorkerDistributed(AsyncOp opCode, const AsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
 
@@ -203,6 +203,7 @@ private:
 
 public:
 
+#ifdef USING_TAEF
     TEST_CLASS(AsyncBlockTests)
 
     TEST_CLASS_SETUP(TestClassSetup) { UnitTestBase::StartResponseLogging(); return true; }
@@ -212,7 +213,8 @@ public:
         VERIFY_ARE_EQUAL(s_AsyncLibGlobalStateCount, (DWORD)0);
         UnitTestBase::RemoveResponseLogging(); 
         return true; 
-    }  
+    }
+#endif
 
     DEFINE_TEST_CASE(VerifySimpleAsyncCall)
     {
@@ -311,7 +313,7 @@ public:
         VERIFY_ARE_EQUAL(data.result, (DWORD)120);
 
         // Iteration wait should have paused 100ms between each iteration.
-        VERIFY_IS_GREATER_THAN_OR_EQUAL(ticks, (UINT64)500);
+        VERIFY_IS_TRUE(ticks >= (UINT64)500);
 
         ops.push_back(AsyncOp_DoWork);
         ops.push_back(AsyncOp_DoWork);

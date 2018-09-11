@@ -87,11 +87,15 @@ bool IsQueryKeyOrValueCharacter(char c);
 /// </summary>
 bool IsFragmentCharacter(char c);
 
+Uri::Uri() : m_valid(false)
+{
+}
+
 Uri::Uri(String const& uri)
 {
     m_uri = uri;
     String::const_iterator it = uri.begin();
-    
+
     if (!ParseScheme(uri, it))
     {
         return;

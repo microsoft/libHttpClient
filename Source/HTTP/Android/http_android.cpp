@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
-#if ANDROID_API
 #include <httpClient/httpClient.h>
 #include "android_http_request.h"
 #include "android_platform_context.h"
@@ -30,13 +29,22 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _Inout_ AsyncBlock* asyncBlock
     )
 {
     auto httpSingleton = xbox::httpclient::get_http_singleton(true);
     AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
-    std::unique_ptr<HttpRequest> httpRequest{ new HttpRequest(asyncBlock, platformContext->GetJavaVm(), platformContext->GetHttpRequestClass(), platformContext->GetHttpResponseClass()) };
+    std::unique_ptr<HttpRequest> httpRequest{
+        new HttpRequest(
+            asyncBlock,
+            platformContext->GetJavaVm(),
+            platformContext->GetApplicationContext(),
+            platformContext->GetHttpRequestClass(),
+            platformContext->GetHttpResponseClass()
+        )
+    };
+
     HRESULT result = httpRequest->Initialize();
 
     if (!SUCCEEDED(result))
@@ -88,5 +96,3 @@ void Internal_HCHttpCallPerformAsync(
         CompleteAsync(asyncBlock, E_FAIL, 0);
     }
 }
-
-#endif
