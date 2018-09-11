@@ -19,7 +19,6 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 
 
-    m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
     m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
 
