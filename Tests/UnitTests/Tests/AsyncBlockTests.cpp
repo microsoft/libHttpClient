@@ -444,4 +444,62 @@ public:
         VERIFY_ARE_EQUAL(data.result, result);
         VERIFY_ARE_EQUAL(data.result, (DWORD)120);
     }
+
+    DEFINE_TEST_CASE(VerifyPeriodicPattern)
+    {
+        struct Controller
+        {
+            async_queue_handle_t queue;
+            bool enabled;
+            uint32_t callbackCount;
+            std::function<void(Controller* controller)> schedule;
+        };
+
+        auto schedule = [](Controller* controller)
+        {
+            AsyncBlock *async = new AsyncBlock{};
+            async->context = controller;
+            async->queue = controller->queue;
+            async->callback = [](AsyncBlock* async)
+            {
+                Controller* pcontroller = (Controller*)async->context;
+                pcontroller->callbackCount++;
+                if (pcontroller->enabled)
+                {
+                    pcontroller->schedule(pcontroller);
+                }
+                delete async;
+            };
+
+            VERIFY_SUCCEEDED(BeginAsync(async, controller, nullptr, nullptr, [](AsyncOp op, const AsyncProviderData* data)
+            {
+                if (op == AsyncOp_DoWork)
+                {
+                    CompleteAsync(data->async, S_OK, 0);
+                }
+                return S_OK;
+            }));
+
+            VERIFY_SUCCEEDED(ScheduleAsync(async, 30));
+        };
+
+        Controller c;
+        c.queue = nullptr;
+        c.enabled = true;
+        c.callbackCount = 0;
+        c.schedule = schedule;
+
+        // Now run this thing for a while
+        schedule(&c);
+
+        uint64_t ticks = GetTickCount64();
+        while (c.callbackCount < 10)
+        {
+            SleepEx(100, TRUE);
+            VERIFY_IS_TRUE(GetTickCount64() - ticks < 10000);
+        }
+
+        c.enabled = false;
+        while (SleepEx(500, TRUE) == WAIT_IO_COMPLETION);
+    }
 };
