@@ -40,8 +40,9 @@ void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
     
     auto duration = Deadline::duration(absoluteTime);
     auto timePoint = Deadline(duration) - std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(timePoint);
 
-    m_timer = [NSTimer scheduledTimerWithTimeInterval:timePoint.count() / 1000.0
+    m_timer = [NSTimer scheduledTimerWithTimeInterval:ms.count() / 1000.0
                                                 target:m_target
                                                 selector:@selector(timerFireMethod:)
                                                 userInfo:[NSValue valueWithPointer:this]
