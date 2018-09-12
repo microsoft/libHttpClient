@@ -351,9 +351,12 @@ public:
     bool Wait(uint32_t timeout)
     {
         std::unique_lock<std::mutex> lock(m_cs);
-        if (!m_hasItems)
+        while (!m_hasItems)
         {
-            m_event.wait_for(lock, std::chrono::milliseconds(timeout));
+            if (m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+            {
+                break;
+            }
         }
         return m_hasItems;
     }

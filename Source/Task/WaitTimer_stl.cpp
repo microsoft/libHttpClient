@@ -7,88 +7,194 @@ class WaitTimerImpl
 {
 public:
 
-    ~WaitTimerImpl()
-    {
-        if (m_thread.joinable())
-        {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_abortThread = true;
-            m_cv.notify_all();
-        }
-
-        m_thread.join();
-    }
-
-    HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback)
-    {
-        m_context = context;
-        m_callback = callback;
-
-        try
-        {
-            std::thread t([this] { Worker(); });
-            m_thread.swap(t);
-        }
-        catch (...)
-        {
-            return E_FAIL;
-        }
-
-        return S_OK;
-    }
-
-    void Start(_In_ uint64_t absoluteTime)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_duration = Deadline::duration(absoluteTime);
-        m_deadlineSet = true;
-        m_cv.notify_all();
-    }
-
-    void Cancel()
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_deadlineSet = false;
-        m_cv.notify_all();
-    }
+    HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback);
+    void Start(_In_ uint64_t absoluteTime);
+    void Cancel();
+    void InvokeCallback();
 
 private:
 
     void* m_context;
     WaitTimerCallback* m_callback;
-    Deadline::duration m_duration;
-    bool m_deadlineSet = false;
-    bool m_abortThread = false;
-    std::condition_variable m_cv;
-    std::mutex m_mutex;
-    std::thread m_thread;
+};
 
-    void Worker() noexcept
+struct TimerEntry
+{
+    Deadline When;
+    WaitTimerImpl* Timer;
+    TimerEntry(Deadline d, WaitTimerImpl* t) : When{ d }, Timer{ t } {}
+};
+
+struct TimerEntryComparator
+{
+    bool operator()(TimerEntry const& l, TimerEntry const& r) noexcept
     {
-        std::unique_lock<std::mutex> lock(m_mutex);
-
-        while (!m_abortThread)
-        {
-            if (m_deadlineSet)
-            {
-                Deadline deadline(m_duration);
-                m_cv.wait_until(lock, deadline);
-            }
-            else
-            {
-                m_cv.wait(lock);
-            }
-
-            if (std::chrono::high_resolution_clock::now() >= Deadline(m_duration))
-            {
-                m_deadlineSet = false;
-                lock.unlock();
-                m_callback(m_context);
-                lock.lock();
-            }
-        }
+        return l.When > r.When;
     }
 };
+
+class TimerQueue
+{
+public:
+    bool LazyInit() noexcept;
+
+    void Set(WaitTimerImpl* timer, Deadline deadline) noexcept;
+    void Remove(WaitTimerImpl const* timer) noexcept;
+
+private:
+    void Worker() noexcept;
+
+    TimerEntry const& Peek() const noexcept;
+    TimerEntry Pop() noexcept;
+
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    std::vector<TimerEntry> m_queue; // used as a heap
+    bool m_initialized = false;
+};
+
+namespace
+{
+    std::once_flag g_timerQueueLazyInit;
+    TimerQueue g_timerQueue;
+}
+
+bool TimerQueue::LazyInit() noexcept
+{
+    std::call_once(g_timerQueueLazyInit, [this]()
+    {
+        try
+        {
+            std::thread t([this]()
+            {
+                Worker();
+            });
+            t.detach();
+            m_initialized = true;
+        }
+        catch (...)
+        {
+            m_initialized = false;
+        }
+    });
+
+    return m_initialized;
+}
+
+void TimerQueue::Set(WaitTimerImpl* timer, Deadline deadline) noexcept
+{
+    {
+        std::lock_guard<std::mutex> lock{ m_mutex };
+
+        auto it = std::find_if(m_queue.begin(), m_queue.end(), [timer](auto &item) { return item.Timer == timer; });
+        if (it != m_queue.end())
+        {
+            it->When = deadline;
+        }
+        else
+        {
+            m_queue.emplace_back(deadline, timer);
+        }
+        std::push_heap(m_queue.begin(), m_queue.end(), TimerEntryComparator{});
+    }
+    m_cv.notify_all();
+}
+
+void TimerQueue::Remove(WaitTimerImpl const* timer) noexcept
+{
+    std::lock_guard<std::mutex> lock{ m_mutex };
+
+    // since m_queue is a heap, removing elements is non trivial, instead we
+    // just clean the timer pointer and the entry will be popped eventually
+
+    for (auto& entry : m_queue)
+    {
+        if (entry.Timer == timer)
+        {
+            entry.Timer = nullptr;
+        }
+    }
+}
+
+void TimerQueue::Worker() noexcept
+{
+    std::unique_lock<std::mutex> lock{ m_mutex };
+    while (true)
+    {
+        while (!m_queue.empty())
+        {
+            Deadline next = Peek().When;
+            if (std::chrono::high_resolution_clock::now() < next)
+            {
+                break;
+            }
+
+            TimerEntry entry = Pop();
+
+            // release the lock while invoking the callback, just in case timer
+            // gets destroyed on this thread or readds itself in the callback
+            lock.unlock();
+            if (entry.Timer) // Timer is set to nullptr if the entry is removed
+            {
+                entry.Timer->InvokeCallback();
+            }
+            lock.lock();
+        }
+
+        if (!m_queue.empty())
+        {
+            Deadline next = Peek().When;
+            m_cv.wait_until(lock, next);
+        }
+        else
+        {
+            m_cv.wait(lock);
+        }
+    }
+}
+
+TimerEntry const& TimerQueue::Peek() const noexcept
+{
+    // assume lock is held
+    return m_queue.front();
+}
+
+TimerEntry TimerQueue::Pop() noexcept
+{
+    // assume lock is held
+    TimerEntry e = m_queue.front();
+    std::pop_heap(m_queue.begin(), m_queue.end(), TimerEntryComparator{});
+    m_queue.pop_back();
+    return e;
+}
+
+HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback)
+{
+    m_context = context;
+    m_callback = callback;
+
+    if (!g_timerQueue.LazyInit())
+    {
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
+{
+    g_timerQueue.Set(this, Deadline(Deadline::duration(absoluteTime)));
+}
+
+void WaitTimerImpl::Cancel()
+{
+    g_timerQueue.Remove(this);
+}
+
+void WaitTimerImpl::InvokeCallback()
+{
+    m_callback(m_context);
+}
 
 WaitTimer::WaitTimer() noexcept
     : m_impl(nullptr)

@@ -33,12 +33,12 @@ struct AsyncState
 
     void* operator new(size_t size, size_t additional)
     {
-        return malloc(size + additional);
+        return ::operator new(size + additional);
     }
 
     void operator delete(void* ptr)
     {
-        free(ptr);
+        ::operator delete(ptr);
     }
 
     AsyncState() noexcept
@@ -707,6 +707,7 @@ STDAPI BeginAsyncAlloc(
     state->identityName = identityName;
 
     ASSERT(state->providerData.context != nullptr);
+    memset(state->providerData.context, 0, contextSize);
     *context = state->providerData.context;
 
     return S_OK;

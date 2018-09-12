@@ -428,7 +428,7 @@ public:
 
         struct ResultData
         {
-            uint64_t Times[2];
+            uint64_t Times[3];
         };
 
         struct ArgData
@@ -466,19 +466,27 @@ public:
             call2.Data = &result;
             VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, type, 0, &call2, cb));
 
+            ArgData call3;
+            call3.Index = 2;
+            call3.Data = &result;
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, type, 500, &call3, cb));
+
             // We should be able to dispatch one without waiting
             VERIFY_IS_TRUE(DispatchAsyncQueue(queue, type, 0));
             VERIFY_IS_FALSE(DispatchAsyncQueue(queue, type, 0));
 
-            VERIFY_IS_TRUE(DispatchAsyncQueue(queue, type, 1500));
+            VERIFY_IS_TRUE(DispatchAsyncQueue(queue, type, 700));
+            VERIFY_IS_TRUE(DispatchAsyncQueue(queue, type, 1200));
             VERIFY_IS_FALSE(DispatchAsyncQueue(queue, type, 0));
 
             uint64_t call1Ticks = result.Times[0] - baseTicks;
             uint64_t call2Ticks = result.Times[1] - baseTicks;
+            uint64_t call3Ticks = result.Times[2] - baseTicks;
 
             // Call 1 at index 0 should have a tick count > 1000 and < 1050 (shouldn't take 50ms)
             VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1050);
             VERIFY_IS_TRUE(call2Ticks < 50);
+            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 550);
         }
     }
 
