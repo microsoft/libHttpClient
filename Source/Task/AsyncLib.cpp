@@ -471,10 +471,18 @@ static void CALLBACK WorkerCallback(
         }
 
         bool completedNow = false;
+
+        // If DoWork completed and had no payload, this completes the async operation.
+        // When this happens the zombie block is set and there is no need to check for
+        // completion here.  In fact, if this happens we have a race with the completion
+        // callback that could delete the async block.
+
+        if (!state->zombieBlockSet)
         {
             AsyncBlockInternalGuard internal{ asyncBlock };
             completedNow = internal.TrySetTerminalStatus(result);
         }
+
         if (completedNow)
         {
             SignalCompletion(state);
