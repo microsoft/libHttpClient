@@ -1,24 +1,28 @@
-// Copyright (c) Microsoft Corporation
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
 #include "pch.h"
-
-#include "timer.h"
-
-#include <algorithm>
-#include <chrono>
-#include <mutex>
-#include <thread>
-#include <vector>
+#include "WaitTimer.h"
 
 using Deadline = std::chrono::high_resolution_clock::time_point;
+
+class WaitTimerImpl
+{
+public:
+
+    HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback);
+    void Start(_In_ uint64_t absoluteTime);
+    void Cancel();
+    void InvokeCallback();
+
+private:
+
+    void* m_context;
+    WaitTimerCallback* m_callback;
+};
 
 struct TimerEntry
 {
     Deadline When;
-    PlatformTimer* Timer;
-
-    TimerEntry(Deadline d, PlatformTimer* t) : When{ d }, Timer{ t } {}
+    WaitTimerImpl* Timer;
+    TimerEntry(Deadline d, WaitTimerImpl* t) : When{ d }, Timer{ t } {}
 };
 
 struct TimerEntryComparator
@@ -34,8 +38,8 @@ class TimerQueue
 public:
     bool LazyInit() noexcept;
 
-    void Add(PlatformTimer* timer, Deadline deadline) noexcept;
-    void Remove(PlatformTimer const* timer) noexcept;
+    void Set(WaitTimerImpl* timer, Deadline deadline) noexcept;
+    void Remove(WaitTimerImpl const* timer) noexcept;
 
 private:
     void Worker() noexcept;
@@ -51,10 +55,8 @@ private:
 
 namespace
 {
-
-std::once_flag g_timerQueueLazyInit;
-TimerQueue g_timerQueue;
-
+    std::once_flag g_timerQueueLazyInit;
+    TimerQueue g_timerQueue;
 }
 
 bool TimerQueue::LazyInit() noexcept
@@ -68,7 +70,6 @@ bool TimerQueue::LazyInit() noexcept
                 Worker();
             });
             t.detach();
-
             m_initialized = true;
         }
         catch (...)
@@ -80,10 +81,18 @@ bool TimerQueue::LazyInit() noexcept
     return m_initialized;
 }
 
-void TimerQueue::Add(PlatformTimer* timer, Deadline deadline) noexcept
+void TimerQueue::Set(WaitTimerImpl* timer, Deadline deadline) noexcept
 {
     {
         std::lock_guard<std::mutex> lock{ m_mutex };
+
+        for (auto& entry : m_queue)
+        {
+            if (entry.Timer == timer)
+            {
+                entry.Timer = nullptr;
+            }
+        }
 
         m_queue.emplace_back(deadline, timer);
         std::push_heap(m_queue.begin(), m_queue.end(), TimerEntryComparator{});
@@ -91,12 +100,13 @@ void TimerQueue::Add(PlatformTimer* timer, Deadline deadline) noexcept
     m_cv.notify_all();
 }
 
-void TimerQueue::Remove(PlatformTimer const* timer) noexcept
+void TimerQueue::Remove(WaitTimerImpl const* timer) noexcept
 {
     std::lock_guard<std::mutex> lock{ m_mutex };
 
     // since m_queue is a heap, removing elements is non trivial, instead we
     // just clean the timer pointer and the entry will be popped eventually
+
     for (auto& entry : m_queue)
     {
         if (entry.Timer == timer)
@@ -126,7 +136,7 @@ void TimerQueue::Worker() noexcept
             lock.unlock();
             if (entry.Timer) // Timer is set to nullptr if the entry is removed
             {
-                entry.Timer->OnDeadline();
+                entry.Timer->InvokeCallback();
             }
             lock.lock();
         }
@@ -158,34 +168,75 @@ TimerEntry TimerQueue::Pop() noexcept
     return e;
 }
 
-PlatformTimer::PlatformTimer(void* context, PlatformTimerCallback* callback) noexcept :
-    m_context{ context },
-    m_callback{ callback },
-    m_valid{ g_timerQueue.LazyInit() }
-{}
+HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback)
+{
+    m_context = context;
+    m_callback = callback;
 
-PlatformTimer::~PlatformTimer() noexcept
+    if (!g_timerQueue.LazyInit())
+    {
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
+{
+    g_timerQueue.Set(this, Deadline(Deadline::duration(absoluteTime)));
+}
+
+void WaitTimerImpl::Cancel()
 {
     g_timerQueue.Remove(this);
 }
 
-bool PlatformTimer::Valid() const noexcept
-{
-    return m_valid;
-}
-
-void PlatformTimer::Start(uint32_t delayInMs) noexcept
-{
-    Deadline deadline = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds{ delayInMs };
-    g_timerQueue.Add(this, deadline);
-}
-
-void PlatformTimer::Cancel() noexcept
-{
-    g_timerQueue.Remove(this);
-}
-
-void PlatformTimer::OnDeadline() noexcept
+void WaitTimerImpl::InvokeCallback()
 {
     m_callback(m_context);
+}
+
+WaitTimer::WaitTimer() noexcept
+    : m_impl(nullptr)
+{}
+
+WaitTimer::~WaitTimer() noexcept
+{
+    if (m_impl != nullptr)
+    {
+        delete m_impl;
+    }
+}
+
+HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
+{
+    if (m_impl != nullptr || callback == nullptr)
+    {
+        ASSERT(false);
+        return E_UNEXPECTED;
+    }
+
+    std::unique_ptr<WaitTimerImpl> timer(new (std::nothrow) WaitTimerImpl);
+    RETURN_IF_NULL_ALLOC(timer.get());
+    RETURN_IF_FAILED(timer->Initialize(context, callback));
+
+    m_impl = timer.release();
+
+    return S_OK;
+}
+
+void WaitTimer::Start(_In_ uint64_t absoluteTime) noexcept
+{
+    m_impl->Start(absoluteTime);
+}
+
+void WaitTimer::Cancel() noexcept
+{
+    m_impl->Cancel();
+}
+
+uint64_t WaitTimer::GetAbsoluteTime(_In_ uint32_t msFromNow) noexcept
+{
+    Deadline d = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(msFromNow);
+    return d.time_since_epoch().count();
 }

@@ -103,6 +103,8 @@ typedef std::chrono::steady_clock chrono_clock_t;
 HC_DECLARE_TRACE_AREA(HTTPCLIENT);
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
+#define ASYNC_LIB_LOCK_TIME_SENSITIVE_THREAD()
+
 // Define TRACE for AsyncLib
 #define ASYNC_LIB_TRACE(result, message)	        \
     HC_TRACE_ERROR_HR(HTTPCLIENT, result, message); \
