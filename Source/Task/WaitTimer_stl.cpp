@@ -86,15 +86,15 @@ void TimerQueue::Set(WaitTimerImpl* timer, Deadline deadline) noexcept
     {
         std::lock_guard<std::mutex> lock{ m_mutex };
 
-        auto it = std::find_if(m_queue.begin(), m_queue.end(), [timer](auto &item) { return item.Timer == timer; });
-        if (it != m_queue.end())
+        for (auto& entry : m_queue)
         {
-            it->When = deadline;
+            if (entry.Timer == timer)
+            {
+                entry.Timer = nullptr;
+            }
         }
-        else
-        {
-            m_queue.emplace_back(deadline, timer);
-        }
+
+        m_queue.emplace_back(deadline, timer);
         std::push_heap(m_queue.begin(), m_queue.end(), TimerEntryComparator{});
     }
     m_cv.notify_all();
