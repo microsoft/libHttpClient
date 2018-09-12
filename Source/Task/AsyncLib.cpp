@@ -17,6 +17,7 @@ struct AsyncState
     std::atomic<bool> workScheduled{ false };
     std::atomic<bool> timerScheduled{ false };
     bool canceled = false;
+    bool zombie = false;
     AsyncProvider* provider = nullptr;
     AsyncProviderData providerData;
     PlatformTimer timer;
@@ -185,6 +186,11 @@ public:
         {
             ASSERT(false);
             return AsyncStateRef{};
+        }
+
+        if (state != nullptr)
+        {
+            state->zombie = true;
         }
 
         return state;
@@ -452,10 +458,13 @@ static void CALLBACK WorkerCallback(
         }
 
         bool completedNow = false;
+
+        if (!state->zombie)
         {
             AsyncBlockInternalGuard internal{ asyncBlock };
             completedNow = internal.TrySetTerminalStatus(result);
         }
+
         if (completedNow)
         {
             SignalCompletion(state);
