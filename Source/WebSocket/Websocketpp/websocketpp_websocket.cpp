@@ -54,8 +54,7 @@ private:
 
 public:
     wspp_websocket_impl(hc_websocket_handle_t hcHandle)
-        : m_backgroundAsync(nullptr),
-        m_backgroundQueue(nullptr),
+        : m_backgroundQueue(nullptr),
         m_state(CREATED),
         m_numSends(0),
         m_opensslFailed(false),
@@ -362,22 +361,6 @@ private:
         }
 #endif
 
-        struct connect_context
-        {
-            connect_context(websocketpp::client<WebsocketConfigType>& _client) : client(_client) {}
-            websocketpp::client<WebsocketConfigType>& client;
-        };
-        auto context = http_allocate_shared<connect_context>(client);
-
-        m_backgroundAsync = new (xbox::httpclient::http_memory::mem_alloc(sizeof(AsyncBlock))) AsyncBlock{};
-        m_backgroundQueue = DuplicateAsyncQueueHandle(async->queue);
-        m_backgroundAsync->queue = m_backgroundQueue;
-        m_backgroundAsync->context = shared_ptr_cache::store(context);
-        m_backgroundAsync->callback = [](AsyncBlock* async)
-        {
-            xbox::httpclient::http_memory::mem_free(async);
-        };
-
         // Initialize the 'connect' AsyncBlock here, but the actually work will happen on the ASIO background thread below
         auto hr = BeginAsync(async, this, (void*)HCWebSocketConnectAsync, __FUNCTION__,
             [](AsyncOp op, const AsyncProviderData* data)
@@ -397,27 +380,38 @@ private:
             m_state = CONNECTING;
             client.connect(con);
 
-            hr = RunAsync(m_backgroundAsync, [](AsyncBlock* async)
+            try
             {
-                auto context = shared_ptr_cache::fetch<connect_context>(async->context);
-
-                context->client.run();
-
-                // OpenSSL stores some per thread state that never will be cleaned up until
-                // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
-                // at all and will be reported as leaks.
-                // See http://www.openssl.org/support/faq.html#PROG13
+                struct client_context
+                {
+                    client_context(websocketpp::client<WebsocketConfigType>& _client) : client(_client) {}
+                    websocketpp::client<WebsocketConfigType>& client;
+                };
+                auto context = http_allocate_shared<client_context>(client);
+                
+                m_websocketThread = std::thread([context](){
+                    context->client.run();
+                    
+                    // OpenSSL stores some per thread state that never will be cleaned up until
+                    // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
+                    // at all and will be reported as leaks.
+                    // See http://www.openssl.org/support/faq.html#PROG13
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-                ERR_remove_thread_state(nullptr);
+                    ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
-#else 
-                ERR_remove_thread_state(nullptr);
+#else
+                    ERR_remove_thread_state(nullptr);
 #endif // HC_ANDROID_API
-
-                return S_OK;
-            });
+                });
+                hr = S_OK;
+            }
+            catch (std::system_error err)
+            {
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket: couldn't create background websocket thread (%d)", err.code().value());
+                hr = E_FAIL;
+            }
         }
 
         return hr;
@@ -528,7 +522,7 @@ private:
             auto pThis = reinterpret_cast<wspp_websocket_impl*>(async->context);
 
             // Wait for background thread to finish
-            (void)GetAsyncStatus(pThis->m_backgroundAsync, true);
+            pThis->m_websocketThread.join();
 
             // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
             pThis->m_client.reset();
@@ -606,7 +600,7 @@ private:
     };
 
     // Asio client has a long running "run" task that we need to provide a thread for
-    AsyncBlock* m_backgroundAsync;
+    std::thread m_websocketThread;
     async_queue_handle_t m_backgroundQueue;
 
     websocketpp::connection_hdl m_con;
