@@ -522,7 +522,10 @@ private:
             auto pThis = reinterpret_cast<wspp_websocket_impl*>(async->context);
 
             // Wait for background thread to finish
-            pThis->m_websocketThread.join();
+            if (pThis->m_websocketThread.joinable())
+            {
+                pThis->m_websocketThread.join();
+            }
 
             // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
             pThis->m_client.reset();
