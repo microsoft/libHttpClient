@@ -8,16 +8,28 @@
 // Used by unit tests to verify we cleanup memory correctly.
 std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
 
+// Note that there are two AsyncBlock structures in play.
+// There is the pointer allocated and passed to us by the user
+// and there is our own local copy.  We pass the local copy to
+// async provider callbacks, and pass the user pointer to all
+// user-visible callbacks.  The AsyncBlockInternalGuard class keeps
+// the state of these two classes in sync under a lock.  We
+// do this because it is possible for a user to cancel an async
+// call while that call is still running.  We issue the completion
+// callback for the cancel immediatly, which gives the user an
+// opportunity to delete the user async block.  This would leave
+// the async provider callback with a dangling pointer.
+
 struct AsyncState
 {
     uint32_t signature = ASYNC_STATE_SIG;
     std::atomic<uint32_t> refs{ 1 };
     std::atomic<bool> workScheduled{ false };
     bool canceled = false;
-    bool zombieBlockSet = false;
     AsyncProvider* provider = nullptr;
     AsyncProviderData providerData{ };
-    AsyncBlock zombieBlock{ };
+    AsyncBlock asyncBlock { };
+    AsyncBlock* userAsyncBlock = nullptr;
     async_queue_handle_t queue = nullptr;
 
 #ifdef _WIN32
@@ -164,20 +176,42 @@ class AsyncBlockInternalGuard
 {
 public:
     AsyncBlockInternalGuard(_Inout_ AsyncBlock* asyncBlock) noexcept :
-        m_internal{ reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal) }
+        m_internal1{ reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal) },
+        m_internal2(nullptr)
     {
-        ASSERT(m_internal);
-        while (m_internal->lock.test_and_set()) {}
+        ASSERT(m_internal1);
+        while (m_internal1->lock.test_and_set()) {}
+        
+        if (m_internal1->state != nullptr)
+        {
+            // Which async block go we grab?  Either our copy of the user
+            // pointer could have been passed in. We want to get the internal
+            // state of both blocks.
+            
+            AsyncBlock* asyncBlock2 = (asyncBlock == m_internal1->state->userAsyncBlock) ?
+                &m_internal1->state->asyncBlock :
+                m_internal1->state->userAsyncBlock;
+
+            ASSERT(asyncBlock2 != asyncBlock);
+            
+            m_internal2 = reinterpret_cast<AsyncBlockInternal*>(asyncBlock2->internal);
+            ASSERT(m_internal2);
+            while (m_internal2->lock.test_and_set()) {}
+        }
     }
 
     ~AsyncBlockInternalGuard() noexcept
     {
-        m_internal->lock.clear();
+        m_internal1->lock.clear();
+        if (m_internal2 != nullptr)
+        {
+            m_internal2->lock.clear();
+        }
     }
-
+    
     AsyncStateRef GetState() const noexcept
     {
-        AsyncStateRef state{ m_internal->state };
+        AsyncStateRef state{ m_internal1->state };
 
         if (state != nullptr && state->signature != ASYNC_STATE_SIG)
         {
@@ -190,8 +224,13 @@ public:
 
     AsyncStateRef ExtractState() const noexcept
     {
-        AsyncStateRef state{ m_internal->state };
-        m_internal->state = nullptr;
+        AsyncStateRef state{ m_internal1->state };
+        m_internal1->state = nullptr;
+        
+        if (m_internal2 != nullptr)
+        {
+            m_internal2->state = nullptr;
+        }
 
         if (state != nullptr && state->signature != ASYNC_STATE_SIG)
         {
@@ -199,40 +238,24 @@ public:
             return AsyncStateRef{};
         }
 
-        // When extracting state, save off the async block
-        // from the async state's provider as a "zombie". 
-        // This is a snapshot of the async block and we use
-        // it so the async provider has access to a block even
-        // in late cleanup cases.  Later on we will replace
-        // providerData.async with a pointer to this zombie
-        // block (but not before any user-defined callbacks
-        // are invoked.  All user callbacks need to use the 
-        // original block, since they may delete it.)
-
-        if (state != nullptr)
-        {
-            state->zombieBlock = *state->providerData.async;
-            state->zombieBlockSet = true;
-
-            // Clear the lock on the zombie block now, because we
-            // just duplicated it while it was held.
-            AsyncBlockInternal * internal = reinterpret_cast<AsyncBlockInternal*>(state->zombieBlock.internal);
-            internal->lock.clear();
-        }
-
         return state;
     }
 
     HRESULT GetStatus() const noexcept
     {
-        return m_internal->status;
+        return m_internal1->status;
     }
 
     bool TrySetTerminalStatus(HRESULT status) noexcept
     {
-        if (m_internal->status == E_PENDING)
+        if (m_internal1->status == E_PENDING)
         {
-            m_internal->status = status;
+            m_internal1->status = status;
+            if (m_internal2 != nullptr)
+            {
+                ASSERT(m_internal2->status == E_PENDING);
+                m_internal2->status = status;
+            }
             return true;
         }
         else
@@ -242,7 +265,8 @@ public:
     }
 
 private:
-    AsyncBlockInternal * const m_internal;
+    AsyncBlockInternal * const m_internal1;
+    AsyncBlockInternal * m_internal2;
 };
 
 static void CALLBACK CompletionCallbackForAsyncState(_In_ void* context);
@@ -272,9 +296,14 @@ static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ As
     RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
 #endif
 
-    state->providerData.async = asyncBlock;
+    state->userAsyncBlock = asyncBlock;
+    state->providerData.async = &state->asyncBlock;
     state->queue = DuplicateAsyncQueueHandle(asyncBlock->queue);
+    
     internal->state = state.Detach();
+
+    // Duplicate the async block we've just configured
+    internal->state->asyncBlock = *asyncBlock;
 
     return S_OK;
 }
@@ -287,24 +316,29 @@ static HRESULT AllocState(_Inout_ AsyncBlock* asyncBlock, _In_ size_t contextSiz
     // There is no great way to tell if the AsyncBlockInternal has already been
     // initialized, because uninitialized memory can look like anything.
     // Here we rely on the client zeoring out the entirety of the AsyncBlock
-    // object so we can check that AsyncBlock::Internal is all 0
-    for (auto i = 0u; i < sizeof(asyncBlock->internal); ++i)
+    // object so we can check that the state pointer of the internal data is zero.
+    auto internal = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
+    if (internal->state != nullptr)
     {
-        if (asyncBlock->internal[i] != 0)
-        {
-            return E_INVALIDARG;
-        }
+        return E_INVALIDARG;
     }
-
+    
     if (asyncBlock->queue == nullptr)
     {
         return E_INVALIDARG;
+    }
+    
+    // This could be a reused async block from a prior
+    // call, so zero everything.
+    for (auto i = 0u; i < sizeof(asyncBlock->internal); ++i)
+    {
+        asyncBlock->internal[i] = 0;
     }
 
     // Construction is inherently single threaded
     // (there is nothing we can do if the client tries to use the same
     // AsyncBlock in 2 calls at the same time)
-    auto internal = new (asyncBlock->internal) AsyncBlockInternal{};
+    internal = new (asyncBlock->internal) AsyncBlockInternal{};
 
     HRESULT hr = AllocStateNoCompletion(asyncBlock, internal, contextSize);
 
@@ -379,17 +413,6 @@ static void SignalCompletion(_In_ AsyncStateRef const& state)
     else
     {
         SignalWait(state);
-
-        // If the zombie block was set, apply it.  After we invoke
-        // a completion the async block may have been deleted,
-        // so we snapped a copy of it earlier.  This allows late
-        // invoking code like cleanup on the provider to still get
-        // a valid async block.
-
-        if (state->zombieBlockSet)
-        {
-            state->providerData.async = &state->zombieBlock;
-        }
     }
 }
 
@@ -425,24 +448,13 @@ static void CALLBACK CompletionCallbackForAsyncState(
     AsyncStateRef state;
     state.Attach(static_cast<AsyncState*>(context));
 
-    AsyncBlock* asyncBlock = state->providerData.async;
+    AsyncBlock* asyncBlock = state->userAsyncBlock;
     if (asyncBlock->callback != nullptr)
     {
         asyncBlock->callback(asyncBlock);
     }
 
     SignalWait(state);
-
-    // If the zombie block was set, apply it.  After we invoke
-    // a completion the async block may have been deleted,
-    // so we snapped a copy of it earlier.  This allows late
-    // invoking code like cleanup on the provider to still get
-    // a valid async block.
-
-    if (state->zombieBlockSet)
-    {
-        state->providerData.async = &state->zombieBlock;
-    }
 }
 
 static void CALLBACK WorkerCallback(
@@ -450,7 +462,6 @@ static void CALLBACK WorkerCallback(
 {
     AsyncStateRef state;
     state.Attach(static_cast<AsyncState*>(context));
-    AsyncBlock* asyncBlock = state->providerData.async;
     state->workScheduled = false;
 
     if (state->canceled)
@@ -472,14 +483,8 @@ static void CALLBACK WorkerCallback(
 
         bool completedNow = false;
 
-        // If DoWork completed and had no payload, this completes the async operation.
-        // When this happens the zombie block is set and there is no need to check for
-        // completion here.  In fact, if this happens we have a race with the completion
-        // callback that could delete the async block.
-
-        if (!state->zombieBlockSet)
         {
-            AsyncBlockInternalGuard internal{ asyncBlock };
+            AsyncBlockInternalGuard internal{ &state->asyncBlock };
             completedNow = internal.TrySetTerminalStatus(result);
         }
 
@@ -899,14 +904,9 @@ STDAPI GetAsyncResult(
         }
     }
 
-    // Cleanup state if needed.  Configure the provider data's async
-    // block to point to the zombie copy so late cleanup on the provider
-    // still has valid memory.
-
+    // Cleanup state if needed.
     if (result != E_PENDING && state != nullptr)
     {
-        ASSERT(state->zombieBlockSet);
-        state->providerData.async = &state->zombieBlock;
         CleanupState(std::move(state));
     }
 
