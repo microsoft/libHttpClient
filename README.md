@@ -21,7 +21,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 - **Does not throw exceptions** as a means of non-fatal error reporting
 - Caller controlled **memory allocation** via callback API (similar to XDK's XMemAlloc)
 - Built-in **logging** support to either debug output and/or callback
-- **Built in retry** support according to Xbox Live best practices (obey Retry-After header, jitter wait, etc) according to https://developer.microsoft.com/en-us/games/xbox/docs/xboxlive/using-xbox-live/best-practices/best-practices-for-calling-xbox-live
+- **Built in retry** support according to Xbox Live best practices (obey Retry-After header, jitter wait, etc) according to https://docs.microsoft.com/en-us/windows/uwp/xbox-live/using-xbox-live/best-practices/best-practices-for-calling-xbox-live#retry-logic-best-practices
 - **Xbox Live throttle** handling logic
 - Built-in API support to switch to **mock layer**
 - **Open source** project on GitHub
