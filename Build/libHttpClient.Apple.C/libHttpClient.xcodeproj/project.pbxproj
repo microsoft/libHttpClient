@@ -665,6 +665,7 @@
 				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(SRCROOT)/../../Binaries/iOS/include",
@@ -687,6 +688,7 @@
 				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(SRCROOT)/../../Binaries/iOS/include",
