@@ -310,6 +310,8 @@ STDAPI HCHttpCallResponseSetHeader(
     ) HC_NOEXCEPT;
 
 
+#if HC_NOWEBSOCKETS
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket Set APIs
 // 
@@ -456,3 +458,4 @@ STDAPI HCWebSocketGetFunctions(
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
     ) HC_NOEXCEPT;
 
+#endif
