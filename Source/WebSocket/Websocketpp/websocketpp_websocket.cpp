@@ -23,6 +23,7 @@
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
+#include "../HTTP/Android/android_platform_context.h"
 
 #if defined(_WIN32)
 #pragma warning( pop )
@@ -390,6 +391,22 @@ private:
                 auto context = http_allocate_shared<client_context>(client);
                 
                 m_websocketThread = std::thread([context](){
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+                    auto httpSingleton = xbox::httpclient::get_http_singleton(true);
+                    AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
+                    JavaVM* javaVm = platformContext->GetJavaVm();
+
+                    if (javaVm == nullptr)
+                    {
+                        HC_TRACE_ERROR(HTTPCLIENT, "javaVm is null");
+                        throw std::runtime_error("JavaVm is null");
+                    }
+
+                    JNIEnv* jniEnv = nullptr;
+                    jint result = javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+                    javaVm->AttachCurrentThread(&jniEnv, nullptr);
+#endif
+
                     context->client.run();
                     
                     // OpenSSL stores some per thread state that never will be cleaned up until
@@ -401,6 +418,7 @@ private:
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
                     ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
+                    javaVm->DetachCurrentThread();
 #else
                     ERR_remove_thread_state(nullptr);
 #endif // HC_ANDROID_API
