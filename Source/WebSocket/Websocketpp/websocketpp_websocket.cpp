@@ -394,9 +394,12 @@ private:
                 
                 m_websocketThread = std::thread([context](){
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
-                    auto httpSingleton = xbox::httpclient::get_http_singleton(true);
-                    AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
-                    JavaVM* javaVm = platformContext->GetJavaVm();
+                    JavaVM* javaVm = nullptr;
+                    {   // Allow our singleton to go out of scope quickly once we're done with it
+                        auto httpSingleton = xbox::httpclient::get_http_singleton(true);
+                        AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
+                        javaVm = platformContext->GetJavaVm();
+                    }
 
                     if (javaVm == nullptr)
                     {
