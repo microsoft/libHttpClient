@@ -556,6 +556,7 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
     _Out_ const char** headerValue
     ) HC_NOEXCEPT;
 
+#if HC_NOWEBSOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket APIs
 // 
@@ -736,3 +737,5 @@ hc_websocket_handle_t HCWebSocketDuplicateHandle(
 STDAPI HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
+
+#endif

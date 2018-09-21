@@ -23,12 +23,14 @@ http_singleton::http_singleton(IHCPlatformContext* initialContext) :
     m_lastId = 0;
     m_performFunc = Internal_HCHttpCallPerformAsync;
 
+#if HC_NOWEBSOCKETS
     m_websocketMessageFunc = nullptr;
     m_websocketCloseEventFunc = nullptr;
 
     m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
     m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
+#endif
 
     m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
