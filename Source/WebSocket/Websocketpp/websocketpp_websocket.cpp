@@ -23,7 +23,9 @@
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "../HTTP/Android/android_platform_context.h"
+#endif
 
 #if defined(_WIN32)
 #pragma warning( pop )
