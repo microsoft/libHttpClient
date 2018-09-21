@@ -23,7 +23,7 @@ http_singleton::http_singleton(IHCPlatformContext* initialContext) :
     m_lastId = 0;
     m_performFunc = Internal_HCHttpCallPerformAsync;
 
-#if HC_NOWEBSOCKETS
+#if !HC_NOWEBSOCKETS
     m_websocketMessageFunc = nullptr;
     m_websocketCloseEventFunc = nullptr;
 

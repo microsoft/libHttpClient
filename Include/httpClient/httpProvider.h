@@ -310,7 +310,7 @@ STDAPI HCHttpCallResponseSetHeader(
     ) HC_NOEXCEPT;
 
 
-#if HC_NOWEBSOCKETS
+#if !HC_NOWEBSOCKETS
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket Set APIs

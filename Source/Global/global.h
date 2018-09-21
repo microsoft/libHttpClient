@@ -58,7 +58,7 @@ typedef struct http_singleton
     // Platform-specific context for calls
     std::unique_ptr<IHCPlatformContext> m_platformContext;
 
-#if HC_NOWEBSOCKETS
+#if !HC_NOWEBSOCKETS
     // WebSocket state
     HCWebSocketMessageFunction m_websocketMessageFunc;
     HCWebSocketCloseEventFunction m_websocketCloseEventFunc;
