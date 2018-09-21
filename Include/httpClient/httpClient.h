@@ -556,7 +556,7 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
     _Out_ const char** headerValue
     ) HC_NOEXCEPT;
 
-#if HC_NOWEBSOCKETS
+#if !HC_NOWEBSOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket APIs
 // 
