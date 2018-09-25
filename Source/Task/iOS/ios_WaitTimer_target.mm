@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#import "WaitTimer.h"
+#include "../WaitTimer.h"
 #include "ios_WaitTimerImpl.h"
 
 #import "ios_WaitTimer_target.h"
