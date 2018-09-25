@@ -8,7 +8,7 @@
 #ifndef ios_WaitTimerImpl_h
 #define ios_WaitTimerImpl_h
 
-#include "WaitTimer.h"
+#include "../WaitTimer.h"
 #include "ios_WaitTimer_target.h"
 
 class WaitTimerImpl
