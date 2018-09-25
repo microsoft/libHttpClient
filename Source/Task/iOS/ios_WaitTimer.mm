@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#include "WaitTimer.h"
+#import "WaitTimer.h"
 
 #import <Foundation/Foundation.h>
 
