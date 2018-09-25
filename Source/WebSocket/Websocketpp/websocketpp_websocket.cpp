@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "hcwebsocket.h"
+#include "../hcwebsocket.h"
 #include "uri.h"
 #include "x509_cert_utilities.hpp"
 

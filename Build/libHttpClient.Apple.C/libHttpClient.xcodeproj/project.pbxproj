@@ -45,14 +45,11 @@
 		7DB100DE2119F91B00AE22F5 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
 		9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
-		9C3B2542212F29CF0080AEC6 /* x509_cert_utilities.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */; };
 		9C3B2543212F29CF0080AEC6 /* x509_cert_utilities.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */; };
 		9CC0523821374B5D0009B69A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		9CC0523921374B5D0009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
 		9CC0523B213779F70009B69A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		9CC0523C213779F70009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
-		D3C5B5512148481F004BE1FF /* WaitTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = D3C5B5502148481F004BE1FF /* WaitTimer.h */; };
-		D3C5B555214848B6004BE1FF /* ios_WaitTimer_target.h in Headers */ = {isa = PBXBuildFile; fileRef = D3C5B552214848B6004BE1FF /* ios_WaitTimer_target.h */; };
 		D3C5B556214848B6004BE1FF /* ios_WaitTimer_target.mm in Sources */ = {isa = PBXBuildFile; fileRef = D3C5B553214848B6004BE1FF /* ios_WaitTimer_target.mm */; };
 		D3C5B557214848B6004BE1FF /* ios_WaitTimer.mm in Sources */ = {isa = PBXBuildFile; fileRef = D3C5B554214848B6004BE1FF /* ios_WaitTimer.mm */; };
 /* End PBXBuildFile section */
@@ -365,16 +362,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		58722D0C209AD61900B071F7 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				D3C5B555214848B6004BE1FF /* ios_WaitTimer_target.h in Headers */,
-				9C3B2542212F29CF0080AEC6 /* x509_cert_utilities.hpp in Headers */,
-				D3C5B5512148481F004BE1FF /* WaitTimer.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		7DB100A52119206B00AE22F5 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -393,7 +380,6 @@
 				9C3B2537212F25AB0080AEC6 /* Run Script */,
 				58722D0A209AD61900B071F7 /* Sources */,
 				58722D0B209AD61900B071F7 /* Frameworks */,
-				58722D0C209AD61900B071F7 /* Headers */,
 			);
 			buildRules = (
 			);
