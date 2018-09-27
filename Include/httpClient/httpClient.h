@@ -7,6 +7,7 @@
 #include <httpClient/trace.h>
 #include <httpClient/async.h>
 #include <httpClient/asyncQueue.h>
+#include <httpClient/asyncQueueEx.h>
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"

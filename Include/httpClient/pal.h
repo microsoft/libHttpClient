@@ -73,6 +73,10 @@ typedef int32_t HRESULT;
 #define __cdecl 
 #endif
 
+#ifndef __stdcal
+#define __stdcall
+#endif
+
 #ifndef __forceinline 
 #define __forceinline inline
 #endif
