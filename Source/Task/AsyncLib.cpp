@@ -296,9 +296,10 @@ static HRESULT AllocStateNoCompletion(_Inout_ AsyncBlock* asyncBlock, _Inout_ As
     RETURN_LAST_ERROR_IF_NULL(state->waitEvent);
 #endif
 
+    RETURN_IF_FAILED(DuplicateAsyncQueueHandle(asyncBlock->queue, &state->queue));
+
     state->userAsyncBlock = asyncBlock;
     state->providerData.async = &state->asyncBlock;
-    state->queue = DuplicateAsyncQueueHandle(asyncBlock->queue);
     
     internal->state = state.Detach();
 

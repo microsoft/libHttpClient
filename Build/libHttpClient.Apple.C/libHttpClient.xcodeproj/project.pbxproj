@@ -114,6 +114,10 @@
 		9CC0523621374B5D0009B69A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../Binaries/iOS/lib/libcrypto.a; sourceTree = "<group>"; };
 		9CC0523721374B5D0009B69A /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../Binaries/iOS/lib/libssl.a; sourceTree = "<group>"; };
 		A529DDBC20A4C88F00D50640 /* http_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_ios.h; sourceTree = "<group>"; };
+		D35A179E215807BF00597B6A /* asyncQueueEx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = asyncQueueEx.h; sourceTree = "<group>"; };
+		D35A17A221580D0600597B6A /* AsyncQueueEx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AsyncQueueEx.cpp; sourceTree = "<group>"; };
+		D35A17A42158129900597B6A /* AsyncQueueImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AsyncQueueImpl.h; sourceTree = "<group>"; };
+		D35A17A6215A6BF600597B6A /* asyncQueueP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = asyncQueueP.h; sourceTree = "<group>"; };
 		D3C5B5502148481F004BE1FF /* WaitTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaitTimer.h; sourceTree = "<group>"; };
 		D3C5B552214848B6004BE1FF /* ios_WaitTimer_target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_WaitTimer_target.h; sourceTree = "<group>"; };
 		D3C5B553214848B6004BE1FF /* ios_WaitTimer_target.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_WaitTimer_target.mm; sourceTree = "<group>"; };
@@ -260,8 +264,11 @@
 			children = (
 				A5304E1D20C0AC10000667A3 /* iOS */,
 				D3C5B5502148481F004BE1FF /* WaitTimer.h */,
+				D35A17A6215A6BF600597B6A /* asyncQueueP.h */,
+				D35A17A42158129900597B6A /* AsyncQueueImpl.h */,
 				58A7E9B3209ADEB100CC6774 /* AsyncLib.cpp */,
 				58A7E9AF209ADEB100CC6774 /* AsyncQueue.cpp */,
+				D35A17A221580D0600597B6A /* AsyncQueueEx.cpp */,
 			);
 			path = Task;
 			sourceTree = "<group>";
@@ -315,6 +322,7 @@
 		58A7EA22209AE8BB00CC6774 /* httpClient */ = {
 			isa = PBXGroup;
 			children = (
+				D35A179E215807BF00597B6A /* asyncQueueEx.h */,
 				58A7EA28209AE8BB00CC6774 /* async.h */,
 				58A7EA29209AE8BB00CC6774 /* asyncProvider.h */,
 				58A7EA26209AE8BB00CC6774 /* asyncQueue.h */,
@@ -486,6 +494,7 @@
 				58A7E9C7209ADEB100CC6774 /* utils.cpp in Sources */,
 				58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */,
 				58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */,
+				D35A17A321580D0600597B6A /* AsyncQueueEx.cpp in Sources */,
 				58A7E9C5209ADEB100CC6774 /* mock.cpp in Sources */,
 				58A7E9D4209ADEB100CC6774 /* httpcall_response.cpp in Sources */,
 				9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,

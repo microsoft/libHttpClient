@@ -7,7 +7,13 @@
 #include "Utils.h"
 #include "../global/global.h"
 #include "asyncqueue.h"
+#include "asyncqueueex.h"
 #include "callbackthunk.h"
+
+namespace ApiDiag
+{
+    extern std::atomic<uint32_t> g_globalApiRefs;
+}
 
 template <class H, class C>
 class AutoHandleWrapper
@@ -96,7 +102,26 @@ public:
 DEFINE_TEST_CLASS(AsyncQueueTests)
 {
 public:
-    DEFINE_TEST_CLASS_PROPS(AsyncQueueTests)
+
+#ifdef USING_TAEF
+
+    TEST_CLASS(AsyncQueueTests);
+
+    TEST_CLASS_SETUP(TestClassSetup) 
+    {
+        UnitTestBase::StartResponseLogging(); 
+        return true; 
+    }
+
+    TEST_CLASS_CLEANUP(TestClassCleanup)
+    {
+        VERIFY_ARE_EQUAL(0u, ApiDiag::g_globalApiRefs);
+        UnitTestBase::RemoveResponseLogging();
+        return true; 
+    }
+#else
+    DEFINE_TEST_CLASS_PROPS(AsyncQueueTests);
+#endif
 
     DEFINE_TEST_CASE(VerifyStockQueue)
     {
@@ -204,7 +229,7 @@ public:
 
         for (int idx = 0; idx < count; idx++)
         {
-            dups[idx] = DuplicateAsyncQueueHandle(queue);
+            VERIFY_SUCCEEDED(DuplicateAsyncQueueHandle(queue, &dups[idx]));
         }
 
         for (int idx = 0; idx < count; idx++)
@@ -372,6 +397,76 @@ public:
         }
     }
 
+    DEFINE_TEST_CASE(VerifyRemoveCallbacksRace)
+    {
+        AutoQueueHandle queue;
+        const DWORD count = 1000;
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_Manual, &queue));
+
+        struct Data
+        {
+            std::atomic<DWORD> count;
+            HANDLE evt;
+
+        };
+
+        Data data;
+        data.count = { 0 };
+        data.evt = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+
+        DWORD removeCount = 0;
+
+        VERIFY_IS_NOT_NULL(data.evt);
+
+        auto cb = [](void* cxt)
+        {
+            Data* ptr = (Data*)cxt;
+            ptr->count++;
+            SetEvent(ptr->evt);
+            Sleep(30);
+        };
+
+        for (DWORD idx = 0; idx < count; idx++)
+        {
+            if (idx % 2)
+            {
+                VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, &data, cb));
+            }
+            else
+            {
+                VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 100, &data, cb));
+            }
+        }
+
+        CallbackThunk<void*, bool> search([&](void*)
+        {
+            removeCount++;
+            return true;
+        });
+
+        // Wait for the calls to start executing
+        WaitForSingleObject(data.evt, INFINITE);
+
+        RemoveAsyncQueueCallbacks(queue, AsyncQueueCallbackType_Work, nullptr, &search, CallbackThunk<void*, bool>::Callback);
+
+        UINT64 ticks = GetTickCount64();
+        while (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work))
+        {
+            if (GetTickCount64() - ticks > 5000)
+            {
+                VERIFY_FAIL();
+            }
+            Sleep(200);
+        }
+
+        CloseHandle(data.evt);
+
+        VERIFY_IS_TRUE(removeCount > 0);
+        VERIFY_IS_TRUE(data.count > 0);
+        VERIFY_ARE_EQUAL(count, removeCount + data.count);
+    }
+
     DEFINE_TEST_CASE(VerifySubmittedCallback)
     {
         AutoQueueHandle queue;
@@ -418,6 +513,10 @@ public:
         VERIFY_ARE_EQUAL(submitCount.Completion, completeCount);
 
         UnregisterAsyncQueueCallbackSubmitted(queue, token);
+
+        // Now drain the queues
+        while (DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0));
+        while (DispatchAsyncQueue(queue, AsyncQueueCallbackType_Completion, 0));
     }
 
     DEFINE_TEST_CASE(VerifySubmitCallbackWithWait)
@@ -544,5 +643,92 @@ public:
 
         // Dispatch all calls on the queue so we can shut it down
         while (DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0));
+    }
+
+    DEFINE_TEST_CASE(VerifyImmediateDispatch)
+    {
+        AutoQueueHandle queue;
+        uint32_t callCount = 0;
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode_Immediate, &queue));
+
+        auto callback = [](void* ptr)
+        {
+            uint32_t* pint = (uint32_t*)ptr;
+            (*pint)++;
+        };
+
+        const uint32_t count = 10;
+
+        for (uint32_t i = 1; i <= count; i++)
+        {
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &callCount, callback));
+            VERIFY_ARE_EQUAL(i, callCount);
+        }
+
+        // Verify a deferred completion still works
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 200, &callCount, callback));
+        VERIFY_ARE_EQUAL(count, callCount);
+        Sleep(500);
+        VERIFY_ARE_EQUAL(count + 1, callCount);
+    }
+
+    DEFINE_TEST_CASE(VerifySerializedThreadPoolDispatch)
+    {
+        AutoQueueHandle queue;
+        const uint32_t total = 100;
+        struct Data
+        {
+            uint32_t Count = 0;
+            uint32_t Work[total];
+        };
+
+        struct PerCallData
+        {
+            uint32_t Index;
+            Data* D;
+        };
+
+        Data data;
+        data.Count = 0;
+        ZeroMemory(data.Work, sizeof(data.Work));
+
+        PerCallData callData[total];
+        for (uint32_t i = 0; i < total; i++)
+        {
+            callData[i].Index = i;
+            callData[i].D = &data;
+        }
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_SerializedThreadPool, &queue));
+
+        auto callback = [](void* ptr)
+        {
+            PerCallData* pdata = (PerCallData*)ptr;
+            if (pdata->Index == 0)
+            {
+                pdata->D->Work[pdata->Index] = 5;
+            }
+            else
+            {
+                pdata->D->Work[pdata->Index] = pdata->D->Work[pdata->D->Count - 1] + 5;
+            }
+            pdata->D->Count++;
+        };
+
+        for (uint32_t i = 0; i < total; i++)
+        {
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &(callData[i]), callback));
+        }
+
+        Sleep(500);
+
+        VERIFY_ARE_EQUAL(total, data.Count);
+        uint32_t previous = 0;
+        for (uint32_t i = 0; i < total; i++)
+        {
+            VERIFY_ARE_EQUAL(previous + 5, data.Work[i]);
+            previous = data.Work[i];
+        }
     }
 };

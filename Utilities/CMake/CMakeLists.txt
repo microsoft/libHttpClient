@@ -88,12 +88,16 @@ set(Public_Source_Files
     ../../../include/httpClient/async.h
     ../../../include/httpClient/asyncProvider.h
     ../../../include/httpClient/asyncQueue.h
+    ../../../include/httpClient/asyncQueueEx.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/pal.h
     )
 
 set(Task_Source_Files
+    ../../../Source/Task/asyncQueueP.h
+    ../../../Source/Task/asyncQueueImpl.h
     ../../../Source/Task/AsyncQueue.cpp
+    ../../../Source/Task/AsyncQueueEx.cpp
     ../../../Source/Task/AsyncLib.cpp
     ../../../Source/Task/WaitTimer.h
     )
