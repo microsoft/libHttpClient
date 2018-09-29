@@ -238,7 +238,7 @@ void __stdcall AsyncQueueSection::RemoveItems(
     _In_ AsyncQueueRemovePredicate* removePredicate)
 {
     bool removedPendingItem = RemoveItems(&m_pendingHead, searchCallback, predicateContext, removePredicate);
-        
+
     if (removedPendingItem)
     {
         std::lock_guard<spinlock> lock(m_lock);
@@ -316,7 +316,7 @@ Restart:
 // position to start looking, or null to start from the beginning of the
 // list.
 AsyncQueueSection::QueueEntry* AsyncQueueSection::EnumNextRemoveCandidate(
-    _In_ AsyncQueueCallback* searchCallback,
+    _In_opt_ AsyncQueueCallback* searchCallback,
     _In_ PLIST_ENTRY head,
     _In_ PLIST_ENTRY current,
     _In_ bool removeCurrent,
@@ -811,7 +811,7 @@ STDAPI_(bool) DispatchAsyncQueue(
     }
     
     referenced_ptr<IAsyncQueueSection> q;
-    if (FAILED(aq->GetSection(type, &q)))
+    if (FAILED(aq->GetSection(type, q.address_of())))
     {
         return false;
     }
@@ -841,7 +841,7 @@ STDAPI_(bool) IsAsyncQueueEmpty(
     }
     
     referenced_ptr<IAsyncQueueSection> q;
-    if (FAILED(aq->GetSection(type, &q)))
+    if (FAILED(aq->GetSection(type, q.address_of())))
     {
         return false;
     }
@@ -878,7 +878,7 @@ STDAPI SubmitAsyncCallback(
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
 
     referenced_ptr<IAsyncQueueSection> q;
-    RETURN_IF_FAILED(aq->GetSection(type, &q));
+    RETURN_IF_FAILED(aq->GetSection(type, q.address_of()));
 
     RETURN_HR(q->QueueItem(aq.get(), delayMs, callbackContext, callback));
 }
@@ -894,7 +894,7 @@ STDAPI SubmitAsyncCallback(
 STDAPI_(void) RemoveAsyncQueueCallbacks(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
-    _In_ AsyncQueueCallback* searchCallback,
+    _In_opt_ AsyncQueueCallback* searchCallback,
     _In_opt_ void* predicateContext,
     _In_ AsyncQueueRemovePredicate* removePredicate)
 {
@@ -902,7 +902,7 @@ STDAPI_(void) RemoveAsyncQueueCallbacks(
     if (aq != nullptr)
     {
         referenced_ptr<IAsyncQueueSection> q;
-        if (SUCCEEDED(aq->GetSection(type, &q)))
+        if (SUCCEEDED(aq->GetSection(type, q.address_of())))
         {
             q->RemoveItems(searchCallback, predicateContext, removePredicate);
         }

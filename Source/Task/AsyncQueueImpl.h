@@ -6,69 +6,90 @@
 template <typename TInterface>
 struct referenced_ptr
 {
-    referenced_ptr()
+    referenced_ptr() noexcept
         : _ptr(nullptr)
-    {
-    }
+    {}
 
-    referenced_ptr(TInterface* ptr)
+    explicit referenced_ptr(TInterface* ptr) noexcept
         : _ptr(ptr)
     {
-        if (ptr) ptr->AddRef();
+        add_ref();
     }
 
-    referenced_ptr(const referenced_ptr&) = delete;
-    referenced_ptr(referenced_ptr&&) = delete;
-    referenced_ptr& operator=(const referenced_ptr&&) = delete;
-
-    referenced_ptr& operator=(TInterface* ptr)
+    referenced_ptr(const referenced_ptr& other) noexcept
+        : _ptr(other.get())
     {
-        reset();
-        _ptr = ptr;
-        if (ptr) ptr->AddRef();
+        add_ref();
+    }
+
+    referenced_ptr(referenced_ptr&& other) noexcept
+        : _ptr(other.release())
+    {}
+
+    referenced_ptr& operator=(const referenced_ptr& other) noexcept
+    {
+        if (this == &other) { return *this; }
+
+        _ptr = other.get();
+        add_ref();
+
         return *this;
     }
-    
-    ~referenced_ptr()
+
+    referenced_ptr& operator=(referenced_ptr&& other) noexcept
+    {
+        if (this == &other) { return *this; }
+
+        _ptr = other.release();
+
+        return *this;
+    }
+
+    ~referenced_ptr() noexcept
     {
         reset();
     }
     
-    TInterface* get() 
+    TInterface* get() const noexcept
     {
-        return _ptr; 
+        return _ptr;
     }
     
-    TInterface* release()
+    TInterface* release() noexcept
     {
         TInterface* ptr = _ptr;
         _ptr = nullptr;
         return ptr;
     }
-    
-    void reset()
+
+    void reset() noexcept
     {
         if (_ptr) _ptr->Release();
         _ptr = nullptr;
     }
-    
+
     explicit operator bool() const noexcept
     {
         return _ptr != nullptr;
     }
-    
+
     TInterface* operator->() const noexcept
     {
         return _ptr;
     }
-    
-    TInterface** operator&() noexcept
+
+    TInterface** address_of() noexcept
     {
         reset();
         return &_ptr;
     }
-        
+
 private:
+    void add_ref() noexcept
+    {
+        if (_ptr) _ptr->AddRef();
+    }
+
     TInterface* _ptr = nullptr;
 };
 
@@ -238,7 +259,7 @@ public:
         AsyncQueueCallback* callback);
 
     void __stdcall RemoveItems(
-       _In_ AsyncQueueCallback* searchCallback,
+       _In_opt_ AsyncQueueCallback* searchCallback,
        _In_opt_ void* predicateContext,
        _In_ AsyncQueueRemovePredicate* removePredicate);
 
@@ -298,12 +319,12 @@ private:
 
     bool RemoveItems(
         _In_ PLIST_ENTRY queueHead,
-        _In_ AsyncQueueCallback* searchCallback,
+        _In_opt_ AsyncQueueCallback* searchCallback,
         _In_opt_ void* predicateContext,
         _In_ AsyncQueueRemovePredicate* removePredicate);
 
     QueueEntry* EnumNextRemoveCandidate(
-        _In_ AsyncQueueCallback* searchCallback,
+        _In_opt_ AsyncQueueCallback* searchCallback,
         _In_ PLIST_ENTRY head,
         _In_ PLIST_ENTRY current,
         _In_ bool removeCurrent,
