@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+
+#if !HC_NOWEBSOCKETS
+
 #include "hcwebsocket.h"
 
 using namespace xbox::httpclient;
@@ -431,3 +434,6 @@ try
     );
 }
 CATCH_RETURN()
+
+#endif
+
