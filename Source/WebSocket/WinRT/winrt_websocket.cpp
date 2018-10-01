@@ -49,6 +49,8 @@ class winrt_websocket_impl : public hc_websocket_impl
 public:
     winrt_websocket_impl() : m_connectAsyncOpResult(S_OK)
     {
+        m_outgoingMessageSendInProgress = false;
+        m_websocketHandle = nullptr;
     }
 
     Windows::Networking::Sockets::MessageWebSocket^ m_messageWebSocket;
@@ -61,6 +63,7 @@ public:
     std::mutex m_outgoingMessageQueueLock;
     std::queue<std::shared_ptr<websocket_outgoing_message>> m_outgoingMessageQueue;
     hc_websocket_handle_t m_websocketHandle;
+    std::atomic<bool> m_outgoingMessageSendInProgress;
 };
 
 void MessageWebSocketSendMessage(
@@ -307,6 +310,8 @@ HRESULT Internal_HCWebSocketSendMessageAsync(
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
+    if(websocketTask == nullptr)
+        return E_HC_NOT_INITIALISED;
 
     std::shared_ptr<websocket_outgoing_message> msg = std::make_shared<websocket_outgoing_message>();
     msg->m_message = message;
@@ -318,20 +323,15 @@ HRESULT Internal_HCWebSocketSendMessageAsync(
         return E_INVALIDARG;
     }
 
-    bool sendInProgress = false;
     {
         std::lock_guard<std::mutex> lock(websocketTask->m_outgoingMessageQueueLock);
-        if (websocketTask->m_outgoingMessageQueue.size() > 0)
-        {
-            sendInProgress = true;
-        }
         HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %lld", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
-
         websocketTask->m_outgoingMessageQueue.push(msg);
     }
 
     // No sends in progress, so start sending the message
-    if (!sendInProgress)
+    bool expectedSendInProgress = false;
+    if (websocketTask->m_outgoingMessageSendInProgress.compare_exchange_strong(expectedSendInProgress, true))
     {
         MessageWebSocketSendMessage(websocketTask);
     }
@@ -404,6 +404,8 @@ try
     catch (Platform::Exception^ e)
     {
         HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: Send failed = 0x%0.8x", websocketTask->m_websocketHandle->id, e->HResult);
+        bool expectedSendInProgress = true;
+        websocketTask->m_outgoingMessageSendInProgress.compare_exchange_strong(expectedSendInProgress, false);
         return e->HResult;
     }
 
@@ -461,6 +463,8 @@ void MessageWebSocketSendMessage(
     }
     if (msg == nullptr)
     {
+        bool expectedSendInProgress = true;
+        websocketTask->m_outgoingMessageSendInProgress.compare_exchange_strong(expectedSendInProgress, false);
         return;
     }
 
@@ -490,6 +494,12 @@ void MessageWebSocketSendMessage(
     if (hr == S_OK)
     {
         hr = ScheduleAsync(msg->m_asyncBlock, 0);
+    }
+
+    if (FAILED(hr))
+    {
+        bool expectedSendInProgress = true;
+        websocketTask->m_outgoingMessageSendInProgress.compare_exchange_strong(expectedSendInProgress, false);
     }
 }
 
