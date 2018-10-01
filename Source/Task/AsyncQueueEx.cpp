@@ -39,20 +39,20 @@ public:
         _In_ IAsyncQueue* completionSource,
         _In_ AsyncQueueCallbackType completionSourceCallbackType)
     {
-        HRESULT hr = workerSource->GetSection(workerSourceCallbackType, &m_work);
+        HRESULT hr = workerSource->GetSection(workerSourceCallbackType, m_work.address_of());
         if (FAILED(hr))
         {
             FAIL_FAST_MSG("Unexpected failure getting worker queue");
         }
         
-        hr = completionSource->GetSection(completionSourceCallbackType, &m_completion);
+        hr = completionSource->GetSection(completionSourceCallbackType, m_completion.address_of());
         if (FAILED(hr))
         {
             FAIL_FAST_MSG("Unexpected failure getting worker queue");
         }
-        
-        m_workSource = workerSource;
-        m_completionSource = completionSource;
+
+        m_workSource = referenced_ptr<IAsyncQueue>(workerSource);
+        m_completionSource = referenced_ptr<IAsyncQueue>(completionSource);
     }
 
     void MakeShared(_In_ uint64_t shareId)
@@ -151,10 +151,10 @@ STDAPI CreateSharedAsyncQueue(
     EnsureSharedInitialization();
     uint64_t queueId = MAKE_SHARED_ID(id, workDispatchMode, completionDispatchMode);
     referenced_ptr<AsyncQueueEx> aq;
-    
+
     {
         std::lock_guard<spinlock> lock(s_sharedLock);
-        aq = AsyncQueueEx::FindSharedQueue(queueId);
+        aq = referenced_ptr<AsyncQueueEx>(AsyncQueueEx::FindSharedQueue(queueId));
     }
 
     if (aq != nullptr)
@@ -163,12 +163,12 @@ STDAPI CreateSharedAsyncQueue(
     }
     else
     {
-        aq = new (std::nothrow) AsyncQueueEx;
+        aq = referenced_ptr<AsyncQueueEx>(new (std::nothrow) AsyncQueueEx);
         RETURN_IF_NULL_ALLOC(aq);
         RETURN_IF_FAILED(aq->Initialize(workDispatchMode, completionDispatchMode));
 
         std::unique_lock<spinlock> lock(s_sharedLock);
-        referenced_ptr<AsyncQueueEx> aq2 = AsyncQueueEx::FindSharedQueue(queueId);
+        referenced_ptr<AsyncQueueEx> aq2(AsyncQueueEx::FindSharedQueue(queueId));
         if (aq2 != nullptr)
         {
             // We raced with someone else
