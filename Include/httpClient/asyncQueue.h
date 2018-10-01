@@ -189,7 +189,7 @@ STDAPI SubmitAsyncCallback(
 STDAPI_(void) RemoveAsyncQueueCallbacks(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
-    _In_ AsyncQueueCallback* searchCallback,
+    _In_opt_ AsyncQueueCallback* searchCallback,
     _In_opt_ void* predicateContext,
     _In_ AsyncQueueRemovePredicate* removePredicate);
 
