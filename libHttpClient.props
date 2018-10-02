@@ -5,6 +5,11 @@
 -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <Import Project="$(MSBuildThisFileDirectory)platform_select.props" />
+  <PropertyGroup>
+    <HCLibPlatformType>$(HCPlatform)</HCLibPlatformType>
+  </PropertyGroup>
+
   <!-- Valid values for HCLibPlatformType:
       Android
       UWP
@@ -17,8 +22,8 @@
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango'">Win32</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">XDK</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Android'">Android</HCLibPlatformType>
-  </PropertyGroup> 
-  
+  </PropertyGroup>
+
   <PropertyGroup>
     <useWsppWebsockets>false</useWsppWebsockets>
     <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Android'">true</useWsppWebsockets>
