@@ -1,6 +1,10 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-#pragma once
+
+#ifndef __asyncqueue_h__
+#define __asyncqueue_h__
+
+#include <stdint.h>
 
 /// <summary>
 /// A token returned when registering a callback to identify the registration. This token
@@ -33,9 +37,23 @@ typedef enum AsyncQueueDispatchMode
 
     /// <summary>
     /// Async callbacks are queued to the system thread pool and will
-    /// be processed in order by the threadpool.
+    /// be processed in order by the thread pool across multiple thread
+    /// pool threads.
     /// </summary>
-    AsyncQueueDispatchMode_ThreadPool
+    AsyncQueueDispatchMode_ThreadPool,
+    
+    /// <summary>
+    /// Async callbacks are queued to the system thread pool and
+    /// will be processed one at a time.
+    /// </summary>
+    AsyncQueueDispatchMode_SerializedThreadPool,
+    
+    /// <summary>
+    /// Async callbacks are not queued at all but are dispatched
+    /// immediately by the thread that submits them.
+    /// </summary>
+    AsyncQueueDispatchMode_Immediate
+    
 } AsyncQueueDispatchMode;
 
 /// <summary>
@@ -64,10 +82,10 @@ typedef void CALLBACK AsyncQueueCallback(_In_opt_ void* context);
 /// <summary>
 /// A callback that is invoked by the async queue whenever an item is submitted for execution.
 /// </summary>
-/// <param name='context'>A context pointer that was passed during AddAsyncQueueCallbackSubmitted.</param>
+/// <param name='context'>A context pointer that was passed during RegisterAsyncQueueCallbackSubmitted.</param>
 /// <param name='queue'>The async queue where the callback was submitted.</param>
 /// <param name='type'>The type of callback.</param>
-/// <seealso cref='AddAsyncQueueCallbackSubmitted' />
+/// <seealso cref='RegisterAsyncQueueCallbackSubmitted' />
 typedef void CALLBACK AsyncQueueCallbackSubmitted(_In_opt_ void* context, _In_ async_queue_handle_t queue, _In_ AsyncQueueCallbackType type);
 
 /// <summary>
@@ -94,57 +112,13 @@ STDAPI CreateAsyncQueue(
     _Out_ async_queue_handle_t* queue);
 
 /// <summary>
-/// Creates an async queue with the given shared ID and dispatch
-/// modes. If there is already a queue with this ID and dispatch
-/// modes, it will be referenced.  Otherwise a new queue will be
-/// created with a reference count of 1.  Call CloseAsyncQueue 
-/// when done with the shared instance.
-/// </summary>
-/// <param name='id'>An ID to identify the shared queue.  All calls with the same ID and work/completion dispatch moders will share the same queue.</param>
-/// <param name='workerMode'>The dispatch mode for the "work" side of the queue.</param>
-/// <param name='completionMode'>The dispatch mode for the "completion" side of the queue.</param>
-/// <param name='queue'>The shared queue.</param>
-STDAPI CreateSharedAsyncQueue(
-    _In_ uint32_t id,
-    _In_ AsyncQueueDispatchMode workerMode,
-    _In_ AsyncQueueDispatchMode completionMode,
-    _Out_ async_queue_handle_t* queue);
-
-/// <summary>
-/// Creates an async queue suitable for invoking child tasks.
-/// A nested queue dispatches its work through the parent
-/// queue.  Both work and completions are dispatched through
-/// the parent as "work" callback types.  A nested queue is useful
-/// for performing intermediate work within a larger task.
-/// </summary>
-/// <param name='parentQueue'>The parent queue to use when nesting.</param>
-/// <param name='queue'>The newly created queue.</param>
-STDAPI CreateNestedAsyncQueue(
-    _In_ async_queue_handle_t parentQueue,
-    _Out_ async_queue_handle_t* queue);
-
-/// <summary>
-/// Creates an async queue by composing elements of 2 other queues.
-/// </summary>
-/// <param name='workerSourceQueue'>"work" callbacks will be called on this queue.</param>
-/// <param name='workerSourceCallbackType'>Determines if "work" callbacks will be called as "work" or completion callbacks on workerSourceQueue.</param>
-/// <param name='completionSourceQueue'>"completion" callbacks will be called on this queue.</param>
-/// <param name='completionSourceCallbackType'>Determines if "completion" callbacks will be called as "work" or completion callbacks on completionSourceQueue.</param>
-/// <param name='queue'>The newly created queue.</param>
-STDAPI CreateCompositeAsyncQueue(
-    _In_ async_queue_handle_t workerSourceQueue,
-    _In_ AsyncQueueCallbackType workerSourceCallbackType,
-    _In_ async_queue_handle_t completionSourceQueue,
-    _In_ AsyncQueueCallbackType completionSourceCallbackType,
-    _Out_ async_queue_handle_t* queue);
-
-/// <summary>
 /// Duplicates the async_queue_handle_t object.  Use CloseAsyncQueue to close it.
 /// </summary>
-/// <param name='queue'>The queue to reference.</param>
-/// <returns>Returns the duplicated handle.</returns>
-STDAPI_(async_queue_handle_t) DuplicateAsyncQueueHandle(
-    _In_ async_queue_handle_t queue);
+/// <param name='queueHandle'>The queue to reference.</param>
+/// <param name='duplicatedHandle'>The duplicated queue handle.</param>
+STDAPI DuplicateAsyncQueueHandle(
+    _In_ async_queue_handle_t queueHandle,
+    _Out_ async_queue_handle_t* duplicatedHandle);
 
 /// <summary>
 /// Processes items in the async queue of the given type. If an item
@@ -199,12 +173,10 @@ STDAPI SubmitAsyncCallback(
 
 /// <summary>
 /// Walks all callbacks in the queue of the given type searching
-/// for callback pointers that match searchCallback. For each one,
-/// the predicate is invoked with the callback's context.  If
-/// the predicate wishes to remove the callback, it should return
-/// true.  The predicate is invoked while holding a lock on the
-/// async queue -- care should be taken to do no work on the
-/// qsync queue within the predicate or you could deadlock.
+/// for callback pointers that match searchCallback, or all callbacks
+/// if searchCallback is null. For each one, the predicate is invoked
+/// with the callback's context.  If the predicate wishes to remove
+/// the callback, it should return true.
 /// This should be called before an object is deleted
 /// to ensure there are no orphan callbacks in the async queue
 /// that could later call back into the deleted object.
@@ -217,7 +189,7 @@ STDAPI SubmitAsyncCallback(
 STDAPI_(void) RemoveAsyncQueueCallbacks(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
-    _In_ AsyncQueueCallback* searchCallback,
+    _In_opt_ AsyncQueueCallback* searchCallback,
     _In_opt_ void* predicateContext,
     _In_ AsyncQueueRemovePredicate* removePredicate);
 
@@ -243,3 +215,5 @@ STDAPI RegisterAsyncQueueCallbackSubmitted(
 STDAPI_(void) UnregisterAsyncQueueCallbackSubmitted(
     _In_ async_queue_handle_t queue,
     _In_ registration_token_t token);
+
+#endif // #ifndef __asyncqueue_h__

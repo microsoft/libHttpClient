@@ -74,3 +74,7 @@
 
 #define HC_PLATFORM_IS_MICROSOFT \
    (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK)
+
+#if defined(HC_PLATFORM_MSBUILD_GUESS) && (HC_PLATFORM_MSBUILD_GUESS != HC_PLATFORM)
+    #error The platform guessed by MSBuild does not agree with the platform selected by config.h
+#endif
