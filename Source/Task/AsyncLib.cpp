@@ -766,7 +766,7 @@ STDAPI ScheduleAsync(
         state.Get(),
         WorkerCallback));
 
-    state->Detach();
+    state.Detach();
     return S_OK;
 }
 
