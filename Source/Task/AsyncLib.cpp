@@ -759,6 +759,13 @@ STDAPI ScheduleAsync(
         RETURN_HR(E_UNEXPECTED);
     }
 
+    // Hold another ref here to prevent async call from finishing then triggering dtor before 
+    // we had a chance to call addRef after submission.
+    AsyncStateRef holder;
+    {
+        AsyncBlockInternalGuard internal{ asyncBlock };
+        holder = internal.GetState();
+    }
     RETURN_IF_FAILED(SubmitAsyncCallback(
         state->queue,
         AsyncQueueCallbackType_Work,
