@@ -11,7 +11,7 @@
 
 #include <httpClient/config.h>
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
+#if HC_PLATFORM_IS_MICROSOFT
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -71,6 +71,10 @@ typedef int32_t HRESULT;
 
 #ifndef __cdecl
 #define __cdecl 
+#endif
+
+#ifndef __stdcal
+#define __stdcall
 #endif
 
 #ifndef __forceinline 
