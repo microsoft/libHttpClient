@@ -71,7 +71,7 @@ publishing {
         else
         {
             maven {
-                url 'file:///' + (project.hasProperty("LocalMavenRepositoryPath") ? LocalMavenRepositoryPath : 'C:/Maven')
+                url (project.hasProperty("LocalMavenRepositoryPath") ? 'file:///' + LocalMavenRepositoryPath : "file://${buildDir}/Maven")
             }
         }
     }
