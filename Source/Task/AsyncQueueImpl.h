@@ -105,46 +105,6 @@ bool operator!=(referenced_ptr<TInterface>& p, nullptr_t)
     return p.get() != nullptr;
 }
 
-struct spinlock
-{
-    void lock() 
-    {
-        if (IsSingleProcSystem())
-        {
-            m_mutex.lock();
-        }
-        else
-        {
-            while (m_locked.test_and_set(std::memory_order_acquire)) { ; }
-            m_tid = std::this_thread::get_id();
-        }
-    }
-    
-    void unlock() 
-    {
-        if (IsSingleProcSystem())
-        {
-            m_mutex.unlock();
-        }
-        else
-        {
-            m_tid = {};
-            m_locked.clear(std::memory_order_release);
-        }
-    }
-
-    bool owned()
-    {
-        return std::this_thread::get_id() == m_tid;
-    }
-    
-private:
-    std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
-    std::mutex m_mutex;
-    std::thread::id m_tid;
-    static bool IsSingleProcSystem();
-};
-
 namespace ApiDiag
 {
     extern std::atomic<uint32_t> g_globalApiRefs;
@@ -236,7 +196,7 @@ private:
     std::atomic<registration_token_t> m_nextToken{ 0 };
     CallbackRegistration m_callbacks[SUBMIT_CALLBACK_MAX];
     uint32_t m_callbackCount = 0;
-    spinlock m_lock;
+    std::mutex m_lock;
     async_queue_handle_t m_queue;
 };
 
@@ -281,7 +241,7 @@ private:
     std::atomic<uint32_t> m_processingCallback{ 0 };
     std::condition_variable_any m_event;
     std::condition_variable_any m_busy;
-    spinlock m_lock;
+    std::mutex m_lock;
     LIST_ENTRY m_queueHead;
     LIST_ENTRY m_pendingHead;
     WaitTimer m_timer;
