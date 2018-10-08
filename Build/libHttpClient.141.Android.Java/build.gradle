@@ -23,12 +23,15 @@ allprojects {
     }
 }
 
+// To publish artifacts locally, first build the .aar with visual studio and then run the following command from /Build/libHttpClient.141.Android.Java/
+// gradlew.bat publish -PHCVersion=[Version] -PLocalMavenRepositoryPath=[Path to local maven repository]
+
 publishing { 
     publications { 
         mavenAar(MavenPublication) {
             groupId 'libHttpClientAndroid'
             artifactId 'libHttpClient'
-            version (project.hasProperty("HCVersion") ? HCVersion : '0.0.1')
+            version (project.hasProperty("HCVersion") ? HCVersion : '0.0.0')
             artifact (project.hasProperty('InputAar') ? InputAar : '../../Binaries/Release/x86/libHttpClient.141.Android.Java/libHttpClient.aar')
 
             pom.withXml {
@@ -65,9 +68,10 @@ publishing {
                 url ('file:///' + System.getenv("TFS_DropLocation") + '/Maven')
             }
         }
-        else {
+        else
+        {
             maven {
-                url 'file:///C:/scratch/Maven'
+                url 'file:///' + (project.hasProperty("LocalMavenRepositoryPath") ? LocalMavenRepositoryPath : 'C:/Maven')
             }
         }
     }
