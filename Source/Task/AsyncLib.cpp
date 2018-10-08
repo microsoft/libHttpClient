@@ -766,6 +766,10 @@ STDAPI ScheduleAsync(
         state.Get(),
         WorkerCallback));
 
+    // NOTE: The callback now owns the state ref.  It could have run
+    // already, and state may be holding a dead pointer.  Regardless,
+    // state should be detached here as it no longer owns
+    // the ref.  
     state.Detach();
     return S_OK;
 }

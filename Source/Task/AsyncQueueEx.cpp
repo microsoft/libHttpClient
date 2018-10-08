@@ -8,7 +8,7 @@
 static uint64_t const INVALID_SHARE_ID = 0xFFFFFFFFFFFFFFFF;
 
 static LIST_ENTRY s_sharedList;
-static spinlock s_sharedLock;
+static std::mutex s_sharedLock;
 static std::once_flag s_sharedOnceFlag;
 
 #define MAKE_SHARED_ID(threadId, workMode, completionMode) \
@@ -27,7 +27,7 @@ public:
     {
         if (m_shareId != INVALID_SHARE_ID)
         {
-            std::lock_guard<spinlock> lock(s_sharedLock);
+            std::lock_guard<std::mutex> lock(s_sharedLock);
             RemoveEntryList(&m_shareEntry);
             m_shareId = INVALID_SHARE_ID;
         }
@@ -153,7 +153,7 @@ STDAPI CreateSharedAsyncQueue(
     referenced_ptr<AsyncQueueEx> aq;
 
     {
-        std::lock_guard<spinlock> lock(s_sharedLock);
+        std::lock_guard<std::mutex> lock(s_sharedLock);
         aq = referenced_ptr<AsyncQueueEx>(AsyncQueueEx::FindSharedQueue(queueId));
     }
 
@@ -167,7 +167,7 @@ STDAPI CreateSharedAsyncQueue(
         RETURN_IF_NULL_ALLOC(aq);
         RETURN_IF_FAILED(aq->Initialize(workDispatchMode, completionDispatchMode));
 
-        std::unique_lock<spinlock> lock(s_sharedLock);
+        std::unique_lock<std::mutex> lock(s_sharedLock);
         referenced_ptr<AsyncQueueEx> aq2(AsyncQueueEx::FindSharedQueue(queueId));
         if (aq2 != nullptr)
         {

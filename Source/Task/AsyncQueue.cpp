@@ -6,16 +6,6 @@
 
 static std::atomic<uint32_t> s_processorCount = { 0 } ;
 
-bool spinlock::IsSingleProcSystem()
-{
-    if (s_processorCount == 0)
-    {
-        s_processorCount = std::thread::hardware_concurrency();
-    }
-    
-    return s_processorCount < 2;    
-}
-
 namespace ApiDiag
 {
     std::atomic<uint32_t> g_globalApiRefs = {};
@@ -27,7 +17,7 @@ namespace ApiDiag
 
 HRESULT SubmitCallback::Register(_In_ void* context, _In_ AsyncQueueCallbackSubmitted* callback, _Out_ registration_token_t* token)
 {
-    std::lock_guard<spinlock> lock(m_lock);
+    std::lock_guard<std::mutex> lock(m_lock);
     if (m_callbackCount == SUBMIT_CALLBACK_MAX)
     {
         return E_OUTOFMEMORY;
@@ -44,7 +34,7 @@ HRESULT SubmitCallback::Register(_In_ void* context, _In_ AsyncQueueCallbackSubm
 
 void SubmitCallback::Unregister(_In_ registration_token_t token)
 {
-    std::lock_guard<spinlock> lock(m_lock);
+    std::lock_guard<std::mutex> lock(m_lock);
     bool shuffling = false;
 
     for(uint32_t idx = 0; idx < SUBMIT_CALLBACK_MAX - 1; idx++)
@@ -72,7 +62,7 @@ void SubmitCallback::Invoke(_In_ AsyncQueueCallbackType type)
     uint32_t callbackCount;
 
     {
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         if (m_callbackCount == 0)
         {
             return;
@@ -118,7 +108,7 @@ AsyncQueueSection::~AsyncQueueSection()
     m_timer.Cancel();
 
     {
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         EraseQueue(&m_queueHead);
         EraseQueue(&m_pendingHead);
     }
@@ -217,7 +207,7 @@ HRESULT __stdcall AsyncQueueSection::QueueItem(
     {
         entry->enqueueTime = m_timer.GetAbsoluteTime(waitMs);
 
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         InsertTailList(&m_pendingHead, &entry->entry);
 
         // If the entry's enqueue time is < our current time,
@@ -241,7 +231,7 @@ void __stdcall AsyncQueueSection::RemoveItems(
 
     if (removedPendingItem)
     {
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         ScheduleNextPendingCallback(nullptr);
     }
 
@@ -250,7 +240,7 @@ void __stdcall AsyncQueueSection::RemoveItems(
     bool isEmpty;
 
     {
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         isEmpty = m_queueHead.Flink == &m_queueHead;
         if (isEmpty) m_hasItems = false;
     }
@@ -277,6 +267,8 @@ bool AsyncQueueSection::RemoveItems(
     _In_ AsyncQueueRemovePredicate* removePredicate)
 {
     bool itemRemoved = false;
+
+    std::lock_guard<std::mutex> lock(m_lock);
 
 Restart:
 
@@ -325,8 +317,6 @@ AsyncQueueSection::QueueEntry* AsyncQueueSection::EnumNextRemoveCandidate(
     QueueEntry* candidate = nullptr;
     restart = false;
 
-    std::unique_lock<spinlock> lock(m_lock);
-
     PLIST_ENTRY next = current->Flink;
 
     // If we are not processing the beginning of the list our
@@ -368,26 +358,40 @@ AsyncQueueSection::QueueEntry* AsyncQueueSection::EnumNextRemoveCandidate(
 
             // If this item is currently being processed, wait for
             // its busy flag to clear.  Since waiting unlocks our
-            // spinlock, we must restart our loop.
+            // std::mutex, we must restart our loop.
 
-            if (candidate->busy)
+            // Note:  doing this lock free and causing a restart on contention
+            // can cause pathological performance problems when there are a lot
+            // of items in the queue (eg, running 10,000 async operations, where each
+            // operation removes callbacks when it is done causes this to continue
+            // to allocate TP threads and essentially never finishes).  We are redesigning
+            // this currently, but for now we grab a lock during all of remove items.
+
+            //if (candidate->busy)
+            //{
+            //    while (candidate->busy)
+            //    {
+            //        m_busy.wait(lock);
+            //        restart = true;
+            //    }
+
+            //    if (restart)
+            //    {
+            //        ReleaseEntry(candidate, false);
+            //        candidate = nullptr;
+            //        break;
+            //    }
+            //}
+
+            if (candidate->detached)
             {
-                while (candidate->busy)
-                {
-                    m_busy.wait(lock);
-                    restart = true;
-                }
-
-                if (restart)
-                {
-                    ReleaseEntry(candidate, false);
-                    candidate = nullptr;
-                    break;
-                }
+                ReleaseEntry(candidate, false);
             }
-
-            candidate->busy = true;
-            break;
+            else
+            {
+                candidate->busy = true;
+                break;
+            }
         }
 
         candidate = nullptr;
@@ -408,7 +412,7 @@ bool __stdcall AsyncQueueSection::DrainOneItem()
     // a new item if removal detached this one.
 
     {
-        std::unique_lock<spinlock> lock(m_lock);
+        std::unique_lock<std::mutex> lock(m_lock);
 
         while (true)
         {
@@ -459,7 +463,7 @@ bool __stdcall AsyncQueueSection::DrainOneItem()
         entry->callback(entry->context);
         m_processingCallback--;
 
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         ReleaseEntry(entry, false);
         return true;
     }
@@ -469,7 +473,7 @@ bool __stdcall AsyncQueueSection::DrainOneItem()
 
 bool __stdcall AsyncQueueSection::Wait(uint32_t timeout)
 {
-    std::unique_lock<spinlock> lock(m_lock);
+    std::unique_lock<std::mutex> lock(m_lock);
     while (!m_hasItems)
     {
         if (m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
@@ -482,7 +486,7 @@ bool __stdcall AsyncQueueSection::Wait(uint32_t timeout)
 
 bool __stdcall AsyncQueueSection::IsEmpty()
 {
-    std::lock_guard<spinlock> lock(m_lock);
+    std::lock_guard<std::mutex> lock(m_lock);
     bool empty = m_queueHead.Flink == &m_queueHead;
     
     if (empty)
@@ -520,7 +524,7 @@ HRESULT AsyncQueueSection::AppendEntry(
     bool firstItem;
 
     {
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         firstItem = (m_queueHead.Flink == &m_queueHead);
         InsertTailList(&m_queueHead, &entry->entry);
         m_hasItems = true;
@@ -540,7 +544,7 @@ HRESULT AsyncQueueSection::AppendEntry(
         {
             HRESULT result = HRESULT_FROM_WIN32(GetLastError());
 
-            std::lock_guard<spinlock> lock(m_lock);
+            std::lock_guard<std::mutex> lock(m_lock);
             ReleaseEntry(entry, true);
             return result;
         }
@@ -592,8 +596,6 @@ void AsyncQueueSection::ReleaseEntry(
     _In_ QueueEntry* entry,
     _In_ bool remove)
 {
-    ASSERT(m_lock.owned());
-
     bool wasBusy;
     wasBusy = entry->busy;
     entry->busy = false;
@@ -646,8 +648,6 @@ void AsyncQueueSection::EraseQueue(_In_ PLIST_ENTRY head)
 // this requires m_lock held.
 void AsyncQueueSection::ScheduleNextPendingCallback(_Out_opt_ QueueEntry** dueEntry)
 {
-    ASSERT(m_lock.owned());
-
     QueueEntry* nextItem = nullptr;
     PLIST_ENTRY entry = m_pendingHead.Flink;
 
@@ -688,7 +688,7 @@ void AsyncQueueSection::SubmitPendingCallback()
     QueueEntry* dueEntry;
 
     {
-        std::lock_guard<spinlock> lock(m_lock);
+        std::lock_guard<std::mutex> lock(m_lock);
         ScheduleNextPendingCallback(&dueEntry);
     }
 

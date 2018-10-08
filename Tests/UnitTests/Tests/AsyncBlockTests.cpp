@@ -677,4 +677,34 @@ public:
         c.enabled = false;
         while(SleepEx(500, TRUE) == WAIT_IO_COMPLETION);
     }
+
+    DEFINE_TEST_CASE(VerifyRunAlotAsync)
+    {
+        int count = 20000;
+        WorkThunk cb([&](AsyncBlock*)
+        {
+            return 0;
+        });
+
+        auto asyncs = std::unique_ptr<AsyncBlock[]>(new AsyncBlock[count]{});
+
+        for (int i = 0; i < count; i++)
+        {
+            auto& async = asyncs[i];
+            async.queue = queue;
+            async.context = &cb;
+
+            HRESULT hr = RunAsync(&async, WorkThunk::Callback);
+            if (FAILED(hr))
+            {
+                VERIFY_FAIL();
+            }
+        }
+
+        while (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work) || 
+               !IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion))
+        {
+            SleepEx(500, TRUE);
+        }
+    }
 };
