@@ -49,7 +49,7 @@ publishing {
         if (project.hasProperty("PublishRemote") && (System.getenv("VSTS_ENV_ACCESS_TOKEN") != null || project.hasProperty("vstsMavenAccessToken")))
         {
             maven { 
-                url 'https://microsoft.pkgs.visualstudio.com/_packaging/XsapiAndroid/maven/v1'
+                url 'https://microsoft.pkgs.visualstudio.com/_packaging/gaming/maven/v1'
                 credentials { 
                     username "VSTS" 
                     //The VSTS build system will use the "VSTS_ENV_ACCCESS_TOKEN" to authenticate to VSTS feeds, otherwise it will fall back on the "vstsMavenAccessToken" property, 
