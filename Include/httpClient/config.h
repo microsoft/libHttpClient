@@ -16,7 +16,8 @@
 #define HC_DATAMODEL_LP64 3 // int is 32 bit; long and pointer are 64 bits (64 bit unix)
 // see http://www.unix.org/version2/whatsnew/lp64_wp.html for detailed descriptions
 
-#if defined(_WIN32)
+#if defined(HC_PLATFORM) && defined(HC_DATAMODEL)
+#elif defined(_WIN32)
     #include <sdkddkver.h>
     #include <winapifamily.h>
 
@@ -72,8 +73,10 @@
 #error HC_DATAMODEL is not set to a valid value, it must be one of HC_DATAMODEL_ILP32, HC_DATAMODEL_LLP64, or HC_DATAMODEL_LP64.
 #endif
 
+#if !defined(HC_PLATFORM_IS_MICROSOFT)
 #define HC_PLATFORM_IS_MICROSOFT \
    (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK)
+#endif
 
 #if defined(HC_PLATFORM_MSBUILD_GUESS) && (HC_PLATFORM_MSBUILD_GUESS != HC_PLATFORM)
     #error The platform guessed by MSBuild does not agree with the platform selected by config.h
