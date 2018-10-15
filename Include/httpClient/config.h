@@ -16,7 +16,10 @@
 #define HC_DATAMODEL_LP64 3 // int is 32 bit; long and pointer are 64 bits (64 bit unix)
 // see http://www.unix.org/version2/whatsnew/lp64_wp.html for detailed descriptions
 
-#if defined(HC_PLATFORM) && defined(HC_DATAMODEL)
+#if defined(HC_PLATFORM) 
+#if !defined(HC_DATAMODEL)
+    #error When setting HC_PLATFORM, also please specify the datamodel manually by setting the HC_DATAMODEL macro in your compiler.
+#endif
 #elif defined(_WIN32)
     #include <sdkddkver.h>
     #include <winapifamily.h>
