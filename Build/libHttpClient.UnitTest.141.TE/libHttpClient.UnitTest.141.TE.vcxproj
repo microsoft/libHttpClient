@@ -231,10 +231,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncProvider.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncQueue.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncQueueEx.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\async.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\asyncProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\asyncQueue.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\asyncQueueEx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />

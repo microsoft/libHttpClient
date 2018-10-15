@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.#include "stdafx.h"
 #include "pch.h"
-#include <httpClient/asyncQueueEx.h>
+#include <asyncQueueEx.h>
 #include "asyncQueueP.h"
 #include "AsyncQueueImpl.h"
 

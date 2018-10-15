@@ -5,9 +5,9 @@
 #include <httpClient/pal.h>
 #include <httpClient/mock.h>
 #include <httpClient/trace.h>
-#include <httpClient/async.h>
-#include <httpClient/asyncQueue.h>
-#include <httpClient/asyncQueueEx.h>
+#include <async.h>
+#include <asyncQueue.h>
+#include <asyncQueueEx.h>
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"

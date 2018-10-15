@@ -85,10 +85,10 @@ set(Public_Source_Files
     ../../../include/httpClient/httpClient.h
     ../../../include/httpClient/httpProvider.h
     ../../../include/httpClient/mock.h
-    ../../../include/httpClient/async.h
-    ../../../include/httpClient/asyncProvider.h
-    ../../../include/httpClient/asyncQueue.h
-    ../../../include/httpClient/asyncQueueEx.h
+    ../../../include/async.h
+    ../../../include/asyncProvider.h
+    ../../../include/asyncQueue.h
+    ../../../include/asyncQueueEx.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/pal.h
     )
