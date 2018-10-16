@@ -253,17 +253,6 @@ STDAPI_(uint64_t) HCHttpCallGetId(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Enables or disables tracing for this specific HTTP call
-/// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="traceCall">Trace this call</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCHttpCallSetTracing(
-    _In_ hc_call_handle_t call,
-    _In_ bool traceCall
-    ) HC_NOEXCEPT;
-
-/// <summary>
 /// Gets the request url for the HTTP call
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
@@ -724,7 +713,7 @@ STDAPI HCWebSocketDisconnect(
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <returns>Returns the duplicated handle.</returns>
-hc_websocket_handle_t HCWebSocketDuplicateHandle(
+STDAPI_(hc_websocket_handle_t) HCWebSocketDuplicateHandle(
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
 

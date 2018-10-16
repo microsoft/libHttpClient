@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "XDK", "XDK", "{888A3A17-4FE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Android", "Android", "{C1BDC490-C10E-4DF8-B614-54164FD28340}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.141.Win32.C", "Build\libHttpClient.141.Win32.C\libHttpClient.141.Win32.C.vcxproj", "{CF37BEB2-A66A-42BA-B348-1F07566F4865}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.Win32.C", "Build\libHttpClient.Win32.C\libHttpClient.Win32.C.vcxproj", "{CF37BEB2-A66A-42BA-B348-1F07566F4865}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.141.UWP.C", "Build\libHttpClient.141.UWP.C\libHttpClient.141.UWP.C.vcxproj", "{30753B00-85F9-43E0-B0E0-A5A5F3E4B62A}"
 EndProject
