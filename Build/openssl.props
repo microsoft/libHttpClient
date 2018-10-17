@@ -22,7 +22,7 @@
     <HCSettingsImported>true</HCSettingsImported>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary'">
+  <ItemGroup Condition="'$(HCAddProjectReferences)'=='true' and '$(ConfigurationType)'!='StaticLibrary'">
     <ProjectReference Include="$(HCBuildRoot)Build\$(libsslName)\$(libsslName).vcxproj">
       <Project Condition="'$(HCLibPlatformType)' == 'Android' AND '$(opensslToolset)' == '141'">{51b9c654-fbc9-4224-8751-d7d0c05b7bc9}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' AND '$(opensslToolset)' == '141'">{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</Project>

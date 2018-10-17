@@ -34,13 +34,42 @@
     <HCLibToolset Condition="'$(HCLibPlatformType)'=='Android'">141</HCLibToolset>
 
     <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
+    <HCProjectName Condition="'$(HCLibPlatformType)'=='Win32'">libHttpClient.$(HCLibPlatformType).C</HCProjectName>
   </PropertyGroup>
-
+  
   <PropertyGroup>
     <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
     <libHttpClientInclude>$(HCBuildRoot)Include\</libHttpClientInclude>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(HCAddProjectReferences)'==''">
+    <HCAddProjectReferences>true</HCAddProjectReferences>
+  </PropertyGroup>
+
+  <!-- Handle linking against dll -->
+  <PropertyGroup Condition="'$(HCUseDll)'==''">
+    <HCUseDll Condition="'$(HCLibPlatformType)'=='Win32'">true</HCUseDll>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(HCImportLibPath)'==''">
+    <HCImportLibPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\$(HCProjectName)</HCImportLibPath>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(HCDllPath)'==''">
+    <HCDllPath>$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\$(HCProjectName)\$(HCProjectName).dll</HCDllPath>
+  </PropertyGroup> 
+
+  <ItemDefinitionGroup Condition="'$(HCUseDll)'=='true'">
+    <Link>
+      <AdditionalLibraryDirectories>$(AdditionalLibraryDirectories);$(HCImportLibPath)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(AdditionalDependencies);$(HCProjectName).lib;</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+    
+  <ItemGroup Condition="'$(HCUseDll)'=='true'">
+    <ReferenceCopyLocalPaths Include="$(HCDllPath)"></ReferenceCopyLocalPaths>
+  </ItemGroup>
+    
   <!--PropertyGroup>
     <libHttpClientPath>$(libHttpClientOutDir)Binaries\$(Configuration)\$(Platform)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPath>
     <libHttpClientPathBuildMachine>$(XES_OUTDIR)\libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C\</libHttpClientPathBuildMachine>
@@ -57,9 +86,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(HCBuildRoot)Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(HCLibImpl)'!='true' and '$(ConfigurationType)'!='StaticLibrary'">
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and $(HCLibToolset)==140">{BD57C607-E104-4505-8A43-3D152F016F16}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and $(HCLibToolset)==141">{CF37BEB2-A66A-42BA-B348-1F07566F4865}</Project>
+    <ProjectReference Include="$(HCBuildRoot)Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(HCAddProjectReferences)'=='true' and '$(HCLibImpl)'!='true' and '$(ConfigurationType)'!='StaticLibrary'">
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32'">{CF37BEB2-A66A-42BA-B348-1F07566F4865}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==140">{1B0DFB7F-2CD5-48DE-80D4-5CC56C22AEEE}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==141">{30753B00-85F9-43E0-B0E0-A5A5F3E4B62A}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==140">{D0A538D3-F4B6-4197-8E72-A02726B4DF50}</Project>
