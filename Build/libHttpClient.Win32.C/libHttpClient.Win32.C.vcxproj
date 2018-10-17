@@ -75,10 +75,6 @@
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
       <ModuleDefinitionFile>libHttpClient.Win32.C.def</ModuleDefinitionFile>
     </Link>
-    <Lib>
-      <AdditionalOptions>/ignore:4099 /ignore:4264</AdditionalOptions>
-      <ModuleDefinitionFile>libHttpClient.Win32.C.def</ModuleDefinitionFile>
-    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
   </ItemDefinitionGroup>

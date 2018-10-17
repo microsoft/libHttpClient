@@ -35,28 +35,37 @@
 
     <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
     <HCProjectName Condition="'$(HCLibPlatformType)'=='Win32'">libHttpClient.$(HCLibPlatformType).C</HCProjectName>
-
-    <useDll>false</useDll>
-    <useDll Condition="'$(HCLibPlatformType)'=='Win32'">true</useDll>
   </PropertyGroup>
-
+  
   <PropertyGroup>
     <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
     <libHttpClientInclude>$(HCBuildRoot)Include\</libHttpClientInclude>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(useDll)'=='true'">
-    <importLibPath></importLibPath>
-    <dllPath></dllPath>
-    
-    <importLibPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.Win32.C\libHttpClient.Win32.C.lib</importLibPath>
-    <dllPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.Win32.C\libHttpClient.Win32.C.dll</dllPath>
-      
-    <AdditionalDependencies>%(importLibPath);$(AdditionalDependencies);</AdditionalDependencies>
+  <!-- Handle linking against dll -->
+  <PropertyGroup Condition="'$(HCUseDll)' == ''">
+    <HCUseDll Condition="'$(HCLibPlatformType)'=='Win32'">true</HCUseDll>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(HCUseDll)'=='true' AND '$(HCImportLibPath)' == ''">
+    <HCImportLibPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.Win32.C</HCImportLibPath>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(HCUseDll)'=='true' AND '$(HCLibName)' == ''">
+    <HCLibName Condition="'$(HCLibPlatformType)'=='Win32'">libHttpClient.Win32.C.lib</HCLibName>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(HCUseDll)'=='true' AND '$(HCDllPath)' == ''">
+    <HCDllPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.Win32.C\libHttpClient.Win32.C.dll</HCDllPath>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(HCUseDll)'=='true'">
+    <AdditionalLibraryDirectories>%(HCImportLibPath);$(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    <AdditionalDependencies>%(HCLibName);$(AdditionalDependencies);</AdditionalDependencies>
   </PropertyGroup>
     
-  <ItemGroup Condition="'$(useDll)'=='true'">
-    <ReferenceCopyLocalPaths Include="$(dllPath)"></ReferenceCopyLocalPaths>
+  <ItemGroup Condition="'$(HCUseDll)'=='true'">
+    <ReferenceCopyLocalPaths Include="$(HCDllPath)"></ReferenceCopyLocalPaths>
   </ItemGroup>
     
   <!--PropertyGroup>
