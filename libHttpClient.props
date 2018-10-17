@@ -42,27 +42,29 @@
     <libHttpClientInclude>$(HCBuildRoot)Include\</libHttpClientInclude>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(HCAddProjectReferences)'==''">
+    <HCAddProjectReferences>true</HCAddProjectReferences>
+  </PropertyGroup>
+
   <!-- Handle linking against dll -->
-  <PropertyGroup Condition="'$(HCUseDll)' == ''">
+  <PropertyGroup Condition="'$(HCUseDll)'==''">
     <HCUseDll Condition="'$(HCLibPlatformType)'=='Win32'">true</HCUseDll>
   </PropertyGroup> 
 
-  <PropertyGroup Condition="'$(HCUseDll)'=='true' AND '$(HCImportLibPath)' == ''">
-    <HCImportLibPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.Win32.C</HCImportLibPath>
+  <PropertyGroup Condition="'$(HCImportLibPath)'==''">
+    <HCImportLibPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\$(HCProjectName)</HCImportLibPath>
   </PropertyGroup> 
 
-  <PropertyGroup Condition="'$(HCUseDll)'=='true' AND '$(HCLibName)' == ''">
-    <HCLibName Condition="'$(HCLibPlatformType)'=='Win32'">libHttpClient.Win32.C.lib</HCLibName>
+  <PropertyGroup Condition="'$(HCDllPath)'==''">
+    <HCDllPath>$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\$(HCProjectName)\$(HCProjectName).dll</HCDllPath>
   </PropertyGroup> 
 
-  <PropertyGroup Condition="'$(HCUseDll)'=='true' AND '$(HCDllPath)' == ''">
-    <HCDllPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\libHttpClient.Win32.C\libHttpClient.Win32.C.dll</HCDllPath>
-  </PropertyGroup> 
-
-  <PropertyGroup Condition="'$(HCUseDll)'=='true'">
-    <AdditionalLibraryDirectories>%(HCImportLibPath);$(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    <AdditionalDependencies>%(HCLibName);$(AdditionalDependencies);</AdditionalDependencies>
-  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(HCUseDll)'=='true'">
+    <Link>
+      <AdditionalLibraryDirectories>$(AdditionalLibraryDirectories);$(HCImportLibPath)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(AdditionalDependencies);$(HCProjectName).lib;</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
     
   <ItemGroup Condition="'$(HCUseDll)'=='true'">
     <ReferenceCopyLocalPaths Include="$(HCDllPath)"></ReferenceCopyLocalPaths>
@@ -84,7 +86,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(HCBuildRoot)Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(HCLibImpl)'!='true' and '$(ConfigurationType)'!='StaticLibrary'">
+    <ProjectReference Include="$(HCBuildRoot)Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(HCAddProjectReferences)'=='true' and '$(HCLibImpl)'!='true' and '$(ConfigurationType)'!='StaticLibrary'">
       <Project Condition="'$(HCLibPlatformType)' == 'Win32'">{CF37BEB2-A66A-42BA-B348-1F07566F4865}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==140">{1B0DFB7F-2CD5-48DE-80D4-5CC56C22AEEE}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==141">{30753B00-85F9-43E0-B0E0-A5A5F3E4B62A}</Project>
