@@ -39,9 +39,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{33FC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Http_2017", "Samples\XDK-Http\Http_2017.vcxproj", "{C9971737-D469-4BEE-901A-6FBB2A3BA7E1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcrypto.141.Win32", "Build\libcrypto.141.Win32\libcrypto.141.Win32.vcxproj", "{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcrypto.Win32", "Build\libcrypto.Win32\libcrypto.Win32.vcxproj", "{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssl.141.Win32", "Build\libssl.141.Win32\libssl.141.Win32.vcxproj", "{CF4C3985-3F37-45B6-95F7-7602C53F1F21}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssl.Win32", "Build\libssl.Win32\libssl.Win32.vcxproj", "{CF4C3985-3F37-45B6-95F7-7602C53F1F21}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssl.141.Android", "Build\libssl.141.Android\libssl.141.Android.vcxproj", "{51B9C654-FBC9-4224-8751-D7D0C05B7BC9}"
 EndProject
