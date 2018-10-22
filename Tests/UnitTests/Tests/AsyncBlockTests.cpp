@@ -707,4 +707,26 @@ public:
             SleepEx(500, TRUE);
         }
     }
+
+    DEFINE_TEST_CASE(VerifyGetAsyncStatusNoDeadlock)
+    {
+        WorkThunk cb([](AsyncBlock*)
+        {
+            Sleep(10);
+            return 0;
+        });
+
+        AsyncBlock async = {};
+        async.queue = queue;
+        async.context = &cb;
+
+        for (int iteration = 0; iteration < 1000; iteration++)
+        {
+            VERIFY_SUCCEEDED(RunAsync(&async, WorkThunk::Callback));
+            while (GetAsyncStatus(&async, false) == E_PENDING)
+            {
+                Sleep(0);
+            }
+        }
+    }
 };
