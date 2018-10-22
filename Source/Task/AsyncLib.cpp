@@ -264,38 +264,44 @@ private:
     // we locked.
     static AsyncBlockInternal* DoLock(_In_ AsyncBlock* asyncBlock)
     {
-        AsyncBlockInternal* internal = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
-        ASSERT(internal);
-        while (internal->lock.test_and_set()) {}
+        AsyncBlockInternal* lockedResult = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
+        ASSERT(lockedResult);
+        while (lockedResult->lock.test_and_set()) {}
 
         // We've locked the async block. We only ever want to keep a lock on one block
         // to prevent deadlocks caused by lock ordering.  If the state is still valid
         // on this block, we ensure the async block we're locking is the permanent one
         // associated with the async state.  
 
-        if (internal->state != nullptr && asyncBlock != &internal->state->asyncBlock)
+        if (lockedResult->state != nullptr && asyncBlock != &lockedResult->state->asyncBlock)
         {
             // Grab a state ref here because releasing the lock can allow
             // the state to be cleared / released.
-            AsyncStateRef state(internal->state);
-            internal->lock.clear();
-            internal = DoLock(&state->asyncBlock);
+            AsyncStateRef state(lockedResult->state);
+            lockedResult->lock.clear();
+
+            // Now lock the async block on the state struct
+            AsyncBlockInternal* stateAsyncBlockInternal = reinterpret_cast<AsyncBlockInternal*>(state->asyncBlock.internal);
+            while (stateAsyncBlockInternal->lock.test_and_set()) {}
 
             // We locked the right object, but we need to check here to see if we
             // lost the state after clearing the lock above.  If we did, then this
-            // internal pointer is likely going to destruct as soon as we release
+            // pointer is likely going to destruct as soon as we release
             // our state ref.  We should throw it away and grab the user block
             // again.
 
-            if (internal->state == nullptr)
+            if (stateAsyncBlockInternal->state == nullptr)
             {
-                internal->lock.clear();
-                internal = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
-                while (internal->lock.test_and_set()) {}
+                stateAsyncBlockInternal->lock.clear();
+                while (lockedResult->lock.test_and_set()) {}
+            }
+            else
+            {
+                lockedResult = stateAsyncBlockInternal;
             }
         }
 
-        return internal;
+        return lockedResult;
     }
 };
 
