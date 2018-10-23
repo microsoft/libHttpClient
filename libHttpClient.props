@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--Project
-    ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-    InitialTargets="HCBuildDebug"
--->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="$(MSBuildThisFileDirectory)platform_select.props" />
@@ -16,6 +12,11 @@
       Win32
       XDK
     -->
+
+  <!-- Handle linking against dll -->
+  <PropertyGroup Condition="'$(HCUseDll)'==''">
+    <HCUseDll Condition="'$(HCLibPlatformType)'=='Win32'">true</HCUseDll>
+  </PropertyGroup> 
 
   <PropertyGroup Condition="'$(HCLibPlatformType)' == ''">
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Windows Store'">UWP</HCLibPlatformType>
@@ -34,11 +35,11 @@
     <HCLibToolset Condition="'$(HCLibPlatformType)'=='Android'">141</HCLibToolset>
 
     <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
-    <HCProjectName Condition="'$(HCLibPlatformType)'=='Win32'">libHttpClient.$(HCLibPlatformType).C</HCProjectName>
+    <HCProjectName Condition="'$(HCLibPlatformType)'=='Win32' AND '$(HCUseDll)'==''">libHttpClient.$(HCLibPlatformType).C</HCProjectName>
   </PropertyGroup>
   
   <PropertyGroup>
-    <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
+    <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</HCBuildRoot>
     <libHttpClientInclude>$(HCBuildRoot)Include\</libHttpClientInclude>
   </PropertyGroup>
 
@@ -46,20 +47,15 @@
     <HCAddProjectReferences>true</HCAddProjectReferences>
   </PropertyGroup>
 
-  <!-- Handle linking against dll -->
-  <PropertyGroup Condition="'$(HCUseDll)'==''">
-    <HCUseDll Condition="'$(HCLibPlatformType)'=='Win32'">true</HCUseDll>
-  </PropertyGroup> 
-
   <PropertyGroup Condition="'$(HCImportLibPath)'==''">
-    <HCImportLibPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\$(HCProjectName)</HCImportLibPath>
+    <HCImportLibPath Condition="'$(HCLibPlatformType)'=='Win32'">$(HCBuildRoot)Binaries\$(Configuration)\$(Platform)\$(HCProjectName)</HCImportLibPath>
   </PropertyGroup> 
 
   <PropertyGroup Condition="'$(HCDllPath)'==''">
-    <HCDllPath>$(HCBuildRoot)\Binaries\$(Configuration)\$(Platform)\$(HCProjectName)\$(HCProjectName).dll</HCDllPath>
+    <HCDllPath>$(HCBuildRoot)Binaries\$(Configuration)\$(Platform)\$(HCProjectName)\$(HCProjectName).dll</HCDllPath>
   </PropertyGroup> 
 
-  <ItemDefinitionGroup Condition="'$(HCUseDll)'=='true'">
+  <ItemDefinitionGroup Condition="'$(HCAddProjectReferences)'!='true'">
     <Link>
       <AdditionalLibraryDirectories>$(AdditionalLibraryDirectories);$(HCImportLibPath)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(AdditionalDependencies);$(HCProjectName).lib;</AdditionalDependencies>
@@ -107,7 +103,7 @@
 
   <Import Project="$(HCBuildRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)'=='true'"/>
 
-  <Target Name="HCBuildDebug">
+  <Target Name="HCBuildDebug" BeforeTargets="InitializeBuildStatus" Condition="'$(HCTraceBuildInfo)' == 'true'">
     <PropertyGroup>
       <!-- Useful constants -->
       <Dir>$([System.IO.Path]::DirectorySeparatorChar)</Dir>
@@ -121,6 +117,8 @@
     <Message Importance="High" Text="    Platform                     = '$(Platform)'" />
     <Message Importance="High" Text="    ConfigurationType            = '$(ConfigurationType)'" />
     <Message Importance="High" Text="    HCLibPlatformType            = '$(HCLibPlatformType)'" />
+    <Message Importance="High" Text="    HCImportLibPath              = '$(HCImportLibPath)'" />
+    <Message Importance="High" Text="    HCDllPath                    = '$(HCImportLibPath)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
     <Message Importance="High" Text="    XES_OUTDIR                   = '$(XES_OUTDIR)'" />
@@ -133,9 +131,9 @@
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    IntDir                       = '$(IntDir)'" />
     <Message Importance="High" Text="    OutDir                       = '$(OutDir)'" />
-    <Message Importance="High" Text="    LibPath                    = '$(LibPath)'" />
-    <Message Importance="High" Text="    IntermediateOutputPath     = '$(IntermediateOutputPath)'" />
-    <Message Importance="High" Text="    OutputPath                 = '$(OutputPath)'" />
+    <Message Importance="High" Text="    LibPath                      = '$(LibPath)'" />
+    <Message Importance="High" Text="    IntermediateOutputPath       = '$(IntermediateOutputPath)'" />
+    <Message Importance="High" Text="    OutputPath                   = '$(OutputPath)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="  ClCompile$(N)    Identity = '%(ClCompile.Identity)'$(N)    AdditionalIncludeDirectories = '%(ClCompile.AdditionalIncludeDirectories)'$(N)" />
     <Message Importance="High" Text="  Link$(N)    Identity = '%(Link.Identity)'$(N)    AdditionalDependencies = '%(Link.AdditionalDependencies)'$(N)" />
