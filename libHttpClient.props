@@ -25,11 +25,13 @@
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Android'">Android</HCLibPlatformType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(HCUseWsppWebsockets)'==''">
+    <HCUseWsppWebsockets>false</HCUseWsppWebsockets>
+    <HCUseWsppWebsockets Condition="'$(HCLibPlatformType)'=='Android'">true</HCUseWsppWebsockets>
+    <HCUseWsppWebsockets Condition="'$(HCLibPlatformType)'=='Win32'">true</HCUseWsppWebsockets>
+  </PropertyGroup>
+  
   <PropertyGroup>
-    <useWsppWebsockets>false</useWsppWebsockets>
-    <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Android'">true</useWsppWebsockets>
-    <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Win32'">true</useWsppWebsockets>
-
     <HCLibToolset Condition="'$(PlatformToolset)'=='v140'">140</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
     <HCLibToolset Condition="'$(HCLibPlatformType)'=='Android'">141</HCLibToolset>
@@ -40,7 +42,7 @@
   
   <PropertyGroup>
     <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</HCBuildRoot>
-    <libHttpClientInclude>$(HCBuildRoot)Include\</libHttpClientInclude>
+    <HCIncludePath>$(HCBuildRoot)Include\</HCIncludePath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(HCAddProjectReferences)'==''">
@@ -58,7 +60,7 @@
   <ItemDefinitionGroup Condition="'$(HCAddProjectReferences)'!='true'">
     <Link>
       <AdditionalLibraryDirectories>$(AdditionalLibraryDirectories);$(HCImportLibPath)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(AdditionalDependencies);$(HCProjectName).lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(HCProjectName).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
     
@@ -94,14 +96,14 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(libHttpClientInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCIncludePath)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);winhttp.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
-  <Import Project="$(HCBuildRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)'=='true'"/>
+  <Import Project="$(HCBuildRoot)Build\openssl.props" Condition="'$(HCUseWsppWebsockets)'=='true'"/>
 
   <Target Name="HCBuildDebug" BeforeTargets="InitializeBuildStatus" Condition="'$(HCTraceBuildInfo)' == 'true'">
     <PropertyGroup>
@@ -116,24 +118,28 @@
     <Message Importance="High" Text="    Configuration                = '$(Configuration)'" />
     <Message Importance="High" Text="    Platform                     = '$(Platform)'" />
     <Message Importance="High" Text="    ConfigurationType            = '$(ConfigurationType)'" />
+    <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    HCLibPlatformType            = '$(HCLibPlatformType)'" />
-    <Message Importance="High" Text="    HCImportLibPath              = '$(HCImportLibPath)'" />
-    <Message Importance="High" Text="    HCDllPath                    = '$(HCImportLibPath)'" />
-    <Message Importance="High" Text=" " />
-    <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
-    <Message Importance="High" Text="    XES_OUTDIR                   = '$(XES_OUTDIR)'" />
-    <Message Importance="High" Text=" " />
-    <Message Importance="High" Text="    HCBuildRoot                  = '$(HCBuildRoot)'" />
     <Message Importance="High" Text="    HCLibToolset                 = '$(HCLibToolset)'" />
+    <Message Importance="High" Text="    HCBuildRoot                  = '$(HCBuildRoot)'" />
     <Message Importance="High" Text="    HCProjectName                = '$(HCProjectName)'" />
-    <Message Importance="High" Text="    libHttpClientInclude         = '$(libHttpClientInclude)'" />
-    <Message Importance="High" Text="    useWsppWebsockets            = '$(useWsppWebsockets)'" />
+    <Message Importance="High" Text="    HCAddProjectReferences       = '$(HCAddProjectReferences)'" />
+    <Message Importance="High" Text="    HCIncludePath                = '$(HCIncludePath)'" />
+    <Message Importance="High" Text="    HCSettingsFile               = '$(HCSettingsFile)'" />
+    <Message Importance="High" Text="    HCSettingsImported           = '$(HCSettingsImported)'" />
+    <Message Importance="High" Text="    HCLibImpl                    = '$(HCLibImpl)'" />
+    <Message Importance="High" Text="    HCImportLibPath              = '$(HCImportLibPath)'" />
+    <Message Importance="High" Text="    HCDllPath                    = '$(HCDllPath)'" />
+    <Message Importance="High" Text="    HCUseWsppWebsockets          = '$(HCUseWsppWebsockets)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    IntDir                       = '$(IntDir)'" />
     <Message Importance="High" Text="    OutDir                       = '$(OutDir)'" />
     <Message Importance="High" Text="    LibPath                      = '$(LibPath)'" />
     <Message Importance="High" Text="    IntermediateOutputPath       = '$(IntermediateOutputPath)'" />
     <Message Importance="High" Text="    OutputPath                   = '$(OutputPath)'" />
+    <Message Importance="High" Text=" " />
+    <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
+    <Message Importance="High" Text="    XES_OUTDIR                   = '$(XES_OUTDIR)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="  ClCompile$(N)    Identity = '%(ClCompile.Identity)'$(N)    AdditionalIncludeDirectories = '%(ClCompile.AdditionalIncludeDirectories)'$(N)" />
     <Message Importance="High" Text="  Link$(N)    Identity = '%(Link.Identity)'$(N)    AdditionalDependencies = '%(Link.AdditionalDependencies)'$(N)" />
