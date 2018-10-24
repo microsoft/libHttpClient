@@ -21,6 +21,10 @@
 #if (_MSC_VER >= 1900)
 #define ASIO_ERROR_CATEGORY_NOEXCEPT noexcept(true)
 #endif // (_MSC_VER >= 1900)
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
 
 #include <websocketpp/config/asio_client.hpp>
@@ -32,6 +36,8 @@
 
 #if defined(_WIN32)
 #pragma warning( pop )
+#elif defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #define SUB_PROTOCOL_HEADER "Sec-WebSocket-Protocol"
@@ -149,14 +155,14 @@ public:
                 // See http://www.openssl.org/support/faq.html#PROG13
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM == HC_PLATFORM_IOS
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"     
                 ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
 #else 
                 ERR_remove_thread_state(nullptr);
-#endif // HC_ANDROID_API
+#endif // HC_ANDROID_API || HC_PLATFORM_IOS
 
                 return sslContext;
             });
@@ -421,15 +427,17 @@ private:
                     // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                     // at all and will be reported as leaks.
                     // See http://www.openssl.org/support/faq.html#PROG13
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM == HC_PLATFORM_IOS
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
                     ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
                     javaVm->DetachCurrentThread();
+#endif // HC_PLATFORM_ANDROID
 #else
                     ERR_remove_thread_state(nullptr);
-#endif // HC_ANDROID_API
+#endif // HC_PLATFORM_ANDROID || HC_PLATFORM_IOS
                 });
                 hr = S_OK;
             }
