@@ -59,7 +59,7 @@
 
   <ItemDefinitionGroup Condition="'$(HCAddProjectReferences)'!='true'">
     <Link>
-      <AdditionalLibraryDirectories>$(AdditionalLibraryDirectories);$(HCImportLibPath)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(HCImportLibPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(HCProjectName).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
