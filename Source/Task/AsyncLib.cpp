@@ -765,8 +765,7 @@ STDAPI ScheduleAsync(
         state.Get(),
         WorkerCallback));
 
-    // State object is now referenced by the work callback
-    state->AddRef();
+    state.Detach();
     return S_OK;
 }
 
