@@ -1,515 +1,779 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.#include "stdafx.h"
 #include "pch.h"
-#include "CriticalThread.h"
+#include "asyncQueueP.h"
+#include "AsyncQueueImpl.h"
 
-#include <mutex>
-
-#ifdef _WIN32
-#include "Callback.h"
-#else
-#include "Callback_STL.h"
-#endif
-
-static uint32_t const QUEUE_SIGNATURE = 0x41515545;
-static uint64_t const INVALID_SHARE_ID = 0xFFFFFFFFFFFFFFFF;
-
-// Support for shared queues
-static LIST_ENTRY s_sharedList;
-static std::mutex s_sharedCs;
-static std::once_flag s_onceFlag;
-
-#define MAKE_SHARED_ID(threadId, workMode, completionMode) \
-    (uint64_t)(((uint64_t)workMode) << 48 | ((uint64_t)completionMode) << 32 | threadId)
-
-struct AsyncQueueCallbackSubmittedData
+namespace ApiDiag
 {
-    async_queue_handle_t queue;
-    AsyncQueueCallbackType type;
-};
+    std::atomic<uint32_t> g_globalApiRefs = {};
+}
 
-struct AsyncQueueCallbackSubmittedThunk
+//
+// SubmitCallback
+//
+
+HRESULT SubmitCallback::Register(_In_ void* context, _In_ AsyncQueueCallbackSubmitted* callback, _Out_ registration_token_t* token)
 {
-    void operator()(AsyncQueueCallbackSubmitted* callback, void* context, AsyncQueueCallbackSubmittedData* data)
+    std::lock_guard<std::mutex> lock(m_lock);
+    if (m_callbackCount == SUBMIT_CALLBACK_MAX)
     {
-        callback(context, data->queue, data->type);
-    }
-};
-
-typedef Callback<AsyncQueueCallbackSubmitted, AsyncQueueCallbackSubmittedData, AsyncQueueCallbackSubmittedThunk> SubmitCallback;
-
-class Queue
-{
-public:
-
-    Queue()
-    {
-        InitializeListHead(&m_queueHead);
+        return E_OUTOFMEMORY;
     }
 
-    ~Queue()
+    m_callbacks[m_callbackCount].Token = ++m_nextToken;
+    m_callbacks[m_callbackCount].Context = context;
+    m_callbacks[m_callbackCount].Callback = callback;
+    *token = m_callbacks[m_callbackCount].Token;
+    m_callbackCount++;
+    
+    return S_OK;
+}
+
+void SubmitCallback::Unregister(_In_ registration_token_t token)
+{
+    std::lock_guard<std::mutex> lock(m_lock);
+    bool shuffling = false;
+
+    for(uint32_t idx = 0; idx < SUBMIT_CALLBACK_MAX - 1; idx++)
     {
+        if (!shuffling && m_callbacks[idx].Token == token)
         {
-            std::lock_guard<std::mutex> lock(m_cs);
-            PLIST_ENTRY listEntry = RemoveHeadList(&m_queueHead);
-
-            while (listEntry != &m_queueHead)
-            {
-                QueueEntry* entry = CONTAINING_RECORD(listEntry, QueueEntry, entry);
-                (*entry->refsPointer)--;
-                delete entry;
-                listEntry = RemoveHeadList(&m_queueHead);
-            }
+            shuffling = true;
         }
 
-#ifdef _WIN32
-
-        if (m_event != nullptr)
+        if (shuffling)
         {
-            CloseHandle(m_event);
+            m_callbacks[idx] = m_callbacks[idx + 1];
         }
-
-        if (m_apcThread != nullptr)
-        {
-            CloseHandle(m_apcThread);
-        }
-
-        if (m_work != nullptr)
-        {
-            WaitForThreadpoolWorkCallbacks(m_work, TRUE);
-            CloseThreadpoolWork(m_work);
-        }
-
-#endif
     }
 
-    HRESULT Initialize(async_queue_handle_t owner, AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
+    if (shuffling || m_callbacks[SUBMIT_CALLBACK_MAX - 1].Token == token)
     {
-        m_owner = owner;
-        m_type = type;
-        m_callbackSubmitted = submitCallback;
-        m_dispatchMode = mode;
+        m_callbackCount--;
+    }
+}
 
-        switch (mode)
+void SubmitCallback::Invoke(_In_ AsyncQueueCallbackType type)
+{
+    CallbackRegistration callbacks[SUBMIT_CALLBACK_MAX];
+    uint32_t callbackCount;
+
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        if (m_callbackCount == 0)
         {
-        case AsyncQueueDispatchMode_Manual:
-            // nothing
-            break;
-
-        case AsyncQueueDispatchMode_FixedThread:
-#ifdef _WIN32
-            RETURN_IF_WIN32_BOOL_FALSE(DuplicateHandle(
-                GetCurrentProcess(),
-                GetCurrentThread(),
-                GetCurrentProcess(),
-                &m_apcThread, 0,
-                FALSE,
-                DUPLICATE_SAME_ACCESS));
-#else
-            RETURN_HR(E_NOTIMPL);
-#endif
-            break;
-
-        case AsyncQueueDispatchMode_ThreadPool:
-#ifdef _WIN32
-            m_work = CreateThreadpoolWork(TPCallback, this, nullptr);
-            RETURN_LAST_ERROR_IF_NULL(m_work);
-#else
-            RETURN_HR(E_NOTIMPL);
-#endif
-            break;
+            return;
         }
 
+        callbackCount = m_callbackCount;
+        memcpy(callbacks, m_callbacks, sizeof(CallbackRegistration) * callbackCount);
+    }
+
+    for(uint32_t idx = 0; idx < callbackCount; idx++)
+    {
+        callbacks[idx].Callback(callbacks[idx].Context, m_queue, type);
+    }
+}
+
+//
+// AsyncQueueSection
+//
+
 #ifdef _WIN32
-        m_event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        RETURN_LAST_ERROR_IF_NULL(m_event);
+static void CALLBACK APCCallback(ULONG_PTR context)
+{
+    AsyncQueueSection* queue = (AsyncQueueSection*)context;
+    queue->ProcessCallback();
+}
+
+static void CALLBACK TPCallback(PTP_CALLBACK_INSTANCE, void* context, PTP_WORK)
+{
+    AsyncQueueSection* queue = (AsyncQueueSection*)context;
+    queue->ProcessCallback();
+}
 #endif
+
+AsyncQueueSection::AsyncQueueSection()
+    : Api()
+{
+    InitializeListHead(&m_queueHead);
+    InitializeListHead(&m_pendingHead);
+}
+
+AsyncQueueSection::~AsyncQueueSection()
+{
+    m_timer.Cancel();
+
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        EraseQueue(&m_queueHead);
+        EraseQueue(&m_pendingHead);
+    }
+
+#ifdef _WIN32
+
+    if (m_apcThread != nullptr)
+    {
+        CloseHandle(m_apcThread);
+    }
+
+    if (m_work != nullptr)
+    {
+        WaitForThreadpoolWorkCallbacks(m_work, TRUE);
+        CloseThreadpoolWork(m_work);
+    }
+
+#endif
+}
+
+HRESULT AsyncQueueSection::Initialize(AsyncQueueCallbackType type, AsyncQueueDispatchMode mode, SubmitCallback* submitCallback)
+{
+    m_type = type;
+    m_callbackSubmitted = submitCallback;
+    m_dispatchMode = mode;
+
+    RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
+    {
+        AsyncQueueSection* pthis = static_cast<AsyncQueueSection*>(context);
+        pthis->SubmitPendingCallback();
+    }));
+
+    switch (mode)
+    {
+    case AsyncQueueDispatchMode_Manual:
+        // nothing
+        break;
+
+    case AsyncQueueDispatchMode_FixedThread:
+#ifdef _WIN32
+        RETURN_IF_WIN32_BOOL_FALSE(DuplicateHandle(
+            GetCurrentProcess(),
+            GetCurrentThread(),
+            GetCurrentProcess(),
+            &m_apcThread, 0,
+            FALSE,
+            DUPLICATE_SAME_ACCESS));
+#else
+        RETURN_HR(E_NOTIMPL);
+#endif
+        break;
+
+    case AsyncQueueDispatchMode_ThreadPool:
+    case AsyncQueueDispatchMode_SerializedThreadPool:
+#ifdef _WIN32
+        m_work = CreateThreadpoolWork(TPCallback, this, nullptr);
+        RETURN_LAST_ERROR_IF_NULL(m_work);
+#else
+        RETURN_HR(E_NOTIMPL);
+#endif
+        break;
+          
+    case AsyncQueueDispatchMode_Immediate:
+        // nothing
+        break;
+    }
+
+    return S_OK;
+}
+
+HRESULT __stdcall AsyncQueueSection::QueueItem(
+    IAsyncQueue* owner,
+    uint32_t waitMs,
+    void* context,
+    AsyncQueueCallback* callback)
+{
+    QueueEntry* entry = new (std::nothrow) QueueEntry;
+    RETURN_IF_NULL_ALLOC(entry);
+
+    entry->owner = owner;
+    entry->owner->AddRef();
+    entry->callback = callback;
+    entry->context = context;
+    entry->refs = 1;
+    entry->busy = false;
+    entry->detached = false;
+
+    if (waitMs == 0)
+    {
+        entry->enqueueTime = 0;
+
+        // Owns the entry -- on error will delete
+        return AppendEntry(entry);
+    }
+    else
+    {
+        entry->enqueueTime = m_timer.GetAbsoluteTime(waitMs);
+
+        std::lock_guard<std::mutex> lock(m_lock);
+        InsertTailList(&m_pendingHead, &entry->entry);
+
+        // If the entry's enqueue time is < our current time,
+        // update the timer.
+        if (entry->enqueueTime < m_timerDue)
+        {
+            m_timerDue = entry->enqueueTime;
+            m_timer.Start(entry->enqueueTime);
+        }
 
         return S_OK;
     }
+}
 
-    HRESULT AppendItem(
-        std::atomic<uint32_t>* refsPointer,
-        AsyncQueueCallback* callback,
-        void* context)
+void __stdcall AsyncQueueSection::RemoveItems(
+    _In_ AsyncQueueCallback* searchCallback,
+    _In_opt_ void* predicateContext,
+    _In_ AsyncQueueRemovePredicate* removePredicate)
+{
+    bool removedPendingItem = RemoveItems(&m_pendingHead, searchCallback, predicateContext, removePredicate);
+
+    if (removedPendingItem)
     {
-        QueueEntry* entry = new (std::nothrow) QueueEntry;
-        RETURN_IF_NULL_ALLOC(entry);
+        std::lock_guard<std::mutex> lock(m_lock);
+        ScheduleNextPendingCallback(nullptr);
+    }
 
-        entry->refsPointer = refsPointer;
-        entry->callback = callback;
-        entry->context = context;
+    RemoveItems(&m_queueHead, searchCallback, predicateContext, removePredicate);
 
-        bool queueCallback;
+    bool isEmpty;
 
-        {
-            std::lock_guard<std::mutex> lock(m_cs);
-            InsertTailList(&m_queueHead, &entry->entry);
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        isEmpty = m_queueHead.Flink == &m_queueHead;
+        if (isEmpty) m_hasItems = false;
+    }
+        
+    if (isEmpty)
+    {
+        m_event.notify_all();
+    }
+        
 #ifdef _WIN32
-            SetEvent(m_event);
+    if (isEmpty &&
+        m_dispatchMode == AsyncQueueDispatchMode_FixedThread &&
+        GetThreadId(m_apcThread) == GetCurrentThreadId())
+    {
+        SleepEx(0, TRUE);
+    }
 #endif
-            (*refsPointer)++;
-            queueCallback = !m_isCallbackQueued;
-            m_isCallbackQueued = true;
+}
+
+bool AsyncQueueSection::RemoveItems(
+    _In_ PLIST_ENTRY queueHead,
+    _In_ AsyncQueueCallback* searchCallback,
+    _In_opt_ void* predicateContext,
+    _In_ AsyncQueueRemovePredicate* removePredicate)
+{
+    bool itemRemoved = false;
+
+    std::lock_guard<std::mutex> lock(m_lock);
+
+Restart:
+
+    bool restart;
+    QueueEntry* candidate = EnumNextRemoveCandidate(searchCallback, queueHead, queueHead, false, restart);
+
+    if (restart)
+    {
+        goto Restart;
+    }
+
+    while (candidate != nullptr)
+    {
+        bool remove = false;
+
+        if (removePredicate(predicateContext, candidate->context))
+        {
+            remove = true;
+            itemRemoved = true;
         }
 
-        switch (m_dispatchMode)
-        {
-        case AsyncQueueDispatchMode_Manual:
-            // nothing
-            break;
+        candidate = EnumNextRemoveCandidate(searchCallback, queueHead, &candidate->entry, remove, restart);
 
-        case AsyncQueueDispatchMode_FixedThread:
-#ifdef _WIN32
-            if (queueCallback && QueueUserAPC(APCCallback, m_apcThread, (ULONG_PTR)this) == 0)
+        if (restart)
+        {
+            goto Restart;
+        }
+    }
+
+    return itemRemoved;
+}
+
+// Returns the next candidate element for removal.  If an item is returned
+// its ref count will be incremented and it's busy flag set.  Call
+// ReleaseEntry when done.  If restart is true the callback was busy in 
+// another call and we need to restart the enumeration.  Next is the next
+// position to start looking, or null to start from the beginning of the
+// list.
+AsyncQueueSection::QueueEntry* AsyncQueueSection::EnumNextRemoveCandidate(
+    _In_opt_ AsyncQueueCallback* searchCallback,
+    _In_ PLIST_ENTRY head,
+    _In_ PLIST_ENTRY current,
+    _In_ bool removeCurrent,
+    _Out_ bool& restart)
+{
+    QueueEntry* candidate = nullptr;
+    restart = false;
+
+    PLIST_ENTRY next = current->Flink;
+
+    // If we are not processing the beginning of the list our
+    // current item needs to be released and possibly removed.
+    // This needs to happen under the lock.
+
+    if (current != head)
+    {
+        QueueEntry* currentEntry = CONTAINING_RECORD(current, QueueEntry, entry);
+
+        // Now release the artificial ref we added.
+        ReleaseEntry(currentEntry, false);
+
+        if (removeCurrent)
+        {
+            ReleaseEntry(currentEntry, true);
+        }
+    }
+
+    // Next will be null if this item was pulled off the queue by someone
+    // else.  We need to restart because the queue has changed shape.
+    
+    if (next == nullptr)
+    {
+        restart = true;
+        return nullptr;
+    }
+
+    // Loop around to the first candidate entry that matches the search callback.  We support
+    // a null search callback as a wild card (needed for decent support of lambdas).
+
+    while (next != head)
+    {
+        candidate = CONTAINING_RECORD(next, QueueEntry, entry);
+
+        if (searchCallback == nullptr || candidate->callback == searchCallback)
+        {
+            candidate->refs++;
+
+            // If this item is currently being processed, wait for
+            // its busy flag to clear.  Since waiting unlocks our
+            // std::mutex, we must restart our loop.
+
+            // Note:  doing this lock free and causing a restart on contention
+            // can cause pathological performance problems when there are a lot
+            // of items in the queue (eg, running 10,000 async operations, where each
+            // operation removes callbacks when it is done causes this to continue
+            // to allocate TP threads and essentially never finishes).  We are redesigning
+            // this currently, but for now we grab a lock during all of remove items.
+
+            //if (candidate->busy)
+            //{
+            //    while (candidate->busy)
+            //    {
+            //        m_busy.wait(lock);
+            //        restart = true;
+            //    }
+
+            //    if (restart)
+            //    {
+            //        ReleaseEntry(candidate, false);
+            //        candidate = nullptr;
+            //        break;
+            //    }
+            //}
+
+            if (candidate->detached)
             {
-                HRESULT result = HRESULT_FROM_WIN32(GetLastError());
-                std::lock_guard<std::mutex> lock(m_cs);
-                (*refsPointer)--;
-                RemoveEntryList(&entry->entry);
-                m_isCallbackQueued = false;
-                delete entry;
-                return result;
+                ReleaseEntry(candidate, false);
             }
-#else
-            ASSERT(false);
-#endif
-            break;
-
-        case AsyncQueueDispatchMode_ThreadPool:
-#ifdef _WIN32
-            SubmitThreadpoolWork(m_work);
-#else
-            ASSERT(false);
-#endif
-            break;
+            else
+            {
+                candidate->busy = true;
+                break;
+            }
         }
 
-        AsyncQueueCallbackSubmittedData data;
-        data.queue = m_owner;
-        data.type = m_type;
-        (void)m_callbackSubmitted->Invoke(&data);
-
-        return S_OK;
+        candidate = nullptr;
+        next = next->Flink;
     }
 
-    bool IsEmpty()
+    return candidate;
+}
+
+bool __stdcall AsyncQueueSection::DrainOneItem()
+{
+    QueueEntry* entry = nullptr;
+    bool notify = false;
+
+    // Get the first item in the queue to execute.  Because items
+    // could be in the process of being removed, we must check their
+    // busy flag.  If set we need to wait until it clears and get
+    // a new item if removal detached this one.
+
     {
-        std::lock_guard<std::mutex> lock(m_cs);
-        bool empty = m_queueHead.Flink == &m_queueHead;
+        std::unique_lock<std::mutex> lock(m_lock);
 
-        if (empty)
+        while (true)
         {
-            empty = (m_processingCallback == 0);
-        }
-
-        return empty;
-    }
-
-    bool DrainOneItem(AsyncQueueDispatchMode dispatcher)
-    {
-        QueueEntry* entry = nullptr;
-
-        {
-            std::lock_guard<std::mutex> lock(m_cs);
             PLIST_ENTRY listEntry = RemoveHeadList(&m_queueHead);
 
             if (listEntry != &m_queueHead)
             {
+                listEntry->Flink = listEntry->Blink = nullptr;
                 entry = CONTAINING_RECORD(listEntry, QueueEntry, entry);
+                entry->refs++;
                 m_processingCallback++;
+
+                while (entry->busy)
+                {
+                    m_busy.wait(lock);
+                }
+
+                if (entry->detached)
+                {
+                    m_processingCallback--;
+                    ReleaseEntry(entry, false);
+                }
+                else
+                {
+                    entry->busy = true;
+                    entry->detached = true;
+                    entry->refs--;
+                    ASSERT(entry->refs != 0);
+                    break;
+                }
             }
             else
             {
-#ifdef _WIN32
-                ResetEvent(m_event);
-#endif
-                if (dispatcher != AsyncQueueDispatchMode_Manual)
-                {
-                    m_isCallbackQueued = false;
-                }
+                m_hasItems = false;
+                notify = true;
+                break;
             }
-        }
-
-        if (entry != nullptr)
-        {
-            entry->callback(entry->context);
-            (*entry->refsPointer)--;
-            m_processingCallback--;
-            delete entry;
-            return true;
-        }
-
-        return entry != nullptr;
-    }
-
-    void DrainQueue(AsyncQueueDispatchMode dispatcher)
-    {
-        while (DrainOneItem(dispatcher))
-        {
-            // Do nothing.
         }
     }
 
-    void RemoveCallbacks(
-        _In_ AsyncQueueCallback* searchCallback,
-        _In_opt_ void* predicateContext,
-        _In_ AsyncQueueRemovePredicate* removePredicate)
+    if (notify)
     {
-        bool isEmpty;
-
-        {
-            std::lock_guard<std::mutex> lock(m_cs);
-            PLIST_ENTRY entry = m_queueHead.Flink;
-
-            while (entry != &m_queueHead)
-            {
-                QueueEntry* candidate = CONTAINING_RECORD(entry, QueueEntry, entry);
-                entry = entry->Flink;
-
-                if (candidate->callback == searchCallback && removePredicate(predicateContext, candidate->context))
-                {
-                    RemoveEntryList(&candidate->entry);
-                    (*candidate->refsPointer)--;
-                    delete candidate;
-                }
-            }
-
-            isEmpty = m_queueHead.Flink == &m_queueHead;
-            if (isEmpty)
-            {
-#ifdef _WIN32
-                ResetEvent(m_event);
-#endif
-            }
-        }
-
-#ifdef _WIN32
-        if (isEmpty && 
-            m_dispatchMode == AsyncQueueDispatchMode_FixedThread && 
-            GetThreadId(m_apcThread) == GetCurrentThreadId())
-        {
-            SleepEx(0, TRUE);
-        }
-#endif
+        m_event.notify_all();
     }
 
-    bool Wait(uint32_t timeout)
+    if (entry != nullptr)
     {
+        entry->callback(entry->context);
+        m_processingCallback--;
+
+        std::lock_guard<std::mutex> lock(m_lock);
+        ReleaseEntry(entry, false);
+        return true;
+    }
+
+    return false;
+}
+
+bool __stdcall AsyncQueueSection::Wait(uint32_t timeout)
+{
+    std::unique_lock<std::mutex> lock(m_lock);
+    while (!m_hasItems)
+    {
+        if (m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+        {
+            break;
+        }
+    }
+    return m_hasItems;
+}
+
+bool __stdcall AsyncQueueSection::IsEmpty()
+{
+    std::lock_guard<std::mutex> lock(m_lock);
+    bool empty = m_queueHead.Flink == &m_queueHead;
+    
+    if (empty)
+    {
+        empty = m_pendingHead.Flink == &m_pendingHead;
+    }
+    
+    if (empty)
+    {
+        empty = (m_processingCallback == 0);
+    }
+
+    return empty;
+}
+
+// Called from thread pool or APC system callbacks
+void AsyncQueueSection::ProcessCallback()
+{
+    if (m_dispatchMode == AsyncQueueDispatchMode_SerializedThreadPool)
+    {
+        while(DrainOneItem());
+    }
+    else
+    {
+        DrainOneItem();
+    }
+}
+
+// Appends the given entry to the active queue.  The entry should already
+// be add-refd, and this API owns the lifetime of the entry.  If the
+// API fails, the entry will be released and deleted.
+HRESULT AsyncQueueSection::AppendEntry(
+    _In_ QueueEntry* entry)
+{
+    bool firstItem;
+
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        firstItem = (m_queueHead.Flink == &m_queueHead);
+        InsertTailList(&m_queueHead, &entry->entry);
+        m_hasItems = true;
+    }
+
+    m_event.notify_all();
+
+    switch (m_dispatchMode)
+    {
+    case AsyncQueueDispatchMode_Manual:
+        // nothing
+        break;
+
+    case AsyncQueueDispatchMode_FixedThread:
 #ifdef _WIN32
-        uint32_t w = WaitForSingleObject(m_event, timeout);
-        return (w == WAIT_OBJECT_0);
+        if (QueueUserAPC(APCCallback, m_apcThread, (ULONG_PTR)this) == 0)
+        {
+            HRESULT result = HRESULT_FROM_WIN32(GetLastError());
+
+            std::lock_guard<std::mutex> lock(m_lock);
+            ReleaseEntry(entry, true);
+            return result;
+        }
 #else
         ASSERT(false);
-        return true;
 #endif
-    }
+        break;
 
-private:
-
-    async_queue_handle_t m_owner = nullptr;
-    AsyncQueueCallbackType m_type = AsyncQueueCallbackType_Work;
-    AsyncQueueDispatchMode m_dispatchMode = AsyncQueueDispatchMode_Manual;
-    SubmitCallback* m_callbackSubmitted = nullptr;
-    bool m_isCallbackQueued = false;
-    std::atomic<uint32_t> m_processingCallback{ 0 };
-    std::mutex m_cs;
-    LIST_ENTRY m_queueHead;
-
+    case AsyncQueueDispatchMode_ThreadPool:
 #ifdef _WIN32
-    HANDLE m_apcThread = nullptr;
-    PTP_WORK m_work = nullptr;
-    HANDLE m_event = nullptr;
+        SubmitThreadpoolWork(m_work);
+#else
+        ASSERT(false);
 #endif
+        break;
 
-    struct QueueEntry
-    {
-        LIST_ENTRY entry;
-        std::atomic<uint32_t>* refsPointer;
-        void* context;
-        AsyncQueueCallback* callback;
-    };
-
+    case AsyncQueueDispatchMode_SerializedThreadPool:
 #ifdef _WIN32
-    static void CALLBACK APCCallback(ULONG_PTR context)
-    {
-        Queue* queue = (Queue*)context;
-        queue->DrainQueue(AsyncQueueDispatchMode_FixedThread);
-    }
-
-    static void CALLBACK TPCallback(PTP_CALLBACK_INSTANCE, void* context, PTP_WORK)
-    {
-        // Prevent any callbacks from declaring this thread as time critical.
-        (void)LockTimeCriticalThread();
-        Queue* queue = (Queue*)context;
-        queue->DrainOneItem(AsyncQueueDispatchMode_ThreadPool);
-    }
+        if (firstItem)
+        {
+            SubmitThreadpoolWork(m_work);
+        }
+#else
+        ASSERT(false);
 #endif
-};
+        break;
 
-struct async_queue_t
-{
-    ~async_queue_t()
-    {
-        if (m_workSource != nullptr)
-        {
-            CloseAsyncQueue(m_workSource);
-        }
-        else
-        {
-            if (m_work != nullptr)
-            {
-                delete m_work;
-            }
-        }
-
-        if (m_completionSource != nullptr)
-        {
-            CloseAsyncQueue(m_completionSource);
-        }
-        else
-        {
-            if (m_completion != nullptr)
-            {
-                delete m_completion;
-            }
-        }
+    case AsyncQueueDispatchMode_Immediate:
+        // We will handle this after we invoke
+        // callback submitted.
+        break;
     }
 
-    void Initialize(
-        _In_ async_queue_t* workerSource,
-        _In_ AsyncQueueCallbackType workerSourceCallbackType,
-        _In_ async_queue_t* completionSource,
-        _In_ AsyncQueueCallbackType completionSourceCallbackType)
+    m_callbackSubmitted->Invoke(m_type);
+    
+    if (m_dispatchMode == AsyncQueueDispatchMode_Immediate)
     {
-        Queue* work = workerSourceCallbackType == AsyncQueueCallbackType_Work ?
-            workerSource->m_work : workerSource->m_completion;
-        Queue* completion = completionSourceCallbackType == AsyncQueueCallbackType_Work ?
-            completionSource->m_work : completionSource->m_completion;
-
-        m_work = work;
-        m_completion = completion;
-
-        m_workSource = workerSource;
-        m_workSource->AddRef();
-
-        m_completionSource = completionSource;
-        m_completionSource->AddRef();
+        DrainOneItem();
     }
 
-    HRESULT Initialize(AsyncQueueDispatchMode workMode, AsyncQueueDispatchMode completionMode)
-    {
-        m_work = new (std::nothrow) Queue;
-        RETURN_IF_NULL_ALLOC(m_work);
-        RETURN_IF_FAILED(m_work->Initialize(this, AsyncQueueCallbackType_Work, workMode, &m_callbackSubmitted));
-
-        m_completion = new (std::nothrow) Queue;
-        RETURN_IF_NULL_ALLOC(m_completion);
-        RETURN_IF_FAILED(m_completion->Initialize(this, AsyncQueueCallbackType_Completion, completionMode, &m_callbackSubmitted));
-
-        return S_OK;
-    }
-
-    void AddRef()
-    {
-        m_refs++;
-    }
-
-    void Release()
-    {
-        if (m_refs.fetch_sub(1) == 0)
-        {
-            if (m_shareId != INVALID_SHARE_ID)
-            {
-                std::lock_guard<std::mutex> lock(s_sharedCs);
-                RemoveEntryList(&m_shareEntry);
-                m_shareId = INVALID_SHARE_ID;
-            }
-
-            delete this;
-        }
-    }
-
-    Queue* GetSide(_In_ AsyncQueueCallbackType type)
-    {
-        return type == AsyncQueueCallbackType_Work ? m_work : m_completion;
-    }
-
-    HRESULT AppendItem(
-        AsyncQueueCallbackType type,
-        AsyncQueueCallback* callback,
-        void* context)
-    {
-        Queue* q = GetSide(type);
-        return q->AppendItem(&m_refs, callback, context);
-    }
-
-    HRESULT RegisterCallback(
-        _In_opt_ void* context,
-        _In_ AsyncQueueCallbackSubmitted* callback,
-        _Out_ registration_token_t* token)
-    {
-        return m_callbackSubmitted.Register(this, context, callback, token);
-    }
-
-    void UnregisterCallback(
-        _In_ registration_token_t token)
-    {
-        m_callbackSubmitted.Unregister(token);
-    }
-
-    void MakeShared(_In_ uint64_t shareId)
-    {
-        ASSERT(m_shareId == INVALID_SHARE_ID);
-        m_shareId = shareId;
-        InsertHeadList(&s_sharedList, &m_shareEntry);
-    }
-
-    static async_queue_t* GetQueue(_In_ async_queue_handle_t queue)
-    {
-        async_queue_t* aq = (async_queue_t*)queue;
-        if (queue == nullptr || aq->m_signature != QUEUE_SIGNATURE)
-        {
-            ASSERT(false);
-            aq = nullptr;
-        }
-
-        return aq;
-    }
-
-    static async_queue_t* FindSharedQueue(_In_ uint64_t id)
-    {
-        for (PLIST_ENTRY entry = s_sharedList.Flink; entry != &s_sharedList; entry = entry->Flink)
-        {
-            async_queue_t* queue = (async_queue_t*)CONTAINING_RECORD(entry, async_queue_t, m_shareEntry);
-            if (queue->m_shareId == id)
-            {
-                return queue;
-            }
-        }
-        return nullptr;
-    }
-
-private:
-
-    uint32_t m_signature = QUEUE_SIGNATURE;
-    std::atomic<uint32_t> m_refs{ 1 };
-    uint64_t m_shareId = INVALID_SHARE_ID;
-    LIST_ENTRY m_shareEntry;
-    SubmitCallback m_callbackSubmitted;
-    Queue* m_work = nullptr;
-    Queue* m_completion = nullptr;
-    async_queue_t* m_workSource = nullptr;
-    async_queue_t* m_completionSource = nullptr;
-};
-
-static void EnsureSharedInitialization()
-{
-    std::call_once(s_onceFlag, []()
-    {
-        InitializeListHead(&s_sharedList);
-    });
+    return S_OK;
 }
+
+// Releases the entry and optionally removes it from its owning list.
+// Also clears the entry busy flag and, if it was set, notifies the
+// m_busy condition variable.
+// m_lock must be held before calling
+void AsyncQueueSection::ReleaseEntry(
+    _In_ QueueEntry* entry,
+    _In_ bool remove)
+{
+    bool wasBusy;
+    wasBusy = entry->busy;
+    entry->busy = false;
+
+    if (remove)
+    {
+        entry->detached = true;
+
+        // When we remove an entry from the list, we clear the
+        // flink and blink to ensure we don't remove more than
+        // once.  Removing an entry that is already removed can
+        // corrupt the list, and nulling the links forces a crash
+        // if we do it.
+
+        if (entry->entry.Flink != nullptr)
+        {
+            RemoveEntryList(&entry->entry);
+            entry->entry.Flink = entry->entry.Blink = nullptr;
+        }
+    }
+
+    entry->refs--;
+    if (entry->refs == 0)
+    {
+        ASSERT(entry->detached);
+        entry->owner->Release();
+        delete entry;
+    }
+
+    if (wasBusy)
+    {
+        m_busy.notify_all();
+    }
+}
+
+void AsyncQueueSection::EraseQueue(_In_ PLIST_ENTRY head)
+{
+    PLIST_ENTRY listEntry = RemoveHeadList(head);
+    while (listEntry != head)
+    {
+        QueueEntry* entry = CONTAINING_RECORD(listEntry, QueueEntry, entry);
+        entry->owner->Release();
+        delete entry;
+        listEntry = RemoveHeadList(head);
+    }
+}
+
+// Examines the pending callback list, optionally popping the entry off the
+// list that matches m_timerDue, and schedules the timer for the next entry.
+// this requires m_lock held.
+void AsyncQueueSection::ScheduleNextPendingCallback(_Out_opt_ QueueEntry** dueEntry)
+{
+    QueueEntry* nextItem = nullptr;
+    PLIST_ENTRY entry = m_pendingHead.Flink;
+
+    if (dueEntry != nullptr)
+    {
+        *dueEntry = nullptr;
+    }
+    
+    while(entry != &m_pendingHead)
+    {
+        QueueEntry* candidate = CONTAINING_RECORD(entry, QueueEntry, entry);
+        entry = entry->Flink;
+        if (dueEntry != nullptr && (*dueEntry) == nullptr && candidate->enqueueTime == m_timerDue)
+        {
+            RemoveEntryList(&candidate->entry);
+            *dueEntry = candidate;
+        }
+        else if (nextItem == nullptr || nextItem->enqueueTime > candidate->enqueueTime)
+        {
+            nextItem = candidate;
+        }
+    }
+
+    if (nextItem != nullptr)
+    {
+        m_timerDue = nextItem->enqueueTime;
+        m_timer.Start(m_timerDue);
+    }
+    else
+    {
+        m_timerDue = UINT64_MAX;
+        m_timer.Cancel();
+    }
+}
+
+void AsyncQueueSection::SubmitPendingCallback()
+{
+    QueueEntry* dueEntry;
+
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        ScheduleNextPendingCallback(&dueEntry);
+    }
+
+    if (dueEntry != nullptr)
+    {
+        HRESULT hr = AppendEntry(dueEntry);
+        if (FAILED(hr))
+        {
+            FAIL_FAST_MSG("Failed to append due entry: 0x%08x", hr);
+        }
+    }
+}
+
+//
+// AsyncQueue
+//
+
+AsyncQueue::AsyncQueue()
+    : Api()
+    , m_callbackSubmitted(&m_header)
+{
+    m_header.m_signature = ASYNC_QUEUE_SIGNATURE;
+    m_header.m_queue = this;
+}
+
+AsyncQueue::~AsyncQueue()
+{
+}
+
+HRESULT AsyncQueue::Initialize(AsyncQueueDispatchMode workMode, AsyncQueueDispatchMode completionMode)
+{
+    referenced_ptr<AsyncQueueSection> work(new (std::nothrow) AsyncQueueSection);
+    RETURN_IF_NULL_ALLOC(work);
+    RETURN_IF_FAILED(work->Initialize(AsyncQueueCallbackType_Work, workMode, &m_callbackSubmitted));
+
+    referenced_ptr<AsyncQueueSection> completion(new (std::nothrow) AsyncQueueSection);
+    RETURN_IF_NULL_ALLOC(completion);
+    RETURN_IF_FAILED(completion->Initialize(AsyncQueueCallbackType_Completion, completionMode, &m_callbackSubmitted));
+    
+    RETURN_IF_FAILED(work->QueryApi(ApiId::AsyncQueueSection, (void**)&m_work));
+    RETURN_IF_FAILED(completion->QueryApi(ApiId::AsyncQueueSection, (void**)&m_completion));
+
+    return S_OK;
+}
+
+HRESULT __stdcall AsyncQueue::GetSection(
+    _In_ AsyncQueueCallbackType type,
+    _Out_ IAsyncQueueSection** section)
+{
+    RETURN_HR_IF(E_POINTER, section == nullptr);
+    
+    switch(type)
+    {
+        case AsyncQueueCallbackType_Work:
+            *section = m_work.get();
+            m_work->AddRef();
+            break;
+            
+        case AsyncQueueCallbackType_Completion:
+            *section = m_completion.get();
+            m_completion->AddRef();
+            break;
+            
+        default:
+            RETURN_HR(E_INVALIDARG);
+    }
+    
+    return S_OK;
+}
+
+HRESULT __stdcall AsyncQueue::RegisterSubmitCallback(
+    _In_opt_ void* context,
+    _In_ AsyncQueueCallbackSubmitted* callback,
+    _Out_ registration_token_t* token)
+{
+    return m_callbackSubmitted.Register(context, callback, token);
+}
+
+void __stdcall AsyncQueue::UnregisterSubmitCallback(
+    _In_ registration_token_t token)
+{
+    m_callbackSubmitted.Unregister(token);
+}
+
+///////////////////
+// AsyncQueue.h APIs
+///////////////////
 
 //
 // Creates an Async Queue, which can be used to queue
@@ -520,85 +784,10 @@ STDAPI CreateAsyncQueue(
     _In_ AsyncQueueDispatchMode completionDispatchMode,
     _Out_ async_queue_handle_t* queue)
 {
-    std::unique_ptr<async_queue_t> aq(new (std::nothrow) async_queue_t);
+    referenced_ptr<AsyncQueue> aq(new (std::nothrow) AsyncQueue);
     RETURN_IF_NULL_ALLOC(aq);
     RETURN_IF_FAILED(aq->Initialize(workDispatchMode, completionDispatchMode));
-    *queue = aq.release();
-
-    return S_OK;
-}
-
-/// <summary>
-/// Creates an async queue suitable for invoking child tasks.
-/// A nested queue dispatches its work through the parent
-/// queue.  Both work and completions are dispatched through
-/// the parent as "work" callback types.  A nested queue is useful
-/// for performing intermediate work within a larger task.
-/// </summary>
-STDAPI CreateNestedAsyncQueue(
-    _In_ async_queue_handle_t parentQueue,
-    _Out_ async_queue_handle_t* queue)
-{
-    return CreateCompositeAsyncQueue(
-        parentQueue,
-        AsyncQueueCallbackType_Work,
-        parentQueue,
-        AsyncQueueCallbackType_Work,
-        queue);
-}
-
-/// <summary>
-/// Creates an async queue by composing elements of 2 other queues.
-/// </summary>
-STDAPI CreateCompositeAsyncQueue(
-    _In_ async_queue_handle_t workerSourceQueue,
-    _In_ AsyncQueueCallbackType workerSourceCallbackType,
-    _In_ async_queue_handle_t completionSourceQueue,
-    _In_ AsyncQueueCallbackType completionSourceCallbackType,
-    _Out_ async_queue_handle_t* queue)
-{
-    async_queue_t* workerSource = async_queue_t::GetQueue(workerSourceQueue);
-    async_queue_t* completionSource = async_queue_t::GetQueue(completionSourceQueue);
-    if (workerSource == nullptr || completionSource == nullptr)
-    {
-        RETURN_HR(E_INVALIDARG);
-    }
-
-    async_queue_t* aq = new (std::nothrow) async_queue_t;
-    RETURN_IF_NULL_ALLOC(aq);
-
-    aq->Initialize(workerSource, workerSourceCallbackType, completionSource, completionSourceCallbackType);
-
-    *queue = aq;
-    return S_OK;
-}
-
-//
-// Creates a shared queue.  Queues with the same ID and
-// dispatch modes can share a single instance.
-//
-STDAPI CreateSharedAsyncQueue(
-    _In_ uint32_t id,
-    _In_ AsyncQueueDispatchMode workerMode,
-    _In_ AsyncQueueDispatchMode completionMode,
-    _Out_ async_queue_handle_t* queue)
-{
-    EnsureSharedInitialization();
-    std::lock_guard<std::mutex> lock(s_sharedCs);
-    uint64_t queueId = MAKE_SHARED_ID(id, workerMode, completionMode);
-    async_queue_t* q = async_queue_t::FindSharedQueue(queueId);
-
-    if (q != nullptr)
-    {
-        q = DuplicateAsyncQueueHandle(q);
-        *queue = q;
-    }
-    else
-    {
-        RETURN_IF_FAILED(CreateAsyncQueue(workerMode, completionMode, queue));
-        (*queue)->MakeShared(queueId);
-    }
-
+    *queue = aq.release()->GetHandle();
     return S_OK;
 }
 
@@ -613,19 +802,23 @@ STDAPI_(bool) DispatchAsyncQueue(
     _In_ AsyncQueueCallbackType type,
     _In_ uint32_t timeoutInMs)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    referenced_ptr<IAsyncQueue> aq(GetQueue(queue));
     if (aq == nullptr)
     {
         return false;
     }
-
-    Queue* q = aq->GetSide(type);
-
-    bool found = q->DrainOneItem(AsyncQueueDispatchMode_Manual);
+    
+    referenced_ptr<IAsyncQueueSection> q;
+    if (FAILED(aq->GetSection(type, q.address_of())))
+    {
+        return false;
+    }
+        
+    bool found = q->DrainOneItem();
     if (!found && timeoutInMs != 0)
     {
         found = q->Wait(timeoutInMs);
-        if (found) q->DrainOneItem(AsyncQueueDispatchMode_Manual);
+        if (found) q->DrainOneItem();
     }
 
     return found;
@@ -639,13 +832,19 @@ STDAPI_(bool) IsAsyncQueueEmpty(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    referenced_ptr<IAsyncQueue> aq(GetQueue(queue));
     if (aq == nullptr)
     {
         return false;
     }
+    
+    referenced_ptr<IAsyncQueueSection> q;
+    if (FAILED(aq->GetSection(type, q.address_of())))
+    {
+        return false;
+    }
 
-    return aq->GetSide(type)->IsEmpty();
+    return q->IsEmpty();
 }
 
 //
@@ -656,7 +855,7 @@ STDAPI_(bool) IsAsyncQueueEmpty(
 STDAPI_(void) CloseAsyncQueue(
     _In_ async_queue_handle_t queue)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    IAsyncQueue* aq = GetQueue(queue);
     if (aq != nullptr)
     {
         aq->Release();
@@ -669,16 +868,17 @@ STDAPI_(void) CloseAsyncQueue(
 STDAPI SubmitAsyncCallback(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
+    _In_ uint32_t delayMs,
     _In_opt_ void* callbackContext,
     _In_ AsyncQueueCallback* callback)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
-    if (aq == nullptr)
-    {
-        RETURN_HR(E_INVALIDARG);
-    }
+    referenced_ptr<IAsyncQueue> aq(GetQueue(queue));
+    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
 
-    RETURN_HR(aq->AppendItem(type, callback, callbackContext));
+    referenced_ptr<IAsyncQueueSection> q;
+    RETURN_IF_FAILED(aq->GetSection(type, q.address_of()));
+
+    RETURN_HR(q->QueueItem(aq.get(), delayMs, callbackContext, callback));
 }
 
 /// <summary>
@@ -692,27 +892,37 @@ STDAPI SubmitAsyncCallback(
 STDAPI_(void) RemoveAsyncQueueCallbacks(
     _In_ async_queue_handle_t queue,
     _In_ AsyncQueueCallbackType type,
-    _In_ AsyncQueueCallback* searchCallback,
+    _In_opt_ AsyncQueueCallback* searchCallback,
     _In_opt_ void* predicateContext,
     _In_ AsyncQueueRemovePredicate* removePredicate)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    referenced_ptr<IAsyncQueue> aq(GetQueue(queue));
     if (aq != nullptr)
     {
-        Queue* q = aq->GetSide(type);
-        q->RemoveCallbacks(searchCallback, predicateContext, removePredicate);
+        referenced_ptr<IAsyncQueueSection> q;
+        if (SUCCEEDED(aq->GetSection(type, q.address_of())))
+        {
+            q->RemoveItems(searchCallback, predicateContext, removePredicate);
+        }
     }
 }
 
 //
 // Increments the refcount on the queue
 //
-STDAPI_(async_queue_handle_t) DuplicateAsyncQueueHandle(
-    _In_ async_queue_handle_t queue)
+STDAPI DuplicateAsyncQueueHandle(
+    _In_ async_queue_handle_t queueHandle,
+    _Out_ async_queue_handle_t* duplicatedHandle)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
-    aq->AddRef();
-    return queue;
+    RETURN_HR_IF(E_POINTER, duplicatedHandle == nullptr);
+
+    auto queue = GetQueue(queueHandle);
+    RETURN_HR_IF(E_INVALIDARG, queue == nullptr);
+
+    queue->AddRef();
+    *duplicatedHandle = queueHandle;
+
+    return S_OK;
 }
 
 //
@@ -726,13 +936,9 @@ STDAPI RegisterAsyncQueueCallbackSubmitted(
     _In_ AsyncQueueCallbackSubmitted* callback,
     _Out_ registration_token_t* token)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
-    if (aq == nullptr)
-    {
-        RETURN_HR(E_INVALIDARG);
-    }
-
-    RETURN_HR(aq->RegisterCallback(context, callback, token));
+    referenced_ptr<IAsyncQueue> aq(GetQueue(queue));
+    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
+    RETURN_HR(aq->RegisterSubmitCallback(context, callback, token));
 }
 
 //
@@ -742,9 +948,9 @@ STDAPI_(void) UnregisterAsyncQueueCallbackSubmitted(
     _In_ async_queue_handle_t queue,
     _In_ registration_token_t token)
 {
-    async_queue_t* aq = async_queue_t::GetQueue(queue);
+    referenced_ptr<IAsyncQueue> aq(GetQueue(queue));
     if (aq != nullptr)
     {
-        aq->UnregisterCallback(token);
+        aq->UnregisterSubmitCallback(token);
     }
 }

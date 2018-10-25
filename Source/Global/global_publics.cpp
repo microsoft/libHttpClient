@@ -5,7 +5,7 @@
 #include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
-#include "trace_internal.h"
+#include "../Logger/trace_internal.h"
 
 using namespace xbox::httpclient;
 

@@ -7,7 +7,13 @@
 #include "Utils.h"
 #include "../global/global.h"
 #include "asyncqueue.h"
+#include "asyncqueueex.h"
 #include "callbackthunk.h"
+
+namespace ApiDiag
+{
+    extern std::atomic<uint32_t> g_globalApiRefs;
+}
 
 template <class H, class C>
 class AutoHandleWrapper
@@ -96,7 +102,26 @@ public:
 DEFINE_TEST_CLASS(AsyncQueueTests)
 {
 public:
-    DEFINE_TEST_CLASS_PROPS(AsyncQueueTests)
+
+#ifdef USING_TAEF
+
+    TEST_CLASS(AsyncQueueTests);
+
+    TEST_CLASS_SETUP(TestClassSetup) 
+    {
+        UnitTestBase::StartResponseLogging(); 
+        return true; 
+    }
+
+    TEST_CLASS_CLEANUP(TestClassCleanup)
+    {
+        VERIFY_ARE_EQUAL(0u, ApiDiag::g_globalApiRefs);
+        UnitTestBase::RemoveResponseLogging();
+        return true; 
+    }
+#else
+    DEFINE_TEST_CLASS_PROPS(AsyncQueueTests);
+#endif
 
     DEFINE_TEST_CASE(VerifyStockQueue)
     {
@@ -118,10 +143,10 @@ public:
         CallbackThunk<void, void> work([&]()
         {
             workCalled = true;
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, &complete, CallbackThunk<void, void>::Callback));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &complete, CallbackThunk<void, void>::Callback));
         });
 
-        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, &work, CallbackThunk<void, void>::Callback));
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &work, CallbackThunk<void, void>::Callback));
 
         DWORD waitResult = WaitForSingleObjectEx(wait, 5000, TRUE);
         VERIFY_ARE_EQUAL((DWORD)WAIT_IO_COMPLETION, waitResult);
@@ -166,14 +191,14 @@ public:
             AutoQueueHandle child;
             VERIFY_SUCCEEDED(CreateNestedAsyncQueue(queue, &child));
 
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(child, AsyncQueueCallbackType_Work, &calls, [](void* context)
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(child, AsyncQueueCallbackType_Work, 0, &calls, [](void* context)
             {
                 
                 DWORD* pcalls = (DWORD*)context;
                 (*pcalls)++;
             }));
 
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(child, AsyncQueueCallbackType_Completion, &calls, [](void* context)
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(child, AsyncQueueCallbackType_Completion, 0, &calls, [](void* context)
             {
                 
                 DWORD* pcalls = (DWORD*)context;
@@ -181,7 +206,7 @@ public:
             }));
         });
 
-        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, &work, CallbackThunk<void, void>::Callback));
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, &work, CallbackThunk<void, void>::Callback));
 
         // Now wait for the queue to drain. The completion side of the queue should never have an item 
         // in it.
@@ -194,21 +219,24 @@ public:
         }      
     }
 
-    DEFINE_TEST_CASE(VerifyReferenceQueue)
+    DEFINE_TEST_CASE(VerifyDuplicateQueueHandle)
     {
+        const size_t count = 10;
         async_queue_handle_t queue;
+        async_queue_handle_t dups[count];
 
         VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode_Manual, &queue));
-        
-        for(int idx = 0; idx < 10; idx++)
+
+        for (int idx = 0; idx < count; idx++)
         {
-            queue = DuplicateAsyncQueueHandle(queue);
+            VERIFY_SUCCEEDED(DuplicateAsyncQueueHandle(queue, &dups[idx]));
         }
 
-        for(int idx = 0; idx < 11; idx++)
+        for (int idx = 0; idx < count; idx++)
         {
-            CloseAsyncQueue(queue);
+            CloseAsyncQueue(dups[idx]);
         }
+        CloseAsyncQueue(queue);
     }
 
     DEFINE_TEST_CASE(VerifyDispatch)
@@ -237,7 +265,7 @@ public:
 
         for(DWORD idx = 0; idx < count; idx++)
         {
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, &workThunk, CallbackThunk<void, void>::Callback));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, &workThunk, CallbackThunk<void, void>::Callback));
         }
 
         VERIFY_IS_FALSE(IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work));
@@ -245,7 +273,7 @@ public:
 
         for(DWORD idx = 0; idx < count; idx++)
         {
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, &completeThunk, CallbackThunk<void, void>::Callback));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &completeThunk, CallbackThunk<void, void>::Callback));
         }
 
         VERIFY_IS_FALSE(IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion));
@@ -278,8 +306,8 @@ public:
 
         VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_FixedThread, AsyncQueueDispatchMode_ThreadPool, &queue));
     
-        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, &workThunk, CallbackThunk<void, void>::Callback));
-        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, &workThunk, CallbackThunk<void, void>::Callback));
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, &workThunk, CallbackThunk<void, void>::Callback));
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, &workThunk, CallbackThunk<void, void>::Callback));
 
         VERIFY_IS_TRUE(DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0));
         VERIFY_ARE_EQUAL((DWORD)1, workCalls);
@@ -288,7 +316,7 @@ public:
         VERIFY_ARE_EQUAL((DWORD)2, workCalls);
         VERIFY_ARE_EQUAL(GetCurrentThreadId(), workThreadId);
 
-        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, &completeThunk, CallbackThunk<void, void>::Callback));
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &completeThunk, CallbackThunk<void, void>::Callback));
 
         UINT64 ticks = GetTickCount64();
         while(!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion)) 
@@ -306,10 +334,10 @@ public:
         {
             completeCalls++;
             completeThreadId = GetCurrentThreadId();
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, &workThunk, CallbackThunk<void, void>::Callback));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, &workThunk, CallbackThunk<void, void>::Callback));
         });
 
-        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, &completeHandoffThunk, CallbackThunk<void, void>::Callback));
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &completeHandoffThunk, CallbackThunk<void, void>::Callback));
 
         ticks = GetTickCount64();
         while(!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion)) 
@@ -349,8 +377,8 @@ public:
 
         for(DWORD idx = 0; idx < count; idx++)
         {
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, array1 + idx, cb));
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, array2 + idx, cb));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, array1 + idx, cb));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, array2 + idx, cb));
         }
 
         CallbackThunk<void*, bool> search([&](void* cxt)
@@ -367,6 +395,76 @@ public:
             VERIFY_ARE_EQUAL(array1[idx], (DWORD)1);
             VERIFY_ARE_EQUAL(array2[idx], (DWORD)0);
         }
+    }
+
+    DEFINE_TEST_CASE(VerifyRemoveCallbacksRace)
+    {
+        AutoQueueHandle queue;
+        const DWORD count = 1000;
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_Manual, &queue));
+
+        struct Data
+        {
+            std::atomic<DWORD> count;
+            HANDLE evt;
+
+        };
+
+        Data data;
+        data.count = { 0 };
+        data.evt = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+
+        DWORD removeCount = 0;
+
+        VERIFY_IS_NOT_NULL(data.evt);
+
+        auto cb = [](void* cxt)
+        {
+            Data* ptr = (Data*)cxt;
+            ptr->count++;
+            SetEvent(ptr->evt);
+            Sleep(30);
+        };
+
+        for (DWORD idx = 0; idx < count; idx++)
+        {
+            if (idx % 2)
+            {
+                VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, &data, cb));
+            }
+            else
+            {
+                VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 100, &data, cb));
+            }
+        }
+
+        CallbackThunk<void*, bool> search([&](void*)
+        {
+            removeCount++;
+            return true;
+        });
+
+        // Wait for the calls to start executing
+        WaitForSingleObject(data.evt, INFINITE);
+
+        RemoveAsyncQueueCallbacks(queue, AsyncQueueCallbackType_Work, nullptr, &search, CallbackThunk<void*, bool>::Callback);
+
+        UINT64 ticks = GetTickCount64();
+        while (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work))
+        {
+            if (GetTickCount64() - ticks > 5000)
+            {
+                VERIFY_FAIL();
+            }
+            Sleep(200);
+        }
+
+        CloseHandle(data.evt);
+
+        VERIFY_IS_TRUE(removeCount > 0);
+        VERIFY_IS_TRUE(data.count > 0);
+        VERIFY_ARE_EQUAL(count, removeCount + data.count);
     }
 
     DEFINE_TEST_CASE(VerifySubmittedCallback)
@@ -403,17 +501,234 @@ public:
         
         for(DWORD i = 0; i < workCount; i++)
         {
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, nullptr, cb));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, nullptr, cb));
         }
 
         for(DWORD i = 0; i < completeCount; i++)
         {
-            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, nullptr, cb));
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, nullptr, cb));
         }
 
         VERIFY_ARE_EQUAL(submitCount.Work, workCount);
         VERIFY_ARE_EQUAL(submitCount.Completion, completeCount);
 
         UnregisterAsyncQueueCallbackSubmitted(queue, token);
+
+        // Now drain the queues
+        while (DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0));
+        while (DispatchAsyncQueue(queue, AsyncQueueCallbackType_Completion, 0));
+    }
+
+    DEFINE_TEST_CASE(VerifySubmitCallbackWithWait)
+    {
+        AutoQueueHandle queue;
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode_Manual, &queue));
+
+        struct ResultData
+        {
+            uint64_t Times[3];
+        };
+
+        struct ArgData
+        {
+            ResultData* Data;
+            int Index;
+        };
+
+        ResultData result;
+
+        AsyncQueueCallbackType types[] =
+        {
+            AsyncQueueCallbackType_Work,
+            AsyncQueueCallbackType_Completion
+        };
+
+        auto cb = [](void* context)
+        {
+            ArgData* data = (ArgData*)context;
+            data->Data->Times[data->Index] = GetTickCount64();
+        };
+
+        for (int i = 0; i < _countof(types); i++)
+        {
+            AsyncQueueCallbackType type = types[i];
+            uint64_t baseTicks = GetTickCount64();
+
+            ArgData call1;
+            call1.Index = 0;
+            call1.Data = &result;
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, type, 1000, &call1, cb));
+
+            ArgData call2;
+            call2.Index = 1;
+            call2.Data = &result;
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, type, 0, &call2, cb));
+
+            ArgData call3;
+            call3.Index = 2;
+            call3.Data = &result;
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, type, 500, &call3, cb));
+
+            // We should be able to dispatch one without waiting
+            VERIFY_IS_TRUE(DispatchAsyncQueue(queue, type, 0));
+            VERIFY_IS_FALSE(DispatchAsyncQueue(queue, type, 0));
+
+            VERIFY_IS_TRUE(DispatchAsyncQueue(queue, type, 700));
+            VERIFY_IS_TRUE(DispatchAsyncQueue(queue, type, 1200));
+            VERIFY_IS_FALSE(DispatchAsyncQueue(queue, type, 0));
+
+            uint64_t call1Ticks = result.Times[0] - baseTicks;
+            uint64_t call2Ticks = result.Times[1] - baseTicks;
+            uint64_t call3Ticks = result.Times[2] - baseTicks;
+
+            // Call 1 at index 0 should have a tick count > 1000 and < 1050 (shouldn't take 50ms)
+            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1050);
+            VERIFY_IS_TRUE(call2Ticks < 50);
+            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 550);
+        }
+    }
+
+    DEFINE_TEST_CASE(VerifyRegisterCallbackSubmitted)
+    {
+        AutoQueueHandle queue;
+        const uint32_t count = 5;
+        registration_token_t tokens[count];
+        uint32_t calls[count];
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode_Manual, &queue));
+
+        auto cb = [](void* context, async_queue_handle_t, AsyncQueueCallbackType)
+        {
+            uint32_t* p = static_cast<uint32_t*>(context);
+            (*p)++;
+        };
+
+        auto dummy = [](void*) {};
+
+        for (uint32_t idx = 0; idx < count; idx++)
+        {
+            calls[idx] = 0;
+            VERIFY_SUCCEEDED(RegisterAsyncQueueCallbackSubmitted(queue, &(calls[idx]), cb, &tokens[idx]));
+        }
+
+        // queue some calls
+        SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, nullptr, dummy);
+        SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, nullptr, dummy);
+        SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, nullptr, dummy);
+
+        // Should be a correct count on all calls
+        for (uint32_t idx = 0; idx < count; idx++)
+        {
+            VERIFY_ARE_EQUAL(calls[idx], 3u);
+        }
+
+        // Nuke every odd entry
+        for (uint32_t idx = 1; idx < count; idx += 2)
+        {
+            UnregisterAsyncQueueCallbackSubmitted(queue, tokens[idx]);
+        }
+
+        // Now make some more calls.
+        SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, nullptr, dummy);
+        SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, nullptr, dummy);
+        SubmitAsyncCallback(queue, AsyncQueueCallbackType_Work, 0, nullptr, dummy);
+
+        // Should be a correct count on all calls
+        for (uint32_t idx = 0; idx < count; idx++)
+        {
+            uint32_t expectedCount = (idx & 1) ? 3 : 6;
+            VERIFY_ARE_EQUAL(calls[idx], expectedCount);
+        }
+
+        // Dispatch all calls on the queue so we can shut it down
+        while (DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0));
+    }
+
+    DEFINE_TEST_CASE(VerifyImmediateDispatch)
+    {
+        AutoQueueHandle queue;
+        uint32_t callCount = 0;
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode_Immediate, &queue));
+
+        auto callback = [](void* ptr)
+        {
+            uint32_t* pint = (uint32_t*)ptr;
+            (*pint)++;
+        };
+
+        const uint32_t count = 10;
+
+        for (uint32_t i = 1; i <= count; i++)
+        {
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &callCount, callback));
+            VERIFY_ARE_EQUAL(i, callCount);
+        }
+
+        // Verify a deferred completion still works
+        VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 200, &callCount, callback));
+        VERIFY_ARE_EQUAL(count, callCount);
+        Sleep(500);
+        VERIFY_ARE_EQUAL(count + 1, callCount);
+    }
+
+    DEFINE_TEST_CASE(VerifySerializedThreadPoolDispatch)
+    {
+        AutoQueueHandle queue;
+        const uint32_t total = 100;
+        struct Data
+        {
+            uint32_t Count = 0;
+            uint32_t Work[total];
+        };
+
+        struct PerCallData
+        {
+            uint32_t Index;
+            Data* D;
+        };
+
+        Data data;
+        data.Count = 0;
+        ZeroMemory(data.Work, sizeof(data.Work));
+
+        PerCallData callData[total];
+        for (uint32_t i = 0; i < total; i++)
+        {
+            callData[i].Index = i;
+            callData[i].D = &data;
+        }
+
+        VERIFY_SUCCEEDED(CreateAsyncQueue(AsyncQueueDispatchMode_ThreadPool, AsyncQueueDispatchMode_SerializedThreadPool, &queue));
+
+        auto callback = [](void* ptr)
+        {
+            PerCallData* pdata = (PerCallData*)ptr;
+            if (pdata->Index == 0)
+            {
+                pdata->D->Work[pdata->Index] = 5;
+            }
+            else
+            {
+                pdata->D->Work[pdata->Index] = pdata->D->Work[pdata->D->Count - 1] + 5;
+            }
+            pdata->D->Count++;
+        };
+
+        for (uint32_t i = 0; i < total; i++)
+        {
+            VERIFY_SUCCEEDED(SubmitAsyncCallback(queue, AsyncQueueCallbackType_Completion, 0, &(callData[i]), callback));
+        }
+
+        Sleep(500);
+
+        VERIFY_ARE_EQUAL(total, data.Count);
+        uint32_t previous = 0;
+        for (uint32_t i = 0; i < total; i++)
+        {
+            VERIFY_ARE_EQUAL(previous + 5, data.Work[i]);
+            previous = data.Work[i];
+        }
     }
 };

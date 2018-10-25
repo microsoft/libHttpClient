@@ -2,7 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "hcwebsocket.h"
+
+#if !HC_NOWEBSOCKETS
+
+#include "../hcwebsocket.h"
 #include "uri.h"
 #include "x509_cert_utilities.hpp"
 
@@ -18,14 +21,23 @@
 #if (_MSC_VER >= 1900)
 #define ASIO_ERROR_CATEGORY_NOEXCEPT noexcept(true)
 #endif // (_MSC_VER >= 1900)
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
 
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#include "../HTTP/Android/android_platform_context.h"
+#endif
 
 #if defined(_WIN32)
 #pragma warning( pop )
+#elif defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #define SUB_PROTOCOL_HEADER "Sec-WebSocket-Protocol"
@@ -54,8 +66,7 @@ private:
 
 public:
     wspp_websocket_impl(hc_websocket_handle_t hcHandle)
-        : m_backgroundAsync(nullptr),
-        m_backgroundQueue(nullptr),
+        : m_backgroundQueue(nullptr),
         m_state(CREATED),
         m_numSends(0),
         m_opensslFailed(false),
@@ -144,14 +155,14 @@ public:
                 // See http://www.openssl.org/support/faq.html#PROG13
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM == HC_PLATFORM_IOS
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"     
                 ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
 #else 
                 ERR_remove_thread_state(nullptr);
-#endif // HC_ANDROID_API
+#endif // HC_ANDROID_API || HC_PLATFORM_IOS
 
                 return sslContext;
             });
@@ -362,22 +373,6 @@ private:
         }
 #endif
 
-        struct connect_context
-        {
-            connect_context(websocketpp::client<WebsocketConfigType>& _client) : client(_client) {}
-            websocketpp::client<WebsocketConfigType>& client;
-        };
-        auto context = http_allocate_shared<connect_context>(client);
-
-        m_backgroundAsync = new (xbox::httpclient::http_memory::mem_alloc(sizeof(AsyncBlock))) AsyncBlock{};
-        m_backgroundQueue = DuplicateAsyncQueueHandle(async->queue);
-        m_backgroundAsync->queue = m_backgroundQueue;
-        m_backgroundAsync->context = shared_ptr_cache::store(context);
-        m_backgroundAsync->callback = [](AsyncBlock* async)
-        {
-            xbox::httpclient::http_memory::mem_free(async);
-        };
-
         // Initialize the 'connect' AsyncBlock here, but the actually work will happen on the ASIO background thread below
         auto hr = BeginAsync(async, this, (void*)HCWebSocketConnectAsync, __FUNCTION__,
             [](AsyncOp op, const AsyncProviderData* data)
@@ -397,27 +392,60 @@ private:
             m_state = CONNECTING;
             client.connect(con);
 
-            hr = RunAsync(m_backgroundAsync, [](AsyncBlock* async)
+            try
             {
-                auto context = shared_ptr_cache::fetch<connect_context>(async->context);
-
-                context->client.run();
-
-                // OpenSSL stores some per thread state that never will be cleaned up until
-                // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
-                // at all and will be reported as leaks.
-                // See http://www.openssl.org/support/faq.html#PROG13
+                struct client_context
+                {
+                    client_context(websocketpp::client<WebsocketConfigType>& _client) : client(_client) {}
+                    websocketpp::client<WebsocketConfigType>& client;
+                };
+                auto context = http_allocate_shared<client_context>(client);
+                
+                m_websocketThread = std::thread([context](){
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
+                    JavaVM* javaVm = nullptr;
+                    {   // Allow our singleton to go out of scope quickly once we're done with it
+                        auto httpSingleton = xbox::httpclient::get_http_singleton(true);
+                        AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
+                        javaVm = platformContext->GetJavaVm();
+                    }
+
+                    if (javaVm == nullptr)
+                    {
+                        HC_TRACE_ERROR(HTTPCLIENT, "javaVm is null");
+                        throw std::runtime_error("JavaVm is null");
+                    }
+
+                    JNIEnv* jniEnv = nullptr;
+                    jint result = javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+                    javaVm->AttachCurrentThread(&jniEnv, nullptr);
+#endif
+
+                    context->client.run();
+                    
+                    // OpenSSL stores some per thread state that never will be cleaned up until
+                    // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
+                    // at all and will be reported as leaks.
+                    // See http://www.openssl.org/support/faq.html#PROG13
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM == HC_PLATFORM_IOS
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-                ERR_remove_thread_state(nullptr);
+                    ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
-#else 
-                ERR_remove_thread_state(nullptr);
-#endif // HC_ANDROID_API
-
-                return S_OK;
-            });
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+                    javaVm->DetachCurrentThread();
+#endif // HC_PLATFORM_ANDROID
+#else
+                    ERR_remove_thread_state(nullptr);
+#endif // HC_PLATFORM_ANDROID || HC_PLATFORM_IOS
+                });
+                hr = S_OK;
+            }
+            catch (std::system_error err)
+            {
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket: couldn't create background websocket thread (%d)", err.code().value());
+                hr = E_FAIL;
+            }
         }
 
         return hr;
@@ -528,7 +556,10 @@ private:
             auto pThis = reinterpret_cast<wspp_websocket_impl*>(async->context);
 
             // Wait for background thread to finish
-            (void)GetAsyncStatus(pThis->m_backgroundAsync, true);
+            if (pThis->m_websocketThread.joinable())
+            {
+                pThis->m_websocketThread.join();
+            }
 
             // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
             pThis->m_client.reset();
@@ -606,7 +637,7 @@ private:
     };
 
     // Asio client has a long running "run" task that we need to provide a thread for
-    AsyncBlock* m_backgroundAsync;
+    std::thread m_websocketThread;
     async_queue_handle_t m_backgroundQueue;
 
     websocketpp::connection_hdl m_con;
@@ -686,3 +717,6 @@ HRESULT Internal_HCWebSocketDisconnect(
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
     return wsppSocket->close(closeStatus);
 }
+
+#endif
+

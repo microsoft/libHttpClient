@@ -43,13 +43,6 @@ typedef struct AsyncProviderData
     AsyncBlock* async;
 
     /// <summary>
-    /// The async queue for the call.  This will never be null -- either it will point
-    /// to the queue inside the above async block or it will point to a temporary queue
-    /// being used for the duration of the call.
-    /// </summary>
-    async_queue_handle_t queue;
-
-    /// <summary>
     /// Valid during a GetResult opcode and holds the size of the buffer.  This will
     /// be at least as large as the data size provided to CompleteAsync.
     /// </summary>
@@ -99,6 +92,35 @@ STDAPI BeginAsync(
     _In_ AsyncProvider* provider);
 
 /// <summary>
+/// Initializes an async block for use.  Once begun calls such
+/// as GetAsyncStatus will provide meaningful data. It is assumed the
+/// async work will begin on some system defined thread after this call
+/// returns. The token and function parameters can be used to help identify
+/// mismatched Begin/GetResult calls.  The token is typically the function
+/// pointer of the async API you are implementing, and the functionName parameter
+/// is typically the __FUNCTION__ compiler macro.  
+///
+/// This variant of BeginAsync will allocate additional memory of size contextSize
+/// and use this as the context pointer for async provider callbacks.  The memory
+/// pointer is returned in 'context'.  The lifetime of this memory is managed
+/// by the async library and will be freed automatically when the call 
+/// completes.
+/// </summary>
+/// <param name='asyncBlock'>A pointer to the AsyncBlock that holds data for the call.</param>
+/// <param name='identity'>An optional arbitrary pointer that can be used to identify this call.</param>
+/// <param name='identityName'>An optional string that names the async call.  This is typically the __FUNCTION__ compiler macro.</param>
+/// <param name='provider'>The function callback to invoke to implement the async call.</param>
+/// <param name='contextSize'>The size, in bytes, of additional context memory to allocate.</param>
+/// <param name='context'>The allocated context object pointer.</param>
+STDAPI BeginAsyncAlloc(
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ const void* identity,
+    _In_opt_ const char* identityName,
+    _In_ AsyncProvider* provider,
+    _In_ size_t contextSize,
+    _Out_ void** context);
+
+/// <summary>
 /// Schedules a callback to do async work.  Calling this is optional.  If the async work can be done
 /// through a system - async mechanism like overlapped IO or async COM, there is no need to schedule
 /// work.  If work should be scheduled after a delay, pass the number of ms ScheduleAsync should wait
@@ -141,4 +163,7 @@ STDAPI GetAsyncResult(
     _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) void* buffer,
     _Out_opt_ size_t* bufferUsed);
 
-
+/// <summary>
+/// This is used generate an identity to pass to BeginAsync/GetAsyncResult
+/// </summary>
+#define ASYNC_IDENTITY(method) #method

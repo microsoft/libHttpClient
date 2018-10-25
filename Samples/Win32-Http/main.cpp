@@ -182,7 +182,8 @@ void ShutdownActiveThreads()
 int main()
 {
     std::string method = "GET";
-    std::string url = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Tests/TestWebApplication/appsettings.Development.json";
+       
+    std::string url = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
     std::string requestBody = "";// "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;

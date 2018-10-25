@@ -3,18 +3,18 @@
 
 #include "pch.h"
 
-#include "timer.h"
+#include "../WaitTimer.h"
+#include "ios_WaitTimerImpl.h"
 
-#import "ios_timer_target.h"
+#import "ios_WaitTimer_target.h"
 
-@implementation ios_timer_target
+@implementation ios_WaitTimer_target
 
 - (void)timerFireMethod:(NSTimer*)timer
 {
     auto value = (NSValue*)timer.userInfo;
-    auto pt = static_cast<PlatformTimer*>(value.pointerValue);
-
-    pt->m_callback(pt->m_context);
+    auto impl = static_cast<WaitTimerImpl*>(value.pointerValue);
+    impl->TimerFired();
 }
 
 @end

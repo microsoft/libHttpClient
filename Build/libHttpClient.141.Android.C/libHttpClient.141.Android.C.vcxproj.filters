@@ -61,10 +61,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueue.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueueEx.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer_cpp.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_stl.cpp">
       <Filter>C++ Source\Task\Android</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
@@ -123,16 +123,13 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock.h">
       <Filter>C++ Source\Mock</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\Callback.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h">
       <Filter>C++ Source\Task</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\Callback_STL.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncQueueImpl.h">
       <Filter>C++ Source\Task</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\CriticalThread.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\timer.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\asyncQueueP.h">
       <Filter>C++ Source\Task</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
@@ -141,13 +138,16 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
       <Filter>C++ Source\WebSocket</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\async.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncProvider.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\asyncProvider.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\asyncQueue.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\asyncQueue.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\asyncQueueEx.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h">
@@ -171,46 +171,46 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{85E51936-22C2-3583-86D9-B638217D0C7A}</UniqueIdentifier>
+      <UniqueIdentifier>{B348936D-D09B-3ACE-A476-12C7C5E48781}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{1E82CF86-C9E8-3B21-9CBF-0A0B6AE61DD8}</UniqueIdentifier>
+      <UniqueIdentifier>{6D290126-3831-3A04-903B-F2ADD104D81C}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common\Android">
-      <UniqueIdentifier>{4E898E7A-4EC1-31B7-8767-25EA1D6FA1B4}</UniqueIdentifier>
+      <UniqueIdentifier>{A65FC96D-D1A4-34EB-BC4F-36D3A3D905A5}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{8C35B4A2-1B9F-3D62-96D0-FFB233AA19A7}</UniqueIdentifier>
+      <UniqueIdentifier>{B5E18BF5-6C51-323C-96A0-81422D9D6069}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{026C4B3F-3D4C-3E71-B451-12966F95AE4D}</UniqueIdentifier>
+      <UniqueIdentifier>{6DAD9E7F-080C-3264-920E-77D0AFFE8CC9}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP\Android">
-      <UniqueIdentifier>{DFBB5D55-D11E-3479-84FE-A9F6F7D3957C}</UniqueIdentifier>
+      <UniqueIdentifier>{932FF9B4-0F6C-3D9E-ADD7-F607B9EE46A9}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{0D1FDFAD-B8A7-34A7-8F11-FE3E25DA758B}</UniqueIdentifier>
+      <UniqueIdentifier>{FD710BAD-78A2-39F4-9CB7-90B1627CC1D5}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger\Android">
-      <UniqueIdentifier>{9349A526-8102-38D9-BC2E-81B8D226CF3D}</UniqueIdentifier>
+      <UniqueIdentifier>{E49AC6C7-8BA8-3732-A533-988ED3333337}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{CB4C32A4-0AD9-3DE2-95C4-D3A23BAEFF0D}</UniqueIdentifier>
+      <UniqueIdentifier>{ECB59FD8-67C4-354A-90B2-DFC893C0F2E5}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{EE1B1BF8-2B09-3303-86B3-BDC10C34DA2F}</UniqueIdentifier>
+      <UniqueIdentifier>{09ED63FC-76E4-368A-B7E4-40A1D70ABD31}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task\Android">
-      <UniqueIdentifier>{3A624990-0986-32DA-BE8A-7B6E2C6E144F}</UniqueIdentifier>
+      <UniqueIdentifier>{B95AC387-5C11-3C0C-A361-6B40BA6CF75D}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{CE3116D1-0464-39B1-9ED6-5005959BB3CC}</UniqueIdentifier>
+      <UniqueIdentifier>{09CB3AE4-1639-3274-BB94-99AAC498EA50}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket\Android">
-      <UniqueIdentifier>{244453B1-9536-3723-AE2A-16C5901EE428}</UniqueIdentifier>
+      <UniqueIdentifier>{2D9BF097-B06F-328B-93C8-5B6D9227F412}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{C2C20477-FEDD-3905-AF5B-08FA4AE915C8}</UniqueIdentifier>
+      <UniqueIdentifier>{42CA3718-AE3E-3CEB-A859-F23D0D7A9918}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

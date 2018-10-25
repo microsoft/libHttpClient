@@ -39,6 +39,7 @@
     <JavaSourceRoots>src\main\java</JavaSourceRoots>
   </PropertyGroup>
   <Import Project="$(AndroidTargetsPath)\Android.Default.props" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.paths.props))\libHttpClient.paths.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <ConfigurationType>Library</ConfigurationType>
   </PropertyGroup>

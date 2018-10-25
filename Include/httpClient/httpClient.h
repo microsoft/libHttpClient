@@ -5,8 +5,9 @@
 #include <httpClient/pal.h>
 #include <httpClient/mock.h>
 #include <httpClient/trace.h>
-#include <httpClient/async.h>
-#include <httpClient/asyncQueue.h>
+#include <async.h>
+#include <asyncQueue.h>
+#include <asyncQueueEx.h>
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"
@@ -556,6 +557,7 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
     _Out_ const char** headerValue
     ) HC_NOEXCEPT;
 
+#if !HC_NOWEBSOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket APIs
 // 
@@ -736,3 +738,5 @@ hc_websocket_handle_t HCWebSocketDuplicateHandle(
 STDAPI HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
+
+#endif

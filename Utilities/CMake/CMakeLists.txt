@@ -85,29 +85,29 @@ set(Public_Source_Files
     ../../../include/httpClient/httpClient.h
     ../../../include/httpClient/httpProvider.h
     ../../../include/httpClient/mock.h
-    ../../../include/httpClient/async.h
-    ../../../include/httpClient/asyncProvider.h
-    ../../../include/httpClient/asyncQueue.h
+    ../../../include/async.h
+    ../../../include/asyncProvider.h
+    ../../../include/asyncQueue.h
+    ../../../include/asyncQueueEx.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/pal.h
     )
 
 set(Task_Source_Files
+    ../../../Source/Task/asyncQueueP.h
+    ../../../Source/Task/asyncQueueImpl.h
     ../../../Source/Task/AsyncQueue.cpp
+    ../../../Source/Task/AsyncQueueEx.cpp
     ../../../Source/Task/AsyncLib.cpp
-    ../../../Source/Task/CriticalThread.cpp
-    ../../../Source/Task/timer.h
-    ../../../Source/Task/Callback.h
-    ../../../Source/Task/Callback_STL.h
-    ../../../Source/Task/CriticalThread.h
+    ../../../Source/Task/WaitTimer.h
     )
 
 set(Task_Windows_Source_Files
-    ../../../Source/Task/timer_win32.cpp
+    ../../../Source/Task/WaitTimer_stl.cpp
     )
 
 set(Task_Android_Source_Files
-    ../../../Source/Task/timer_cpp.cpp
+    ../../../Source/Task/WaitTimer_stl.cpp
     )
 
 set(Global_Source_Files
