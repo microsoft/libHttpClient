@@ -4,8 +4,6 @@
 #include "asyncQueueP.h"
 #include "AsyncQueueImpl.h"
 
-static std::atomic<uint32_t> s_processorCount = { 0 } ;
-
 namespace ApiDiag
 {
     std::atomic<uint32_t> g_globalApiRefs = {};

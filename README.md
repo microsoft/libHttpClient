@@ -41,7 +41,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Call HCHttpCallPerform() to perform an HTTP call using the hc_call_handle_t.  
 1. The perform call is asynchronous, so the work will be done on a background thread which calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Work ).  The results will return to the callback on the thread that calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Completion ).
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the hc_call_handle_t
-1. Call HCHttpCallCleanup() to cleanup the hc_call_handle_t
+1. Call HCHttpCallCloseHandle() to cleanup the hc_call_handle_t
 1. Repeat 4-8 for each new HTTP call
 1. Call HCCleanup() at shutdown before your memory manager set in step 1 is shutdown
 
@@ -65,13 +65,6 @@ If you already cloned the repo, you can initialize submodules with:
     git submodule update --init --recursive
 
 Note that using GitHub's feature to "Download Zip" does not contain the submodules and will not properly build.  Please clone recursively instead.
-
-## How to build
-
-If you are building libHttpClient from the xcode project, run the config script first.
-
-    ./Utilities/configureApple
-    
 
 ## Contribute Back!
 

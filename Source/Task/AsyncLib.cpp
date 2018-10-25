@@ -176,42 +176,40 @@ class AsyncBlockInternalGuard
 {
 public:
     AsyncBlockInternalGuard(_Inout_ AsyncBlock* asyncBlock) noexcept :
-        m_internal1{ reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal) },
-        m_internal2(nullptr)
+        m_internal(DoLock(asyncBlock))
     {
-        ASSERT(m_internal1);
-        while (m_internal1->lock.test_and_set()) {}
-        
-        if (m_internal1->state != nullptr)
+        if (m_internal->state != nullptr)
         {
-            // Which async block go we grab?  Either our copy of the user
-            // pointer could have been passed in. We want to get the internal
-            // state of both blocks.
-            
-            AsyncBlock* asyncBlock2 = (asyncBlock == m_internal1->state->userAsyncBlock) ?
-                &m_internal1->state->asyncBlock :
-                m_internal1->state->userAsyncBlock;
+            m_userInternal = reinterpret_cast<AsyncBlockInternal*>(m_internal->state->userAsyncBlock->internal);
+        }
+        else
+        {
+            m_userInternal = m_internal;
+        }
 
-            ASSERT(asyncBlock2 != asyncBlock);
-            
-            m_internal2 = reinterpret_cast<AsyncBlockInternal*>(asyncBlock2->internal);
-            ASSERT(m_internal2);
-            while (m_internal2->lock.test_and_set()) {}
+        // If user internal != internal, we grab its lock.  Note that
+        // lock ordering here is critical.  It must always be 
+        // state lock, then user lock.  If state is not available, then
+        // it is just user lock.
+
+        if (m_userInternal != m_internal)
+        {
+            while (m_userInternal->lock.test_and_set()) {}
         }
     }
 
     ~AsyncBlockInternalGuard() noexcept
     {
-        m_internal1->lock.clear();
-        if (m_internal2 != nullptr)
+        m_internal->lock.clear();
+        if (m_userInternal != m_internal)
         {
-            m_internal2->lock.clear();
+            m_userInternal->lock.clear();
         }
     }
-    
+
     AsyncStateRef GetState() const noexcept
     {
-        AsyncStateRef state{ m_internal1->state };
+        AsyncStateRef state{ m_internal->state };
 
         if (state != nullptr && state->signature != ASYNC_STATE_SIG)
         {
@@ -224,13 +222,9 @@ public:
 
     AsyncStateRef ExtractState() const noexcept
     {
-        AsyncStateRef state{ m_internal1->state };
-        m_internal1->state = nullptr;
-        
-        if (m_internal2 != nullptr)
-        {
-            m_internal2->state = nullptr;
-        }
+        AsyncStateRef state{ m_internal->state };
+        m_internal->state = nullptr;
+        m_userInternal->state = nullptr;
 
         if (state != nullptr && state->signature != ASYNC_STATE_SIG)
         {
@@ -243,19 +237,17 @@ public:
 
     HRESULT GetStatus() const noexcept
     {
-        return m_internal1->status;
+        return m_internal->status;
     }
 
     bool TrySetTerminalStatus(HRESULT status) noexcept
     {
-        if (m_internal1->status == E_PENDING)
+        if (m_internal->status == E_PENDING)
         {
-            m_internal1->status = status;
-            if (m_internal2 != nullptr)
-            {
-                ASSERT(m_internal2->status == E_PENDING);
-                m_internal2->status = status;
-            }
+            ASSERT(m_userInternal->status == E_PENDING);
+            m_userInternal->status = status;
+            m_internal->status = status;
+
             return true;
         }
         else
@@ -265,8 +257,52 @@ public:
     }
 
 private:
-    AsyncBlockInternal * const m_internal1;
-    AsyncBlockInternal * m_internal2;
+    AsyncBlockInternal * const m_internal;
+    AsyncBlockInternal * m_userInternal;
+
+    // Locks the correct async block and returns a pointer to the one
+    // we locked.
+    static AsyncBlockInternal* DoLock(_In_ AsyncBlock* asyncBlock)
+    {
+        AsyncBlockInternal* lockedResult = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
+        ASSERT(lockedResult);
+        while (lockedResult->lock.test_and_set()) {}
+
+        // We've locked the async block. We only ever want to keep a lock on one block
+        // to prevent deadlocks caused by lock ordering.  If the state is still valid
+        // on this block, we ensure the async block we're locking is the permanent one
+        // associated with the async state.  
+
+        if (lockedResult->state != nullptr && asyncBlock != &lockedResult->state->asyncBlock)
+        {
+            // Grab a state ref here because releasing the lock can allow
+            // the state to be cleared / released.
+            AsyncStateRef state(lockedResult->state);
+            lockedResult->lock.clear();
+
+            // Now lock the async block on the state struct
+            AsyncBlockInternal* stateAsyncBlockInternal = reinterpret_cast<AsyncBlockInternal*>(state->asyncBlock.internal);
+            while (stateAsyncBlockInternal->lock.test_and_set()) {}
+
+            // We locked the right object, but we need to check here to see if we
+            // lost the state after clearing the lock above.  If we did, then this
+            // pointer is likely going to destruct as soon as we release
+            // our state ref.  We should throw it away and grab the user block
+            // again.
+
+            if (stateAsyncBlockInternal->state == nullptr)
+            {
+                stateAsyncBlockInternal->lock.clear();
+                while (lockedResult->lock.test_and_set()) {}
+            }
+            else
+            {
+                lockedResult = stateAsyncBlockInternal;
+            }
+        }
+
+        return lockedResult;
+    }
 };
 
 static void CALLBACK CompletionCallbackForAsyncState(_In_ void* context);
