@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
+		588C7E7321813EB7001098B3 /* timer_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7221813EB7001098B3 /* timer_cpp.cpp */; };
+		588C7E7421813ED3001098B3 /* timer_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7221813EB7001098B3 /* timer_cpp.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
 		58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
@@ -38,8 +40,6 @@
 		7DB100C72119276B00AE22F5 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
 		7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E982209ADEB100CC6774 /* mock_publics.cpp */; };
 		7DB100C92119276B00AE22F5 /* mock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E984209ADEB100CC6774 /* mock.cpp */; };
-		7DB100CA2119276B00AE22F5 /* ios_timer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E1E20C0AC2C000667A3 /* ios_timer.mm */; };
-		7DB100CB2119276B00AE22F5 /* ios_timer_target.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E2120C0C169000667A3 /* ios_timer_target.mm */; };
 		7DB100CC2119276B00AE22F5 /* AsyncLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B3209ADEB100CC6774 /* AsyncLib.cpp */; };
 		7DB100CD2119276B00AE22F5 /* AsyncQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9AF209ADEB100CC6774 /* AsyncQueue.cpp */; };
 		7DB100CE2119276B00AE22F5 /* CriticalThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9AE209ADEB100CC6774 /* CriticalThread.cpp */; };
@@ -55,13 +55,12 @@
 		9CC0523921374B5D0009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
 		9CC0523B213779F70009B69A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		9CC0523C213779F70009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
-		A5304E1F20C0AC2C000667A3 /* ios_timer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E1E20C0AC2C000667A3 /* ios_timer.mm */; };
-		A5304E2320C0C169000667A3 /* ios_timer_target.mm in Sources */ = {isa = PBXBuildFile; fileRef = A5304E2120C0C169000667A3 /* ios_timer_target.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_logger.cpp; sourceTree = "<group>"; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		588C7E7221813EB7001098B3 /* timer_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer_cpp.cpp; sourceTree = "<group>"; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
 		58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hcwebsocket.cpp; sourceTree = "<group>"; };
 		58A7E97E209ADEB100CC6774 /* log_publics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log_publics.cpp; sourceTree = "<group>"; };
@@ -273,6 +272,7 @@
 				58A7E9B2209ADEB100CC6774 /* Callback.h */,
 				58A7E9AE209ADEB100CC6774 /* CriticalThread.cpp */,
 				58A7E9B1209ADEB100CC6774 /* CriticalThread.h */,
+				588C7E7221813EB7001098B3 /* timer_cpp.cpp */,
 				A5304E1B20C0AB9D000667A3 /* timer.h */,
 			);
 			path = Task;
@@ -343,13 +343,9 @@
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				9C3B2538212F25C90080AEC6 /* libcrypto.a */,
-				9C3B2539212F25C90080AEC6 /* libssl.a */,
 				9CC0523621374B5D0009B69A /* libcrypto.a */,
 				9CC0523721374B5D0009B69A /* libssl.a */,
 				9C3B2535212F238F0080AEC6 /* libopenssl.a */,
-				9CD2D90221249497009C60EC /* libcrypto.a */,
-				9CD2D90321249497009C60EC /* libssl.a */,
 				7DB100DA2119383400AE22F5 /* Foundation.framework */,
 			);
 			name = Frameworks;
@@ -504,6 +500,7 @@
 				58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */,
 				5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */,
 				58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */,
+				588C7E7321813EB7001098B3 /* timer_cpp.cpp in Sources */,
 				58A7E9CE209ADEB100CC6774 /* uri.cpp in Sources */,
 				58A7E9EB209ADEB100CC6774 /* AsyncLib.cpp in Sources */,
 				58A7E9C7209ADEB100CC6774 /* utils.cpp in Sources */,
@@ -518,11 +515,9 @@
 				58A7E9E2209ADEB100CC6774 /* httpcall_request.cpp in Sources */,
 				58A7E9C3209ADEB100CC6774 /* mock_publics.cpp in Sources */,
 				58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */,
-				A5304E2320C0C169000667A3 /* ios_timer_target.mm in Sources */,
 				58A7E9E5209ADEB100CC6774 /* httpcall.cpp in Sources */,
 				58A7E9E7209ADEB100CC6774 /* AsyncQueue.cpp in Sources */,
 				58A7E9D0209ADEB100CC6774 /* pch.cpp in Sources */,
-				A5304E1F20C0AC2C000667A3 /* ios_timer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -537,6 +532,7 @@
 				7DB100BF2119276B00AE22F5 /* global.cpp in Sources */,
 				7DB100C02119276B00AE22F5 /* mem.cpp in Sources */,
 				7DB100C12119276B00AE22F5 /* http_ios.mm in Sources */,
+				588C7E7421813ED3001098B3 /* timer_cpp.cpp in Sources */,
 				7DB100C22119276B00AE22F5 /* httpcall_request.cpp in Sources */,
 				7DB100C32119276B00AE22F5 /* httpcall_response.cpp in Sources */,
 				7DB100C42119276B00AE22F5 /* httpcall.cpp in Sources */,
@@ -546,8 +542,6 @@
 				7DB100C72119276B00AE22F5 /* trace.cpp in Sources */,
 				7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */,
 				7DB100C92119276B00AE22F5 /* mock.cpp in Sources */,
-				7DB100CA2119276B00AE22F5 /* ios_timer.mm in Sources */,
-				7DB100CB2119276B00AE22F5 /* ios_timer_target.mm in Sources */,
 				7DB100CC2119276B00AE22F5 /* AsyncLib.cpp in Sources */,
 				7DB100CD2119276B00AE22F5 /* AsyncQueue.cpp in Sources */,
 				7DB100CE2119276B00AE22F5 /* CriticalThread.cpp in Sources */,
