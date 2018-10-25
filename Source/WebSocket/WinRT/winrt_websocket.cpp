@@ -146,10 +146,10 @@ try
 {
     hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(executionRoutineContext);
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Connect executing", websocket->id);
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
 
     try
     {
-        std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
         websocketTask->m_messageWebSocket = ref new MessageWebSocket();
 
         uint32_t numHeaders = 0;
@@ -524,7 +524,6 @@ HRESULT Internal_HCWebSocketDisconnect(
     try
     {
         websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(closeStatus), nullptr);
-    }
     }
     catch (Platform::Exception^ e)
     {
