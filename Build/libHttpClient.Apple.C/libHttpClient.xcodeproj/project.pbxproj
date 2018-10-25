@@ -10,6 +10,8 @@
 		583472B62167FE16003E384B /* AsyncQueueEx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D35A17A221580D0600597B6A /* AsyncQueueEx.cpp */; };
 		583472B72167FE17003E384B /* AsyncQueueEx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D35A17A221580D0600597B6A /* AsyncQueueEx.cpp */; };
 		5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
+		588C7E7C218275CE001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
+		588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
 		58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
@@ -52,13 +54,12 @@
 		9CC0523921374B5D0009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
 		9CC0523B213779F70009B69A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		9CC0523C213779F70009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
-		D3C5B556214848B6004BE1FF /* ios_WaitTimer_target.mm in Sources */ = {isa = PBXBuildFile; fileRef = D3C5B553214848B6004BE1FF /* ios_WaitTimer_target.mm */; };
-		D3C5B557214848B6004BE1FF /* ios_WaitTimer.mm in Sources */ = {isa = PBXBuildFile; fileRef = D3C5B554214848B6004BE1FF /* ios_WaitTimer.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_logger.cpp; sourceTree = "<group>"; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WaitTimer_stl.cpp; sourceTree = "<group>"; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
 		58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hcwebsocket.cpp; sourceTree = "<group>"; };
 		58A7E97E209ADEB100CC6774 /* log_publics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log_publics.cpp; sourceTree = "<group>"; };
@@ -269,6 +270,7 @@
 				D35A17A221580D0600597B6A /* AsyncQueueEx.cpp */,
 				D35A17A42158129900597B6A /* AsyncQueueImpl.h */,
 				D35A17A6215A6BF600597B6A /* asyncQueueP.h */,
+				588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */,
 				D3C5B5502148481F004BE1FF /* WaitTimer.h */,
 			);
 			path = Task;
@@ -491,7 +493,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */,
-				D3C5B556214848B6004BE1FF /* ios_WaitTimer_target.mm in Sources */,
 				5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */,
 				58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */,
 				58A7E9CE209ADEB100CC6774 /* uri.cpp in Sources */,
@@ -506,7 +507,7 @@
 				58A7E9D5209ADEB100CC6774 /* http_ios.mm in Sources */,
 				58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */,
 				58A7E9E2209ADEB100CC6774 /* httpcall_request.cpp in Sources */,
-				D3C5B557214848B6004BE1FF /* ios_WaitTimer.mm in Sources */,
+				588C7E7C218275CE001098B3 /* WaitTimer_stl.cpp in Sources */,
 				58A7E9C3209ADEB100CC6774 /* mock_publics.cpp in Sources */,
 				58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */,
 				58A7E9E5209ADEB100CC6774 /* httpcall.cpp in Sources */,
@@ -534,6 +535,7 @@
 				9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				7DB100C62119276B00AE22F5 /* log_publics.cpp in Sources */,
 				7DB100C72119276B00AE22F5 /* trace.cpp in Sources */,
+				588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */,
 				7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */,
 				7DB100C92119276B00AE22F5 /* mock.cpp in Sources */,
 				7DB100CC2119276B00AE22F5 /* AsyncLib.cpp in Sources */,
