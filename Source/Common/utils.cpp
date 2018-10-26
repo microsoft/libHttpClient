@@ -29,6 +29,9 @@ bool StringToUint4(char const* begin, char const* end, uint64_t& v, int32_t base
 {
     v = 0;
 
+    // we have to manually clear errno
+    errno = 0;
+
     char* readTo = nullptr;
     uint64_t n = std::strtoull(begin, &readTo, base);
 
