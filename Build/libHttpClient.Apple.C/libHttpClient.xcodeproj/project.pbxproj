@@ -462,8 +462,8 @@
 			);
 			name = "Build openssl";
 			outputPaths = (
-				"$(SRCROOT)/../../Binaries/iOS/libcrypto.a",
-				"$(SRCROOT)/../../Binaries/iOS/libssl.a",
+				"$(SRCROOT)/../../Binaries/iOS/lib/libcrypto.a",
+				"$(SRCROOT)/../../Binaries/iOS/lib/libssl.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -478,8 +478,8 @@
 			);
 			name = "Build openssl";
 			outputPaths = (
-				"$(SRCROOT)/../../Binaries/iOS/libcrypto.a",
-				"$(SRCROOT)/../../Binaries/iOS/libssl.a",
+				"$(SRCROOT)/../../Binaries/iOS/lib/libcrypto.a",
+				"$(SRCROOT)/../../Binaries/iOS/lib/libssl.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
