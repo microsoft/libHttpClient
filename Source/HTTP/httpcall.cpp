@@ -219,10 +219,6 @@ bool http_call_should_retry(
         std::chrono::seconds timeoutWindow = std::chrono::seconds(timeoutWindowInSeconds);
         std::chrono::milliseconds remainingTimeBeforeTimeout = timeoutWindow - timeElapsedSinceFirstCall;
         if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", call->id, remainingTimeBeforeTimeout.count()); }
-        if (remainingTimeBeforeTimeout.count() <= MIN_HTTP_TIMEOUT_IN_MS) // Need at least 5 seconds to bother making a call
-        {
-            return false;
-        }
 
         // Based on the retry iteration, delay 2,4,8,16,etc seconds by default between retries
         // Jitter the response between the current and next delay based on system clock
@@ -264,12 +260,6 @@ bool http_call_should_retry(
             }
         }
 
-        if (remainingTimeBeforeTimeout < call->delayBeforeRetry + std::chrono::milliseconds(MIN_HTTP_TIMEOUT_IN_MS))
-        {
-            // Don't bother retrying when out of time
-            return false;
-        }
-
         if (httpStatus == 500) // Internal Error
         {
             // For 500 - Internal Error, wait at least 10 seconds before retrying.
@@ -277,6 +267,18 @@ bool http_call_should_retry(
             {
                 call->delayBeforeRetry = std::chrono::milliseconds(MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS);
             }
+        }
+
+        if (remainingTimeBeforeTimeout.count() <= MIN_HTTP_TIMEOUT_IN_MS) 
+        {
+            // Need at least 5 seconds to bother making a call
+            return false;
+        }
+
+        if (remainingTimeBeforeTimeout < call->delayBeforeRetry + std::chrono::milliseconds(MIN_HTTP_TIMEOUT_IN_MS))
+        {
+            // Don't bother retrying when out of time
+            return false;
         }
 
         return true;
@@ -356,6 +358,7 @@ void retry_http_call_until_done(
             HCHttpCallResponseSetStatusCode(retryContext->call, apiState.statusCode);
             if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", retryContext->call->id, apiState.statusCode); }
             CompleteAsync(retryContext->outerAsyncBlock, S_OK, 0);
+            return;
         }
 
         if( clearState )
