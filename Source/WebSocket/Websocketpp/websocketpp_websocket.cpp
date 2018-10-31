@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+
+#if !HC_NOWEBSOCKETS
+
 #include "../hcwebsocket.h"
 #include "uri.h"
 #include "x509_cert_utilities.hpp"
@@ -706,3 +709,6 @@ HRESULT Internal_HCWebSocketDisconnect(
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
     return wsppSocket->close(closeStatus);
 }
+
+#endif
+
