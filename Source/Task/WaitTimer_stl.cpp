@@ -6,7 +6,6 @@ using Deadline = std::chrono::high_resolution_clock::time_point;
 class WaitTimerImpl
 {
 public:
-
     HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback);
     void Start(_In_ uint64_t absoluteTime);
     void Cancel();
@@ -37,6 +36,7 @@ class TimerQueue
 {
 public:
     bool LazyInit() noexcept;
+    ~TimerQueue();
 
     void Set(WaitTimerImpl* timer, Deadline deadline) noexcept;
     void Remove(WaitTimerImpl const* timer) noexcept;
@@ -50,6 +50,8 @@ private:
     std::mutex m_mutex;
     std::condition_variable m_cv;
     std::vector<TimerEntry> m_queue; // used as a heap
+    std::thread m_t;
+    bool m_exitThread = false;
     bool m_initialized = false;
 };
 
@@ -59,17 +61,28 @@ namespace
     TimerQueue g_timerQueue;
 }
 
+TimerQueue::~TimerQueue()
+{
+    {
+        std::lock_guard<std::mutex> lock{ m_mutex };
+        m_exitThread = true;
+    }
+
+    m_cv.notify_all();
+    m_t.join();
+}
+
 bool TimerQueue::LazyInit() noexcept
 {
+    m_exitThread = false;
     std::call_once(g_timerQueueLazyInit, [this]()
     {
         try
         {
-            std::thread t([this]()
+            m_t = std::thread([this]()
             {
                 Worker();
             });
-            t.detach();
             m_initialized = true;
         }
         catch (...)
@@ -121,6 +134,9 @@ void TimerQueue::Worker() noexcept
     std::unique_lock<std::mutex> lock{ m_mutex };
     while (true)
     {
+        if (m_exitThread)
+            return;
+
         while (!m_queue.empty())
         {
             Deadline next = Peek().When;
@@ -132,7 +148,7 @@ void TimerQueue::Worker() noexcept
             TimerEntry entry = Pop();
 
             // release the lock while invoking the callback, just in case timer
-            // gets destroyed on this thread or readds itself in the callback
+            // gets destroyed on this thread or reads itself in the callback
             lock.unlock();
             if (entry.Timer) // Timer is set to nullptr if the entry is removed
             {
@@ -205,6 +221,7 @@ WaitTimer::~WaitTimer() noexcept
     if (m_impl != nullptr)
     {
         delete m_impl;
+        m_impl = nullptr;
     }
 }
 
