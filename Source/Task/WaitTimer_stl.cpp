@@ -145,7 +145,7 @@ void TimerQueue::Worker() noexcept
             TimerEntry entry = Pop();
 
             // release the lock while invoking the callback, just in case timer
-            // gets destroyed on this thread or reads itself in the callback
+            // gets destroyed on this thread or re-adds itself in the callback
             lock.unlock();
             if (entry.Timer) // Timer is set to nullptr if the entry is removed
             {
