@@ -132,11 +132,8 @@ void TimerQueue::Remove(WaitTimerImpl const* timer) noexcept
 void TimerQueue::Worker() noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
-    while (true)
+    while (!m_exitThread)
     {
-        if (m_exitThread)
-            return;
-
         while (!m_queue.empty())
         {
             Deadline next = Peek().When;
@@ -221,7 +218,6 @@ WaitTimer::~WaitTimer() noexcept
     if (m_impl != nullptr)
     {
         delete m_impl;
-        m_impl = nullptr;
     }
 }
 
