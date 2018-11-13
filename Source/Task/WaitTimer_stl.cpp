@@ -69,7 +69,10 @@ TimerQueue::~TimerQueue()
     }
 
     m_cv.notify_all();
-    m_t.join();
+    if (m_t.joinable())
+    {
+        m_t.join();
+    }
 }
 
 bool TimerQueue::LazyInit() noexcept
