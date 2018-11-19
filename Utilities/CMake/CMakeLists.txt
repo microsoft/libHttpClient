@@ -138,8 +138,8 @@ set(Android_WebSocket_Source_Files
     )
 
 set(Mock_Source_Files
-    ../../../Source/Mock/mock.cpp
-    ../../../Source/Mock/mock.h
+    ../../../Source/Mock/lhc_mock.cpp
+    ../../../Source/Mock/lhc_mock.h
     ../../../Source/Mock/mock_publics.cpp
     )
 
