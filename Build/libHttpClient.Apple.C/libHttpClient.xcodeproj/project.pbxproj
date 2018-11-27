@@ -215,9 +215,9 @@
 		58A7E981209ADEB100CC6774 /* Mock */ = {
 			isa = PBXGroup;
 			children = (
-				58A7E982209ADEB100CC6774 /* mock_publics.cpp */,
 				58A7E984209ADEB100CC6774 /* lhc_mock.cpp */,
-				58A7E983209ADEB100CC6774 /* lhc_mock.h */,
+				58A7E983209ADEB100CC6774 /* lhc_mock.h */,				
+				58A7E982209ADEB100CC6774 /* mock_publics.cpp */,
 			);
 			path = Mock;
 			sourceTree = "<group>";
