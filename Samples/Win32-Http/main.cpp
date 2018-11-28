@@ -226,18 +226,19 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         std::string responseString;
         std::string errMessage;
 
-        HRESULT hr = GetAsyncStatus(asyncBlock, false);
-        if (FAILED(hr)) 
-        {
-            // This should be a rare error case when the async task fails
-            printf_s("Couldn't get HTTP call object 0x%0.8x\r\n", hr);
-            return;
-        }
-
         SampleHttpCallAsyncContext* hcContext = static_cast<SampleHttpCallAsyncContext*>(asyncBlock->context);
         hc_call_handle_t call = hcContext->call;
         bool isJson = hcContext->isJson;
         std::string filePath = hcContext->filePath;
+
+        HRESULT hr = GetAsyncStatus(asyncBlock, false);
+        if (FAILED(hr))
+        {
+            // This should be a rare error case when the async task fails
+            printf_s("Couldn't get HTTP call object 0x%0.8x\r\n", hr);
+            HCHttpCallCloseHandle(call);
+            return;
+        }
 
         HCHttpCallResponseGetNetworkErrorCode(call, &networkErrorCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
