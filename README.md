@@ -1,19 +1,19 @@
 ## Welcome!
 
-libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API (XSAPI) [https://github.com/Microsoft/xbox-live-api] and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
+libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api) and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
 
 ## Goals
 
 - libHttpClient provides a **platform abstraction layer** for **HTTP** and **WebSocket**
 - Stock implementations that call **native platform HTTP / WebSocket APIs** on UWP, XDK ERA, iOS, Android 
 - Caller can add support for **other platforms via callback** API
-- Sample showing off an **HTTP implementation via Curl** https://github.com/curl/curl via this callback
+- Sample showing off an [**HTTP implementation via Curl**](https://github.com/curl/curl) via this callback
 - Designed around the needs of **professional game developers** that use Xbox Live
-- Will be **used by** the Microsoft Xbox Live Service API (XSAPI) [https://github.com/Microsoft/xbox-live-api]
+- Will be **used by** the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api)
 - Builds for **UWP, XDK ERA, Win32, iOS, and Android**
 - Public API is a **flat C API**
 - **Asynchronous** API
-- Public API **supports simple P/Invoke** without needing to use the "C#/.NET P/Invoke Interop SDK" or C++/CLI  [https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK]
+- Public API **supports simple P/Invoke** without needing to use the ["C#/.NET P/Invoke Interop SDK" or C++/CLI](https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK)
 - Public APIs to **manage async tasks** 
 - Async data can be returned to a specific game thread so the **game doesn't need to marshal the data between threads**
 - **No streams** support
@@ -49,7 +49,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 
 * On UWP, XDK ERA, iOS, and Android, HCHttpCallPerform() will call native platform APIs
 * Optionally call HCSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
-* See sample CustomHttpImplWithCurl how to use this callback plus Curl https://github.com/curl/curl to make an HTTP implementation using Curl.
+* See sample CustomHttpImplWithCurl how to use this callback plus [Curl](https://github.com/curl/curl) to make an HTTP implementation using Curl.
 
 ## How to clone repo
 

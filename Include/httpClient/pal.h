@@ -283,6 +283,10 @@ typedef struct _LIST_ENTRY {
 #define _Out_writes_bytes_opt_(size)
 #endif
 
+#ifndef _Out_writes_bytes_to_
+#define _Out_writes_bytes_to_(size, buffer)
+#endif
+
 #ifndef _Out_writes_bytes_to_opt_
 #define _Out_writes_bytes_to_opt_(size, buffer)
 #endif
