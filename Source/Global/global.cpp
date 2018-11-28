@@ -77,17 +77,16 @@ HRESULT init_http_singleton(HCInitArgs* args)
         if (SUCCEEDED(hr))
         {
             auto newSingleton = http_allocate_shared<http_singleton>(platformContext);
-                std::atomic_compare_exchange_strong(
-                    &g_httpSingleton_atomicReadsOnly,
-                    &httpSingleton,
-                    newSingleton
-                );
+            std::atomic_compare_exchange_strong(
+                &g_httpSingleton_atomicReadsOnly,
+                &httpSingleton,
+                newSingleton);
 
-                if (newSingleton == nullptr)
-                {
-                    hr = E_OUTOFMEMORY;
-                }
-                // At this point there is a singleton (ours or someone else's)
+            if (newSingleton == nullptr)
+            {
+                hr = E_OUTOFMEMORY;
+            }
+            // At this point there is a singleton (ours or someone else's)
         }
     }
 

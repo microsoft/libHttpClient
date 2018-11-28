@@ -224,18 +224,6 @@ STDAPI HCHttpCallPerformAsync(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Get hc_call_handle_t from an HCHttpCallPerformAsync call.
-/// Use HCHttpCallResponse* to get information from the hc_call_handle_t.
-/// </summary>
-/// <param name="async">The same AsyncBlock that passed to HCHttpCallPerformAsync.</param>
-/// <param name="result">hc_call_handle_t result handle.</param>
-/// <returns>HRESULT return code for this API operation.</returns>
-STDAPI HCHttpCallPerformResult(
-    _Inout_ AsyncBlock* asyncBlock,
-    _Out_ hc_call_handle_t* call
-    );
-
-/// <summary>
 /// Duplicates the hc_call_handle_t object.  Use HCHttpCallCloseHandle to close it.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>

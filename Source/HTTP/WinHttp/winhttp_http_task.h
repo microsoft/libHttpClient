@@ -36,10 +36,12 @@ public:
         : m_pCS(pCS)
     {
         m_pCS->lock();
+        //HC_TRACE_INFORMATION(HTTPCLIENT, "win32_cs_autolock locked [ID %lu]", GetCurrentThreadId());
     }
 
     ~win32_cs_autolock()
     {
+        //HC_TRACE_INFORMATION(HTTPCLIENT, "win32_cs_autolock unlocking [ID %lu]", GetCurrentThreadId());
         m_pCS->unlock();
     }
 

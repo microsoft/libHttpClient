@@ -131,6 +131,22 @@ public:
         }
     }
 
+    template<typename T>
+    static void remove(void *rawContextPtr)
+    {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+            return;
+
+        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+
+        auto iter = httpSingleton->m_sharedPtrs.find(rawContextPtr);
+        if (iter != httpSingleton->m_sharedPtrs.end())
+        {
+            httpSingleton->m_sharedPtrs.erase(iter);
+        }
+    }
+
     static void cleanup(_In_ std::shared_ptr<http_singleton> httpSingleton)
     {
         std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);

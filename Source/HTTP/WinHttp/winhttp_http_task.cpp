@@ -48,7 +48,7 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
     CompleteAsync(m_asyncBlock, S_OK, 0);
     HCHttpCallSetContext(m_call, nullptr);
     WinHttpSetStatusCallback(m_hSession, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
-    shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(this), true, false);
+    shared_ptr_cache::remove<winhttp_http_task>(this);
 }
 
 // Helper function to query/read next part of response data from winhttp.
@@ -417,6 +417,11 @@ void CALLBACK winhttp_http_task::completion_callback(
 
         // Process 1 thread at a time since updating shared state
         win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+
+        if (shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(context), false, false) == nullptr)
+        {
+            return;
+        }
 
         switch (statusCode)
         {
@@ -848,7 +853,7 @@ void Internal_HCHttpCallPerformAsync(
     _Inout_ AsyncBlock* asyncBlock
     )
 {
-    std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = std::make_shared<winhttp_http_task>(asyncBlock, call);
+    std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(asyncBlock, call);
     shared_ptr_cache::store<winhttp_http_task>(httpTask);
     HCHttpCallSetContext(call, httpTask.get());
     httpTask->perform_async();
