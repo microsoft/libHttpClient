@@ -16,7 +16,7 @@
 		58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
 		58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
 		58A7E9C3209ADEB100CC6774 /* mock_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E982209ADEB100CC6774 /* mock_publics.cpp */; };
-		58A7E9C5209ADEB100CC6774 /* mock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E984209ADEB100CC6774 /* mock.cpp */; };
+		58A7E9C5209ADEB100CC6774 /* lhc_mock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E984209ADEB100CC6774 /* lhc_mock.cpp */; };
 		58A7E9C7209ADEB100CC6774 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E987209ADEB100CC6774 /* utils.cpp */; };
 		58A7E9CE209ADEB100CC6774 /* uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E98F209ADEB100CC6774 /* uri.cpp */; };
 		58A7E9D0209ADEB100CC6774 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
@@ -40,7 +40,7 @@
 		7DB100C62119276B00AE22F5 /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
 		7DB100C72119276B00AE22F5 /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
 		7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E982209ADEB100CC6774 /* mock_publics.cpp */; };
-		7DB100C92119276B00AE22F5 /* mock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E984209ADEB100CC6774 /* mock.cpp */; };
+		7DB100C92119276B00AE22F5 /* lhc_mock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E984209ADEB100CC6774 /* lhc_mock.cpp */; };
 		7DB100CC2119276B00AE22F5 /* AsyncLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B3209ADEB100CC6774 /* AsyncLib.cpp */; };
 		7DB100CD2119276B00AE22F5 /* AsyncQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9AF209ADEB100CC6774 /* AsyncQueue.cpp */; };
 		7DB100D02119276B00AE22F5 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
@@ -66,8 +66,8 @@
 		58A7E97F209ADEB100CC6774 /* trace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = trace.cpp; sourceTree = "<group>"; };
 		58A7E980209ADEB100CC6774 /* trace_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = trace_internal.h; sourceTree = "<group>"; };
 		58A7E982209ADEB100CC6774 /* mock_publics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mock_publics.cpp; sourceTree = "<group>"; };
-		58A7E983209ADEB100CC6774 /* mock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mock.h; sourceTree = "<group>"; };
-		58A7E984209ADEB100CC6774 /* mock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mock.cpp; sourceTree = "<group>"; };
+		58A7E983209ADEB100CC6774 /* lhc_mock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lhc_mock.h; sourceTree = "<group>"; };
+		58A7E984209ADEB100CC6774 /* lhc_mock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lhc_mock.cpp; sourceTree = "<group>"; };
 		58A7E986209ADEB100CC6774 /* utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = utils.h; sourceTree = "<group>"; };
 		58A7E987209ADEB100CC6774 /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
 		58A7E988209ADEB100CC6774 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
@@ -102,7 +102,7 @@
 		58A7EA21209AE8BB00CC6774 /* json.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
 		58A7EA23209AE8BB00CC6774 /* httpProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = httpProvider.h; sourceTree = "<group>"; };
 		58A7EA24209AE8BB00CC6774 /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
-		58A7EA25209AE8BB00CC6774 /* mock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mock.h; sourceTree = "<group>"; };
+		58A7EA25209AE8BB00CC6774 /* lhc_mock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lhc_mock.h; sourceTree = "<group>"; };
 		58A7EA26209AE8BB00CC6774 /* asyncQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = asyncQueue.h; sourceTree = "<group>"; };
 		58A7EA27209AE8BB00CC6774 /* httpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
 		58A7EA28209AE8BB00CC6774 /* async.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = async.h; sourceTree = "<group>"; };
@@ -215,9 +215,9 @@
 		58A7E981209ADEB100CC6774 /* Mock */ = {
 			isa = PBXGroup;
 			children = (
+				58A7E984209ADEB100CC6774 /* lhc_mock.cpp */,
+				58A7E983209ADEB100CC6774 /* lhc_mock.h */,				
 				58A7E982209ADEB100CC6774 /* mock_publics.cpp */,
-				58A7E984209ADEB100CC6774 /* mock.cpp */,
-				58A7E983209ADEB100CC6774 /* mock.h */,
 			);
 			path = Mock;
 			sourceTree = "<group>";
@@ -501,7 +501,7 @@
 				58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */,
 				58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */,
 				583472B72167FE17003E384B /* AsyncQueueEx.cpp in Sources */,
-				58A7E9C5209ADEB100CC6774 /* mock.cpp in Sources */,
+				58A7E9C5209ADEB100CC6774 /* lhc_mock.cpp in Sources */,
 				58A7E9D4209ADEB100CC6774 /* httpcall_response.cpp in Sources */,
 				9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				58A7E9D5209ADEB100CC6774 /* http_ios.mm in Sources */,
@@ -537,7 +537,7 @@
 				7DB100C72119276B00AE22F5 /* trace.cpp in Sources */,
 				588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */,
 				7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */,
-				7DB100C92119276B00AE22F5 /* mock.cpp in Sources */,
+				7DB100C92119276B00AE22F5 /* lhc_mock.cpp in Sources */,
 				7DB100CC2119276B00AE22F5 /* AsyncLib.cpp in Sources */,
 				7DB100CD2119276B00AE22F5 /* AsyncQueue.cpp in Sources */,
 				7DB100D02119276B00AE22F5 /* hcwebsocket.cpp in Sources */,

@@ -4,7 +4,7 @@
 #include "pch.h"
 #include <asyncQueueEx.h>
 #include "httpcall.h"
-#include "../Mock/mock.h"
+#include "../Mock/lhc_mock.h"
 
 using namespace xbox::httpclient;
 
