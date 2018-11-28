@@ -66,7 +66,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to create IXMLHTTPRequest2 instance %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, hr, 0);
+            CompleteAsync(asyncBlock, S_OK, 0);
             return;
         }
 
@@ -87,7 +87,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to open HTTP request %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, hr, 0);
+            CompleteAsync(asyncBlock, S_OK, 0);
             return;
         }
 
@@ -127,7 +127,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to set HTTP response stream %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, hr, 0);
+            CompleteAsync(asyncBlock, S_OK, 0);
             return;
         }
 
@@ -147,7 +147,7 @@ void xmlhttp_http_task::perform_async(
             {
                 HC_TRACE_ERROR(HTTPCLIENT, "[%d] http_request_stream failed in xmlhttp_http_task.", hr);
                 HCHttpCallResponseSetNetworkErrorCode(call, E_FAIL, static_cast<uint32_t>(hr));
-                CompleteAsync(asyncBlock, hr, 0);
+                CompleteAsync(asyncBlock, S_OK, 0);
                 return;
             }
 
@@ -162,7 +162,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, hr, 0);
+            CompleteAsync(asyncBlock, S_OK, 0);
             return;
         }
         // If there were no errors so far, HCTaskSetCompleted is called later 
@@ -172,24 +172,19 @@ void xmlhttp_http_task::perform_async(
     }
     catch (std::bad_alloc const& e)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::bad_alloc in xmlhttp_http_task: %s",
-            E_OUTOFMEMORY, e.what());
-
+        HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::bad_alloc in xmlhttp_http_task: %s", E_OUTOFMEMORY, e.what());
         HCHttpCallResponseSetNetworkErrorCode(call, E_OUTOFMEMORY, static_cast<uint32_t>(E_OUTOFMEMORY));
         CompleteAsync(asyncBlock, E_OUTOFMEMORY, 0);
     }
     catch (std::exception const& e)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::exception in xmlhttp_http_task: %s",
-            E_FAIL, e.what());
-
+        HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::exception in xmlhttp_http_task: %s", E_FAIL, e.what());
         HCHttpCallResponseSetNetworkErrorCode(call, E_FAIL, static_cast<uint32_t>(E_FAIL));
         CompleteAsync(asyncBlock, E_FAIL, 0);
     }
     catch (...)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception in xmlhttp_http_task", E_FAIL);
-
         HCHttpCallResponseSetNetworkErrorCode(call, E_FAIL, static_cast<uint32_t>(E_FAIL));
         CompleteAsync(asyncBlock, E_FAIL, 0);
     }

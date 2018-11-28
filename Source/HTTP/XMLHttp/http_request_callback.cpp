@@ -87,8 +87,7 @@ HRESULT STDMETHODCALLTYPE http_request_callback::OnResponseReceived(
         hr = E_FAIL;
     }
     HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-
-    CompleteAsync(m_httpTask->async_block(), hr, 0);
+    CompleteAsync(m_httpTask->async_block(), S_OK, 0);
 
     // Break the circular reference loop.
     //     - xmlhttp_http_task holds a reference to IXmlHttpRequest2
@@ -114,7 +113,7 @@ HRESULT STDMETHODCALLTYPE http_request_callback::OnError(
     )
 {
     HCHttpCallResponseSetNetworkErrorCode(m_httpTask->call(), E_FAIL, hrError);
-    CompleteAsync(m_httpTask->async_block(), E_FAIL, 0);
+    CompleteAsync(m_httpTask->async_block(), S_OK, 0);
 
     // Break the circular reference loop.
     // See full explanation in OnResponseReceived

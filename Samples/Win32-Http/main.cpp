@@ -203,6 +203,7 @@ int main()
         AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
         &g_queue);
     RegisterAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+    HCTraceSetTraceToDebugger(true);
 
     StartBackgroundThread();
 
@@ -227,35 +228,46 @@ int main()
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const char* str;
-        HRESULT errCode = S_OK;
+        HRESULT networkErrorCode = S_OK;
         uint32_t platErrCode = 0;
         uint32_t statusCode = 0;
         std::string responseString;
         std::string errMessage;
 
-        hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
-        HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
+        hc_call_handle_t call = nullptr;
+        HRESULT hr = HCHttpCallPerformResult(asyncBlock, &call);
+        if (FAILED(hr)) 
+        {
+            // This should be a rare error case when the async task fails
+            printf_s("Couldn't get HTTP call object 0x%0.8x\r\n", hr);
+            return;
+        }
+
+        HCHttpCallResponseGetNetworkErrorCode(call, &networkErrorCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);
         if (str != nullptr) responseString = str;
         std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
-        // Uncomment to write binary file to disk
-        //size_t bufferSize = 0;
-        //HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
-        //uint8_t* buffer = new uint8_t[bufferSize];
-        //size_t bufferUsed = 0;
-        //HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
-        //HANDLE hFile = CreateFile(L"c:\\test\\test.zip", GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-        //DWORD bufferWritten = 0;
-        //WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
-        //CloseHandle(hFile);
-        //delete[] buffer;
+        bool writeToFile = false; // Change to write binary file to disk
+        if (writeToFile)
+        {
+            size_t bufferSize = 0;
+            HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
+            uint8_t* buffer = new uint8_t[bufferSize];
+            size_t bufferUsed = 0;
+            HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
+            HANDLE hFile = CreateFile(L"c:\\test\\test.zip", GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+            DWORD bufferWritten = 0;
+            WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
+            CloseHandle(hFile);
+            delete[] buffer;
+        }
 
         HCHttpCallCloseHandle(call);
 
         printf_s("HTTP call done\r\n");
-        printf_s("Network error code: %d\r\n", errCode);
+        printf_s("Network error code: 0x%0.8x\r\n", networkErrorCode);
         printf_s("HTTP status code: %d\r\n", statusCode);
 
         int i = 0;

@@ -76,6 +76,7 @@ typedef struct http_singleton
 
     std::mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
+
 } http_singleton;
 
 
@@ -102,7 +103,7 @@ public:
     }
 
     template<typename T>
-    static std::shared_ptr<T> fetch(void *rawContextPtr, bool deleteShared = true)
+    static std::shared_ptr<T> fetch(void *rawContextPtr, bool deleteShared = true, bool assertIfNotFound = true)
     {
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
@@ -122,7 +123,10 @@ public:
         }
         else
         {
-            ASSERT(false && "Context not found!");
+            if (assertIfNotFound)
+            {
+                ASSERT(false && "Context not found!");
+            }
             return std::shared_ptr<T>();
         }
     }
