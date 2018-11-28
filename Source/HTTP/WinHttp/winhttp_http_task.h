@@ -16,6 +16,39 @@ enum msg_body_type
     transfer_encoding_chunked
 };
 
+class win32_cs
+{
+public:
+    win32_cs() { InitializeCriticalSection(&m_cs); }
+    ~win32_cs() { DeleteCriticalSection(&m_cs); }
+
+    void lock() { EnterCriticalSection(&m_cs); }
+    void unlock() { LeaveCriticalSection(&m_cs); }
+
+private:
+    CRITICAL_SECTION m_cs;
+};
+
+class win32_cs_autolock
+{
+public:
+    win32_cs_autolock(win32_cs* pCS)
+        : m_pCS(pCS)
+    {
+        m_pCS->lock();
+        //HC_TRACE_INFORMATION(HTTPCLIENT, "win32_cs_autolock locked [ID %lu]", GetCurrentThreadId());
+    }
+
+    ~win32_cs_autolock()
+    {
+        //HC_TRACE_INFORMATION(HTTPCLIENT, "win32_cs_autolock unlocking [ID %lu]", GetCurrentThreadId());
+        m_pCS->unlock();
+    }
+
+private:
+    win32_cs* m_pCS;
+};
+
 class winhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
@@ -73,7 +106,9 @@ private:
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
 
-    void complete_async(_In_ HRESULT result);
+    void complete_task(_In_ HRESULT translatedHR);
+
+    void complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError);
 
     void get_proxy_name(
         _Out_ DWORD* pAccessType,
@@ -108,6 +143,7 @@ private:
     xbox::httpclient::Uri m_proxyUri;
     http_internal_wstring m_wProxyName;
     proxy_type m_proxyType;
+    win32_cs m_lock;
 };
 
 

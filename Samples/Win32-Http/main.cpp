@@ -179,12 +179,16 @@ void ShutdownActiveThreads()
     }
 }
 
-int main()
+struct SampleHttpCallAsyncContext
+{
+    hc_call_handle_t call;
+    bool isJson;
+    std::string filePath;
+};
+
+void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath)
 {
     std::string method = "GET";
-       
-    std::string url = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
-    std::string requestBody = "";// "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
     std::vector< std::string > header;
@@ -193,18 +197,6 @@ int main()
     header.push_back("TestHeader");
     header.push_back("1.0");
     headers.push_back(header);
-
-    HCInitialize(nullptr);
-
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        &g_queue);
-    RegisterAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
-
-    StartBackgroundThread();
 
     hc_call_handle_t call = nullptr;
     HCHttpCallCreate(&call);
@@ -220,42 +212,58 @@ int main()
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
+    SampleHttpCallAsyncContext* hcContext =  new SampleHttpCallAsyncContext{ call, isJson, filePath };
     AsyncBlock* asyncBlock = new AsyncBlock;
     ZeroMemory(asyncBlock, sizeof(AsyncBlock));
-    asyncBlock->context = call;
+    asyncBlock->context = hcContext;
     asyncBlock->queue = g_queue;
     asyncBlock->callback = [](AsyncBlock* asyncBlock)
     {
         const char* str;
-        HRESULT errCode = S_OK;
+        HRESULT networkErrorCode = S_OK;
         uint32_t platErrCode = 0;
         uint32_t statusCode = 0;
         std::string responseString;
         std::string errMessage;
 
-        hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
-        HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
+        SampleHttpCallAsyncContext* hcContext = static_cast<SampleHttpCallAsyncContext*>(asyncBlock->context);
+        hc_call_handle_t call = hcContext->call;
+        bool isJson = hcContext->isJson;
+        std::string filePath = hcContext->filePath;
+
+        HRESULT hr = GetAsyncStatus(asyncBlock, false);
+        if (FAILED(hr))
+        {
+            // This should be a rare error case when the async task fails
+            printf_s("Couldn't get HTTP call object 0x%0.8x\r\n", hr);
+            HCHttpCallCloseHandle(call);
+            return;
+        }
+
+        HCHttpCallResponseGetNetworkErrorCode(call, &networkErrorCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);
         if (str != nullptr) responseString = str;
         std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
 
-        // Uncomment to write binary file to disk
-        //size_t bufferSize = 0;
-        //HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
-        //uint8_t* buffer = new uint8_t[bufferSize];
-        //size_t bufferUsed = 0;
-        //HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
-        //HANDLE hFile = CreateFile(L"c:\\test\\test.zip", GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-        //DWORD bufferWritten = 0;
-        //WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
-        //CloseHandle(hFile);
-        //delete[] buffer;
+        if (!isJson)
+        {
+            size_t bufferSize = 0;
+            HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
+            uint8_t* buffer = new uint8_t[bufferSize];
+            size_t bufferUsed = 0;
+            HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
+            HANDLE hFile = CreateFileA(filePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+            DWORD bufferWritten = 0;
+            WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
+            CloseHandle(hFile);
+            delete[] buffer;
+        }
 
         HCHttpCallCloseHandle(call);
 
         printf_s("HTTP call done\r\n");
-        printf_s("Network error code: %d\r\n", errCode);
+        printf_s("Network error code: 0x%0.8x\r\n", networkErrorCode);
         printf_s("HTTP status code: %d\r\n", statusCode);
 
         int i = 0;
@@ -265,7 +273,7 @@ int main()
             i++;
         }
 
-        if (responseString.length() > 0)
+        if (isJson && responseString.length() > 0)
         {
             // Returned string starts with a BOM strip it out.
             uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
@@ -293,6 +301,25 @@ int main()
     HCHttpCallPerformAsync(call, asyncBlock);
 
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
+}
+
+int main()
+{
+    HCInitialize(nullptr);
+
+    uint32_t sharedAsyncQueueId = 0;
+    CreateSharedAsyncQueue(sharedAsyncQueueId, 
+        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual, 
+        &g_queue);
+    RegisterAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+    HCTraceSetTraceToDebugger(true);
+    StartBackgroundThread();
+
+    std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
+    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "");
+
+    std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
+    DoHttpCall(url2, "", false, "SplashScreen.png");
 
     ShutdownActiveThreads();
     HCCleanup();
