@@ -119,12 +119,12 @@ HRESULT perform_http_call(
 
                 if (!matchedMocks) // if there wasn't a matched mock, then real call
                 {
-                    HCCallPerformFunction performFunc = httpSingleton->m_performFunc;
-                    if (performFunc != nullptr)
+                    PerformInfo info = httpSingleton->m_perform;
+                    if (info.handler != nullptr)
                     {
                         try
                         {
-                            performFunc(call, data->async);
+                            info.handler(call, data->async, info.context, httpSingleton->m_performEnv.get());
                         }
                         catch (...)
                         {
@@ -562,4 +562,9 @@ CATCH_RETURN()
 bool http_header_compare::operator()(http_internal_string const& l, http_internal_string const& r) const
 {
     return str_icmp(l, r) < 0;
+}
+
+void PerformEnvDeleter::operator()(HC_PERFORM_ENV* performEnv) noexcept
+{
+    Internal_CleanupHttpPlatform(performEnv);
 }

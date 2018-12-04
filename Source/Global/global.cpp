@@ -17,12 +17,18 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton(IHCPlatformContext* initialContext) :
-    m_platformContext{ initialContext }
+http_singleton::http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv) :
+    m_callRoutedHandlersContext{ 0 },
+    m_perform{ performInfo },
+    m_performEnv{ std::move(performEnv) },
+    m_lastId{ 0 },
+    m_retryAllowed{ false },
+    m_timeoutInSeconds{ DEFAULT_HTTP_TIMEOUT_IN_SECONDS },
+    m_timeoutWindowInSeconds{ DEFAULT_TIMEOUT_WINDOW_IN_SECONDS },
+    m_retryDelayInSeconds{ DEFAULT_RETRY_DELAY_IN_SECONDS },
+    m_lastMatchingMock{ nullptr },
+    m_mocksEnabled{ false }
 {
-    m_lastId = 0;
-    m_performFunc = Internal_HCHttpCallPerformAsync;
-
 #if !HC_NOWEBSOCKETS
     m_websocketMessageFunc = nullptr;
     m_websocketCloseEventFunc = nullptr;
@@ -31,15 +37,6 @@ http_singleton::http_singleton(IHCPlatformContext* initialContext) :
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
     m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
 #endif
-
-    m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
-    m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
-    m_mocksEnabled = false;
-    m_lastMatchingMock = nullptr;
-    m_retryAllowed = true;
-    m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
-
-    m_callRoutedHandlersContext = 0;
 }
 
 http_singleton::~http_singleton()
@@ -68,19 +65,24 @@ HRESULT init_http_singleton(HCInitArgs* args)
 {
     HRESULT hr = S_OK;
 
+    // TODO do as a run once? to avoid platform code being initided twice?
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
-        IHCPlatformContext* platformContext = nullptr;
-        hr = IHCPlatformContext::InitializeHttpPlatformContext(args, &platformContext);
+        PerformEnv performEnv;
+        hr = Internal_InitializeHttpPlatform(args, performEnv);
 
         if (SUCCEEDED(hr))
         {
-            auto newSingleton = http_allocate_shared<http_singleton>(platformContext);
+            auto newSingleton = http_allocate_shared<http_singleton>(
+                GetUserPerformHandler(),
+                std::move(performEnv)
+            );
             std::atomic_compare_exchange_strong(
                 &g_httpSingleton_atomicReadsOnly,
                 &httpSingleton,
-                newSingleton);
+                newSingleton
+            );
 
             if (newSingleton == nullptr)
             {
@@ -119,15 +121,7 @@ void http_singleton::set_retry_state(
     _In_ const http_retry_after_api_state& state)
 {
     std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
-    http_retry_after_api_state oldstate = get_retry_state(retryAfterCacheId);
-    if (oldstate.statusCode < 400)
-    {
-        m_retryAfterCache[retryAfterCacheId] = state;
-    }
-    else if (oldstate.retryAfterTime <= state.retryAfterTime)
-    {
-        m_retryAfterCache[retryAfterCacheId] = state;
-    }
+    m_retryAfterCache[retryAfterCacheId] = state;
 }
 
 http_retry_after_api_state http_singleton::get_retry_state(_In_ uint32_t retryAfterCacheId)
@@ -145,6 +139,12 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 {
     std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
     m_retryAfterCache.erase(retryAfterCacheId);
+}
+
+PerformInfo& GetUserPerformHandler() noexcept
+{
+    static PerformInfo handler = { &Internal_HCHttpCallPerformAsync, nullptr };
+    return handler;
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

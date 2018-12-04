@@ -13,6 +13,10 @@
 #include "jni.h"
 #endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Memory APIs
 //
@@ -739,4 +743,8 @@ STDAPI HCWebSocketCloseHandle(
     _In_ hc_websocket_handle_t websocket
     ) HC_NOEXCEPT;
 
+#endif
+
+#if defined(__cplusplus)
+}
 #endif

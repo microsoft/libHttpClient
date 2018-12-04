@@ -5,19 +5,30 @@
 #include "httpClient/httpClient.h"
 #include "../global/global.h"
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
+HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
     // No-op
     assert(args == nullptr);
-    *platformContext = nullptr;
+    assert(performEnv == nullptr);
     return S_OK;
+}
+
+void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
+{
+    assert(!performEnv);
 }
 
 void Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
-    )
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ hc_perform_env env
+) noexcept
 {
+    assert(call);
+    assert(asyncBlock);
+    assert(!context);
+    assert(!env);
     CompleteAsync(asyncBlock, S_OK, 0);
 }
 #endif

@@ -406,7 +406,7 @@ private:
                     JavaVM* javaVm = nullptr;
                     {   // Allow our singleton to go out of scope quickly once we're done with it
                         auto httpSingleton = xbox::httpclient::get_http_singleton(true);
-                        AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
+                        HC_PERFORM_ENV* platformContext = reinterpret_cast<HC_PERFORM_ENV*>(httpSingleton->m_performEnv.get());
                         javaVm = platformContext->GetJavaVm();
                     }
 
@@ -417,8 +417,10 @@ private:
                     }
 
                     JNIEnv* jniEnv = nullptr;
-                    jint result = javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
-                    javaVm->AttachCurrentThread(&jniEnv, nullptr);
+                    if (javaVm->AttachCurrentThread(&jniEnv, nullptr) != 0)
+                    {
+                        assert(false);
+                    }
 #endif
 
                     context->client.run();

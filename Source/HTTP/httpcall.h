@@ -60,17 +60,26 @@ typedef struct HC_CALL
     bool performCalled;
 } HC_CALL;
 
-class IHCPlatformContext
+struct PerformInfo
 {
-public:
-    virtual ~IHCPlatformContext() = default;
-
-    static HRESULT InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext);
+    HCCallPerformFunction handler;
+    void* context; // non owning
 };
+
+struct PerformEnvDeleter
+{
+    void operator()(HC_PERFORM_ENV* performEnv) noexcept;
+};
+
+using PerformEnv = std::unique_ptr<HC_PERFORM_ENV, PerformEnvDeleter>;
+
+HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept;
+
+void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept;
 
 void Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
-    );
-
-
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ hc_perform_env env
+) noexcept;

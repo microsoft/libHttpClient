@@ -3,15 +3,17 @@
 
 #pragma once
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #ifndef HC_TRACE_BUILD_LEVEL
 #define HC_TRACE_BUILD_LEVEL HC_PRIVATE_TRACE_LEVEL_VERBOSE
 #endif
 
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Tracing APIs
 //
-
 
 //------------------------------------------------------------------------------
 // Configuration
@@ -172,13 +174,13 @@ typedef void (HCTraceCallback)(
 /// Set client callback for tracing 
 /// </summary>
 /// <param name="callback">Trace callback</param>
-STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback);
+STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) HC_NOEXCEPT;
 
 /// <summary>
 /// Sets or unsets if the trace is sent to the debugger.
 /// </summary>
 /// <param name="traceToDebugger">If True, sends the trace to the debugger.</param>
-STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger);
+STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) HC_NOEXCEPT;
 
 
 //------------------------------------------------------------------------------
@@ -273,7 +275,18 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger);
     #define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel_Off
 #endif
 
+//------------------------------------------------------------------------------
+// Platform Hooks
+//------------------------------------------------------------------------------
+typedef uint64_t HCTracePlatformThisThreadIdCallback(void*);
+typedef void HCTracePlatformWriteMessageToDebuggerCallback(char const*, HCTraceLevel, char const*, void*);
 
+HRESULT HCTraceSetPlatformCallbacks(
+    _In_ HCTracePlatformThisThreadIdCallback* threadIdCallback,
+    _In_opt_ void* threadIdContext,
+    _In_ HCTracePlatformWriteMessageToDebuggerCallback* writeToDebuggerCallback,
+    _In_opt_ void* writeToDebuggerContext
+    ) HC_NOEXCEPT;
 
 //------------------------------------------------------------------------------
 // Implementation
@@ -297,13 +310,16 @@ typedef struct HCTraceImplArea
 } HCTraceImplArea;
 
 inline
-void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(struct HCTraceImplArea* area, enum HCTraceLevel verbosity)
+void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
+    struct HCTraceImplArea* area,
+    enum HCTraceLevel verbosity
+    ) HC_NOEXCEPT
 {
     area->Verbosity = verbosity;
 }
 
 inline
-enum HCTraceLevel HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area)
+enum HCTraceLevel HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area) HC_NOEXCEPT
 {
     return area->Verbosity;
 }
@@ -313,15 +329,18 @@ STDAPI_(void) HCTraceImplMessage(
     enum HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
-);
+) HC_NOEXCEPT;
 
+#if defined(__cplusplus)
+}
+#endif
 
 #if defined(__cplusplus)
 class HCTraceImplScopeHelper
 {
 public:
-    HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, char const* scope);
-    ~HCTraceImplScopeHelper();
+    HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, char const* scope) HC_NOEXCEPT;
+    ~HCTraceImplScopeHelper() HC_NOEXCEPT;
 
 private:
     HCTraceImplArea const* m_area;

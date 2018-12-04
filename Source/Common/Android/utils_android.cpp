@@ -10,7 +10,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 JNIEnv* get_jvm_env()
 {
     auto httpSingleton = xbox::httpclient::get_http_singleton(true);
-    AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
+    HC_PERFORM_ENV* platformContext = httpSingleton->m_performEnv.get();
     JavaVM* javaVm = platformContext->GetJavaVm();
 
     if (javaVm == nullptr)

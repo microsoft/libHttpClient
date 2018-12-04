@@ -32,7 +32,7 @@ typedef struct http_retry_after_api_state
 
 typedef struct http_singleton
 {
-    http_singleton(IHCPlatformContext* context);
+    http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv);
     ~http_singleton();
 
     std::mutex m_singletonLock;
@@ -48,15 +48,14 @@ typedef struct http_singleton
     http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 
     // HTTP state
+    PerformInfo const m_perform;
+    PerformEnv const m_performEnv;
+
     std::atomic<std::uint64_t> m_lastId;
-    HCCallPerformFunction m_performFunc;
     bool m_retryAllowed;
     uint32_t m_timeoutInSeconds;
     uint32_t m_timeoutWindowInSeconds;
     uint32_t m_retryDelayInSeconds;
-
-    // Platform-specific context for calls
-    std::unique_ptr<IHCPlatformContext> m_platformContext;
 
 #if !HC_NOWEBSOCKETS
     // WebSocket state
@@ -76,7 +75,6 @@ typedef struct http_singleton
 
     std::mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
-
 } http_singleton;
 
 
@@ -159,5 +157,7 @@ private:
     shared_ptr_cache(const shared_ptr_cache&);
     shared_ptr_cache& operator=(const shared_ptr_cache&);
 };
+
+PerformInfo& GetUserPerformHandler() noexcept;
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

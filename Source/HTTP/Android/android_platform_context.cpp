@@ -3,9 +3,10 @@
 #include "android_platform_context.h"
 #include <httpClient/httpClient.h>
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
+HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
     assert(args != nullptr);
+    assert(!performEnv);
     JavaVM* javaVm = args->JavaVM;
     JNIEnv* jniEnv = nullptr;
     // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
@@ -37,11 +38,23 @@ HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCP
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
 
-    *platformContext = new AndroidPlatformContext(javaVm, args->ApplicationContext, globalRequestClass, globalResponseClass);
+    performEnv.reset(new (std::nothrow) HC_PERFORM_ENV(
+        javaVm,
+        args->ApplicationContext,
+        globalRequestClass,
+        globalResponseClass
+    ));
+    if (!performEnv) { return E_OUTOFMEMORY; }
+
     return S_OK;
 }
 
-AndroidPlatformContext::AndroidPlatformContext(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass) :
+void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
+{
+    delete performEnv;
+}
+
+HC_PERFORM_ENV::HC_PERFORM_ENV(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass) :
     m_javaVm{ javaVm },
     m_applicationContext{ applicationContext },
     m_httpRequestClass{ requestClass },
@@ -50,7 +63,7 @@ AndroidPlatformContext::AndroidPlatformContext(JavaVM* javaVm, jobject applicati
     assert(m_javaVm != nullptr);
 }
 
-AndroidPlatformContext::~AndroidPlatformContext()
+HC_PERFORM_ENV::~HC_PERFORM_ENV()
 {
     JNIEnv* jniEnv = nullptr;
     bool isThreadAttached = false;

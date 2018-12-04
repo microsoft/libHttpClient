@@ -30,18 +30,19 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 
 void Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
-    )
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ hc_perform_env env
+) noexcept
 {
     auto httpSingleton = xbox::httpclient::get_http_singleton(true);
-    AndroidPlatformContext* platformContext = reinterpret_cast<AndroidPlatformContext*>(httpSingleton->m_platformContext.get());
     std::unique_ptr<HttpRequest> httpRequest{
         new HttpRequest(
             asyncBlock,
-            platformContext->GetJavaVm(),
-            platformContext->GetApplicationContext(),
-            platformContext->GetHttpRequestClass(),
-            platformContext->GetHttpResponseClass()
+            env->GetJavaVm(),
+            env->GetApplicationContext(),
+            env->GetHttpRequestClass(),
+            env->GetHttpResponseClass()
         )
     };
 

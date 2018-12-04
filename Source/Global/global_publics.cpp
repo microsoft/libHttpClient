@@ -40,34 +40,39 @@ try
 }
 CATCH_RETURN_WITH(;)
 
-STDAPI_(void)
+STDAPI
 HCSetHttpCallPerformFunction(
-    _In_opt_ HCCallPerformFunction performFunc
+    _In_ HCCallPerformFunction performFunc,
+    _In_opt_ void* performContext
     ) HC_NOEXCEPT
 {
     auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-        return;
+    if (httpSingleton)
+    {
+        return E_HC_ALREADY_INITIALISED;
+    }
 
-    httpSingleton->m_performFunc = (performFunc == nullptr) ? Internal_HCHttpCallPerformAsync : performFunc;
+    auto& info = GetUserPerformHandler();
+    info.handler = performFunc;
+    info.context = performContext;
+    return S_OK;
 }
 
 STDAPI 
 HCGetHttpCallPerformFunction(
-    _Out_ HCCallPerformFunction* performFunc
+    _Out_ HCCallPerformFunction* performFunc,
+    _Out_ void** performContext
     ) HC_NOEXCEPT
 try
 {
-    if (performFunc == nullptr)
+    if (performFunc == nullptr || performContext == nullptr)
     {
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-        return E_HC_NOT_INITIALISED;
-
-    *performFunc = httpSingleton->m_performFunc;
+    auto& info = GetUserPerformHandler();
+    *performFunc = info.handler;
+    *performContext = info.context;
     return S_OK;
 }
 CATCH_RETURN()

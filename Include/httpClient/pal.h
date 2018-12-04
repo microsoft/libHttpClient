@@ -372,6 +372,7 @@ typedef uint32_t hc_memory_type;
 typedef struct HC_WEBSOCKET* hc_websocket_handle_t;
 typedef struct HC_CALL* hc_call_handle_t;
 typedef struct HC_CALL* hc_mock_call_handle;
+typedef struct HC_PERFORM_ENV* hc_perform_env;
 
 // Error codes from https://www.iana.org/assignments/websocket/websocket.xml#close-code-number
 typedef enum HCWebSocketCloseStatus

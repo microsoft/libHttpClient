@@ -10,14 +10,14 @@
 #include <cstdio>
 #include <ctime>
 
+#include "trace_internal.h"
 #include "utils.h"
 
 namespace
 {
 
-
 template<size_t SIZE>
-int stprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format ...)
+int stprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format ...) noexcept
 {
     va_list varArgs{};
     va_start(varArgs, format);
@@ -26,7 +26,7 @@ int stprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format ..
     return result;
 }
 
-int stprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* format ...)
+int stprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* format ...) noexcept
 {
     va_list varArgs{};
     va_start(varArgs, format);
@@ -36,7 +36,7 @@ int stprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* for
 }
 
 template<size_t SIZE>
-int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs)
+int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
 {
     return vsnprintf(buffer, SIZE, format, varArgs);
 }
@@ -44,71 +44,6 @@ int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, 
 //------------------------------------------------------------------------------
 // Trace implementation
 //------------------------------------------------------------------------------
-class TraceState
-{
-public:
-    TraceState() : m_traceToDebugger(false)
-    {
-    }
-    
-    void Init()
-    {
-        auto previousCount = m_tracingClients++;
-        if (previousCount == 0)
-        {
-            m_initTime = std::chrono::high_resolution_clock::now();
-        }
-    }
-
-    void Cleanup()
-    {
-        --m_tracingClients;
-    }
-
-    bool IsSetup() const
-    {
-        return m_tracingClients > 0;
-    }
-
-    bool GetTraceToDebugger()
-    {
-        return m_traceToDebugger;
-    }
-
-    void SetTraceToDebugger(_In_ bool traceToDebugger)
-    {
-        m_traceToDebugger = traceToDebugger;
-    }
-
-    void SetClientCallback(HCTraceCallback* callback)
-    {
-        m_clientCallback = callback;
-    }
-
-    HCTraceCallback* GetClientCallback() const
-    {
-        return m_clientCallback;
-    }
-
-    uint64_t GetTimestamp() const
-    {
-        auto now = std::chrono::high_resolution_clock::now();
-        auto nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_initTime.load());
-        return nowMS.count();
-    }
-
-private:
-    std::atomic<uint32_t> m_tracingClients{ 0 };
-    std::atomic<std::chrono::high_resolution_clock::time_point> m_initTime { std::chrono::high_resolution_clock::now() };
-    std::atomic<HCTraceCallback*> m_clientCallback{ nullptr };
-    bool m_traceToDebugger;
-};
-
-TraceState& GetTraceState()
-{
-    static TraceState state;
-    return state;
-}
 
 void TraceMessageToDebugger(
     char const* areaName,
@@ -116,7 +51,7 @@ void TraceMessageToDebugger(
     uint64_t threadId,
     uint64_t timestamp,
     char const* message
-    )
+) noexcept
 {
     if (!GetTraceState().GetTraceToDebugger())
         return;
@@ -155,7 +90,7 @@ void TraceMessageToDebugger(
         fractionMSec,
         areaName,
         message
-        );
+    );
     if (written <= 0)
     {
         return;
@@ -181,7 +116,7 @@ void TraceMessageToClient(
     uint64_t threadId,
     uint64_t timestamp,
     char const* message
-    )
+) noexcept
 {
     auto callback = GetTraceState().GetClientCallback();
     if (callback)
@@ -190,20 +125,20 @@ void TraceMessageToClient(
     }
 }
 
-unsigned long long GetScopeId()
+unsigned long long GetScopeId() noexcept
 {
     return std::chrono::high_resolution_clock::now().time_since_epoch().count();
 }
 
 }
 
-STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger)
+STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept
 {
     GetTraceState().SetTraceToDebugger(traceToDebugger);
 }
 
 
-STDAPI_(VOID) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback)
+STDAPI_(VOID) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
 {
     GetTraceState().SetClientCallback(callback);
 }
@@ -213,7 +148,7 @@ void HCTraceImplMessage(
     enum HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
-    )
+) noexcept
 {
     if (!area)
     {
@@ -242,7 +177,7 @@ void HCTraceImplMessage(
     }
 
     auto timestamp = GetTraceState().GetTimestamp();
-    auto threadId = xbox::httpclient::ThisThreadId();
+    auto threadId = Internal_ThisThreadId();
 
     char message[4096] = {};
 
@@ -260,25 +195,82 @@ void HCTraceImplMessage(
     TraceMessageToClient(area->Name, level, threadId, timestamp, message);
 }
 
-HCTraceImplScopeHelper::HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, char const* scope)
+HCTraceImplScopeHelper::HCTraceImplScopeHelper(
+    HCTraceImplArea const* area,
+    HCTraceLevel level, char const* scope
+) noexcept
     : m_area{ area }, m_level{ level }, m_scope{ scope }, m_id{ GetScopeId() }
 {
     HCTraceImplMessage(m_area, m_level, ">>> %s (%016llX)", m_scope, m_id);
 }
 
-HCTraceImplScopeHelper::~HCTraceImplScopeHelper()
+HCTraceImplScopeHelper::~HCTraceImplScopeHelper() noexcept
 {
     HCTraceImplMessage(m_area, m_level, "<<< %s (%016llX)", m_scope, m_id);
 }
 
 // trace_internal.h
+TraceState::TraceState() noexcept : m_traceToDebugger(false)
+{}
 
-void HCTraceImplInit()
+void TraceState::Init() noexcept
+{
+    auto previousCount = m_tracingClients++;
+    if (previousCount == 0)
+    {
+        m_initTime = std::chrono::high_resolution_clock::now();
+    }
+}
+
+void TraceState::Cleanup() noexcept
+{
+    --m_tracingClients;
+}
+
+bool TraceState::IsSetup() const noexcept
+{
+    return m_tracingClients > 0;
+}
+
+bool TraceState::GetTraceToDebugger() noexcept
+{
+    return m_traceToDebugger;
+}
+
+void TraceState::SetTraceToDebugger(_In_ bool traceToDebugger) noexcept
+{
+    m_traceToDebugger = traceToDebugger;
+}
+
+void TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
+{
+    m_clientCallback = callback;
+}
+
+HCTraceCallback* TraceState::GetClientCallback() const noexcept
+{
+    return m_clientCallback;
+}
+
+uint64_t TraceState::GetTimestamp() const noexcept
+{
+    auto now = std::chrono::high_resolution_clock::now();
+    auto nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_initTime.load());
+    return nowMS.count();
+}
+
+TraceState& GetTraceState() noexcept
+{
+    static TraceState state;
+    return state;
+}
+
+void HCTraceImplInit() noexcept
 {
     GetTraceState().Init();
 }
 
-void HCTraceImplCleanup()
+void HCTraceImplCleanup() noexcept
 {
     GetTraceState().Cleanup();
 }
