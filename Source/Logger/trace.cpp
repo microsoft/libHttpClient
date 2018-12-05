@@ -125,11 +125,6 @@ void TraceMessageToClient(
     }
 }
 
-unsigned long long GetScopeId() noexcept
-{
-    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
-}
-
 }
 
 STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept
@@ -137,13 +132,12 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept
     GetTraceState().SetTraceToDebugger(traceToDebugger);
 }
 
-
-STDAPI_(VOID) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
+STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
 {
     GetTraceState().SetClientCallback(callback);
 }
 
-void HCTraceImplMessage(
+STDAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     enum HCTraceLevel level,
     _Printf_format_string_ char const* format,
@@ -193,6 +187,11 @@ void HCTraceImplMessage(
 
     TraceMessageToDebugger(area->Name, level, threadId, timestamp, message);
     TraceMessageToClient(area->Name, level, threadId, timestamp, message);
+}
+
+STDAPI_(uint64_t) HCTraceImplScopeId() noexcept
+{
+    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
 }
 
 // trace_internal.h

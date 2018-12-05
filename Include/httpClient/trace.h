@@ -327,6 +327,8 @@ STDAPI_(void) HCTraceImplMessage(
     ...
 ) HC_NOEXCEPT;
 
+STDAPI_(uint64_t) HCTraceImplScopeId() HC_NOEXCEPT;
+
 #if defined(__cplusplus)
 class HCTraceImplScopeHelper
 {
@@ -346,7 +348,7 @@ HCTraceImplScopeHelper::HCTraceImplScopeHelper(
     HCTraceImplArea const* area,
     HCTraceLevel level, char const* scope
 ) noexcept
-    : m_area{ area }, m_level{ level }, m_scope{ scope }, m_id{ GetScopeId() }
+    : m_area{ area }, m_level{ level }, m_scope{ scope }, m_id{ HCTraceImplScopeId() }
 {
     HCTraceImplMessage(m_area, m_level, ">>> %s (%016llX)", m_scope, m_id);
 }
