@@ -195,20 +195,6 @@ void HCTraceImplMessage(
     TraceMessageToClient(area->Name, level, threadId, timestamp, message);
 }
 
-HCTraceImplScopeHelper::HCTraceImplScopeHelper(
-    HCTraceImplArea const* area,
-    HCTraceLevel level, char const* scope
-) noexcept
-    : m_area{ area }, m_level{ level }, m_scope{ scope }, m_id{ GetScopeId() }
-{
-    HCTraceImplMessage(m_area, m_level, ">>> %s (%016llX)", m_scope, m_id);
-}
-
-HCTraceImplScopeHelper::~HCTraceImplScopeHelper() noexcept
-{
-    HCTraceImplMessage(m_area, m_level, "<<< %s (%016llX)", m_scope, m_id);
-}
-
 // trace_internal.h
 TraceState::TraceState() noexcept : m_traceToDebugger(false)
 {}

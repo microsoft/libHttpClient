@@ -6,17 +6,13 @@
 #include <asyncProvider.h>
 #include <httpClient/trace.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 /// <summary>
 /// The callback definition used by HCSetHttpCallPerformFunction().
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 typedef void
-(STDAPIVCALLTYPE* HCCallPerformFunction)(
+(CALLBACK* HCCallPerformFunction)(
     _In_ hc_call_handle_t call,
     _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
@@ -341,7 +337,7 @@ STDAPI HCHttpCallResponseSetHeader(
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef HRESULT
-(STDAPIVCALLTYPE* HCWebSocketConnectFunction)(
+(CALLBACK* HCWebSocketConnectFunction)(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
@@ -356,7 +352,7 @@ typedef HRESULT
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
-(STDAPIVCALLTYPE* HCWebSocketSendMessageFunction)(
+(CALLBACK* HCWebSocketSendMessageFunction)(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
     _Inout_ AsyncBlock* asyncBlock
@@ -369,7 +365,7 @@ typedef HRESULT
 /// <param name="closeStatus">The close status of the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
-(STDAPIVCALLTYPE* HCWebSocketDisconnectFunction)(
+(CALLBACK* HCWebSocketDisconnectFunction)(
     _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     );
@@ -473,8 +469,4 @@ STDAPI HCWebSocketGetFunctions(
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
     ) HC_NOEXCEPT;
 
-#endif
-
-#if defined(__cplusplus)
-}
 #endif
