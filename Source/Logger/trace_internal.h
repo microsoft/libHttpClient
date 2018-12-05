@@ -27,6 +27,21 @@ TraceState& GetTraceState() noexcept;
 void HCTraceImplInit() noexcept;
 void HCTraceImplCleanup() noexcept;
 
+struct ThreadIdInfo
+{
+    HCTracePlatformThisThreadIdCallback* callback;
+    void* context;
+};
+
+struct WriteToDebuggerInfo
+{
+    HCTracePlatformWriteMessageToDebuggerCallback* callback;
+    void* context;
+};
+
+ThreadIdInfo& GetThreadIdInfo() noexcept;
+WriteToDebuggerInfo& GetWriteToDebuggerInfo() noexcept;
+
 //------------------------------------------------------------------------------
 // Platform specific functionality
 //------------------------------------------------------------------------------
