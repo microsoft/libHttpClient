@@ -9,8 +9,15 @@
 /// <summary>
 /// The callback definition used by HCSetHttpCallPerformFunction().
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="asyncBlock">The asyncBlock of the async task</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="asyncBlock">The asyncBlock of the async task.</param>
+/// <param name="context">The context registered with the callback.</param>
+/// <param name="env">The environment for the default callback.</param>
+/// <remarks>
+/// env is opaque to the client. If the client hooks are filters (they process
+/// the request and then pass it on to the default libHttpClient hooks) env
+/// should be passed on, otherwise it can be ignored.
+/// </remarks>
 typedef void
 (CALLBACK* HCCallPerformFunction)(
     _In_ hc_call_handle_t call,
@@ -23,6 +30,7 @@ typedef void
 /// Optionally allows the caller to implement the HTTP perform function.
 /// </summary>
 /// <param name="performFunc">A callback that implements HTTP perform function as desired.</param>
+/// <param name="performContext">The context for the callback.</param>
 /// <remarks>
 /// Must be called before HCInit.
 ///
@@ -51,7 +59,7 @@ STDAPI HCSetHttpCallPerformFunction(
 /// E_HC_ALREADY_INITIALISED, or E_INVALIDARG.</returns>
 STDAPI HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc,
-    _Out_ void** performContex
+    _Out_ void** performContext
     ) HC_NOEXCEPT;
 
 /// <summary>
