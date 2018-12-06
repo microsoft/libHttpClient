@@ -22,7 +22,7 @@ http_singleton::http_singleton(PerformInfo const& performInfo, PerformEnv&& perf
     m_perform{ performInfo },
     m_performEnv{ std::move(performEnv) },
     m_lastId{ 0 },
-    m_retryAllowed{ false },
+    m_retryAllowed{ true },
     m_timeoutInSeconds{ DEFAULT_HTTP_TIMEOUT_IN_SECONDS },
     m_timeoutWindowInSeconds{ DEFAULT_TIMEOUT_WINDOW_IN_SECONDS },
     m_retryDelayInSeconds{ DEFAULT_RETRY_DELAY_IN_SECONDS },
