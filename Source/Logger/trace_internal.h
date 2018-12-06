@@ -17,9 +17,12 @@ public:
 
 private:
     std::atomic<uint32_t> m_tracingClients{ 0 };
-    std::atomic<std::chrono::high_resolution_clock::time_point> m_initTime{};
+    std::atomic<std::chrono::high_resolution_clock::time_point> m_initTime
+    {
+        std::chrono::high_resolution_clock::time_point{}
+    };
     std::atomic<HCTraceCallback*> m_clientCallback{ nullptr };
-    bool m_traceToDebugger;
+    bool m_traceToDebugger = false;
 };
 
 TraceState& GetTraceState() noexcept;
