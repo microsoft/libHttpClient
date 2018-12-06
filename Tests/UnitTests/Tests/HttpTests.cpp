@@ -45,12 +45,17 @@ void STDAPIVCALLTYPE MemFree(
 }
 
 static bool g_PerformCallbackCalled = false;
+static void* g_PerformCallbackContext = nullptr;
+static int g_performContext = 0;
 static void STDAPIVCALLTYPE PerformCallback(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ void* ctx,
+    _In_opt_ hc_perform_env /*env*/
     )
 {
     g_PerformCallbackCalled = true;
+    g_PerformCallbackContext = ctx;
     CompleteAsync(asyncBlock, S_OK, 0);
 }
 
@@ -119,10 +124,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         g_PerformCallbackCalled = false;
         HCCallPerformFunction func = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&func));
+        void* ctx = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&func, &ctx));
         VERIFY_IS_NOT_NULL(func);
 
-        HCSetHttpCallPerformFunction(&PerformCallback);
+        HCSetHttpCallPerformFunction(&PerformCallback, &g_performContext);
         hc_call_handle_t call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
@@ -157,6 +163,7 @@ public:
         }
         VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
+        VERIFY_ARE_EQUAL(reinterpret_cast<uintptr_t>(&g_performContext), reinterpret_cast<uintptr_t>(g_PerformCallbackContext));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         CloseAsyncQueue(queue);
         HCCleanup();

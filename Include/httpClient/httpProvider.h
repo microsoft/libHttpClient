@@ -6,41 +6,61 @@
 #include <asyncProvider.h>
 #include <httpClient/trace.h>
 
-
-    /// <summary>
+/// <summary>
 /// The callback definition used by HCSetHttpCallPerformFunction().
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="asyncBlock">The asyncBlock of the async task</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="asyncBlock">The asyncBlock of the async task.</param>
+/// <param name="context">The context registered with the callback.</param>
+/// <param name="env">The environment for the default callback.</param>
+/// <remarks>
+/// env is opaque to the client. If the client hooks are filters (they process
+/// the request and then pass it on to the default libHttpClient hooks) env
+/// should be passed on, otherwise it can be ignored.
+/// </remarks>
 typedef void
-(STDAPIVCALLTYPE* HCCallPerformFunction)(
+(CALLBACK* HCCallPerformFunction)(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ hc_perform_env env
     );
 
 /// <summary>
 /// Optionally allows the caller to implement the HTTP perform function.
+/// </summary>
+/// <param name="performFunc">A callback that implements HTTP perform function as desired.</param>
+/// <param name="performContext">The context for the callback.</param>
+/// <remarks>
+/// Must be called before HCInit.
+///
 /// In the HCCallPerformFunction callback, use HCHttpCallRequestGet*() and HCSettingsGet*() to 
 /// get information about the HTTP call and perform the call as desired and set 
 /// the response with HCHttpCallResponseSet*().
-/// </summary>
-/// <param name="performFunc">A callback that implements HTTP perform function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-STDAPI_(void) HCSetHttpCallPerformFunction(
-    _In_opt_ HCCallPerformFunction performFunc
+/// </remarks>
+/// <returns>Result code for this API operation.  Possible values are S_OK, or
+/// E_HC_ALREADY_INITIALISED.</returns>
+STDAPI HCSetHttpCallPerformFunction(
+    _In_ HCCallPerformFunction performFunc,
+    _In_opt_ void* performContext
     ) HC_NOEXCEPT;
 
 /// <summary>
 /// Returns the current HCCallPerformFunction callback which implements the HTTP 
-/// perform function on the current platform. This can be used along with 
-/// HCSetHttpCallPerformFunction() to monitor all HTTP calls.
+/// perform function on the current platform.
 /// </summary>
 /// <param name="performFunc">Set to the current HTTP perform function. Returns the default 
 /// routine if not previously set</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <param name="performContext">The context for the callback.</param>
+/// <remarks>
+/// This can be used along with HCSetHttpCallPerformFunction() to build a filter that
+/// monitors and modifies all HTTP calls, while still using the default HTTP implementation.
+/// </remarks>
+/// <returns>Result code for this API operation.  Possible values are S_OK,
+/// E_HC_ALREADY_INITIALISED, or E_INVALIDARG.</returns>
 STDAPI HCGetHttpCallPerformFunction(
-    _Out_ HCCallPerformFunction* performFunc
+    _Out_ HCCallPerformFunction* performFunc,
+    _Out_ void** performContext
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -326,7 +346,7 @@ STDAPI HCHttpCallResponseSetHeader(
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef HRESULT
-(STDAPIVCALLTYPE* HCWebSocketConnectFunction)(
+(CALLBACK* HCWebSocketConnectFunction)(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
@@ -341,7 +361,7 @@ typedef HRESULT
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
-(STDAPIVCALLTYPE* HCWebSocketSendMessageFunction)(
+(CALLBACK* HCWebSocketSendMessageFunction)(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
     _Inout_ AsyncBlock* asyncBlock
@@ -354,7 +374,7 @@ typedef HRESULT
 /// <param name="closeStatus">The close status of the WebSocket</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
-(STDAPIVCALLTYPE* HCWebSocketDisconnectFunction)(
+(CALLBACK* HCWebSocketDisconnectFunction)(
     _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     );

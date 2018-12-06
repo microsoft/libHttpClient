@@ -4,6 +4,11 @@
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
 
+uint64_t Internal_ThisThreadId() noexcept
+{
+    return pthread_self();
+}
+
 void Internal_HCTraceMessage(const char* areaName, HCTraceLevel traceLevel, const char* message)
 {
     int32_t androidLogPriority = ANDROID_LOG_UNKNOWN;

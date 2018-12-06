@@ -3,11 +3,11 @@
 #include "jni.h"
 #include "../httpcall.h"
 
-class AndroidPlatformContext : public IHCPlatformContext
+struct HC_PERFORM_ENV
 {
 public:
-    AndroidPlatformContext(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass);
-    virtual ~AndroidPlatformContext();
+    HC_PERFORM_ENV(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass);
+    virtual ~HC_PERFORM_ENV();
 
     JavaVM* GetJavaVm() { return m_javaVm; }
     jobject GetApplicationContext() { return m_applicationContext; }

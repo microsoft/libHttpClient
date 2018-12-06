@@ -19,10 +19,10 @@ ios_http_task::ios_http_task(_Inout_ AsyncBlock* asyncBlock, _In_ hc_call_handle
         // default to 60 to match other default ios behaviour
         timeoutInSeconds = 60;
     }
-    
+
     [configuration setTimeoutIntervalForRequest:(NSTimeInterval)timeoutInSeconds];
     [configuration setTimeoutIntervalForResource:(NSTimeInterval)timeoutInSeconds];
-    
+
     m_session = [NSURLSession sessionWithConfiguration:configuration];
 }
 
@@ -42,19 +42,19 @@ void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NS
         CompleteAsync(m_asyncBlock, errorResult, 0);
         return;
     }
-    
+
     assert([response isKindOfClass:[NSHTTPURLResponse class]]);
     NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
 
     uint32_t statusCode = static_cast<uint32_t>([httpResponse statusCode]);
-    
+
     HCHttpCallResponseSetStatusCode(m_call, statusCode);
-    
+
     NSDictionary* headers = [httpResponse allHeaderFields];
     for (NSString* key in headers)
     {
         NSString* value = headers[key];
-        
+
         char const* keyCString = [key cStringUsingEncoding:NSUTF8StringEncoding];
         char const* valueCString = [value cStringUsingEncoding:NSUTF8StringEncoding];
         HCHttpCallResponseSetHeader(m_call, keyCString, valueCString);
@@ -74,15 +74,15 @@ bool ios_http_task::initiate_request()
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
         return false;
     }
-    
+
     NSString* urlString = [[NSString alloc] initWithUTF8String:urlCString];
     NSURL* url = [NSURL URLWithString:urlString];
-    
+
     NSString* methodString = [[NSString alloc] initWithUTF8String:methodCString];
-    
+
     NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:methodString];
-    
+
     uint32_t numHeaders = 0;
     if (FAILED(HCHttpCallRequestGetNumHeaders(m_call, &numHeaders)))
     {
@@ -90,7 +90,7 @@ bool ios_http_task::initiate_request()
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
         return false;
     }
-    
+
     for (uint32_t i = 0; i<numHeaders; ++i)
     {
         char const* headerName;
@@ -99,11 +99,11 @@ bool ios_http_task::initiate_request()
         {
             NSString* headerNameString = [[NSString alloc] initWithUTF8String:headerName];
             NSString* headerValueString = [[NSString alloc] initWithUTF8String:headerValue];
-            
+
             [request addValue:headerValueString forHTTPHeaderField:headerNameString];
         }
     }
-    
+
     uint8_t const* requestBody = nullptr;
     uint32_t requestBodySize = 0;
     if (FAILED(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize)))
@@ -112,7 +112,7 @@ bool ios_http_task::initiate_request()
         CompleteAsync(m_asyncBlock, E_FAIL, 0);
         return false;
     }
-    
+
     if (requestBodySize == 0)
     {
         m_sessionTask = [m_session dataTaskWithRequest:request completionHandler:
@@ -125,7 +125,7 @@ bool ios_http_task::initiate_request()
     else
     {
         NSData* data = [NSData dataWithBytes:requestBody length:requestBodySize];
-        
+
         m_sessionTask = [m_session uploadTaskWithRequest:request fromData:data completionHandler:
                          ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
@@ -133,26 +133,39 @@ bool ios_http_task::initiate_request()
                              me->completion_handler(data, response, error);
                          }];
     }
-    
+
     [m_sessionTask resume];
     return true;
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
+HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
     // No-op
     assert(args == nullptr);
-    *platformContext = nullptr;
+    assert(performEnv == nullptr);
     return S_OK;
+}
+
+void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
+{
+    assert(performEnv == nullptr);
+    UNREFERENCED_PARAMETER(performEnv);
 }
 
 void Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
-)
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ hc_perform_env env
+) noexcept
 {
+    assert(context == nullptr);
+    assert(env == nullptr);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
     std::unique_ptr<xbox::httpclient::ios_http_task> httpTask(new xbox::httpclient::ios_http_task(asyncBlock, call));
     HCHttpCallSetContext(call, &httpTask);
     if (httpTask->initiate_request())

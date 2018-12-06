@@ -5,13 +5,12 @@
 
 #include <string.h>
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
 using String = http_internal_string;
 
 template<class K, class V, class LESS = std::less<K>>
 using Map = std::map<K, V, LESS, http_stl_allocator<std::pair<K const, V>>>;
-
-
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 void trim_whitespace(_In_ http_internal_wstring& str);
 void BasicAsciiLowercase(String& s);
@@ -176,26 +175,6 @@ public:
 
     virtual ~hc_task() {}
 };
-
-inline
-uint64_t ThisThreadId()
-{
-    // use platform specific implementations so that it's easy to look up values
-    // in the debugger
-#if HC_PLATFORM_IS_MICROSOFT
-    return GetCurrentThreadId();
-#elif HC_PLATFORM == HC_PLATFORM_IOS
-    uint64_t threadId = 0;
-    if (pthread_threadid_np(0, &threadId) != 0)
-    {
-        threadId = pthread_mach_thread_np(pthread_self());
-    }
-    
-    return threadId;
-#else
-    return pthread_self();
-#endif
-}
 
 static inline int str_icmp(const http_internal_string& left, const http_internal_string& right)
 {

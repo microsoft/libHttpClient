@@ -841,19 +841,32 @@ void winhttp_http_task::perform_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-HRESULT IHCPlatformContext::InitializeHttpPlatformContext(HCInitArgs* args, IHCPlatformContext** platformContext)
+HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
     // No-op
     assert(args == nullptr);
-    *platformContext = nullptr;
+    assert(performEnv == nullptr);
     return S_OK;
+}
+
+void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
+{
+    // No-op
+    assert(performEnv == nullptr);
 }
 
 void Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
-    )
+    _Inout_ AsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ hc_perform_env env
+) noexcept
 {
+    assert(context == nullptr);
+    assert(env == nullptr);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
     std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(asyncBlock, call);
     shared_ptr_cache::store<winhttp_http_task>(httpTask);
     HCHttpCallSetContext(call, httpTask.get());
