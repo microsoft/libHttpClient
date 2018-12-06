@@ -51,6 +51,7 @@ STDAPI HCSetHttpCallPerformFunction(
 /// </summary>
 /// <param name="performFunc">Set to the current HTTP perform function. Returns the default 
 /// routine if not previously set</param>
+/// <param name="performContext">The context for the callback.</param>
 /// <remarks>
 /// This can be used along with HCSetHttpCallPerformFunction() to build a filter that
 /// monitors and modifies all HTTP calls, while still using the default HTTP implementation.
