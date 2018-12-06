@@ -272,7 +272,7 @@ WriteToDebuggerInfo& GetWriteToDebuggerInfo() noexcept
     return info;
 }
 
-HRESULT HCTraceSetPlatformCallbacks(
+STDAPI HCTraceSetPlatformCallbacks(
     _In_ HCTracePlatformThisThreadIdCallback* threadIdCallback,
     _In_opt_ void* threadIdContext,
     _In_ HCTracePlatformWriteMessageToDebuggerCallback* writeToDebuggerCallback,
