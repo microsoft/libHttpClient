@@ -30,20 +30,20 @@ typedef struct HC_WEBSOCKET
     std::shared_ptr<hc_websocket_impl> impl;
 } HC_WEBSOCKET;
 
-HRESULT Internal_HCWebSocketConnectAsync(
+HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
     _Inout_ AsyncBlock* asyncBlock
     );
 
-HRESULT Internal_HCWebSocketSendMessageAsync(
+HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
     _Inout_ AsyncBlock* asyncBlock
     );
 
-HRESULT Internal_HCWebSocketDisconnect(
+HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     );

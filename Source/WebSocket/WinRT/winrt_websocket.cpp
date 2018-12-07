@@ -257,7 +257,7 @@ HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
     return S_OK;
 }
 
-HRESULT Internal_HCWebSocketConnectAsync(
+HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ hc_websocket_handle_t websocket,
@@ -295,7 +295,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
     return hr;
 }
 
-HRESULT Internal_HCWebSocketSendMessageAsync(
+HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message,
     _Inout_ AsyncBlock* asyncBlock
@@ -503,8 +503,7 @@ void MessageWebSocketSendMessage(
     }
 }
 
-
-HRESULT Internal_HCWebSocketDisconnect(
+HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ hc_websocket_handle_t websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
