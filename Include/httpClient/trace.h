@@ -305,7 +305,7 @@ typedef struct HCTraceImplArea
     HCTraceLevel Verbosity;
 } HCTraceImplArea;
 
-extern "C" inline
+EXTERN_C inline
 void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     struct HCTraceImplArea* area,
     HCTraceLevel verbosity
@@ -314,7 +314,7 @@ void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     area->Verbosity = verbosity;
 }
 
-extern "C" inline
+EXTERN_C inline
 HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area) HC_NOEXCEPT
 {
     return area->Verbosity;
