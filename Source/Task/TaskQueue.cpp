@@ -5,6 +5,10 @@
 #include "TaskQueueP.h"
 #include "TaskQueueImpl.h"
 
+//
+// Note:  ApiDiag is only used for reference count validation during
+//        unit tests.  Otherwise, g_globalApiRefs is unused.
+//
 namespace ApiDiag
 {
     std::atomic<uint32_t> g_globalApiRefs = { 0 };
