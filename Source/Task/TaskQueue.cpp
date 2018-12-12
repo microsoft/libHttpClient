@@ -1532,8 +1532,6 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
     _Out_ XTaskQueueHandle* queue
     ) noexcept
 {
-    RETURN_HR_IF(E_POINTER, queue == nullptr);
-
     XTaskQueueHandle processQueue = ProcessGlobals::g_processQueue;
     if (processQueue == ProcessGlobals::g_invalidQueueHandle)
     {

@@ -95,13 +95,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    XTaskQueueHandle queue;
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
-        XTaskQueueDispatchMode::Manual,
-        XTaskQueueDispatchMode::Manual,
-        &queue);
+    XTaskQueueHandle queue = static_cast<XTaskQueueHandle>(lpParam);
 
     UNREFERENCED_PARAMETER(lpParam);
     bool stop = false;
@@ -111,9 +105,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         switch (dwResult)
         {
         case WAIT_OBJECT_0: // work ready
-            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
-
-            if (!IsAsyncQueueEmpty(queue, XTaskQueuePort::Work))
+            if (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
             {
                 // If there's more pending work, then set the event to process them
                 SetEvent(g_workReadyHandle.get());
@@ -123,9 +115,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         case WAIT_OBJECT_0 + 1: // completed 
             // Typically completions should be dispatched on the game thread, but
             // for this simple XAML app we're doing it here
-            XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
-
-            if (!IsAsyncQueueEmpty(queue, XTaskQueuePort::Completion))
+            if (XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0))
             {
                 // If there's more pending completions, then set the event to process them
                 SetEvent(g_completionReadyHandle.get());
@@ -145,7 +135,7 @@ void Sample::StartBackgroundThread()
 {
     if (m_hBackgroundThread == nullptr)
     {
-        m_hBackgroundThread = CreateThread(nullptr, 0, background_thread_proc, nullptr, 0, nullptr);
+        m_hBackgroundThread = CreateThread(nullptr, 0, background_thread_proc, m_queue, 0, nullptr);
     }
 }
 
@@ -173,9 +163,7 @@ Sample::Sample() :
     HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
+    XTaskQueueCreate(
         XTaskQueueDispatchMode::Manual,
         XTaskQueueDispatchMode::Manual,
         &m_queue);
