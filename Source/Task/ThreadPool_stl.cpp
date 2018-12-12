@@ -75,8 +75,10 @@ public:
 
     void Submit() noexcept
     {
-        std::lock_guard<std::mutex> lock(m_wakeLock);
-        m_calls++;
+        {
+            std::lock_guard<std::mutex> lock(m_wakeLock);
+            m_calls++;
+        }
         m_wake.notify_all();
     }
 

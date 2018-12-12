@@ -827,7 +827,8 @@ public:
 
     DEFINE_TEST_CASE(VerifyGlobalQueue)
     {
-        XTaskQueueHandle queue = XTaskQueueGetCurrentProcessTaskQueue();
+        AutoQueueHandle queue;
+        VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&queue));
         XTaskQueueHandle globalQueue = queue;
         VERIFY_IS_NOT_NULL(queue);
 
@@ -852,10 +853,17 @@ public:
 
         XTaskQueueSetCurrentProcessTaskQueue(ourQueue);
 
-        queue = XTaskQueueGetCurrentProcessTaskQueue();
+        queue.Close();
+        VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&queue));
         VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Work, nullptr, cb));
         VERIFY_IS_FALSE(XTaskQueueIsEmpty(ourQueue, XTaskQueuePort::Work));
         while(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) {};
+
+        // Null the queue and verify we get false
+        queue.Close();
+        XTaskQueueSetCurrentProcessTaskQueue(nullptr);
+        VERIFY_IS_FALSE(XTaskQueueGetCurrentProcessTaskQueue(&queue));
+        VERIFY_IS_NULL(queue.Handle());
 
         // Replace the global queue back
         XTaskQueueSetCurrentProcessTaskQueue(globalQueue);

@@ -286,14 +286,19 @@ STDAPI_(void) XTaskQueueUnregisterMonitor(
     ) noexcept;
 
 /// <summary>
-/// Returns a handle to the process task queue, or nullptr if there is no
+/// Obtains a handle to the process task queue, or nullptr if there is no
 /// process task queue.  By default, there is a process task queue
 /// that uses the thread pool for both work and completion ports. You
 /// can replace the default process task queue by calling 
-/// XTaskQueueSetCurrentProcessTaskQueue.  There is no need to close the
-/// handle returned from XTaskQueueGetCurrentProcessTaskQueue.
+/// XTaskQueueSetCurrentProcessTaskQueue, and you can prevent callers using
+/// the process task queue by calling XTaskQueueSetCurrentProcessTaskQueue 
+/// with a null queue parameter.
+///
+/// This API returns true if there is a process task queue available.
+/// You are responsible for calling XTaskQueueCloseHandle on the handle
+/// returned from this API.
 /// </summary>
-STDAPI_(XTaskQueueHandle) XTaskQueueGetCurrentProcessTaskQueue() noexcept;
+STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(_Out_ XTaskQueueHandle* queue) noexcept;
 
 /// <summary>
 /// Sets the given task queue as the process wide task queue.  The

@@ -767,4 +767,27 @@ public:
             }
         }
     }
+
+    DEFINE_TEST_CASE(VerifyGlobalQueueUsage)
+    {
+        XAsyncBlock async = { };
+
+        auto nopProvider = [](XAsyncOp, const XAsyncProviderData*)
+        {
+            return S_OK;
+        };
+
+        // Verify we use the global queue
+        VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, nopProvider));
+        XAsyncCancel(&async);
+
+        // Now null the global queue and verify the right error happens
+        XTaskQueueHandle globalQueue;
+        VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
+        XTaskQueueSetCurrentProcessTaskQueue(nullptr);
+
+        VERIFY_ARE_EQUAL(E_NO_TASK_QUEUE, XAsyncBegin(&async, nullptr, nullptr, nullptr, nopProvider));
+        XTaskQueueSetCurrentProcessTaskQueue(globalQueue);
+        XTaskQueueCloseHandle(globalQueue);
+    }
 };

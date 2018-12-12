@@ -1524,8 +1524,12 @@ STDAPI_(void) XTaskQueueUnregisterMonitor(
 // process task queue.  By default, there is a default process task queue
 // that uses the thread pool for both work and completion ports.
 //
-STDAPI_(XTaskQueueHandle) XTaskQueueGetCurrentProcessTaskQueue() noexcept
+STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
+    _Out_ XTaskQueueHandle* queue
+    ) noexcept
 {
+    RETURN_HR_IF(E_POINTER, queue == nullptr);
+
     XTaskQueueHandle processQueue = ProcessGlobals::g_processQueue;
     if (processQueue == ProcessGlobals::g_invalidQueueHandle)
     {
@@ -1563,7 +1567,22 @@ STDAPI_(XTaskQueueHandle) XTaskQueueGetCurrentProcessTaskQueue() noexcept
         processQueue = nullptr;
     }
 
-    return processQueue;
+    if (processQueue != nullptr)
+    {
+        *queue = processQueue;
+
+        // The default process queue does not addref or release.
+        if (processQueue->m_queue->CanClose())
+        {
+            processQueue->m_queue->AddRef();
+        }
+    }
+    else
+    {
+        *queue = nullptr;
+    }
+
+    return processQueue != nullptr;
 }
 
 //

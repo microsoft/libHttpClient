@@ -318,13 +318,13 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
     XTaskQueueHandle queue = asyncBlock->queue;
     if (queue == nullptr)
     {
-        queue = XTaskQueueGetCurrentProcessTaskQueue();
+        RETURN_HR_IF(E_NO_TASK_QUEUE, XTaskQueueGetCurrentProcessTaskQueue(&state->queue) == false);
     }
-    
-    RETURN_HR_IF(E_NO_TASK_QUEUE, queue == nullptr);
-
-    RETURN_IF_FAILED(XTaskQueueDuplicateHandle(queue, &state->queue));
-
+    else
+    {
+        RETURN_IF_FAILED(XTaskQueueDuplicateHandle(queue, &state->queue));
+    }
+   
     state->userAsyncBlock = asyncBlock;
     state->providerData.async = &state->asyncBlock;
     
