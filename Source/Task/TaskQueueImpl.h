@@ -219,7 +219,7 @@ private:
     {
         uint64_t token;
         HANDLE waitHandle;
-        HANDLE registeredWaitHandle;
+        PTP_WAIT threadpoolWait;
         TaskQueuePortImpl* port;
         IApi* owner;
         QueueEntry* queueEntry;
@@ -288,8 +288,10 @@ private:
         _In_ WaitRegistration* waitReg);
 
     static void CALLBACK WaitCallback(
-        _In_ PVOID   parameter,
-        _In_ BOOLEAN timerOrWaitFired);
+        _In_ PTP_CALLBACK_INSTANCE instance,
+        _Inout_opt_ void* context,
+        _Inout_ PTP_WAIT wait,
+        _In_ TP_WAIT_RESULT waitResult);
 #endif
 };
 

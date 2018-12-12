@@ -3,6 +3,9 @@
 
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable: 4324) // structure was padded due to alignas
+
 /*****************************************************************************
  
  LocklessList is a lock free singly linked list that can take any type as a payload.
@@ -358,3 +361,5 @@ private:
 #endif
     }
 };
+
+#pragma warning(pop)

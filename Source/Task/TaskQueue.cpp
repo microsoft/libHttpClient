@@ -5,12 +5,6 @@
 #include "TaskQueueP.h"
 #include "TaskQueueImpl.h"
 
-#ifdef _WIN32
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PC_APP)
-#define TASK_QUEUE_WAITERS_ENABLED
-#endif
-#endif
-
 namespace ApiDiag
 {
     std::atomic<uint32_t> g_globalApiRefs = { 0 };
@@ -191,7 +185,7 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
     EraseQueue(m_queueList.get());
     EraseQueue(m_pendingList.get());
 
-#ifdef TASK_QUEUE_WAITERS_ENABLED
+#ifdef _WIN32
     StaticArray<WaitRegistration*, PORT_WAIT_MAX> waits;
 
     // We have no control over when these event callbacks
@@ -204,29 +198,19 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
 
     if (waits.count() != 0)
     {
-        HANDLE waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-
         for (uint32_t idx = 0; idx < waits.count(); idx++)
         {
-            if (waitEvent != nullptr)
+            if (waits[idx]->threadpoolWait != nullptr)
             {
-                UnregisterWaitEx(waits[idx]->registeredWaitHandle, waitEvent);
-                WaitForSingleObject(waitEvent, INFINITE);
-            }
-            else
-            {
-                UnregisterWait(waits[idx]->registeredWaitHandle);
+                SetThreadpoolWait(waits[idx]->threadpoolWait, nullptr, nullptr);
+                WaitForThreadpoolWaitCallbacks(waits[idx]->threadpoolWait, TRUE);
+                CloseThreadpoolWait(waits[idx]->threadpoolWait);
             }
 
             // Note: queue entries that are parked on the wait registration
             // don't take a reference on the owner, so don't release here.
             delete waits[idx]->queueEntry;
             delete waits[idx];
-        }
-
-        if (waitEvent != nullptr)
-        {
-            CloseHandle(waitEvent);
         }
     }
 
@@ -356,7 +340,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     RETURN_HR_IF(E_POINTER, token == nullptr);
     RETURN_IF_FAILED(VerifyNotTerminated());
 
-#ifdef TASK_QUEUE_WAITERS_ENABLED
+#ifdef _WIN32
     std::unique_ptr<WaitRegistration> waitReg(new (std::nothrow) WaitRegistration);
     RETURN_IF_NULL_ALLOC(waitReg);
 
@@ -378,7 +362,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     waitReg->port = this;
     waitReg->owner = owner;
     waitReg->queueEntry = entry.get();
-    waitReg->registeredWaitHandle = nullptr;
+    waitReg->threadpoolWait = nullptr;
 
     std::lock_guard<std::mutex> lock(m_lock);
     RETURN_HR_IF(E_OUTOFMEMORY, m_events.capacity() == 0);
@@ -408,7 +392,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
 void __stdcall TaskQueuePortImpl::UnregisterWaitHandle(
     _In_ XTaskQueueRegistrationToken token)
 {
-#ifdef TASK_QUEUE_WAITERS_ENABLED
+#ifdef _WIN32
     WaitRegistration* toDelete = nullptr;
 
     {
@@ -425,6 +409,10 @@ void __stdcall TaskQueuePortImpl::UnregisterWaitHandle(
 
         if (toDelete != nullptr)
         {
+            // Any running entry will look for this and re-register,
+            // so clear it under the lock.
+            toDelete->queueEntry->waitRegistration = nullptr;
+
             // Remove the handle from our event list
             for (uint32_t idx = 1; idx < m_events.count(); idx++)
             {
@@ -439,20 +427,9 @@ void __stdcall TaskQueuePortImpl::UnregisterWaitHandle(
 
     if (toDelete != nullptr)
     {
-        HANDLE waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        if (waitEvent != nullptr)
-        {
-            UnregisterWaitEx(toDelete->registeredWaitHandle, waitEvent);
-            WaitForSingleObject(waitEvent, INFINITE);
-            CloseHandle(waitEvent);
-        }
-        else
-        {
-            ASSERT(false);
-            UnregisterWait(toDelete->registeredWaitHandle);
-        }
-
-        toDelete->queueEntry->waitRegistration = nullptr;
+        SetThreadpoolWait(toDelete->threadpoolWait, nullptr, nullptr);
+        WaitForThreadpoolWaitCallbacks(toDelete->threadpoolWait, TRUE);
+        CloseThreadpoolWait(toDelete->threadpoolWait);
         ReleaseEntry(toDelete->queueEntry);
         delete toDelete;
     }
@@ -525,7 +502,7 @@ void __stdcall TaskQueuePortImpl::Terminate(
         queueEntry = m_pendingList->pop_front(&queueEntryNode);
     }
 
-#ifdef TASK_QUEUE_WAITERS_ENABLED
+#ifdef _WIN32
 
     // Abort any registered waits and promote their entries too.
     // Wait registration is not lock free.
@@ -533,9 +510,9 @@ void __stdcall TaskQueuePortImpl::Terminate(
 
     for (uint32_t idx = 0; idx < m_waits.count(); idx++)
     {
-        UnregisterWait(m_waits[idx]->registeredWaitHandle);
+        CloseThreadpoolWait(m_waits[idx]->threadpoolWait);
         m_waits[idx]->queueEntry->waitRegistration = nullptr;
-        
+
         if (!AppendWaitRegistrationEntry(m_waits[idx]))
         {
             ReleaseEntry(m_waits[idx]->queueEntry);
@@ -932,13 +909,17 @@ void TaskQueuePortImpl::SignalTerminations()
 
 #ifdef _WIN32
 void CALLBACK TaskQueuePortImpl::WaitCallback(
-    _In_ PVOID   parameter,
-    _In_ BOOLEAN timerOrWaitFired)
+    _In_ PTP_CALLBACK_INSTANCE instance,
+    _Inout_opt_ void* context,
+    _Inout_ PTP_WAIT wait,
+    _In_ TP_WAIT_RESULT waitResult)
 {
-    if (!timerOrWaitFired)
-    {
+    UNREFERENCED_PARAMETER(instance);
+    UNREFERENCED_PARAMETER(wait);
 
-        WaitRegistration* waitReg = static_cast<WaitRegistration*>(parameter);
+    if (waitResult == WAIT_OBJECT_0)
+    {
+        WaitRegistration* waitReg = static_cast<WaitRegistration*>(context);
         waitReg->port->ProcessWaitCallback(waitReg);
     }
 }
@@ -946,32 +927,19 @@ void CALLBACK TaskQueuePortImpl::WaitCallback(
 HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
     _In_ WaitRegistration* waitReg)
 {
-#ifdef TASK_QUEUE_WAITERS_ENABLED
-    DWORD flags = m_dispatchMode == XTaskQueueDispatchMode::Immediate ? 0 : WT_EXECUTEINWAITTHREAD;
-
-    if (waitReg->registeredWaitHandle != nullptr)
-    {
-        UnregisterWait(waitReg->registeredWaitHandle);
-    }
-
     if (waitReg->queueEntry->owner != nullptr)
     {
         waitReg->queueEntry->owner->Release();
         waitReg->queueEntry->owner = nullptr;
     }
 
-    // We don't require auto reset events to be used. We register for a single wait and re-register
-    // after the entry has been dispatched.
-    flags |= WT_EXECUTEONLYONCE;
+    if (waitReg->threadpoolWait == nullptr)
+    {
+        waitReg->threadpoolWait = CreateThreadpoolWait(WaitCallback, waitReg, nullptr);
+        RETURN_LAST_ERROR_IF_NULL(waitReg->threadpoolWait);
+    }
 
-    RETURN_IF_WIN32_BOOL_FALSE(RegisterWaitForSingleObject(
-        &waitReg->registeredWaitHandle, 
-        waitReg->waitHandle, 
-        WaitCallback, 
-        waitReg, 
-        INFINITE, 
-        flags));
-#endif
+    SetThreadpoolWait(waitReg->threadpoolWait, waitReg->waitHandle, nullptr);
 
     return S_OK;
 }
