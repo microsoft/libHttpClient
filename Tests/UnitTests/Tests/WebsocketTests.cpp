@@ -77,7 +77,7 @@ HRESULT Test_Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     g_HCWebSocketConnect_Called = true;
@@ -88,7 +88,7 @@ bool g_HCWebSocketSendMessage_Called = false;
 HRESULT Test_Internal_HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     g_HCWebSocketSendMessage_Called = true;
@@ -181,7 +181,7 @@ public:
         VERIFY_ARE_EQUAL_STR("1234", proxy);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketConnect_Called);
-        AsyncBlock* asyncBlock = nullptr;
+        XAsyncBlock* asyncBlock = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, asyncBlock));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketConnect_Called);
 

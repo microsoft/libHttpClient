@@ -77,7 +77,7 @@ include_directories(
     $(ProjectDir)../../../include
     $(ProjectDir)../../../include/httpClient
     )
-
+    
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Public_Source_Files
@@ -85,28 +85,33 @@ set(Public_Source_Files
     ../../../include/httpClient/httpClient.h
     ../../../include/httpClient/httpProvider.h
     ../../../include/httpClient/mock.h
-    ../../../include/async.h
-    ../../../include/asyncProvider.h
-    ../../../include/asyncQueue.h
-    ../../../include/asyncQueueEx.h
+    ../../../include/xasync.h
+    ../../../include/xasyncProvider.h
+    ../../../include/xtaskQueue.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/pal.h
     )
 
 set(Task_Source_Files
-    ../../../Source/Task/asyncQueueP.h
-    ../../../Source/Task/asyncQueueImpl.h
-    ../../../Source/Task/AsyncQueue.cpp
-    ../../../Source/Task/AsyncQueueEx.cpp
     ../../../Source/Task/AsyncLib.cpp
+    ../../../Source/Task/LocklessList.h
+    ../../../Source/Task/referenced_ptr.h
+    ../../../Source/Task/StaticArray.h
+    ../../../Source/Task/TaskQueue.cpp
+    ../../../Source/Task/TaskQueueImpl.h
+    ../../../Source/Task/TaskQueueP.h
+    ../../../Source/Task/ThreadPool.h
     ../../../Source/Task/WaitTimer.h
+    ../../../Source/Task/XTaskQueuePriv.h
     )
 
 set(Task_Windows_Source_Files
+    ../../../Source/Task/ThreadPool_win32.cpp
     ../../../Source/Task/WaitTimer_stl.cpp
     )
 
 set(Task_Android_Source_Files
+    ../../../Source/Task/ThreadPool_stl.cpp
     ../../../Source/Task/WaitTimer_stl.cpp
     )
 
@@ -243,10 +248,12 @@ set(TE_UnitTests_Source_Files
 
 set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/AsyncBlockTests.cpp
-    ../../../Tests/UnitTests/Tests/AsyncQueueTests.cpp
-    ../../../Tests/UnitTests/Tests/HttpTests.cpp
-    ../../../Tests/UnitTests/Tests/MockTests.cpp
+    ../../../Tests/UnitTests/Tests/CallbackThunk.h
     ../../../Tests/UnitTests/Tests/GlobalTests.cpp
+    ../../../Tests/UnitTests/Tests/HttpTests.cpp
+    ../../../Tests/UnitTests/Tests/LocklessListTests.cpp
+    ../../../Tests/UnitTests/Tests/MockTests.cpp
+    ../../../Tests/UnitTests/Tests/TaskQueueTests.cpp
     ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 

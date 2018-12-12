@@ -4,7 +4,7 @@
 #include <httpClient/httpClient.h>
 #include <vector>
 
-HttpRequest::HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jobject applicationContext, jclass httpRequestClass, jclass httpResponseClass) :
+HttpRequest::HttpRequest(XAsyncBlock* asyncBlock, JavaVM* javaVm, jobject applicationContext, jclass httpRequestClass, jclass httpResponseClass) :
     m_httpRequestInstance(nullptr), 
     m_asyncBlock(asyncBlock),
     m_javaVm(javaVm),

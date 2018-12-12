@@ -67,8 +67,8 @@ win32_handle g_completionReadyHandle;
 
 void CALLBACK HandleAsyncQueueCallback(
     _In_ void* context,
-    _In_ async_queue_handle_t queue,
-    _In_ AsyncQueueCallbackType type
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort type
     )
 {
     UNREFERENCED_PARAMETER(context);
@@ -76,11 +76,11 @@ void CALLBACK HandleAsyncQueueCallback(
 
     switch (type)
     {
-    case AsyncQueueCallbackType::AsyncQueueCallbackType_Work:
+    case XTaskQueuePort::Work:
         SetEvent(g_workReadyHandle.get());
         break;
 
-    case AsyncQueueCallbackType::AsyncQueueCallbackType_Completion:
+    case XTaskQueuePort::Completion:
         SetEvent(g_completionReadyHandle.get());
         break;
     }
@@ -95,12 +95,12 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    async_queue_handle_t queue;
+    XTaskQueueHandle queue;
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
         sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        XTaskQueueDispatchMode::Manual,
+        XTaskQueueDispatchMode::Manual,
         &queue);
 
     UNREFERENCED_PARAMETER(lpParam);
@@ -111,9 +111,9 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         switch (dwResult)
         {
         case WAIT_OBJECT_0: // work ready
-            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0);
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
 
-            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work))
+            if (!IsAsyncQueueEmpty(queue, XTaskQueuePort::Work))
             {
                 // If there's more pending work, then set the event to process them
                 SetEvent(g_workReadyHandle.get());
@@ -123,9 +123,9 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         case WAIT_OBJECT_0 + 1: // completed 
             // Typically completions should be dispatched on the game thread, but
             // for this simple XAML app we're doing it here
-            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Completion, 0);
+            XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
 
-            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion))
+            if (!IsAsyncQueueEmpty(queue, XTaskQueuePort::Completion))
             {
                 // If there's more pending completions, then set the event to process them
                 SetEvent(g_completionReadyHandle.get());
@@ -176,10 +176,10 @@ Sample::Sample() :
     uint32_t sharedAsyncQueueId = 0;
     CreateSharedAsyncQueue(
         sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        XTaskQueueDispatchMode::Manual,
+        XTaskQueueDispatchMode::Manual,
         &m_queue);
-    RegisterAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    XTaskQueueRegisterMonitor(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
     ATG::UIConfig uiconfig;
@@ -433,11 +433,11 @@ void Sample::MakeHttpCall()
         HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str(), true);
     }
 
-    AsyncBlock* asyncBlock = new AsyncBlock;
-    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    XAsyncBlock* asyncBlock = new XAsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
     asyncBlock->context = call;
     asyncBlock->queue = m_queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         const CHAR* str;
         HRESULT errCode = S_OK;

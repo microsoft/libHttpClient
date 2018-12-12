@@ -14,7 +14,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     return S_OK;
@@ -23,7 +23,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
 HRESULT Internal_HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     return S_OK;

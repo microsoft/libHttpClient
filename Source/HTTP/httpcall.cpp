@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include <asyncQueueEx.h>
 #include "httpcall.h"
 #include "../Mock/lhc_mock.h"
 
@@ -92,15 +91,15 @@ CATCH_RETURN()
 HRESULT perform_http_call(
     _In_ std::shared_ptr<http_singleton> httpSingleton,
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
-    HRESULT hr = BeginAsync(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
-        [](AsyncOp opCode, const AsyncProviderData* data)
+    HRESULT hr = XAsyncBegin(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
+        [](XAsyncOp opCode, const XAsyncProviderData* data)
     {
         switch (opCode)
         {
-            case AsyncOp_DoWork:
+            case XAsyncOp::DoWork:
             {
                 hc_call_handle_t call = static_cast<hc_call_handle_t>(data->context);
                 auto httpSingleton = get_http_singleton(false);
@@ -113,7 +112,7 @@ HRESULT perform_http_call(
                     matchedMocks = Mock_Internal_HCHttpCallPerformAsync(call);
                     if (matchedMocks)
                     {
-                        CompleteAsync(data->async, S_OK, 0);
+                        XAsyncComplete(data->async, S_OK, 0);
                     }
                 }
 
@@ -143,7 +142,7 @@ HRESULT perform_http_call(
     if (SUCCEEDED(hr))
     {
         uint32_t delayInMilliseconds = static_cast<uint32_t>(call->delayBeforeRetry.count());
-        hr = ScheduleAsync(asyncBlock, delayInMilliseconds);
+        hr = XAsyncSchedule(asyncBlock, delayInMilliseconds);
     }
 
     return hr;
@@ -327,8 +326,8 @@ bool should_fast_fail(
 typedef struct retry_context
 {
     HC_CALL* call;
-    AsyncBlock* outerAsyncBlock;
-    async_queue_handle_t outerQueue;
+    XAsyncBlock* outerAsyncBlock;
+    XTaskQueueHandle outerQueue;
 } retry_context;
 
 void retry_http_call_until_done(
@@ -338,7 +337,7 @@ void retry_http_call_until_done(
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
     {
-        CompleteAsync(retryContext->outerAsyncBlock, S_OK, 0);
+        XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
     }
 
     auto requestStartTime = chrono_clock_t::now();
@@ -357,7 +356,7 @@ void retry_http_call_until_done(
         {
             HCHttpCallResponseSetStatusCode(retryContext->call, apiState.statusCode);
             if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", retryContext->call->id, apiState.statusCode); }
-            CompleteAsync(retryContext->outerAsyncBlock, S_OK, 0);
+            XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
             return;
         }
 
@@ -367,16 +366,18 @@ void retry_http_call_until_done(
         }
     }
 
-    async_queue_handle_t nestedQueue = nullptr;
+    XTaskQueueHandle nestedQueue = nullptr;
     if (retryContext->outerQueue != nullptr)
     {
-        CreateNestedAsyncQueue(retryContext->outerQueue, &nestedQueue);
+        XTaskQueuePortHandle workPort;
+        XTaskQueueGetPort(retryContext->outerQueue, XTaskQueuePort::Work, &workPort);
+        XTaskQueueCreateComposite(workPort, workPort, &nestedQueue);
     }
-    AsyncBlock* nestedBlock = new AsyncBlock{};
+    XAsyncBlock* nestedBlock = new XAsyncBlock{};
     nestedBlock->queue = nestedQueue;
     nestedBlock->context = retryContext;
 
-    nestedBlock->callback = [](AsyncBlock* nestedAsyncBlock)
+    nestedBlock->callback = [](XAsyncBlock* nestedAsyncBlock)
     {
         retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
         auto responseReceivedTime = chrono_clock_t::now();
@@ -386,7 +387,7 @@ void retry_http_call_until_done(
 
         if (nestedAsyncBlock->queue != nullptr)
         {
-            CloseAsyncQueue(nestedAsyncBlock->queue);
+            XTaskQueueCloseHandle(nestedAsyncBlock->queue);
         }
         delete nestedAsyncBlock;
 
@@ -409,14 +410,14 @@ void retry_http_call_until_done(
         }
         else
         {
-            CompleteAsync(retryContext->outerAsyncBlock, S_OK, 0);
+            XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
         }
     };
 
     HRESULT hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
     if (FAILED(hr))
     {
-        CompleteAsync(retryContext->outerAsyncBlock, hr, 0);
+        XAsyncComplete(retryContext->outerAsyncBlock, hr, 0);
         return;
     }
 }
@@ -424,7 +425,7 @@ void retry_http_call_until_done(
 STDAPI 
 HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
@@ -442,24 +443,24 @@ try
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
 
-    HRESULT hr = BeginAsync(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
-        [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
+    HRESULT hr = XAsyncBegin(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
+        [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
         switch (op)
         {
-            case AsyncOp_DoWork:
+            case XAsyncOp::DoWork:
                 retry_http_call_until_done(static_cast<retry_context*>(data->context));
                 return E_PENDING;
 
-            case AsyncOp_GetResult:
+            case XAsyncOp::GetResult:
                 assert(false);
                 return E_NOTIMPL;
 
-            case AsyncOp_Cancel:
+            case XAsyncOp::Cancel:
                 assert(false);
                 return E_NOTIMPL;
 
-            case AsyncOp_Cleanup:
+            case XAsyncOp::Cleanup:
                 shared_ptr_cache::fetch<retry_context>(data->context, true);
                 break;
         }
@@ -469,7 +470,7 @@ try
 
     if (hr == S_OK)
     {
-        hr = ScheduleAsync(asyncBlock, 0);
+        hr = XAsyncSchedule(asyncBlock, 0);
     }
 
     return hr;

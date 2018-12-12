@@ -11,7 +11,7 @@ public:
     {
     }
 
-    static R CALLBACK Callback(void * context, T data)
+    static R Callback(void * context, T data)
     {
         const CallbackThunk<T, R>* pthis = static_cast<CallbackThunk<T, R>*>(context);
         return pthis->_func(data);
@@ -31,7 +31,7 @@ public:
     {
     }
 
-    static void CALLBACK Callback(void * context, T data)
+    static void Callback(void * context, T data)
     {
         const CallbackThunk<T, void>* pthis = static_cast<CallbackThunk<T, void>*>(context);
         pthis->_func(data);
@@ -51,7 +51,7 @@ public:
     {
     }
 
-    static void CALLBACK Callback(void * context)
+    static void Callback(void * context, bool)
     {
         const CallbackThunk<void, void>* pthis = static_cast<CallbackThunk<void, void>*>(context);
         pthis->_func();

@@ -5,9 +5,8 @@
 #include <httpClient/pal.h>
 #include <httpClient/mock.h>
 #include <httpClient/trace.h>
-#include <async.h>
-#include <asyncQueue.h>
-#include <asyncQueueEx.h>
+#include <XAsync.h>
+#include <XTaskQueue.h>
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"
@@ -180,10 +179,10 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 ///
 /// The perform call is asynchronous, so the work will be done on a background thread which calls 
-/// DispatchAsyncQueue( ..., AsyncQueueCallbackType_Work ).  
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Work ).  
 ///
 /// The results will return to the callback on the thread that calls 
-/// DispatchAsyncQueue( ..., AsyncQueueCallbackType_Completion ), then get the result of the HTTP call by calling 
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Completion ), then get the result of the HTTP call by calling 
 /// HCHttpCallResponseGet*() to get the HTTP response of the hc_call_handle_t.
 /// 
 /// When the hc_call_handle_t is no longer needed, call HCHttpCallCloseHandle() to free the 
@@ -204,10 +203,10 @@ STDAPI HCHttpCallCreate(
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 ///
 /// The perform call is asynchronous, so the work will be done on a background thread which calls 
-/// DispatchAsyncQueue( ..., AsyncQueueCallbackType_Work ).  
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Work ).  
 ///
 /// The results will return to the callback on the thread that calls 
-/// DispatchAsyncQueue( ..., AsyncQueueCallbackType_Completion ), then get the result of the HTTP call by calling 
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Completion ), then get the result of the HTTP call by calling 
 /// HCHttpCallResponseGet*() to get the HTTP response of the hc_call_handle_t.
 /// 
 /// When the hc_call_handle_t is no longer needed, call HCHttpCallCloseHandle() to free the 
@@ -216,11 +215,11 @@ STDAPI HCHttpCallCreate(
 /// HCHttpCallPerformAsync can only be called once.  Create new hc_call_handle_t to repeat the call.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="asyncBlock">The XAsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
@@ -659,30 +658,30 @@ typedef struct WebSocketCompletionResult
 /// Connects to the WebSocket.
 /// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket.
 /// On Win32, iOS, and Android, all background work (including initial connection process) will be added to the queue
-/// in the provided AsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
+/// in the provided XAsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
 /// caller to dispatch that queue for as long as the websocket connection is active. Note that work for 
 /// HCWebSocketSendMessageAsync calls can be assigned to a seperate queue if desired.
 /// </summary>
 /// <param name="uri">The UTF-8 encoded URI to connect to</param>
 /// <param name="subProtocol">The UTF-8 encoded subProtocol to connect to</param>
 /// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="asyncBlock">The XAsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets the result for HCGetWebSocketConnectResult.
 /// </summary>
-/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="asyncBlock">The XAsyncBlock that defines the async operation</param>
 /// <param name="result">Pointer to the result payload</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCGetWebSocketConnectResult(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
@@ -691,22 +690,22 @@ STDAPI HCGetWebSocketConnectResult(
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="message">The UTF-8 encoded message to send</param>
-/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="asyncBlock">The XAsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT;
 
 /// <summary>
 /// Gets the result from HCWebSocketSendMessage 
 /// </summary>
-/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <param name="asyncBlock">The XAsyncBlock that defines the async operation</param>
 /// <param name="result">Pointer to the result payload</param>
 /// <returns>Returns the duplicated handle.</returns>
 STDAPI HCGetWebSocketSendMessageResult(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT;
 
