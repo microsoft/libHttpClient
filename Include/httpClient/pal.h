@@ -52,9 +52,9 @@
 
 #ifndef E_NO_TASK_QUEUE
 #ifndef ERROR_NO_TASK_QUEUE
-#define ERROR_NO_TASK_QUEUE 0x1A9
+#define ERROR_NO_TASK_QUEUE 0x1AB
 #endif
-#define E_NO_TASK_QUEUE                  __HRESULT_FROM_WIN32(ERROR_NO_TASK_QUEUE) // 0x800701A9
+#define E_NO_TASK_QUEUE                  __HRESULT_FROM_WIN32(ERROR_NO_TASK_QUEUE) // 0x800701AB
 #endif
 
 #ifndef E_NOT_SUPPORTED
@@ -139,7 +139,7 @@ typedef void* HANDLE;
 #define E_UNEXPECTED                            _HRESULTYPEDEF_(0x8000FFFFL)
 #define E_POINTER                               _HRESULTYPEDEF_(0x80004003L)
 #define E_TIME_CRITICAL_THREAD                  _HRESULTYPEDEF_(0x800701A0L)
-#define E_NO_TASK_QUEUE                         _HRESULTYPEDEF_(0x800701A9L)
+#define E_NO_TASK_QUEUE                         _HRESULTYPEDEF_(0x800701ABL)
 #define E_NOT_SUPPORTED                         _HRESULTYPEDEF_(0x80070032L)
 #define E_NOT_SUFFICIENT_BUFFER                 _HRESULTYPEDEF_(0x8007007AL)
 #define E_NOINTERFACE                           _HRESULTYPEDEF_(0x80004002L)
