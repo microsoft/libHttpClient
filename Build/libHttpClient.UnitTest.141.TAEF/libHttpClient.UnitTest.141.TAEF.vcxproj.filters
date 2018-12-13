@@ -58,7 +58,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp">
       <Filter>C++ Source\Task\Win</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_stl.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp">
       <Filter>C++ Source\Task\Win</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Unittest\websocket_unittest.cpp">

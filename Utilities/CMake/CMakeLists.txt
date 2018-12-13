@@ -107,7 +107,7 @@ set(Task_Source_Files
 
 set(Task_Windows_Source_Files
     ../../../Source/Task/ThreadPool_win32.cpp
-    ../../../Source/Task/WaitTimer_stl.cpp
+    ../../../Source/Task/WaitTimer_win32.cpp
     )
 
 set(Task_Android_Source_Files
