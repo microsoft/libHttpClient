@@ -46,7 +46,7 @@ using namespace xbox::httpclient;
 
 struct websocket_outgoing_message
 {
-    AsyncBlock* async;
+    XAsyncBlock* async;
     http_internal_string payload;
     websocketpp::lib::error_code error;
     uint64_t id;
@@ -111,10 +111,10 @@ public:
 
         // At this point, there should be no more references to me.
         m_state = DESTROYED;
-        CloseAsyncQueue(m_backgroundQueue);
+        XTaskQueueCloseHandle(m_backgroundQueue);
     }
 
-    HRESULT connect(AsyncBlock* async)
+    HRESULT connect(XAsyncBlock* async)
     {
         if (m_uri.Scheme() == "wss")
         {
@@ -184,7 +184,7 @@ public:
         }
     }
 
-    HRESULT send(AsyncBlock* async, const char* payloadPtr)
+    HRESULT send(XAsyncBlock* async, const char* payloadPtr)
     {
         if (payloadPtr == nullptr)
         {
@@ -258,7 +258,7 @@ public:
 
 private:
     template<typename WebsocketConfigType>
-    HRESULT connect_impl(AsyncBlock* async)
+    HRESULT connect_impl(XAsyncBlock* async)
     {
         auto &client = m_client->client<WebsocketConfigType>();
 
@@ -273,7 +273,7 @@ private:
             ASSERT(m_state == CONNECTING);
             m_state = CONNECTED;
             set_connection_error<WebsocketConfigType>();
-            CompleteAsync(async, S_OK, sizeof(WebSocketCompletionResult));
+            XAsyncComplete(async, S_OK, sizeof(WebSocketCompletionResult));
         });
 
         client.set_fail_handler([this, async](websocketpp::connection_hdl)
@@ -281,7 +281,7 @@ private:
             ASSERT(m_state == CONNECTING);
             shutdown_wspp_impl<WebsocketConfigType>();
             set_connection_error<WebsocketConfigType>();
-            CompleteAsync(async, S_OK, sizeof(WebSocketCompletionResult));
+            XAsyncComplete(async, S_OK, sizeof(WebSocketCompletionResult));
         });
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
@@ -373,11 +373,11 @@ private:
         }
 #endif
 
-        // Initialize the 'connect' AsyncBlock here, but the actually work will happen on the ASIO background thread below
-        auto hr = BeginAsync(async, this, (void*)HCWebSocketConnectAsync, __FUNCTION__,
-            [](AsyncOp op, const AsyncProviderData* data)
+        // Initialize the 'connect' XAsyncBlock here, but the actually work will happen on the ASIO background thread below
+        auto hr = XAsyncBegin(async, this, (void*)HCWebSocketConnectAsync, __FUNCTION__,
+            [](XAsyncOp op, const XAsyncProviderData* data)
         {
-            if (op == AsyncOp_GetResult)
+            if (op == XAsyncOp::GetResult)
             {
                 auto context = static_cast<wspp_websocket_impl*>(data->context);
                 auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
@@ -481,7 +481,7 @@ private:
             {
                 hr = E_FAIL;
             }
-            CompleteAsync(message.async, hr, sizeof(WebSocketCompletionResult));
+            XAsyncComplete(message.async, hr, sizeof(WebSocketCompletionResult));
 
             if (--m_numSends > 0)
             {
@@ -491,7 +491,7 @@ private:
         catch (...)
         {
             hr = E_FAIL;
-            CompleteAsync(message.async, hr, sizeof(WebSocketCompletionResult));
+            XAsyncComplete(message.async, hr, sizeof(WebSocketCompletionResult));
         }
         return hr;
     }
@@ -508,21 +508,21 @@ private:
             m_outgoingMessageQueue.pop();
         }
 
-        auto hr = BeginAsync(sendContext->message.async, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
-            [](AsyncOp op, const AsyncProviderData* data)
+        auto hr = XAsyncBegin(sendContext->message.async, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
+            [](XAsyncOp op, const XAsyncProviderData* data)
         {
             WebSocketCompletionResult* result;
-            auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, op == AsyncOp_Cleanup);
+            auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, op == XAsyncOp::Cleanup);
 
             switch (op)
             {
-            case AsyncOp_DoWork:
+            case XAsyncOp::DoWork:
                 return context->pThis->send_msg_do_work(context->message);
             
-            case AsyncOp_GetResult:
+            case XAsyncOp::GetResult:
                 result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                 result->platformErrorCode = context->message.error.value();
-                result->errorCode = GetAsyncStatus(data->async, false);
+                result->errorCode = XAsyncGetStatus(data->async, false);
                 return S_OK;
 
             default: return S_OK;
@@ -531,7 +531,7 @@ private:
 
         if (SUCCEEDED(hr))
         {
-            hr = ScheduleAsync(sendContext->message.async, 0);
+            hr = XAsyncSchedule(sendContext->message.async, 0);
         }
         return hr;
     }
@@ -545,15 +545,15 @@ private:
         client.stop_perpetual();
 
         // Can't join thread directly since it is the current thread.
-        AsyncBlock* async = new (xbox::httpclient::http_memory::mem_alloc(sizeof(AsyncBlock))) AsyncBlock {};
+        XAsyncBlock* async = new (xbox::httpclient::http_memory::mem_alloc(sizeof(XAsyncBlock))) XAsyncBlock {};
         async->queue = m_backgroundQueue;
         async->context = this;
-        async->callback = [](AsyncBlock* async)
+        async->callback = [](XAsyncBlock* async)
         {
             xbox::httpclient::http_memory::mem_free(async);
         };
 
-        RunAsync(async, [](AsyncBlock* async)
+        XAsyncRun(async, [](XAsyncBlock* async)
         {
             auto pThis = reinterpret_cast<wspp_websocket_impl*>(async->context);
 
@@ -640,7 +640,7 @@ private:
 
     // Asio client has a long running "run" task that we need to provide a thread for
     std::thread m_websocketThread;
-    async_queue_handle_t m_backgroundQueue;
+    XTaskQueueHandle m_backgroundQueue;
 
     websocketpp::connection_hdl m_con;
 
@@ -675,7 +675,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _Inout_ AsyncBlock* async
+    _Inout_ XAsyncBlock* async
     )
 {
     websocket->uri = uri;
@@ -689,7 +689,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
-    _Inout_ AsyncBlock* async
+    _Inout_ XAsyncBlock* async
     )
 {
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);

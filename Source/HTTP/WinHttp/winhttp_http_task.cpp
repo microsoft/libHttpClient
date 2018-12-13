@@ -16,7 +16,7 @@ using namespace xbox::httpclient;
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 winhttp_http_task::winhttp_http_task(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_ hc_call_handle_t call
     ) :
     m_call(call),
@@ -45,7 +45,7 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR)
 void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError)
 {
     HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
-    CompleteAsync(m_asyncBlock, S_OK, 0);
+    XAsyncComplete(m_asyncBlock, S_OK, 0);
     HCHttpCallSetContext(m_call, nullptr);
     WinHttpSetStatusCallback(m_hSession, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
     shared_ptr_cache::remove<winhttp_http_task>(this);
@@ -418,7 +418,7 @@ void CALLBACK winhttp_http_task::completion_callback(
         // Process 1 thread at a time since updating shared state
         win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-        // Exit early if error happened and it was removed from cache to avoid calling CompleteAsync() multiple times
+        // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
         if (shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(context), false, false) == nullptr)
         {
             return;
@@ -857,7 +857,7 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 
 void CALLBACK Internal_HCHttpCallPerformAsync(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_ hc_perform_env env
 ) noexcept

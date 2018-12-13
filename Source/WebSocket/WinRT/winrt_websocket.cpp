@@ -16,7 +16,7 @@ class websocket_outgoing_message
 {
 public: 
     http_internal_string m_message;
-    AsyncBlock* m_asyncBlock;
+    XAsyncBlock* m_asyncBlock;
     DataWriterStoreOperation^ m_storeAsyncOp;
     AsyncStatus m_storeAsyncOpStatus;
     HRESULT m_storeAsyncResult;
@@ -33,7 +33,7 @@ public:
     }
 
     friend HRESULT WebsocketConnectDoWork(
-        _Inout_ AsyncBlock* asyncBlock,
+        _Inout_ XAsyncBlock* asyncBlock,
         _In_opt_ void* executionRoutineContext
         );
 
@@ -139,7 +139,7 @@ http_internal_vector<http_internal_wstring> parse_subprotocols(const http_intern
 }
 
 HRESULT WebsocketConnectDoWork(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* executionRoutineContext
     )
 try
@@ -230,7 +230,7 @@ try
                 HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu] connect complete", websocket->id);
             }
 
-            CompleteAsync(asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
+            XAsyncComplete(asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
         });
     }
     catch (Platform::Exception^ e)
@@ -243,7 +243,7 @@ try
 }
 CATCH_RETURN()
 
-HRESULT WebsocketConnectGetResult(_In_ const AsyncProviderData* data)
+HRESULT WebsocketConnectGetResult(_In_ const XAsyncProviderData* data)
 {
     hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(data->context);
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
@@ -261,7 +261,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
@@ -270,14 +270,14 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     websocket->subProtocol = subProtocol;
     websocket->impl = std::dynamic_pointer_cast<hc_websocket_impl>(websocketTask);
 
-    HRESULT hr = BeginAsync(asyncBlock, websocket, HCWebSocketConnectAsync, __FUNCTION__,
-        [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
+    HRESULT hr = XAsyncBegin(asyncBlock, websocket, HCWebSocketConnectAsync, __FUNCTION__,
+        [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
         switch (op)
         {
-            case AsyncOp_DoWork: return WebsocketConnectDoWork(data->async, data->context);
-            case AsyncOp_GetResult: return WebsocketConnectGetResult(data);
-            case AsyncOp_Cleanup:
+            case XAsyncOp::DoWork: return WebsocketConnectDoWork(data->async, data->context);
+            case XAsyncOp::GetResult: return WebsocketConnectGetResult(data);
+            case XAsyncOp::Cleanup:
             {
                 HCWebSocketCloseHandle(static_cast<hc_websocket_handle_t>(data->context));
                 break;
@@ -289,7 +289,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 
     if (hr == S_OK)
     {
-        hr = ScheduleAsync(asyncBlock, 0);
+        hr = XAsyncSchedule(asyncBlock, 0);
     }
 
     return hr;
@@ -298,7 +298,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ PCSTR message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     if (message == nullptr)
@@ -346,7 +346,7 @@ struct SendMessageCallbackContent
 };
 
 HRESULT WebsockSendMessageDoWork(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* executionRoutineContext
     )
 try
@@ -397,7 +397,7 @@ try
             {
                 HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] send failed = 0x%0.8x", websocketTask->m_websocketHandle->id, msg->m_id, msg->m_storeAsyncResult);
             }
-            CompleteAsync(asyncBlock, msg->m_storeAsyncResult, sizeof(WebSocketCompletionResult));
+            XAsyncComplete(asyncBlock, msg->m_storeAsyncResult, sizeof(WebSocketCompletionResult));
             MessageWebSocketSendMessage(websocketTask);
         });
     }
@@ -413,7 +413,7 @@ try
 }
 CATCH_RETURN()
 
-HRESULT WebsockSendMessageGetResult(_In_ const AsyncProviderData* data)
+HRESULT WebsockSendMessageGetResult(_In_ const XAsyncProviderData* data)
 {
     if (data->context == nullptr ||
         data->bufferSize < sizeof(WebSocketCompletionResult))
@@ -474,14 +474,14 @@ void MessageWebSocketSendMessage(
     void* rawContext = shared_ptr_cache::store<SendMessageCallbackContent>(callbackContext);
     HCWebSocketDuplicateHandle(websocketTask->m_websocketHandle);
 
-    HRESULT hr = BeginAsync(msg->m_asyncBlock, rawContext, HCWebSocketSendMessageAsync, __FUNCTION__,
-        [](_In_ AsyncOp op, _In_ const AsyncProviderData* data)
+    HRESULT hr = XAsyncBegin(msg->m_asyncBlock, rawContext, HCWebSocketSendMessageAsync, __FUNCTION__,
+        [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
         switch (op)
         {
-            case AsyncOp_DoWork: return WebsockSendMessageDoWork(data->async, data->context);
-            case AsyncOp_GetResult: return WebsockSendMessageGetResult(data);
-            case AsyncOp_Cleanup: 
+            case XAsyncOp::DoWork: return WebsockSendMessageDoWork(data->async, data->context);
+            case XAsyncOp::GetResult: return WebsockSendMessageGetResult(data);
+            case XAsyncOp::Cleanup: 
             {
                 HCWebSocketCloseHandle(shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, true)->websocketTask->m_websocketHandle);
                 break;
@@ -493,7 +493,7 @@ void MessageWebSocketSendMessage(
 
     if (hr == S_OK)
     {
-        hr = ScheduleAsync(msg->m_asyncBlock, 0);
+        hr = XAsyncSchedule(msg->m_asyncBlock, 0);
     }
 
     if (FAILED(hr))

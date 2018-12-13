@@ -92,7 +92,7 @@ HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
@@ -127,7 +127,7 @@ STDAPI
 HCWebSocketSendMessageAsync(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
 {
@@ -403,12 +403,12 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketConnectResult(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT
 try
 {
-    return GetAsyncResult(
+    return XAsyncGetResult(
         asyncBlock,
         reinterpret_cast<void*>(HCWebSocketConnectAsync),
         sizeof(WebSocketCompletionResult),
@@ -420,12 +420,12 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketSendMessageResult(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) HC_NOEXCEPT
 try
 {
-    return GetAsyncResult(
+    return XAsyncGetResult(
         asyncBlock,
         reinterpret_cast<void*>(HCWebSocketSendMessageAsync),
         sizeof(WebSocketCompletionResult),

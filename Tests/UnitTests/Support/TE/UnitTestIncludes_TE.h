@@ -140,6 +140,12 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
 #define VERIFY_IS_NOT_NULL(x) \
     Assert::IsTrue(x != nullptr, L#x)
 
+#define VERIFY_IS_LESS_THAN(expectedLess, expectedGreater) \
+    Assert::IsTrue(expectedLess < expectedGreater)
+
+#define VERIFY_IS_GREATER_THAN_OR_EQUAL(expectedGreater, expectedLess) \
+    Assert::IsTrue(expectedGreater >= expectedLess)
+
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_SECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::seconds(__seconds))
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_MILLISECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::milliseconds(__seconds))
 
@@ -211,3 +217,6 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
 //using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
+
+#define LOG_COMMENT(x, ...)
+

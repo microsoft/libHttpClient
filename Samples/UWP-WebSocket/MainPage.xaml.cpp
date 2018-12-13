@@ -78,8 +78,8 @@ std::string format_string(_Printf_format_string_ char const* format, ...)
 
 void CALLBACK HandleAsyncQueueCallback(
     _In_ void* context,
-    _In_ async_queue_handle_t queue,
-    _In_ AsyncQueueCallbackType type
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort type
 )
 {
     UNREFERENCED_PARAMETER(context);
@@ -87,11 +87,11 @@ void CALLBACK HandleAsyncQueueCallback(
 
     switch (type)
     {
-    case AsyncQueueCallbackType::AsyncQueueCallbackType_Work:
+    case XTaskQueuePort::Work:
         SetEvent(g_workReadyHandle.get());
         break;
 
-    case AsyncQueueCallbackType::AsyncQueueCallbackType_Completion:
+    case XTaskQueuePort::Completion:
         SetEvent(g_completionReadyHandle.get());
         break;
     }
@@ -111,13 +111,11 @@ MainPage::MainPage()
     HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+    XTaskQueueCreate(
+        XTaskQueueDispatchMode::Manual,
+        XTaskQueueDispatchMode::Manual,
         &m_queue);
-    RegisterAsyncQueueCallbackSubmitted(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
+    XTaskQueueRegisterMonitor(m_queue, nullptr, HandleAsyncQueueCallback, &m_callbackToken);
 
     StartBackgroundThread();
 
@@ -132,6 +130,7 @@ MainPage::MainPage()
 MainPage::~MainPage()
 {
     HCCleanup();
+    XTaskQueueCloseHandle(m_queue);
 }
 
 std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::string headersList)
@@ -165,13 +164,7 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    async_queue_handle_t queue;
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        &queue);
+    XTaskQueueHandle queue = static_cast<XTaskQueueHandle>(lpParam);
 
     bool stop = false;
     while (!stop)
@@ -180,11 +173,9 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         switch (dwResult)
         {
         case WAIT_OBJECT_0: // work ready
-            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0);
-
-            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work))
+            if (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
             {
-                // If there's more pending work, then set the event to process them
+                // If we processed work, look for more.
                 SetEvent(g_workReadyHandle.get());
             }
             break;
@@ -192,11 +183,9 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         case WAIT_OBJECT_0 + 1: // completed 
             // Typically completions should be dispatched on the game thread, but
             // for this simple XAML app we're doing it here
-            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Completion, 0);
-
-            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion))
+            if (XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0))
             {
-                // If there's more pending completions, then set the event to process them
+                // If we processed a completion, look for more.
                 SetEvent(g_completionReadyHandle.get());
             }
             break;
@@ -224,7 +213,7 @@ void HttpTestApp::MainPage::StartBackgroundThread()
 {
     if (m_hBackgroundThread == nullptr)
     {
-        m_hBackgroundThread = CreateThread(nullptr, 0, background_thread_proc, nullptr, 0, nullptr);
+        m_hBackgroundThread = CreateThread(nullptr, 0, background_thread_proc, m_queue, 0, nullptr);
     }
 }
 
@@ -268,10 +257,10 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
         hr = HCWebSocketSetHeader(m_websocket, headerName.c_str(), headerValue.c_str());
     }
 
-    AsyncBlock* asyncBlock = new AsyncBlock;
-    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    XAsyncBlock* asyncBlock = new XAsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
     asyncBlock->queue = m_queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
         HCGetWebSocketConnectResult(asyncBlock, &result);
@@ -291,10 +280,10 @@ void HttpTestApp::MainPage::SendMessage_Button_Click(Platform::Object^ sender, W
 
     std::string requestBody = to_utf8string(TextboxRequestString->Text->Data());
 
-    AsyncBlock* asyncBlock = new AsyncBlock;
-    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    XAsyncBlock* asyncBlock = new XAsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
     asyncBlock->queue = m_queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
         HCGetWebSocketSendMessageResult(asyncBlock, &result);

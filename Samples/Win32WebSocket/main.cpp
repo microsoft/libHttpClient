@@ -30,12 +30,10 @@ int main()
     HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
 
-    async_queue_handle_t queue;
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_ThreadPool,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_ThreadPool,
+    XTaskQueueHandle queue;
+    XTaskQueueCreate(
+        XTaskQueueDispatchMode::ThreadPool,
+        XTaskQueueDispatchMode::ThreadPool,
         &queue);
 
     std::string url = "wss://echo.websocket.org";
@@ -44,9 +42,9 @@ int main()
     HRESULT hr = HCWebSocketCreate(&websocket);
     hr = HCWebSocketSetFunctions(message_received, websocket_closed);
 
-    AsyncBlock* asyncBlock = new AsyncBlock{};
+    XAsyncBlock* asyncBlock = new XAsyncBlock{};
     asyncBlock->queue = queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
         HCGetWebSocketConnectResult(asyncBlock, &result);
@@ -60,9 +58,9 @@ int main()
     hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
     WaitForSingleObject(g_eventHandle, INFINITE);
 
-    asyncBlock = new AsyncBlock{};
+    asyncBlock = new XAsyncBlock{};
     asyncBlock->queue = queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
         HCGetWebSocketSendMessageResult(asyncBlock, &result);

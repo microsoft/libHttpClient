@@ -4,11 +4,11 @@
 
 class HttpRequest {
 public:
-    HttpRequest(AsyncBlock* asyncBlock, JavaVM* javaVm, jobject applicationContext, jclass httpRequestClass, jclass httpResponseClass);
+    HttpRequest(XAsyncBlock* asyncBlock, JavaVM* javaVm, jobject applicationContext, jclass httpRequestClass, jclass httpResponseClass);
     virtual ~HttpRequest();
 
     HRESULT Initialize();
-    AsyncBlock* GetAsyncBlock() { return m_asyncBlock; }
+    XAsyncBlock* GetAsyncBlock() { return m_asyncBlock; }
 
     // Request Functions
     HRESULT SetUrl(const char* url);
@@ -24,7 +24,7 @@ private:
     HRESULT ProcessResponseBody(hc_call_handle_t call, jobject response);
 
     jobject m_httpRequestInstance;
-    AsyncBlock* m_asyncBlock;
+    XAsyncBlock* m_asyncBlock;
 
     JavaVM* m_javaVm;
     jobject m_applicationContext;

@@ -49,14 +49,14 @@ static void* g_PerformCallbackContext = nullptr;
 static int g_performContext = 0;
 static void STDAPIVCALLTYPE PerformCallback(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* ctx,
     _In_opt_ hc_perform_env /*env*/
     )
 {
     g_PerformCallbackCalled = true;
     g_PerformCallbackContext = ctx;
-    CompleteAsync(asyncBlock, S_OK, 0);
+    XAsyncComplete(asyncBlock, S_OK, 0);
 }
 
 
@@ -133,19 +133,17 @@ public:
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
 
-        async_queue_handle_t queue;
-        uint32_t sharedAsyncQueueId = 0;
-        CreateSharedAsyncQueue(
-            sharedAsyncQueueId,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        XTaskQueueHandle queue;
+        XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Manual,
             &queue);
 
-        AsyncBlock* asyncBlock = new AsyncBlock;
-        ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock = new XAsyncBlock;
+        ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
         asyncBlock->context = call;
         asyncBlock->queue = queue;
-        asyncBlock->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -159,13 +157,13 @@ public:
 
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_PerformCallbackCalled);
         VERIFY_ARE_EQUAL(reinterpret_cast<uintptr_t>(&g_performContext), reinterpret_cast<uintptr_t>(g_PerformCallbackContext));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
-        CloseAsyncQueue(queue);
+        XTaskQueueCloseHandle(queue);
         HCCleanup();
     }
 

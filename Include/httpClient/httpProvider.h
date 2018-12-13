@@ -3,7 +3,7 @@
 
 #pragma once
 #include <httpClient/pal.h>
-#include <asyncProvider.h>
+#include <XAsyncProvider.h>
 #include <httpClient/trace.h>
 
 /// <summary>
@@ -21,7 +21,7 @@
 typedef void
 (CALLBACK* HCCallPerformFunction)(
     _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_ hc_perform_env env
     );
@@ -350,7 +350,7 @@ typedef HRESULT
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ hc_websocket_handle_t websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     );
 
 /// <summary>
@@ -364,7 +364,7 @@ typedef HRESULT
 (CALLBACK* HCWebSocketSendMessageFunction)(
     _In_ hc_websocket_handle_t websocket,
     _In_z_ const char* message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     );
 
 /// <summary>
