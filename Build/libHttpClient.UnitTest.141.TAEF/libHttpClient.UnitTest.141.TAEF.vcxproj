@@ -143,7 +143,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_stl.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\referenced_ptr.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Unittest\websocket_unittest.cpp" />
