@@ -1,15 +1,13 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !defined(__cplusplus)
-    #error C++11 required
-#endif
-
 #pragma once
 #include <stdint.h>
 
+#ifdef __cplusplus
 extern "C"
 {
+#endif
 
 /// <summary>
 /// A task queue contains and dispatches callbacks. A task queue has two ports:  a worker port and
@@ -311,4 +309,6 @@ STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
     _In_ XTaskQueueHandle queue
     ) noexcept;
 
+#ifdef __cplusplus
 } // extern "C"
+#endif
