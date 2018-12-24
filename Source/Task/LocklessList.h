@@ -119,7 +119,7 @@ public:
         }
     }
     
-    // Returns true if we believve the list is empty.
+    // Returns true if we believe the list is empty.
     bool empty() noexcept
     {
         return ToNode(m_head) == ToNode(m_tail);

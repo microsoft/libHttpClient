@@ -104,11 +104,13 @@ void SubmitCallback::Unregister(_In_ XTaskQueueRegistrationToken token)
     while (!m_indexAndRef.compare_exchange_weak(expected, desired)) {}
 }
 
-void SubmitCallback::Invoke(_In_ XTaskQueuePort port)
+void SubmitCallback::Invoke(_In_ ITaskQueuePort* port)
 {
     uint32_t indexAndRef = ++m_indexAndRef;
     uint32_t bufferIdx = (indexAndRef & 0x80000000 ? 1 : 0);
-
+    
+    XTaskQueuePort portId = GetQueue(m_queue)->GetPort(port);
+    
     for(uint32_t idx = 0; idx < ARRAYSIZE(m_buffer1); idx++)
     {
         if (m_buffers[bufferIdx][idx].Callback != nullptr)
@@ -116,7 +118,7 @@ void SubmitCallback::Invoke(_In_ XTaskQueuePort port)
             m_buffers[bufferIdx][idx].Callback(
                 m_buffers[bufferIdx][idx].Context,
                 m_queue,
-                port);
+                portId);
         }
     }
 
@@ -184,7 +186,6 @@ TaskQueuePortImpl::TaskQueuePortImpl()
 TaskQueuePortImpl::~TaskQueuePortImpl()
 {
     m_timer.Cancel();
-    m_status = PortStatus::Terminated;
 
     EraseQueue(m_queueList.get());
     EraseQueue(m_pendingList.get());
@@ -231,9 +232,8 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
 #endif
 }
 
-HRESULT TaskQueuePortImpl::Initialize(XTaskQueuePort port, XTaskQueueDispatchMode mode, SubmitCallback* submitCallback)
+HRESULT TaskQueuePortImpl::Initialize(XTaskQueueDispatchMode mode, SubmitCallback* submitCallback)
 {
-    m_type = port;
     m_callbackSubmitted = submitCallback;
     m_dispatchMode = mode;
 
@@ -282,17 +282,19 @@ HRESULT TaskQueuePortImpl::Initialize(XTaskQueuePort port, XTaskQueueDispatchMod
 }
 
 HRESULT __stdcall TaskQueuePortImpl::QueueItem(
-    ITaskQueue* owner,
-    uint32_t waitMs,
-    void* callbackContext,
-    XTaskQueueCallback* callback)
+    _In_ ITaskQueue* owner,
+    _In_ XTaskQueuePort port,
+    _In_ uint32_t waitMs,
+    _In_opt_ void* callbackContext,
+    _In_ XTaskQueueCallback* callback)
 {
-    RETURN_IF_FAILED(VerifyNotTerminated());
+    RETURN_IF_FAILED(VerifyNotTerminated(owner));
 
     std::unique_ptr<QueueEntry> entry(new (std::nothrow) QueueEntry);
     RETURN_IF_NULL_ALLOC(entry);
 
     entry->owner = owner;
+    entry->port = port;
     entry->owner->AddRef();
     entry->callback = callback;
     entry->context = callbackContext;
@@ -335,6 +337,7 @@ HRESULT __stdcall TaskQueuePortImpl::QueueItem(
 
 HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     _In_ ITaskQueue* owner,
+    _In_ XTaskQueuePort port,
     _In_ HANDLE waitHandle,
     _In_opt_ void* callbackContext,
     _In_ XTaskQueueCallback* callback,
@@ -342,7 +345,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
 {
     RETURN_HR_IF(E_INVALIDARG, callback == nullptr || waitHandle == nullptr || token == nullptr);
     RETURN_HR_IF(E_POINTER, token == nullptr);
-    RETURN_IF_FAILED(VerifyNotTerminated());
+    RETURN_IF_FAILED(VerifyNotTerminated(owner));
 
 #ifdef _WIN32
     std::unique_ptr<WaitRegistration> waitReg(new (std::nothrow) WaitRegistration);
@@ -354,6 +357,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     // Entry gets its owner and an addref on it when it
     // is added to the queue
     entry->owner = nullptr;
+    entry->port = port;
     entry->callback = callback;
     entry->context = callbackContext;
     entry->waitRegistration = waitReg.get();
@@ -363,8 +367,8 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     // waiter does not keep the queue alive.
     waitReg->waitHandle = waitHandle;
     waitReg->token = ++m_nextWaitToken;
-    waitReg->port = this;
     waitReg->owner = owner;
+    waitReg->port = this;
     waitReg->queueEntry = entry.get();
     waitReg->threadpoolWait = nullptr;
 
@@ -449,6 +453,7 @@ void __stdcall TaskQueuePortImpl::UnregisterWaitHandle(
 }
 
 HRESULT __stdcall TaskQueuePortImpl::PrepareTerminate(
+    _In_ ITaskQueue* owner,
     _In_ void* context,
     _In_ XTaskQueueTerminatedCallback* callback,
     _Out_ void** token)
@@ -465,11 +470,9 @@ HRESULT __stdcall TaskQueuePortImpl::PrepareTerminate(
     term->callback = callback;
     term->node = node.release();
 
-    // Mark the port as canceled, but don't overwrite 
+    // Mark the port as canceled, but don't overwrite
     // terminating or terminated status.
-    PortStatus expectedStatus = PortStatus::Active;
-    m_status.compare_exchange_strong(expectedStatus, PortStatus::Canceled);
-
+    owner->TrySetPortStatus(this, TaskQueuePortStatus::Active, TaskQueuePortStatus::Canceled);
     *token = term.release();
 
     return S_OK;
@@ -478,10 +481,8 @@ HRESULT __stdcall TaskQueuePortImpl::PrepareTerminate(
 void __stdcall TaskQueuePortImpl::CancelTermination(
     _In_ void* token)
 {
-    PortStatus expectedStatus = PortStatus::Canceled;
-    m_status.compare_exchange_strong(expectedStatus, PortStatus::Active);
-
     TerminationEntry* term = static_cast<TerminationEntry*>(token);
+    term->owner->TrySetPortStatus(this, TaskQueuePortStatus::Canceled, TaskQueuePortStatus::Active);
     delete term->node;
     delete term;
 }
@@ -489,53 +490,16 @@ void __stdcall TaskQueuePortImpl::CancelTermination(
 void __stdcall TaskQueuePortImpl::Terminate(
     _In_ void* token)
 {
-    m_status = PortStatus::Terminating;
+    TerminationEntry* term = static_cast<TerminationEntry*>(token);
+    
+    CancelPendingEntries(term->owner, true);
 
-    // Stop wait timer and promote pending calbacks.
-
-    m_timer.Cancel();
-
-    QueueEntryNode* queueEntryNode;
-    QueueEntry* queueEntry = m_pendingList->pop_front(&queueEntryNode);
-    while(queueEntry != nullptr)
-    {
-        if (!AppendEntry(queueEntry, queueEntryNode))
-        {
-            ReleaseEntry(queueEntry);
-        }
-        queueEntry = m_pendingList->pop_front(&queueEntryNode);
-    }
-
-#ifdef _WIN32
-
-    // Abort any registered waits and promote their entries too.
-    // Wait registration is not lock free.
-    std::unique_lock<std::mutex> lock(m_lock);
-
-    for (uint32_t idx = 0; idx < m_waits.count(); idx++)
-    {
-        CloseThreadpoolWait(m_waits[idx]->threadpoolWait);
-        m_waits[idx]->queueEntry->waitRegistration = nullptr;
-
-        if (!AppendWaitRegistrationEntry(m_waits[idx]))
-        {
-            ReleaseEntry(m_waits[idx]->queueEntry);
-        }
-
-        delete m_waits[idx];
-    }
-    m_waits.clear();
-    lock.unlock();
-
-#endif
-
-    // Inserr the termination callback into the queue.  Even if the
+    // Insert the termination callback into the queue.  Even if the
     // main queue is empty, we still signal it and run through
     // a cycle.  This ensures we flush the queue out with no 
     // races and that the termination callback happens on the right
     // thread.
 
-    TerminationEntry* term = static_cast<TerminationEntry*>(token);
     if (term->callback != nullptr)
     {
         // This never fails because we preallocate the
@@ -547,7 +511,7 @@ void __stdcall TaskQueuePortImpl::Terminate(
     // We will not signal until we are marked as terminated. The queue could
     // still be moving while we are running this terminate call.
 
-    m_status = PortStatus::Terminated;
+    term->owner->SetPortStatus(this, TaskQueuePortStatus::Terminated);
     SignalQueue();
 
     // We must ensure we poke the queue threads in case there's
@@ -568,6 +532,12 @@ void __stdcall TaskQueuePortImpl::Terminate(
     }
 }
 
+void __stdcall TaskQueuePortImpl::Detach(
+    _In_ ITaskQueue* owner)
+{
+    CancelPendingEntries(owner, false);
+}
+
 bool __stdcall TaskQueuePortImpl::DrainOneItem()
 {
     m_processingCallback++;
@@ -583,7 +553,7 @@ bool __stdcall TaskQueuePortImpl::DrainOneItem()
 
     if (entry != nullptr)
     {
-        entry->callback(entry->context, m_status != PortStatus::Active);
+        entry->callback(entry->context, IsCallCanceled(entry));
         m_processingCallback--;
 
 #ifdef _WIN32
@@ -602,29 +572,18 @@ bool __stdcall TaskQueuePortImpl::DrainOneItem()
         ReleaseEntry(entry);
     }
 
-    bool emptyList = false;
-    bool signalTerminations = false;
-
     if (m_queueList->empty())
     {
-        emptyList = true;
-        signalTerminations = m_status == PortStatus::Terminated;
-    }
-
-    if (emptyList)
-    {
         SignalQueue();
-    }
-
-    if (signalTerminations)
-    {
         SignalTerminations();
     }
 
     return entry != nullptr;
 }
 
-bool __stdcall TaskQueuePortImpl::Wait(_In_ uint32_t timeout)
+bool __stdcall TaskQueuePortImpl::Wait(
+    _In_ ITaskQueue* owner,
+    _In_ uint32_t timeout)
 {
 #ifdef _WIN32
     while(true)
@@ -663,7 +622,7 @@ bool __stdcall TaskQueuePortImpl::Wait(_In_ uint32_t timeout)
             // We are using event 0 like a condition variable.  It's
             // auto reset, so if nothing is in the queue we continue
             // waiting.
-            if (m_status == PortStatus::Terminated || !m_queueList->empty())
+            if (owner->GetPortStatus(this) == TaskQueuePortStatus::Terminated || !m_queueList->empty())
             {
                 break;
             }
@@ -675,7 +634,7 @@ bool __stdcall TaskQueuePortImpl::Wait(_In_ uint32_t timeout)
     }
 
 #else
-    while (m_queueList->empty() && m_status != PortStatus::Terminated)
+    while (m_queueList->empty() && owner->GetPortStatus(this) != TaskQueuePortStatus::Terminated)
     {
         std::unique_lock<std::mutex> lock(m_lock);
         if (m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
@@ -698,13 +657,19 @@ bool __stdcall TaskQueuePortImpl::IsEmpty()
     return empty;
 }
 
-HRESULT TaskQueuePortImpl::VerifyNotTerminated()
+HRESULT TaskQueuePortImpl::VerifyNotTerminated(
+    _In_ ITaskQueue* owner)
 {
     // N.B.  This looks wrong but it's not.  We only error adding new items
-    // if we are termating or terminated.  If we're just canceled we allow
+    // if we are terminating or terminated.  If we're just canceled we allow
     // new items in but we invoke them with the canceled flag set to true.
-    RETURN_HR_IF(__HRESULT_FROM_WIN32(ERROR_CANCELLED), m_status > PortStatus::Canceled);
+    RETURN_HR_IF(__HRESULT_FROM_WIN32(ERROR_CANCELLED), owner->GetPortStatus(this) > TaskQueuePortStatus::Canceled);
     return S_OK;
+}
+
+bool TaskQueuePortImpl::IsCallCanceled(_In_ QueueEntry* entry)
+{
+    return entry->owner->GetPortStatus(this) != TaskQueuePortStatus::Active;
 }
 
 // Appends the given entry to the active queue.  The entry should already
@@ -741,7 +706,7 @@ bool TaskQueuePortImpl::AppendEntry(
         break;
     }
 
-    m_callbackSubmitted->Invoke(m_type);
+    m_callbackSubmitted->Invoke(this);
     
     if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
     {
@@ -751,7 +716,7 @@ bool TaskQueuePortImpl::AppendEntry(
     return true;
 }
 
-// Releases the entry.
+// Releases the entry and the ref on the owner.
 void TaskQueuePortImpl::ReleaseEntry(
     _In_ QueueEntry* entry)
 {
@@ -763,6 +728,76 @@ void TaskQueuePortImpl::ReleaseEntry(
         }
         delete entry;
     }
+}
+
+void TaskQueuePortImpl::CancelPendingEntries(
+    _In_ ITaskQueue* owner,
+    _In_ bool appendToQueue)
+{
+    // Stop wait timer and promote pending calbacks that are used
+    // by the queue that invoked this termination. Other callbacks
+    // are placed back on the pending list.
+    
+    m_timer.Cancel();
+    
+    QueueEntryNode* queueEntryNode;
+    QueueEntry* queueEntry = m_pendingList->pop_front(&queueEntryNode);
+    QueueEntry* initialPushedEntry = nullptr;
+    while(queueEntry != nullptr)
+    {
+        if (queueEntry == initialPushedEntry)
+        {
+            m_pendingList->push_back(queueEntry, queueEntryNode);
+            break;
+        }
+        
+        if (queueEntry->owner == owner)
+        {
+            if (!appendToQueue || !AppendEntry(queueEntry, queueEntryNode))
+            {
+                ReleaseEntry(queueEntry);
+                delete queueEntryNode;
+            }
+        }
+        else
+        {
+            if (initialPushedEntry == nullptr)
+            {
+                queueEntry = initialPushedEntry;
+            }
+            m_pendingList->push_back(queueEntry, queueEntryNode);
+        }
+        queueEntry = m_pendingList->pop_front(&queueEntryNode);
+    }
+    
+    SubmitPendingCallback();
+    
+#ifdef _WIN32
+    
+    // Abort any registered waits and promote their entries too.
+    // Wait registration is not lock free.
+    std::unique_lock<std::mutex> lock(m_lock);
+    
+    for (uint32_t index = m_waits.count(); index > 0; index--)
+    {
+        uint32_t idx = index - 1;
+        if (m_waits[idx]->owner == owner)
+        {
+            CloseThreadpoolWait(m_waits[idx]->threadpoolWait);
+            m_waits[idx]->queueEntry->waitRegistration = nullptr;
+            
+            if (!appendToQueue || !AppendWaitRegistrationEntry(m_waits[idx]))
+            {
+                ReleaseEntry(m_waits[idx]->queueEntry);
+            }
+            
+            delete m_waits[idx];
+            m_waits.removeAt(idx);
+        }
+    }
+    lock.unlock();
+    
+#endif
 }
 
 void TaskQueuePortImpl::EraseQueue(
@@ -874,6 +909,7 @@ void TaskQueuePortImpl::SubmitPendingCallback()
 // Called from thread pool callback
 void TaskQueuePortImpl::ProcessThreadPoolCallback()
 {
+    referenced_ptr<ITaskQueuePort>(this);
     uint32_t wasProcessing = m_processingCallback++;
     if (m_dispatchMode == XTaskQueueDispatchMode::SerializedThreadPool)
     {
@@ -899,14 +935,32 @@ void TaskQueuePortImpl::SignalQueue()
 
 void TaskQueuePortImpl::SignalTerminations()
 {
-    ASSERT(m_queueList->empty());
-    ASSERT(m_status == PortStatus::Terminated);
-
-    TerminationEntry* term = m_terminationList->pop_front();
+    TerminationEntryNode* termNode;
+    TerminationEntry* term = m_terminationList->pop_front(&termNode);
+    TerminationEntry* initialPushBackNode = nullptr;
+    
     while(term != nullptr)
     {
-        term->callback(term->context);
-        delete(term);
+        if (term == initialPushBackNode)
+        {
+            m_terminationList->push_back(term, termNode);
+            break;
+        }
+        
+        if (term->owner->GetPortStatus(this) == TaskQueuePortStatus::Terminated)
+        {
+            term->callback(term->context);
+            delete term;
+            delete termNode;
+        }
+        else
+        {
+            if (initialPushBackNode == nullptr)
+            {
+                initialPushBackNode = term;
+            }
+            m_terminationList->push_back(term, termNode);
+        }
         term = m_terminationList->pop_front();
     }
 }
@@ -1017,17 +1071,17 @@ HRESULT TaskQueueImpl::Initialize(
 
     referenced_ptr<TaskQueuePortImpl> work(new (std::nothrow) TaskQueuePortImpl);
     RETURN_IF_NULL_ALLOC(work);
-    RETURN_IF_FAILED(work->Initialize(XTaskQueuePort::Work, workMode, &m_callbackSubmitted));
+    RETURN_IF_FAILED(work->Initialize(workMode, &m_callbackSubmitted));
 
     referenced_ptr<TaskQueuePortImpl> completion(new (std::nothrow) TaskQueuePortImpl);
     RETURN_IF_NULL_ALLOC(completion);
-    RETURN_IF_FAILED(completion->Initialize(XTaskQueuePort::Completion, completionMode, &m_callbackSubmitted));
+    RETURN_IF_FAILED(completion->Initialize(completionMode, &m_callbackSubmitted));
     
     work->GetHandle()->m_queue = this;
     completion->GetHandle()->m_queue = this;
     
-    RETURN_IF_FAILED(work->QueryApi(ApiId::XTaskQueuePort, (void**)&m_work));
-    RETURN_IF_FAILED(completion->QueryApi(ApiId::XTaskQueuePort, (void**)&m_completion));
+    RETURN_IF_FAILED(work->QueryApi(ApiId::XTaskQueuePort, (void**)&m_work.port));
+    RETURN_IF_FAILED(completion->QueryApi(ApiId::XTaskQueuePort, (void**)&m_completion.port));
 
     if (!allowClose)
     {
@@ -1047,21 +1101,21 @@ HRESULT TaskQueueImpl::Initialize(
     RETURN_HR_IF(E_INVALIDARG, workPort== nullptr || workPort->m_signature != TASK_QUEUE_PORT_SIGNATURE);
     RETURN_HR_IF(E_INVALIDARG, completionPort == nullptr || completionPort->m_signature != TASK_QUEUE_PORT_SIGNATURE);
     
-    m_work = referenced_ptr<ITaskQueuePort>(workPort->m_port);
-    m_completion = referenced_ptr<ITaskQueuePort>(completionPort->m_port);
-    m_workSource = referenced_ptr<ITaskQueue>(workPort->m_queue);
-    m_completionSource = referenced_ptr<ITaskQueue>(completionPort->m_queue);
+    m_work.port = referenced_ptr<ITaskQueuePort>(workPort->m_port);
+    m_completion.port = referenced_ptr<ITaskQueuePort>(completionPort->m_port);
+    m_work.source = referenced_ptr<ITaskQueue>(workPort->m_queue);
+    m_completion.source = referenced_ptr<ITaskQueue>(completionPort->m_queue);
 
     m_termination.allowed = 
-        m_workSource->CanTerminate() &&
-        m_completionSource->CanTerminate();
+        m_work.source->CanTerminate() &&
+        m_completion.source->CanTerminate();
 
     m_allowClose = true;
     
     return S_OK;
 }
 
-HRESULT __stdcall TaskQueueImpl::GetPort(
+HRESULT __stdcall TaskQueueImpl::GetPortHandle(
     _In_ XTaskQueuePort port,
     _Out_ ITaskQueuePort** portHandle)
 {
@@ -1070,13 +1124,13 @@ HRESULT __stdcall TaskQueueImpl::GetPort(
     switch(port)
     {
     case XTaskQueuePort::Work:
-        *portHandle = m_work.get();
-        m_work->AddRef();
+        *portHandle = m_work.port.get();
+        m_work.port->AddRef();
         break;
         
     case XTaskQueuePort::Completion:
-        *portHandle = m_completion.get();
-        m_completion->AddRef();
+        *portHandle = m_completion.port.get();
+        m_completion.port->AddRef();
         break;
         
     default:
@@ -1084,6 +1138,80 @@ HRESULT __stdcall TaskQueueImpl::GetPort(
     }
     
     return S_OK;
+}
+
+XTaskQueuePort __stdcall TaskQueueImpl::GetPort(
+    _In_ ITaskQueuePort* portHandle)
+{
+    if (portHandle == m_work.port.get())
+    {
+        return XTaskQueuePort::Work;
+    }
+    else if (portHandle == m_completion.port.get())
+    {
+        return XTaskQueuePort::Completion;
+    }
+    else
+    {
+        ASSERT(false);
+        return XTaskQueuePort::Work;
+    }
+}
+
+TaskQueuePortStatus __stdcall TaskQueueImpl::GetPortStatus(
+    _In_ ITaskQueuePort* portHandle)
+{
+    if (portHandle == m_work.port.get())
+    {
+        return m_work.status;
+    }
+    else if (portHandle == m_completion.port.get())
+    {
+        return m_completion.status;
+    }
+    else
+    {
+        ASSERT(false);
+        return TaskQueuePortStatus::Terminated;
+    }
+}
+
+bool __stdcall TaskQueueImpl::TrySetPortStatus(
+    _In_ ITaskQueuePort* portHandle,
+    _In_ TaskQueuePortStatus expectedStatus,
+    _In_ TaskQueuePortStatus status)
+{
+    if (portHandle == m_work.port.get())
+    {
+        return m_work.status.compare_exchange_strong(expectedStatus, status);
+    }
+    else if (portHandle == m_completion.port.get())
+    {
+        return m_completion.status.compare_exchange_strong(expectedStatus, status);
+    }
+    else
+    {
+        ASSERT(false);
+        return false;
+    }
+}
+
+void __stdcall TaskQueueImpl::SetPortStatus(
+    _In_ ITaskQueuePort* portHandle,
+    _In_ TaskQueuePortStatus status)
+{
+    if (portHandle == m_work.port.get())
+    {
+        m_work.status = status;
+    }
+    else if (portHandle == m_completion.port.get())
+    {
+        m_completion.status = status;
+    }
+    else
+    {
+        ASSERT(false);
+    }
 }
 
 HRESULT __stdcall TaskQueueImpl::RegisterWaitHandle(
@@ -1098,8 +1226,8 @@ HRESULT __stdcall TaskQueueImpl::RegisterWaitHandle(
     XTaskQueueRegistrationToken portToken;
     referenced_ptr<ITaskQueuePort> portHandle;
 
-    RETURN_IF_FAILED(GetPort(port, portHandle.address_of()));
-    RETURN_IF_FAILED(portHandle->RegisterWaitHandle(this, waitHandle, callbackContext, callback, &portToken));
+    RETURN_IF_FAILED(GetPortHandle(port, portHandle.address_of()));
+    RETURN_IF_FAILED(portHandle->RegisterWaitHandle(this, port, waitHandle, callbackContext, callback, &portToken));
 
     HRESULT hr = m_waitRegistry.Register(port, portToken, token);
     if (FAILED(hr))
@@ -1118,7 +1246,7 @@ void __stdcall TaskQueueImpl::UnregisterWaitHandle(
     if (pair.second.token != 0)
     {
         referenced_ptr<ITaskQueuePort> portHandle;
-        if (SUCCEEDED(GetPort(pair.first, portHandle.address_of())))
+        if (SUCCEEDED(GetPortHandle(pair.first, portHandle.address_of())))
         {
             portHandle->UnregisterWaitHandle(pair.second);
         }
@@ -1165,13 +1293,13 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
     entry->callback = callback;
 
     void* workToken;
+    
+    RETURN_IF_FAILED(m_work.port->PrepareTerminate(this, entry.get(), OnTerminationCallback, &workToken));
 
-    RETURN_IF_FAILED(m_work->PrepareTerminate(entry.get(), OnTerminationCallback, &workToken));
-
-    HRESULT hr = m_completion->PrepareTerminate(entry.get(), OnTerminationCallback, &entry->completionPortToken);
+    HRESULT hr = m_completion.port->PrepareTerminate(this, entry.get(), OnTerminationCallback, &entry->completionPortToken);
     if (FAILED(hr))
     {
-        m_work->CancelTermination(workToken);
+        m_work.port->CancelTermination(workToken);
         RETURN_HR(hr);
     }
 
@@ -1179,7 +1307,8 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
     // need, so we can proceed with the actual termination.
     
     entry.release();
-    m_work->Terminate(workToken);
+
+    m_work.port->Terminate(workToken);
     
     if (wait)
     {
@@ -1193,6 +1322,14 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
     return S_OK;
 }
 
+void TaskQueueImpl::FinalRelease()
+{
+    m_work.status = TaskQueuePortStatus::Terminated;
+    m_completion.status = TaskQueuePortStatus::Terminated;
+    m_work.port->Detach(this);
+    m_completion.port->Detach(this);
+}
+
 void TaskQueueImpl::OnTerminationCallback(_In_ void* context)
 {
     TerminationEntry* entry = static_cast<TerminationEntry*>(context);
@@ -1200,23 +1337,10 @@ void TaskQueueImpl::OnTerminationCallback(_In_ void* context)
     {
         case TerminationLevel::Work:
             entry->level = TerminationLevel::Completion;
-            entry->owner->m_completion->Terminate(entry->completionPortToken);
+            entry->owner->m_completion.port->Terminate(entry->completionPortToken);
             break;
 
         case TerminationLevel::Completion:
-
-            // If this queue is a composite, we need to terminate
-            // its sources.  This is a best effort.
-            if (entry->owner->m_workSource != nullptr)
-            {
-                entry->owner->m_workSource->Terminate(true, nullptr, nullptr);
-            }
-
-            if (entry->owner->m_completionSource != nullptr)
-            {
-                entry->owner->m_completionSource->Terminate(true, nullptr, nullptr);
-            }
-
             if (entry->callback != nullptr)
             {
                 entry->callback(entry->context);
@@ -1279,7 +1403,7 @@ STDAPI XTaskQueueGetPort(
     }
     
     referenced_ptr<ITaskQueuePort> aqs;
-    RETURN_IF_FAILED(aq->GetPort(port, aqs.address_of()));
+    RETURN_IF_FAILED(aq->GetPortHandle(port, aqs.address_of()));
     
     *portHandle = aqs->GetHandle();
     
@@ -1325,7 +1449,7 @@ STDAPI_(bool) XTaskQueueDispatch(
     }
     
     referenced_ptr<ITaskQueuePort> s;
-    if (FAILED(aq->GetPort(port, s.address_of())))
+    if (FAILED(aq->GetPortHandle(port, s.address_of())))
     {
         return false;
     }
@@ -1333,7 +1457,7 @@ STDAPI_(bool) XTaskQueueDispatch(
     bool found = s->DrainOneItem();
     if (!found && timeoutInMs != 0)
     {
-        found = s->Wait(timeoutInMs);
+        found = s->Wait(GetQueue(queue), timeoutInMs);
         if (found) s->DrainOneItem();
     }
 
@@ -1357,7 +1481,7 @@ STDAPI_(bool) XTaskQueueIsEmpty(
     }
     
     referenced_ptr<ITaskQueuePort> s;
-    if (FAILED(aq->GetPort(port, s.address_of())))
+    if (FAILED(aq->GetPortHandle(port, s.address_of())))
     {
         return false;
     }
@@ -1425,9 +1549,9 @@ STDAPI XTaskQueueSubmitDelayedCallback(
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
 
     referenced_ptr<ITaskQueuePort> s;
-    RETURN_IF_FAILED(aq->GetPort(port, s.address_of()));
+    RETURN_IF_FAILED(aq->GetPortHandle(port, s.address_of()));
 
-    RETURN_HR(s->QueueItem(aq.get(), delayMs, callbackContext, callback));
+    RETURN_HR(s->QueueItem(aq.get(), port, delayMs, callbackContext, callback));
 }
 
 //

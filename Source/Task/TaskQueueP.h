@@ -32,12 +32,14 @@ struct ITaskQueuePort: IApi
 
     virtual HRESULT __stdcall QueueItem(
         _In_ ITaskQueue* owner,
+        _In_ XTaskQueuePort port,
         _In_ uint32_t waitMs, 
-        _In_ void* callbackContext, 
+        _In_opt_ void* callbackContext,
         _In_ XTaskQueueCallback* callback) = 0;
 
     virtual HRESULT __stdcall RegisterWaitHandle(
         _In_ ITaskQueue* owner,
+        _In_ XTaskQueuePort port,
         _In_ HANDLE waitHandle,
         _In_opt_ void* callbackContext,
         _In_ XTaskQueueCallback* callback,
@@ -47,6 +49,7 @@ struct ITaskQueuePort: IApi
         _In_ XTaskQueueRegistrationToken token) = 0;
 
     virtual HRESULT __stdcall PrepareTerminate(
+        _In_ ITaskQueue* owner,
         _In_ void* context,
         _In_ XTaskQueueTerminatedCallback* callback,
         _Out_ void** token) = 0;
@@ -56,10 +59,26 @@ struct ITaskQueuePort: IApi
 
     virtual void __stdcall Terminate(
         _In_ void* token) = 0;
+    
+    virtual void Detach(
+        _In_ ITaskQueue* owner) = 0;
 
     virtual bool __stdcall DrainOneItem() = 0;
-    virtual bool __stdcall Wait(_In_ uint32_t timeout) = 0;
+    
+    virtual bool __stdcall Wait(
+        _In_ ITaskQueue* owner,
+        _In_ uint32_t timeout) = 0;
+
     virtual bool __stdcall IsEmpty() = 0;
+};
+
+// The status of a port on the queue.
+enum class TaskQueuePortStatus
+{
+    Active,
+    Canceled,
+    Terminating,
+    Terminated
 };
 
 // The task queue.  The public flat API is built entirely on
@@ -68,9 +87,24 @@ struct ITaskQueue : IApi
 {
     virtual XTaskQueueHandle __stdcall GetHandle() = 0;
     
-    virtual HRESULT __stdcall GetPort(
+    virtual HRESULT __stdcall GetPortHandle(
         _In_ XTaskQueuePort port,
         _Out_ ITaskQueuePort** portHandle) = 0;
+    
+    virtual XTaskQueuePort __stdcall GetPort(
+        _In_ ITaskQueuePort* portHandle) = 0;
+    
+    virtual TaskQueuePortStatus __stdcall GetPortStatus(
+        _In_ ITaskQueuePort* portHandle) = 0;
+    
+    virtual bool __stdcall TrySetPortStatus(
+        _In_ ITaskQueuePort* portHandle,
+        _In_ TaskQueuePortStatus expectedStatus,
+        _In_ TaskQueuePortStatus status) = 0;
+
+    virtual void __stdcall SetPortStatus(
+        _In_ ITaskQueuePort* portHandle,
+        _In_ TaskQueuePortStatus status) = 0;
 
     virtual HRESULT __stdcall RegisterWaitHandle(
         _In_ XTaskQueuePort port,
