@@ -230,6 +230,7 @@ private:
         ITaskQueuePortContext* portContext;
         TaskQueuePortImpl* port;
         QueueEntry* queueEntry;
+        std::atomic_flag appended;
     };
 #endif
 
@@ -293,6 +294,7 @@ private:
 
     bool AppendWaitRegistrationEntry(
         _In_ WaitRegistration* waitReg,
+        _In_ bool addRef = true,
         _In_ bool signal = true);
 
     void ProcessWaitCallback(
@@ -311,13 +313,8 @@ class TaskQueuePortContextImpl : public ITaskQueuePortContext
 public:
     
     TaskQueuePortContextImpl(
-        _In_ XTaskQueuePort port) : m_type(port)
-    {
-    }
-    
-    void Initialize(
         _In_ ITaskQueue* queue,
-        _In_ XTaskQueuePort port);
+        _In_ XTaskQueuePort type);
     
     uint32_t __stdcall AddRef() override;
     uint32_t __stdcall Release() override;

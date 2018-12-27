@@ -949,8 +949,11 @@ public:
             XTaskQueueCallback* CompletionCallback = nullptr;
         } data, compositeData;
 
-        AutoHandle waitHandle = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        AutoHandle waitHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         VERIFY_IS_NOT_NULL(waitHandle);
+
+        AutoHandle compositeWaitHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        VERIFY_IS_NOT_NULL(compositeWaitHandle);
 
         VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &data.queue));
 
@@ -991,7 +994,7 @@ public:
         {
             TestData* pd = (TestData*)context;
             pd->queueTerminated = true;
-            XTaskQueueCloseHandle(pd->queue.Release());
+            //XTaskQueueCloseHandle(pd->queue.Release());
         };
 
         data.CompletionCallback = completionCallback;
@@ -1006,15 +1009,15 @@ public:
 
         VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(compositeData.queue, XTaskQueuePort::Work, &compositeData, workCallback));
         VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(compositeData.queue, XTaskQueuePort::Work, 300, &compositeData, futureCallback));
-        VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(compositeData.queue, XTaskQueuePort::Work, waitHandle, &compositeData, waitCallback, &token));
+        VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(compositeData.queue, XTaskQueuePort::Work, compositeWaitHandle, &compositeData, waitCallback, &token));
 
         VERIFY_SUCCEEDED(XTaskQueueTerminate(compositeData.queue, false, &compositeData, terminationCallback));
 
         bool somethingDispatched;
         do
         {
-            somethingDispatched = XTaskQueueDispatch(data.queue, XTaskQueuePort::Work, 1000);
-            somethingDispatched |= XTaskQueueDispatch(data.queue, XTaskQueuePort::Completion, 1000);
+            somethingDispatched = XTaskQueueDispatch(data.queue, XTaskQueuePort::Work, 500);
+            somethingDispatched |= XTaskQueueDispatch(data.queue, XTaskQueuePort::Completion, 500);
         } while (somethingDispatched);
 
         // Verify -- calls for the main queue should have gone through but calls for the composite
@@ -1031,8 +1034,7 @@ public:
         VERIFY_IS_TRUE(compositeData.workCanceled);
         VERIFY_IS_TRUE(compositeData.completionCanceled);
         VERIFY_IS_TRUE(compositeData.futureCanceled);
-        // waits don't get called; they're just erased.
-        VERIFY_IS_FALSE(compositeData.waitInvoked);
+        VERIFY_IS_TRUE(compositeData.waitCanceled);
         VERIFY_IS_TRUE(compositeData.queueTerminated);
 
         // Verify it is still possible to schedule a call on the main queue and that registrations remain
@@ -1040,20 +1042,24 @@ public:
         data.workCanceled = false;
         data.waitInvoked = false;
         data.waitCanceled = false;
+        compositeData.waitInvoked = false;
+        compositeData.waitCanceled = false;
         VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(data.queue, XTaskQueuePort::Work, &data, workCallback));
 
         SetEvent(waitHandle);
+        SetEvent(compositeWaitHandle);
 
         do
         {
-            somethingDispatched = XTaskQueueDispatch(data.queue, XTaskQueuePort::Work, 1000);
-            somethingDispatched |= XTaskQueueDispatch(data.queue, XTaskQueuePort::Completion, 1000);
+            somethingDispatched = XTaskQueueDispatch(data.queue, XTaskQueuePort::Work, 500);
+            somethingDispatched |= XTaskQueueDispatch(data.queue, XTaskQueuePort::Completion, 500);
         } while (somethingDispatched);
 
         VERIFY_IS_TRUE(data.workInvoked);
         VERIFY_IS_TRUE(data.waitInvoked);
         VERIFY_IS_FALSE(data.workCanceled);
         VERIFY_IS_FALSE(data.waitCanceled);
+        VERIFY_IS_FALSE(compositeData.waitInvoked);
     }
 
     DEFINE_TEST_CASE(VerifyQueueMonitorHasCorrectPorts)

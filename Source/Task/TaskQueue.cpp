@@ -213,7 +213,7 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
             }
 
             // Note: queue entries that are parked on the wait registration
-            // don't take a reference on the owner, so don't release here.
+            // don't take a reference on the port context, so don't release here.
             delete waits[idx]->queueEntry;
             delete waits[idx];
         }
@@ -351,7 +351,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     std::unique_ptr<QueueEntry> entry(new (std::nothrow) QueueEntry);
     RETURN_IF_NULL_ALLOC(entry);
 
-    // Entry gets its owner and an addref on it when it
+    // Entry gets its port context and an addref on it when it
     // is added to the queue
     entry->portContext = nullptr;
     entry->callback = callback;
@@ -359,7 +359,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     entry->waitRegistration = waitReg.get();
     entry->refs = 1;
 
-    // Owner on waitReg is not add-ref'd because a registered
+    // Port context on waitReg is not add-ref'd because a registered
     // waiter does not keep the queue alive.
     waitReg->waitHandle = waitHandle;
     waitReg->token = ++m_nextWaitToken;
@@ -367,6 +367,7 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     waitReg->port = this;
     waitReg->queueEntry = entry.get();
     waitReg->threadpoolWait = nullptr;
+    waitReg->appended.clear();
 
     std::lock_guard<std::mutex> lock(m_lock);
     RETURN_HR_IF(E_OUTOFMEMORY, m_events.capacity() == 0);
@@ -602,13 +603,10 @@ bool __stdcall TaskQueuePortImpl::Wait(
             {
                 if (m_waits[idx]->waitHandle == events[waitResult - WAIT_OBJECT_0])
                 {
-                    m_waits[idx]->queueEntry->refs++;
-
                     if (!AppendWaitRegistrationEntry(m_waits[idx]))
                     {
                         // If we fail adding to the queue, re-initialize our wait
                         LOG_IF_FAILED(InitializeWaitRegistration(m_waits[idx]));
-                        ReleaseEntry(m_waits[idx]->queueEntry);
                     }
                     break;
                 }
@@ -713,7 +711,7 @@ bool TaskQueuePortImpl::AppendEntry(
     return true;
 }
 
-// Releases the entry and the ref on the owner.
+// Releases the entry and the ref on the port context.
 void TaskQueuePortImpl::ReleaseEntry(
     _In_ QueueEntry* entry)
 {
@@ -760,7 +758,7 @@ void TaskQueuePortImpl::CancelPendingEntries(
         {
             if (initialPushedEntry == nullptr)
             {
-                queueEntry = initialPushedEntry;
+                 initialPushedEntry = queueEntry;
             }
             m_pendingList->push_back(queueEntry, queueEntryNode);
         }
@@ -782,8 +780,12 @@ void TaskQueuePortImpl::CancelPendingEntries(
         {
             CloseThreadpoolWait(m_waits[idx]->threadpoolWait);
             m_waits[idx]->queueEntry->waitRegistration = nullptr;
-            
-            if (!appendToQueue || !AppendWaitRegistrationEntry(m_waits[idx]))
+
+            if (appendToQueue)
+            {
+                AppendWaitRegistrationEntry(m_waits[idx], false);
+            }
+            else
             {
                 ReleaseEntry(m_waits[idx]->queueEntry);
             }
@@ -982,11 +984,13 @@ void CALLBACK TaskQueuePortImpl::WaitCallback(
 HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
     _In_ WaitRegistration* waitReg)
 {
-    if (waitReg->queueEntry->owner != nullptr)
+    if (waitReg->queueEntry->portContext != nullptr)
     {
-        waitReg->queueEntry->owner->Release();
-        waitReg->queueEntry->owner = nullptr;
+        waitReg->queueEntry->portContext->Release();
+        waitReg->queueEntry->portContext = nullptr;
     }
+
+    waitReg->appended.clear();
 
     if (waitReg->threadpoolWait == nullptr)
     {
@@ -999,24 +1003,40 @@ HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
     return S_OK;
 }
 
-// Like append entry this assumes the queue entry has
-// already been addref'd
+// Appends the queue entry of the wait registration to the queue
+// if it has not allready been done. This can addref the queue
+// entry. Returns true if it appended or found nothing to do.
+// Returns false if it needed to append but failed. On failure this
+// correctly releases the queue entry.
 bool TaskQueuePortImpl::AppendWaitRegistrationEntry(
     _In_ WaitRegistration* waitReg,
+    _In_ bool addRef,
     _In_ bool signal)
 {
     // Prepare the queue entry for insert
     QueueEntry* entry = waitReg->queueEntry;
-    ASSERT(entry->owner == nullptr);
-    entry->owner = waitReg->owner;
-    entry->owner->AddRef();
 
-    bool success = AppendEntry(entry, nullptr, signal);
+    bool success = true;
 
-    if (!success)
+    if (waitReg->appended.test_and_set() == false)
     {
-        entry->owner->Release();
-        entry->owner = nullptr;
+        if (addRef)
+        {
+            entry->refs++;
+        }
+
+        ASSERT(entry->portContext == nullptr);
+        entry->portContext = waitReg->portContext;
+        entry->portContext->AddRef();
+
+        success = AppendEntry(entry, nullptr, signal);
+
+        if (!success)
+        {
+            entry->portContext->Release();
+            entry->portContext = nullptr;
+            ReleaseEntry(entry);
+        }
     }
 
     return success;
@@ -1026,12 +1046,9 @@ bool TaskQueuePortImpl::AppendWaitRegistrationEntry(
 void TaskQueuePortImpl::ProcessWaitCallback(
     _In_ WaitRegistration* waitReg)
 {
-    QueueEntry* queueEntry = waitReg->queueEntry;
-    queueEntry->refs++;
     if (!AppendWaitRegistrationEntry(waitReg))
     {
         LOG_IF_FAILED(InitializeWaitRegistration(waitReg));
-        ReleaseEntry(queueEntry);
     }
 }
 
@@ -1041,12 +1058,12 @@ void TaskQueuePortImpl::ProcessWaitCallback(
 // TaskQueuePortContextImpl
 //
 
-void TaskQueuePortContextImpl::Initialize(
+TaskQueuePortContextImpl::TaskQueuePortContextImpl(
     _In_ ITaskQueue* queue,
-    _In_ XTaskQueuePort port)
+    _In_ XTaskQueuePort type) :
+    m_queue(queue),
+    m_type(type)
 {
-    m_queue = queue;
-    m_type = port;
 }
     
 uint32_t __stdcall TaskQueuePortContextImpl::AddRef()
@@ -1117,8 +1134,8 @@ TaskQueueImpl::TaskQueueImpl() :
     Api(),
     m_callbackSubmitted(&m_header),
     m_allowClose(true),
-    m_work(XTaskQueuePort::Work),
-    m_completion(XTaskQueuePort::Completion)
+    m_work(this, XTaskQueuePort::Work),
+    m_completion(this, XTaskQueuePort::Completion)
 {
     m_header.m_signature = TASK_QUEUE_SIGNATURE;
     m_header.m_queue = this;

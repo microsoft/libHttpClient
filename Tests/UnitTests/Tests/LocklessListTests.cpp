@@ -193,4 +193,62 @@ public:
             VERIFY_IS_TRUE(ops[idx]);
         }
     }
+
+    TEST_METHOD(VerifyRemoveAndReAdd)
+    {
+        LocklessList<uint32_t> list;
+        const uint32_t total = 10;
+
+        for (uint32_t idx = 0; idx < total; idx++)
+        {
+            uint32_t* n = new uint32_t(idx);
+            VERIFY_IS_TRUE(list.push_back(n));
+        }
+
+        uint32_t* initial = nullptr;
+        uint32_t evenCount = 0;
+        uint32_t evenPushCount = 0;
+        uint32_t oddCount = 0;
+
+        uint32_t* node = list.pop_front();
+        while (node != nullptr)
+        {
+            if (node == initial)
+            {
+                list.push_back(node);
+                break;
+            }
+
+            if ((*node) & 1)
+            {
+                oddCount++;
+                delete node;
+            }
+            else
+            {
+                if (initial == nullptr)
+                {
+                    initial = node;
+                }
+                list.push_back(node);
+                evenPushCount++;
+            }
+
+            node = list.pop_front();
+        }
+
+        // Now pop off what's left - they should be all the
+        // evens.
+        node = list.pop_front();
+        while (node != nullptr)
+        {
+            VERIFY_ARE_EQUAL(0u, ((*node) & 1u));
+            delete node;
+            evenCount++;
+            node = list.pop_front();
+        }
+
+        VERIFY_ARE_EQUAL(oddCount, evenPushCount);
+        VERIFY_ARE_EQUAL(oddCount, evenCount);
+    }
 };
