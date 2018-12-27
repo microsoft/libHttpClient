@@ -468,6 +468,7 @@ HRESULT __stdcall TaskQueuePortImpl::PrepareTerminate(
 
     term->context = context;
     term->callback = callback;
+    term->owner = owner;
     term->node = node.release();
 
     // Mark the port as canceled, but don't overwrite
