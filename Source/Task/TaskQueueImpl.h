@@ -37,7 +37,7 @@ public:
         {
             m_refs++;
             FinalRelease();
-            refs = m_refs--;
+            refs = --m_refs;
             if (refs == 0)
             {
                 delete this;
@@ -93,7 +93,7 @@ public:
 
     HRESULT Register(_In_ void* context, _In_ XTaskQueueMonitorCallback* callback, _Out_ XTaskQueueRegistrationToken* token);
     void Unregister(_In_ XTaskQueueRegistrationToken token);
-    void Invoke(_In_ ITaskQueuePortContext* portContext);
+    void Invoke(_In_ XTaskQueuePort port);
 
 private:
 
@@ -152,6 +152,7 @@ public:
 
     HRESULT Initialize(
         _In_ XTaskQueueDispatchMode mode,
+        _In_ XTaskQueuePort nativePort,
         _Out_ SubmitCallback* submitCallback);
 
     XTaskQueuePortHandle __stdcall GetHandle() { return &m_header; }
@@ -236,6 +237,7 @@ private:
 
     XTaskQueuePortObject m_header = { };
     XTaskQueueDispatchMode m_dispatchMode = XTaskQueueDispatchMode::Manual;
+    XTaskQueuePort m_nativePort;
     SubmitCallback* m_callbackSubmitted = nullptr;
     std::atomic<uint32_t> m_processingCallback{ 0 };
     std::condition_variable_any m_event;
@@ -286,7 +288,7 @@ private:
 
     void SignalQueue();
 
-    void ProcessThreadPoolCallback();
+    void ProcessThreadPoolCallback(_In_ ThreadPoolActionComplete& complete);
 
 #ifdef _WIN32
     HRESULT InitializeWaitRegistration(

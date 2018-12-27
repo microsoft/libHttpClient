@@ -44,9 +44,17 @@ public:
                         {
                             m_calls--;
 
+                            ActionCompleteImpl ac(this);
+
                             lock.unlock();
-                            m_callback(m_context);
+                            m_callback(m_context, ac);
                             lock.lock();
+
+                            if (!ac.Invoked)
+                            {
+                                m_activeCalls--;
+                                m_active.notify_all();
+                            }
                         }
                     }
                 }));
@@ -65,10 +73,14 @@ public:
         m_terminate = true;
         m_wake.notify_all();
 
-        for(auto &thread : m_pool)
+        // Wait for the active call count
+        // to go to zero.
+        std::unique_lock<std::mutex> lock(m_activeLock);
+        while (m_activeCalls != 0)
         {
-            thread.join();
+            m_active.wait(lock);
         }
+        lock.unlock();
 
         m_pool.clear();
     }
@@ -78,17 +90,43 @@ public:
         {
             std::lock_guard<std::mutex> lock(m_wakeLock);
             m_calls++;
+            m_activeCalls++;
         }
         m_wake.notify_all();
     }
 
 private:
 
+    struct ActionCompleteImpl : ThreadPoolActionComplete
+    {
+        ActionCompleteImpl(ThreadPoolImpl* owner) :
+            m_owner(owner)
+        {
+        }
+
+        bool Invoked = false;
+
+        void operator()() override
+        {
+            Invoked = true;
+            m_owner->m_activeCalls--;
+            m_owner->m_active.notify_all();
+        }
+
+    private:
+        ThreadPoolImpl * m_owner = nullptr;
+    };
+
     std::mutex m_wakeLock;
     std::condition_variable m_wake;
+    uint32_t m_calls = 0;
+
+    std::mutex m_activeLock;
+    std::condition_variable m_active;
+    uint32_t m_activeCalls = 0;
+
     bool m_terminate = false;
     std::vector<std::thread> m_pool;
-    uint32_t m_calls = 0;
     void* m_context = nullptr;
     ThreadPoolCallback* m_callback = nullptr;
 };

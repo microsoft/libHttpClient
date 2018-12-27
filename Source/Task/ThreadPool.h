@@ -1,6 +1,11 @@
 #pragma once
 
-using ThreadPoolCallback = void(_In_opt_ void*);
+struct ThreadPoolActionComplete
+{
+    virtual void operator()() = 0;
+};
+
+using ThreadPoolCallback = void(_In_opt_ void*, _In_ ThreadPoolActionComplete& complete);
 
 class ThreadPoolImpl;
 

@@ -104,12 +104,10 @@ void SubmitCallback::Unregister(_In_ XTaskQueueRegistrationToken token)
     while (!m_indexAndRef.compare_exchange_weak(expected, desired)) {}
 }
 
-void SubmitCallback::Invoke(_In_ ITaskQueuePortContext* portContext)
+void SubmitCallback::Invoke(_In_ XTaskQueuePort port)
 {
     uint32_t indexAndRef = ++m_indexAndRef;
     uint32_t bufferIdx = (indexAndRef & 0x80000000 ? 1 : 0);
-    
-    XTaskQueuePort portId = portContext->GetType();
     
     for(uint32_t idx = 0; idx < ARRAYSIZE(m_buffer1); idx++)
     {
@@ -118,7 +116,7 @@ void SubmitCallback::Invoke(_In_ ITaskQueuePortContext* portContext)
             m_buffers[bufferIdx][idx].Callback(
                 m_buffers[bufferIdx][idx].Context,
                 m_queue,
-                portId);
+                port);
         }
     }
 
@@ -232,10 +230,14 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
 #endif
 }
 
-HRESULT TaskQueuePortImpl::Initialize(XTaskQueueDispatchMode mode, SubmitCallback* submitCallback)
+HRESULT TaskQueuePortImpl::Initialize(
+    _In_ XTaskQueueDispatchMode mode, 
+    _In_ XTaskQueuePort nativePort,
+    _In_ SubmitCallback* submitCallback)
 {
-    m_callbackSubmitted = submitCallback;
     m_dispatchMode = mode;
+    m_nativePort = nativePort;
+    m_callbackSubmitted = submitCallback;
 
     m_queueList.reset(new (std::nothrow) LocklessList<QueueEntry>);
     RETURN_IF_NULL_ALLOC(m_queueList);
@@ -266,10 +268,10 @@ HRESULT TaskQueuePortImpl::Initialize(XTaskQueueDispatchMode mode, SubmitCallbac
 
     case XTaskQueueDispatchMode::ThreadPool:
     case XTaskQueueDispatchMode::SerializedThreadPool:
-        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context)
+        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context, ThreadPoolActionComplete& complete)
         {
             TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
-            pthis->ProcessThreadPoolCallback();
+            pthis->ProcessThreadPoolCallback(complete);
         }));
         break;
           
@@ -701,7 +703,7 @@ bool TaskQueuePortImpl::AppendEntry(
         break;
     }
 
-    m_callbackSubmitted->Invoke(entry->portContext);
+    m_callbackSubmitted->Invoke(m_nativePort);
     
     if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
     {
@@ -906,9 +908,9 @@ void TaskQueuePortImpl::SubmitPendingCallback()
 }
 
 // Called from thread pool callback
-void TaskQueuePortImpl::ProcessThreadPoolCallback()
+void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ ThreadPoolActionComplete& complete)
 {
-    referenced_ptr<ITaskQueuePort>(this);
+    referenced_ptr<ITaskQueuePort> ref(this);
     uint32_t wasProcessing = m_processingCallback++;
     if (m_dispatchMode == XTaskQueueDispatchMode::SerializedThreadPool)
     {
@@ -922,6 +924,10 @@ void TaskQueuePortImpl::ProcessThreadPoolCallback()
         DrainOneItem();
     }
     m_processingCallback--;
+
+    // Important that this comes before our release (which is implicit
+    // in the raii referenced_ptr wrapper).
+    complete();
 }
 
 void TaskQueuePortImpl::SignalQueue()
@@ -960,7 +966,7 @@ void TaskQueuePortImpl::SignalTerminations()
             }
             m_terminationList->push_back(term, termNode);
         }
-        term = m_terminationList->pop_front();
+        term = m_terminationList->pop_front(&termNode);
     }
 }
 
@@ -1159,11 +1165,11 @@ HRESULT TaskQueueImpl::Initialize(
 
     referenced_ptr<TaskQueuePortImpl> work(new (std::nothrow) TaskQueuePortImpl);
     RETURN_IF_NULL_ALLOC(work);
-    RETURN_IF_FAILED(work->Initialize(workMode, &m_callbackSubmitted));
+    RETURN_IF_FAILED(work->Initialize(workMode, XTaskQueuePort::Work, &m_callbackSubmitted));
 
     referenced_ptr<TaskQueuePortImpl> completion(new (std::nothrow) TaskQueuePortImpl);
     RETURN_IF_NULL_ALLOC(completion);
-    RETURN_IF_FAILED(completion->Initialize(completionMode, &m_callbackSubmitted));
+    RETURN_IF_FAILED(completion->Initialize(completionMode, XTaskQueuePort::Completion, &m_callbackSubmitted));
     
     work->GetHandle()->m_queue = this;
     completion->GetHandle()->m_queue = this;
@@ -1327,6 +1333,11 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
     
     entry.release();
 
+    // Addref ourself to ensure we don't lose the queue to a close
+    // while termination is in flight.  This is released on OnTerminationCallback
+
+    AddRef();
+
     m_work.Port->Terminate(workToken);
     
     if (wait)
@@ -1368,6 +1379,7 @@ void TaskQueueImpl::OnTerminationCallback(_In_ void* context)
             entry->owner->m_termination.terminated = true;
             entry->owner->m_termination.cv.notify_all();
 
+            entry->owner->Release();
             delete entry;
             break;
 

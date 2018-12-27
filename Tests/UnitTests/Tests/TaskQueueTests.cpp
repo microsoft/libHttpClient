@@ -994,7 +994,7 @@ public:
         {
             TestData* pd = (TestData*)context;
             pd->queueTerminated = true;
-            //XTaskQueueCloseHandle(pd->queue.Release());
+            XTaskQueueCloseHandle(pd->queue.Release());
         };
 
         data.CompletionCallback = completionCallback;
@@ -1093,6 +1093,6 @@ public:
         while (XTaskQueueDispatch(compositeQueue, XTaskQueuePort::Completion, 100));
 
         VERIFY_ARE_EQUAL(queuePort, XTaskQueuePort::Work);
-        VERIFY_ARE_EQUAL(compositeQueuePort, XTaskQueuePort::Completion);
+        VERIFY_ARE_EQUAL(compositeQueuePort, (XTaskQueuePort)(-1)); // composite queues don't monitor;
     }
 };
