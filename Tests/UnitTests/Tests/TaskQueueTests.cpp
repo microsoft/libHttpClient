@@ -65,6 +65,13 @@ public:
         return _handle;
     }
 
+    H Release()
+    {
+        H h = _handle;
+        _handle = nullptr;
+        return h;
+    }
+
 private:
 
     H _handle;
@@ -867,5 +874,219 @@ public:
 
         // Replace the global queue back
         XTaskQueueSetCurrentProcessTaskQueue(globalQueue);
+    }
+
+    DEFINE_TEST_CASE(VerifyCloseInTerminationForThreadPool)
+    {
+        struct TestData
+        {
+            AutoQueueHandle queue;
+            bool terminationCalled = false;
+
+        } data;
+
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &data.queue));
+
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(data.queue, false, &data, [](void* context)
+        {
+            TestData* pd = (TestData*)context;
+            pd->terminationCalled = true;
+            XTaskQueueCloseHandle(pd->queue.Release());
+        }));
+
+        uint64_t ticks = GetTickCount64();
+        while (!data.terminationCalled && GetTickCount64() - ticks < 5000)
+        {
+            Sleep(250);
+        }
+
+        VERIFY_IS_TRUE(data.terminationCalled);
+    }
+
+    DEFINE_TEST_CASE(VerifyCloseInTerminationForManual)
+    {
+        struct TestData
+        {
+            AutoQueueHandle queue;
+            bool terminationCalled = false;
+
+        } data;
+
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &data.queue));
+
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(data.queue, false, &data, [](void* context)
+        {
+            TestData* pd = (TestData*)context;
+            pd->terminationCalled = true;
+            XTaskQueueCloseHandle(pd->queue.Release());
+        }));
+
+        uint64_t ticks = GetTickCount64();
+        while (!data.terminationCalled && GetTickCount64() - ticks < 5000)
+        {
+            XTaskQueueDispatch(data.queue, XTaskQueuePort::Work, 0);
+            XTaskQueueDispatch(data.queue, XTaskQueuePort::Completion, 0);
+            Sleep(250);
+        }
+
+        VERIFY_IS_TRUE(data.terminationCalled);
+    }
+
+    DEFINE_TEST_CASE(VerifyTerminationOfCompositeQueue)
+    {
+        struct TestData
+        {
+            AutoQueueHandle queue;
+            bool workInvoked = false;
+            bool workCanceled = false;
+            bool completionInvoked = false;
+            bool completionCanceled = false;
+            bool futureInvoked = false;
+            bool futureCanceled = false;
+            bool waitInvoked = false;
+            bool waitCanceled = false;
+            bool queueTerminated = false;
+            XTaskQueueCallback* CompletionCallback = nullptr;
+        } data, compositeData;
+
+        AutoHandle waitHandle = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        VERIFY_IS_NOT_NULL(waitHandle);
+
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &data.queue));
+
+        XTaskQueuePortHandle port;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(data.queue, XTaskQueuePort::Work, &port));
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(port, port, &compositeData.queue));
+
+        auto workCallback = [](void* context, bool canceled)
+        {
+            TestData* pd = (TestData*)context;
+            pd->workInvoked = true;
+            pd->workCanceled = canceled;
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(pd->queue, XTaskQueuePort::Completion, pd, pd->CompletionCallback));
+        };
+
+        auto futureCallback = [](void* context, bool canceled)
+        {
+            TestData* pd = (TestData*)context;
+            pd->futureInvoked = true;
+            pd->futureCanceled = canceled;
+        };
+
+        auto waitCallback = [](void* context, bool canceled)
+        {
+            TestData* pd = (TestData*)context;
+            pd->waitInvoked = true;
+            pd->waitCanceled = canceled;
+        };
+
+        auto completionCallback = [](void* context, bool canceled)
+        {
+            TestData* pd = (TestData*)context;
+            pd->completionInvoked = true;
+            pd->completionCanceled = canceled;
+        };
+
+        auto terminationCallback = [](void* context)
+        {
+            TestData* pd = (TestData*)context;
+            pd->queueTerminated = true;
+            XTaskQueueCloseHandle(pd->queue.Release());
+        };
+
+        data.CompletionCallback = completionCallback;
+        compositeData.CompletionCallback = completionCallback;
+
+        // Submit work callbacks to both queues and terminate the composite.
+        XTaskQueueRegistrationToken token;
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(data.queue, XTaskQueuePort::Work, &data, workCallback));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(data.queue, XTaskQueuePort::Work, 300, &data, futureCallback));
+        VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(data.queue, XTaskQueuePort::Work, waitHandle, &data, waitCallback, &token));
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(compositeData.queue, XTaskQueuePort::Work, &compositeData, workCallback));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(compositeData.queue, XTaskQueuePort::Work, 300, &compositeData, futureCallback));
+        VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(compositeData.queue, XTaskQueuePort::Work, waitHandle, &compositeData, waitCallback, &token));
+
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(compositeData.queue, false, &compositeData, terminationCallback));
+
+        bool somethingDispatched;
+        do
+        {
+            somethingDispatched = XTaskQueueDispatch(data.queue, XTaskQueuePort::Work, 1000);
+            somethingDispatched |= XTaskQueueDispatch(data.queue, XTaskQueuePort::Completion, 1000);
+        } while (somethingDispatched);
+
+        // Verify -- calls for the main queue should have gone through but calls for the composite
+        // should have been canceled.
+
+        VERIFY_IS_TRUE(data.workInvoked);
+        VERIFY_IS_TRUE(data.completionInvoked);
+        VERIFY_IS_TRUE(data.futureInvoked);
+        VERIFY_IS_FALSE(data.waitInvoked);
+        VERIFY_IS_FALSE(data.workCanceled);
+        VERIFY_IS_FALSE(data.completionCanceled);
+        VERIFY_IS_FALSE(data.futureCanceled);
+
+        VERIFY_IS_TRUE(compositeData.workCanceled);
+        VERIFY_IS_TRUE(compositeData.completionCanceled);
+        VERIFY_IS_TRUE(compositeData.futureCanceled);
+        // waits don't get called; they're just erased.
+        VERIFY_IS_FALSE(compositeData.waitInvoked);
+        VERIFY_IS_TRUE(compositeData.queueTerminated);
+
+        // Verify it is still possible to schedule a call on the main queue and that registrations remain
+        data.workInvoked = false;
+        data.workCanceled = false;
+        data.waitInvoked = false;
+        data.waitCanceled = false;
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(data.queue, XTaskQueuePort::Work, &data, workCallback));
+
+        SetEvent(waitHandle);
+
+        do
+        {
+            somethingDispatched = XTaskQueueDispatch(data.queue, XTaskQueuePort::Work, 1000);
+            somethingDispatched |= XTaskQueueDispatch(data.queue, XTaskQueuePort::Completion, 1000);
+        } while (somethingDispatched);
+
+        VERIFY_IS_TRUE(data.workInvoked);
+        VERIFY_IS_TRUE(data.waitInvoked);
+        VERIFY_IS_FALSE(data.workCanceled);
+        VERIFY_IS_FALSE(data.waitCanceled);
+    }
+
+    DEFINE_TEST_CASE(VerifyQueueMonitorHasCorrectPorts)
+    {
+        AutoQueueHandle queue, compositeQueue;
+
+        XTaskQueuePort queuePort = (XTaskQueuePort)(-1);
+        XTaskQueuePort compositeQueuePort = (XTaskQueuePort)(-1);
+
+        auto cb = [](void*, bool) {};
+
+        auto monitorCallback = [](void* context, XTaskQueueHandle, XTaskQueuePort port)
+        {
+            XTaskQueuePort* pp = (XTaskQueuePort*)context;
+            *pp = port;
+        };
+
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+
+        XTaskQueuePortHandle port;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Work, &port));
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(port, port, &compositeQueue));
+
+        XTaskQueueRegistrationToken token;
+        VERIFY_SUCCEEDED(XTaskQueueRegisterMonitor(queue, &queuePort, monitorCallback, &token));
+        VERIFY_SUCCEEDED(XTaskQueueRegisterMonitor(compositeQueue, &compositeQueuePort, monitorCallback, &token));
+
+        // Submitting a call to the composite port should generate a monitor callback on each
+        // queue with the correct port ID.
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(compositeQueue, XTaskQueuePort::Completion, nullptr, cb));
+        while (XTaskQueueDispatch(compositeQueue, XTaskQueuePort::Completion, 100));
+
+        VERIFY_ARE_EQUAL(queuePort, XTaskQueuePort::Work);
+        VERIFY_ARE_EQUAL(compositeQueuePort, XTaskQueuePort::Completion);
     }
 };
