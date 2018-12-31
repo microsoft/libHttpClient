@@ -231,13 +231,9 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
 }
 
 HRESULT TaskQueuePortImpl::Initialize(
-    _In_ XTaskQueueDispatchMode mode, 
-    _In_ XTaskQueuePort nativePort,
-    _In_ SubmitCallback* submitCallback)
+    _In_ XTaskQueueDispatchMode mode)
 {
     m_dispatchMode = mode;
-    m_nativePort = nativePort;
-    m_callbackSubmitted = submitCallback;
 
     m_queueList.reset(new (std::nothrow) LocklessList<QueueEntry>);
     RETURN_IF_NULL_ALLOC(m_queueList);
@@ -532,10 +528,21 @@ void __stdcall TaskQueuePortImpl::Terminate(
     }
 }
 
+HRESULT __stdcall TaskQueuePortImpl::Attach(
+    _In_ ITaskQueuePortContext* portContext)
+{
+    return m_attachedContexts.Add(portContext);
+}
+
 void __stdcall TaskQueuePortImpl::Detach(
     _In_ ITaskQueuePortContext* portContext)
 {
     CancelPendingEntries(portContext, false);
+    m_attachedContexts.Remove(portContext, [](void* context, ITaskQueuePortContext* compare)
+    {
+        ITaskQueuePortContext* cxt = static_cast<ITaskQueuePortContext*>(context);
+        return cxt == compare;
+    });
 }
 
 bool __stdcall TaskQueuePortImpl::DrainOneItem()
@@ -703,7 +710,10 @@ bool TaskQueuePortImpl::AppendEntry(
         break;
     }
 
-    m_callbackSubmitted->Invoke(m_nativePort);
+    m_attachedContexts.Visit(nullptr, [](void*, ITaskQueuePortContext* portContext)
+    {
+        portContext->ItemQueued();
+    });
     
     if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
     {
@@ -1066,9 +1076,11 @@ void TaskQueuePortImpl::ProcessWaitCallback(
 
 TaskQueuePortContextImpl::TaskQueuePortContextImpl(
     _In_ ITaskQueue* queue,
-    _In_ XTaskQueuePort type) :
+    _In_ XTaskQueuePort type,
+    _In_ SubmitCallback* submitCallback) :
     m_queue(queue),
-    m_type(type)
+    m_type(type),
+    m_submitCallback(submitCallback)
 {
 }
     
@@ -1132,6 +1144,11 @@ void __stdcall TaskQueuePortContextImpl::SetStatus(
     m_status = status;
 }
 
+void __stdcall TaskQueuePortContextImpl::ItemQueued()
+{
+    m_submitCallback->Invoke(m_type);
+}
+
 //
 // TaskQueueImpl
 //
@@ -1140,8 +1157,8 @@ TaskQueueImpl::TaskQueueImpl() :
     Api(),
     m_callbackSubmitted(&m_header),
     m_allowClose(true),
-    m_work(this, XTaskQueuePort::Work),
-    m_completion(this, XTaskQueuePort::Completion)
+    m_work(this, XTaskQueuePort::Work, &m_callbackSubmitted),
+    m_completion(this, XTaskQueuePort::Completion, &m_callbackSubmitted)
 {
     m_header.m_signature = TASK_QUEUE_SIGNATURE;
     m_header.m_queue = this;
@@ -1165,17 +1182,20 @@ HRESULT TaskQueueImpl::Initialize(
 
     referenced_ptr<TaskQueuePortImpl> work(new (std::nothrow) TaskQueuePortImpl);
     RETURN_IF_NULL_ALLOC(work);
-    RETURN_IF_FAILED(work->Initialize(workMode, XTaskQueuePort::Work, &m_callbackSubmitted));
+    RETURN_IF_FAILED(work->Initialize(workMode));
 
     referenced_ptr<TaskQueuePortImpl> completion(new (std::nothrow) TaskQueuePortImpl);
     RETURN_IF_NULL_ALLOC(completion);
-    RETURN_IF_FAILED(completion->Initialize(completionMode, XTaskQueuePort::Completion, &m_callbackSubmitted));
+    RETURN_IF_FAILED(completion->Initialize(completionMode));
     
     work->GetHandle()->m_queue = this;
     completion->GetHandle()->m_queue = this;
     
     RETURN_IF_FAILED(work->QueryApi(ApiId::TaskQueuePort, (void**)&m_work.Port));
     RETURN_IF_FAILED(completion->QueryApi(ApiId::TaskQueuePort, (void**)&m_completion.Port));
+
+    RETURN_IF_FAILED(m_work.Port->Attach(&m_work));
+    RETURN_IF_FAILED(m_completion.Port->Attach(&m_completion));
 
     if (!allowClose)
     {
@@ -1206,6 +1226,9 @@ HRESULT TaskQueueImpl::Initialize(
 
     m_allowClose = true;
     
+    RETURN_IF_FAILED(m_work.Port->Attach(&m_work));
+    RETURN_IF_FAILED(m_completion.Port->Attach(&m_completion));
+
     return S_OK;
 }
 

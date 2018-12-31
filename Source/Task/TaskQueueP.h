@@ -59,6 +59,9 @@ struct ITaskQueuePort: IApi
 
     virtual void __stdcall Terminate(
         _In_ void* token) = 0;
+
+    virtual HRESULT __stdcall Attach(
+        _In_ ITaskQueuePortContext* portContext) = 0;
     
     virtual void __stdcall Detach(
         _In_ ITaskQueuePortContext* portContext) = 0;
@@ -97,6 +100,8 @@ struct ITaskQueuePortContext : IApi
     
     virtual void __stdcall SetStatus(
         _In_ TaskQueuePortStatus status) = 0;
+
+    virtual void __stdcall ItemQueued() = 0;
 };
 
 // The task queue.  The public flat API is built entirely on

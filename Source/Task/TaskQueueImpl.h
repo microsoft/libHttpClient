@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "AtomicVector.h"
 #include "LocklessList.h"
 #include "StaticArray.h"
 #include "ThreadPool.h"
@@ -151,9 +152,7 @@ public:
     virtual ~TaskQueuePortImpl();
 
     HRESULT Initialize(
-        _In_ XTaskQueueDispatchMode mode,
-        _In_ XTaskQueuePort nativePort,
-        _Out_ SubmitCallback* submitCallback);
+        _In_ XTaskQueueDispatchMode mode);
 
     XTaskQueuePortHandle __stdcall GetHandle() { return &m_header; }
 
@@ -184,6 +183,9 @@ public:
 
     void __stdcall Terminate(
         _In_ void* token);
+
+    virtual HRESULT __stdcall Attach(
+        _In_ ITaskQueuePortContext* portContext);
 
     void __stdcall Detach(
         _In_ ITaskQueuePortContext* portContext);
@@ -237,8 +239,7 @@ private:
 
     XTaskQueuePortObject m_header = { };
     XTaskQueueDispatchMode m_dispatchMode = XTaskQueueDispatchMode::Manual;
-    XTaskQueuePort m_nativePort;
-    SubmitCallback* m_callbackSubmitted = nullptr;
+    AtomicVector<ITaskQueuePortContext*> m_attachedContexts;
     std::atomic<uint32_t> m_processingCallback{ 0 };
     std::condition_variable_any m_event;
     std::mutex m_lock;
@@ -316,7 +317,8 @@ public:
     
     TaskQueuePortContextImpl(
         _In_ ITaskQueue* queue,
-        _In_ XTaskQueuePort type);
+        _In_ XTaskQueuePort type,
+        _In_ SubmitCallback* submitCallback);
     
     uint32_t __stdcall AddRef() override;
     uint32_t __stdcall Release() override;
@@ -333,14 +335,17 @@ public:
     
     void __stdcall SetStatus(
         _In_ TaskQueuePortStatus status) override;
-    
+
+    void __stdcall ItemQueued() override;
+
     referenced_ptr<ITaskQueuePort> Port;
     referenced_ptr<ITaskQueue> Source;
 
 private:
     
     ITaskQueue* m_queue = nullptr;
-    XTaskQueuePort m_type;
+    XTaskQueuePort m_type = XTaskQueuePort::Work;
+    SubmitCallback* m_submitCallback = nullptr;
     std::atomic<TaskQueuePortStatus> m_status = { TaskQueuePortStatus::Active };
 };
 

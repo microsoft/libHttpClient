@@ -131,6 +131,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\StaticArray.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueue.cpp" />
