@@ -105,6 +105,7 @@ public:
         m_head = reinterpret_cast<std::uintptr_t>(&m_initialNode);
         m_tail = reinterpret_cast<std::uintptr_t>(&m_initialNode);;
         m_initialNode.next = 0;
+        m_initialNode.data = nullptr;
         ASSERT((m_head & 0x1F) == 0); // Alignment problem
     }
     
@@ -119,7 +120,7 @@ public:
         }
     }
     
-    // Returns true if we believve the list is empty.
+    // Returns true if we believe the list is empty.
     bool empty() noexcept
     {
         return ToNode(m_head) == ToNode(m_tail);
