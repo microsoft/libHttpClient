@@ -3,7 +3,6 @@ package com.xbox.httpclient;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 import java.io.IOException;
 
@@ -17,6 +16,7 @@ import okhttp3.RequestBody;
 
 public class HttpClientRequest {
     private static OkHttpClient OK_CLIENT;
+    private static final byte[] NO_BODY = new byte[0];
 
     private Request okHttpRequest;
     private Request.Builder requestBuilder;
@@ -47,7 +47,11 @@ public class HttpClientRequest {
 
     public void setHttpMethodAndBody(String method, String contentType, byte[] body) {
         if (body == null || body.length == 0) {
-            this.requestBuilder = this.requestBuilder.method(method, null);
+            if ("POST".equals(method)) {
+                this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(null, NO_BODY));
+            } else {
+                this.requestBuilder = this.requestBuilder.method(method, null);
+            }
         } else {
             this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(MediaType.parse(contentType), body));
         }
@@ -61,7 +65,6 @@ public class HttpClientRequest {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(final Call call, IOException e) {
-                Log.e("HttpRequestClient", "Failed to execute async request", e);
                 OnRequestCompleted(sourceCall, null);
             }
 
