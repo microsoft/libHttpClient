@@ -47,7 +47,7 @@ public class HttpClientRequest {
 
     public void setHttpMethodAndBody(String method, String contentType, byte[] body) {
         if (body == null || body.length == 0) {
-            if ("POST".equals(method)) {
+            if ("POST".equals(method) || "PUT".equals(method)) {
                 this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(null, NO_BODY));
             } else {
                 this.requestBuilder = this.requestBuilder.method(method, null);
