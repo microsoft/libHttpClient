@@ -890,8 +890,8 @@ public:
         VERIFY_SUCCEEDED(XTaskQueueTerminate(data.queue, false, &data, [](void* context)
         {
             TestData* pd = (TestData*)context;
-            pd->terminationCalled = true;
             XTaskQueueCloseHandle(pd->queue.Release());
+            pd->terminationCalled = true;
         }));
 
         uint64_t ticks = GetTickCount64();
