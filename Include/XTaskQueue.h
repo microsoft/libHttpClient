@@ -182,7 +182,7 @@ STDAPI_(void) XTaskQueueCloseHandle(
 
 /// <summary>
 /// Terminates a task queue by canceling all pending items and
-/// preventning new items from being queued.  Once a queue is terminated
+/// preventing new items from being queued.  Once a queue is terminated
 /// its handle can be closed. New items cannot be enqueued to a task
 /// queue that has been terminated.
 /// </summary>
@@ -232,7 +232,7 @@ STDAPI XTaskQueueSubmitDelayedCallback(
 /// Registers a wait handle with the task queue.  When the wait handle
 /// is satisfied the task queue will invoke the given callback. This
 /// provides an efficient way to add items to a task queue in 
-/// response to handles becomming signaled.
+/// response to handles becoming signaled.
 /// </summary>
 /// <param name='queue'>The queue to submit the callback to.</param>
 /// <param name='port'>The port to invoke the callback on.</param>

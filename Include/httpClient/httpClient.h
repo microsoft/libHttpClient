@@ -660,7 +660,7 @@ typedef struct WebSocketCompletionResult
 /// On Win32, iOS, and Android, all background work (including initial connection process) will be added to the queue
 /// in the provided XAsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
 /// caller to dispatch that queue for as long as the websocket connection is active. Note that work for 
-/// HCWebSocketSendMessageAsync calls can be assigned to a seperate queue if desired.
+/// HCWebSocketSendMessageAsync calls can be assigned to a separate queue if desired.
 /// </summary>
 /// <param name="uri">The UTF-8 encoded URI to connect to</param>
 /// <param name="subProtocol">The UTF-8 encoded subProtocol to connect to</param>

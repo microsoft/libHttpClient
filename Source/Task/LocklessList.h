@@ -246,7 +246,7 @@ public:
                         }
                         else
                         {
-                            // This should never happen beause our lock should
+                            // This should never happen because our lock should
                             // have prevented races.  Remove the lock
                             ASSERT(false);
                             m_head.compare_exchange_strong(lockedHead, localHead);
