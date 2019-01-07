@@ -39,7 +39,7 @@ public:
         // on itself it can do so safely.  We take a
         // ref during this time to ensure we don't
         // get a cascade of rundown calls for temporary
-        // referenes.
+        // references.
 
         if (m_refs == 1)
         {

@@ -754,7 +754,7 @@ void TaskQueuePortImpl::CancelPendingEntries(
     _In_ ITaskQueuePortContext* portContext,
     _In_ bool appendToQueue)
 {
-    // Stop wait timer and promote pending calbacks that are used
+    // Stop wait timer and promote pending callbacks that are used
     // by the queue that invoked this termination. Other callbacks
     // are placed back on the pending list.
     
@@ -1033,7 +1033,7 @@ HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
 }
 
 // Appends the queue entry of the wait registration to the queue
-// if it has not allready been done. This can addref the queue
+// if it has not already been done. This can addref the queue
 // entry. Returns true if it appended or found nothing to do.
 // Returns false if it needed to append but failed. On failure this
 // correctly releases the queue entry.
@@ -1574,7 +1574,7 @@ STDAPI_(void) XTaskQueueCloseHandle(
 
 //
 // Terminates a task queue by canceling all pending items and
-// preventning new items from being queued.  Once a queue is terminated
+// preventing new items from being queued.  Once a queue is terminated
 // its handle can be closed.
 //
 STDAPI XTaskQueueTerminate(
@@ -1623,9 +1623,9 @@ STDAPI XTaskQueueSubmitDelayedCallback(
 
 //
 // Registers a wait handle with the task queue.  When the wait handle
-// is satisfied the task queue will invoke the given calback. This
+// is satisfied the task queue will invoke the given callback. This
 // provides an efficient way to add items to a task queue in 
-// response to handles becomming signaled.
+// response to handles becoming signaled.
 //
 STDAPI XTaskQueueRegisterWaiter(
     _In_ XTaskQueueHandle queue,
