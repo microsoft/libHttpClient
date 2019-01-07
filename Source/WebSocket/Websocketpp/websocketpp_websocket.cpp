@@ -326,7 +326,7 @@ private:
         // Add any request headers specified by the user.
         for (const auto & header : headers)
         {
-            // Subprotocols are handled seperately below
+            // Subprotocols are handled separately below
             if (str_icmp(header.first, SUB_PROTOCOL_HEADER) != 0)
             {
                 con->append_header(header.first.data(), header.second.data());

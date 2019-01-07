@@ -453,15 +453,13 @@ try
                 return E_PENDING;
 
             case XAsyncOp::GetResult:
-                assert(false);
-                return E_NOTIMPL;
+                break;
 
             case XAsyncOp::Cancel:
-                assert(false);
-                return E_NOTIMPL;
+                break;
 
             case XAsyncOp::Cleanup:
-                shared_ptr_cache::fetch<retry_context>(data->context, true);
+                shared_ptr_cache::remove<retry_context>(data->context);
                 break;
         }
 
