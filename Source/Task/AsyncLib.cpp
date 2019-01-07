@@ -401,10 +401,6 @@ static void SignalCompletion(_In_ AsyncStateRef const& state)
         {
             callbackState.Detach();
         }
-        else
-        {
-            FAIL_FAST_MSG("Failed to submit competion callback: 0x%08x", hr);
-        }
     }
     else
     {
