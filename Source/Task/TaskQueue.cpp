@@ -11,7 +11,7 @@
 //
 namespace ApiDiag
 {
-    std::atomic<uint32_t> g_globalApiRefs = { 0 };
+    std::atomic<uint32_t> g_globalApiRefs { 0 };
     
     void GlobalAddRef()
     {
@@ -74,7 +74,14 @@ HRESULT SubmitCallback::Register(_In_ void* context, _In_ XTaskQueueMonitorCallb
     uint32_t expected = bufferReadIdx << 31;
     uint32_t desired = bufferWriteIdx << 31;
 
-    while (!m_indexAndRef.compare_exchange_weak(expected, desired)) {}
+    for (;;)
+    {
+        uint32_t expectedSwap = expected;
+        if (m_indexAndRef.compare_exchange_weak(expectedSwap, desired))
+        {
+            break;
+        }
+    }
     
     return S_OK;
 }
@@ -101,14 +108,21 @@ void SubmitCallback::Unregister(_In_ XTaskQueueRegistrationToken token)
     uint32_t expected = bufferReadIdx << 31;
     uint32_t desired = bufferWriteIdx << 31;
 
-    while (!m_indexAndRef.compare_exchange_weak(expected, desired)) {}
+    for (;;)
+    {
+        uint32_t expectedSwap = expected;
+        if (m_indexAndRef.compare_exchange_weak(expectedSwap, desired))
+        {
+            break;
+        }
+    }
 }
 
 void SubmitCallback::Invoke(_In_ XTaskQueuePort port)
 {
     uint32_t indexAndRef = ++m_indexAndRef;
     uint32_t bufferIdx = (indexAndRef & 0x80000000 ? 1 : 0);
-    
+
     for(uint32_t idx = 0; idx < ARRAYSIZE(m_buffer1); idx++)
     {
         if (m_buffers[bufferIdx][idx].Callback != nullptr)
@@ -538,10 +552,9 @@ void __stdcall TaskQueuePortImpl::Detach(
     _In_ ITaskQueuePortContext* portContext)
 {
     CancelPendingEntries(portContext, false);
-    m_attachedContexts.Remove(portContext, [](void* context, ITaskQueuePortContext* compare)
+    m_attachedContexts.Remove([portContext](ITaskQueuePortContext* compare)
     {
-        ITaskQueuePortContext* cxt = static_cast<ITaskQueuePortContext*>(context);
-        return cxt == compare;
+        return portContext == compare;
     });
 }
 
@@ -710,7 +723,7 @@ bool TaskQueuePortImpl::AppendEntry(
         break;
     }
 
-    m_attachedContexts.Visit(nullptr, [](void*, ITaskQueuePortContext* portContext)
+    m_attachedContexts.Visit([](ITaskQueuePortContext* portContext)
     {
         portContext->ItemQueued();
     });
@@ -741,7 +754,7 @@ void TaskQueuePortImpl::CancelPendingEntries(
     _In_ ITaskQueuePortContext* portContext,
     _In_ bool appendToQueue)
 {
-    // Stop wait timer and promote pending calbacks that are used
+    // Stop wait timer and promote pending callbacks that are used
     // by the queue that invoked this termination. Other callbacks
     // are placed back on the pending list.
     
@@ -1020,7 +1033,7 @@ HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
 }
 
 // Appends the queue entry of the wait registration to the queue
-// if it has not allready been done. This can addref the queue
+// if it has not already been done. This can addref the queue
 // entry. Returns true if it appended or found nothing to do.
 // Returns false if it needed to append but failed. On failure this
 // correctly releases the queue entry.
@@ -1375,7 +1388,7 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
     return S_OK;
 }
 
-void TaskQueueImpl::FinalRelease()
+void TaskQueueImpl::RundownObject()
 {
     m_work.SetStatus(TaskQueuePortStatus::Terminated);
     m_completion.SetStatus(TaskQueuePortStatus::Terminated);
@@ -1561,7 +1574,7 @@ STDAPI_(void) XTaskQueueCloseHandle(
 
 //
 // Terminates a task queue by canceling all pending items and
-// preventning new items from being queued.  Once a queue is terminated
+// preventing new items from being queued.  Once a queue is terminated
 // its handle can be closed.
 //
 STDAPI XTaskQueueTerminate(
@@ -1610,9 +1623,9 @@ STDAPI XTaskQueueSubmitDelayedCallback(
 
 //
 // Registers a wait handle with the task queue.  When the wait handle
-// is satisfied the task queue will invoke the given calback. This
+// is satisfied the task queue will invoke the given callback. This
 // provides an efficient way to add items to a task queue in 
-// response to handles becomming signaled.
+// response to handles becoming signaled.
 //
 STDAPI XTaskQueueRegisterWaiter(
     _In_ XTaskQueueHandle queue,

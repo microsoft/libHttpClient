@@ -10,6 +10,19 @@ public:
         Terminate();
     }
 
+    void AddRef()
+    {
+        m_refs++;
+    }
+
+    void Release()
+    {
+        if (--m_refs == 0)
+        {
+            delete this;
+        }
+    }
+
     HRESULT Initialize(
         _In_opt_ void* context,
         _In_ ThreadPoolCallback* callback) noexcept
@@ -35,7 +48,7 @@ public:
             // and we block on that.
             EnterCriticalSection(&m_cs);
 
-            while (m_calls != 0)
+            while (m_activeCalls != 0)
             {
                 SleepConditionVariableCS(&m_cv, &m_cs, INFINITE);
             }
@@ -50,7 +63,7 @@ public:
 
     void Submit() noexcept
     {
-        m_calls++;
+        m_activeCalls++;
         SubmitThreadpoolWork(m_work);
     }
 
@@ -62,14 +75,28 @@ private:
     {
         ThreadPoolImpl* pthis = static_cast<ThreadPoolImpl*>(context);
 
+        // ActionComplete is an optional call
+        // the callback can make to indicate 
+        // all portions of the call have finished
+        // and it is safe to release the
+        // thread pool, even if the callback has
+        // not totally unwound.  This is neccessary
+        // to allow users to close a task queue from
+        // within a callback.  Task queue guards with an 
+        // extra ref to ensure a safe point where 
+        // member state is no longer accessed, but the
+        // final release does need to wait on outstanding
+        // calls.
+
         ActionCompleteImpl ac(pthis);
+        pthis->AddRef();
         pthis->m_callback(pthis->m_context, ac);
 
         if (!ac.Invoked)
         {
-            pthis->m_calls--;
-            WakeAllConditionVariable(&pthis->m_cv);
+            ac();
         }
+        pthis->Release(); // May delete this
     }
 
     struct ActionCompleteImpl : ThreadPoolActionComplete
@@ -84,7 +111,7 @@ private:
         void operator()() override
         {
             Invoked = true;
-            m_owner->m_calls--;
+            m_owner->m_activeCalls--;
             WakeAllConditionVariable(&m_owner->m_cv);
         }
 
@@ -92,11 +119,12 @@ private:
         ThreadPoolImpl* m_owner = nullptr;
     };
 
+    std::atomic<uint32_t> m_refs { 1 };
     CONDITION_VARIABLE m_cv;
     CRITICAL_SECTION m_cs;
     PTP_WORK m_work = nullptr;
     void* m_context = nullptr;
-    std::atomic<uint32_t> m_calls = { 0 };
+    std::atomic<uint32_t> m_activeCalls { 0 };
     ThreadPoolCallback* m_callback = nullptr;
 };
 
@@ -128,7 +156,7 @@ void ThreadPool::Terminate() noexcept
     if (m_impl != nullptr)
     {
         m_impl->Terminate();
-        delete m_impl;
+        m_impl->Release();
         m_impl = nullptr;
     }
 }
