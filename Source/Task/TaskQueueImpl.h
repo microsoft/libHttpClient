@@ -32,17 +32,27 @@ public:
 
     uint32_t __stdcall Release()
     {
+        // When we are at one, we give
+        // the object a chance to run down.  We
+        // do this at 1 instead of 0 to ensure that
+        // if the object needed to take temporary refs
+        // on itself it can do so safely.  We take a
+        // ref during this time to ensure we don't
+        // get a cascade of rundown calls for temporary
+        // referenes.
+
+        if (m_refs == 1)
+        {
+            m_refs++;
+            RundownObject();
+            m_refs--;
+        }
+
         ApiDiag::GlobalRelease();
         uint32_t refs = --m_refs;
         if (refs == 0)
         {
-            m_refs++;
-            FinalRelease();
-            refs = --m_refs;
-            if (refs == 0)
-            {
-                delete this;
-            }
+            delete this;
         }
         return refs;
     }
@@ -76,7 +86,10 @@ protected:
         return nullptr;
     }
     
-    virtual void FinalRelease()
+    // Called when the object is "likely" about to be
+    // deleted.  There is no guarantee that an object
+    // will be deleted after this call.
+    virtual void RundownObject()
     {
     }
     
@@ -110,7 +123,7 @@ private:
     CallbackRegistration m_buffer1[SUBMIT_CALLBACK_MAX];
     CallbackRegistration m_buffer2[SUBMIT_CALLBACK_MAX];
     CallbackRegistration* m_buffers[2]= { m_buffer1, m_buffer2 };
-    std::atomic<uint32_t> m_indexAndRef = { 0 };
+    std::atomic<uint32_t> m_indexAndRef { 0 };
     XTaskQueueHandle m_queue;
 };
 
@@ -400,7 +413,7 @@ public:
 
 protected:
     
-    void FinalRelease() override;
+    void RundownObject() override;
     
 private:
 
