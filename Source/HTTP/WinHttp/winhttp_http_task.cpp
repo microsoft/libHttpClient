@@ -13,27 +13,102 @@
 
 using namespace xbox::httpclient;
 
+
+HC_PERFORM_ENV::HC_PERFORM_ENV()
+{
+    m_proxyType = get_ie_proxy_info(proxy_protocol::https, m_proxyUri);
+
+    DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+    const wchar_t* wProxyName = nullptr;
+    get_proxy_name(m_proxyType, &accessType, &wProxyName);
+
+    m_hSession = WinHttpOpen(
+        NULL,
+        accessType,
+        wProxyName,
+        WINHTTP_NO_PROXY_BYPASS,
+        WINHTTP_FLAG_ASYNC);
+}
+
+HC_PERFORM_ENV::~HC_PERFORM_ENV()
+{
+    if (m_hSession != nullptr) WinHttpCloseHandle(m_hSession);
+}
+
+void HC_PERFORM_ENV::get_proxy_name(
+    _In_ proxy_type proxyType,
+    _Out_ DWORD* pAccessType,
+    _Out_ const wchar_t** pwProxyName)
+{
+    switch (proxyType)
+    {
+        case proxy_type::no_proxy:
+        {
+            *pAccessType = WINHTTP_ACCESS_TYPE_NO_PROXY;
+            *pwProxyName = WINHTTP_NO_PROXY_NAME;
+            break;
+        }
+
+        case proxy_type::named_proxy:
+        {
+            *pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+
+            http_internal_wstring wProxyHost = utf16_from_utf8(m_proxyUri.Host());
+
+            // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
+            if (m_proxyUri.IsPortDefault())
+            {
+                m_wProxyName = wProxyHost;
+                *pwProxyName = m_wProxyName.c_str();
+            }
+            else
+            {
+                if (m_proxyUri.Port() > 0)
+                {
+                    http_internal_basic_stringstream<wchar_t> ss;
+                    ss.imbue(std::locale::classic());
+                    ss << wProxyHost << L":" << m_proxyUri.Port();
+                    m_wProxyName = ss.str();
+                    *pwProxyName = m_wProxyName.c_str();
+                }
+                else
+                {
+                    m_wProxyName = wProxyHost;
+                    *pwProxyName = m_wProxyName.c_str();
+                }
+            }
+            break;
+        }
+
+        default:
+        case proxy_type::autodiscover_proxy:
+        case proxy_type::default_proxy:
+        {
+            *pAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+            *pwProxyName = WINHTTP_NO_PROXY_NAME;
+            break;
+        }
+    }
+}
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 winhttp_http_task::winhttp_http_task(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ hc_call_handle_t call,
+    _In_ HINTERNET hSession,
+    _In_ proxy_type proxyType
     ) :
     m_call(call),
     m_asyncBlock(asyncBlock),
-    m_hSession(nullptr),
-    m_hConnection(nullptr),
-    m_hRequest(nullptr),
-    m_requestBodyType(msg_body_type::no_body),
-    m_requestBodyRemainingToWrite(0),
-    m_requestBodyOffset(0),
-    m_proxyType(proxy_type::default_proxy)
+    m_hSession(hSession),
+    m_proxyType(proxyType)
 {
 }
 
 winhttp_http_task::~winhttp_http_task()
 {
-    if (m_hSession != nullptr) WinHttpCloseHandle(m_hSession);
+    if (m_hRequest != nullptr) WinHttpCloseHandle(m_hRequest);
     if (m_hConnection != nullptr) WinHttpCloseHandle(m_hConnection);
 }
 
@@ -486,61 +561,6 @@ void CALLBACK winhttp_http_task::completion_callback(
     }
 }
 
-void winhttp_http_task::get_proxy_name(
-    _Out_ DWORD* pAccessType,
-    _Out_ const wchar_t** pwProxyName)
-{
-    switch (m_proxyType)
-    {
-        case proxy_type::no_proxy:
-        {
-            *pAccessType = WINHTTP_ACCESS_TYPE_NO_PROXY;
-            *pwProxyName = WINHTTP_NO_PROXY_NAME;
-            break;
-        }
-
-        case proxy_type::named_proxy:
-        {
-            *pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-
-            http_internal_wstring wProxyHost = utf16_from_utf8(m_proxyUri.Host());
-
-            // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
-            if (m_proxyUri.IsPortDefault())
-            {
-                m_wProxyName = wProxyHost;
-                *pwProxyName = m_wProxyName.c_str();
-            }
-            else
-            {
-                if (m_proxyUri.Port() > 0)
-                {
-                    http_internal_basic_stringstream<wchar_t> ss;
-                    ss.imbue(std::locale::classic());
-                    ss << wProxyHost << L":" << m_proxyUri.Port();
-                    m_wProxyName = ss.str();
-                    *pwProxyName = m_wProxyName.c_str();
-                }
-                else
-                {
-                    m_wProxyName = wProxyHost;
-                    *pwProxyName = m_wProxyName.c_str();
-                }
-            }
-            break;
-        }
-
-        default:
-        case proxy_type::autodiscover_proxy:
-        case proxy_type::default_proxy:
-        {
-            *pAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-            *pwProxyName = WINHTTP_NO_PROXY_NAME;
-            break;
-        }
-    }
-}
-
 void winhttp_http_task::set_autodiscover_proxy(
     _In_ const xbox::httpclient::Uri& cUri)
 {
@@ -590,18 +610,6 @@ HRESULT winhttp_http_task::connect(
         return hr;
     }
 
-    m_proxyType = get_ie_proxy_info(cUri.IsSecure() ? proxy_protocol::https : proxy_protocol::http, m_proxyUri);
-
-    DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-    const wchar_t* wProxyName = nullptr;
-    get_proxy_name(&accessType, &wProxyName);
-
-    m_hSession = WinHttpOpen(
-        NULL,
-        accessType,
-        wProxyName,
-        WINHTTP_NO_PROXY_BYPASS,
-        WINHTTP_FLAG_ASYNC);
     if (!m_hSession)
     {
         DWORD dwError = GetLastError();
@@ -843,16 +851,17 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 
 HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
-    // No-op
     assert(args == nullptr);
-    assert(performEnv == nullptr);
+
+    performEnv.reset(new (std::nothrow) HC_PERFORM_ENV());
+    if (!performEnv) { return E_OUTOFMEMORY; }
+
     return S_OK;
 }
 
 void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 {
-    // No-op
-    assert(performEnv == nullptr);
+    delete performEnv;
 }
 
 void CALLBACK Internal_HCHttpCallPerformAsync(
@@ -863,11 +872,12 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 ) noexcept
 {
     assert(context == nullptr);
-    assert(env == nullptr);
+    assert(env != nullptr);
     UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(env);
 
-    std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(asyncBlock, call);
+    std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(
+        asyncBlock, call, env->m_hSession, env->m_proxyType
+        );
     shared_ptr_cache::store<winhttp_http_task>(httpTask);
     HCHttpCallSetContext(call, httpTask.get());
     httpTask->perform_async();
