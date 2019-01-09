@@ -10,7 +10,7 @@ void message_received(
     _In_z_ const char* incomingBodyString
     )
 {
-    printf_s("Recieved websocket message: %s\n", incomingBodyString);
+    printf_s("Received websocket message: %s\n", incomingBodyString);
     SetEvent(g_eventHandle);
 }
 
@@ -74,7 +74,7 @@ int main()
     printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", requestString.data());
     hr = HCWebSocketSendMessageAsync(websocket, requestString.data(), asyncBlock);
     
-    // Wait for send to complete sucessfully and then wait again for response to be received.
+    // Wait for send to complete successfully and then wait again for response to be received.
     WaitForSingleObject(g_eventHandle, INFINITE);
     WaitForSingleObject(g_eventHandle, INFINITE);
 

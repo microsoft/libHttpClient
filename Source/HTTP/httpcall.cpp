@@ -434,6 +434,7 @@ try
         return E_INVALIDARG;
     }
 
+    ++call->refCount;
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id); }
     call->performCalled = true;
 
@@ -459,6 +460,8 @@ try
                 break;
 
             case XAsyncOp::Cleanup:
+                auto context = static_cast<retry_context*>(data->context);
+                HCHttpCallCloseHandle(context->call);
                 shared_ptr_cache::remove<retry_context>(data->context);
                 break;
         }
