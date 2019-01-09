@@ -815,11 +815,11 @@ public:
         }
 
         VERIFY_ARE_EQUAL(
-            HRESULT_FROM_WIN32(ERROR_CANCELLED), 
+            E_ABORT, 
             XTaskQueueSubmitCallback(queue, XTaskQueuePort::Work, &data, workCb));
 
         VERIFY_ARE_EQUAL(
-            HRESULT_FROM_WIN32(ERROR_CANCELLED), 
+            E_ABORT, 
             XTaskQueueSubmitCallback(queue, XTaskQueuePort::Completion, &data, completionCb));
 
         for(auto h : events)

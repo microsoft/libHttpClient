@@ -680,7 +680,7 @@ HRESULT TaskQueuePortImpl::VerifyNotTerminated(
     // N.B.  This looks wrong but it's not.  We only error adding new items
     // if we are terminating or terminated.  If we're just canceled we allow
     // new items in but we invoke them with the canceled flag set to true.
-    RETURN_HR_IF(__HRESULT_FROM_WIN32(ERROR_CANCELLED), portContext->GetStatus() > TaskQueuePortStatus::Canceled);
+    RETURN_HR_IF(E_ABORT, portContext->GetStatus() > TaskQueuePortStatus::Canceled);
     return S_OK;
 }
 
