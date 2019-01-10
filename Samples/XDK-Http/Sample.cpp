@@ -374,7 +374,7 @@ std::vector<std::vector<std::string>> ExtractHeadersFromHeadersString(std::strin
     return headers;
 }
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle_t call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HCCallHandle call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -407,7 +407,7 @@ void Sample::MakeHttpCall()
     std::string requestUrl = "http://www.bing.com";
     bool retryAllowed = true;
 
-    hc_call_handle_t call = nullptr;
+    HCCallHandle call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, requestMethod.c_str(), requestUrl.c_str());
 
@@ -434,7 +434,7 @@ void Sample::MakeHttpCall()
         std::string responseString;
         std::string errMessage;
 
-        hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+        HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);

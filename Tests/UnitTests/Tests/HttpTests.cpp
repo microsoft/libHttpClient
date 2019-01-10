@@ -28,7 +28,7 @@ bool g_memFreeCalled = false;
 
 _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE MemAlloc(
     _In_ size_t size,
-    _In_ hc_memory_type memoryType
+    _In_ HCMemoryType memoryType
     )   
 {
     g_memAllocCalled = true;
@@ -37,7 +37,7 @@ _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE MemAlloc(
 
 void STDAPIVCALLTYPE MemFree(
     _In_ _Post_invalid_ void* pointer,
-    _In_ hc_memory_type memoryType
+    _In_ HCMemoryType memoryType
     )
 {
     g_memFreeCalled = true;
@@ -48,10 +48,10 @@ static bool g_PerformCallbackCalled = false;
 static void* g_PerformCallbackContext = nullptr;
 static int g_performContext = 0;
 static void STDAPIVCALLTYPE PerformCallback(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* ctx,
-    _In_opt_ hc_perform_env /*env*/
+    _In_opt_ HCPerformEnv /*env*/
     )
 {
     g_PerformCallbackCalled = true;
@@ -129,7 +129,7 @@ public:
         VERIFY_IS_NOT_NULL(func);
 
         HCSetHttpCallPerformFunction(&PerformCallback, &g_performContext);
-        hc_call_handle_t call;
+        HCCallHandle call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);
 
@@ -147,7 +147,7 @@ public:
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             uint32_t statusCode = 0;
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
@@ -215,7 +215,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestCall);
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_IS_NOT_NULL(call);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
@@ -226,7 +226,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequest);
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
@@ -276,7 +276,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
         uint32_t numHeaders = 0;
@@ -324,7 +324,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestResponse);
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
         std::string s1 = "test1";
@@ -355,7 +355,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         HCHttpCallCreate(&call);
 
         uint32_t numHeaders = 0;

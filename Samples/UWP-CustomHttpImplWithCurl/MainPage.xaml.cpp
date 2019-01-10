@@ -56,7 +56,7 @@ win32_handle g_completionReadyHandle;
 #define TICKS_PER_SECOND 10000000i64
 
 void STDAPIVCALLTYPE PerformCallWithCurl(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ AsyncBlock* asyncBlock
     );
 
@@ -223,7 +223,7 @@ void HttpTestApp::MainPage::StartBackgroundThread()
     }
 }
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle_t call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HCCallHandle call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -295,7 +295,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
     std::string requestMethod = to_utf8string(TextboxMethod->Text->Data());
     std::string requestUrl = to_utf8string(TextboxURL->Text->Data());
 
-    hc_call_handle_t call = nullptr;
+    HCCallHandle call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, requestMethod.c_str(), requestUrl.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
@@ -321,7 +321,7 @@ void HttpTestApp::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::
         std::string responseString;
         std::string errMessage;
 
-        hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+        HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
         HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
         HCHttpCallResponseGetResponseString(call, &str);

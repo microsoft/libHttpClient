@@ -17,7 +17,7 @@ namespace HttpTestApp
 
         void LogToUI(std::string str);
         void ClearLog();
-        hc_websocket_handle_t m_websocket;
+        HCWebsocketHandle m_websocket;
 
         void StartBackgroundThread();
         void StopBackgroundThread();

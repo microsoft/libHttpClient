@@ -9,13 +9,13 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 class ios_http_task
 {
 public:
-    ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ hc_call_handle_t call);
+    ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call);
     bool initiate_request();
 
 private:
     void completion_handler(NSData* data, NSURLResponse* response, NSError* error);
     
-    hc_call_handle_t m_call; // non owning
+    HCCallHandle m_call; // non owning
     XAsyncBlock* m_asyncBlock; // non owning
     
     NSURLSession* m_session;

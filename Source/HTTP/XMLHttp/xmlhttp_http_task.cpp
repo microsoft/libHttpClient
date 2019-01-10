@@ -13,7 +13,7 @@
 
 xmlhttp_http_task::xmlhttp_http_task(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ HCCallHandle call
     ) :
     m_statusCode(0),
     m_call(call),
@@ -34,7 +34,7 @@ xmlhttp_http_task::~xmlhttp_http_task()
 
 void xmlhttp_http_task::perform_async(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ HCCallHandle call
     )
 {
     try
@@ -274,7 +274,7 @@ http_buffer& xmlhttp_http_task::response_buffer()
     return m_responseBuffer;
 }
 
-hc_call_handle_t xmlhttp_http_task::call()
+HCCallHandle xmlhttp_http_task::call()
 {
     return m_call;
 }
@@ -299,10 +299,10 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 }
 
 void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ hc_perform_env env
+    _In_ HCPerformEnv env
 ) noexcept
 {
     assert(context == nullptr);

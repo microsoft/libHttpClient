@@ -36,12 +36,12 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Optionally call HCMemSetFunctions() to control memory allocations
 1. Call HCInitialize()
 1. Optionally call HCSettingsSet*()
-1. Call HCHttpCallCreate() to create a new hc_call_handle_t
-1. Call HCHttpCallRequestSet*() to prepare the hc_call_handle_t
-1. Call HCHttpCallPerform() to perform an HTTP call using the hc_call_handle_t.  
+1. Call HCHttpCallCreate() to create a new HCCallHandle
+1. Call HCHttpCallRequestSet*() to prepare the HCCallHandle
+1. Call HCHttpCallPerform() to perform an HTTP call using the HCCallHandle.  
 1. The perform call is asynchronous, so the work will be done on a background thread which calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Work ).  The results will return to the callback on the thread that calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Completion ).
-1. Call HCHttpCallResponseGet*() to get the HTTP response of the hc_call_handle_t
-1. Call HCHttpCallCloseHandle() to cleanup the hc_call_handle_t
+1. Call HCHttpCallResponseGet*() to get the HTTP response of the HCCallHandle
+1. Call HCHttpCallCloseHandle() to cleanup the HCCallHandle
 1. Repeat 4-8 for each new HTTP call
 1. Call HCCleanup() at shutdown before your memory manager set in step 1 is shutdown
 

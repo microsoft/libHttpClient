@@ -12,7 +12,7 @@ using namespace xbox::httpclient;
 
 STDAPI
 HCWebSocketCreate(
-    _Out_ hc_websocket_handle_t* websocket
+    _Out_ HCWebsocketHandle* websocket
     ) HC_NOEXCEPT
 try
 {
@@ -37,7 +37,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketSetProxyUri(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* proxyUri
     ) HC_NOEXCEPT
 try
@@ -51,7 +51,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketSetHeader(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
     ) HC_NOEXCEPT
@@ -91,7 +91,7 @@ STDAPI
 HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT
 try
@@ -125,7 +125,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketSendMessageAsync(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
     _Inout_ XAsyncBlock* asyncBlock
     ) HC_NOEXCEPT
@@ -159,7 +159,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketDisconnect(
-    _In_ hc_websocket_handle_t websocket
+    _In_ HCWebsocketHandle websocket
     ) HC_NOEXCEPT
 try
 {
@@ -196,8 +196,8 @@ try
 }
 CATCH_RETURN()
 
-hc_websocket_handle_t HCWebSocketDuplicateHandle(
-    _In_ hc_websocket_handle_t websocket
+HCWebsocketHandle HCWebSocketDuplicateHandle(
+    _In_ HCWebsocketHandle websocket
     ) HC_NOEXCEPT
 try
 {
@@ -215,7 +215,7 @@ CATCH_RETURN_WITH(nullptr)
 
 STDAPI
 HCWebSocketCloseHandle(
-    _In_ hc_websocket_handle_t websocket
+    _In_ HCWebsocketHandle websocket
     ) HC_NOEXCEPT
 try
 {
@@ -285,7 +285,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketGetProxyUri(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _Out_ const char** proxyUri
     ) HC_NOEXCEPT
 try
@@ -302,7 +302,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketGetHeader(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
     ) HC_NOEXCEPT
@@ -328,7 +328,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketGetNumHeaders(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _Out_ uint32_t* numHeaders
     ) HC_NOEXCEPT
 try
@@ -345,7 +345,7 @@ CATCH_RETURN()
 
 STDAPI
 HCWebSocketGetHeaderAtIndex(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_ uint32_t headerIndex,
     _Out_ const char** headerName,
     _Out_ const char** headerValue
