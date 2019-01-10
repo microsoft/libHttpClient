@@ -138,6 +138,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h">
       <Filter>C++ Source\Mock</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessList.h">
       <Filter>C++ Source\Task</Filter>
     </ClInclude>

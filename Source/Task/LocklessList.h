@@ -104,7 +104,6 @@ public:
     {
         m_head = reinterpret_cast<std::uintptr_t>(&m_initialNode);
         m_tail = reinterpret_cast<std::uintptr_t>(&m_initialNode);;
-        m_initialNode.next = 0;
         ASSERT((m_head & 0x1F) == 0); // Alignment problem
     }
     
@@ -119,7 +118,7 @@ public:
         }
     }
     
-    // Returns true if we believve the list is empty.
+    // Returns true if we believe the list is empty.
     bool empty() noexcept
     {
         return ToNode(m_head) == ToNode(m_tail);
@@ -247,7 +246,7 @@ public:
                         }
                         else
                         {
-                            // This should never happen beause our lock should
+                            // This should never happen because our lock should
                             // have prevented races.  Remove the lock
                             ASSERT(false);
                             m_head.compare_exchange_strong(lockedHead, localHead);
@@ -278,7 +277,7 @@ public:
 private:
     
     // We keep a single additional node around
-    Node m_initialNode;
+    Node m_initialNode = { };
     
     // List head and tail
     alignas(sizeof(std::uintptr_t) * 8) std::atomic<std::uintptr_t> m_head;

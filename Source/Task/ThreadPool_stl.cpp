@@ -10,6 +10,19 @@ public:
         Terminate();
     }
 
+    void AddRef()
+    {
+        m_refs++;
+    }
+
+    void Release()
+    {
+        if (--m_refs == 0)
+        {
+            delete this;
+        }
+    }
+
     HRESULT Initialize(
         _In_opt_ void* context,
         _In_ ThreadPoolCallback* callback) noexcept
@@ -44,9 +57,41 @@ public:
                         {
                             m_calls--;
 
+                            // ActionComplete is an optional call
+                            // the callback can make to indicate 
+                            // all portions of the call have finished
+                            // and it is safe to release the
+                            // thread pool, even if the callback has
+                            // not totally unwound.  This is neccessary
+                            // to allow users to close a task queue from
+                            // within a callback.  Task queue guards with an 
+                            // extra ref to ensure a safe point where 
+                            // member state is no longer accessed, but the
+                            // final release does need to wait on outstanding
+                            // calls.
+                            
+                            ActionCompleteImpl ac(this);
+
                             lock.unlock();
-                            m_callback(m_context);
+                            AddRef();
+                            m_callback(m_context, ac);
                             lock.lock();
+
+                            if (!ac.Invoked)
+                            {
+                                ac();
+                            }
+
+                            if (m_terminate)
+                            {
+                                lock.unlock();
+                                Release(); // This could destroy us
+                                break;
+                            }
+                            else
+                            {
+                                Release();
+                            }
                         }
                     }
                 }));
@@ -62,12 +107,28 @@ public:
 
     void Terminate() noexcept
     {
+        std::unique_lock<std::mutex> lock(m_activeLock);
         m_terminate = true;
         m_wake.notify_all();
 
-        for(auto &thread : m_pool)
+        // Wait for the active call count
+        // to go to zero.
+        while (m_activeCalls != 0)
         {
-            thread.join();
+            m_active.wait(lock);
+        }
+        lock.unlock();
+
+        for (auto &t : m_pool)
+        {
+            if (t.get_id() == std::this_thread::get_id())
+            {
+                t.detach();
+            }
+            else
+            {
+                t.join();
+            }
         }
 
         m_pool.clear();
@@ -75,20 +136,45 @@ public:
 
     void Submit() noexcept
     {
-        {
-            std::lock_guard<std::mutex> lock(m_wakeLock);
-            m_calls++;
-        }
+        m_calls++;
+        m_activeCalls++;
         m_wake.notify_all();
     }
 
 private:
 
+    struct ActionCompleteImpl : ThreadPoolActionComplete
+    {
+        ActionCompleteImpl(ThreadPoolImpl* owner) :
+            m_owner(owner)
+        {
+        }
+
+        bool Invoked = false;
+
+        void operator()() override
+        {
+            Invoked = true;
+            m_owner->m_activeCalls--;
+            m_owner->m_active.notify_all();
+        }
+
+    private:
+        ThreadPoolImpl * m_owner = nullptr;
+    };
+
+    std::atomic<uint32_t> m_refs { 1 };
+
     std::mutex m_wakeLock;
     std::condition_variable m_wake;
-    bool m_terminate = false;
+    std::atomic<uint32_t> m_calls { 0 };
+
+    std::mutex m_activeLock;
+    std::condition_variable m_active;
+    std::atomic<uint32_t> m_activeCalls { 0 };
+
+    std::atomic<bool> m_terminate = { false };
     std::vector<std::thread> m_pool;
-    uint32_t m_calls = 0;
     void* m_context = nullptr;
     ThreadPoolCallback* m_callback = nullptr;
 };
@@ -121,7 +207,7 @@ void ThreadPool::Terminate() noexcept
     if (m_impl != nullptr)
     {
         m_impl->Terminate();
-        delete m_impl;
+        m_impl->Release();
         m_impl = nullptr;
     }
 }

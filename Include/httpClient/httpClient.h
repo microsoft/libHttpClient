@@ -656,11 +656,13 @@ typedef struct WebSocketCompletionResult
 
 /// <summary>
 /// Connects to the WebSocket.
+/// To get the result, first call HCGetWebSocketConnectResult
+/// inside the AsyncBlock callback or after the AsyncBlock is complete.
 /// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket.
 /// On Win32, iOS, and Android, all background work (including initial connection process) will be added to the queue
 /// in the provided XAsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
 /// caller to dispatch that queue for as long as the websocket connection is active. Note that work for 
-/// HCWebSocketSendMessageAsync calls can be assigned to a seperate queue if desired.
+/// HCWebSocketSendMessageAsync calls can be assigned to a separate queue if desired.
 /// </summary>
 /// <param name="uri">The UTF-8 encoded URI to connect to</param>
 /// <param name="subProtocol">The UTF-8 encoded subProtocol to connect to</param>
@@ -686,7 +688,9 @@ STDAPI HCGetWebSocketConnectResult(
     ) HC_NOEXCEPT;
 
 /// <summary>
-/// Send message the WebSocket
+/// Send message the WebSocket.  
+/// To get the result, first call HCGetWebSocketSendMessageResult
+/// inside the AsyncBlock callback or after the AsyncBlock is complete.
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="message">The UTF-8 encoded message to send</param>

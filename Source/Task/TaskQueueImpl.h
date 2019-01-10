@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "AtomicVector.h"
 #include "LocklessList.h"
 #include "StaticArray.h"
 #include "ThreadPool.h"
@@ -31,6 +32,22 @@ public:
 
     uint32_t __stdcall Release()
     {
+        // When we are at one, we give
+        // the object a chance to run down.  We
+        // do this at 1 instead of 0 to ensure that
+        // if the object needed to take temporary refs
+        // on itself it can do so safely.  We take a
+        // ref during this time to ensure we don't
+        // get a cascade of rundown calls for temporary
+        // references.
+
+        if (m_refs == 1)
+        {
+            m_refs++;
+            RundownObject();
+            m_refs--;
+        }
+
         ApiDiag::GlobalRelease();
         uint32_t refs = --m_refs;
         if (refs == 0)
@@ -69,6 +86,13 @@ protected:
         return nullptr;
     }
     
+    // Called when the object is "likely" about to be
+    // deleted.  There is no guarantee that an object
+    // will be deleted after this call.
+    virtual void RundownObject()
+    {
+    }
+    
 private:
     std::atomic<uint32_t> m_refs{ 0 };
 };
@@ -99,7 +123,7 @@ private:
     CallbackRegistration m_buffer1[SUBMIT_CALLBACK_MAX];
     CallbackRegistration m_buffer2[SUBMIT_CALLBACK_MAX];
     CallbackRegistration* m_buffers[2]= { m_buffer1, m_buffer2 };
-    std::atomic<uint32_t> m_indexAndRef = { 0 };
+    std::atomic<uint32_t> m_indexAndRef { 0 };
     XTaskQueueHandle m_queue;
 };
 
@@ -133,7 +157,7 @@ private:
     std::mutex m_lock;
 };
 
-class TaskQueuePortImpl: public Api<ApiId::XTaskQueuePort, ITaskQueuePort>
+class TaskQueuePortImpl: public Api<ApiId::TaskQueuePort, ITaskQueuePort>
 {
 public:
 
@@ -141,20 +165,18 @@ public:
     virtual ~TaskQueuePortImpl();
 
     HRESULT Initialize(
-        _In_ XTaskQueuePort port, 
-        _In_ XTaskQueueDispatchMode mode, 
-        _Out_ SubmitCallback* submitCallback);
+        _In_ XTaskQueueDispatchMode mode);
 
     XTaskQueuePortHandle __stdcall GetHandle() { return &m_header; }
 
     HRESULT __stdcall QueueItem(
-        ITaskQueue* owner,
-        uint32_t waitMs,
-        void* context,
+        _In_ ITaskQueuePortContext* portContext,
+        _In_ uint32_t waitMs,
+        _In_opt_ void* callbackContext,
         XTaskQueueCallback* callback);
 
     HRESULT __stdcall RegisterWaitHandle(
-        ITaskQueue* owner,
+        _In_ ITaskQueuePortContext* portContext,
         _In_ HANDLE waitHandle,
         _In_opt_ void* callbackContext,
         _In_ XTaskQueueCallback* callback,
@@ -164,7 +186,8 @@ public:
         _In_ XTaskQueueRegistrationToken token);
 
     HRESULT __stdcall PrepareTerminate(
-        _In_ void* context,
+        _In_ ITaskQueuePortContext* portContext,
+        _In_ void* callbackContext,
         _In_ XTaskQueueTerminatedCallback* callback,
         _Out_ void** token);
 
@@ -174,9 +197,16 @@ public:
     void __stdcall Terminate(
         _In_ void* token);
 
+    virtual HRESULT __stdcall Attach(
+        _In_ ITaskQueuePortContext* portContext);
+
+    void __stdcall Detach(
+        _In_ ITaskQueuePortContext* portContext);
+    
     bool __stdcall DrainOneItem();
 
     bool __stdcall Wait(
+        _In_ ITaskQueuePortContext* portContext,
         _In_ uint32_t timeout);
 
     bool __stdcall IsEmpty();
@@ -187,8 +217,8 @@ private:
 
     struct QueueEntry
     {
-        IApi* owner;
-        void* context;
+        ITaskQueuePortContext* portContext;
+        void* callbackContext;
         XTaskQueueCallback* callback;
         WaitRegistration* waitRegistration;
         uint64_t enqueueTime;
@@ -197,17 +227,10 @@ private:
 
     typedef LocklessList<QueueEntry>::Node QueueEntryNode;
 
-    enum class PortStatus
-    {
-        Active,
-        Canceled,
-        Terminating,
-        Terminated
-    };
-
     struct TerminationEntry
     {
-        void* context;
+        ITaskQueuePortContext* portContext;
+        void* callbackContext;
         XTaskQueueTerminatedCallback* callback;
         LocklessList<TerminationEntry>::Node* node;
     };
@@ -220,17 +243,16 @@ private:
         uint64_t token;
         HANDLE waitHandle;
         PTP_WAIT threadpoolWait;
+        ITaskQueuePortContext* portContext;
         TaskQueuePortImpl* port;
-        IApi* owner;
         QueueEntry* queueEntry;
+        std::atomic_flag appended;
     };
 #endif
 
     XTaskQueuePortObject m_header = { };
-    XTaskQueuePort m_type = XTaskQueuePort::Work;
     XTaskQueueDispatchMode m_dispatchMode = XTaskQueueDispatchMode::Manual;
-    SubmitCallback* m_callbackSubmitted = nullptr;
-    std::atomic<PortStatus> m_status = { PortStatus::Active };
+    AtomicVector<ITaskQueuePortContext*> m_attachedContexts;
     std::atomic<uint32_t> m_processingCallback{ 0 };
     std::condition_variable_any m_event;
     std::mutex m_lock;
@@ -247,7 +269,9 @@ private:
     uint64_t m_nextWaitToken = 0;
 #endif
 
-    HRESULT VerifyNotTerminated();
+    HRESULT VerifyNotTerminated(_In_ ITaskQueuePortContext* portContext);
+    
+    bool IsCallCanceled(_In_ QueueEntry* entry);
 
     // Appends the given entry to the active queue.  The entry should already
     // be add-refd.
@@ -259,6 +283,10 @@ private:
     // Releases the entry.
     void ReleaseEntry(
         _In_ QueueEntry* entry);
+    
+    void CancelPendingEntries(
+        _In_ ITaskQueuePortContext* portContext,
+        _In_ bool appendToQueue);
 
     static void EraseQueue(
         _In_opt_ LocklessList<QueueEntry>* queue);
@@ -274,7 +302,7 @@ private:
 
     void SignalQueue();
 
-    void ProcessThreadPoolCallback();
+    void ProcessThreadPoolCallback(_In_ ThreadPoolActionComplete& complete);
 
 #ifdef _WIN32
     HRESULT InitializeWaitRegistration(
@@ -282,6 +310,7 @@ private:
 
     bool AppendWaitRegistrationEntry(
         _In_ WaitRegistration* waitReg,
+        _In_ bool addRef = true,
         _In_ bool signal = true);
 
     void ProcessWaitCallback(
@@ -293,6 +322,44 @@ private:
         _Inout_ PTP_WAIT wait,
         _In_ TP_WAIT_RESULT waitResult);
 #endif
+};
+
+class TaskQueuePortContextImpl : public ITaskQueuePortContext
+{
+public:
+    
+    TaskQueuePortContextImpl(
+        _In_ ITaskQueue* queue,
+        _In_ XTaskQueuePort type,
+        _In_ SubmitCallback* submitCallback);
+    
+    uint32_t __stdcall AddRef() override;
+    uint32_t __stdcall Release() override;
+    HRESULT __stdcall QueryApi(_In_ ApiId id, _Out_ void** ptr) override;
+
+    XTaskQueuePort __stdcall GetType() override;
+    TaskQueuePortStatus __stdcall GetStatus() override;
+    ITaskQueue* __stdcall GetQueue() override;
+    ITaskQueuePort* __stdcall GetPort() override;
+    
+    bool __stdcall TrySetStatus(
+        _In_ TaskQueuePortStatus expectedStatus,
+        _In_ TaskQueuePortStatus status) override;
+    
+    void __stdcall SetStatus(
+        _In_ TaskQueuePortStatus status) override;
+
+    void __stdcall ItemQueued() override;
+
+    referenced_ptr<ITaskQueuePort> Port;
+    referenced_ptr<ITaskQueue> Source;
+
+private:
+    
+    ITaskQueue* m_queue = nullptr;
+    XTaskQueuePort m_type = XTaskQueuePort::Work;
+    SubmitCallback* m_submitCallback = nullptr;
+    std::atomic<TaskQueuePortStatus> m_status = { TaskQueuePortStatus::Active };
 };
 
 class TaskQueueImpl : public Api<ApiId::TaskQueue, ITaskQueue>
@@ -312,38 +379,42 @@ public:
         _In_ XTaskQueuePortHandle workPort,
         _In_ XTaskQueuePortHandle completionPort);
     
-    XTaskQueueHandle __stdcall GetHandle() { return &m_header; }
+    XTaskQueueHandle __stdcall GetHandle() override { return &m_header; }
 
-    HRESULT __stdcall GetPort(
+    HRESULT __stdcall GetPortContext(
         _In_ XTaskQueuePort port,
-        _Out_ ITaskQueuePort** portHandle);
+        _Out_ ITaskQueuePortContext** portContext) override;
     
     HRESULT __stdcall RegisterWaitHandle(
         _In_ XTaskQueuePort port,
         _In_ HANDLE waitHandle,
         _In_opt_ void* callbackContext,
         _In_ XTaskQueueCallback* callback,
-        _Out_ XTaskQueueRegistrationToken* token);
+        _Out_ XTaskQueueRegistrationToken* token) override;
 
     void __stdcall UnregisterWaitHandle(
-        _In_ XTaskQueueRegistrationToken token);
+        _In_ XTaskQueueRegistrationToken token) override;
 
     HRESULT __stdcall RegisterSubmitCallback(
         _In_opt_ void* context,
         _In_ XTaskQueueMonitorCallback* callback,
-        _Out_ XTaskQueueRegistrationToken* token);
+        _Out_ XTaskQueueRegistrationToken* token) override;
     
     void __stdcall UnregisterSubmitCallback(
-        _In_ XTaskQueueRegistrationToken token);
+        _In_ XTaskQueueRegistrationToken token) override;
 
-    bool __stdcall CanTerminate();
-    bool __stdcall CanClose();
+    bool __stdcall CanTerminate() override;
+    bool __stdcall CanClose() override;
 
     HRESULT __stdcall Terminate(
         _In_ bool wait, 
         _In_opt_ void* callbackContext, 
-        _In_opt_ XTaskQueueTerminatedCallback* callback);
+        _In_opt_ XTaskQueueTerminatedCallback* callback)override ;
 
+protected:
+    
+    void RundownObject() override;
+    
 private:
 
     static void CALLBACK OnTerminationCallback(_In_ void* context);
@@ -356,7 +427,7 @@ private:
         Work,
         Completion
     };
-
+    
     struct TerminationEntry
     {
         TaskQueueImpl* owner;
@@ -373,16 +444,14 @@ private:
         std::mutex lock;
         std::condition_variable cv;
     };
-
+    
     XTaskQueueObject m_header = { };
     SubmitCallback m_callbackSubmitted;
     QueueWaitRegistry m_waitRegistry;
     TerminationData m_termination;
+    TaskQueuePortContextImpl m_work;
+    TaskQueuePortContextImpl m_completion;
     bool m_allowClose;
-    referenced_ptr<ITaskQueuePort> m_work;
-    referenced_ptr<ITaskQueuePort> m_completion;
-    referenced_ptr<ITaskQueue> m_workSource;
-    referenced_ptr<ITaskQueue> m_completionSource;
 };
 
 inline ITaskQueue* GetQueue(XTaskQueueHandle handle)

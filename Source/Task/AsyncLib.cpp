@@ -16,7 +16,7 @@ std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
 // the state of these two classes in sync under a lock.  We
 // do this because it is possible for a user to cancel an async
 // call while that call is still running.  We issue the completion
-// callback for the cancel immediatly, which gives the user an
+// callback for the cancel immediately, which gives the user an
 // opportunity to delete the user async block.  This would leave
 // the async provider callback with a dangling pointer.
 
@@ -400,10 +400,6 @@ static void SignalCompletion(_In_ AsyncStateRef const& state)
         if (SUCCEEDED(hr))
         {
             callbackState.Detach();
-        }
-        else
-        {
-            FAIL_FAST_MSG("Failed to submit competion callback: 0x%08x", hr);
         }
     }
     else

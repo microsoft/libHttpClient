@@ -94,6 +94,7 @@ set(Public_Source_Files
 
 set(Task_Source_Files
     ../../../Source/Task/AsyncLib.cpp
+    ../../../Source/Task/AtomicVector.h
     ../../../Source/Task/LocklessList.h
     ../../../Source/Task/referenced_ptr.h
     ../../../Source/Task/StaticArray.h

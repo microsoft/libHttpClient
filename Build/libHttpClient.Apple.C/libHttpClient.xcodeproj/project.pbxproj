@@ -114,6 +114,7 @@
 		D3C5B553214848B6004BE1FF /* ios_WaitTimer_target.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_WaitTimer_target.mm; sourceTree = "<group>"; };
 		D3C5B554214848B6004BE1FF /* ios_WaitTimer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_WaitTimer.mm; sourceTree = "<group>"; };
 		D3C5B55821484A8A004BE1FF /* ios_WaitTimerImpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_WaitTimerImpl.h; sourceTree = "<group>"; };
+		D3C6513F21DA3C4D002A8F59 /* AtomicVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AtomicVector.h; sourceTree = "<group>"; };
 		D3DAA84721C0E4090009C7F6 /* XTaskQueuePriv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XTaskQueuePriv.h; sourceTree = "<group>"; };
 		D3DAA84821C0E4090009C7F6 /* TaskQueueP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskQueueP.h; sourceTree = "<group>"; };
 		D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TaskQueue.cpp; sourceTree = "<group>"; };
@@ -265,6 +266,7 @@
 		58A7E9AD209ADEB100CC6774 /* Task */ = {
 			isa = PBXGroup;
 			children = (
+				D3C6513F21DA3C4D002A8F59 /* AtomicVector.h */,
 				D3DAA85021C0E4090009C7F6 /* LocklessList.h */,
 				D3DAA84A21C0E4090009C7F6 /* referenced_ptr.h */,
 				D3DAA84B21C0E4090009C7F6 /* StaticArray.h */,
