@@ -111,6 +111,7 @@ public:
 
         // At this point, there should be no more references to me.
         m_state = DESTROYED;
+        HCWebSocketCloseHandle(m_hcWebsocketHandle);
         XTaskQueueCloseHandle(m_backgroundQueue);
     }
 
