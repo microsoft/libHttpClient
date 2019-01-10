@@ -70,9 +70,9 @@ public:
         m_state(CREATED),
         m_numSends(0),
         m_opensslFailed(false),
-        m_uri(hcHandle->uri)
+        m_uri(hcHandle->uri),
+        m_hcWebsocketHandle{ hcHandle }
     {
-        m_hcWebsocketHandle = HCWebSocketDuplicateHandle(hcHandle);
     }
 
     ~wspp_websocket_impl()
@@ -111,7 +111,10 @@ public:
 
         // At this point, there should be no more references to me.
         m_state = DESTROYED;
-        XTaskQueueCloseHandle(m_backgroundQueue);
+        if (m_backgroundQueue)
+        {
+            XTaskQueueCloseHandle(m_backgroundQueue);
+        }
     }
 
     HRESULT connect(XAsyncBlock* async)
@@ -260,6 +263,11 @@ private:
     template<typename WebsocketConfigType>
     HRESULT connect_impl(XAsyncBlock* async)
     {
+        if (async->queue)
+        {
+            XTaskQueueDuplicateHandle(async->queue, &m_backgroundQueue);
+        }
+
         auto &client = m_client->client<WebsocketConfigType>();
 
         client.clear_access_channels(websocketpp::log::alevel::all);
@@ -400,7 +408,7 @@ private:
                     websocketpp::client<WebsocketConfigType>& client;
                 };
                 auto context = http_allocate_shared<client_context>(client);
-                
+
                 m_websocketThread = std::thread([context](){
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
                     JavaVM* javaVm = nullptr;
