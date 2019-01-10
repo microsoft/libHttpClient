@@ -6,7 +6,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-ios_http_task::ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
+ios_http_task::ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call) :
     m_call(call),
     m_asyncBlock(asyncBlock),
     m_sessionTask(nullptr)
@@ -155,10 +155,10 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ hc_perform_env env
+    _In_ HCPerformEnv env
 ) noexcept
 {
     assert(context == nullptr);

@@ -9,7 +9,7 @@ using namespace xbox::httpclient::log;
 
 STDAPI 
 HCMockCallCreate(
-    _Out_ hc_mock_call_handle* call
+    _Out_ HCMockCallHandle* call
     ) HC_NOEXCEPT
 {
     return HCHttpCallCreate(call);
@@ -17,7 +17,7 @@ HCMockCallCreate(
 
 STDAPI 
 HCMockAddMock(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_opt_z_ const char* method,
     _In_opt_z_ const char* url,
     _In_reads_bytes_opt_(requestBodySize) const uint8_t* requestBodyBytes,
@@ -82,7 +82,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCMockResponseSetResponseBodyBytes(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
     _In_ uint32_t bodySize
     ) HC_NOEXCEPT
@@ -92,7 +92,7 @@ HCMockResponseSetResponseBodyBytes(
 
 STDAPI 
 HCMockResponseSetStatusCode(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_ uint32_t statusCode
     ) HC_NOEXCEPT
 {
@@ -101,7 +101,7 @@ HCMockResponseSetStatusCode(
 
 STDAPI 
 HCMockResponseSetNetworkErrorCode(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
     ) HC_NOEXCEPT
@@ -111,7 +111,7 @@ HCMockResponseSetNetworkErrorCode(
 
 STDAPI 
 HCMockResponseSetHeader(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
     ) HC_NOEXCEPT

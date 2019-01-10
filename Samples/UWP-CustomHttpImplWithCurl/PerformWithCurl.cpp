@@ -67,7 +67,7 @@ std::wstring to_wstring(const std::string &value)
 }
 
 void STDAPIVCALLTYPE PerformCallWithCurl(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ AsyncBlock* asyncBlock
     )
 {

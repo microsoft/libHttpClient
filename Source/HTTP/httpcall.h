@@ -78,8 +78,8 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept;
 
 void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ hc_perform_env env
+    _In_ HCPerformEnv env
 ) noexcept;

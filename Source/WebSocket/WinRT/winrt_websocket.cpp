@@ -41,7 +41,7 @@ public:
     void OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args);
 
 private:
-    hc_websocket_handle_t m_websocket;
+    HCWebsocketHandle m_websocket;
 };
 
 class winrt_websocket_impl : public hc_websocket_impl
@@ -62,7 +62,7 @@ public:
 
     std::mutex m_outgoingMessageQueueLock;
     std::queue<std::shared_ptr<websocket_outgoing_message>> m_outgoingMessageQueue;
-    hc_websocket_handle_t m_websocketHandle;
+    HCWebsocketHandle m_websocketHandle;
     std::atomic<bool> m_outgoingMessageSendInProgress;
 };
 
@@ -144,7 +144,7 @@ HRESULT WebsocketConnectDoWork(
     )
 try
 {
-    hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(executionRoutineContext);
+    HCWebsocketHandle websocket = static_cast<HCWebsocketHandle>(executionRoutineContext);
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Connect executing", websocket->id);
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
 
@@ -245,7 +245,7 @@ CATCH_RETURN()
 
 HRESULT WebsocketConnectGetResult(_In_ const XAsyncProviderData* data)
 {
-    hc_websocket_handle_t websocket = static_cast<hc_websocket_handle_t>(data->context);
+    HCWebsocketHandle websocket = static_cast<HCWebsocketHandle>(data->context);
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
 
     WebSocketCompletionResult result = {};
@@ -260,7 +260,7 @@ HRESULT WebsocketConnectGetResult(_In_ const XAsyncProviderData* data)
 HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock
     )
 {
@@ -279,7 +279,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
             case XAsyncOp::GetResult: return WebsocketConnectGetResult(data);
             case XAsyncOp::Cleanup:
             {
-                HCWebSocketCloseHandle(static_cast<hc_websocket_handle_t>(data->context));
+                HCWebSocketCloseHandle(static_cast<HCWebsocketHandle>(data->context));
                 break;
             }
         }
@@ -296,7 +296,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 }
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ PCSTR message,
     _Inout_ XAsyncBlock* asyncBlock
     )
@@ -504,7 +504,7 @@ void MessageWebSocketSendMessage(
 }
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {

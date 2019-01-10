@@ -376,11 +376,11 @@ typedef struct _LIST_ENTRY {
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005)
 #define E_HC_NO_NETWORK                 MAKE_E_HC(0x5006)
 
-typedef uint32_t hc_memory_type;
-typedef struct HC_WEBSOCKET* hc_websocket_handle_t;
-typedef struct HC_CALL* hc_call_handle_t;
-typedef struct HC_CALL* hc_mock_call_handle;
-typedef struct HC_PERFORM_ENV* hc_perform_env;
+typedef uint32_t HCMemoryType;
+typedef struct HC_WEBSOCKET* HCWebsocketHandle;
+typedef struct HC_CALL* HCCallHandle;
+typedef struct HC_CALL* HCMockCallHandle;
+typedef struct HC_PERFORM_ENV* HCPerformEnv;
 
 // Error codes from https://www.iana.org/assignments/websocket/websocket.xml#close-code-number
 typedef enum HCWebSocketCloseStatus

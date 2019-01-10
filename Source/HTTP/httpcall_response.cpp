@@ -9,7 +9,7 @@ using namespace xbox::httpclient;
 
 STDAPI 
 HCHttpCallResponseGetResponseString(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Out_ const char** responseString
     ) HC_NOEXCEPT
 try
@@ -30,7 +30,7 @@ try
 CATCH_RETURN()
 
 STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Out_ size_t* bufferSize
     ) HC_NOEXCEPT
 try
@@ -46,7 +46,7 @@ try
 CATCH_RETURN()
 
 STDAPI HCHttpCallResponseGetResponseBodyBytes(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ size_t bufferSize,
     _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) uint8_t* buffer,
     _Out_opt_ size_t* bufferUsed
@@ -75,7 +75,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseSetResponseBodyBytes(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
     _In_ size_t bodySize
     ) HC_NOEXCEPT
@@ -96,7 +96,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseGetStatusCode(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Out_ uint32_t* statusCode
     ) HC_NOEXCEPT
 try 
@@ -113,7 +113,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseSetStatusCode(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ uint32_t statusCode
     ) HC_NOEXCEPT
 try 
@@ -131,7 +131,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseGetNetworkErrorCode(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Out_ HRESULT* networkErrorCode,
     _Out_ uint32_t* platformNetworkErrorCode
     ) HC_NOEXCEPT
@@ -150,7 +150,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseSetNetworkErrorCode(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
     ) HC_NOEXCEPT
@@ -170,7 +170,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseGetHeader(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
     ) HC_NOEXCEPT
@@ -196,7 +196,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseGetNumHeaders(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Out_ uint32_t* numHeaders
     ) HC_NOEXCEPT
 try 
@@ -213,7 +213,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseGetHeaderAtIndex(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ uint32_t headerIndex,
     _Out_ const char** headerName,
     _Out_ const char** headerValue
@@ -246,7 +246,7 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseSetHeader(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
     ) HC_NOEXCEPT

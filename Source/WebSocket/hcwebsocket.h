@@ -33,17 +33,17 @@ typedef struct HC_WEBSOCKET
 HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock
     );
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
     _Inout_ XAsyncBlock* asyncBlock
     );
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     );
