@@ -233,7 +233,7 @@ public:
 
     HRESULT close()
     {
-        return close(HCWebSocketCloseStatus::HCWebSocketCloseStatus_Normal);
+        return close(HCWebSocketCloseStatus::Normal);
     }
 
     HRESULT close(HCWebSocketCloseStatus status)
