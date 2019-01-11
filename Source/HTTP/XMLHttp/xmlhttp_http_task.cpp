@@ -12,8 +12,8 @@
 #include "http_request_stream.h"
 
 xmlhttp_http_task::xmlhttp_http_task(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HCCallHandle call
     ) :
     m_statusCode(0),
     m_call(call),
@@ -33,8 +33,8 @@ xmlhttp_http_task::~xmlhttp_http_task()
 }
 
 void xmlhttp_http_task::perform_async(
-    _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HCCallHandle call
     )
 {
     try
@@ -66,7 +66,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to create IXMLHTTPRequest2 instance %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, S_OK, 0);
+            XAsyncComplete(asyncBlock, S_OK, 0);
             return;
         }
 
@@ -87,7 +87,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to open HTTP request %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, S_OK, 0);
+            XAsyncComplete(asyncBlock, S_OK, 0);
             return;
         }
 
@@ -127,7 +127,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to set HTTP response stream %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, S_OK, 0);
+            XAsyncComplete(asyncBlock, S_OK, 0);
             return;
         }
 
@@ -147,7 +147,7 @@ void xmlhttp_http_task::perform_async(
             {
                 HC_TRACE_ERROR(HTTPCLIENT, "[%d] http_request_stream failed in xmlhttp_http_task.", hr);
                 HCHttpCallResponseSetNetworkErrorCode(call, E_FAIL, static_cast<uint32_t>(hr));
-                CompleteAsync(asyncBlock, S_OK, 0);
+                XAsyncComplete(asyncBlock, S_OK, 0);
                 return;
             }
 
@@ -162,7 +162,7 @@ void xmlhttp_http_task::perform_async(
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
-            CompleteAsync(asyncBlock, S_OK, 0);
+            XAsyncComplete(asyncBlock, S_OK, 0);
             return;
         }
         // If there were no errors so far, HCTaskSetCompleted is called later 
@@ -174,19 +174,19 @@ void xmlhttp_http_task::perform_async(
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::bad_alloc in xmlhttp_http_task: %s", E_OUTOFMEMORY, e.what());
         HCHttpCallResponseSetNetworkErrorCode(call, E_OUTOFMEMORY, static_cast<uint32_t>(E_OUTOFMEMORY));
-        CompleteAsync(asyncBlock, E_OUTOFMEMORY, 0);
+        XAsyncComplete(asyncBlock, E_OUTOFMEMORY, 0);
     }
     catch (std::exception const& e)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] std::exception in xmlhttp_http_task: %s", E_FAIL, e.what());
         HCHttpCallResponseSetNetworkErrorCode(call, E_FAIL, static_cast<uint32_t>(E_FAIL));
-        CompleteAsync(asyncBlock, E_FAIL, 0);
+        XAsyncComplete(asyncBlock, E_FAIL, 0);
     }
     catch (...)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[%d] unknown exception in xmlhttp_http_task", E_FAIL);
         HCHttpCallResponseSetNetworkErrorCode(call, E_FAIL, static_cast<uint32_t>(E_FAIL));
-        CompleteAsync(asyncBlock, E_FAIL, 0);
+        XAsyncComplete(asyncBlock, E_FAIL, 0);
     }
 }
 
@@ -274,12 +274,12 @@ http_buffer& xmlhttp_http_task::response_buffer()
     return m_responseBuffer;
 }
 
-hc_call_handle_t xmlhttp_http_task::call()
+HCCallHandle xmlhttp_http_task::call()
 {
     return m_call;
 }
 
-AsyncBlock* xmlhttp_http_task::async_block()
+XAsyncBlock* xmlhttp_http_task::async_block()
 {
     return m_asyncBlock;
 }
@@ -299,10 +299,10 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 }
 
 void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock,
+    _In_ HCCallHandle call,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ hc_perform_env env
+    _In_ HCPerformEnv env
 ) noexcept
 {
     assert(context == nullptr);

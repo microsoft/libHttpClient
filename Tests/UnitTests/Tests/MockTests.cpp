@@ -50,19 +50,17 @@ public:
         HCCallHandle mockCall = CreateMockCall("Mock1", false, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, "", "", nullptr, 0));
 
-        async_queue_handle_t queue;
-        uint32_t sharedAsyncQueueId = 1;
-        CreateSharedAsyncQueue(
-            sharedAsyncQueueId,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        XTaskQueueHandle queue;
+        XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Manual,
             &queue);
 
-        AsyncBlock* asyncBlock = new AsyncBlock;
-        ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock = new XAsyncBlock;
+        ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
         asyncBlock->context = call;
         asyncBlock->queue = queue;
-        asyncBlock->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -84,12 +82,12 @@ public:
 
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
 
-        CloseAsyncQueue(queue);
+        XTaskQueueCloseHandle(queue);
         HCCleanup();
     }
 
@@ -109,19 +107,17 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "3"));
         g_gotCall = false;
 
-        async_queue_handle_t queue;
-        uint32_t sharedAsyncQueueId = 2;
-        CreateSharedAsyncQueue(
-            sharedAsyncQueueId,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        XTaskQueueHandle queue;
+        XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Manual,
             &queue);
 
-        AsyncBlock* asyncBlock = new AsyncBlock;
-        ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock = new XAsyncBlock;
+        ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
         asyncBlock->context = call;
         asyncBlock->queue = queue;
-        asyncBlock->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -144,9 +140,9 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -155,11 +151,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "10", "20"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "3"));
 
-        AsyncBlock* asyncBlock2 = new AsyncBlock;
-        ZeroMemory(asyncBlock2, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock2 = new XAsyncBlock;
+        ZeroMemory(asyncBlock2, sizeof(XAsyncBlock));
         asyncBlock2->context = call;
         asyncBlock2->queue = queue;
-        asyncBlock2->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock2->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -181,13 +177,13 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
-        CloseAsyncQueue(queue);
+        XTaskQueueCloseHandle(queue);
         HCCleanup();
     }
 
@@ -207,19 +203,17 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
         g_gotCall = false;
 
-        async_queue_handle_t queue;
-        uint32_t sharedAsyncQueueId = 3;
-        CreateSharedAsyncQueue(
-            sharedAsyncQueueId,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        XTaskQueueHandle queue;
+        XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Manual,
             &queue);
 
-        AsyncBlock* asyncBlock = new AsyncBlock;
-        ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock = new XAsyncBlock;
+        ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
         asyncBlock->context = call;
         asyncBlock->queue = queue;
-        asyncBlock->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -242,9 +236,9 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -253,11 +247,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "3"));
 
-        AsyncBlock* asyncBlock2 = new AsyncBlock;
-        ZeroMemory(asyncBlock2, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock2 = new XAsyncBlock;
+        ZeroMemory(asyncBlock2, sizeof(XAsyncBlock));
         asyncBlock2->context = call;
         asyncBlock2->queue = queue;
-        asyncBlock2->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock2->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -279,9 +273,9 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -291,11 +285,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
 
-        AsyncBlock* asyncBlock3 = new AsyncBlock;
-        ZeroMemory(asyncBlock3, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock3 = new XAsyncBlock;
+        ZeroMemory(asyncBlock3, sizeof(XAsyncBlock));
         asyncBlock3->context = call;
         asyncBlock3->queue = queue;
-        asyncBlock3->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock3->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -317,9 +311,9 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -329,11 +323,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
 
-        AsyncBlock* asyncBlock4 = new AsyncBlock;
-        ZeroMemory(asyncBlock4, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock4 = new XAsyncBlock;
+        ZeroMemory(asyncBlock4, sizeof(XAsyncBlock));
         asyncBlock4->context = call;
         asyncBlock4->queue = queue;
-        asyncBlock4->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock4->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -354,12 +348,12 @@ public:
 
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         g_gotCall = false;
 
-        CloseAsyncQueue(queue);
+        XTaskQueueCloseHandle(queue);
         HCCleanup();
     }
 
@@ -382,19 +376,17 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
         g_gotCall = false;
 
-        async_queue_handle_t queue;
-        uint32_t sharedAsyncQueueId = 5;
-        CreateSharedAsyncQueue(
-            sharedAsyncQueueId,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-            AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
+        XTaskQueueHandle queue;
+        XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Manual,
             &queue);
 
-        AsyncBlock* asyncBlock = new AsyncBlock;
-        ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock = new XAsyncBlock;
+        ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
         asyncBlock->context = call;
         asyncBlock->queue = queue;
-        asyncBlock->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -417,9 +409,9 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -428,11 +420,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
 
-        AsyncBlock* asyncBlock2 = new AsyncBlock;
-        ZeroMemory(asyncBlock2, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock2 = new XAsyncBlock;
+        ZeroMemory(asyncBlock2, sizeof(XAsyncBlock));
         asyncBlock2->context = call;
         asyncBlock2->queue = queue;
-        asyncBlock2->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock2->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -455,9 +447,9 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
@@ -467,11 +459,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(call, "requestBody"));
 
-        AsyncBlock* asyncBlock3 = new AsyncBlock;
-        ZeroMemory(asyncBlock3, sizeof(AsyncBlock));
+        XAsyncBlock* asyncBlock3 = new XAsyncBlock;
+        ZeroMemory(asyncBlock3, sizeof(XAsyncBlock));
         asyncBlock3->context = call;
         asyncBlock3->queue = queue;
-        asyncBlock3->callback = [](AsyncBlock* asyncBlock)
+        asyncBlock3->callback = [](XAsyncBlock* asyncBlock)
         {
             HRESULT errCode = S_OK;
             uint32_t platErrCode = 0;
@@ -494,13 +486,13 @@ public:
         VERIFY_ARE_EQUAL(false, g_gotCall);
         while (true)
         {
-            if (!DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Work, 0)) break;
+            if (!XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) break;
         }
-        VERIFY_ARE_EQUAL(true, DispatchAsyncQueue(queue, AsyncQueueCallbackType::AsyncQueueCallbackType_Completion, 0));
+        VERIFY_ARE_EQUAL(true, XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0));
         VERIFY_ARE_EQUAL(true, g_gotCall);
         g_gotCall = false;
 
-        CloseAsyncQueue(queue);
+        XTaskQueueCloseHandle(queue);
         HCCleanup();
     }
 

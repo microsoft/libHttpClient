@@ -6,7 +6,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-ios_http_task::ios_http_task(_Inout_ AsyncBlock* asyncBlock, _In_ hc_call_handle_t call) :
+ios_http_task::ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call) :
     m_call(call),
     m_asyncBlock(asyncBlock),
     m_sessionTask(nullptr)
@@ -39,7 +39,7 @@ void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NS
         }
 
         HCHttpCallResponseSetNetworkErrorCode(m_call, errorResult, errorCode);
-        CompleteAsync(m_asyncBlock, errorResult, 0);
+        XAsyncComplete(m_asyncBlock, errorResult, 0);
         return;
     }
 
@@ -61,7 +61,7 @@ void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NS
     }
 
     HCHttpCallResponseSetResponseBodyBytes(m_call, static_cast<const uint8_t*>([data bytes]), [data length]);
-    CompleteAsync(m_asyncBlock, S_OK, 0);
+    XAsyncComplete(m_asyncBlock, S_OK, 0);
 }
 
 bool ios_http_task::initiate_request()
@@ -71,7 +71,7 @@ bool ios_http_task::initiate_request()
     if (FAILED(HCHttpCallRequestGetUrl(m_call, &methodCString, &urlCString)))
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        XAsyncComplete(m_asyncBlock, E_FAIL, 0);
         return false;
     }
 
@@ -87,7 +87,7 @@ bool ios_http_task::initiate_request()
     if (FAILED(HCHttpCallRequestGetNumHeaders(m_call, &numHeaders)))
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        XAsyncComplete(m_asyncBlock, E_FAIL, 0);
         return false;
     }
 
@@ -109,7 +109,7 @@ bool ios_http_task::initiate_request()
     if (FAILED(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize)))
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);
-        CompleteAsync(m_asyncBlock, E_FAIL, 0);
+        XAsyncComplete(m_asyncBlock, E_FAIL, 0);
         return false;
     }
 
@@ -155,10 +155,10 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _In_ hc_call_handle_t call,
-    _Inout_ AsyncBlock* asyncBlock,
+    _In_ HCCallHandle call,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ hc_perform_env env
+    _In_ HCPerformEnv env
 ) noexcept
 {
     assert(context == nullptr);

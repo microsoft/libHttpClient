@@ -10,7 +10,7 @@ void message_received(
     _In_z_ const char* incomingBodyString
     )
 {
-    printf_s("Recieved websocket message: %s\n", incomingBodyString);
+    printf_s("Received websocket message: %s\n", incomingBodyString);
     SetEvent(g_eventHandle);
 }
 
@@ -28,14 +28,12 @@ int main()
     g_eventHandle = CreateEvent(nullptr, false, false, nullptr);
 
     HCInitialize(nullptr);
-    HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
+    HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
 
-    async_queue_handle_t queue;
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_ThreadPool,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_ThreadPool,
+    XTaskQueueHandle queue;
+    XTaskQueueCreate(
+        XTaskQueueDispatchMode::ThreadPool,
+        XTaskQueueDispatchMode::ThreadPool,
         &queue);
 
     std::string url = "wss://echo.websocket.org";
@@ -44,9 +42,9 @@ int main()
     HRESULT hr = HCWebSocketCreate(&websocket);
     hr = HCWebSocketSetFunctions(message_received, websocket_closed);
 
-    AsyncBlock* asyncBlock = new AsyncBlock{};
+    XAsyncBlock* asyncBlock = new XAsyncBlock{};
     asyncBlock->queue = queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
         HCGetWebSocketConnectResult(asyncBlock, &result);
@@ -60,9 +58,9 @@ int main()
     hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
     WaitForSingleObject(g_eventHandle, INFINITE);
 
-    asyncBlock = new AsyncBlock{};
+    asyncBlock = new XAsyncBlock{};
     asyncBlock->queue = queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
         HCGetWebSocketSendMessageResult(asyncBlock, &result);
@@ -76,7 +74,7 @@ int main()
     printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", requestString.data());
     hr = HCWebSocketSendMessageAsync(websocket, requestString.data(), asyncBlock);
     
-    // Wait for send to complete sucessfully and then wait again for response to be received.
+    // Wait for send to complete successfully and then wait again for response to be received.
     WaitForSingleObject(g_eventHandle, INFINITE);
     WaitForSingleObject(g_eventHandle, INFINITE);
 

@@ -55,14 +55,14 @@ extern bool g_memFreeCalled;
 
 
 
-void Internal_HCWebSocketMessage(
+void CALLBACK Internal_HCWebSocketMessage(
     _In_ HCWebsocketHandle websocket,
     _In_z_ PCSTR incomingBodyString
     )
 {
 }
 
-void Internal_HCWebSocketCloseEvent(
+void CALLBACK Internal_HCWebSocketCloseEvent(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
 )
@@ -77,7 +77,7 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     g_HCWebSocketConnect_Called = true;
@@ -88,7 +88,7 @@ bool g_HCWebSocketSendMessage_Called = false;
 HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ PCSTR message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     )
 {
     g_HCWebSocketSendMessage_Called = true;
@@ -122,7 +122,7 @@ public:
         VERIFY_IS_NULL(messageFunc);
         VERIFY_IS_NULL(closeFunc);
 
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetFunctions(Internal_HCWebSocketMessage, Internal_HCWebSocketCloseEvent));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetFunctions(nullptr, nullptr));// Internal_HCWebSocketMessage, Internal_HCWebSocketCloseEvent));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetFunctions(&messageFunc, &closeFunc));
         VERIFY_IS_NOT_NULL(messageFunc);
         VERIFY_IS_NOT_NULL(closeFunc);
@@ -181,7 +181,7 @@ public:
         VERIFY_ARE_EQUAL_STR("1234", proxy);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketConnect_Called);
-        AsyncBlock* asyncBlock = nullptr;
+        XAsyncBlock* asyncBlock = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, asyncBlock));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketConnect_Called);
 

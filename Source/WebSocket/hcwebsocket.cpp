@@ -92,7 +92,7 @@ HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) noexcept
 try
 {
@@ -127,7 +127,7 @@ STDAPI
 HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     ) noexcept
 try
 {
@@ -178,7 +178,7 @@ try
     {
         try
         {
-            HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::HCWebSocketCloseStatus_Normal;
+            HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::Normal;
             closeFunc(websocket, closeStatus);
 
             if (closeEventFunc != nullptr)
@@ -403,12 +403,12 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketConnectResult(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) noexcept
 try
 {
-    return GetAsyncResult(
+    return XAsyncGetResult(
         asyncBlock,
         reinterpret_cast<void*>(HCWebSocketConnectAsync),
         sizeof(WebSocketCompletionResult),
@@ -420,12 +420,12 @@ CATCH_RETURN()
 
 STDAPI
 HCGetWebSocketSendMessageResult(
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_ WebSocketCompletionResult* result
     ) noexcept
 try
 {
-    return GetAsyncResult(
+    return XAsyncGetResult(
         asyncBlock,
         reinterpret_cast<void*>(HCWebSocketSendMessageAsync),
         sizeof(WebSocketCompletionResult),

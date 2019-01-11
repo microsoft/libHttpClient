@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+#if !defined(__cplusplus)
+    #error C++11 required
+#endif
 
 #pragma once
-
-#if !defined(__cplusplus)
-#error C++11 required
-#endif
 
 #ifndef HC_TRACE_BUILD_LEVEL
 #define HC_TRACE_BUILD_LEVEL HC_PRIVATE_TRACE_LEVEL_VERBOSE
 #endif
+
+extern "C"
+{
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Tracing APIs
@@ -107,38 +109,38 @@
 /// <summary>
 /// Diagnostic level used by tracing
 /// </summary>
-typedef enum HCTraceLevel
+enum class HCTraceLevel : uint32_t
 {
     /// <summary>
     /// No tracing
     /// </summary>
-    HCTraceLevel_Off = HC_PRIVATE_TRACE_LEVEL_OFF,
+    Off = HC_PRIVATE_TRACE_LEVEL_OFF,
 
     /// <summary>
     /// Trace only errors
     /// </summary>
-    HCTraceLevel_Error = HC_PRIVATE_TRACE_LEVEL_ERROR,
+    Error = HC_PRIVATE_TRACE_LEVEL_ERROR,
 
     /// <summary>
     /// Trace warnings and errors
     /// </summary>
-    HCTraceLevel_Warning = HC_PRIVATE_TRACE_LEVEL_WARNING,
+    Warning = HC_PRIVATE_TRACE_LEVEL_WARNING,
 
     /// <summary>
     /// Trace important, warnings and errors
     /// </summary>
-    HCTraceLevel_Important = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
+    Important = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
 
     /// <summary>
     /// Trace info, important, warnings and errors
     /// </summary>
-    HCTraceLevel_Information = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
+    Information = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
 
     /// <summary>
     /// Trace everything
     /// </summary>
-    HCTraceLevel_Verbose = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
-} HCTraceLevel;
+    Verbose = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
+};
 
 /// <summary>
 /// Sets the trace level for the library.  Traces are sent the debug output
@@ -204,7 +206,7 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 #endif
 
 #if HC_TRACE_ERROR_ENABLE
-    #define HC_TRACE_ERROR(area, msg, ...)  HC_TRACE_MESSAGE(area, HCTraceLevel_Error, msg, ##__VA_ARGS__)
+    #define HC_TRACE_ERROR(area, msg, ...)  HC_TRACE_MESSAGE(area, HCTraceLevel::Error, msg, ##__VA_ARGS__)
     #define HC_TRACE_ERROR_HR(area, failedHr, msg) HC_TRACE_ERROR(area, "%hs (hr=0x%08x)", msg, failedHr)
 #else
     #define HC_TRACE_ERROR(area, msg, ...)
@@ -212,7 +214,7 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 #endif
 
 #if HC_TRACE_WARNING_ENABLE
-    #define HC_TRACE_WARNING(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Warning, msg, ##__VA_ARGS__)
+    #define HC_TRACE_WARNING(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel::Warning, msg, ##__VA_ARGS__)
     #define HC_TRACE_WARNING_HR(area, failedHr, msg) HC_TRACE_WARNING(area, "%hs (hr=0x%08x)", msg, failedHr)
 #else
     #define HC_TRACE_WARNING(area, msg, ...)
@@ -220,24 +222,24 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 #endif
 
 #if HC_TRACE_IMPORTANT_ENABLE
-    #define HC_TRACE_IMPORTANT(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Important, msg, ##__VA_ARGS__)
-    #define HC_TRACE_SCOPE_IMPORTANT(area) HC_TRACE_SCOPE(area, HCTraceLevel_Important)
+    #define HC_TRACE_IMPORTANT(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel::Important, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_IMPORTANT(area) HC_TRACE_SCOPE(area, HCTraceLevel::Important)
 #else
     #define HC_TRACE_IMPORTANT(area, msg, ...)
     #define HC_TRACE_SCOPE_IMPORTANT(area)
 #endif
 
 #if HC_TRACE_INFORMATION_ENABLE
-    #define HC_TRACE_INFORMATION(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Information, msg, ##__VA_ARGS__)
-    #define HC_TRACE_SCOPE_INFORMATION(area) HC_TRACE_SCOPE(area, HCTraceLevel_Information)
+    #define HC_TRACE_INFORMATION(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel::Information, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_INFORMATION(area) HC_TRACE_SCOPE(area, HCTraceLevel::Information)
 #else
     #define HC_TRACE_INFORMATION(area, msg, ...)
     #define HC_TRACE_SCOPE_INFORMATION(area)
 #endif
 
 #if HC_TRACE_VERBOSE_ENABLE
-    #define HC_TRACE_VERBOSE(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel_Verbose, msg, ##__VA_ARGS__)
-    #define HC_TRACE_SCOPE_VERBOSE(area) HC_TRACE_SCOPE(area, HCTraceLevel_Verbose)
+    #define HC_TRACE_VERBOSE(area, msg, ...) HC_TRACE_MESSAGE(area, HCTraceLevel::Verbose, msg, ##__VA_ARGS__)
+    #define HC_TRACE_SCOPE_VERBOSE(area) HC_TRACE_SCOPE(area, HCTraceLevel::Verbose)
 #else
     #define HC_TRACE_VERBOSE(area, msg, ...)
     #define HC_TRACE_SCOPE_VERBOSE(area)
@@ -272,7 +274,7 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
     #define HC_DEFINE_TRACE_AREA(name, verbosity)
     #define HC_DECLARE_TRACE_AREA(name)
     #define HC_TRACE_SET_VERBOSITY(area, level)
-    #define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel_Off
+    #define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel::Off
 #endif
 
 //------------------------------------------------------------------------------
@@ -309,7 +311,7 @@ typedef struct HCTraceImplArea
     HCTraceLevel Verbosity;
 } HCTraceImplArea;
 
-extern "C" inline
+EXTERN_C inline
 void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     struct HCTraceImplArea* area,
     HCTraceLevel verbosity
@@ -318,7 +320,7 @@ void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     area->Verbosity = verbosity;
 }
 
-extern "C" inline
+EXTERN_C inline
 HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area) noexcept
 {
     return area->Verbosity;
@@ -332,6 +334,8 @@ STDAPI_(void) HCTraceImplMessage(
 ) noexcept;
 
 STDAPI_(uint64_t) HCTraceImplScopeId() noexcept;
+
+}
 
 #if defined(__cplusplus)
 class HCTraceImplScopeHelper

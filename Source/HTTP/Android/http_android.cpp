@@ -17,12 +17,12 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 
     if (response == nullptr) 
     {
-        CompleteAsync(sourceRequest->GetAsyncBlock(), E_FAIL, 0);
+        XAsyncComplete(sourceRequest->GetAsyncBlock(), E_FAIL, 0);
     }
     else 
     {
         HRESULT result = sourceRequest->ProcessResponse(sourceCall, response);
-        CompleteAsync(sourceRequest->GetAsyncBlock(), result, 0);
+        XAsyncComplete(sourceRequest->GetAsyncBlock(), result, 0);
     }
 }
 
@@ -30,7 +30,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 
 void Internal_HCHttpCallPerformAsync(
     _In_ HCCallHandle call,
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_ HCPerformEnv env
 ) noexcept
@@ -50,7 +50,7 @@ void Internal_HCHttpCallPerformAsync(
 
     if (!SUCCEEDED(result))
     {
-        CompleteAsync(asyncBlock, result, 0);
+        XAsyncComplete(asyncBlock, result, 0);
         return;
     }
 
@@ -94,6 +94,6 @@ void Internal_HCHttpCallPerformAsync(
     }
     else
     { 
-        CompleteAsync(asyncBlock, E_FAIL, 0);
+        XAsyncComplete(asyncBlock, E_FAIL, 0);
     }
 }

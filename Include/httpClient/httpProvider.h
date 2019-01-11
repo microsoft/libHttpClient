@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+#if !defined(__cplusplus)
+    #error C++11 required
+#endif
 
 #pragma once
 
-#if !defined(__cplusplus)
-#error C++11 required
-#endif
-
 #include <httpClient/pal.h>
-#include <asyncProvider.h>
+#include <XAsyncProvider.h>
 #include <httpClient/trace.h>
+
+extern "C"
+{
 
 /// <summary>
 /// The callback definition used by HCSetHttpCallPerformFunction().
@@ -26,7 +28,7 @@
 typedef void
 (CALLBACK* HCCallPerformFunction)(
     _In_ HCCallHandle call,
-    _Inout_ AsyncBlock* asyncBlock,
+    _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_ HCPerformEnv env
     );
@@ -355,7 +357,7 @@ typedef HRESULT
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     );
 
 /// <summary>
@@ -369,7 +371,7 @@ typedef HRESULT
 (CALLBACK* HCWebSocketSendMessageFunction)(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
-    _Inout_ AsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock
     );
 
 /// <summary>
@@ -483,4 +485,6 @@ STDAPI HCWebSocketGetFunctions(
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
     ) noexcept;
 
-#endif
+#endif // !HC_NOWEBSOCKETS
+
+}

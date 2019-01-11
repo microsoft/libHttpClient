@@ -6,3 +6,5 @@
 #include "UnitTestBase_winrt.h"
 #include "DefineTestMacros.h"
 #include "WexTestClass.h"
+
+#define LOG_COMMENT(x, ...) WEX::Logging::Log::Comment(WEX::Common::String().Format(x, __VA_ARGS__))

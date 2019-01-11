@@ -63,8 +63,8 @@ HANDLE g_hActiveThreads[10] = { 0 };
 DWORD g_defaultIdealProcessor = 0;
 DWORD g_numActiveThreads = 0;
 
-async_queue_handle_t g_queue;
-registration_token_t g_callbackToken;
+XTaskQueueHandle g_queue;
+XTaskQueueRegistrationToken g_callbackToken;
 
 DWORD WINAPI background_thread_proc(LPVOID lpParam)
 {
@@ -75,13 +75,8 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         g_stopRequestedHandle.get()
     };
 
-    async_queue_handle_t queue;
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(
-        sharedAsyncQueueId,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual,
-        &queue);
+    XTaskQueueHandle queue;
+    XTaskQueueDuplicateHandle(g_queue, &queue);
 
     bool stop = false;
     while (!stop)
@@ -90,11 +85,9 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         switch (dwResult)
         {
         case WAIT_OBJECT_0: // work ready
-            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Work, 0);
-
-            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Work))
+            if (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
             {
-                // If there's more pending work, then set the event to process them
+                // If we executed work, set our event again to check next time.
                 SetEvent(g_workReadyHandle.get());
             }
             break;
@@ -102,11 +95,9 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         case WAIT_OBJECT_0 + 1: // completed 
             // Typically completions should be dispatched on the game thread, but
             // for this simple XAML app we're doing it here
-            DispatchAsyncQueue(queue, AsyncQueueCallbackType_Completion, 0);
-
-            if (!IsAsyncQueueEmpty(queue, AsyncQueueCallbackType_Completion))
+            if (XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0))
             {
-                // If there's more pending completions, then set the event to process them
+                // If we executed a completion set our event again to check next time
                 SetEvent(g_completionReadyHandle.get());
             }
             break;
@@ -117,13 +108,14 @@ DWORD WINAPI background_thread_proc(LPVOID lpParam)
         }
     }
 
+    XTaskQueueCloseHandle(queue);
     return 0;
 }
 
 void CALLBACK HandleAsyncQueueCallback(
     _In_ void* context,
-    _In_ async_queue_handle_t queue,
-    _In_ AsyncQueueCallbackType type
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort type
     )
 {
     UNREFERENCED_PARAMETER(context);
@@ -131,11 +123,11 @@ void CALLBACK HandleAsyncQueueCallback(
 
     switch (type)
     {
-    case AsyncQueueCallbackType::AsyncQueueCallbackType_Work:
+    case XTaskQueuePort::Work:
         SetEvent(g_workReadyHandle.get());
         break;
 
-    case AsyncQueueCallbackType::AsyncQueueCallbackType_Completion:
+    case XTaskQueuePort::Completion:
         SetEvent(g_completionReadyHandle.get());
         break;
     }
@@ -213,11 +205,11 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
     SampleHttpCallAsyncContext* hcContext =  new SampleHttpCallAsyncContext{ call, isJson, filePath };
-    AsyncBlock* asyncBlock = new AsyncBlock;
-    ZeroMemory(asyncBlock, sizeof(AsyncBlock));
+    XAsyncBlock* asyncBlock = new XAsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
     asyncBlock->context = hcContext;
     asyncBlock->queue = g_queue;
-    asyncBlock->callback = [](AsyncBlock* asyncBlock)
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         const char* str;
         HRESULT networkErrorCode = S_OK;
@@ -231,7 +223,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         bool isJson = hcContext->isJson;
         std::string filePath = hcContext->filePath;
 
-        HRESULT hr = GetAsyncStatus(asyncBlock, false);
+        HRESULT hr = XAsyncGetStatus(asyncBlock, false);
         if (FAILED(hr))
         {
             // This should be a rare error case when the async task fails
@@ -307,11 +299,9 @@ int main()
 {
     HCInitialize(nullptr);
 
-    uint32_t sharedAsyncQueueId = 0;
-    CreateSharedAsyncQueue(sharedAsyncQueueId, 
-        AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual, AsyncQueueDispatchMode::AsyncQueueDispatchMode_Manual, 
+    XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, 
         &g_queue);
-    RegisterAsyncQueueCallbackSubmitted(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+    XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
     HCTraceSetTraceToDebugger(true);
     StartBackgroundThread();
 
@@ -323,6 +313,7 @@ int main()
 
     ShutdownActiveThreads();
     HCCleanup();
+    XTaskQueueCloseHandle(g_queue);
 
     return 0;
 }

@@ -139,10 +139,10 @@ STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexc
 
 STDAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
-    enum HCTraceLevel level,
+    HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
-) noexcept
+    ) noexcept
 {
     if (!area)
     {

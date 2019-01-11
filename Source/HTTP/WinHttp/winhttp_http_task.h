@@ -7,6 +7,23 @@
 #include "utils.h"
 #include "uri.h"
 
+struct HC_PERFORM_ENV
+{
+public:
+    HC_PERFORM_ENV();
+    virtual ~HC_PERFORM_ENV();
+    void get_proxy_name(
+        _In_ xbox::httpclient::proxy_type proxyType,
+        _Out_ DWORD* pAccessType,
+        _Out_ const wchar_t** pwProxyName);
+
+    HINTERNET m_hSession = nullptr;
+    xbox::httpclient::Uri m_proxyUri;
+    http_internal_wstring m_wProxyName;
+    xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::default_proxy;
+};
+
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 enum msg_body_type
@@ -53,9 +70,10 @@ class winhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
     winhttp_http_task(
-        _Inout_ AsyncBlock* asyncBlock,
-        _In_ HCCallHandle call
-        );
+        _Inout_ XAsyncBlock* asyncBlock,
+        _In_ HCCallHandle call,
+        HINTERNET hSession,
+        proxy_type proxyType);
     ~winhttp_http_task();
 
     void perform_async();
@@ -110,7 +128,8 @@ private:
 
     void complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError);
 
-    void get_proxy_name(
+    static void get_proxy_name(
+        _In_ proxy_type proxyType,
         _Out_ DWORD* pAccessType,
         _Out_ const wchar_t** pwProxyName
         );
@@ -129,22 +148,19 @@ private:
         _In_ void* statusInfo,
         DWORD statusInfoLength);
 
-    HCCallHandle m_call;
-    AsyncBlock* m_asyncBlock;
+    HCCallHandle m_call = nullptr;
+    XAsyncBlock* m_asyncBlock = nullptr;
 
-    HINTERNET m_hSession;
-    HINTERNET m_hConnection;
-    HINTERNET m_hRequest;
-    msg_body_type m_requestBodyType;
-    uint64_t m_requestBodyRemainingToWrite;
-    uint64_t m_requestBodyOffset;
+    HINTERNET m_hSession = nullptr;
+    HINTERNET m_hConnection = nullptr;
+    HINTERNET m_hRequest = nullptr;
+    msg_body_type m_requestBodyType = msg_body_type::no_body;
+    uint64_t m_requestBodyRemainingToWrite = 0;
+    uint64_t m_requestBodyOffset = 0;
     http_internal_vector<uint8_t> m_responseBuffer;
 
-    xbox::httpclient::Uri m_proxyUri;
-    http_internal_wstring m_wProxyName;
-    proxy_type m_proxyType;
+    proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
 };
-
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

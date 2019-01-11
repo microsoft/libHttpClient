@@ -24,7 +24,7 @@ namespace HttpTestApp
         void StartBackgroundThread();
         void StopBackgroundThread();
 
-        async_queue_handle_t m_queue;
-        registration_token_t m_callbackToken;
+        XTaskQueueHandle m_queue;
+        XTaskQueueRegistrationToken m_callbackToken;
     };
 }

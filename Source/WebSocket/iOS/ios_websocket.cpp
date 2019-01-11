@@ -6,7 +6,7 @@
  HRESULT Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _Inout_ AsyncBlock* async
     )
 {
@@ -14,7 +14,7 @@
     return S_OK;
 }
  HRESULT Internal_HCWebSocketSendMessageAsync(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
     _Inout_ AsyncBlock* async
     )
@@ -23,7 +23,7 @@
     return S_OK;
 }
  HRESULT Internal_HCWebSocketDisconnect(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
 )
 {
