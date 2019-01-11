@@ -109,7 +109,7 @@ MainPage::MainPage()
     InitializeComponent();
 
     HCInitialize(nullptr);
-    HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
+    HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
 
     XTaskQueueCreate(
         XTaskQueueDispatchMode::Manual,

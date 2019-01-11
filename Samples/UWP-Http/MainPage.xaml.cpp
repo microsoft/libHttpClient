@@ -94,7 +94,7 @@ MainPage::MainPage()
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     InitializeComponent();
     HCInitialize(nullptr);
-    HCSettingsSetTraceLevel(HCTraceLevel::HCTraceLevel_Information);
+    HCSettingsSetTraceLevel(HCTraceLevel::Information);
 
     XTaskQueueCreate(
         XTaskQueueDispatchMode::Manual,
@@ -257,7 +257,7 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 
 void TraceCallback(
     _In_z_ const char* areaName,
-    _In_ enum HCTraceLevel level,
+    _In_ HCTraceLevel level,
     _In_ uint64_t threadId,
     _In_ uint64_t timestamp,
     _In_z_ const char* message

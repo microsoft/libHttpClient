@@ -28,7 +28,7 @@ int main()
     g_eventHandle = CreateEvent(nullptr, false, false, nullptr);
 
     HCInitialize(nullptr);
-    HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
+    HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
 
     XTaskQueueHandle queue;
     XTaskQueueCreate(

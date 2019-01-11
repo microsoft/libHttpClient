@@ -47,7 +47,7 @@ void STDAPIVCALLTYPE MemFree(
 static bool g_PerformCallbackCalled = false;
 static void* g_PerformCallbackContext = nullptr;
 static int g_performContext = 0;
-static void STDAPIVCALLTYPE PerformCallback(
+static void CALLBACK PerformCallback(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* ctx,
@@ -174,29 +174,29 @@ public:
 
         HCTraceLevel level;
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Off));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel::Off));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
-        VERIFY_ARE_EQUAL(HCTraceLevel_Off, level);
+        VERIFY_ARE_EQUAL(HCTraceLevel::Off, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Error));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel::Error));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
-        VERIFY_ARE_EQUAL(HCTraceLevel_Error, level);
+        VERIFY_ARE_EQUAL(HCTraceLevel::Error, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Warning));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel::Warning));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
-        VERIFY_ARE_EQUAL(HCTraceLevel_Warning, level);
+        VERIFY_ARE_EQUAL(HCTraceLevel::Warning, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Important));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel::Important));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
-        VERIFY_ARE_EQUAL(HCTraceLevel_Important, level);
+        VERIFY_ARE_EQUAL(HCTraceLevel::Important, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Information));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel::Information));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
-        VERIFY_ARE_EQUAL(HCTraceLevel_Information, level);
+        VERIFY_ARE_EQUAL(HCTraceLevel::Information, level);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel_Verbose));
+        VERIFY_ARE_EQUAL(S_OK, HCSettingsSetTraceLevel(HCTraceLevel::Verbose));
         VERIFY_ARE_EQUAL(S_OK, HCSettingsGetTraceLevel(&level));
-        VERIFY_ARE_EQUAL(HCTraceLevel_Verbose, level);
+        VERIFY_ARE_EQUAL(HCTraceLevel::Verbose, level);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetTimeoutWindow(nullptr, 1000));
         uint32_t timeout = 0;

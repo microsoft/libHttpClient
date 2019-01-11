@@ -149,7 +149,7 @@ private:
         return S_OK;
     }
 
-    static HRESULT FactorialWorkerDistributed(XAsyncOp opCode, const XAsyncProviderData* data)
+    static HRESULT CALLBACK FactorialWorkerDistributed(XAsyncOp opCode, const XAsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
 

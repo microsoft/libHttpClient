@@ -274,7 +274,7 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) HC_NOEXCEPT;
     #define HC_DEFINE_TRACE_AREA(name, verbosity)
     #define HC_DECLARE_TRACE_AREA(name)
     #define HC_TRACE_SET_VERBOSITY(area, level)
-    #define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel_Off
+    #define HC_TRACE_GET_VERBOSITY(area) HCTraceLevel::Off
 #endif
 
 //------------------------------------------------------------------------------

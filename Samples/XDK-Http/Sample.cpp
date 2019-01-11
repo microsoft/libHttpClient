@@ -161,7 +161,7 @@ Sample::Sample() :
     g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
     HCInitialize(nullptr);
-    HCSettingsSetTraceLevel(HCTraceLevel_Verbose);
+    HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
 
     XTaskQueueCreate(
         XTaskQueueDispatchMode::Manual,
