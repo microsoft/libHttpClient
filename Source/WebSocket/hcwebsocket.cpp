@@ -178,7 +178,7 @@ try
     {
         try
         {
-            HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::HCWebSocketCloseStatus_Normal;
+            HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::Normal;
             closeFunc(websocket, closeStatus);
 
             if (closeEventFunc != nullptr)

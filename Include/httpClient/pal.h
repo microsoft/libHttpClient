@@ -1,5 +1,8 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+#if !defined(__cplusplus)
+    #error C++11 required
+#endif
 
 #pragma once
 #pragma warning(disable: 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
@@ -65,7 +68,7 @@
 #define E_NOT_SUFFICIENT_BUFFER          __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) // 0x8007007A
 #endif
 
-#else
+#else // !HC_PLATFORM_IS_MICROSOFT
 
 #ifndef HC_ANDROID_API
 #define HC_ANDROID_API (HC_PLATFORM == HC_PLATFORM_ANDROID)
@@ -359,7 +362,63 @@ typedef struct _LIST_ENTRY {
 #define STDAPI_(type)           EXTERN_C type STDAPIVCALLTYPE
 #endif
 
-#endif
+#ifndef DEFINE_ENUM_FLAG_OPERATORS
+    #ifdef __cplusplus
+
+    extern "C++" {
+
+        template <size_t S>
+        struct _ENUM_FLAG_INTEGER_FOR_SIZE;
+
+        template <>
+        struct _ENUM_FLAG_INTEGER_FOR_SIZE<1>
+        {
+            typedef int8_t type;
+        };
+
+        template <>
+        struct _ENUM_FLAG_INTEGER_FOR_SIZE<2>
+        {
+            typedef int16_t type;
+        };
+
+        template <>
+        struct _ENUM_FLAG_INTEGER_FOR_SIZE<4>
+        {
+            typedef int32_t type;
+        };
+
+        template <>
+        struct _ENUM_FLAG_INTEGER_FOR_SIZE<8>
+        {
+            typedef int64_t type;
+        };
+
+        // used as an approximation of std::underlying_type<T>
+        template <class T>
+        struct _ENUM_FLAG_SIZED_INTEGER
+        {
+            typedef typename _ENUM_FLAG_INTEGER_FOR_SIZE<sizeof(T)>::type type;
+        };
+
+    }
+
+    #define DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE) \
+    extern "C++" { \
+    inline ENUMTYPE operator | (ENUMTYPE a, ENUMTYPE b) throw() { return ENUMTYPE(((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)a) | ((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)b)); } \
+    inline ENUMTYPE &operator |= (ENUMTYPE &a, ENUMTYPE b) throw() { return (ENUMTYPE &)(((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type &)a) |= ((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)b)); } \
+    inline ENUMTYPE operator & (ENUMTYPE a, ENUMTYPE b) throw() { return ENUMTYPE(((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)a) & ((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)b)); } \
+    inline ENUMTYPE &operator &= (ENUMTYPE &a, ENUMTYPE b) throw() { return (ENUMTYPE &)(((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type &)a) &= ((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)b)); } \
+    inline ENUMTYPE operator ~ (ENUMTYPE a) throw() { return ENUMTYPE(~((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)a)); } \
+    inline ENUMTYPE operator ^ (ENUMTYPE a, ENUMTYPE b) throw() { return ENUMTYPE(((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)a) ^ ((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)b)); } \
+    inline ENUMTYPE &operator ^= (ENUMTYPE &a, ENUMTYPE b) throw() { return (ENUMTYPE &)(((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type &)a) ^= ((_ENUM_FLAG_SIZED_INTEGER<ENUMTYPE>::type)b)); } \
+    }
+    #else
+    #define DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE) // NOP, C allows these operators.
+    #endif
+#endif // DEFINE_ENUM_FLAG_OPERATORS
+
+#endif // HC_PLATFORM_IS_MICROSOFT
 
 #ifdef __cplusplus
 #define HC_NOEXCEPT noexcept
@@ -382,19 +441,23 @@ typedef struct HC_CALL* HCCallHandle;
 typedef struct HC_CALL* HCMockCallHandle;
 typedef struct HC_PERFORM_ENV* HCPerformEnv;
 
-// Error codes from https://www.iana.org/assignments/websocket/websocket.xml#close-code-number
-typedef enum HCWebSocketCloseStatus
+extern "C"
 {
-    HCWebSocketCloseStatus_Normal = 1000,
-    HCWebSocketCloseStatus_GoingAway = 1001,
-    HCWebSocketCloseStatus_ProtocolError = 1002,
-    HCWebSocketCloseStatus_Unsupported = 1003,
-    HCWebSocketCloseStatus_AbnormalClose = 1006,
-    HCWebSocketCloseStatus_InconsistentDatatype = 1007,
-    HCWebSocketCloseStatus_PolicyViolation = 1008,
-    HCWebSocketCloseStatus_TooLarge = 1009,
-    HCWebSocketCloseStatus_NegotiateError = 1010,
-    HCWebSocketCloseStatus_ServerTerminate = 1011,
-    HCWebSocketCloseStatus_UnknownError = 4000
-} HCWebSocketCloseStatus;
 
+// Error codes from https://www.iana.org/assignments/websocket/websocket.xml#close-code-number
+enum class HCWebSocketCloseStatus : uint32_t
+{
+    Normal = 1000,
+    GoingAway = 1001,
+    ProtocolError = 1002,
+    Unsupported = 1003,
+    AbnormalClose = 1006,
+    InconsistentDatatype = 1007,
+    PolicyViolation = 1008,
+    TooLarge = 1009,
+    NegotiateError = 1010,
+    ServerTerminate = 1011,
+    UnknownError = 4000
+};
+
+}

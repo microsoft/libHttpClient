@@ -18,7 +18,7 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
     assert(!performEnv);
 }
 
-void Internal_HCHttpCallPerformAsync(
+void CALLBACK Internal_HCHttpCallPerformAsync(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
