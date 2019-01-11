@@ -647,6 +647,16 @@ STDAPI XAsyncBegin(
     state->identity = identity;
     state->identityName = identityName;
 
+    // We've successfully setup the call.  Now kick off a
+    // Begin opcode.  If this call fails, we use it to fail
+    // the async call, instead of failing XAsyncBegin.
+
+    HRESULT hr = provider(XAsyncOp::Begin, &state->providerData);
+    if (FAILED(hr))
+    {
+        XAsyncComplete(asyncBlock, hr, 0);
+    }
+
     return S_OK;
 }
 
@@ -694,6 +704,16 @@ STDAPI XAsyncBeginAlloc(
     ASSERT(state->providerData.context != nullptr);
     memset(state->providerData.context, 0, contextSize);
     *context = state->providerData.context;
+
+    // We've successfully setup the call.  Now kick off a
+    // Begin opcode.  If this call fails, we use it to fail
+    // the async call, instead of failing XAsyncBegin.
+    
+    HRESULT hr = provider(XAsyncOp::Begin, &state->providerData);
+    if (FAILED(hr))
+    {
+        XAsyncComplete(asyncBlock, hr, 0);
+    }
 
     return S_OK;
 }
