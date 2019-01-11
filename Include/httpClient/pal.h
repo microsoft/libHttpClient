@@ -373,25 +373,25 @@ typedef struct _LIST_ENTRY {
         template <>
         struct _ENUM_FLAG_INTEGER_FOR_SIZE<1>
         {
-            typedef INT8 type;
+            typedef int8_t type;
         };
 
         template <>
         struct _ENUM_FLAG_INTEGER_FOR_SIZE<2>
         {
-            typedef INT16 type;
+            typedef int16_t type;
         };
 
         template <>
         struct _ENUM_FLAG_INTEGER_FOR_SIZE<4>
         {
-            typedef INT32 type;
+            typedef int32_t type;
         };
 
         template <>
         struct _ENUM_FLAG_INTEGER_FOR_SIZE<8>
         {
-            typedef INT64 type;
+            typedef int64_t type;
         };
 
         // used as an approximation of std::underlying_type<T>
