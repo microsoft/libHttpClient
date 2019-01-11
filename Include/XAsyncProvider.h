@@ -14,6 +14,14 @@ extern "C"
 enum class XAsyncOp : uint32_t
 {
     /// <summary>
+    /// An async provider is invoked with this opcode during XAsyncBegin or XAsyncBeginAlloc.
+    /// If the provider implements this op code, they should start their asynchronous task,
+    /// either by calling XAsyncSchedule or through exterior means.  This callback is
+    /// called synchronously in the XAsyncBegin call chain, so it should never block.
+    /// </summary>
+    Begin,
+
+    /// <summary>
     /// An async provider is invoked with this opcode when XAsyncSchedule has been called to
     /// schedule work. Implementations should perform their asynchronous work and then call
     /// XAsyncComplete with the data payload size. If additional work needs to be done they
