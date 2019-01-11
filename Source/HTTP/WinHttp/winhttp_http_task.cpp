@@ -17,7 +17,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 winhttp_http_task::winhttp_http_task(
     _Inout_ AsyncBlock* asyncBlock,
-    _In_ hc_call_handle_t call
+    _In_ HCCallHandle call
     ) :
     m_call(call),
     m_asyncBlock(asyncBlock),
@@ -157,7 +157,7 @@ void winhttp_http_task::callback_status_sendrequest_complete(
 }
 
 HRESULT winhttp_http_task::query_header_length(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ HINTERNET hRequestHandle,
     _In_ DWORD header,
     _Out_ DWORD* pLength)
@@ -182,7 +182,7 @@ HRESULT winhttp_http_task::query_header_length(
 }
 
 uint32_t winhttp_http_task::parse_status_code(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext
     )
@@ -220,7 +220,7 @@ uint32_t winhttp_http_task::parse_status_code(
 
 
 void winhttp_http_task::parse_headers_string(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ wchar_t* headersStr)
 {
     wchar_t* context = nullptr;
@@ -660,7 +660,7 @@ HRESULT winhttp_http_task::connect(
     return S_OK;
 }
 
-http_internal_wstring flatten_http_headers(_In_ hc_call_handle_t call)
+http_internal_wstring flatten_http_headers(_In_ HCCallHandle call)
 {
     http_internal_wstring flattened_headers;
 
@@ -856,10 +856,10 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 }
 
 void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ hc_perform_env env
+    _In_ HCPerformEnv env
 ) noexcept
 {
     assert(context == nullptr);

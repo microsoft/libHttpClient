@@ -18,9 +18,9 @@ DEFINE_TEST_CLASS(MockTests)
 public:
     DEFINE_TEST_CLASS_PROPS(MockTests);
 
-    hc_call_handle_t CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
+    HCCallHandle CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
-        hc_call_handle_t mockCall;
+        HCCallHandle mockCall;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&mockCall));
         if (makeSpecificUrl)
         {
@@ -43,11 +43,11 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleGenericMock);
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
 
-        hc_call_handle_t mockCall = CreateMockCall("Mock1", false, false);
+        HCCallHandle mockCall = CreateMockCall("Mock1", false, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, "", "", nullptr, 0));
 
         async_queue_handle_t queue;
@@ -68,7 +68,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -99,10 +99,10 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
-        hc_call_handle_t mockCall = CreateMockCall("Mock1", true, false);
+        HCCallHandle mockCall = CreateMockCall("Mock1", true, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
 
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
@@ -127,7 +127,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -165,7 +165,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -197,10 +197,10 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
-        hc_call_handle_t mockCall = CreateMockCall("Mock1", true, true);
+        HCCallHandle mockCall = CreateMockCall("Mock1", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
 
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
@@ -225,7 +225,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -263,7 +263,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -301,7 +301,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -339,7 +339,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -370,12 +370,12 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
-        hc_call_handle_t mockCall1 = CreateMockCall("Mock1", true, true);
-        hc_call_handle_t mockCall2 = CreateMockCall("Mock2", true, true);
+        HCCallHandle mockCall1 = CreateMockCall("Mock1", true, true);
+        HCCallHandle mockCall2 = CreateMockCall("Mock2", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall1, nullptr, nullptr, nullptr, 0));
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall2, nullptr, nullptr, nullptr, 0));
 
-        hc_call_handle_t call = nullptr;
+        HCCallHandle call = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
@@ -400,7 +400,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -438,7 +438,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
@@ -477,7 +477,7 @@ public:
             uint32_t platErrCode = 0;
             uint32_t statusCode = 0;
             PCSTR responseStr;
-            hc_call_handle_t call = static_cast<hc_call_handle_t>(asyncBlock->context);
+            HCCallHandle call = static_cast<HCCallHandle>(asyncBlock->context);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));

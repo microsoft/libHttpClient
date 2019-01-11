@@ -8,10 +8,10 @@ using namespace xbox::httpclient;
 
 STDAPI 
 HCHttpCallRequestSetUrl(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_z_ const char* method,
     _In_z_ const char* url
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || method == nullptr || url == nullptr)
@@ -35,10 +35,10 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetUrl(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Outptr_ const char** method,
     _Outptr_ const char** url
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || method == nullptr || url == nullptr)
@@ -58,10 +58,10 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetRequestBodyBytes(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_reads_bytes_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == 0)
@@ -84,9 +84,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetRequestBodyString(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_z_ const char* requestBodyString
-) HC_NOEXCEPT
+) noexcept
 {
     if (requestBodyString == nullptr)
     {
@@ -103,10 +103,10 @@ HCHttpCallRequestSetRequestBodyString(
 
 STDAPI 
 HCHttpCallRequestGetRequestBodyBytes(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const uint8_t** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == nullptr)
@@ -130,9 +130,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetRequestBodyString(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Outptr_ const char** requestBody
-) HC_NOEXCEPT
+) noexcept
 try
 {
     if (call == nullptr || requestBody == nullptr)
@@ -151,11 +151,11 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetHeader(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue,
     _In_ bool allowTracing
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -173,10 +173,10 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetHeader(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -199,9 +199,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetNumHeaders(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Out_ uint32_t* numHeaders
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || numHeaders == nullptr)
@@ -216,11 +216,11 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetHeaderAtIndex(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _In_ uint32_t headerIndex,
     _Out_ const char** headerName,
     _Out_ const char** headerValue
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -249,9 +249,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetRetryCacheId(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _In_ uint32_t retryAfterCacheId
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -271,9 +271,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetRetryAllowed(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _In_ bool retryAllowed
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -297,9 +297,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetRetryAllowed(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _Out_ bool* retryAllowed
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (retryAllowed == nullptr)
@@ -325,9 +325,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetRetryCacheId(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Out_ uint32_t* retryAfterCacheId
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || retryAfterCacheId == nullptr)
@@ -344,9 +344,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetTimeout(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _In_ uint32_t timeoutInSeconds
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -371,9 +371,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetTimeout(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutInSeconds
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (timeoutInSeconds == nullptr)
@@ -400,9 +400,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetTimeoutWindow(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _In_ uint32_t timeoutWindowInSeconds
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -427,9 +427,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetTimeoutWindow(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutWindowInSeconds
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (timeoutWindowInSeconds == nullptr)
@@ -455,9 +455,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetRetryDelay(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _In_ uint32_t* retryDelayInSeconds
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
      if (retryDelayInSeconds == nullptr)
@@ -483,9 +483,9 @@ CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestSetRetryDelay(
-    _In_opt_ hc_call_handle_t call,
+    _In_opt_ HCCallHandle call,
     _In_ uint32_t retryDelayInSeconds
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)

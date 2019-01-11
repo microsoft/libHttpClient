@@ -7,7 +7,7 @@
 _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE 
 DefaultMemAllocFunction(
     _In_ size_t size,
-    _In_ hc_memory_type memoryType
+    _In_ HCMemoryType memoryType
     )
 {
     UNREFERENCED_PARAMETER(memoryType);
@@ -17,7 +17,7 @@ DefaultMemAllocFunction(
 void STDAPIVCALLTYPE 
 DefaultMemFreeFunction(
     _In_ _Post_invalid_ void* pointer,
-    _In_ hc_memory_type memoryType
+    _In_ HCMemoryType memoryType
     )
 {
     UNREFERENCED_PARAMETER(memoryType);
@@ -31,7 +31,7 @@ STDAPI
 HCMemSetFunctions(
     _In_opt_ HCMemAllocFunction memAllocFunc,
     _In_opt_ HCMemFreeFunction memFreeFunc
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     if (xbox::httpclient::get_http_singleton(false) != nullptr)
     {
@@ -47,7 +47,7 @@ STDAPI
 HCMemGetFunctions(
     _Out_ HCMemAllocFunction* memAllocFunc,
     _Out_ HCMemFreeFunction* memFreeFunc
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     if (memAllocFunc == nullptr || memFreeFunc == nullptr)
     {

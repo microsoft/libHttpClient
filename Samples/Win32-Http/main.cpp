@@ -4,7 +4,7 @@
 #include "httpClient\httpClient.h"
 #include "json_cpp\json.h"
 
-std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ hc_call_handle_t call)
+std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HCCallHandle call)
 {
     uint32_t numHeaders = 0;
     HCHttpCallResponseGetNumHeaders(call, &numHeaders);
@@ -181,7 +181,7 @@ void ShutdownActiveThreads()
 
 struct SampleHttpCallAsyncContext
 {
-    hc_call_handle_t call;
+    HCCallHandle call;
     bool isJson;
     std::string filePath;
 };
@@ -198,7 +198,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     header.push_back("1.0");
     headers.push_back(header);
 
-    hc_call_handle_t call = nullptr;
+    HCCallHandle call = nullptr;
     HCHttpCallCreate(&call);
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
@@ -227,7 +227,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         std::string errMessage;
 
         SampleHttpCallAsyncContext* hcContext = static_cast<SampleHttpCallAsyncContext*>(asyncBlock->context);
-        hc_call_handle_t call = hcContext->call;
+        HCCallHandle call = hcContext->call;
         bool isJson = hcContext->isJson;
         std::string filePath = hcContext->filePath;
 

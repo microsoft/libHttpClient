@@ -6,7 +6,7 @@
 HANDLE g_eventHandle;
 
 void message_received(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* incomingBodyString
     )
 {
@@ -15,7 +15,7 @@ void message_received(
 }
 
 void websocket_closed(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {
@@ -40,7 +40,7 @@ int main()
 
     std::string url = "wss://echo.websocket.org";
 
-    hc_websocket_handle_t websocket;
+    HCWebsocketHandle websocket;
     HRESULT hr = HCWebSocketCreate(&websocket);
     hr = HCWebSocketSetFunctions(message_received, websocket_closed);
 

@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 
+#if !defined(__cplusplus)
+#error C++11 required
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Mock APIs
@@ -17,8 +20,8 @@
 /// <param name="call">The handle of the mock HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCMockCallCreate(
-    _Out_ hc_mock_call_handle* call
-    ) HC_NOEXCEPT;
+    _Out_ HCMockCallHandle* call
+    ) noexcept;
 
 
 /// <summary>
@@ -58,18 +61,18 @@ STDAPI HCMockCallCreate(
 /// </param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockAddMock(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_opt_z_ const char* method,
     _In_opt_z_ const char* url,
     _In_reads_bytes_opt_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Removes and cleans up all mock calls added by HCMockAddMock
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-STDAPI HCMockClearMocks() HC_NOEXCEPT;
+STDAPI HCMockClearMocks() noexcept;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -84,10 +87,10 @@ STDAPI HCMockClearMocks() HC_NOEXCEPT;
 /// <param name="bodySize">The length in bytes of the body being set.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockResponseSetResponseBodyBytes(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
     _In_ uint32_t bodySize
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set the HTTP status code to return for the mock
@@ -96,9 +99,9 @@ STDAPI HCMockResponseSetResponseBodyBytes(
 /// <param name="statusCode">the HTTP status code of the HTTP call response</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCMockResponseSetStatusCode(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_ uint32_t statusCode
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set the network error code to return for the mock
@@ -108,10 +111,10 @@ STDAPI HCMockResponseSetStatusCode(
 /// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCMockResponseSetNetworkErrorCode(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set a response header to return for the mock
@@ -121,9 +124,9 @@ STDAPI HCMockResponseSetNetworkErrorCode(
 /// <param name="headerValue">UTF-8 encoded response header value for the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCMockResponseSetHeader(
-    _In_ hc_mock_call_handle call,
+    _In_ HCMockCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 

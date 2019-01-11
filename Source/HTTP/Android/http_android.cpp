@@ -10,7 +10,7 @@ extern "C"
 
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(JNIEnv* env, jobject instance, jlong call, jobject response)
 {
-    hc_call_handle_t sourceCall = reinterpret_cast<hc_call_handle_t>(call);
+    HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
     HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
     std::unique_ptr<HttpRequest> sourceRequest{ request };
@@ -29,10 +29,10 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 }
 
 void Internal_HCHttpCallPerformAsync(
-    _In_ hc_call_handle_t call,
+    _In_ HCCallHandle call,
     _Inout_ AsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ hc_perform_env env
+    _In_ HCPerformEnv env
 ) noexcept
 {
     auto httpSingleton = xbox::httpclient::get_http_singleton(true);

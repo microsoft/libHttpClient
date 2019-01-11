@@ -14,14 +14,14 @@ public:
     HRESULT SetUrl(const char* url);
     HRESULT SetMethodAndBody(const char* method, const char* contentType, const uint8_t* body, uint32_t bodySize);
     HRESULT AddHeader(const char* headerName, const char* headerValue);
-    HRESULT ExecuteAsync(hc_call_handle_t call);
+    HRESULT ExecuteAsync(HCCallHandle call);
 
-    HRESULT ProcessResponse(hc_call_handle_t call, jobject response);
+    HRESULT ProcessResponse(HCCallHandle call, jobject response);
 
 private:
     HRESULT GetJniEnv(JNIEnv**);
     uint32_t GetResponseHeaderCount(jobject response);
-    HRESULT ProcessResponseBody(hc_call_handle_t call, jobject response);
+    HRESULT ProcessResponseBody(HCCallHandle call, jobject response);
 
     jobject m_httpRequestInstance;
     AsyncBlock* m_asyncBlock;

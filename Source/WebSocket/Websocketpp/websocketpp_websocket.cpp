@@ -65,7 +65,7 @@ private:
     };
 
 public:
-    wspp_websocket_impl(hc_websocket_handle_t hcHandle)
+    wspp_websocket_impl(HCWebsocketHandle hcHandle)
         : m_backgroundQueue(nullptr),
         m_state(CREATED),
         m_numSends(0),
@@ -594,7 +594,7 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-        virtual ~websocketpp_client_base() HC_NOEXCEPT {}
+        virtual ~websocketpp_client_base() noexcept {}
         template <typename WebsocketConfig>
         websocketpp::client<WebsocketConfig> & client()
         {
@@ -666,7 +666,7 @@ private:
     // only happen once for each client.
     bool m_opensslFailed;
 
-    hc_websocket_handle_t m_hcWebsocketHandle;
+    HCWebsocketHandle m_hcWebsocketHandle;
 
     Uri m_uri;
 };
@@ -674,7 +674,7 @@ private:
 HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _Inout_ AsyncBlock* async
     )
 {
@@ -687,7 +687,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 }
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
     _Inout_ AsyncBlock* async
     )
@@ -701,7 +701,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
 }
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
-    _In_ hc_websocket_handle_t websocket,
+    _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {
