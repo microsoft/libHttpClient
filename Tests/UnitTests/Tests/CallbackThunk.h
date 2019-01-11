@@ -51,7 +51,7 @@ public:
     {
     }
 
-    static void Callback(void * context, bool)
+    static void CALLBACK Callback(void * context, bool)
     {
         const CallbackThunk<void, void>* pthis = static_cast<CallbackThunk<void, void>*>(context);
         pthis->_func();

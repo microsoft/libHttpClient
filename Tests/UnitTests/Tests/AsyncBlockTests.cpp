@@ -36,7 +36,7 @@ public:
     {
     }
 
-    static void Callback(XAsyncBlock* async)
+    static void CALLBACK Callback(XAsyncBlock* async)
     {
         const CompletionThunk* pthis = static_cast<CompletionThunk*>(async->context);
         pthis->_func(async);
@@ -55,7 +55,7 @@ public:
     {
     }
 
-    static HRESULT Callback(XAsyncBlock* async)
+    static HRESULT CALLBACK Callback(XAsyncBlock* async)
     {
         const WorkThunk* pthis = static_cast<WorkThunk*>(async->context);
         return pthis->_func(async);
@@ -108,7 +108,7 @@ private:
         }
     }
 
-    static HRESULT FactorialWorkerSimple(XAsyncOp opCode, const XAsyncProviderData* data)
+    static HRESULT CALLBACK FactorialWorkerSimple(XAsyncOp opCode, const XAsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
 

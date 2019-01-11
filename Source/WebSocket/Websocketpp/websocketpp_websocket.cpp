@@ -70,8 +70,8 @@ public:
         m_state(CREATED),
         m_numSends(0),
         m_opensslFailed(false),
-        m_uri(hcHandle->uri),
-        m_hcWebsocketHandle{ hcHandle }
+        m_hcWebsocketHandle{ hcHandle },
+        m_uri(hcHandle->uri)
     {
     }
 

@@ -1169,9 +1169,9 @@ void __stdcall TaskQueuePortContextImpl::ItemQueued()
 TaskQueueImpl::TaskQueueImpl() :
     Api(),
     m_callbackSubmitted(&m_header),
-    m_allowClose(true),
     m_work(this, XTaskQueuePort::Work, &m_callbackSubmitted),
-    m_completion(this, XTaskQueuePort::Completion, &m_callbackSubmitted)
+    m_completion(this, XTaskQueuePort::Completion, &m_callbackSubmitted),
+    m_allowClose(true)
 {
     m_header.m_signature = TASK_QUEUE_SIGNATURE;
     m_header.m_queue = this;
