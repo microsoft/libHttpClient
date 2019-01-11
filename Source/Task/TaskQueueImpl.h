@@ -412,9 +412,9 @@ public:
         _In_opt_ XTaskQueueTerminatedCallback* callback)override ;
 
 protected:
-    
+
     void RundownObject() override;
-    
+
 private:
 
     static void CALLBACK OnTerminationCallback(_In_ void* context);

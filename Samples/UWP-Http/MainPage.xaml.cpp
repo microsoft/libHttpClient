@@ -255,7 +255,7 @@ void HttpTestApp::MainPage::UpdateXamlUI(
     }));
 }
 
-void TraceCallback(
+void CALLBACK TraceCallback(
     _In_z_ const char* areaName,
     _In_ HCTraceLevel level,
     _In_ uint64_t threadId,

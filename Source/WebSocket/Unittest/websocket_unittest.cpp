@@ -10,7 +10,7 @@ using namespace xbox::httpclient;
 
 
 
-HRESULT Internal_HCWebSocketConnectAsync(
+HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
@@ -20,7 +20,7 @@ HRESULT Internal_HCWebSocketConnectAsync(
     return S_OK;
 }
 
-HRESULT Internal_HCWebSocketSendMessageAsync(
+HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ PCSTR message,
     _Inout_ XAsyncBlock* asyncBlock
@@ -29,7 +29,7 @@ HRESULT Internal_HCWebSocketSendMessageAsync(
     return S_OK;
 }
 
-HRESULT Internal_HCWebSocketDisconnect(
+HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )

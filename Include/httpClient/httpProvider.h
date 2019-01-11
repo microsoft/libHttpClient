@@ -5,6 +5,7 @@
 #endif
 
 #pragma once
+
 #include <httpClient/pal.h>
 #include <XAsyncProvider.h>
 #include <httpClient/trace.h>
@@ -49,7 +50,7 @@ typedef void
 STDAPI HCSetHttpCallPerformFunction(
     _In_ HCCallPerformFunction performFunc,
     _In_opt_ void* performContext
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Returns the current HCCallPerformFunction callback which implements the HTTP 
@@ -67,7 +68,7 @@ STDAPI HCSetHttpCallPerformFunction(
 STDAPI HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc,
     _Out_ void** performContext
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the context pointer attached to this call object
@@ -78,7 +79,7 @@ STDAPI HCGetHttpCallPerformFunction(
 STDAPI HCHttpCallGetContext(
     _In_ HCCallHandle call,
     _In_ void** context
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Sets the context pointer attached to this call object
@@ -89,7 +90,7 @@ STDAPI HCHttpCallGetContext(
 STDAPI HCHttpCallSetContext(
     _In_ HCCallHandle call,
     _In_ void* context
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +108,7 @@ STDAPI HCHttpCallRequestGetUrl(
     _In_ HCCallHandle call,
     _Outptr_ const char** method,
     _Outptr_ const char** url
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Get the request body bytes of the HTTP call
@@ -120,7 +121,7 @@ STDAPI HCHttpCallRequestGetRequestBodyBytes(
     _In_ HCCallHandle call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const uint8_t** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Get the request body bytes of the HTTP call
@@ -131,7 +132,7 @@ STDAPI HCHttpCallRequestGetRequestBodyBytes(
 STDAPI HCHttpCallRequestGetRequestBodyString(
     _In_ HCCallHandle call,
     _Outptr_ const char** requestBody
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Get a request header for the HTTP call for a given header name
@@ -144,7 +145,7 @@ STDAPI HCHttpCallRequestGetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the number of request headers in the HTTP call
@@ -155,7 +156,7 @@ STDAPI HCHttpCallRequestGetHeader(
 STDAPI HCHttpCallRequestGetNumHeaders(
     _In_ HCCallHandle call,
     _Out_ uint32_t* numHeaders
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the request headers at specific zero based index in the HTTP call.
@@ -171,7 +172,7 @@ STDAPI HCHttpCallRequestGetHeaderAtIndex(
     _In_ uint32_t headerIndex,
     _Out_ const char** headerName,
     _Out_ const char** headerValue
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets if retry is allowed for this HTTP call
@@ -183,7 +184,7 @@ STDAPI HCHttpCallRequestGetHeaderAtIndex(
 STDAPI HCHttpCallRequestGetRetryAllowed(
     _In_opt_ HCCallHandle call,
     _Out_ bool* retryAllowed
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the ID number of this REST endpoint used to cache the Retry-After header for fast fail.
@@ -195,7 +196,7 @@ STDAPI HCHttpCallRequestGetRetryAllowed(
 STDAPI HCHttpCallRequestGetRetryCacheId(
     _In_ HCCallHandle call,
     _Out_ uint32_t* retryAfterCacheId
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the timeout for this HTTP call.
@@ -207,7 +208,7 @@ STDAPI HCHttpCallRequestGetRetryCacheId(
 STDAPI HCHttpCallRequestGetTimeout(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutInSeconds
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the HTTP retry delay in seconds. The default and minimum delay is 2 seconds.
@@ -237,7 +238,7 @@ STDAPI HCHttpCallRequestGetTimeout(
 STDAPI HCHttpCallRequestGetRetryDelay(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t* retryDelayInSeconds
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Sets the HTTP timeout window in seconds.
@@ -260,7 +261,7 @@ STDAPI HCHttpCallRequestGetRetryDelay(
 STDAPI HCHttpCallRequestGetTimeoutWindow(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutWindowInSeconds
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets if assert are enabled if throttled.
@@ -278,7 +279,7 @@ STDAPI HCHttpCallRequestGetTimeoutWindow(
 STDAPI HCHttpCallRequestGetAssertsForThrottling(
     _In_opt_ HCCallHandle call,
     _Out_ bool* enableAssertsForThrottling
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -296,7 +297,7 @@ STDAPI HCHttpCallResponseSetResponseBodyBytes(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
     _In_ size_t bodySize
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set the HTTP status code of the HTTP call response
@@ -307,7 +308,7 @@ STDAPI HCHttpCallResponseSetResponseBodyBytes(
 STDAPI HCHttpCallResponseSetStatusCode(
     _In_ HCCallHandle call,
     _In_ uint32_t statusCode
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set the network error code of the HTTP call
@@ -320,7 +321,7 @@ STDAPI HCHttpCallResponseSetNetworkErrorCode(
     _In_ HCCallHandle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set a response header for the HTTP call
@@ -333,7 +334,7 @@ STDAPI HCHttpCallResponseSetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 
 #if !HC_NOWEBSOCKETS
@@ -400,7 +401,7 @@ HCSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the functions that implement the WebSocket functions.
@@ -417,7 +418,7 @@ HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Get the proxy URI for the WebSocket
@@ -429,7 +430,7 @@ STDAPI
 HCWebSocketGetProxyUri(
     _In_ HCWebsocketHandle websocket,
     _Out_ const char** proxyUri
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Get a header for the WebSocket
@@ -443,7 +444,7 @@ HCWebSocketGetHeader(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the number of headers in the WebSocket
@@ -455,7 +456,7 @@ STDAPI
 HCWebSocketGetNumHeaders(
     _In_ HCWebsocketHandle websocket,
     _Out_ uint32_t* numHeaders
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the headers at specific zero based index in the WebSocket.
@@ -472,7 +473,7 @@ HCWebSocketGetHeaderAtIndex(
     _In_ uint32_t headerIndex,
     _Out_ const char** headerName,
     _Out_ const char** headerValue
-) HC_NOEXCEPT;
+) noexcept;
 
 /// <summary>
 /// Gets the WebSocket functions to allow callers to respond to incoming messages and WebSocket close events.
@@ -482,7 +483,7 @@ HCWebSocketGetHeaderAtIndex(
 STDAPI HCWebSocketGetFunctions(
     _Out_opt_ HCWebSocketMessageFunction* messageFunc,
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 #endif // !HC_NOWEBSOCKETS
 

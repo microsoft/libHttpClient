@@ -31,7 +31,7 @@ STDAPI
 HCMemSetFunctions(
     _In_opt_ HCMemAllocFunction memAllocFunc,
     _In_opt_ HCMemFreeFunction memFreeFunc
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     if (xbox::httpclient::get_http_singleton(false) != nullptr)
     {
@@ -47,7 +47,7 @@ STDAPI
 HCMemGetFunctions(
     _Out_ HCMemAllocFunction* memAllocFunc,
     _Out_ HCMemFreeFunction* memFreeFunc
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     if (memAllocFunc == nullptr || memFreeFunc == nullptr)
     {

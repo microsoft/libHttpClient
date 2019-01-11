@@ -73,7 +73,7 @@ void CALLBACK Internal_HCWebSocketCloseEvent(
 
 
 bool g_HCWebSocketConnect_Called = false;
-HRESULT Test_Internal_HCWebSocketConnectAsync(
+HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
@@ -85,7 +85,7 @@ HRESULT Test_Internal_HCWebSocketConnectAsync(
 }
 
 bool g_HCWebSocketSendMessage_Called = false;
-HRESULT Test_Internal_HCWebSocketSendMessageAsync(
+HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ PCSTR message,
     _Inout_ XAsyncBlock* asyncBlock
@@ -96,7 +96,7 @@ HRESULT Test_Internal_HCWebSocketSendMessageAsync(
 }
 
 bool g_HCWebSocketDisconnect_Called = false;
-HRESULT Test_Internal_HCWebSocketDisconnect(
+HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     )
