@@ -20,7 +20,7 @@ const int RETRY_AFTER_CAP_IN_SEC = 15;
 STDAPI 
 HCHttpCallCreate(
     _Out_ HCCallHandle* callHandle
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (callHandle == nullptr)
@@ -50,7 +50,7 @@ CATCH_RETURN()
 
 HCCallHandle HCHttpCallDuplicateHandle(
     _In_ HCCallHandle call
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -68,7 +68,7 @@ CATCH_RETURN_WITH(nullptr)
 STDAPI 
 HCHttpCallCloseHandle(
     _In_ HCCallHandle call
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr)
@@ -426,7 +426,7 @@ STDAPI
 HCHttpCallPerformAsync(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -481,7 +481,7 @@ CATCH_RETURN()
 STDAPI_(uint64_t)
 HCHttpCallGetId(
     _In_ HCCallHandle call
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -496,7 +496,7 @@ STDAPI
 HCHttpCallSetLogging(
     _In_ HCCallHandle call,
     _In_ bool logCall
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -512,7 +512,7 @@ STDAPI
 HCHttpCallSetContext(
     _In_ HCCallHandle call,
     _In_ void* context
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -530,7 +530,7 @@ STDAPI
 HCHttpCallGetContext(
     _In_ HCCallHandle call,
     _In_ void** context
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)
@@ -548,7 +548,7 @@ STDAPI
 HCHttpCallGetRequestUrl(
     _In_ HCCallHandle call,
     _Out_ const char** url
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr)

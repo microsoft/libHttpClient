@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #if !defined(__cplusplus)
-#error C++11 required
+    #error C++11 required
 #endif
 
 #pragma once
@@ -24,7 +24,7 @@ extern "C"
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCMockCallCreate(
     _Out_ HCMockCallHandle* call
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 
 /// <summary>
@@ -69,13 +69,13 @@ STDAPI HCMockAddMock(
     _In_opt_z_ const char* url,
     _In_reads_bytes_opt_(requestBodySize) const uint8_t* requestBodyBytes,
     _In_ uint32_t requestBodySize
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Removes and cleans up all mock calls added by HCMockAddMock
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-STDAPI HCMockClearMocks() HC_NOEXCEPT;
+STDAPI HCMockClearMocks() noexcept;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ STDAPI HCMockResponseSetResponseBodyBytes(
     _In_ HCMockCallHandle call,
     _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
     _In_ uint32_t bodySize
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set the HTTP status code to return for the mock
@@ -104,7 +104,7 @@ STDAPI HCMockResponseSetResponseBodyBytes(
 STDAPI HCMockResponseSetStatusCode(
     _In_ HCMockCallHandle call,
     _In_ uint32_t statusCode
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set the network error code to return for the mock
@@ -117,7 +117,7 @@ STDAPI HCMockResponseSetNetworkErrorCode(
     _In_ HCMockCallHandle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Set a response header to return for the mock
@@ -130,6 +130,6 @@ STDAPI HCMockResponseSetHeader(
     _In_ HCMockCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 }

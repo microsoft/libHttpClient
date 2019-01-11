@@ -70,8 +70,8 @@ public:
         m_state(CREATED),
         m_numSends(0),
         m_opensslFailed(false),
-        m_uri(hcHandle->uri),
-        m_hcWebsocketHandle{ hcHandle }
+        m_hcWebsocketHandle{ hcHandle },
+        m_uri(hcHandle->uri)
     {
     }
 
@@ -602,7 +602,7 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-        virtual ~websocketpp_client_base() HC_NOEXCEPT {}
+        virtual ~websocketpp_client_base() noexcept {}
         template <typename WebsocketConfig>
         websocketpp::client<WebsocketConfig> & client()
         {

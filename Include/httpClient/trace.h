@@ -149,7 +149,7 @@ enum class HCTraceLevel : uint32_t
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCSettingsSetTraceLevel(
     _In_ HCTraceLevel traceLevel
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Gets the trace level for the library
@@ -158,7 +158,7 @@ STDAPI HCSettingsSetTraceLevel(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCSettingsGetTraceLevel(
     _Out_ HCTraceLevel* traceLevel
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 /// <summary>
 /// Register callback for tracing so that the client can merge tracing into their
@@ -176,13 +176,13 @@ typedef void (CALLBACK HCTraceCallback)(
 /// Set client callback for tracing 
 /// </summary>
 /// <param name="callback">Trace callback</param>
-STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) HC_NOEXCEPT;
+STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
 
 /// <summary>
 /// Sets or unsets if the trace is sent to the debugger.
 /// </summary>
 /// <param name="traceToDebugger">If True, sends the trace to the debugger.</param>
-STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) HC_NOEXCEPT;
+STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 
 
 //------------------------------------------------------------------------------
@@ -288,7 +288,7 @@ STDAPI HCTraceSetPlatformCallbacks(
     _In_opt_ void* threadIdContext,
     _In_ HCTracePlatformWriteMessageToDebuggerCallback* writeToDebuggerCallback,
     _In_opt_ void* writeToDebuggerContext
-    ) HC_NOEXCEPT;
+    ) noexcept;
 
 //------------------------------------------------------------------------------
 // Implementation
@@ -315,13 +315,13 @@ EXTERN_C inline
 void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     struct HCTraceImplArea* area,
     HCTraceLevel verbosity
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     area->Verbosity = verbosity;
 }
 
 EXTERN_C inline
-HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area) HC_NOEXCEPT
+HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area) noexcept
 {
     return area->Verbosity;
 }
@@ -331,9 +331,9 @@ STDAPI_(void) HCTraceImplMessage(
     HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
-) HC_NOEXCEPT;
+) noexcept;
 
-STDAPI_(uint64_t) HCTraceImplScopeId() HC_NOEXCEPT;
+STDAPI_(uint64_t) HCTraceImplScopeId() noexcept;
 
 }
 
@@ -341,8 +341,8 @@ STDAPI_(uint64_t) HCTraceImplScopeId() HC_NOEXCEPT;
 class HCTraceImplScopeHelper
 {
 public:
-    HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, char const* scope) HC_NOEXCEPT;
-    ~HCTraceImplScopeHelper() HC_NOEXCEPT;
+    HCTraceImplScopeHelper(HCTraceImplArea const* area, HCTraceLevel level, char const* scope) noexcept;
+    ~HCTraceImplScopeHelper() noexcept;
 
 private:
     HCTraceImplArea const* m_area;

@@ -10,7 +10,7 @@
 using namespace xbox::httpclient;
 
 STDAPI 
-HCGetLibVersion(_Outptr_ const char** version) HC_NOEXCEPT
+HCGetLibVersion(_Outptr_ const char** version) noexcept
 try
 {
     if (version == nullptr)
@@ -24,7 +24,7 @@ try
 CATCH_RETURN()
 
 STDAPI 
-HCInitialize(_In_opt_ HCInitArgs* args) HC_NOEXCEPT
+HCInitialize(_In_opt_ HCInitArgs* args) noexcept
 try
 {
     HCTraceImplInit();
@@ -32,7 +32,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI_(void) HCCleanup() HC_NOEXCEPT
+STDAPI_(void) HCCleanup() noexcept
 try
 {
     xbox::httpclient::cleanup_http_singleton();
@@ -44,7 +44,7 @@ STDAPI
 HCSetHttpCallPerformFunction(
     _In_ HCCallPerformFunction performFunc,
     _In_opt_ void* performContext
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     auto httpSingleton = get_http_singleton(true);
     if (httpSingleton)
@@ -62,7 +62,7 @@ STDAPI
 HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc,
     _Out_ void** performContext
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (performFunc == nullptr || performContext == nullptr)
@@ -80,7 +80,7 @@ CATCH_RETURN()
 STDAPI_(int32_t) HCAddCallRoutedHandler(
     _In_ HCCallRoutedHandler handler,
     _In_ void* context
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     if (handler == nullptr)
     {
@@ -99,7 +99,7 @@ STDAPI_(int32_t) HCAddCallRoutedHandler(
 
 STDAPI_(void) HCRemoveCallRoutedHandler(
     _In_ int32_t handlerContext
-    ) HC_NOEXCEPT
+    ) noexcept
 {
     auto httpSingleton = get_http_singleton(true);
     if (nullptr != httpSingleton)

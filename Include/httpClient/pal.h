@@ -420,12 +420,6 @@ typedef struct _LIST_ENTRY {
 
 #endif // HC_PLATFORM_IS_MICROSOFT
 
-#ifdef __cplusplus
-#define HC_NOEXCEPT noexcept
-#else
-#define HC_NOEXCEPT
-#endif
-
 #define FACILITY_XBOX 2339
 #define MAKE_E_HC(code)                 MAKE_HRESULT(1, FACILITY_XBOX, code)
 

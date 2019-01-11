@@ -11,7 +11,7 @@ STDAPI
 HCHttpCallResponseGetResponseString(
     _In_ HCCallHandle call,
     _Out_ const char** responseString
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || responseString == nullptr)
@@ -32,7 +32,7 @@ CATCH_RETURN()
 STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
     _In_ HCCallHandle call,
     _Out_ size_t* bufferSize
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || bufferSize == nullptr)
@@ -50,7 +50,7 @@ STDAPI HCHttpCallResponseGetResponseBodyBytes(
     _In_ size_t bufferSize,
     _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) uint8_t* buffer,
     _Out_opt_ size_t* bufferUsed
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || buffer == nullptr)
@@ -78,7 +78,7 @@ HCHttpCallResponseSetResponseBodyBytes(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
     _In_ size_t bodySize
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || bodyBytes == nullptr)
@@ -98,7 +98,7 @@ STDAPI
 HCHttpCallResponseGetStatusCode(
     _In_ HCCallHandle call,
     _Out_ uint32_t* statusCode
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || statusCode == nullptr)
@@ -115,7 +115,7 @@ STDAPI
 HCHttpCallResponseSetStatusCode(
     _In_ HCCallHandle call,
     _In_ uint32_t statusCode
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr)
@@ -134,7 +134,7 @@ HCHttpCallResponseGetNetworkErrorCode(
     _In_ HCCallHandle call,
     _Out_ HRESULT* networkErrorCode,
     _Out_ uint32_t* platformNetworkErrorCode
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || networkErrorCode == nullptr || platformNetworkErrorCode == nullptr)
@@ -153,7 +153,7 @@ HCHttpCallResponseSetNetworkErrorCode(
     _In_ HCCallHandle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr)
@@ -173,7 +173,7 @@ HCHttpCallResponseGetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -198,7 +198,7 @@ STDAPI
 HCHttpCallResponseGetNumHeaders(
     _In_ HCCallHandle call,
     _Out_ uint32_t* numHeaders
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || numHeaders == nullptr)
@@ -217,7 +217,7 @@ HCHttpCallResponseGetHeaderAtIndex(
     _In_ uint32_t headerIndex,
     _Out_ const char** headerName,
     _Out_ const char** headerValue
-    ) HC_NOEXCEPT
+    ) noexcept
 try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -249,7 +249,7 @@ HCHttpCallResponseSetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
-    ) HC_NOEXCEPT
+    ) noexcept
 try 
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)

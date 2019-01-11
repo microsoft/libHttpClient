@@ -7,7 +7,7 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 {
     assert(args != nullptr);
     assert(!performEnv);
-    JavaVM* javaVm = args->JavaVM;
+    JavaVM* javaVm = args->javaVM;
     JNIEnv* jniEnv = nullptr;
     // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
@@ -40,7 +40,7 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 
     performEnv.reset(new (std::nothrow) HC_PERFORM_ENV(
         javaVm,
-        args->ApplicationContext,
+        args->applicationContext,
         globalRequestClass,
         globalResponseClass
     ));
