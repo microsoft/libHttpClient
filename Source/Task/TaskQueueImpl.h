@@ -32,26 +32,16 @@ public:
 
     uint32_t __stdcall Release()
     {
-        // When we are at one, we give
-        // the object a chance to run down.  We
-        // do this at 1 instead of 0 to ensure that
-        // if the object needed to take temporary refs
-        // on itself it can do so safely.  We take a
-        // ref during this time to ensure we don't
-        // get a cascade of rundown calls for temporary
-        // references.
-
-        if (m_refs == 1)
-        {
-            m_refs++;
-            RundownObject();
-            m_refs--;
-        }
-
         ApiDiag::GlobalRelease();
         uint32_t refs = --m_refs;
-        if (refs == 0)
+
+        // Note: rundown may addref/release as it
+        // progresses, so we guard agaisnt redundant
+        // deletes with m_deleting.
+
+        if (refs == 0 && m_deleting.test_and_set() == false)
         {
+            RundownObject();
             delete this;
         }
         return refs;
@@ -95,6 +85,7 @@ protected:
     
 private:
     std::atomic<uint32_t> m_refs{ 0 };
+    std::atomic_flag m_deleting;
 };
 
 static uint32_t const SUBMIT_CALLBACK_MAX = 32;

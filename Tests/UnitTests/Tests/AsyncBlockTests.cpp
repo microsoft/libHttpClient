@@ -90,6 +90,9 @@ private:
     {
         switch(op)
         {
+            case XAsyncOp::Begin:
+                return L"Begin";
+
             case XAsyncOp::GetResult:
                 return L"GetResult";
 
@@ -335,6 +338,7 @@ public:
         VERIFY_ARE_EQUAL(data.Ref->result, result);
         VERIFY_ARE_EQUAL(data.Ref->result, (DWORD)120);
 
+        ops.push_back(XAsyncOp::Begin);
         ops.push_back(XAsyncOp::DoWork);
         ops.push_back(XAsyncOp::GetResult);
         ops.push_back(XAsyncOp::Cleanup);
@@ -418,6 +422,7 @@ public:
         // Iteration wait should have paused 100ms between each iteration.
         VERIFY_IS_GREATER_THAN_OR_EQUAL(ticks, (UINT64)500);
 
+        ops.push_back(XAsyncOp::Begin);
         ops.push_back(XAsyncOp::DoWork);
         ops.push_back(XAsyncOp::DoWork);
         ops.push_back(XAsyncOp::DoWork);
@@ -789,5 +794,21 @@ public:
         VERIFY_ARE_EQUAL(E_NO_TASK_QUEUE, XAsyncBegin(&async, nullptr, nullptr, nullptr, nopProvider));
         XTaskQueueSetCurrentProcessTaskQueue(globalQueue);
         XTaskQueueCloseHandle(globalQueue);
+    }
+
+    DEFINE_TEST_CASE(VerifyFailedBeginCompletes)
+    {
+        XAsyncBlock async{};
+        async.queue = queue;
+
+        auto failProvider = [](XAsyncOp op, const XAsyncProviderData*)
+        {
+            return op == XAsyncOp::Begin ? E_FAIL : E_UNEXPECTED;
+        };
+
+        // XAsyncBegin should still succeed even if the begin op fails, because
+        // the call was successfully started.
+        VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, failProvider));
+        VERIFY_ARE_EQUAL(E_FAIL, XAsyncGetStatus(&async, true));
     }
 };

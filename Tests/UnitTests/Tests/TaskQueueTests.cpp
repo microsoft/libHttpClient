@@ -87,7 +87,7 @@ struct QueueHandleCloser
     }
 };
 
-class AutoQueueHandle : public AutoHandleWrapper<XTaskQueueHandle, QueueHandleCloser> {};
+typedef  AutoHandleWrapper<XTaskQueueHandle, QueueHandleCloser> AutoQueueHandle;
 
 struct HandleCloser
 {
@@ -97,13 +97,7 @@ struct HandleCloser
     }
 };
 
-class AutoHandle : public AutoHandleWrapper<HANDLE, HandleCloser> 
-{
-public:
-    AutoHandle(HANDLE h)
-        : AutoHandleWrapper<HANDLE, HandleCloser>(h)
-    {}
-};
+typedef AutoHandleWrapper<HANDLE, HandleCloser> AutoHandle;
 
 DEFINE_TEST_CLASS(TaskQueueTests)
 {
@@ -1094,5 +1088,68 @@ public:
 
         VERIFY_ARE_EQUAL(queuePort, XTaskQueuePort::Work);
         VERIFY_ARE_EQUAL(compositeQueuePort, XTaskQueuePort::Completion);
+    }
+
+    static void NextStep(void* context, uint32_t expectedStep, PCWSTR stepName)
+    {
+        uint32_t* step = static_cast<uint32_t*>(context);
+        LOG_COMMENT(L"%u: %ws (%u)", expectedStep, stepName, *step);
+        VERIFY_ARE_EQUAL(expectedStep, *step);
+        (*step)++;
+    };
+    
+    DEFINE_TEST_CASE(VerifyNestedQueueDispatchOrder)
+    {
+        auto Nest = [](XTaskQueueHandle q) -> XTaskQueueHandle
+        {
+            XTaskQueuePortHandle port;
+            VERIFY_SUCCEEDED(XTaskQueueGetPort(q, XTaskQueuePort::Work, &port));
+
+            XTaskQueueHandle newQueue;
+            VERIFY_SUCCEEDED(XTaskQueueCreateComposite(port, port, &newQueue));
+            return newQueue;
+        };
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+
+        AutoQueueHandle outer(Nest(queue));
+        AutoQueueHandle inner(Nest(outer));
+
+        uint32_t step = 0;
+
+        NextStep(&step, 0, L"Submitting Tasks");
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(outer, XTaskQueuePort::Work, 3000, &step, [](void* context, bool)
+        {
+            NextStep(context, 6, L"Delayed task on outer queue");
+        }));
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(inner, XTaskQueuePort::Work, &step, [](void* context, bool)
+        {
+            NextStep(context, 2, L"Task on inner queue");
+        }));
+
+        NextStep(&step, 1, L"About to tick queues");
+
+        // Note that when dispatching on a queue we're actually dispathing
+        // the queues port, so this may dispatch outer, inner or main.
+        XTaskQueueDispatch(outer, XTaskQueuePort::Work, 0);
+        XTaskQueueDispatch(outer, XTaskQueuePort::Completion, 0);
+
+        NextStep(&step, 3, L"Closing inner queue");
+        XTaskQueueCloseHandle(inner.Release());
+
+        NextStep(&step, 4, L"Tick queues again");
+        XTaskQueueDispatch(outer, XTaskQueuePort::Work, 0);
+        XTaskQueueDispatch(outer, XTaskQueuePort::Completion, 0);
+
+        NextStep(&step, 5, L"Wait for outer to finish");
+
+        XTaskQueueDispatch(outer, XTaskQueuePort::Work, 4000);
+        XTaskQueueDispatch(outer, XTaskQueuePort::Completion, 1000);
+
+        NextStep(&step, 7, L"Closing outer queue");
+        XTaskQueueCloseHandle(outer.Release());
     }
 };
