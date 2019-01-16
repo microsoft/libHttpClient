@@ -67,6 +67,7 @@ private:
 };
 
 
+#if HC_WINHTTP_WEBSOCKETS
 class websocket_message_buffer
 {
 public:
@@ -172,6 +173,7 @@ enum class WinHttpWebsockState
     Closed,
     Destroyed
 };
+#endif
 
 class winhttp_http_task : public xbox::httpclient::hc_task
 {
@@ -185,11 +187,14 @@ public:
     ~winhttp_http_task();
 
     HRESULT connect_and_send_async();
+
+#if HC_WINHTTP_WEBSOCKETS
     HRESULT send_websocket_message(_In_ const char* payloadPtr, _In_ size_t payloadLength);
     HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus);
     HRESULT on_websocket_disconnected(_In_ USHORT closeReason);
     std::atomic<WinHttpWebsockState> m_socketState = WinHttpWebsockState::Created;
     HCWebsocketHandle m_websocketHandle = nullptr;
+#endif
 
 private:
     static HRESULT query_header_length(_In_ HCCallHandle call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
@@ -271,9 +276,6 @@ private:
         _In_ void* statusInfo,
         DWORD statusInfoLength);
 
-    HRESULT websocket_start_listening();
-    HRESULT websocket_read_message();
-
     HCCallHandle m_call = nullptr;
     XAsyncBlock* m_asyncBlock = nullptr;
 
@@ -286,11 +288,15 @@ private:
     http_internal_vector<uint8_t> m_responseBuffer;
     proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
-
-    // websocket state
     bool m_isWebSocket = false;
+
+#if HC_WINHTTP_WEBSOCKETS
+    // websocket state
+    HRESULT websocket_start_listening();
+    HRESULT websocket_read_message();
     HANDLE m_hWebsocketWriteComplete = nullptr;
     websocket_message_buffer m_websocketResponseBuffer;
+#endif
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

@@ -105,14 +105,18 @@ winhttp_http_task::winhttp_http_task(
     m_proxyType(proxyType),
     m_isWebSocket(isWebSocket)
 {
+#if HC_WINHTTP_WEBSOCKETS
     m_hWebsocketWriteComplete = CreateEvent(nullptr, false, false, nullptr);
+#endif
 }
 
 winhttp_http_task::~winhttp_http_task()
 {
     if (m_hRequest != nullptr) WinHttpCloseHandle(m_hRequest);
     if (m_hConnection != nullptr) WinHttpCloseHandle(m_hConnection);
+#if HC_WINHTTP_WEBSOCKETS
     if (m_hWebsocketWriteComplete != nullptr) CloseHandle(m_hWebsocketWriteComplete);
+#endif
 }
 
 void winhttp_http_task::complete_task(_In_ HRESULT translatedHR)
@@ -330,89 +334,6 @@ void winhttp_http_task::parse_headers_string(
     }
 }
 
-HRESULT winhttp_http_task::websocket_start_listening()
-{
-    HC_TRACE_VERBOSE(HTTPCLIENT, "WINHTTP_WEB_SOCKET_UTF8 [ID %llu] [TID %ul] listening", HCHttpCallGetId(m_call), GetCurrentThreadId());
-    HRESULT hr = m_websocketResponseBuffer.Resize(WINHTTP_WEBSOCKET_RECVBUFFER_SIZE);
-    if (SUCCEEDED(hr))
-    {
-        hr = websocket_read_message();
-    }
-
-    return hr;
-}
-
-HRESULT winhttp_http_task::websocket_read_message()
-{
-    HRESULT hr = S_OK;
-
-    if (m_websocketResponseBuffer.GetRemainingCapacity() == 0)
-    {
-        if (m_websocketResponseBuffer.GetBufferByteCount() < WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE)
-        {
-            uint32_t newSize = m_websocketResponseBuffer.GetBufferByteCount() * 2;
-            if (newSize > WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE)
-            {
-                newSize = WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE;
-            }
-
-            hr = m_websocketResponseBuffer.Resize(newSize);
-        }
-        else
-        {
-            hr = E_ABORT;
-        }
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        uint8_t* bufferPtr = m_websocketResponseBuffer.GetNextWriteLocation();
-        uint64_t bufferSize = m_websocketResponseBuffer.GetRemainingCapacity();
-        DWORD dwError = ERROR_SUCCESS;
-        dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, nullptr, nullptr);
-        if (dwError)
-        {
-            HC_TRACE_ERROR(HTTPCLIENT, "websocket_read_message [ID %llu] [TID %ul] errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
-        }
-    }
-
-    return hr;
-}
-
-void winhttp_http_task::callback_websocket_status_headers_available(
-    _In_ HINTERNET hRequestHandle,
-    _In_ winhttp_http_task* pRequestContext,
-    _In_ void* statusInfo)
-{
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId());
-
-    // Application should check what is the HTTP status code returned by the server and behave accordingly.
-    // WinHttpWebSocketCompleteUpgrade will fail if the HTTP status code is different than 101.
-    pRequestContext->m_hRequest = WinHttpWebSocketCompleteUpgrade(hRequestHandle, NULL);
-    if (pRequestContext->m_hRequest == NULL)
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
-        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
-    }
-
-    void* pThis = pRequestContext;
-    if (!WinHttpSetOption(pRequestContext->m_hRequest, WINHTTP_OPTION_CONTEXT_VALUE, &pThis, sizeof(pThis)))
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
-        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
-    }
-
-    pRequestContext->websocket_start_listening();
-    pRequestContext->m_socketState = WinHttpWebsockState::Connected;
-
-    // TODO: jasonsa -- needed?  
-    //WinHttpCloseHandle(hRequestHandle); // The request handle is not needed anymore. From now on we will use the websocket handle.
-
-    pRequestContext->complete_task(S_OK, S_OK);
-}
-
 void winhttp_http_task::callback_status_headers_available(
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext,
@@ -498,60 +419,6 @@ void winhttp_http_task::callback_status_data_available(
     }
 }
 
-void winhttp_http_task::callback_websocket_status_read_complete(
-    _In_ HINTERNET hRequestHandle,
-    _In_ winhttp_http_task* pRequestContext,
-    _In_ void* statusInfo)
-{
-    WINHTTP_WEB_SOCKET_STATUS* wsStatus = static_cast<WINHTTP_WEB_SOCKET_STATUS*>(statusInfo);
-    if (wsStatus == nullptr)
-    {
-        return;
-    }
-
-    if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE)
-    {
-        USHORT closeReason = 0;
-        DWORD dwReasonLengthConsumed = 0;
-        WinHttpWebSocketQueryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
-
-        pRequestContext->on_websocket_disconnected(closeReason);
-    }
-    else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE)
-    {
-        // TODO: jasonsa: hook up read continued
-        //pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
-        pRequestContext->websocket_read_message();
-    }
-    else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE)
-    {
-        pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
-
-        websocket_message_buffer responseBuffer;
-        pRequestContext->m_websocketResponseBuffer.TransferBuffer(&responseBuffer);
-
-        HCWebSocketMessageFunction messageFunc = nullptr;
-        HCWebSocketGetFunctions(&messageFunc, nullptr);
-
-        if (messageFunc)
-        {
-            try
-            {
-                char* buffer = reinterpret_cast<char*>(responseBuffer.GetBuffer());
-                uint32_t bufferLength = responseBuffer.GetBufferByteCount();
-                buffer[bufferLength] = 0;
-
-                messageFunc(pRequestContext->m_websocketHandle, buffer);
-            }
-            catch (...)
-            {
-            }
-        }
-
-        pRequestContext->websocket_start_listening();
-    }
-
-}
 
 void winhttp_http_task::callback_status_read_complete(
     _In_ HINTERNET hRequestHandle,
@@ -666,7 +533,9 @@ void CALLBACK winhttp_http_task::completion_callback(
             {
                 if (pRequestContext->m_isWebSocket)
                 {
+#if HC_WINHTTP_WEBSOCKETS
                     callback_websocket_status_headers_available(hRequestHandle, pRequestContext, statusInfo);
+#endif
                 }
                 else
                 {
@@ -685,7 +554,9 @@ void CALLBACK winhttp_http_task::completion_callback(
             {
                 if (pRequestContext->m_isWebSocket)
                 {
+#if HC_WINHTTP_WEBSOCKETS
                     callback_websocket_status_read_complete(hRequestHandle, pRequestContext, statusInfo);
+#endif
                 }
                 else
                 {
@@ -698,7 +569,9 @@ void CALLBACK winhttp_http_task::completion_callback(
             {
                 if (pRequestContext->m_isWebSocket)
                 {
+#if HC_WINHTTP_WEBSOCKETS
                     SetEvent(pRequestContext->m_hWebsocketWriteComplete);
+#endif
                 }
                 else
                 {
@@ -850,58 +723,6 @@ http_internal_wstring flatten_http_headers(_In_ HCCallHandle call)
     return flattened_headers;
 }
 
-HRESULT winhttp_http_task::send_websocket_message(
-    _In_ const char* payloadPtr,
-    _In_ size_t payloadLength)
-{
-    DWORD dwError = WinHttpWebSocketSend(m_hRequest,
-        WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, // TODO: use WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE when supporting binary
-        (PVOID)payloadPtr,
-        static_cast<DWORD>(payloadLength));
-    if (FAILED(HRESULT_FROM_WIN32(dwError)))
-    {
-        return HRESULT_FROM_WIN32(dwError);
-    }
-
-    // In WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, it will set m_hWebsocketWriteComplete
-    DWORD dwResult = WaitForSingleObject(m_hWebsocketWriteComplete, 30000);
-    if (dwResult == WAIT_TIMEOUT)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] write complete timeout", HCHttpCallGetId(m_call), GetCurrentThreadId());
-        return E_FAIL;
-    }
-
-    return S_OK;
-}
-
-HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
-{
-    m_socketState = WinHttpWebsockState::Closed;
-
-    HCWebSocketCloseEventFunction disconnectFunc = nullptr;
-    HCWebSocketGetFunctions(nullptr, &disconnectFunc);
-
-    try
-    {
-        HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::Normal; // TODO: jasonsa convert closeReason to HCWebSocketCloseStatus
-        disconnectFunc(m_websocketHandle, closeStatus);
-    }
-    catch (...)
-    {
-    }
-
-    return S_OK;
-}
-
-HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
-{
-    USHORT status = 0;
-    DWORD dwError = WinHttpWebSocketClose(m_hRequest, status, nullptr, 0);
-    return HRESULT_FROM_WIN32(dwError);
-
-    // TODO: jasonsa -- verify on_websocket_disconnected is called 
-}
-
 HRESULT winhttp_http_task::send(
     _In_ const xbox::httpclient::Uri& cUri,
     _In_ const char* method)
@@ -984,6 +805,7 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
+#if HC_WINHTTP_WEBSOCKETS
     if (m_isWebSocket)
     {
         // Request protocol upgrade from http to websocket.
@@ -997,6 +819,7 @@ HRESULT winhttp_http_task::send(
             return HRESULT_FROM_WIN32(dwError);
         }
     }
+#endif
 
     DWORD dwTotalLength = 0;
     switch (m_requestBodyType)
@@ -1103,3 +926,197 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
     httpTask->connect_and_send_async();
 }
 
+
+
+#if HC_WINHTTP_WEBSOCKETS
+HRESULT winhttp_http_task::send_websocket_message(
+    _In_ const char* payloadPtr,
+    _In_ size_t payloadLength)
+{
+    DWORD dwError = WinHttpWebSocketSend(m_hRequest,
+        WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, // TODO: use WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE when supporting binary
+        (PVOID)payloadPtr,
+        static_cast<DWORD>(payloadLength));
+    if (FAILED(HRESULT_FROM_WIN32(dwError)))
+    {
+        return HRESULT_FROM_WIN32(dwError);
+    }
+
+    // In WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, it will set m_hWebsocketWriteComplete
+    DWORD dwResult = WaitForSingleObject(m_hWebsocketWriteComplete, 30000);
+    if (dwResult == WAIT_TIMEOUT)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] write complete timeout", HCHttpCallGetId(m_call), GetCurrentThreadId());
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
+{
+    m_socketState = WinHttpWebsockState::Closed;
+
+    HCWebSocketCloseEventFunction disconnectFunc = nullptr;
+    HCWebSocketGetFunctions(nullptr, &disconnectFunc);
+
+    try
+    {
+        HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::Normal; // TODO: jasonsa convert closeReason to HCWebSocketCloseStatus
+        disconnectFunc(m_websocketHandle, closeStatus);
+    }
+    catch (...)
+    {
+    }
+
+    return S_OK;
+}
+
+HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
+{
+    USHORT status = 0;
+    DWORD dwError = WinHttpWebSocketClose(m_hRequest, status, nullptr, 0);
+    return HRESULT_FROM_WIN32(dwError);
+
+    // TODO: jasonsa -- verify on_websocket_disconnected is called 
+}
+
+void winhttp_http_task::callback_websocket_status_read_complete(
+    _In_ HINTERNET hRequestHandle,
+    _In_ winhttp_http_task* pRequestContext,
+    _In_ void* statusInfo)
+{
+    WINHTTP_WEB_SOCKET_STATUS* wsStatus = static_cast<WINHTTP_WEB_SOCKET_STATUS*>(statusInfo);
+    if (wsStatus == nullptr)
+    {
+        return;
+    }
+
+    if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE)
+    {
+        USHORT closeReason = 0;
+        DWORD dwReasonLengthConsumed = 0;
+        WinHttpWebSocketQueryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
+
+        pRequestContext->on_websocket_disconnected(closeReason);
+    }
+    else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE)
+    {
+        // TODO: jasonsa: hook up read continued
+        //pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
+        pRequestContext->websocket_read_message();
+    }
+    else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE)
+    {
+        pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
+
+        websocket_message_buffer responseBuffer;
+        pRequestContext->m_websocketResponseBuffer.TransferBuffer(&responseBuffer);
+
+        HCWebSocketMessageFunction messageFunc = nullptr;
+        HCWebSocketGetFunctions(&messageFunc, nullptr);
+
+        if (messageFunc)
+        {
+            try
+            {
+                char* buffer = reinterpret_cast<char*>(responseBuffer.GetBuffer());
+                uint32_t bufferLength = responseBuffer.GetBufferByteCount();
+                buffer[bufferLength] = 0;
+
+                messageFunc(pRequestContext->m_websocketHandle, buffer);
+            }
+            catch (...)
+            {
+            }
+        }
+
+        pRequestContext->websocket_start_listening();
+    }
+
+}
+
+HRESULT winhttp_http_task::websocket_start_listening()
+{
+    HC_TRACE_VERBOSE(HTTPCLIENT, "WINHTTP_WEB_SOCKET_UTF8 [ID %llu] [TID %ul] listening", HCHttpCallGetId(m_call), GetCurrentThreadId());
+    HRESULT hr = m_websocketResponseBuffer.Resize(WINHTTP_WEBSOCKET_RECVBUFFER_SIZE);
+    if (SUCCEEDED(hr))
+    {
+        hr = websocket_read_message();
+    }
+
+    return hr;
+}
+
+HRESULT winhttp_http_task::websocket_read_message()
+{
+    HRESULT hr = S_OK;
+
+    if (m_websocketResponseBuffer.GetRemainingCapacity() == 0)
+    {
+        if (m_websocketResponseBuffer.GetBufferByteCount() < WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE)
+        {
+            uint32_t newSize = m_websocketResponseBuffer.GetBufferByteCount() * 2;
+            if (newSize > WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE)
+            {
+                newSize = WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE;
+            }
+
+            hr = m_websocketResponseBuffer.Resize(newSize);
+        }
+        else
+        {
+            hr = E_ABORT;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        uint8_t* bufferPtr = m_websocketResponseBuffer.GetNextWriteLocation();
+        uint64_t bufferSize = m_websocketResponseBuffer.GetRemainingCapacity();
+        DWORD dwError = ERROR_SUCCESS;
+        dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, nullptr, nullptr);
+        if (dwError)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "websocket_read_message [ID %llu] [TID %ul] errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+        }
+    }
+
+    return hr;
+}
+
+void winhttp_http_task::callback_websocket_status_headers_available(
+    _In_ HINTERNET hRequestHandle,
+    _In_ winhttp_http_task* pRequestContext,
+    _In_ void* statusInfo)
+{
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId());
+
+    // Application should check what is the HTTP status code returned by the server and behave accordingly.
+    // WinHttpWebSocketCompleteUpgrade will fail if the HTTP status code is different than 101.
+    pRequestContext->m_hRequest = WinHttpWebSocketCompleteUpgrade(hRequestHandle, NULL);
+    if (pRequestContext->m_hRequest == NULL)
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+    }
+
+    void* pThis = pRequestContext;
+    if (!WinHttpSetOption(pRequestContext->m_hRequest, WINHTTP_OPTION_CONTEXT_VALUE, &pThis, sizeof(pThis)))
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+    }
+
+    pRequestContext->websocket_start_listening();
+    pRequestContext->m_socketState = WinHttpWebsockState::Connected;
+
+    // TODO: jasonsa -- needed?  
+    //WinHttpCloseHandle(hRequestHandle); // The request handle is not needed anymore. From now on we will use the websocket handle.
+
+    pRequestContext->complete_task(S_OK, S_OK);
+}
+
+#endif
