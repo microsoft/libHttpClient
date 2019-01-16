@@ -759,6 +759,7 @@ void TaskQueuePortImpl::CancelPendingEntries(
     // are placed back on the pending list.
     
     m_timer.Cancel();
+    m_timerDue = UINT64_MAX;
     
     QueueEntryNode* queueEntryNode;
     QueueEntry* queueEntry = m_pendingList->pop_front(&queueEntryNode);
