@@ -66,17 +66,130 @@ private:
     win32_cs* m_pCS;
 };
 
+
+class websocket_message_buffer
+{
+public:
+    inline uint8_t* GetBuffer() { return m_buffer; }
+    inline uint8_t* GetNextWriteLocation() { return m_buffer + m_bufferByteCount; }
+    inline uint32_t GetBufferByteCount() { return m_bufferByteCount; }
+    inline uint32_t GetRemainingCapacity() { return m_bufferByteCapacity - m_bufferByteCount; }
+
+    HRESULT InitializeBuffer(_In_ uint32_t dataByteCount)
+    {
+        assert(m_buffer == nullptr);
+
+        HRESULT hr = S_OK;
+        if (dataByteCount > 0)
+        {
+            // TODO: jasonsa switch to mem alloc
+            m_buffer = static_cast<uint8_t*>(new (std::nothrow) uint8_t[dataByteCount]);
+            if (m_buffer != nullptr)
+            {
+                m_bufferByteCapacity = dataByteCount;
+            }
+            else
+            {
+                hr = E_OUTOFMEMORY;
+            }
+        }
+        else
+        {
+            m_buffer = nullptr;
+            m_bufferByteCount = 0;
+            m_bufferByteCapacity = 0;
+        }
+
+        return hr;
+    }
+
+    void FinishWriteData(_In_ uint32_t dataByteCount)
+    {
+        m_bufferByteCount += dataByteCount;
+        assert(m_bufferByteCount <= m_bufferByteCapacity);
+    }
+
+    void TransferBuffer(_Inout_ websocket_message_buffer* destBuffer)
+    {
+        assert(destBuffer != nullptr);
+        destBuffer->m_buffer = m_buffer;
+        destBuffer->m_bufferByteCount = m_bufferByteCount;
+        destBuffer->m_bufferByteCapacity = m_bufferByteCapacity;
+
+        m_buffer = nullptr;
+        m_bufferByteCount = 0;
+        m_bufferByteCapacity = 0;
+    }
+
+    HRESULT Resize(_In_ uint32_t dataByteCount)
+    {
+        HRESULT hr = S_OK;
+        uint8_t* newBuffer;
+
+        if (dataByteCount > m_bufferByteCapacity)
+        {
+            // TODO: jasonsa switch to mem alloc
+            newBuffer = static_cast<uint8_t*>(new (std::nothrow) uint8_t[dataByteCount]);
+            if (newBuffer != nullptr)
+            {
+                // Copy the contents of the old buffer
+                CopyMemory(newBuffer, m_buffer, m_bufferByteCount);
+                // TODO: jasonsa switch to mem free
+                delete[] m_buffer;
+                m_buffer = newBuffer;
+                m_bufferByteCapacity = dataByteCount;
+            }
+            else
+            {
+                hr = E_OUTOFMEMORY;
+            }
+        }
+
+        return hr;
+    }
+
+    ~websocket_message_buffer()
+    {
+        if (m_buffer != nullptr)
+        {
+            // TODO: jasonsa switch to mem free
+            delete[] m_buffer;
+        }
+    }
+
+private:
+    uint8_t* m_buffer = nullptr;
+    uint32_t m_bufferByteCount = 0;
+    uint32_t m_bufferByteCapacity = 0;
+};
+
+enum class WinHttpWebsockState
+{
+    Created,
+    Connecting,
+    Connected,
+    Closing,
+    Closed,
+    Destroyed
+};
+
 class winhttp_http_task : public xbox::httpclient::hc_task
 {
 public:
     winhttp_http_task(
         _Inout_ XAsyncBlock* asyncBlock,
         _In_ HCCallHandle call,
-        HINTERNET hSession,
-        proxy_type proxyType);
+        _In_ HINTERNET hSession,
+        _In_ proxy_type proxyType,
+        _In_ bool isWebSocket);
     ~winhttp_http_task();
 
-    void perform_async();
+    HRESULT connect_and_send_async();
+    HRESULT send_websocket_message(_In_ const char* payloadPtr, _In_ size_t payloadLength);
+    HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus);
+    HRESULT on_websocket_disconnected(_In_ USHORT closeReason);
+    std::atomic<WinHttpWebsockState> m_socketState = WinHttpWebsockState::Created;
+    HCWebsocketHandle m_websocketHandle = nullptr;
 
 private:
     static HRESULT query_header_length(_In_ HCCallHandle call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
@@ -120,7 +233,17 @@ private:
         _In_ winhttp_http_task* pRequestContext,
         _In_ DWORD statusInfoLength);
 
-    HRESULT send(_In_ const xbox::httpclient::Uri& cUri);
+    static void callback_websocket_status_headers_available(
+        _In_ HINTERNET hRequestHandle,
+        _In_ winhttp_http_task* pRequestContext,
+        _In_ void* statusInfo);
+
+    static void callback_websocket_status_read_complete(
+        _In_ HINTERNET hRequestHandle,
+        _In_ winhttp_http_task* pRequestContext,
+        _In_ void* statusInfo);
+
+    HRESULT send(_In_ const xbox::httpclient::Uri& cUri, _In_ const char* method);
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
 
@@ -148,6 +271,9 @@ private:
         _In_ void* statusInfo,
         DWORD statusInfoLength);
 
+    HRESULT websocket_start_listening();
+    HRESULT websocket_read_message();
+
     HCCallHandle m_call = nullptr;
     XAsyncBlock* m_asyncBlock = nullptr;
 
@@ -158,9 +284,13 @@ private:
     uint64_t m_requestBodyRemainingToWrite = 0;
     uint64_t m_requestBodyOffset = 0;
     http_internal_vector<uint8_t> m_responseBuffer;
-
     proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
+
+    // websocket state
+    bool m_isWebSocket = false;
+    HANDLE m_hWebsocketWriteComplete = nullptr;
+    websocket_message_buffer m_websocketResponseBuffer;
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

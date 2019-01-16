@@ -34,7 +34,8 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HCPerformEnv env
     );
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
