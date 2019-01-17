@@ -87,14 +87,6 @@ try
 }
 CATCH_RETURN()
 
-typedef struct websocket_connect_context
-{
-    HCWebsocketHandle websocket;
-    XAsyncBlock* outerAsyncBlock;
-    std::string uri;
-    std::string subProtocol;
-} websocket_connect_context;
-
 STDAPI
 HCWebSocketConnectAsync(
     _In_z_ const char* uri,
@@ -109,71 +101,25 @@ try
         return E_INVALIDARG;
     }
 
-    std::shared_ptr<websocket_connect_context> connectContext = std::make_shared<websocket_connect_context>();
-    connectContext->uri = uri;
-    connectContext->subProtocol = subProtocol;
-    connectContext->websocket = websocket;
-    connectContext->outerAsyncBlock = asyncBlock;
-    websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(shared_ptr_cache::store<websocket_connect_context>(connectContext));
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
 
-    HRESULT hr = XAsyncBegin(asyncBlock, rawConnectContext, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
-        [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
+    auto connectFunc = httpSingleton->m_websocketConnectFunc;
+    if (connectFunc != nullptr)
     {
-        switch (op)
+        try
         {
-            case XAsyncOp::DoWork:
-            {
-                websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(data->context);
-                auto httpSingleton = get_http_singleton(true);
-                if (nullptr == httpSingleton)
-                    return E_HC_NOT_INITIALISED;
-
-                auto connectFunc = httpSingleton->m_websocketConnectFunc;
-                HRESULT hr = S_OK;
-                if (connectFunc != nullptr)
-                {
-                    try
-                    {
-                        rawConnectContext->websocket->connectCalled = true;
-                        hr = connectFunc(
-                            rawConnectContext->uri.c_str(),
-                            rawConnectContext->subProtocol.c_str(),
-                            rawConnectContext->websocket,
-                            rawConnectContext->outerAsyncBlock,
-                            httpSingleton->m_performEnv.get());
-                    }
-                    catch (...)
-                    {
-                        HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", rawConnectContext->websocket->id);
-                    }
-                }
-                return E_PENDING;
-            }
-
-            case XAsyncOp::GetResult:
-                break;
-
-            case XAsyncOp::Cancel:
-                break;
-
-            case XAsyncOp::Cleanup:
-            {
-                websocket_connect_context* context = static_cast<websocket_connect_context*>(data->context);
-                //HCWebSocketCloseHandle(context->websocket); // TODO: jasonsa - fix for WinHTTP
-                shared_ptr_cache::remove<websocket_connect_context>(data->context);
-                break;
-            }
+            websocket->connectCalled = true;
+            connectFunc(uri, subProtocol, websocket, asyncBlock, httpSingleton->m_performEnv.get());
         }
-
-        return S_OK;
-    });
-
-    if (hr == S_OK)
-    {
-        hr = XAsyncSchedule(asyncBlock, 0);
+        catch (...)
+        {
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", websocket->id);
+        }
     }
 
-    return hr;
+    return S_OK;
 }
 CATCH_RETURN()
 

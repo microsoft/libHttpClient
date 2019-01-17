@@ -4,7 +4,6 @@
 #include "pch.h"
 
 #if HC_WEBSOCKETPP
-#if !HC_NOWEBSOCKETS
 
 #include "../hcwebsocket.h"
 #include "uri.h"
@@ -688,6 +687,8 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 {
     assert(env != nullptr);
 
+    // TODO: Handle double connecting on same HCWebsocketHandle, and ensure disconnect/reconnect case works
+
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
     auto wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket);
@@ -729,7 +730,5 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
     return wsppSocket->close(closeStatus);
 }
-
-#endif
 
 #endif // HC_WEBSOCKETPP

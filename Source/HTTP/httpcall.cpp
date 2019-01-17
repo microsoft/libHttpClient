@@ -434,7 +434,8 @@ try
         return E_INVALIDARG;
     }
 
-    ++call->refCount;
+    HCHttpCallDuplicateHandle(call); // Keep the HCCallHandle alive during HTTP call
+
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id); }
     call->performCalled = true;
 
@@ -461,7 +462,7 @@ try
 
             case XAsyncOp::Cleanup:
                 auto context = static_cast<retry_context*>(data->context);
-                HCHttpCallCloseHandle(context->call);
+                HCHttpCallCloseHandle(context->call); // Call is done so remove internal keep alive ref
                 shared_ptr_cache::remove<retry_context>(data->context);
                 break;
         }

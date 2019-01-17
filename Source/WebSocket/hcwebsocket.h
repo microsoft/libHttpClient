@@ -13,16 +13,9 @@ struct hc_websocket_impl
 
 typedef struct HC_WEBSOCKET
 {
-    HC_WEBSOCKET() :
-        id(0),
-        refCount(1),
-        connectCalled(false)
-    {
-    }
-
-    uint64_t id;
-    std::atomic<int> refCount;
-    bool connectCalled;
+    uint64_t id = 0;
+    std::atomic<int> refCount = 1;
+    bool connectCalled = false;
     http_internal_map<http_internal_string, http_internal_string> connectHeaders;
     http_internal_string proxyUri;
     http_internal_string uri;

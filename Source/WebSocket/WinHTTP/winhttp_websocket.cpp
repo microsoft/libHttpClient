@@ -17,16 +17,6 @@ using namespace xbox::httpclient;
 struct winhttp_websocket_impl : public hc_websocket_impl, public std::enable_shared_from_this<winhttp_websocket_impl>
 {
 public:
-    winhttp_websocket_impl(HCWebsocketHandle hcHandle)
-    {
-        m_hcWebsocketHandle = HCWebSocketDuplicateHandle(hcHandle);
-        // TODO: when to close
-    }
-
-    ~winhttp_websocket_impl()
-    {
-    }
-
     HRESULT connect_async(
         _In_ HCWebsocketHandle websocket,
         _In_ XAsyncBlock* asyncBlock,
@@ -192,6 +182,13 @@ public:
 };
 
 
+typedef struct websocket_connect_context
+{
+    HCWebsocketHandle websocket;
+    XAsyncBlock* outerAsyncBlock;
+    HCPerformEnv env;
+} websocket_connect_context;
+
 HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
@@ -202,12 +199,82 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 {
     assert(env != nullptr);
 
+    if (uri == nullptr || websocket == nullptr || subProtocol == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    // TODO: Handle double connecting on same HCWebsocketHandle, and ensure disconnect/reconnect case works
+
+    HCWebSocketDuplicateHandle(websocket); // Keep the HCWebsocketHandle alive while connecting/connected
+    // TODO: call HCWebSocketCloseHandle when disconnected
+
+    auto httpSocket = http_allocate_shared<winhttp_websocket_impl>();
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
-    auto wsppSocket = http_allocate_shared<winhttp_websocket_impl>(websocket);
-    websocket->impl = wsppSocket;
+    websocket->impl = httpSocket;
 
-    return wsppSocket->connect_async(websocket, asyncBlock, env->m_hSession, env->m_proxyType);
+    std::shared_ptr<websocket_connect_context> connectContext = std::make_shared<websocket_connect_context>();
+    connectContext->websocket = websocket;
+    connectContext->outerAsyncBlock = asyncBlock;
+    connectContext->env = env;
+    auto storedPtr = shared_ptr_cache::store<websocket_connect_context>(connectContext);
+    websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(storedPtr);
+
+    HRESULT hr = XAsyncBegin(asyncBlock, rawConnectContext, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
+        [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
+    {
+        switch (op)
+        {
+            case XAsyncOp::DoWork:
+            {
+                websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(data->context);
+                auto httpSingleton = get_http_singleton(true);
+                if (nullptr == httpSingleton)
+                    return E_HC_NOT_INITIALISED;
+
+                auto connectFunc = httpSingleton->m_websocketConnectFunc;
+                HRESULT hr = S_OK;
+                if (connectFunc != nullptr)
+                {
+                    try
+                    {
+                        rawConnectContext->websocket->connectCalled = true;
+                        std::shared_ptr<winhttp_websocket_impl> winhttpSocket = std::dynamic_pointer_cast<winhttp_websocket_impl>(rawConnectContext->websocket->impl);
+                        hr = winhttpSocket->connect_async(
+                            rawConnectContext->websocket, 
+                            rawConnectContext->outerAsyncBlock,
+                            rawConnectContext->env->m_hSession,
+                            rawConnectContext->env->m_proxyType);
+                        if (FAILED(hr))
+                        {
+                            return hr;
+                        }
+                    }
+                    catch (...)
+                    {
+                        HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", rawConnectContext->websocket->id);
+                    }
+                }
+                return E_PENDING;
+            }
+
+            case XAsyncOp::Cleanup:
+            {
+                shared_ptr_cache::remove<websocket_connect_context>(data->context);
+                break;
+            }
+        }
+
+        return S_OK;
+    });
+
+    if (hr == S_OK)
+    {
+        hr = XAsyncSchedule(asyncBlock, 0);
+    }
+
+    return hr;
 }
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
