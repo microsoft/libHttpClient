@@ -4,7 +4,6 @@
 #include "pch.h"
 
 #if HC_WINHTTP_WEBSOCKETS
-#if !HC_NOWEBSOCKETS
 
 #include "../hcwebsocket.h"
 #include "../../HTTP/WinHttp/winhttp_http_task.h"
@@ -315,5 +314,4 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     return httpSocket->disconnect_websocket(closeStatus);
 }
 
-#endif
 #endif
