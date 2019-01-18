@@ -261,8 +261,9 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* asyncBlock
-    )
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HCPerformEnv env
+)
 {
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
     websocketTask->m_websocketHandle = HCWebSocketDuplicateHandle(websocket);
