@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#include <atomic>
 
 class win32_handle
 {
@@ -148,6 +149,7 @@ void ShutdownActiveThreads()
 }
 
 HANDLE g_eventHandle;
+std::atomic<uint32_t> g_numberMessagesReceieved = 0;
 
 void message_received(
     _In_ HCWebsocketHandle websocket,
@@ -155,6 +157,7 @@ void message_received(
     )
 {
     printf_s("Received websocket message: %s\n", incomingBodyString);
+    g_numberMessagesReceieved++;
     SetEvent(g_eventHandle);
 }
 
@@ -182,47 +185,59 @@ int main()
 
     HCWebsocketHandle websocket;
     HRESULT hr = HCWebSocketCreate(&websocket);
+
     hr = HCWebSocketSetFunctions(message_received, websocket_closed);
 
-    XAsyncBlock* asyncBlock = new XAsyncBlock{};
-    asyncBlock->queue = g_queue;
-    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+    for (int iConnectAttempt = 0; iConnectAttempt < 10; iConnectAttempt++)
     {
-        WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(asyncBlock, &result);
+        g_numberMessagesReceieved = 0;
 
-        printf_s("HCWebSocketConnect complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-        SetEvent(g_eventHandle);
-        delete asyncBlock;
-    };
+        XAsyncBlock* asyncBlock = new XAsyncBlock{};
+        asyncBlock->queue = g_queue;
+        asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+        {
+            WebSocketCompletionResult result = {};
+            HCGetWebSocketConnectResult(asyncBlock, &result);
 
-    printf_s("Calling HCWebSocketConnect...\n");
-    hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
-    WaitForSingleObject(g_eventHandle, INFINITE);
+            printf_s("HCWebSocketConnect complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+            SetEvent(g_eventHandle);
+            delete asyncBlock;
+        };
 
-    asyncBlock = new XAsyncBlock{};
-    asyncBlock->queue = g_queue;
-    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
-    {
-        WebSocketCompletionResult result = {};
-        HCGetWebSocketSendMessageResult(asyncBlock, &result);
+        printf_s("Calling HCWebSocketConnect...\n");
+        hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
+        WaitForSingleObject(g_eventHandle, INFINITE);
+        
+        uint32_t numberOfMessagesToSend = 100;
+        for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
+        {
+            asyncBlock = new XAsyncBlock{};
+            asyncBlock->queue = g_queue;
+            asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+            {
+                WebSocketCompletionResult result = {};
+                HCGetWebSocketSendMessageResult(asyncBlock, &result);
 
-        printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-        SetEvent(g_eventHandle);
-        delete asyncBlock;
-    };
+                printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+                SetEvent(g_eventHandle);
+                delete asyncBlock;
+            };
 
-    std::string requestString = "This message should be echoed!";
-    printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", requestString.data());
-    hr = HCWebSocketSendMessageAsync(websocket, requestString.data(), asyncBlock);
-    
-    // Wait for send to complete successfully and then wait again for response to be received.
-    WaitForSingleObject(g_eventHandle, INFINITE);
-    WaitForSingleObject(g_eventHandle, INFINITE);
+            char webMsg[100];
+            snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
+            printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", webMsg);
+            hr = HCWebSocketSendMessageAsync(websocket, webMsg, asyncBlock);
+        }
 
-    printf_s("Calling HCWebSocketDisconnect...\n");
-    HCWebSocketDisconnect(websocket);
-    WaitForSingleObject(g_eventHandle, INFINITE);
+        while (g_numberMessagesReceieved < numberOfMessagesToSend)
+        {
+            WaitForSingleObject(g_eventHandle, INFINITE);
+        }
+
+        printf_s("Calling HCWebSocketDisconnect...\n");
+        HCWebSocketDisconnect(websocket);
+        WaitForSingleObject(g_eventHandle, INFINITE);
+    }
 
     HCWebSocketCloseHandle(websocket);
     CloseHandle(g_eventHandle);

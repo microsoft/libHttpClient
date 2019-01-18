@@ -16,6 +16,13 @@ using namespace xbox::httpclient;
 struct winhttp_websocket_impl : public hc_websocket_impl, public std::enable_shared_from_this<winhttp_websocket_impl>
 {
 public:
+    ~winhttp_websocket_impl()
+    {
+        HC_TRACE_VERBOSE(WEBSOCKET, "winhttp_websocket_impl dtor");
+        if(m_call != nullptr) HCHttpCallCloseHandle(m_call);
+        shared_ptr_cache::remove<winhttp_http_task>(m_httpTask.get());
+    }
+
     HRESULT connect_async(
         _In_ HCWebsocketHandle websocket,
         _In_ XAsyncBlock* asyncBlock,
@@ -31,6 +38,18 @@ public:
         HCHttpCallRequestSetUrl(m_call, "GET", websocket->uri.c_str());
 
         bool isWebsocket = true;
+
+        // Handle if this handle is already connected or connecting
+        if (m_httpTask != nullptr)
+        {
+            if (m_httpTask->m_socketState == WinHttpWebsockState::Connecting ||
+                m_httpTask->m_socketState == WinHttpWebsockState::Connected)
+            {
+                XAsyncComplete(asyncBlock, S_OK, 0);
+                return S_OK;
+            }
+        }
+
         m_httpTask = http_allocate_shared<winhttp_http_task>(
             asyncBlock, m_call, hSession, proxyType, isWebsocket
             );
@@ -135,25 +154,31 @@ public:
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
             WebSocketCompletionResult* result;
-            auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, op == XAsyncOp::Cleanup);
-
             switch (op)
             {
                 case XAsyncOp::DoWork:
                 {
+                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, false, true);
                     return sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
                 }
 
                 case XAsyncOp::GetResult:
                 {
+                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, false, true);
                     result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                     result->platformErrorCode = sendMsgContext->message.hr;
                     result->errorCode = XAsyncGetStatus(data->async, false);
                     return S_OK;
                 }
 
-                default: return S_OK;
+                case XAsyncOp::Cleanup:
+                {
+                    shared_ptr_cache::remove<send_msg_context>(data->context);
+                    return S_OK;
+                }
             }
+
+            return S_OK;
         });
 
         if (SUCCEEDED(hr))
@@ -203,15 +228,13 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
         return E_INVALIDARG;
     }
 
-    // TODO: Handle double connecting on same HCWebsocketHandle, and ensure disconnect/reconnect case works
-
-    HCWebSocketDuplicateHandle(websocket); // Keep the HCWebsocketHandle alive while connecting/connected
-    // TODO: call HCWebSocketCloseHandle when disconnected
-
-    auto httpSocket = http_allocate_shared<winhttp_websocket_impl>();
-    websocket->uri = uri;
-    websocket->subProtocol = subProtocol;
-    websocket->impl = httpSocket;
+    if (websocket->impl == nullptr)
+    {
+        auto httpSocket = http_allocate_shared<winhttp_websocket_impl>();
+        websocket->uri = uri;
+        websocket->subProtocol = subProtocol;
+        websocket->impl = httpSocket;
+    }
 
     std::shared_ptr<websocket_connect_context> connectContext = std::make_shared<websocket_connect_context>();
     connectContext->websocket = websocket;

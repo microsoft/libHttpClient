@@ -17,6 +17,11 @@ const double MAX_DELAY_TIME_IN_SEC = 60.0;
 const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
+HC_CALL::~HC_CALL()
+{
+    HC_TRACE_VERBOSE(HTTPCLIENT, "HCCallHandle dtor");
+}
+
 STDAPI 
 HCHttpCallCreate(
     _Out_ HCCallHandle* callHandle

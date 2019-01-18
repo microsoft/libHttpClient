@@ -83,8 +83,7 @@ public:
         HRESULT hr = S_OK;
         if (dataByteCount > 0)
         {
-            // TODO: jasonsa switch to mem alloc
-            m_buffer = static_cast<uint8_t*>(new (std::nothrow) uint8_t[dataByteCount]);
+            m_buffer = static_cast<byte*>(http_memory::mem_alloc(dataByteCount));
             if (m_buffer != nullptr)
             {
                 m_bufferByteCapacity = dataByteCount;
@@ -129,14 +128,12 @@ public:
 
         if (dataByteCount > m_bufferByteCapacity)
         {
-            // TODO: jasonsa switch to mem alloc
-            newBuffer = static_cast<uint8_t*>(new (std::nothrow) uint8_t[dataByteCount]);
+            newBuffer = static_cast<byte*>(http_memory::mem_alloc(dataByteCount));
             if (newBuffer != nullptr)
             {
                 // Copy the contents of the old buffer
                 CopyMemory(newBuffer, m_buffer, m_bufferByteCount);
-                // TODO: jasonsa switch to mem free
-                delete[] m_buffer;
+                http_memory::mem_free(m_buffer);
                 m_buffer = newBuffer;
                 m_bufferByteCapacity = dataByteCount;
             }
@@ -153,8 +150,7 @@ public:
     {
         if (m_buffer != nullptr)
         {
-            // TODO: jasonsa switch to mem free
-            delete[] m_buffer;
+            http_memory::mem_free(m_buffer);
         }
     }
 

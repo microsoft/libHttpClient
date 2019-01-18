@@ -112,6 +112,16 @@ winhttp_http_task::winhttp_http_task(
 
 winhttp_http_task::~winhttp_http_task()
 {
+    HC_TRACE_VERBOSE(HTTPCLIENT, "winhttp_http_task dtor");
+
+#if HC_WINHTTP_WEBSOCKETS
+    if (m_socketState == WinHttpWebsockState::Connected ||
+        m_socketState == WinHttpWebsockState::Connecting)
+    {
+        disconnect_websocket(HCWebSocketCloseStatus::Normal);
+    }
+#endif
+
     if (m_hRequest != nullptr) WinHttpCloseHandle(m_hRequest);
     if (m_hConnection != nullptr) WinHttpCloseHandle(m_hConnection);
 #if HC_WINHTTP_WEBSOCKETS
@@ -135,7 +145,6 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
 
     if (m_hRequest != nullptr && !m_isWebSocket)
     {
-        // TODO: remove handlers when websocket disconnects
         WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
         shared_ptr_cache::remove<winhttp_http_task>(this);
     }
@@ -957,12 +966,15 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 {
     m_socketState = WinHttpWebsockState::Closed;
 
+    // Handlers will be setup again upon connect
+    WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL); 
+
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
     HCWebSocketGetFunctions(nullptr, &disconnectFunc);
 
     try
     {
-        HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::Normal; // TODO: jasonsa convert closeReason to HCWebSocketCloseStatus
+        HCWebSocketCloseStatus closeStatus = static_cast<HCWebSocketCloseStatus>(closeReason); 
         disconnectFunc(m_websocketHandle, closeStatus);
     }
     catch (...)
@@ -974,11 +986,15 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 
 HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
 {
-    USHORT status = 0;
-    DWORD dwError = WinHttpWebSocketClose(m_hRequest, status, nullptr, 0);
-    return HRESULT_FROM_WIN32(dwError);
+    // HCWebSocketCloseEventFunction is triggered inside HCWebSocketDisconnect()
 
-    // TODO: jasonsa -- verify on_websocket_disconnected is called 
+    m_socketState = WinHttpWebsockState::Closed;
+    DWORD dwError = WinHttpWebSocketClose(m_hRequest, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+
+    // Handlers will be setup again upon connect
+    WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
+
+    return HRESULT_FROM_WIN32(dwError);
 }
 
 void winhttp_http_task::callback_websocket_status_read_complete(
@@ -1002,8 +1018,7 @@ void winhttp_http_task::callback_websocket_status_read_complete(
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE)
     {
-        // TODO: jasonsa: hook up read continued
-        //pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
+        pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
         pRequestContext->websocket_read_message();
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE)
@@ -1113,8 +1128,7 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     pRequestContext->websocket_start_listening();
     pRequestContext->m_socketState = WinHttpWebsockState::Connected;
 
-    // TODO: jasonsa -- needed?  
-    //WinHttpCloseHandle(hRequestHandle); // The request handle is not needed anymore. From now on we will use the websocket handle.
+    WinHttpCloseHandle(hRequestHandle); // The old request handle is not needed anymore.  We're using pRequestContext->m_hRequest now
 
     pRequestContext->complete_task(S_OK, S_OK);
 }

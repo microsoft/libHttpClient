@@ -293,7 +293,8 @@ private:
             HCWebSocketMessageFunction messageFunc = nullptr;
             HCWebSocketGetFunctions(&messageFunc, nullptr);
 
-            // TODO: hook up HCWebSocketCloseEventFunction handler
+            // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
+            // TODO: verify auto disconnect when closing client's websocket handle
 
             if (messageFunc != nullptr)
             {

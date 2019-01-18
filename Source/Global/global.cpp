@@ -9,30 +9,15 @@
 
 using namespace xbox::httpclient;
 
-static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
-static const uint32_t DEFAULT_HTTP_TIMEOUT_IN_SECONDS = 30;
-static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
-
 static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 http_singleton::http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv) :
-    m_callRoutedHandlersContext{ 0 },
     m_perform{ performInfo },
-    m_performEnv{ std::move(performEnv) },
-    m_lastId{ 0 },
-    m_retryAllowed{ true },
-    m_timeoutInSeconds{ DEFAULT_HTTP_TIMEOUT_IN_SECONDS },
-    m_timeoutWindowInSeconds{ DEFAULT_TIMEOUT_WINDOW_IN_SECONDS },
-    m_retryDelayInSeconds{ DEFAULT_RETRY_DELAY_IN_SECONDS },
-    m_lastMatchingMock{ nullptr },
-    m_mocksEnabled{ false }
+    m_performEnv{ std::move(performEnv) }
 {
 #if !HC_NOWEBSOCKETS
-    m_websocketMessageFunc = nullptr;
-    m_websocketCloseEventFunc = nullptr;
-
     m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
     m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;

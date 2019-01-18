@@ -13,6 +13,13 @@ struct hc_websocket_impl
 
 typedef struct HC_WEBSOCKET
 {
+    ~HC_WEBSOCKET()
+    {
+#if !HC_NOWEBSOCKETS
+        HC_TRACE_VERBOSE(WEBSOCKET, "HCWebsocketHandle dtor");
+#endif
+    }
+
     uint64_t id = 0;
     std::atomic<int> refCount = 1;
     bool connectCalled = false;
