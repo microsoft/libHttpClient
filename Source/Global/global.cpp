@@ -105,7 +105,7 @@ void http_singleton::set_retry_state(
     _In_ uint32_t retryAfterCacheId,
     _In_ const http_retry_after_api_state& state)
 {
-    std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
+    std::lock_guard<std::recursive_mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
     http_retry_after_api_state oldstate = get_retry_state(retryAfterCacheId);
     if (oldstate.statusCode < 400)
     {
@@ -130,7 +130,7 @@ http_retry_after_api_state http_singleton::get_retry_state(_In_ uint32_t retryAf
 
 void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 {
-    std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
+    std::lock_guard<std::recursive_mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
     m_retryAfterCache.erase(retryAfterCacheId);
 }
 

@@ -60,7 +60,7 @@ public:
 
     IAsyncAction^ m_connectAsyncOp;
 
-    std::mutex m_outgoingMessageQueueLock;
+    std::recursive_mutex m_outgoingMessageQueueLock;
     std::queue<std::shared_ptr<websocket_outgoing_message>> m_outgoingMessageQueue;
     HCWebsocketHandle m_websocketHandle;
     std::atomic<bool> m_outgoingMessageSendInProgress;
@@ -324,7 +324,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     }
 
     {
-        std::lock_guard<std::mutex> lock(websocketTask->m_outgoingMessageQueueLock);
+        std::lock_guard<std::recursive_mutex> lock(websocketTask->m_outgoingMessageQueueLock);
         HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %lld", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
         websocketTask->m_outgoingMessageQueue.push(msg);
     }
@@ -454,7 +454,7 @@ void MessageWebSocketSendMessage(
     std::shared_ptr<websocket_outgoing_message> msg;
 
     {
-        std::lock_guard<std::mutex> lock(websocketTask->m_outgoingMessageQueueLock);
+        std::lock_guard<std::recursive_mutex> lock(websocketTask->m_outgoingMessageQueueLock);
         if (websocketTask->m_outgoingMessageQueue.size() > 0)
         {
             msg = websocketTask->m_outgoingMessageQueue.front();

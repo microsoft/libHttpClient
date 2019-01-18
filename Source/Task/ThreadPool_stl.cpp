@@ -43,7 +43,7 @@ public:
                 numThreads--;
                 m_pool.emplace_back(std::thread([this]
                 {
-                    std::unique_lock<std::mutex> lock(m_wakeLock);
+                    std::unique_lock<std::recursive_mutex> lock(m_wakeLock);
                     while(true)
                     {
                         m_wake.wait(lock);
@@ -107,7 +107,7 @@ public:
 
     void Terminate() noexcept
     {
-        std::unique_lock<std::mutex> lock(m_activeLock);
+        std::unique_lock<std::recursive_mutex> lock(m_activeLock);
         m_terminate = true;
         m_wake.notify_all();
 
@@ -165,11 +165,11 @@ private:
 
     std::atomic<uint32_t> m_refs { 1 };
 
-    std::mutex m_wakeLock;
+    std::recursive_mutex m_wakeLock;
     std::condition_variable m_wake;
     std::atomic<uint32_t> m_calls { 0 };
 
-    std::mutex m_activeLock;
+    std::recursive_mutex m_activeLock;
     std::condition_variable m_active;
     std::atomic<uint32_t> m_activeCalls { 0 };
 
