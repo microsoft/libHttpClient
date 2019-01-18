@@ -215,7 +215,7 @@ public:
 
         {
             // Only actually have to take the lock if touching the queue.
-            std::lock_guard<std::mutex> lock(m_outgoingMessageQueueLock);
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
             m_outgoingMessageQueue.push(message);
         }
 
@@ -236,7 +236,7 @@ public:
     {
         websocketpp::lib::error_code ec;
         {
-            std::lock_guard<std::mutex> lock(m_wsppClientLock);
+            std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
             if (m_state == CONNECTED)
             {
                 m_state = CLOSING;
@@ -472,7 +472,7 @@ private:
 
         try
         {
-            std::lock_guard<std::mutex> lock(m_wsppClientLock);
+            std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
             if (m_client->is_tls_client())
             {
                 auto& client = m_client->client<websocketpp::config::asio_tls_client>();
@@ -509,7 +509,7 @@ private:
         auto sendContext = http_allocate_shared<send_msg_context>();
         sendContext->pThis = shared_from_this();
         {
-            std::lock_guard<std::mutex> lock(m_outgoingMessageQueueLock);
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
             ASSERT(!m_outgoingMessageQueue.empty());
             sendContext->message = std::move(m_outgoingMessageQueue.front());
             m_outgoingMessageQueue.pop();
@@ -655,12 +655,12 @@ private:
     websocketpp::close::status::value m_closeCode;
 
     // Used to safe guard the wspp client.
-    std::mutex m_wsppClientLock;
+    std::recursive_mutex m_wsppClientLock;
     std::atomic<State> m_state = CREATED;
     std::unique_ptr<websocketpp_client_base> m_client;
 
     // Guards access to m_outgoing_msg_queue
-    std::mutex m_outgoingMessageQueueLock;
+    std::recursive_mutex m_outgoingMessageQueueLock;
 
     // Queue to order the sends
     http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue;

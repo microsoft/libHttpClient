@@ -403,7 +403,7 @@ void retry_http_call_until_done(
             auto httpSingleton = get_http_singleton(false);
             if (httpSingleton != nullptr)
             {
-                std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+                std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
                 for (const auto& pair : httpSingleton->m_callRoutedHandlers)
                 {
                     pair.second.first(retryContext->call, pair.second.second);

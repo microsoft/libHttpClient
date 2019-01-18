@@ -87,7 +87,7 @@ public:
 
         {
             // Only actually have to take the lock if touching the queue.
-            std::lock_guard<std::mutex> lock(m_outgoingMessageQueueLock);
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
             m_outgoingMessageQueue.push(message);
         }
 
@@ -120,7 +120,7 @@ public:
 
         try
         {
-            std::lock_guard<std::mutex> lock(m_httpClientLock);
+            std::lock_guard<std::recursive_mutex> lock(m_httpClientLock);
 
             message->hr = m_httpTask->send_websocket_message(message->payload.data(), message->payload.length());
             XAsyncComplete(message->asyncBlock, message->hr, sizeof(WebSocketCompletionResult));
@@ -144,7 +144,7 @@ public:
         auto sendContext = http_allocate_shared<send_msg_context>();
         sendContext->pThis = shared_from_this();
         {
-            std::lock_guard<std::mutex> lock(m_outgoingMessageQueueLock);
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
             ASSERT(!m_outgoingMessageQueue.empty());
             sendContext->message = std::move(m_outgoingMessageQueue.front());
             m_outgoingMessageQueue.pop();
@@ -198,9 +198,9 @@ public:
     HCCallHandle m_call = nullptr;
 
     // Websocket state
-    std::mutex m_httpClientLock; // Guards access to HTTP socket
+    std::recursive_mutex m_httpClientLock; // Guards access to HTTP socket
     HCWebsocketHandle m_hcWebsocketHandle = nullptr;
-    std::mutex m_outgoingMessageQueueLock; // Guards access to m_outgoing_msg_queue
+    std::recursive_mutex m_outgoingMessageQueueLock; // Guards access to m_outgoing_msg_queue
     http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue; // Queue to order the sends   
     std::atomic<int> m_numSends = 0; // Number of sends in progress and queued up.
 };

@@ -47,7 +47,7 @@ private:
     TimerEntry const& Peek() const noexcept;
     TimerEntry Pop() noexcept;
 
-    std::mutex m_mutex;
+    std::recursive_mutex m_mutex;
     std::condition_variable m_cv;
     std::vector<TimerEntry> m_queue; // used as a heap
     std::thread m_t;
@@ -64,7 +64,7 @@ namespace
 TimerQueue::~TimerQueue()
 {
     {
-        std::lock_guard<std::mutex> lock{ m_mutex };
+        std::lock_guard<std::recursive_mutex> lock{ m_mutex };
         m_exitThread = true;
     }
 
@@ -100,7 +100,7 @@ bool TimerQueue::LazyInit() noexcept
 void TimerQueue::Set(WaitTimerImpl* timer, Deadline deadline) noexcept
 {
     {
-        std::lock_guard<std::mutex> lock{ m_mutex };
+        std::lock_guard<std::recursive_mutex> lock{ m_mutex };
 
         for (auto& entry : m_queue)
         {
@@ -118,7 +118,7 @@ void TimerQueue::Set(WaitTimerImpl* timer, Deadline deadline) noexcept
 
 void TimerQueue::Remove(WaitTimerImpl const* timer) noexcept
 {
-    std::lock_guard<std::mutex> lock{ m_mutex };
+    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
 
     // since m_queue is a heap, removing elements is non trivial, instead we
     // just clean the timer pointer and the entry will be popped eventually
@@ -134,7 +134,7 @@ void TimerQueue::Remove(WaitTimerImpl const* timer) noexcept
 
 void TimerQueue::Worker() noexcept
 {
-    std::unique_lock<std::mutex> lock{ m_mutex };
+    std::unique_lock<std::recursive_mutex> lock{ m_mutex };
     while (!m_exitThread)
     {
         while (!m_queue.empty())

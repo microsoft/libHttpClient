@@ -52,7 +52,7 @@ try
         }
     }
 
-    std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+    std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
     httpSingleton->m_mocks.push_back(call);
     httpSingleton->m_mocksEnabled = true;
     return S_OK;
@@ -67,7 +67,7 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+    std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
 
     for (auto& mockCall : httpSingleton->m_mocks)
     {

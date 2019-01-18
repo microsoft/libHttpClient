@@ -65,7 +65,7 @@ HC_CALL* GetMatchingMock(
     HC_CALL* matchingMock = nullptr;
 
     {
-        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+        std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
         mocks = httpSingleton->m_mocks;
         lastMatchingMock = httpSingleton->m_lastMatchingMock;
     }
@@ -109,7 +109,7 @@ HC_CALL* GetMatchingMock(
     }
 
     {
-        std::lock_guard<std::mutex> guard(httpSingleton->m_mocksLock);
+        std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
         httpSingleton->m_lastMatchingMock = matchingMock;
     }
 

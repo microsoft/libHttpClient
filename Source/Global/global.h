@@ -39,15 +39,15 @@ typedef struct http_singleton
     http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv);
     ~http_singleton();
 
-    std::mutex m_singletonLock;
+    std::recursive_mutex m_singletonLock;
 
-    std::mutex m_retryAfterCacheLock;
+    std::recursive_mutex m_retryAfterCacheLock;
     std::unordered_map<uint32_t, http_retry_after_api_state> m_retryAfterCache;
     void set_retry_state(_In_ uint32_t retryAfterCacheId, _In_ const http_retry_after_api_state& state);
     http_retry_after_api_state get_retry_state(_In_ uint32_t retryAfterCacheId);
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
 
-    std::mutex m_callRoutedHandlersLock;
+    std::recursive_mutex m_callRoutedHandlersLock;
     std::atomic<int32_t> m_callRoutedHandlersContext = 0;
     http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 
@@ -72,7 +72,7 @@ typedef struct http_singleton
 #endif
 
     // Mock state
-    std::mutex m_mocksLock;
+    std::recursive_mutex m_mocksLock;
     http_internal_vector<HC_CALL*> m_mocks;
     HC_CALL* m_lastMatchingMock = nullptr;
     bool m_mocksEnabled = false;

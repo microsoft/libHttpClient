@@ -91,7 +91,7 @@ STDAPI_(int32_t) HCAddCallRoutedHandler(
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+    std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
     auto functionContext = httpSingleton->m_callRoutedHandlersContext++;
     httpSingleton->m_callRoutedHandlers[functionContext] = std::make_pair(handler, context);
     return functionContext;
@@ -104,7 +104,7 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
     auto httpSingleton = get_http_singleton(true);
     if (nullptr != httpSingleton)
     {
-        std::lock_guard<std::mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
         httpSingleton->m_callRoutedHandlers.erase(handlerContext);
     }
 }
