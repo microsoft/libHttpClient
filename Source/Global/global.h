@@ -105,7 +105,7 @@ public:
     }
 
     template<typename T>
-    static std::shared_ptr<T> fetch(void *rawContextPtr, bool deleteShared = true, bool assertIfNotFound = true)
+    static std::shared_ptr<T> fetch(void *rawContextPtr, bool assertIfNotFound)
     {
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
@@ -117,10 +117,6 @@ public:
         if (iter != httpSingleton->m_sharedPtrs.end())
         {
             auto returnPtr = std::shared_ptr<T>(iter->second, reinterpret_cast<T*>(iter->second.get()));
-            if (deleteShared)
-            {
-                httpSingleton->m_sharedPtrs.erase(iter);
-            }
             return returnPtr;
         }
         else

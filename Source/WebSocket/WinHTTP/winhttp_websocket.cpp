@@ -158,13 +158,13 @@ public:
             {
                 case XAsyncOp::DoWork:
                 {
-                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, false, true);
+                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
                     return sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
                 }
 
                 case XAsyncOp::GetResult:
                 {
-                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, false, true);
+                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
                     result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                     result->platformErrorCode = sendMsgContext->message.hr;
                     result->errorCode = XAsyncGetStatus(data->async, false);
