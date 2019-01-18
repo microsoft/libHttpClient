@@ -136,7 +136,7 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 
 PerformInfo& GetUserPerformHandler() noexcept
 {
-    static PerformInfo handler = { &Internal_HCHttpCallPerformAsync, nullptr };
+    static PerformInfo handler(&Internal_HCHttpCallPerformAsync);
     return handler;
 }
 

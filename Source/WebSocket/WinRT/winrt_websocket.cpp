@@ -262,9 +262,9 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ HCPerformEnv env
-)
+    _In_ HCPerformEnv env)
 {
+    UNREFERENCED_PARAMETER(env);
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
     websocketTask->m_websocketHandle = HCWebSocketDuplicateHandle(websocket);
     websocket->uri = uri;

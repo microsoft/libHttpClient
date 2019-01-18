@@ -47,6 +47,10 @@ struct HC_CALL
 
 struct PerformInfo
 {
+    PerformInfo(_In_ HCCallPerformFunction h) : handler(h)
+    {
+    }
+
     HCCallPerformFunction handler = nullptr;
     void* context = nullptr; // non owning
 };
