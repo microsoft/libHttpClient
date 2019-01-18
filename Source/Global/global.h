@@ -30,6 +30,10 @@ typedef struct http_retry_after_api_state
     uint32_t statusCode;
 } http_retry_after_api_state;
 
+static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
+static const uint32_t DEFAULT_HTTP_TIMEOUT_IN_SECONDS = 30;
+static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
+
 typedef struct http_singleton
 {
     http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv);
@@ -44,36 +48,36 @@ typedef struct http_singleton
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
 
     std::mutex m_callRoutedHandlersLock;
-    std::atomic<int32_t> m_callRoutedHandlersContext;
+    std::atomic<int32_t> m_callRoutedHandlersContext = 0;
     http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 
     // HTTP state
     PerformInfo const m_perform;
     PerformEnv const m_performEnv;
 
-    std::atomic<std::uint64_t> m_lastId;
-    bool m_retryAllowed;
-    uint32_t m_timeoutInSeconds;
-    uint32_t m_timeoutWindowInSeconds;
-    uint32_t m_retryDelayInSeconds;
+    std::atomic<std::uint64_t> m_lastId = 0;
+    bool m_retryAllowed = true;
+    uint32_t m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
+    uint32_t m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
+    uint32_t m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
 
 #if !HC_NOWEBSOCKETS
     // WebSocket state
-    HCWebSocketMessageFunction m_websocketMessageFunc;
-    HCWebSocketCloseEventFunction m_websocketCloseEventFunc;
+    HCWebSocketMessageFunction m_websocketMessageFunc = nullptr;
+    HCWebSocketCloseEventFunction m_websocketCloseEventFunc = nullptr;
 
-    HCWebSocketConnectFunction m_websocketConnectFunc;
-    HCWebSocketSendMessageFunction m_websocketSendMessageFunc;
-    HCWebSocketDisconnectFunction m_websocketDisconnectFunc;
+    HCWebSocketConnectFunction m_websocketConnectFunc = nullptr;
+    HCWebSocketSendMessageFunction m_websocketSendMessageFunc = nullptr;
+    HCWebSocketDisconnectFunction m_websocketDisconnectFunc = nullptr;
 #endif
 
     // Mock state
     std::mutex m_mocksLock;
     http_internal_vector<HC_CALL*> m_mocks;
-    HC_CALL* m_lastMatchingMock;
-    bool m_mocksEnabled;
+    HC_CALL* m_lastMatchingMock = nullptr;
+    bool m_mocksEnabled = false;
 
-    std::mutex m_sharedPtrsLock;
+    std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 } http_singleton;
 
@@ -92,7 +96,7 @@ public:
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
             return nullptr;
-        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_sharedPtrsLock);
 
         void *rawVoidPtr = contextSharedPtr.get();
         std::shared_ptr<void> voidSharedPtr(contextSharedPtr, rawVoidPtr);
@@ -107,7 +111,7 @@ public:
         if (nullptr == httpSingleton)
             return nullptr;
 
-        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_sharedPtrsLock);
 
         auto iter = httpSingleton->m_sharedPtrs.find(rawContextPtr);
         if (iter != httpSingleton->m_sharedPtrs.end())
@@ -136,7 +140,7 @@ public:
         if (nullptr == httpSingleton)
             return;
 
-        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_sharedPtrsLock);
 
         auto iter = httpSingleton->m_sharedPtrs.find(rawContextPtr);
         if (iter != httpSingleton->m_sharedPtrs.end())
@@ -147,7 +151,7 @@ public:
 
     static void cleanup(_In_ std::shared_ptr<http_singleton> httpSingleton)
     {
-        std::lock_guard<std::mutex> lock(httpSingleton->m_sharedPtrsLock);
+        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_sharedPtrsLock);
         ASSERT(httpSingleton->m_sharedPtrs.size() == 0);
         httpSingleton->m_sharedPtrs.clear();
     }

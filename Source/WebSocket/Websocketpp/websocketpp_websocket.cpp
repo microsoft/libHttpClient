@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#if !HC_NOWEBSOCKETS
+#if HC_WEBSOCKETPP
 
 #include "../hcwebsocket.h"
 #include "uri.h"
@@ -65,11 +65,7 @@ private:
     };
 
 public:
-    wspp_websocket_impl(HCWebsocketHandle hcHandle)
-        : m_backgroundQueue(nullptr),
-        m_state(CREATED),
-        m_numSends(0),
-        m_opensslFailed(false),
+    wspp_websocket_impl(HCWebsocketHandle hcHandle) :
         m_hcWebsocketHandle{ hcHandle },
         m_uri(hcHandle->uri)
     {
@@ -296,6 +292,9 @@ private:
         {
             HCWebSocketMessageFunction messageFunc = nullptr;
             HCWebSocketGetFunctions(&messageFunc, nullptr);
+
+            // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
+            // TODO: verify auto disconnect when closing client's websocket handle
 
             if (messageFunc != nullptr)
             {
@@ -648,7 +647,7 @@ private:
 
     // Asio client has a long running "run" task that we need to provide a thread for
     std::thread m_websocketThread;
-    XTaskQueueHandle m_backgroundQueue;
+    XTaskQueueHandle m_backgroundQueue = nullptr;
 
     websocketpp::connection_hdl m_con;
 
@@ -657,7 +656,7 @@ private:
 
     // Used to safe guard the wspp client.
     std::mutex m_wsppClientLock;
-    std::atomic<State> m_state;
+    std::atomic<State> m_state = CREATED;
     std::unique_ptr<websocketpp_client_base> m_client;
 
     // Guards access to m_outgoing_msg_queue
@@ -667,14 +666,14 @@ private:
     http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue;
 
     // Number of sends in progress and queued up.
-    std::atomic<int> m_numSends;
+    std::atomic<int> m_numSends = 0;
 
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-    bool m_opensslFailed;
+    bool m_opensslFailed = false;
 
-    HCWebsocketHandle m_hcWebsocketHandle;
+    HCWebsocketHandle m_hcWebsocketHandle = nullptr;
 
     Uri m_uri;
 };
@@ -683,9 +682,14 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* async
+    _Inout_ XAsyncBlock* async,
+    _In_ HCPerformEnv env
     )
 {
+    assert(env != nullptr);
+
+    // TODO: Handle double connecting on same HCWebsocketHandle, and ensure disconnect/reconnect case works
+
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
     auto wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket);
@@ -728,5 +732,4 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     return wsppSocket->close(closeStatus);
 }
 
-#endif
-
+#endif // HC_WEBSOCKETPP

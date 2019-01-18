@@ -299,8 +299,7 @@ int main()
 {
     HCInitialize(nullptr);
 
-    XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, 
-        &g_queue);
+    XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &g_queue);
     XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
     HCTraceSetTraceToDebugger(true);
     StartBackgroundThread();

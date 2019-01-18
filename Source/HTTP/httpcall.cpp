@@ -17,6 +17,11 @@ const double MAX_DELAY_TIME_IN_SEC = 60.0;
 const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
+HC_CALL::~HC_CALL()
+{
+    HC_TRACE_VERBOSE(HTTPCLIENT, "HCCallHandle dtor");
+}
+
 STDAPI 
 HCHttpCallCreate(
     _Out_ HCCallHandle* callHandle
@@ -434,7 +439,8 @@ try
         return E_INVALIDARG;
     }
 
-    ++call->refCount;
+    HCHttpCallDuplicateHandle(call); // Keep the HCCallHandle alive during HTTP call
+
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id); }
     call->performCalled = true;
 
@@ -461,7 +467,7 @@ try
 
             case XAsyncOp::Cleanup:
                 auto context = static_cast<retry_context*>(data->context);
-                HCHttpCallCloseHandle(context->call);
+                HCHttpCallCloseHandle(context->call); // Call is done so remove internal keep alive ref
                 shared_ptr_cache::remove<retry_context>(data->context);
                 break;
         }

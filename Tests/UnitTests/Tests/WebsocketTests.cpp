@@ -77,7 +77,8 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HCPerformEnv env
     )
 {
     g_HCWebSocketConnect_Called = true;

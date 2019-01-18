@@ -15,7 +15,7 @@ public:
 
     bool IsSecure() const
     {
-        return (Scheme() == "https");
+        return (Scheme() == "https" || Scheme() == "wss");
     }
 
     bool IsPortDefault() const
