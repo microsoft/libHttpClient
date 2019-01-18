@@ -505,7 +505,7 @@ void CALLBACK winhttp_http_task::completion_callback(
 
     // Fetch std::shared_ptr if its not removed from cache. 
     // If its removed from cache, then error happened and we can ignore incoming calls
-    auto requestContext = shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(context), false, false);
+    auto requestContext = shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(context), false);
     if (requestContext == nullptr)
         return;
 
@@ -519,7 +519,7 @@ void CALLBACK winhttp_http_task::completion_callback(
         win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
         // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-        if (shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(context), false, false) == nullptr)
+        if (shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(context), false) == nullptr)
         {
             return;
         }

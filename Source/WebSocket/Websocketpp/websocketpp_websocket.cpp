@@ -519,21 +519,31 @@ private:
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
             WebSocketCompletionResult* result;
-            auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, op == XAsyncOp::Cleanup);
-
             switch (op)
             {
-            case XAsyncOp::DoWork:
-                return context->pThis->send_msg_do_work(context->message);
+                case XAsyncOp::DoWork:
+                {
+                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    return context->pThis->send_msg_do_work(context->message);
+                }
             
-            case XAsyncOp::GetResult:
-                result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
-                result->platformErrorCode = context->message.error.value();
-                result->errorCode = XAsyncGetStatus(data->async, false);
-                return S_OK;
+                case XAsyncOp::GetResult:
+                {
+                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                    result->platformErrorCode = context->message.error.value();
+                    result->errorCode = XAsyncGetStatus(data->async, false);
+                    return S_OK;
+                }
 
-            default: return S_OK;
+                case XAsyncOp::Cleanup:
+                {
+                    shared_ptr_cache::remove<send_msg_context>(data->context);
+                    return S_OK;
+                }
             }
+
+            return S_OK;
         });
 
         if (SUCCEEDED(hr))
