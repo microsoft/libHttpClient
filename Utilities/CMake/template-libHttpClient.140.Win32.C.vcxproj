@@ -67,7 +67,6 @@
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
-      <PreprocessorDefinitions>HC_WEBSOCKETPP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

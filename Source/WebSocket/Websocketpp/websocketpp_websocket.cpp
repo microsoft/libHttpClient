@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#if HC_WEBSOCKETPP
+#if !HC_NOWEBSOCKETS && !HC_WINHTTP_WEBSOCKETS
 
 #include "../hcwebsocket.h"
 #include "uri.h"
@@ -742,4 +742,4 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     return wsppSocket->close(closeStatus);
 }
 
-#endif // HC_WEBSOCKETPP
+#endif // !HC_NOWEBSOCKETS && !HC_WINHTTP_WEBSOCKETS
