@@ -466,9 +466,14 @@ try
                 break;
 
             case XAsyncOp::Cleanup:
+            {
                 auto context = static_cast<retry_context*>(data->context);
                 HCHttpCallCloseHandle(context->call); // Call is done so remove internal keep alive ref
                 shared_ptr_cache::remove<retry_context>(data->context);
+                break;
+            }
+                
+            default:
                 break;
         }
 

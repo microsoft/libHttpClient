@@ -17,6 +17,9 @@ http_singleton::http_singleton(PerformInfo const& performInfo, PerformEnv&& perf
     m_perform{ performInfo },
     m_performEnv{ std::move(performEnv) }
 {
+    m_callRoutedHandlersContext = 0;
+    m_lastId = 0;
+
 #if !HC_NOWEBSOCKETS
     m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;

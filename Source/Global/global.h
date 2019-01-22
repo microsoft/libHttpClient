@@ -48,14 +48,14 @@ typedef struct http_singleton
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
 
     std::recursive_mutex m_callRoutedHandlersLock;
-    std::atomic<int32_t> m_callRoutedHandlersContext = 0;
+    std::atomic<int32_t> m_callRoutedHandlersContext;
     http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 
     // HTTP state
     PerformInfo const m_perform;
     PerformEnv const m_performEnv;
 
-    std::atomic<std::uint64_t> m_lastId = 0;
+    std::atomic<std::uint64_t> m_lastId;
     bool m_retryAllowed = true;
     uint32_t m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
     uint32_t m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
