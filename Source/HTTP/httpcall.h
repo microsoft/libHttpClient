@@ -13,6 +13,10 @@ using http_header_map = http_internal_map<http_internal_string, http_internal_st
 
 struct HC_CALL
 {
+    HC_CALL()
+    {
+        refCount = 1;
+    }
     ~HC_CALL();
 
     http_internal_string method;
@@ -32,7 +36,7 @@ struct HC_CALL
     uint64_t id = 0;
     bool traceCall = true;
     void* context = nullptr;
-    std::atomic<int> refCount = 1;
+    std::atomic<int> refCount;
 
     chrono_clock_t::time_point firstRequestStartTime;
     std::chrono::milliseconds delayBeforeRetry = std::chrono::milliseconds(0);
