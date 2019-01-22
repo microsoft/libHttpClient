@@ -69,6 +69,9 @@ public:
         m_hcWebsocketHandle{ hcHandle },
         m_uri(hcHandle->uri)
     {
+        
+        m_state = CREATED;
+        m_numSends = 0;
     }
 
     ~wspp_websocket_impl()
@@ -541,6 +544,9 @@ private:
                     shared_ptr_cache::remove<send_msg_context>(data->context);
                     return S_OK;
                 }
+                    
+                default:
+                    break;
             }
 
             return S_OK;
@@ -666,7 +672,7 @@ private:
 
     // Used to safe guard the wspp client.
     std::recursive_mutex m_wsppClientLock;
-    std::atomic<State> m_state = CREATED;
+    std::atomic<State> m_state;
     std::unique_ptr<websocketpp_client_base> m_client;
 
     // Guards access to m_outgoing_msg_queue
@@ -676,7 +682,7 @@ private:
     http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue;
 
     // Number of sends in progress and queued up.
-    std::atomic<int> m_numSends = 0;
+    std::atomic<int> m_numSends;
 
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
