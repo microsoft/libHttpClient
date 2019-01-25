@@ -122,8 +122,9 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpclient::Uri& proxyUri)
 {
-    proxy_type proxyType = proxy_type::no_proxy;
+    proxy_type proxyType = proxy_type::default_proxy;
 
+#if !HC_WINHTTP_WEBSOCKETS
     WINHTTP_CURRENT_USER_IE_PROXY_CONFIG config = { 0 };
     if (!WinHttpGetIEProxyConfigForCurrentUser(&config))
     {
@@ -179,6 +180,7 @@ proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpcli
     {
         proxyType = proxy_type::no_proxy;
     }
+#endif
 
     return proxyType;
 }
