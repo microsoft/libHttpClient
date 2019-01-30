@@ -28,7 +28,7 @@ typedef struct HC_WEBSOCKET
     uint64_t id = 0;
     std::atomic<int> refCount;
     bool connectCalled = false;
-    http_internal_map<http_internal_string, http_internal_string> connectHeaders;
+    http_header_map connectHeaders;
     http_internal_string proxyUri;
     http_internal_string uri;
     http_internal_string subProtocol;

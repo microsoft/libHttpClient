@@ -5,6 +5,7 @@
 #include "../httpcall.h"
 #include "uri.h"
 #include "winhttp_http_task.h"
+#include "hcwebsocket.h"
 
 #define CRLF L"\r\n"
 
@@ -644,6 +645,33 @@ void winhttp_http_task::set_autodiscover_proxy(
     }
 }
 
+http_internal_wstring flatten_http_headers(_In_ const http_header_map& headers)
+{
+    http_internal_wstring flattened_headers;
+
+    bool foundUserAgent = false;
+    for (const auto& header : headers)
+    {
+        auto wHeaderName = utf16_from_utf8(header.first);
+        if (wHeaderName == L"User-Agent")
+        {
+            foundUserAgent = true;
+        }
+
+        flattened_headers.append(wHeaderName);
+        flattened_headers.push_back(L':');
+        flattened_headers.append(utf16_from_utf8(header.second));
+        flattened_headers.append(CRLF);
+    }
+
+    if (!foundUserAgent)
+    {
+        flattened_headers.append(L"User-Agent:libHttpClient/1.0.0.0\r\n");
+    }
+
+    return flattened_headers;
+}
+
 HRESULT winhttp_http_task::connect(
     _In_ const xbox::httpclient::Uri& cUri
     )
@@ -695,41 +723,6 @@ HRESULT winhttp_http_task::connect(
     }
 
     return S_OK;
-}
-
-http_internal_wstring flatten_http_headers(_In_ HCCallHandle call)
-{
-    http_internal_wstring flattened_headers;
-
-    bool foundUserAgent = false;
-    uint32_t numHeaders = 0;
-    HCHttpCallRequestGetNumHeaders(call, &numHeaders);
-    for (uint32_t i = 0; i < numHeaders; i++)
-    {
-        const char* iHeaderName;
-        const char* iHeaderValue;
-        HCHttpCallRequestGetHeaderAtIndex(call, i, &iHeaderName, &iHeaderValue);
-        if (iHeaderName != nullptr && iHeaderValue != nullptr)
-        {
-            auto wHeaderName = utf16_from_utf8(iHeaderName);
-            if (wHeaderName == L"User-Agent")
-            {
-                foundUserAgent = true;
-            }
-
-            flattened_headers.append(wHeaderName);
-            flattened_headers.push_back(L':');
-            flattened_headers.append(utf16_from_utf8(iHeaderValue));
-            flattened_headers.append(CRLF);
-        }
-    }
-
-    if (!foundUserAgent)
-    {
-        flattened_headers.append(L"User-Agent:libHttpClient/1.0.0.0\r\n");
-    }
-
-    return flattened_headers;
 }
 
 HRESULT winhttp_http_task::send(
@@ -790,7 +783,7 @@ HRESULT winhttp_http_task::send(
 
     if (numHeaders > 0)
     {
-        http_internal_wstring flattenedHeaders = flatten_http_headers(m_call);
+        http_internal_wstring flattenedHeaders = flatten_http_headers(m_call->requestHeaders);
         if (!WinHttpAddRequestHeaders(
                 m_hRequest,
                 flattenedHeaders.c_str(),
@@ -817,6 +810,21 @@ HRESULT winhttp_http_task::send(
 #if HC_WINHTTP_WEBSOCKETS
     if (m_isWebSocket)
     {
+        if (!m_websocketHandle->connectHeaders.empty())
+        {
+            http_internal_wstring flattenedHeaders = flatten_http_headers(m_websocketHandle->connectHeaders);
+            if (!WinHttpAddRequestHeaders(
+                m_hRequest,
+                flattenedHeaders.c_str(),
+                static_cast<DWORD>(flattenedHeaders.length()),
+                WINHTTP_ADDREQ_FLAG_ADD))
+            {
+                DWORD dwError = GetLastError();
+                HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+                return HRESULT_FROM_WIN32(dwError);
+            }
+        }
+
         // Request protocol upgrade from http to websocket.
         #pragma prefast(suppress:6387, "WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET does not take any arguments.")
 
