@@ -11,24 +11,13 @@ struct http_header_compare
 
 using http_header_map = http_internal_map<http_internal_string, http_internal_string, http_header_compare>;
 
-typedef struct HC_CALL
+struct HC_CALL
 {
-    HC_CALL() :
-        statusCode(0),
-        networkErrorCode(S_OK),
-        platformNetworkErrorCode(0),
-        id(0),
-        traceCall(true),
-        refCount(1),
-        retryAllowed(false),
-        retryAfterCacheId(0),
-        timeoutInSeconds(0),
-        timeoutWindowInSeconds(0),
-        retryDelayInSeconds(0),
-        performCalled(false)
+    HC_CALL()
     {
-        delayBeforeRetry = std::chrono::milliseconds(0);
+        refCount = 1;
     }
+    ~HC_CALL();
 
     http_internal_string method;
     http_internal_string url;
@@ -39,31 +28,34 @@ typedef struct HC_CALL
     http_internal_string responseString;
     http_internal_vector<uint8_t> responseBodyBytes;
     http_header_map responseHeaders;
-    uint32_t statusCode;
-    HRESULT networkErrorCode;
-    uint32_t platformNetworkErrorCode;
+    uint32_t statusCode = 0;
+    HRESULT networkErrorCode = S_OK;
+    uint32_t platformNetworkErrorCode = 0;
     std::shared_ptr<xbox::httpclient::hc_task> task;
 
-    uint64_t id;
-    bool traceCall;
-    void* context;
+    uint64_t id = 0;
+    bool traceCall = true;
+    void* context = nullptr;
     std::atomic<int> refCount;
 
     chrono_clock_t::time_point firstRequestStartTime;
-    std::chrono::milliseconds delayBeforeRetry;
-    uint32_t retryIterationNumber;
-    bool retryAllowed;
-    uint32_t retryAfterCacheId;
-    uint32_t timeoutInSeconds;
-    uint32_t timeoutWindowInSeconds;
-    uint32_t retryDelayInSeconds;
-    bool performCalled;
-} HC_CALL;
+    std::chrono::milliseconds delayBeforeRetry = std::chrono::milliseconds(0);
+    uint32_t retryIterationNumber = 0;
+    bool retryAllowed = false;
+    uint32_t retryAfterCacheId = 0;
+    uint32_t timeoutInSeconds = 0;
+    uint32_t timeoutWindowInSeconds = 0;
+    uint32_t retryDelayInSeconds = 0;
+    bool performCalled = false;
+};
 
 struct PerformInfo
 {
-    HCCallPerformFunction handler;
-    void* context; // non owning
+    PerformInfo(_In_ HCCallPerformFunction h) 
+        : handler(h) 
+    { }
+    HCCallPerformFunction handler = nullptr;
+    void* context = nullptr; // non owning
 };
 
 struct PerformEnvDeleter

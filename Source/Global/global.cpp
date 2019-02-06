@@ -9,30 +9,18 @@
 
 using namespace xbox::httpclient;
 
-static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
-static const uint32_t DEFAULT_HTTP_TIMEOUT_IN_SECONDS = 30;
-static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
-
 static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 http_singleton::http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv) :
-    m_callRoutedHandlersContext{ 0 },
     m_perform{ performInfo },
-    m_performEnv{ std::move(performEnv) },
-    m_lastId{ 0 },
-    m_retryAllowed{ true },
-    m_timeoutInSeconds{ DEFAULT_HTTP_TIMEOUT_IN_SECONDS },
-    m_timeoutWindowInSeconds{ DEFAULT_TIMEOUT_WINDOW_IN_SECONDS },
-    m_retryDelayInSeconds{ DEFAULT_RETRY_DELAY_IN_SECONDS },
-    m_lastMatchingMock{ nullptr },
-    m_mocksEnabled{ false }
+    m_performEnv{ std::move(performEnv) }
 {
-#if !HC_NOWEBSOCKETS
-    m_websocketMessageFunc = nullptr;
-    m_websocketCloseEventFunc = nullptr;
+    m_callRoutedHandlersContext = 0;
+    m_lastId = 0;
 
+#if !HC_NOWEBSOCKETS
     m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
     m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
@@ -120,7 +108,7 @@ void http_singleton::set_retry_state(
     _In_ uint32_t retryAfterCacheId,
     _In_ const http_retry_after_api_state& state)
 {
-    std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
+    std::lock_guard<std::recursive_mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
     http_retry_after_api_state oldstate = get_retry_state(retryAfterCacheId);
     if (oldstate.statusCode < 400)
     {
@@ -145,13 +133,13 @@ http_retry_after_api_state http_singleton::get_retry_state(_In_ uint32_t retryAf
 
 void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 {
-    std::lock_guard<std::mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
+    std::lock_guard<std::recursive_mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
     m_retryAfterCache.erase(retryAfterCacheId);
 }
 
 PerformInfo& GetUserPerformHandler() noexcept
 {
-    static PerformInfo handler = { &Internal_HCHttpCallPerformAsync, nullptr };
+    static PerformInfo handler(&Internal_HCHttpCallPerformAsync);
     return handler;
 }
 

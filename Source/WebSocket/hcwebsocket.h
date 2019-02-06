@@ -13,17 +13,22 @@ struct hc_websocket_impl
 
 typedef struct HC_WEBSOCKET
 {
-    HC_WEBSOCKET() :
-        id(0),
-        refCount(1),
-        connectCalled(false)
+    HC_WEBSOCKET()
     {
+        refCount = 1;
+    }
+    
+    ~HC_WEBSOCKET()
+    {
+#if !HC_NOWEBSOCKETS
+        HC_TRACE_VERBOSE(WEBSOCKET, "HCWebsocketHandle dtor");
+#endif
     }
 
-    uint64_t id;
+    uint64_t id = 0;
     std::atomic<int> refCount;
-    bool connectCalled;
-    http_internal_map<http_internal_string, http_internal_string> connectHeaders;
+    bool connectCalled = false;
+    http_header_map connectHeaders;
     http_internal_string proxyUri;
     http_internal_string uri;
     http_internal_string subProtocol;
@@ -34,7 +39,8 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HCPerformEnv env
     );
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(

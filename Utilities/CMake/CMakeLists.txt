@@ -136,6 +136,7 @@ set(WinRT_WebSocket_Source_Files
 set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
     ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
+    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
     )
 
 set(Android_WebSocket_Source_Files
@@ -338,7 +339,7 @@ endif()
 if( BUILDWIN32 )
     source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
-    source_group("C++ Source\\WebSocket\\Websocketpp" FILES ${Win32_WebSocket_Source_Files})
+    source_group("C++ Source\\WebSocket\\Win" FILES ${Win32_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
 

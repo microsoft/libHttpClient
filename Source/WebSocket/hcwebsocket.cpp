@@ -111,7 +111,7 @@ try
         try
         {
             websocket->connectCalled = true;
-            connectFunc(uri, subProtocol, websocket, asyncBlock);
+            connectFunc(uri, subProtocol, websocket, asyncBlock, httpSingleton->m_performEnv.get());
         }
         catch (...)
         {

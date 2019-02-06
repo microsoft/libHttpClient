@@ -439,18 +439,21 @@ extern "C"
 {
 
 // Error codes from https://www.iana.org/assignments/websocket/websocket.xml#close-code-number
+// and from https://docs.microsoft.com/en-us/windows/desktop/api/winhttp/ne-winhttp-_winhttp_web_socket_close_status
 enum class HCWebSocketCloseStatus : uint32_t
 {
     Normal = 1000,
     GoingAway = 1001,
     ProtocolError = 1002,
     Unsupported = 1003,
+    EmptyStatus = 1005,
     AbnormalClose = 1006,
     InconsistentDatatype = 1007,
     PolicyViolation = 1008,
     TooLarge = 1009,
     NegotiateError = 1010,
     ServerTerminate = 1011,
+    HandshakeError = 1015,
     UnknownError = 4000
 };
 

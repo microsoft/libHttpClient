@@ -13,6 +13,7 @@ HCSettingsSetTraceLevel(
 try
 {
     HC_TRACE_SET_VERBOSITY(HTTPCLIENT, traceLevel);
+    HC_TRACE_SET_VERBOSITY(WEBSOCKET, traceLevel);
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCSettingsSetTraceLevel: %d", traceLevel);
     return S_OK;
 }

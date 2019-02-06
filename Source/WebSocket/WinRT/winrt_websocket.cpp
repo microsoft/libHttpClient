@@ -60,7 +60,7 @@ public:
 
     IAsyncAction^ m_connectAsyncOp;
 
-    std::mutex m_outgoingMessageQueueLock;
+    std::recursive_mutex m_outgoingMessageQueueLock;
     std::queue<std::shared_ptr<websocket_outgoing_message>> m_outgoingMessageQueue;
     HCWebsocketHandle m_websocketHandle;
     std::atomic<bool> m_outgoingMessageSendInProgress;
@@ -261,9 +261,10 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* asyncBlock
-    )
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HCPerformEnv env)
 {
+    UNREFERENCED_PARAMETER(env);
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
     websocketTask->m_websocketHandle = HCWebSocketDuplicateHandle(websocket);
     websocket->uri = uri;
@@ -324,7 +325,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     }
 
     {
-        std::lock_guard<std::mutex> lock(websocketTask->m_outgoingMessageQueueLock);
+        std::lock_guard<std::recursive_mutex> lock(websocketTask->m_outgoingMessageQueueLock);
         HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %lld", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
         websocketTask->m_outgoingMessageQueue.push(msg);
     }
@@ -339,7 +340,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     return S_OK;
 }
 
-struct SendMessageCallbackContent
+struct SendMessageCallbackContext
 {
     std::shared_ptr<websocket_outgoing_message> nextMessage;
     std::shared_ptr<winrt_websocket_impl> websocketTask;
@@ -351,7 +352,7 @@ HRESULT WebsockSendMessageDoWork(
     )
 try
 {
-    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContent>(executionRoutineContext, false);
+    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContext>(executionRoutineContext, false);
     if (sendMsgContext == nullptr)
     {
         HC_TRACE_ERROR(WEBSOCKET, "Websocket: Send message execute null");
@@ -421,7 +422,7 @@ HRESULT WebsockSendMessageGetResult(_In_ const XAsyncProviderData* data)
         return E_INVALIDARG;
     }
 
-    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, false);
+    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContext>(data->context, false);
     if (sendMsgContext == nullptr)
     {
         HC_TRACE_ERROR(WEBSOCKET, "Websocket GetResult null");
@@ -454,7 +455,7 @@ void MessageWebSocketSendMessage(
     std::shared_ptr<websocket_outgoing_message> msg;
 
     {
-        std::lock_guard<std::mutex> lock(websocketTask->m_outgoingMessageQueueLock);
+        std::lock_guard<std::recursive_mutex> lock(websocketTask->m_outgoingMessageQueueLock);
         if (websocketTask->m_outgoingMessageQueue.size() > 0)
         {
             msg = websocketTask->m_outgoingMessageQueue.front();
@@ -468,10 +469,10 @@ void MessageWebSocketSendMessage(
         return;
     }
 
-    std::shared_ptr<SendMessageCallbackContent> callbackContext = std::make_shared<SendMessageCallbackContent>();
+    std::shared_ptr<SendMessageCallbackContext> callbackContext = std::make_shared<SendMessageCallbackContext>();
     callbackContext->nextMessage = msg;
     callbackContext->websocketTask = websocketTask;
-    void* rawContext = shared_ptr_cache::store<SendMessageCallbackContent>(callbackContext);
+    void* rawContext = shared_ptr_cache::store<SendMessageCallbackContext>(callbackContext);
     HCWebSocketDuplicateHandle(websocketTask->m_websocketHandle);
 
     HRESULT hr = XAsyncBegin(msg->m_asyncBlock, rawContext, HCWebSocketSendMessageAsync, __FUNCTION__,
@@ -481,9 +482,15 @@ void MessageWebSocketSendMessage(
         {
             case XAsyncOp::DoWork: return WebsockSendMessageDoWork(data->async, data->context);
             case XAsyncOp::GetResult: return WebsockSendMessageGetResult(data);
+
             case XAsyncOp::Cleanup: 
             {
-                HCWebSocketCloseHandle(shared_ptr_cache::fetch<SendMessageCallbackContent>(data->context, true)->websocketTask->m_websocketHandle);
+                auto context = shared_ptr_cache::fetch<SendMessageCallbackContext>(data->context, false);
+                if (context != nullptr)
+                {
+                    HCWebSocketCloseHandle(context->websocketTask->m_websocketHandle);
+                    shared_ptr_cache::remove<SendMessageCallbackContext>(data->context);
+                }
                 break;
             }
         }

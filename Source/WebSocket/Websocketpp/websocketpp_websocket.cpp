@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#if !HC_NOWEBSOCKETS
+#if !HC_NOWEBSOCKETS && !HC_WINHTTP_WEBSOCKETS
 
 #include "../hcwebsocket.h"
 #include "uri.h"
@@ -65,14 +65,13 @@ private:
     };
 
 public:
-    wspp_websocket_impl(HCWebsocketHandle hcHandle)
-        : m_backgroundQueue(nullptr),
-        m_state(CREATED),
-        m_numSends(0),
-        m_opensslFailed(false),
+    wspp_websocket_impl(HCWebsocketHandle hcHandle) :
         m_hcWebsocketHandle{ hcHandle },
         m_uri(hcHandle->uri)
     {
+        
+        m_state = CREATED;
+        m_numSends = 0;
     }
 
     ~wspp_websocket_impl()
@@ -219,7 +218,7 @@ public:
 
         {
             // Only actually have to take the lock if touching the queue.
-            std::lock_guard<std::mutex> lock(m_outgoingMessageQueueLock);
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
             m_outgoingMessageQueue.push(message);
         }
 
@@ -240,7 +239,7 @@ public:
     {
         websocketpp::lib::error_code ec;
         {
-            std::lock_guard<std::mutex> lock(m_wsppClientLock);
+            std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
             if (m_state == CONNECTED)
             {
                 m_state = CLOSING;
@@ -296,6 +295,9 @@ private:
         {
             HCWebSocketMessageFunction messageFunc = nullptr;
             HCWebSocketGetFunctions(&messageFunc, nullptr);
+
+            // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
+            // TODO: verify auto disconnect when closing client's websocket handle
 
             if (messageFunc != nullptr)
             {
@@ -473,7 +475,7 @@ private:
 
         try
         {
-            std::lock_guard<std::mutex> lock(m_wsppClientLock);
+            std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
             if (m_client->is_tls_client())
             {
                 auto& client = m_client->client<websocketpp::config::asio_tls_client>();
@@ -510,7 +512,7 @@ private:
         auto sendContext = http_allocate_shared<send_msg_context>();
         sendContext->pThis = shared_from_this();
         {
-            std::lock_guard<std::mutex> lock(m_outgoingMessageQueueLock);
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
             ASSERT(!m_outgoingMessageQueue.empty());
             sendContext->message = std::move(m_outgoingMessageQueue.front());
             m_outgoingMessageQueue.pop();
@@ -520,21 +522,34 @@ private:
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
             WebSocketCompletionResult* result;
-            auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, op == XAsyncOp::Cleanup);
-
             switch (op)
             {
-            case XAsyncOp::DoWork:
-                return context->pThis->send_msg_do_work(context->message);
+                case XAsyncOp::DoWork:
+                {
+                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    return context->pThis->send_msg_do_work(context->message);
+                }
             
-            case XAsyncOp::GetResult:
-                result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
-                result->platformErrorCode = context->message.error.value();
-                result->errorCode = XAsyncGetStatus(data->async, false);
-                return S_OK;
+                case XAsyncOp::GetResult:
+                {
+                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                    result->platformErrorCode = context->message.error.value();
+                    result->errorCode = XAsyncGetStatus(data->async, false);
+                    return S_OK;
+                }
 
-            default: return S_OK;
+                case XAsyncOp::Cleanup:
+                {
+                    shared_ptr_cache::remove<send_msg_context>(data->context);
+                    return S_OK;
+                }
+                    
+                default:
+                    break;
             }
+
+            return S_OK;
         });
 
         if (SUCCEEDED(hr))
@@ -648,7 +663,7 @@ private:
 
     // Asio client has a long running "run" task that we need to provide a thread for
     std::thread m_websocketThread;
-    XTaskQueueHandle m_backgroundQueue;
+    XTaskQueueHandle m_backgroundQueue = nullptr;
 
     websocketpp::connection_hdl m_con;
 
@@ -656,12 +671,12 @@ private:
     websocketpp::close::status::value m_closeCode;
 
     // Used to safe guard the wspp client.
-    std::mutex m_wsppClientLock;
+    std::recursive_mutex m_wsppClientLock;
     std::atomic<State> m_state;
     std::unique_ptr<websocketpp_client_base> m_client;
 
     // Guards access to m_outgoing_msg_queue
-    std::mutex m_outgoingMessageQueueLock;
+    std::recursive_mutex m_outgoingMessageQueueLock;
 
     // Queue to order the sends
     http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue;
@@ -672,9 +687,9 @@ private:
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-    bool m_opensslFailed;
+    bool m_opensslFailed = false;
 
-    HCWebsocketHandle m_hcWebsocketHandle;
+    HCWebsocketHandle m_hcWebsocketHandle = nullptr;
 
     Uri m_uri;
 };
@@ -683,9 +698,14 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* async
+    _Inout_ XAsyncBlock* async,
+    _In_ HCPerformEnv env
     )
 {
+    assert(env != nullptr);
+
+    // TODO: Handle double connecting on same HCWebsocketHandle, and ensure disconnect/reconnect case works
+
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
     auto wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket);
@@ -728,5 +748,4 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     return wsppSocket->close(closeStatus);
 }
 
-#endif
-
+#endif // !HC_NOWEBSOCKETS && !HC_WINHTTP_WEBSOCKETS
