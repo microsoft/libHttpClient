@@ -332,7 +332,7 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
 
     // Duplicate the async block we've just configured
     internal->state->asyncBlock = *asyncBlock;
-    internal->state->asyncBlock.queue = queue;
+    internal->state->asyncBlock.queue = internal->state->queue;
 
     return S_OK;
 }
@@ -553,10 +553,7 @@ STDAPI XAsyncGetResultSize(
         state = internal.GetState();
     }
 
-    if (SUCCEEDED(result))
-    {
-        *bufferSize = state == nullptr ? 0 : state->providerData.bufferSize;
-    }
+    *bufferSize = state == nullptr ? 0 : state->providerData.bufferSize;
 
     return result;
 }
