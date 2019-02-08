@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1000"
+   LastUpgradeVersion = "1010"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "58722D0D209AD61900B071F7"
-               BuildableName = "libHttpClient_iOS.a"
-               BlueprintName = "libHttpClient_iOS"
+               BlueprintIdentifier = "7DB100A62119206B00AE22F5"
+               BuildableName = "liblibHttpClient.a"
+               BlueprintName = "libHttpClient_mac"
                ReferencedContainer = "container:libHttpClient.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,9 +45,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "58722D0D209AD61900B071F7"
-            BuildableName = "libHttpClient_iOS.a"
-            BlueprintName = "libHttpClient_iOS"
+            BlueprintIdentifier = "7DB100A62119206B00AE22F5"
+            BuildableName = "liblibHttpClient.a"
+            BlueprintName = "libHttpClient_mac"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -63,9 +63,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "58722D0D209AD61900B071F7"
-            BuildableName = "libHttpClient_iOS.a"
-            BlueprintName = "libHttpClient_iOS"
+            BlueprintIdentifier = "7DB100A62119206B00AE22F5"
+            BuildableName = "liblibHttpClient.a"
+            BlueprintName = "libHttpClient_mac"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
