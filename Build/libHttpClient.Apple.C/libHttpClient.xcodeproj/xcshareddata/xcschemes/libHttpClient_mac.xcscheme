@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "7DB100A62119206B00AE22F5"
-               BuildableName = "liblibHttpClient.a"
+               BuildableName = "libHttpClient.a"
                BlueprintName = "libHttpClient_mac"
                ReferencedContainer = "container:libHttpClient.xcodeproj">
             </BuildableReference>
@@ -46,7 +46,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7DB100A62119206B00AE22F5"
-            BuildableName = "liblibHttpClient.a"
+            BuildableName = "libHttpClient.a"
             BlueprintName = "libHttpClient_mac"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
@@ -64,7 +64,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7DB100A62119206B00AE22F5"
-            BuildableName = "liblibHttpClient.a"
+            BuildableName = "libHttpClient.a"
             BlueprintName = "libHttpClient_mac"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>

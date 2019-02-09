@@ -102,7 +102,7 @@
 		58A7EA27209AE8BB00CC6774 /* httpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
 		58A7EA2A209AE8BB00CC6774 /* trace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = trace.h; sourceTree = "<group>"; };
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
-		7DB100A72119206B00AE22F5 /* liblibHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblibHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		7DB100DA2119383400AE22F5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
@@ -173,7 +173,7 @@
 			isa = PBXGroup;
 			children = (
 				58722D0E209AD61900B071F7 /* libHttpClient.a */,
-				7DB100A72119206B00AE22F5 /* liblibHttpClient.a */,
+				7DB100A72119206B00AE22F5 /* libHttpClient.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -421,7 +421,7 @@
 			);
 			name = libHttpClient_mac;
 			productName = libHttpClient_Macos;
-			productReference = 7DB100A72119206B00AE22F5 /* liblibHttpClient.a */;
+			productReference = 7DB100A72119206B00AE22F5 /* libHttpClient.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -607,7 +607,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fembed-bitcode-marker";
-				PRODUCT_NAME = libHttpClient;
+				PRODUCT_NAME = HttpClient;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -662,7 +662,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = "-fembed-bitcode";
-				PRODUCT_NAME = libHttpClient;
+				PRODUCT_NAME = HttpClient;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -671,7 +671,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				EXECUTABLE_PREFIX = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
@@ -693,7 +692,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				EXECUTABLE_PREFIX = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
@@ -716,7 +714,6 @@
 			buildSettings = {
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
-				EXECUTABLE_PREFIX = lib;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
@@ -738,7 +735,6 @@
 			buildSettings = {
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
-				EXECUTABLE_PREFIX = lib;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
