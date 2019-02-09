@@ -119,20 +119,6 @@ STDAPI XTaskQueueCreate(
     ) noexcept;
 
 /// <summary>
-/// Returns the task queue port handle for the given
-/// port. Task queue port handles are owned by the
-/// task queue and do not have to be closed. They are
-/// used when creating composite task queues.
-/// </summary>
-/// <param name='queue'>The task queue to get the port from.</param>
-/// <param name='port'>The port to get.</param>
-STDAPI XTaskQueueGetPort(
-    _In_ XTaskQueueHandle queue,
-    _In_ XTaskQueuePort port,
-    _Out_ XTaskQueuePortHandle* portHandle
-    ) noexcept;
-
-/// <summary>
 /// Creates a task queue composed of ports of other
 /// task queues. A composite task queue will duplicate
 /// the handles of queues that own the provided ports.
@@ -145,6 +131,20 @@ STDAPI XTaskQueueCreateComposite(
     _Out_ XTaskQueueHandle* queue
     ) noexcept;
 
+/// <summary>
+/// Returns the task queue port handle for the given
+/// port. Task queue port handles are owned by the
+/// task queue and do not have to be closed. They are
+/// used when creating composite task queues.
+/// </summary>
+/// <param name='queue'>The task queue to get the port from.</param>
+/// <param name='port'>The port to get.</param>
+STDAPI XTaskQueueGetPort(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port,
+    _Out_ XTaskQueuePortHandle* portHandle
+    ) noexcept;
+    
 /// <summary>
 /// Duplicates the XTaskQueueHandle object.  Use XTaskQueueCloseHandle to close it.
 /// </summary>
