@@ -27,6 +27,27 @@
 		58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
 		58BD256622123EF9008942EB /* HttpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58BD256422123EF9008942EB /* HttpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD256A2212415A008942EB /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
+		58BD256B2212415A008942EB /* uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E98F209ADEB100CC6774 /* uri.cpp */; };
+		58BD256C2212415A008942EB /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E987209ADEB100CC6774 /* utils.cpp */; };
+		58BD256D22124161008942EB /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
+		58BD256E22124161008942EB /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
+		58BD256F22124161008942EB /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
+		58BD257022124165008942EB /* httpcall_request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9A8209ADEB100CC6774 /* httpcall_request.cpp */; };
+		58BD257122124165008942EB /* httpcall_response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E997209ADEB100CC6774 /* httpcall_response.cpp */; };
+		58BD257222124165008942EB /* httpcall.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9AC209ADEB100CC6774 /* httpcall.cpp */; };
+		58BD257322124168008942EB /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
+		58BD25742212416D008942EB /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
+		58BD25752212416D008942EB /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
+		58BD257622124173008942EB /* lhc_mock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E984209ADEB100CC6774 /* lhc_mock.cpp */; };
+		58BD257722124173008942EB /* mock_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E982209ADEB100CC6774 /* mock_publics.cpp */; };
+		58BD25782212417D008942EB /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
+		58BD257922124182008942EB /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
+		58BD257A22124185008942EB /* AsyncLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B3209ADEB100CC6774 /* AsyncLib.cpp */; };
+		58BD257B22124188008942EB /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
+		58BD257C2212418D008942EB /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
+		58BD257D22124190008942EB /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
+		58BD257E22124197008942EB /* http_ios.mm in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E999209ADEB100CC6774 /* http_ios.mm */; };
 		7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		7DB100BF2119276B00AE22F5 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		7DB100C02119276B00AE22F5 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
@@ -103,7 +124,7 @@
 		58A7EA27209AE8BB00CC6774 /* httpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
 		58A7EA2A209AE8BB00CC6774 /* trace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = trace.h; sourceTree = "<group>"; };
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
-		58BD256222123EF9008942EB /* libHttpClientFramework_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = libHttpClientFramework_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD256422123EF9008942EB /* HttpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HttpClient.h; sourceTree = "<group>"; };
 		58BD256522123EF9008942EB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -186,7 +207,7 @@
 			children = (
 				58722D0E209AD61900B071F7 /* libHttpClient.a */,
 				7DB100A72119206B00AE22F5 /* libHttpClient.a */,
-				58BD256222123EF9008942EB /* libHttpClientFramework_iOS.framework */,
+				58BD256222123EF9008942EB /* HttpClient.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -451,7 +472,7 @@
 			);
 			name = libHttpClientFramework_iOS;
 			productName = HttpClient;
-			productReference = 58BD256222123EF9008942EB /* libHttpClientFramework_iOS.framework */;
+			productReference = 58BD256222123EF9008942EB /* HttpClient.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		7DB100A62119206B00AE22F5 /* libHttpClient_mac */ = {
@@ -588,6 +609,27 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58BD257122124165008942EB /* httpcall_response.cpp in Sources */,
+				58BD257322124168008942EB /* ios_logger.cpp in Sources */,
+				58BD257D22124190008942EB /* hcwebsocket.cpp in Sources */,
+				58BD256C2212415A008942EB /* utils.cpp in Sources */,
+				58BD256D22124161008942EB /* global_publics.cpp in Sources */,
+				58BD257C2212418D008942EB /* websocketpp_websocket.cpp in Sources */,
+				58BD257E22124197008942EB /* http_ios.mm in Sources */,
+				58BD256E22124161008942EB /* global.cpp in Sources */,
+				58BD257A22124185008942EB /* AsyncLib.cpp in Sources */,
+				58BD257B22124188008942EB /* WaitTimer_stl.cpp in Sources */,
+				58BD25782212417D008942EB /* TaskQueue.cpp in Sources */,
+				58BD25752212416D008942EB /* trace.cpp in Sources */,
+				58BD257922124182008942EB /* ThreadPool_stl.cpp in Sources */,
+				58BD256F22124161008942EB /* mem.cpp in Sources */,
+				58BD257222124165008942EB /* httpcall.cpp in Sources */,
+				58BD257022124165008942EB /* httpcall_request.cpp in Sources */,
+				58BD256B2212415A008942EB /* uri.cpp in Sources */,
+				58BD257622124173008942EB /* lhc_mock.cpp in Sources */,
+				58BD256A2212415A008942EB /* pch.cpp in Sources */,
+				58BD257722124173008942EB /* mock_publics.cpp in Sources */,
+				58BD25742212416D008942EB /* log_publics.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -799,7 +841,6 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -828,7 +869,6 @@
 				);
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
