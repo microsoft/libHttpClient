@@ -27,29 +27,10 @@
 		58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
 		58BD256622123EF9008942EB /* XHttpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58BD256422123EF9008942EB /* XHttpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		58BD256A2212415A008942EB /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
-		58BD256B2212415A008942EB /* uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E98F209ADEB100CC6774 /* uri.cpp */; };
-		58BD256C2212415A008942EB /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E987209ADEB100CC6774 /* utils.cpp */; };
-		58BD256D22124161008942EB /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
-		58BD256E22124161008942EB /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
-		58BD256F22124161008942EB /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
-		58BD257022124165008942EB /* httpcall_request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9A8209ADEB100CC6774 /* httpcall_request.cpp */; };
-		58BD257122124165008942EB /* httpcall_response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E997209ADEB100CC6774 /* httpcall_response.cpp */; };
-		58BD257222124165008942EB /* httpcall.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9AC209ADEB100CC6774 /* httpcall.cpp */; };
-		58BD257322124168008942EB /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
-		58BD25742212416D008942EB /* log_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97E209ADEB100CC6774 /* log_publics.cpp */; };
-		58BD25752212416D008942EB /* trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97F209ADEB100CC6774 /* trace.cpp */; };
-		58BD257622124173008942EB /* lhc_mock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E984209ADEB100CC6774 /* lhc_mock.cpp */; };
-		58BD257722124173008942EB /* mock_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E982209ADEB100CC6774 /* mock_publics.cpp */; };
-		58BD25782212417D008942EB /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
-		58BD257922124182008942EB /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
-		58BD257A22124185008942EB /* AsyncLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B3209ADEB100CC6774 /* AsyncLib.cpp */; };
-		58BD257B22124188008942EB /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
-		58BD257C2212418D008942EB /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
-		58BD257D22124190008942EB /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
-		58BD257E22124197008942EB /* http_ios.mm in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E999209ADEB100CC6774 /* http_ios.mm */; };
 		58BD258422125724008942EB /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		58BD258522125724008942EB /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
+		58BD25902213626E008942EB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58BD258F2213626E008942EB /* Foundation.framework */; };
+		58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58722D0E209AD61900B071F7 /* libHttpClient.a */; };
 		7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		7DB100BF2119276B00AE22F5 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		7DB100C02119276B00AE22F5 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
@@ -77,6 +58,16 @@
 		D3DAA85121C0E4090009C7F6 /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
 		D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		58BD259222136482008942EB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58722D06209AD61900B071F7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 58722D0D209AD61900B071F7;
+			remoteInfo = libHttpClient_iOS;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_logger.cpp; sourceTree = "<group>"; };
@@ -129,8 +120,8 @@
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD256422123EF9008942EB /* XHttpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XHttpClient.h; sourceTree = "<group>"; };
 		58BD256522123EF9008942EB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		7DB100DA2119383400AE22F5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
 		9CC0523621374B5D0009B69A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../Binaries/iOS/lib/libcrypto.a; sourceTree = "<group>"; };
@@ -170,8 +161,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */,
 				58BD258422125724008942EB /* libcrypto.a in Frameworks */,
 				58BD258522125724008942EB /* libssl.a in Frameworks */,
+				58BD25902213626E008942EB /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,9 +388,9 @@
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				58BD258F2213626E008942EB /* Foundation.framework */,
 				9CC0523621374B5D0009B69A /* libcrypto.a */,
 				9CC0523721374B5D0009B69A /* libssl.a */,
-				7DB100DA2119383400AE22F5 /* Foundation.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -465,7 +458,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58BD256922123EF9008942EB /* Build configuration list for PBXNativeTarget "libHttpClientFramework_iOS" */;
 			buildPhases = (
-				58BD25832212544E008942EB /* Build openssl */,
 				58BD255D22123EF9008942EB /* Headers */,
 				58BD255E22123EF9008942EB /* Sources */,
 				58BD255F22123EF9008942EB /* Frameworks */,
@@ -474,6 +466,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				58BD259322136482008942EB /* PBXTargetDependency */,
 			);
 			name = libHttpClientFramework_iOS;
 			productName = HttpClient;
@@ -547,26 +540,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		58BD25832212544E008942EB /* Build openssl */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Build openssl";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/../../Binaries/iOS/lib/libcrypto.a",
-				"$(SRCROOT)/../../Binaries/iOS/lib/libssl.a",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set | grep ARCH\nset -x\n\nOPENSSL_SRC=\"$SRCROOT/../../External/openssl\"\nOPENSSL_TMP=\"$OPENSSL_SRC/tmp\"\nLIB_OUTPUT=\"$SRCROOT/../../Binaries/iOS\"\n\nBUILDARCHS=\"$ARCHS\"\n\n# check whether libcrypto.a already exists for this architecture - we'll only build if it does not\nif [ -f  \"$LIB_OUTPUT/lib/libcrypto.a\" ]; then\n\nEXISTING_ARCHS=\"$(lipo -info $LIB_OUTPUT/lib/libcrypto.a)\"\nARCH_MISSING=0\n\nfor BUILDARCH in $BUILDARCHS\ndo\nif [[ $EXISTING_ARCHS != *\"$BUILDARCH\"* ]]; then\nARCH_MISSING=1\nfi\ndone\n\nif [ $ARCH_MISSING == 1 ]; then\necho \"***** Rebuilding previously-built library to support new architectures *****\"\nelse\necho \"***** Using previously-built libary $LIB_OUTPUT/lib/libcrypto.a - skipping build *****\"\nexit 0;\nfi\n\nelse\n\necho \"***** No previously-built libary present at $LIB_OUTPUT/lib/libcrypto.a - performing build *****\"\n\nfi\n\n# make dirs\nmkdir -p \"$OPENSSL_TMP\"\nmkdir -p \"$LIB_OUTPUT/lib\"\nmkdir -p \"$LIB_OUTPUT/include\"\n\n# figure out the right set of build architectures for this run\necho \"***** creating universal binary for architectures: $BUILDARCHS *****\"\n\nif [ \"$SDKROOT\" != \"\" ]; then\nISYSROOT=\"-isysroot $SDKROOT\"\nfi\n\ncd $OPENSSL_SRC\nfor BUILDARCH in $BUILDARCHS\ndo\necho \"***** BUILDING UNIVERSAL ARCH $BUILDARCH ******\"\nmake clean\n\nif [[ \"$BUILDARCH\" = *\"x86_64\"* ]]; then\n./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nelif [[ \"$BUILDARCH\" = *\"i386\"* ]]; then\n./Configure darwin-i386-cc shared no-ssl2 no-ssl3 no-comp no-async --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nelif [[ \"$BUILDARCH\" = *\"arm64\"* ]]; then\n\nexport CROSS_TOP=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer\nexport CROSS_SDK=iPhoneOS.sdk\nexport PATH=\"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH\"\nexport BUILD_TOOLS=\"${DEVELOPER}\"\nexport CC=\"${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}\"\n\n./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nelse\nexport CROSS_TOP=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer\nexport CROSS_SDK=iPhoneOS.sdk\nexport PATH=\"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH\"\nexport BUILD_TOOLS=\"${DEVELOPER}\"\nexport CC=\"${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}\"\n\n./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix=\"$OPENSSL_TMP/\" --openssldir=\"$OPENSSL_TMP/\"\nfi\n\n# installs openssl for this flavor\nmake install\n\necho \"***** renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a *****\"\ncp \"$OPENSSL_TMP\"/lib/libcrypto.a \"$CONFIGURATION_TEMP_DIR\"/$BUILDARCH-libcrypto.a\ncp \"$OPENSSL_TMP\"/lib/libssl.a \"$CONFIGURATION_TEMP_DIR\"/$BUILDARCH-libssl.a\ndone\n\n# combines each flavor's library into one universal library\n\necho \"***** creating universallibraries in $LIB_OUTPUT *****\"\nlipo -create \"$CONFIGURATION_TEMP_DIR/\"*-libcrypto.a -output \"$LIB_OUTPUT/lib/libcrypto.a\"\nlipo -create \"$CONFIGURATION_TEMP_DIR/\"*-libssl.a -output \"$LIB_OUTPUT/lib/libssl.a\"\ncp -r \"$OPENSSL_TMP/include/\"* \"$LIB_OUTPUT/include/\"\n\necho \"***** cleaning artifacts *****\"\nrm -rf \"$OPENSSL_TMP/\"\nrm -rf \"$CONFIGURATION_TEMP_DIR/\"\n\necho \"***** executing ranlib on libraries in $TARGET_BUILD_DIR *****\"\nranlib \"$LIB_OUTPUT/lib/libcrypto.a\"\nranlib \"$LIB_OUTPUT/lib/libssl.a\"\n\n";
-		};
 		9C3B2537212F25AB0080AEC6 /* Build openssl */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -634,27 +607,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				58BD257122124165008942EB /* httpcall_response.cpp in Sources */,
-				58BD257322124168008942EB /* ios_logger.cpp in Sources */,
-				58BD257D22124190008942EB /* hcwebsocket.cpp in Sources */,
-				58BD256C2212415A008942EB /* utils.cpp in Sources */,
-				58BD256D22124161008942EB /* global_publics.cpp in Sources */,
-				58BD257C2212418D008942EB /* websocketpp_websocket.cpp in Sources */,
-				58BD257E22124197008942EB /* http_ios.mm in Sources */,
-				58BD256E22124161008942EB /* global.cpp in Sources */,
-				58BD257A22124185008942EB /* AsyncLib.cpp in Sources */,
-				58BD257B22124188008942EB /* WaitTimer_stl.cpp in Sources */,
-				58BD25782212417D008942EB /* TaskQueue.cpp in Sources */,
-				58BD25752212416D008942EB /* trace.cpp in Sources */,
-				58BD257922124182008942EB /* ThreadPool_stl.cpp in Sources */,
-				58BD256F22124161008942EB /* mem.cpp in Sources */,
-				58BD257222124165008942EB /* httpcall.cpp in Sources */,
-				58BD257022124165008942EB /* httpcall_request.cpp in Sources */,
-				58BD256B2212415A008942EB /* uri.cpp in Sources */,
-				58BD257622124173008942EB /* lhc_mock.cpp in Sources */,
-				58BD256A2212415A008942EB /* pch.cpp in Sources */,
-				58BD257722124173008942EB /* mock_publics.cpp in Sources */,
-				58BD25742212416D008942EB /* log_publics.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -685,6 +637,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		58BD259322136482008942EB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 58722D0D209AD61900B071F7 /* libHttpClient_iOS */;
+			targetProxy = 58BD259222136482008942EB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		58722D15209AD61900B071F7 /* Debug */ = {
