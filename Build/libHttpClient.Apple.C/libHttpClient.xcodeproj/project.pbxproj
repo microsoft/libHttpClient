@@ -26,7 +26,7 @@
 		58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
-		58BD256622123EF9008942EB /* HttpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58BD256422123EF9008942EB /* HttpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD256622123EF9008942EB /* XHttpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58BD256422123EF9008942EB /* XHttpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58BD256A2212415A008942EB /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
 		58BD256B2212415A008942EB /* uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E98F209ADEB100CC6774 /* uri.cpp */; };
 		58BD256C2212415A008942EB /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E987209ADEB100CC6774 /* utils.cpp */; };
@@ -125,7 +125,7 @@
 		58A7EA2A209AE8BB00CC6774 /* trace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = trace.h; sourceTree = "<group>"; };
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		58BD256422123EF9008942EB /* HttpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HttpClient.h; sourceTree = "<group>"; };
+		58BD256422123EF9008942EB /* XHttpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XHttpClient.h; sourceTree = "<group>"; };
 		58BD256522123EF9008942EB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		7DB100DA2119383400AE22F5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -382,8 +382,8 @@
 		58BD256322123EF9008942EB /* iOSFramework */ = {
 			isa = PBXGroup;
 			children = (
-				58BD256422123EF9008942EB /* HttpClient.h */,
 				58BD256522123EF9008942EB /* Info.plist */,
+				58BD256422123EF9008942EB /* XHttpClient.h */,
 			);
 			path = iOSFramework;
 			sourceTree = "<group>";
@@ -425,7 +425,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				58BD256622123EF9008942EB /* HttpClient.h in Headers */,
+				58BD256622123EF9008942EB /* XHttpClient.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -830,6 +830,13 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/websocketpp",
+					"$(SRCROOT)/../../External/asio/asio/include",
+					"$(SRCROOT)/../../Binaries/iOS/include",
+				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOSFramework/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
@@ -859,6 +866,13 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/websocketpp",
+					"$(SRCROOT)/../../External/asio/asio/include",
+					"$(SRCROOT)/../../Binaries/iOS/include",
+				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOSFramework/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
