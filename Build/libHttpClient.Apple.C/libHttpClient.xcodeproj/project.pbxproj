@@ -26,11 +26,18 @@
 		58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
-		58BD256622123EF9008942EB /* XHttpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58BD256422123EF9008942EB /* XHttpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58BD258422125724008942EB /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		58BD258522125724008942EB /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
 		58BD25902213626E008942EB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58BD258F2213626E008942EB /* Foundation.framework */; };
 		58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58722D0E209AD61900B071F7 /* libHttpClient.a */; };
+		58BD25BF2214DEF7008942EB /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA24209AE8BB00CC6774 /* config.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C02214DEF7008942EB /* httpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA27209AE8BB00CC6774 /* httpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C12214DEF7008942EB /* httpProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA23209AE8BB00CC6774 /* httpProvider.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C22214DEF7008942EB /* pal.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA2B209AE8BB00CC6774 /* pal.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C32214DEF7008942EB /* trace.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA2A209AE8BB00CC6774 /* trace.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C42214DFD2008942EB /* XAsync.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85521C0E47F0009C7F6 /* XAsync.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85621C0E47F0009C7F6 /* XAsyncProvider.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85421C0E47F0009C7F6 /* XTaskQueue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		7DB100BF2119276B00AE22F5 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		7DB100C02119276B00AE22F5 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
@@ -118,7 +125,6 @@
 		58A7EA2A209AE8BB00CC6774 /* trace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = trace.h; sourceTree = "<group>"; };
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		58BD256422123EF9008942EB /* XHttpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XHttpClient.h; sourceTree = "<group>"; };
 		58BD256522123EF9008942EB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -380,7 +386,6 @@
 			isa = PBXGroup;
 			children = (
 				58BD256522123EF9008942EB /* Info.plist */,
-				58BD256422123EF9008942EB /* XHttpClient.h */,
 			);
 			path = iOSFramework;
 			sourceTree = "<group>";
@@ -422,7 +427,14 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				58BD256622123EF9008942EB /* XHttpClient.h in Headers */,
+				58BD25BF2214DEF7008942EB /* config.h in Headers */,
+				58BD25C02214DEF7008942EB /* httpClient.h in Headers */,
+				58BD25C12214DEF7008942EB /* httpProvider.h in Headers */,
+				58BD25C22214DEF7008942EB /* pal.h in Headers */,
+				58BD25C32214DEF7008942EB /* trace.h in Headers */,
+				58BD25C42214DFD2008942EB /* XAsync.h in Headers */,
+				58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */,
+				58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
