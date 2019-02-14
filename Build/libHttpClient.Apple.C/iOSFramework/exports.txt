@@ -85,3 +85,39 @@ _HCWebSocketGetFunctions
 _HCTraceSetPlatformCallbacks
 _HCTraceImplMessage
 _HCTraceImplScopeId
+
+#
+# XAsync.h
+#
+_XAsyncGetStatus
+_XAsyncGetResultSize
+_XAsyncCancel
+_XAsyncRun
+
+#
+# XAsyncProvider.h
+#
+_XAsyncBegin
+_XAsyncBeginAlloc
+_XAsyncSchedule
+_XAsyncComplete
+_XAsyncGetResult
+
+#
+# XTaskQueue.h
+#
+_XTaskQueueCreate
+_XTaskQueueCreateComposite
+_XTaskQueueGetPort
+_XTaskQueueDuplicateHandle
+_XTaskQueueDispatch
+_XTaskQueueCloseHandle
+_XTaskQueueTerminate
+_XTaskQueueSubmitCallback
+_XTaskQueueSubmitDelayedCallback
+_XTaskQueueRegisterWaiter
+_XTaskQueueUnregisterWaiter
+_XTaskQueueRegisterMonitor
+_XTaskQueueUnregisterMonitor
+_XTaskQueueGetCurrentProcessTaskQueue
+_XTaskQueueSetCurrentProcessTaskQueue

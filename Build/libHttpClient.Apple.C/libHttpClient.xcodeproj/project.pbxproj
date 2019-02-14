@@ -10,6 +10,7 @@
 		5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
 		5841E99122150E900009B183 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E99022150E8F0009B183 /* libc++.tbd */; };
 		5841E995221515BD0009B183 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E994221515BD0009B183 /* Security.framework */; };
+		5841E99F22151C5B0009B183 /* XAsyncAll.h in Headers */ = {isa = PBXBuildFile; fileRef = 5841E99E22151A890009B183 /* XAsyncAll.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		588C7E7C218275CE001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
@@ -82,6 +83,7 @@
 		5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_logger.cpp; sourceTree = "<group>"; };
 		5841E99022150E8F0009B183 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
 		5841E994221515BD0009B183 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
+		5841E99E22151A890009B183 /* XAsyncAll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XAsyncAll.h; sourceTree = "<group>"; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WaitTimer_stl.cpp; sourceTree = "<group>"; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
@@ -385,6 +387,7 @@
 				58A7EA23209AE8BB00CC6774 /* httpProvider.h */,
 				58A7EA2B209AE8BB00CC6774 /* pal.h */,
 				58A7EA2A209AE8BB00CC6774 /* trace.h */,
+				5841E99E22151A890009B183 /* XAsyncAll.h */,
 			);
 			path = httpClient;
 			sourceTree = "<group>";
@@ -442,6 +445,7 @@
 				58BD25C12214DEF7008942EB /* httpProvider.h in Headers */,
 				58BD25C22214DEF7008942EB /* pal.h in Headers */,
 				58BD25C32214DEF7008942EB /* trace.h in Headers */,
+				5841E99F22151C5B0009B183 /* XAsyncAll.h in Headers */,
 				58BD25C42214DFD2008942EB /* XAsync.h in Headers */,
 				58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */,
 				58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */,
