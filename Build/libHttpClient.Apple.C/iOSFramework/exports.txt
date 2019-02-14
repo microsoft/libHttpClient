@@ -65,7 +65,7 @@ _HCHttpCallRequestGetRetryCacheId
 _HCHttpCallRequestGetTimeout
 _HCHttpCallRequestGetRetryDelay
 _HCHttpCallRequestGetTimeoutWindow
-#_HCHttpCallRequestGetAssertsForThrottling
+#_HCHttpCallRequestGetAssertsForThrottling MAVA_TODO
 _HCHttpCallResponseSetResponseBodyBytes
 _HCHttpCallResponseSetStatusCode
 _HCHttpCallResponseSetNetworkErrorCode
@@ -84,6 +84,10 @@ _HCWebSocketGetFunctions
 #
 # trace.h
 #
+_HCSettingsSetTraceLevel
+_HCSettingsGetTraceLevel
+_HCTraceSetClientCallback
+_HCTraceSetTraceToDebugger
 _HCTraceSetPlatformCallbacks
 _HCTraceImplMessage
 _HCTraceImplScopeId
