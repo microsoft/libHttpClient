@@ -6,10 +6,8 @@
 
 #pragma once
 #include <httpClient/pal.h>
-#include <httpClient/mock.h>
 #include <httpClient/trace.h>
-#include <XAsync.h>
-#include <XTaskQueue.h>
+#include <httpClient/XAsyncAll.h>
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"
