@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "http_ios.h"
+#include "http_apple.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
