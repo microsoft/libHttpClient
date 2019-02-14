@@ -127,6 +127,7 @@
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD256522123EF9008942EB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		58BD25DF2214FED0008942EB /* exports.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = exports.txt; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
@@ -386,6 +387,7 @@
 			isa = PBXGroup;
 			children = (
 				58BD256522123EF9008942EB /* Info.plist */,
+				58BD25DF2214FED0008942EB /* exports.txt */,
 			);
 			path = iOSFramework;
 			sourceTree = "<group>";
@@ -792,6 +794,7 @@
 					"$(SRCROOT)/../../Binaries/iOS/include",
 				);
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 			};
@@ -812,6 +815,7 @@
 					"$(SRCROOT)/../../Binaries/iOS/include",
 				);
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 			};
@@ -827,6 +831,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				EXPORTED_SYMBOLS_FILE = iOSFramework/exports.txt;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -844,6 +849,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -863,6 +869,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				EXPORTED_SYMBOLS_FILE = iOSFramework/exports.txt;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -879,6 +886,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
 				MTL_FAST_MATH = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
