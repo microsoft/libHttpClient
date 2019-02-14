@@ -53,7 +53,7 @@ try
 }
 CATCH_RETURN()
 
-HCCallHandle HCHttpCallDuplicateHandle(
+STDAPI_(HCCallHandle) HCHttpCallDuplicateHandle(
     _In_ HCCallHandle call
     ) noexcept
 try
