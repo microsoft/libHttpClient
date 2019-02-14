@@ -1,6 +1,8 @@
 #
 # httpClient.h
 #
+_HCMemSetFunctions
+_HCMemGetFunctions
 _HCInitialize
 _HCCleanup
 _HCGetLibVersion
