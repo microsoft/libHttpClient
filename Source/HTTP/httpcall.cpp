@@ -504,7 +504,7 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCHttpCallSetLogging(
+HCHttpCallSetTracing(
     _In_ HCCallHandle call,
     _In_ bool logCall
     ) noexcept

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
 		5841E99122150E900009B183 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E99022150E8F0009B183 /* libc++.tbd */; };
+		5841E995221515BD0009B183 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E994221515BD0009B183 /* Security.framework */; };
 		588C7E7C218275CE001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
@@ -80,6 +81,7 @@
 /* Begin PBXFileReference section */
 		5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_logger.cpp; sourceTree = "<group>"; };
 		5841E99022150E8F0009B183 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
+		5841E994221515BD0009B183 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WaitTimer_stl.cpp; sourceTree = "<group>"; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5841E995221515BD0009B183 /* Security.framework in Frameworks */,
 				5841E99122150E900009B183 /* libc++.tbd in Frameworks */,
 				58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */,
 				58BD258422125724008942EB /* libcrypto.a in Frameworks */,
@@ -398,6 +401,7 @@
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5841E994221515BD0009B183 /* Security.framework */,
 				5841E99022150E8F0009B183 /* libc++.tbd */,
 				58BD258F2213626E008942EB /* Foundation.framework */,
 				9CC0523621374B5D0009B69A /* libcrypto.a */,
