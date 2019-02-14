@@ -7,7 +7,7 @@
 #pragma once
 
 #include <httpClient/pal.h>
-#include <XAsyncProvider.h>
+#include <httpClient/XAsyncAll.h>
 #include <httpClient/trace.h>
 
 extern "C"
