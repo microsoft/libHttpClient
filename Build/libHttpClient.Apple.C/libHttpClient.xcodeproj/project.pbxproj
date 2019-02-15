@@ -86,6 +86,8 @@
 		5841E994221515BD0009B183 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		5841E99E22151A890009B183 /* XAsyncAll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XAsyncAll.h; sourceTree = "<group>"; };
 		584BFB8122164BCA00CDCCBE /* mock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mock.h; sourceTree = "<group>"; };
+		584BFB922217759800CDCCBE /* iOSInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = iOSInfo.plist; sourceTree = "<group>"; };
+		584BFB932217759800CDCCBE /* exports.exp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.exports; path = exports.exp; sourceTree = "<group>"; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WaitTimer_stl.cpp; sourceTree = "<group>"; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
@@ -133,9 +135,7 @@
 		58A7EA2A209AE8BB00CC6774 /* trace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = trace.h; sourceTree = "<group>"; };
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		58BD256522123EF9008942EB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		58BD25DF2214FED0008942EB /* exports.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = exports.txt; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
@@ -205,12 +205,22 @@
 			path = iOS;
 			sourceTree = "<group>";
 		};
+		584BFB912217759800CDCCBE /* FrameworkResources */ = {
+			isa = PBXGroup;
+			children = (
+				584BFB932217759800CDCCBE /* exports.exp */,
+				584BFB922217759800CDCCBE /* iOSInfo.plist */,
+			);
+			name = FrameworkResources;
+			path = ../../Utilities/FrameworkResources;
+			sourceTree = "<group>";
+		};
 		58722D05209AD61900B071F7 = {
 			isa = PBXGroup;
 			children = (
+				584BFB912217759800CDCCBE /* FrameworkResources */,
 				58A7EA15209AE8BB00CC6774 /* Include */,
 				58A7E971209ADEB100CC6774 /* Source */,
-				58BD256322123EF9008942EB /* iOSFramework */,
 				58722D0F209AD61900B071F7 /* Products */,
 				7DB100D92119383400AE22F5 /* Frameworks */,
 			);
@@ -393,15 +403,6 @@
 				5841E99E22151A890009B183 /* XAsyncAll.h */,
 			);
 			path = httpClient;
-			sourceTree = "<group>";
-		};
-		58BD256322123EF9008942EB /* iOSFramework */ = {
-			isa = PBXGroup;
-			children = (
-				58BD256522123EF9008942EB /* Info.plist */,
-				58BD25DF2214FED0008942EB /* exports.txt */,
-			);
-			path = iOSFramework;
 			sourceTree = "<group>";
 		};
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
@@ -855,7 +856,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				EXPORTED_SYMBOLS_FILE = iOSFramework/exports.txt;
+				EXPORTED_SYMBOLS_FILE = ../../Utilities/FrameworkResources/exports.exp;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -863,7 +864,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(SRCROOT)/../../Binaries/iOS/include",
 				);
-				INFOPLIST_FILE = "$(SRCROOT)/iOSFramework/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/iOSInfo.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -893,7 +894,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				EXPORTED_SYMBOLS_FILE = iOSFramework/exports.txt;
+				EXPORTED_SYMBOLS_FILE = ../../Utilities/FrameworkResources/exports.exp;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -901,7 +902,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(SRCROOT)/../../Binaries/iOS/include",
 				);
-				INFOPLIST_FILE = "$(SRCROOT)/iOSFramework/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/iOSInfo.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
