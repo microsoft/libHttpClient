@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <httpClient/XAsyncAll.h>
+#include <httpClient/async.h>
 
 /// <summary>
 /// Returns TRUE if there is no outstanding work in this

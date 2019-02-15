@@ -5,10 +5,10 @@
 #endif
 
 #pragma once
+#include <httpClient/async.h>
 #include <httpClient/mock.h>
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
-#include <httpClient/XAsyncAll.h>
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"
