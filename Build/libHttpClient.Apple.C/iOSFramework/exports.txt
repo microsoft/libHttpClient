@@ -65,11 +65,13 @@ _HCHttpCallRequestGetRetryCacheId
 _HCHttpCallRequestGetTimeout
 _HCHttpCallRequestGetRetryDelay
 _HCHttpCallRequestGetTimeoutWindow
-#_HCHttpCallRequestGetAssertsForThrottling MAVA_TODO
+#_HCHttpCallRequestGetAssertsForThrottling
 _HCHttpCallResponseSetResponseBodyBytes
+_HCHttpCallResponseAppendResponseBodyBytes
 _HCHttpCallResponseSetStatusCode
 _HCHttpCallResponseSetNetworkErrorCode
 _HCHttpCallResponseSetHeader
+_HCHttpCallResponseSetHeaderWithLength
 
 #if !HC_NOWEBSOCKETS
 _HCSetWebSocketFunctions
@@ -80,6 +82,17 @@ _HCWebSocketGetNumHeaders
 _HCWebSocketGetHeaderAtIndex
 _HCWebSocketGetFunctions
 #endif
+
+#
+# mock.h
+#
+_HCMockCallCreate
+_HCMockAddMock
+_HCMockClearMocks
+_HCMockResponseSetResponseBodyBytes
+_HCMockResponseSetStatusCode
+_HCMockResponseSetNetworkErrorCode
+_HCMockResponseSetHeader
 
 #
 # trace.h
