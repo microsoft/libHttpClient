@@ -5,6 +5,7 @@
 #endif
 
 #pragma once
+#include <httpClient/mock.h>
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
 #include <httpClient/XAsyncAll.h>
