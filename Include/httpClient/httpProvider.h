@@ -300,6 +300,19 @@ STDAPI HCHttpCallResponseSetResponseBodyBytes(
     ) noexcept;
 
 /// <summary>
+/// Appends to the response body byte buffer of the HTTP call
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="bodyBytes">The data to append.</param>
+/// <param name="bodySize">The length in bytes of the data.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseAppendResponseBodyBytes(
+    _In_ HCCallHandle call,
+    _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
+    _In_ size_t bodySize
+) noexcept;
+
+/// <summary>
 /// Set the HTTP status code of the HTTP call response
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
@@ -336,6 +349,22 @@ STDAPI HCHttpCallResponseSetHeader(
     _In_z_ const char* headerValue
     ) noexcept;
 
+/// <summary>
+/// Set a response header for the HTTP call
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="headerName">UTF-8 encoded response header name for the HTTP call</param>
+/// <param name="nameSize">The length in bytes of the header name string</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the HTTP call</param>
+/// <param name="valueSize">The length in bytes of the header value string</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseSetHeaderWithLength(
+    _In_ HCCallHandle call,
+    _In_reads_(nameSize) const char* headerName,
+    _In_ size_t nameSize,
+    _In_reads_(valueSize) const char* headerValue,
+    _In_ size_t valueSize
+) noexcept;
 
 #if !HC_NOWEBSOCKETS
 

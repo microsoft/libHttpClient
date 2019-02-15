@@ -46,7 +46,7 @@ HCSetHttpCallPerformFunction(
     _In_opt_ void* performContext
     ) noexcept
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton(false);
     if (httpSingleton)
     {
         return E_HC_ALREADY_INITIALISED;
