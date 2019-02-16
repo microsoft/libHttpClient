@@ -9,9 +9,10 @@
 /* Begin PBXBuildFile section */
 		5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
 		5841E99122150E900009B183 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E99022150E8F0009B183 /* libc++.tbd */; };
-		5841E995221515BD0009B183 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E994221515BD0009B183 /* Security.framework */; };
 		5841E99F22151C5B0009B183 /* async.h in Headers */ = {isa = PBXBuildFile; fileRef = 5841E99E22151A890009B183 /* async.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		584BFB8222164C4800CDCCBE /* mock.h in Headers */ = {isa = PBXBuildFile; fileRef = 584BFB8122164BCA00CDCCBE /* mock.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		584BFB942217993500CDCCBE /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E994221515BD0009B183 /* Security.framework */; };
+		584BFB952217994000CDCCBE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58BD258F2213626E008942EB /* Foundation.framework */; };
 		588C7E7C218275CE001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
@@ -32,7 +33,6 @@
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
 		58BD258422125724008942EB /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		58BD258522125724008942EB /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
-		58BD25902213626E008942EB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58BD258F2213626E008942EB /* Foundation.framework */; };
 		58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58722D0E209AD61900B071F7 /* libHttpClient.a */; };
 		58BD25BF2214DEF7008942EB /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA24209AE8BB00CC6774 /* config.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58BD25C02214DEF7008942EB /* httpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA27209AE8BB00CC6774 /* httpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -86,7 +86,7 @@
 		5841E994221515BD0009B183 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		5841E99E22151A890009B183 /* async.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = async.h; sourceTree = "<group>"; };
 		584BFB8122164BCA00CDCCBE /* mock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mock.h; sourceTree = "<group>"; };
-		584BFB922217759800CDCCBE /* iOSInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = iOSInfo.plist; sourceTree = "<group>"; };
+		584BFB922217759800CDCCBE /* Info_iOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_iOS.plist; sourceTree = "<group>"; };
 		584BFB932217759800CDCCBE /* exports.exp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.exports; path = exports.exp; sourceTree = "<group>"; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WaitTimer_stl.cpp; sourceTree = "<group>"; };
@@ -176,12 +176,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5841E995221515BD0009B183 /* Security.framework in Frameworks */,
 				5841E99122150E900009B183 /* libc++.tbd in Frameworks */,
-				58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */,
 				58BD258422125724008942EB /* libcrypto.a in Frameworks */,
+				58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */,
 				58BD258522125724008942EB /* libssl.a in Frameworks */,
-				58BD25902213626E008942EB /* Foundation.framework in Frameworks */,
+				584BFB952217994000CDCCBE /* Foundation.framework in Frameworks */,
+				584BFB942217993500CDCCBE /* Security.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,7 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				584BFB932217759800CDCCBE /* exports.exp */,
-				584BFB922217759800CDCCBE /* iOSInfo.plist */,
+				584BFB922217759800CDCCBE /* Info_iOS.plist */,
 			);
 			name = FrameworkResources;
 			path = ../../Utilities/FrameworkResources;
@@ -218,11 +218,11 @@
 		58722D05209AD61900B071F7 = {
 			isa = PBXGroup;
 			children = (
+				7DB100D92119383400AE22F5 /* Frameworks */,
 				584BFB912217759800CDCCBE /* FrameworkResources */,
 				58A7EA15209AE8BB00CC6774 /* Include */,
-				58A7E971209ADEB100CC6774 /* Source */,
 				58722D0F209AD61900B071F7 /* Products */,
-				7DB100D92119383400AE22F5 /* Frameworks */,
+				58A7E971209ADEB100CC6774 /* Source */,
 			);
 			sourceTree = "<group>";
 		};
@@ -408,11 +408,11 @@
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				5841E994221515BD0009B183 /* Security.framework */,
 				5841E99022150E8F0009B183 /* libc++.tbd */,
-				58BD258F2213626E008942EB /* Foundation.framework */,
 				9CC0523621374B5D0009B69A /* libcrypto.a */,
 				9CC0523721374B5D0009B69A /* libssl.a */,
+				58BD258F2213626E008942EB /* Foundation.framework */,
+				5841E994221515BD0009B183 /* Security.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -857,14 +857,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				EXPORTED_SYMBOLS_FILE = ../../Utilities/FrameworkResources/exports.exp;
-				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../Include",
-					"$(SRCROOT)/../../Source/Common",
-					"$(SRCROOT)/../../External/websocketpp",
-					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../Binaries/iOS/include",
-				);
-				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/iOSInfo.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/Info_iOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -895,14 +888,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				EXPORTED_SYMBOLS_FILE = ../../Utilities/FrameworkResources/exports.exp;
-				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../Include",
-					"$(SRCROOT)/../../Source/Common",
-					"$(SRCROOT)/../../External/websocketpp",
-					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../Binaries/iOS/include",
-				);
-				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/iOSInfo.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/Info_iOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
