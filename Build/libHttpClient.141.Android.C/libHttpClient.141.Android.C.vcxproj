@@ -121,7 +121,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\XAsyncAll.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />

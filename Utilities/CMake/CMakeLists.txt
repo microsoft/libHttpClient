@@ -90,7 +90,7 @@ set(Public_Source_Files
     ../../../include/xtaskQueue.h
     ../../../include/httpClient/trace.h
     ../../../include/httpClient/pal.h
-    ../../../include/httpClient/XAsyncAll.h
+    ../../../include/httpClient/async.h
     )
 
 set(Task_Source_Files

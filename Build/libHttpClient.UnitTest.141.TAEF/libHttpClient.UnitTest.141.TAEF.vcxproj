@@ -165,7 +165,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\XAsyncAll.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />

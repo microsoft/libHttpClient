@@ -180,7 +180,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h">
       <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\XAsyncAll.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h">
