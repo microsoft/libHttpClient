@@ -6,8 +6,8 @@
 
 #pragma once
 
+#include <httpClient/async.h>
 #include <httpClient/pal.h>
-#include <XAsyncProvider.h>
 #include <httpClient/trace.h>
 
 extern "C"
