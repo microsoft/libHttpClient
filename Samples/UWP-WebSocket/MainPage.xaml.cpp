@@ -244,7 +244,7 @@ void HttpTestApp::MainPage::Connect_Button_Click(Platform::Object^ sender, Windo
 
     ClearLog();
 
-    HRESULT hr = HCWebSocketCreate(&m_websocket);
+    HRESULT hr = HCWebSocketCreate(&m_websocket, nullptr, nullptr, nullptr, nullptr);
     LogToUI(format_string("HCWebSocketCreate: %d", hr));
 
     void* callbackContext = nullptr;

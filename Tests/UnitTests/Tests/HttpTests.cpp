@@ -121,6 +121,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES_FOCUS(TestPerformCallback);
 
+        VERIFY_ARE_EQUAL(S_OK, HCSetHttpCallPerformFunction(&PerformCallback, &g_performContext));
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         g_PerformCallbackCalled = false;
         HCCallPerformFunction func = nullptr;
@@ -128,7 +129,6 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&func, &ctx));
         VERIFY_IS_NOT_NULL(func);
 
-        HCSetHttpCallPerformFunction(&PerformCallback, &g_performContext);
         HCCallHandle call;
         HCHttpCallCreate(&call);
         VERIFY_ARE_EQUAL(false, g_PerformCallbackCalled);

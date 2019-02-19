@@ -947,11 +947,12 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 
 #if HC_WINHTTP_WEBSOCKETS
 HRESULT winhttp_http_task::send_websocket_message(
-    _In_ const char* payloadPtr,
+    WINHTTP_WEB_SOCKET_BUFFER_TYPE eBufferType,
+    _In_ const void* payloadPtr,
     _In_ size_t payloadLength)
 {
     DWORD dwError = WinHttpWebSocketSend(m_hRequest,
-        WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, // TODO: use WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE when supporting binary
+        eBufferType, 
         (PVOID)payloadPtr,
         static_cast<DWORD>(payloadLength));
     if (FAILED(HRESULT_FROM_WIN32(dwError)))
@@ -978,12 +979,13 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
     WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL); 
 
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
-    HCWebSocketGetFunctions(nullptr, &disconnectFunc);
+    void* functionContext = nullptr;
+    HCWebSocketGetEventFunctions(m_websocketHandle, nullptr, nullptr, &disconnectFunc, &functionContext);
 
     try
     {
         HCWebSocketCloseStatus closeStatus = static_cast<HCWebSocketCloseStatus>(closeReason); 
-        disconnectFunc(m_websocketHandle, closeStatus);
+        disconnectFunc(m_websocketHandle, closeStatus, functionContext);
     }
     catch (...)
     {
@@ -1037,7 +1039,8 @@ void winhttp_http_task::callback_websocket_status_read_complete(
         pRequestContext->m_websocketResponseBuffer.TransferBuffer(&responseBuffer);
 
         HCWebSocketMessageFunction messageFunc = nullptr;
-        HCWebSocketGetFunctions(&messageFunc, nullptr);
+        void* functionContext = nullptr;
+        HCWebSocketGetEventFunctions(pRequestContext->m_websocketHandle, &messageFunc, nullptr, nullptr, &functionContext);
 
         if (messageFunc)
         {
@@ -1047,7 +1050,7 @@ void winhttp_http_task::callback_websocket_status_read_complete(
                 uint32_t bufferLength = responseBuffer.GetBufferByteCount();
                 buffer[bufferLength] = 0;
 
-                messageFunc(pRequestContext->m_websocketHandle, buffer);
+                messageFunc(pRequestContext->m_websocketHandle, buffer, functionContext);
             }
             catch (...)
             {

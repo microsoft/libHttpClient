@@ -16,6 +16,7 @@ class websocket_outgoing_message
 {
 public: 
     http_internal_string m_message;
+    http_internal_vector<uint8_t> m_messageBinary;
     XAsyncBlock* m_asyncBlock;
     DataWriterStoreOperation^ m_storeAsyncOp;
     AsyncStatus m_storeAsyncOpStatus;
@@ -84,10 +85,23 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
             HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: receieved msg [%s]", m_websocket->id, payload.c_str());
 
             HCWebSocketMessageFunction messageFunc = nullptr;
-            HCWebSocketGetFunctions(&messageFunc, nullptr);
-            if (messageFunc != nullptr)
+            HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr;
+            void* context = nullptr;
+            HCWebSocketGetEventFunctions(m_websocket, &messageFunc, &binaryMessageFunc, nullptr, &context);
+
+            if (args->MessageType == SocketMessageType::Utf8)
             {
-                messageFunc(m_websocket, payload.c_str());
+                if (messageFunc != nullptr)
+                {
+                    messageFunc(m_websocket, payload.c_str(), context);
+                }
+            }
+            else if (args->MessageType == SocketMessageType::Binary)
+            {
+                if (binaryMessageFunc != nullptr)
+                {
+                    binaryMessageFunc(m_websocket, (uint8_t*)payload.c_str(), (uint32_t)payload.size(), context);
+                }
             }
         }
     }
@@ -104,10 +118,11 @@ void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: on closed event triggered", m_websocket->id);
 
     HCWebSocketCloseEventFunction closeFunc = nullptr;
-    HCWebSocketGetFunctions(nullptr, &closeFunc);
+    void* context = nullptr;
+    HCWebSocketGetEventFunctions(m_websocket, nullptr, nullptr, &closeFunc, &context);
     if (closeFunc != nullptr)
     {
-        closeFunc(m_websocket, static_cast<HCWebSocketCloseStatus>(args->Code));
+        closeFunc(m_websocket, static_cast<HCWebSocketCloseStatus>(args->Code), context);
     }
 }
 
@@ -340,6 +355,48 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     return S_OK;
 }
 
+HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock)
+{
+    if (payloadBytes == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    if (payloadSize == 0)
+    {
+        return E_INVALIDARG;
+    }
+
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
+
+    std::shared_ptr<websocket_outgoing_message> msg = std::make_shared<websocket_outgoing_message>();
+    msg->m_messageBinary.assign(payloadBytes, payloadBytes + payloadSize);
+    msg->m_asyncBlock = asyncBlock;
+    msg->m_id = ++httpSingleton->m_lastId;
+
+    {
+        std::lock_guard<std::recursive_mutex> lock(websocketTask->m_outgoingMessageQueueLock);
+        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %lld", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
+        websocketTask->m_outgoingMessageQueue.push(msg);
+    }
+
+    // No sends in progress, so start sending the message
+    bool expectedSendInProgress = false;
+    if (websocketTask->m_outgoingMessageSendInProgress.compare_exchange_strong(expectedSendInProgress, true))
+    {
+        MessageWebSocketSendMessage(websocketTask);
+    }
+
+    return S_OK;
+}
+
 struct SendMessageCallbackContext
 {
     std::shared_ptr<websocket_outgoing_message> nextMessage;
@@ -369,9 +426,18 @@ try
         auto msg = sendMsgContext->nextMessage;
         HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] [%s]", websocket->id, msg->m_id, msg->m_message.c_str());
 
-        websocketTask->m_messageWebSocket->Control->MessageType = SocketMessageType::Utf8;
-        unsigned char* uchar = reinterpret_cast<unsigned char*>(const_cast<char*>(msg->m_message.c_str()));
-        websocketTask->m_messageDataWriter->WriteBytes(Platform::ArrayReference<unsigned char>(uchar, static_cast<unsigned int>(msg->m_message.length())));
+        if (!msg->m_message.empty())
+        {
+            websocketTask->m_messageWebSocket->Control->MessageType = SocketMessageType::Utf8;
+            unsigned char* uchar = reinterpret_cast<unsigned char*>(const_cast<char*>(msg->m_message.c_str()));
+            websocketTask->m_messageDataWriter->WriteBytes(Platform::ArrayReference<unsigned char>(uchar, static_cast<unsigned int>(msg->m_message.length())));
+        }
+        else
+        {
+            websocketTask->m_messageWebSocket->Control->MessageType = SocketMessageType::Binary;
+            websocketTask->m_messageDataWriter->WriteBytes(Platform::ArrayReference<unsigned char>(msg->m_messageBinary.data(), static_cast<unsigned int>(msg->m_messageBinary.size())));
+        }
+
 
         msg->m_storeAsyncOp = websocketTask->m_messageDataWriter->StoreAsync();
 
