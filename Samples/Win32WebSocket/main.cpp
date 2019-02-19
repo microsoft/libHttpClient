@@ -153,7 +153,8 @@ std::atomic<uint32_t> g_numberMessagesReceieved = 0;
 
 void message_received(
     _In_ HCWebsocketHandle websocket,
-    _In_z_ const char* incomingBodyString
+    _In_z_ const char* incomingBodyString,
+    _In_opt_ void* functionContext
     )
 {
     printf_s("Received websocket message: %s\n", incomingBodyString);
@@ -163,7 +164,8 @@ void message_received(
 
 void websocket_closed(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus,
+    _In_opt_ void* functionContext
     )
 {
     printf_s("Websocket closed!\n");
@@ -184,9 +186,8 @@ int main()
     std::string url = "wss://echo.websocket.org";
 
     HCWebsocketHandle websocket;
-    HRESULT hr = HCWebSocketCreate(&websocket);
 
-    hr = HCWebSocketSetFunctions(message_received, websocket_closed);
+    HRESULT hr = HCWebSocketCreate(&websocket, message_received, nullptr, websocket_closed, nullptr);
 
     for (int iConnectAttempt = 0; iConnectAttempt < 10; iConnectAttempt++)
     {

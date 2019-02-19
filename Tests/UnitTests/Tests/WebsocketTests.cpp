@@ -57,14 +57,25 @@ extern bool g_memFreeCalled;
 
 void CALLBACK Internal_HCWebSocketMessage(
     _In_ HCWebsocketHandle websocket,
-    _In_z_ PCSTR incomingBodyString
+    _In_z_ PCSTR incomingBodyString,
+    _In_ void* context
+    )
+{
+}
+
+void CALLBACK Internal_HCWebSocketBinaryMessage(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ void* context
     )
 {
 }
 
 void CALLBACK Internal_HCWebSocketCloseEvent(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus,
+    _In_ void* context
 )
 {
 }
@@ -96,6 +107,18 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
     return S_OK;
 }
 
+bool g_HCWebSocketSendBinaryMessage_Called = false;
+HRESULT Test_Internal_HCWebSocketSendBinaryMessageAsync(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock
+)
+{
+    g_HCWebSocketSendBinaryMessage_Called = true;
+    return S_OK;
+}
+
 bool g_HCWebSocketDisconnect_Called = false;
 HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
@@ -114,18 +137,25 @@ public:
     DEFINE_TEST_CASE(TestGlobalCallbacks)
     {
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        //g_PerformMessageCallbackCalled = false;
-        //g_PerformCloseCallbackCalled = false;
+        g_PerformMessageCallbackCalled = false;
+        g_PerformCloseCallbackCalled = false;
 
         HCWebSocketMessageFunction messageFunc = nullptr;
+        HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr;
         HCWebSocketCloseEventFunction closeFunc = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetFunctions(&messageFunc, &closeFunc));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketGetEventFunctions(nullptr, &messageFunc, &binaryMessageFunc, &closeFunc, nullptr));
         VERIFY_IS_NULL(messageFunc);
+        VERIFY_IS_NULL(binaryMessageFunc);
         VERIFY_IS_NULL(closeFunc);
 
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetFunctions(nullptr, nullptr));// Internal_HCWebSocketMessage, Internal_HCWebSocketCloseEvent));
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetFunctions(&messageFunc, &closeFunc));
+        HCWebsocketHandle websocket;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, Internal_HCWebSocketMessage, Internal_HCWebSocketBinaryMessage, Internal_HCWebSocketCloseEvent, nullptr));
+        VERIFY_IS_NOT_NULL(websocket);
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetEventFunctions(websocket, &messageFunc, &binaryMessageFunc, &closeFunc, nullptr));
         VERIFY_IS_NOT_NULL(messageFunc);
+        VERIFY_IS_NOT_NULL(binaryMessageFunc);
         VERIFY_IS_NOT_NULL(closeFunc);
         HCCleanup();
     }
@@ -138,7 +168,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         HCWebsocketHandle websocket;
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
 
         HCWebsocketHandle websocket2;
         websocket2 = HCWebSocketDuplicateHandle(websocket);
@@ -158,20 +188,21 @@ public:
 
         HCWebSocketConnectFunction websocketConnectFunc = nullptr;
         HCWebSocketSendMessageFunction websocketSendMessageFunc = nullptr;
+        HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc = nullptr;
         HCWebSocketDisconnectFunction websocketDisconnectFunc = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
-        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketDisconnect));
-        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketDisconnectFunc));
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect));
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
         HCWebsocketHandle websocket;
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
         VERIFY_IS_NOT_NULL(websocket);
 
         const CHAR* proxy = nullptr;
@@ -204,7 +235,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestRequestHeaders);
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
         HCWebsocketHandle call = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&call));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&call, nullptr, nullptr, nullptr, nullptr));
 
         uint32_t numHeaders = 0;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumHeaders(call, &numHeaders));

@@ -23,6 +23,7 @@ http_singleton::http_singleton(PerformInfo const& performInfo, PerformEnv&& perf
 #if !HC_NOWEBSOCKETS
     m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
     m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
+    m_websocketSendBinaryMessageFunc = Internal_HCWebSocketSendBinaryMessageAsync;
     m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
 #endif
 }

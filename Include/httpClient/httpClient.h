@@ -567,10 +567,50 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
 // 
 
 /// <summary>
+/// A callback invoked every time a WebSocket receives an incoming message
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
+/// <param name="incomingBodyString">UTF-8 encoded body of the incoming message as a string value, only if the message type is UTF-8.</param>
+/// <param name="functionContext">Client context to pass to callback function.</param>
+typedef void
+(STDAPIVCALLTYPE* HCWebSocketMessageFunction)(
+    _In_ HCWebsocketHandle websocket,
+    _In_z_ const char* incomingBodyString,
+    _In_ void* functionContext
+    );
+
+/// <summary>
+/// A callback invoked every time a WebSocket receives an incoming binary message
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
+/// <param name="incomingBodyPayload"></param>
+/// <param name="incomingBodyPayloadSize"></param>
+/// <param name="functionContext">Client context to pass to callback function.</param>
+typedef void
+(STDAPIVCALLTYPE* HCWebSocketBinaryMessageFunction)(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ void* functionContext
+    );
+
+/// <summary>
+/// A callback invoked when a WebSocket is closed
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <param name="closeStatus">The status of why the WebSocket was closed</param>
+/// <param name="functionContext">Client context to pass to callback function.</param>
+typedef void
+(STDAPIVCALLTYPE* HCWebSocketCloseEventFunction)(
+    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebSocketCloseStatus closeStatus,
+    _In_ void* functionContext
+    );
+
+/// <summary>
 /// Creates an WebSocket handle
 ///
 /// WebSocket usage:
-/// Setup the handler functions with HCWebSocketSetFunctions()
 /// Create a WebSocket handle using HCWebSocketCreate()
 /// Call HCWebSocketSetProxyUri() and HCWebSocketSetHeader() to prepare the HCWebsocketHandle
 /// Call HCWebSocketConnectAsync() to connect the WebSocket using the HCWebsocketHandle.
@@ -579,9 +619,17 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
 /// Call HCWebSocketCloseHandle() when done with the HCWebsocketHandle to free the associated memory
 /// </summary>
 /// <param name="websocket">The handle of the websocket</param>
+/// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
+/// <param name="binaryMessageFunc">A pointer to the binary message handling callback to use, or a null pointer to remove.</param>
+/// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
+/// <param name="functionContext">Client context to pass to callback function.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketCreate(
-    _Out_ HCWebsocketHandle* websocket
+    _Out_ HCWebsocketHandle* websocket,
+    _In_opt_ HCWebSocketMessageFunction messageFunc,
+    _In_opt_ HCWebSocketBinaryMessageFunction binaryMessageFunc,
+    _In_opt_ HCWebSocketCloseEventFunction closeFunc,
+    _In_opt_ void* functionContext
     ) noexcept;
 
 /// <summary>
@@ -610,37 +658,20 @@ STDAPI HCWebSocketSetHeader(
     _In_z_ const char* headerValue
     ) noexcept;
 
-
 /// <summary>
-/// A callback invoked every time a WebSocket receives an incoming message
+/// Gets the WebSocket functions to allow callers to respond to incoming messages and WebSocket close events.
 /// </summary>
-/// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
-/// <param name="incomingBodyString">UTF-8 encoded body of the incoming message as a string value, only if the message type is UTF-8.</param>
-typedef void
-(STDAPIVCALLTYPE* HCWebSocketMessageFunction)(
-    _In_ HCWebsocketHandle websocket,
-    _In_z_ const char* incomingBodyString
-    );
-
-/// <summary>
-/// A callback invoked when a WebSocket is closed
-/// </summary>
-/// <param name="websocket">Handle to the WebSocket</param>
-/// <param name="closeStatus">The status of why the WebSocket was closed</param>
-typedef void
-(STDAPIVCALLTYPE* HCWebSocketCloseEventFunction)(
-    _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus
-    );
-
-/// <summary>
-/// Sets the WebSocket functions to allow callers to respond to incoming messages and WebSocket close events.
-/// </summary>
+/// <param name="websocket">The handle of the websocket</param>
 /// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
+/// <param name="binaryMessageFunc">A pointer to the binary message handling callback to use, or a null pointer to remove.</param>
 /// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
-STDAPI HCWebSocketSetFunctions(
-    _In_opt_ HCWebSocketMessageFunction messageFunc,
-    _In_opt_ HCWebSocketCloseEventFunction closeFunc
+/// <param name="functionContext">Client context to pass to callback function.</param>
+STDAPI HCWebSocketGetEventFunctions(
+    _In_ HCWebsocketHandle websocket,
+    _Out_opt_ HCWebSocketMessageFunction* messageFunc,
+    _Out_opt_ HCWebSocketBinaryMessageFunction* binaryMessageFunc,
+    _Out_opt_ HCWebSocketCloseEventFunction* closeFunc,
+    _Out_ void** functionContext
     ) noexcept;
 
 
@@ -693,7 +724,7 @@ STDAPI HCGetWebSocketConnectResult(
     ) noexcept;
 
 /// <summary>
-/// Send message the WebSocket.  
+/// Send message the WebSocket
 /// To get the result, first call HCGetWebSocketSendMessageResult
 /// inside the AsyncBlock callback or after the AsyncBlock is complete.
 /// </summary>
@@ -704,6 +735,21 @@ STDAPI HCGetWebSocketConnectResult(
 STDAPI HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
+    _Inout_ XAsyncBlock* asyncBlock
+    ) noexcept;
+
+/// <summary>
+/// Send binary message to the WebSocket
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <param name="payloadBytes"></param>
+/// <param name="payloadSize"></param>
+/// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCWebSocketSendBinaryMessageAsync(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
     _Inout_ XAsyncBlock* asyncBlock
     ) noexcept;
 

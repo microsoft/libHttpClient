@@ -73,7 +73,7 @@
       </AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalOptions>-D DSO_DLFCN -D HAVE_DLFCN_H -D NDEBUG -D OPENSSL_THREADS -D OPENSSL_NO_STATIC_ENGINE -D OPENSSL_PIC -D OPENSSL_USE_NODELETE -D OPENSSLDIR='"THIS_SHOULD_NOT_BE_USED"'  -D ENGINESDIR='"THIS_SHOULD_NOT_BE_USED"' -D UNICODE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-D DSO_DLFCN -D HAVE_DLFCN_H -D NDEBUG -D OPENSSL_THREADS -D OPENSSL_NO_STATIC_ENGINE -D __STDC_NO_ATOMICS__ -D OPENSSL_PIC -D OPENSSL_USE_NODELETE -D OPENSSLDIR='"THIS_SHOULD_NOT_BE_USED"'  -D ENGINESDIR='"THIS_SHOULD_NOT_BE_USED"' -D UNICODE %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -83,7 +83,14 @@
     <ClCompile Include="$(opensslSourceRoot)ssl\d1_msg.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\d1_srtp.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\methods.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\packet.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\pqueue.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\dtls1_bitmap.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_d1.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_s3.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_buffer.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record_tls13.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\s3_cbc.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\s3_enc.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\s3_lib.c" />
@@ -101,22 +108,20 @@
     <ClCompile Include="$(opensslSourceRoot)ssl\ssl_stat.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\ssl_txt.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\ssl_utst.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\t1_enc.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\t1_ext.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\t1_lib.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\t1_reneg.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\t1_trce.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\tls_srp.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\record\dtls1_bitmap.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_d1.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_s3.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_buffer.c" />
-    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_clnt.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_cust.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_srvr.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_clnt.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_dtls.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_lib.c" />
     <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_srvr.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_trce.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\tls13_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\tls_srp.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

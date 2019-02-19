@@ -100,10 +100,48 @@ public:
         return S_OK;
     }
 
+    HRESULT send_websocket_binary_message_async(
+        _In_ XAsyncBlock* asyncBlock, 
+        _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+        _In_ uint32_t payloadSize)
+    {
+        if (payloadBytes == nullptr)
+        {
+            return E_INVALIDARG;
+        }
+
+        auto httpSingleton = get_http_singleton(false);
+        if (httpSingleton == nullptr)
+        {
+            return E_HC_NOT_INITIALISED;
+        }
+
+        websocket_outgoing_message message;
+        message.asyncBlock = asyncBlock;
+        message.binaryPayload.resize(payloadSize);
+        memcpy(&message.binaryPayload[0], payloadBytes, payloadSize);
+        message.id = ++httpSingleton->m_lastId;
+
+        {
+            // Only actually have to take the lock if touching the queue.
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
+            m_outgoingMessageQueue.push(message);
+        }
+
+        if (++m_numSends == 1) // No sends in progress
+        {
+            // Start sending the message
+            return send_msg();
+        }
+
+        return S_OK;
+    }
+
     struct websocket_outgoing_message
     {
         XAsyncBlock* asyncBlock = nullptr;
         http_internal_string payload;
+        http_internal_vector<uint8_t> binaryPayload;
         HRESULT hr = S_OK;
         uint64_t id = 0;
     };
@@ -122,7 +160,10 @@ public:
         {
             std::lock_guard<std::recursive_mutex> lock(m_httpClientLock);
 
-            message->hr = m_httpTask->send_websocket_message(message->payload.data(), message->payload.length());
+            if(message->payload.length() > 0)
+                message->hr = m_httpTask->send_websocket_message(WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, reinterpret_cast<const void*>(message->payload.data()), message->payload.length());
+            else
+                message->hr = m_httpTask->send_websocket_message(WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, reinterpret_cast<const void*>(message->binaryPayload.data()), message->binaryPayload.size());
             XAsyncComplete(message->asyncBlock, message->hr, sizeof(WebSocketCompletionResult));
 
             if (--m_numSends > 0)
@@ -316,6 +357,25 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
         return E_UNEXPECTED;
     }
     return httpSocket->send_websocket_message_async(async, message);
+}
+
+HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock)
+{
+    if (websocket == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    std::shared_ptr<winhttp_websocket_impl> httpSocket = std::dynamic_pointer_cast<winhttp_websocket_impl>(websocket->impl);
+    if (httpSocket == nullptr)
+    {
+        return E_UNEXPECTED;
+    }
+    return httpSocket->send_websocket_binary_message_async(asyncBlock, payloadBytes, payloadSize);
 }
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
