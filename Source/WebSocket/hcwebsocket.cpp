@@ -221,7 +221,7 @@ try
 }
 CATCH_RETURN()
 
-HCWebsocketHandle HCWebSocketDuplicateHandle(
+STDAPI_(HCWebsocketHandle) HCWebSocketDuplicateHandle(
     _In_ HCWebsocketHandle websocket
     ) noexcept
 try

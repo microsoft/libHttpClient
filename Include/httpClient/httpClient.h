@@ -5,11 +5,10 @@
 #endif
 
 #pragma once
-#include <httpClient/pal.h>
+#include <httpClient/async.h>
 #include <httpClient/mock.h>
+#include <httpClient/pal.h>
 #include <httpClient/trace.h>
-#include <XAsync.h>
-#include <XTaskQueue.h>
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"
@@ -233,7 +232,7 @@ STDAPI HCHttpCallPerformAsync(
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <returns>Returns the duplicated handle.</returns>
-HCCallHandle HCHttpCallDuplicateHandle(
+STDAPI_(HCCallHandle) HCHttpCallDuplicateHandle(
     _In_ HCCallHandle call
     ) noexcept;
 
@@ -779,7 +778,7 @@ STDAPI HCWebSocketDisconnect(
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <returns>Returns the duplicated handle.</returns>
-HCWebsocketHandle HCWebSocketDuplicateHandle(
+STDAPI_(HCWebsocketHandle) HCWebSocketDuplicateHandle(
     _In_ HCWebsocketHandle websocket
     ) noexcept;
 
