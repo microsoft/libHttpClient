@@ -2,11 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "http_ios.h"
+#include "http_apple.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-ios_http_task::ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call) :
+http_task_apple::http_task_apple(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call) :
     m_call(call),
     m_asyncBlock(asyncBlock),
     m_sessionTask(nullptr)
@@ -26,7 +26,7 @@ ios_http_task::ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle 
     m_session = [NSURLSession sessionWithConfiguration:configuration];
 }
 
-void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NSError* error)
+void http_task_apple::completion_handler(NSData* data, NSURLResponse* response, NSError* error)
 {
     if (error)
     {
@@ -64,7 +64,7 @@ void ios_http_task::completion_handler(NSData* data, NSURLResponse* response, NS
     XAsyncComplete(m_asyncBlock, S_OK, 0);
 }
 
-bool ios_http_task::initiate_request()
+bool http_task_apple::initiate_request()
 {
     char const* urlCString = nullptr;
     char const* methodCString = nullptr;
@@ -118,7 +118,7 @@ bool ios_http_task::initiate_request()
         m_sessionTask = [m_session dataTaskWithRequest:request completionHandler:
                          ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
-                             std::unique_ptr<ios_http_task> me{this};
+                             std::unique_ptr<http_task_apple> me{this};
                              me->completion_handler(data, response, error);
                          }];
     }
@@ -129,7 +129,7 @@ bool ios_http_task::initiate_request()
         m_sessionTask = [m_session uploadTaskWithRequest:request fromData:data completionHandler:
                          ^(NSData* data, NSURLResponse* response, NSError* error)
                          {
-                             std::unique_ptr<ios_http_task> me{this};
+                             std::unique_ptr<http_task_apple> me{this};
                              me->completion_handler(data, response, error);
                          }];
     }
@@ -166,7 +166,7 @@ void Internal_HCHttpCallPerformAsync(
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(env);
 
-    std::unique_ptr<xbox::httpclient::ios_http_task> httpTask(new xbox::httpclient::ios_http_task(asyncBlock, call));
+    std::unique_ptr<xbox::httpclient::http_task_apple> httpTask(new xbox::httpclient::http_task_apple(asyncBlock, call));
     HCHttpCallSetContext(call, &httpTask);
     if (httpTask->initiate_request())
     {

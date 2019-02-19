@@ -7,6 +7,7 @@
 #define HC_PLATFORM_XDK 3
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
+#define HC_PLATFORM_MAC 21
 
 // These macros define the datamodels that libHttpClient knows about
 // (a datamodel defines the size of primitive types such as int and pointers)
@@ -48,7 +49,11 @@
 #elif defined(__APPLE__)
     #include <TargetConditionals.h>
     #if TARGET_OS_MAC == 1
-        #define HC_PLATFORM HC_PLATFORM_IOS
+        #if TARGET_OS_OSX
+            #define HC_PLATFORM HC_PLATFORM_MAC
+        #else
+            #define HC_PLATFORM HC_PLATFORM_IOS
+        #endif
     #endif
 
     #if defined(__LP64__)
@@ -78,7 +83,12 @@
 
 #if !defined(HC_PLATFORM_IS_MICROSOFT)
 #define HC_PLATFORM_IS_MICROSOFT \
-   (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK)
+(HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK)
+#endif
+
+#if !defined(HC_PLATFORM_IS_APPLE)
+#define HC_PLATFORM_IS_APPLE \
+(HC_PLATFORM == HC_PLATFORM_MAC || HC_PLATFORM == HC_PLATFORM_IOS)
 #endif
 
 #if defined(HC_PLATFORM_MSBUILD_GUESS) && (HC_PLATFORM_MSBUILD_GUESS != HC_PLATFORM)
