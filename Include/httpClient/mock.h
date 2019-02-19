@@ -5,6 +5,7 @@
 #endif
 
 #pragma once
+#include <httpClient/pal.h>
 
 extern "C"
 {

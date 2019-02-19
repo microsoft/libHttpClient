@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		5839C51C20AA24B1006ACBD3 /* ios_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */; };
+		5841E99122150E900009B183 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E99022150E8F0009B183 /* libc++.tbd */; };
+		5841E99F22151C5B0009B183 /* async.h in Headers */ = {isa = PBXBuildFile; fileRef = 5841E99E22151A890009B183 /* async.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		584BFB8222164C4800CDCCBE /* mock.h in Headers */ = {isa = PBXBuildFile; fileRef = 584BFB8122164BCA00CDCCBE /* mock.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		584BFB942217993500CDCCBE /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E994221515BD0009B183 /* Security.framework */; };
+		584BFB952217994000CDCCBE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58BD258F2213626E008942EB /* Foundation.framework */; };
 		588C7E7C218275CE001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
@@ -26,6 +31,17 @@
 		58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
+		58BD258422125724008942EB /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
+		58BD258522125724008942EB /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
+		58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58722D0E209AD61900B071F7 /* libHttpClient.a */; };
+		58BD25BF2214DEF7008942EB /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA24209AE8BB00CC6774 /* config.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C02214DEF7008942EB /* httpClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA27209AE8BB00CC6774 /* httpClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C12214DEF7008942EB /* httpProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA23209AE8BB00CC6774 /* httpProvider.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C22214DEF7008942EB /* pal.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA2B209AE8BB00CC6774 /* pal.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C32214DEF7008942EB /* trace.h in Headers */ = {isa = PBXBuildFile; fileRef = 58A7EA2A209AE8BB00CC6774 /* trace.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C42214DFD2008942EB /* XAsync.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85521C0E47F0009C7F6 /* XAsync.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85621C0E47F0009C7F6 /* XAsyncProvider.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85421C0E47F0009C7F6 /* XTaskQueue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		7DB100BF2119276B00AE22F5 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		7DB100C02119276B00AE22F5 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
@@ -54,8 +70,24 @@
 		D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		58BD259222136482008942EB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58722D06209AD61900B071F7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 58722D0D209AD61900B071F7;
+			remoteInfo = libHttpClient_iOS;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		5839C51B20AA24B1006ACBD3 /* ios_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ios_logger.cpp; sourceTree = "<group>"; };
+		5841E99022150E8F0009B183 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
+		5841E994221515BD0009B183 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
+		5841E99E22151A890009B183 /* async.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = async.h; sourceTree = "<group>"; };
+		584BFB8122164BCA00CDCCBE /* mock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mock.h; sourceTree = "<group>"; };
+		584BFB922217759800CDCCBE /* Info_iOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_iOS.plist; sourceTree = "<group>"; };
+		584BFB932217759800CDCCBE /* exports.exp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.exports; path = exports.exp; sourceTree = "<group>"; };
 		58722D0E209AD61900B071F7 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WaitTimer_stl.cpp; sourceTree = "<group>"; };
 		58A7E975209ADEB100CC6774 /* hcwebsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hcwebsocket.h; sourceTree = "<group>"; };
@@ -102,8 +134,9 @@
 		58A7EA27209AE8BB00CC6774 /* httpClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
 		58A7EA2A209AE8BB00CC6774 /* trace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = trace.h; sourceTree = "<group>"; };
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
+		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		7DB100DA2119383400AE22F5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
 		9CC0523621374B5D0009B69A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../Binaries/iOS/lib/libcrypto.a; sourceTree = "<group>"; };
@@ -139,6 +172,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		58BD255F22123EF9008942EB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5841E99122150E900009B183 /* libc++.tbd in Frameworks */,
+				58BD258422125724008942EB /* libcrypto.a in Frameworks */,
+				58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */,
+				58BD258522125724008942EB /* libssl.a in Frameworks */,
+				584BFB952217994000CDCCBE /* Foundation.framework in Frameworks */,
+				584BFB942217993500CDCCBE /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7DB100A42119206B00AE22F5 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -159,13 +205,24 @@
 			path = iOS;
 			sourceTree = "<group>";
 		};
+		584BFB912217759800CDCCBE /* FrameworkResources */ = {
+			isa = PBXGroup;
+			children = (
+				584BFB932217759800CDCCBE /* exports.exp */,
+				584BFB922217759800CDCCBE /* Info_iOS.plist */,
+			);
+			name = FrameworkResources;
+			path = ../../Utilities/FrameworkResources;
+			sourceTree = "<group>";
+		};
 		58722D05209AD61900B071F7 = {
 			isa = PBXGroup;
 			children = (
-				58A7EA15209AE8BB00CC6774 /* Include */,
-				58A7E971209ADEB100CC6774 /* Source */,
-				58722D0F209AD61900B071F7 /* Products */,
 				7DB100D92119383400AE22F5 /* Frameworks */,
+				584BFB912217759800CDCCBE /* FrameworkResources */,
+				58A7EA15209AE8BB00CC6774 /* Include */,
+				58722D0F209AD61900B071F7 /* Products */,
+				58A7E971209ADEB100CC6774 /* Source */,
 			);
 			sourceTree = "<group>";
 		};
@@ -174,6 +231,7 @@
 			children = (
 				58722D0E209AD61900B071F7 /* libHttpClient.a */,
 				7DB100A72119206B00AE22F5 /* libHttpClient.a */,
+				58BD256222123EF9008942EB /* HttpClient.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -336,9 +394,11 @@
 		58A7EA22209AE8BB00CC6774 /* httpClient */ = {
 			isa = PBXGroup;
 			children = (
+				5841E99E22151A890009B183 /* async.h */,
 				58A7EA24209AE8BB00CC6774 /* config.h */,
 				58A7EA27209AE8BB00CC6774 /* httpClient.h */,
 				58A7EA23209AE8BB00CC6774 /* httpProvider.h */,
+				584BFB8122164BCA00CDCCBE /* mock.h */,
 				58A7EA2B209AE8BB00CC6774 /* pal.h */,
 				58A7EA2A209AE8BB00CC6774 /* trace.h */,
 			);
@@ -348,9 +408,11 @@
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5841E99022150E8F0009B183 /* libc++.tbd */,
 				9CC0523621374B5D0009B69A /* libcrypto.a */,
 				9CC0523721374B5D0009B69A /* libssl.a */,
-				7DB100DA2119383400AE22F5 /* Foundation.framework */,
+				58BD258F2213626E008942EB /* Foundation.framework */,
+				5841E994221515BD0009B183 /* Security.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -378,6 +440,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		58BD255D22123EF9008942EB /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5841E99F22151C5B0009B183 /* async.h in Headers */,
+				58BD25BF2214DEF7008942EB /* config.h in Headers */,
+				58BD25C02214DEF7008942EB /* httpClient.h in Headers */,
+				58BD25C12214DEF7008942EB /* httpProvider.h in Headers */,
+				584BFB8222164C4800CDCCBE /* mock.h in Headers */,
+				58BD25C22214DEF7008942EB /* pal.h in Headers */,
+				58BD25C32214DEF7008942EB /* trace.h in Headers */,
+				58BD25C42214DFD2008942EB /* XAsync.h in Headers */,
+				58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */,
+				58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7DB100A52119206B00AE22F5 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -405,6 +484,25 @@
 			productName = libHttpClient;
 			productReference = 58722D0E209AD61900B071F7 /* libHttpClient.a */;
 			productType = "com.apple.product-type.library.static";
+		};
+		58BD256122123EF9008942EB /* libHttpClientFramework_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 58BD256922123EF9008942EB /* Build configuration list for PBXNativeTarget "libHttpClientFramework_iOS" */;
+			buildPhases = (
+				58BD255D22123EF9008942EB /* Headers */,
+				58BD255E22123EF9008942EB /* Sources */,
+				58BD255F22123EF9008942EB /* Frameworks */,
+				58BD256022123EF9008942EB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				58BD259322136482008942EB /* PBXTargetDependency */,
+			);
+			name = libHttpClientFramework_iOS;
+			productName = HttpClient;
+			productReference = 58BD256222123EF9008942EB /* HttpClient.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 		7DB100A62119206B00AE22F5 /* libHttpClient_mac */ = {
 			isa = PBXNativeTarget;
@@ -435,6 +533,9 @@
 					58722D0D209AD61900B071F7 = {
 						CreatedOnToolsVersion = 9.3;
 					};
+					58BD256122123EF9008942EB = {
+						CreatedOnToolsVersion = 10.1;
+					};
 					7DB100A62119206B00AE22F5 = {
 						CreatedOnToolsVersion = 9.4.1;
 					};
@@ -454,9 +555,20 @@
 			targets = (
 				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
 				7DB100A62119206B00AE22F5 /* libHttpClient_mac */,
+				58BD256122123EF9008942EB /* libHttpClientFramework_iOS */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		58BD256022123EF9008942EB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		9C3B2537212F25AB0080AEC6 /* Build openssl */ = {
@@ -522,6 +634,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		58BD255E22123EF9008942EB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7DB100A32119206B00AE22F5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -549,6 +668,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		58BD259322136482008942EB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 58722D0D209AD61900B071F7 /* libHttpClient_iOS */;
+			targetProxy = 58BD259222136482008942EB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		58722D15209AD61900B071F7 /* Debug */ = {
@@ -603,6 +730,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -659,6 +787,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = "-fembed-bitcode";
@@ -673,6 +802,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"HC_LINK_STATIC=1",
+				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
@@ -681,8 +814,8 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(SRCROOT)/../../Binaries/iOS/include",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 			};
@@ -694,6 +827,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"HC_LINK_STATIC=1",
+				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
@@ -702,10 +839,72 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(SRCROOT)/../../Binaries/iOS/include",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		58BD256722123EF9008942EB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				EXPORTED_SYMBOLS_FILE = ../../Utilities/FrameworkResources/exports.exp;
+				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/Info_iOS.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		58BD256822123EF9008942EB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				EXPORTED_SYMBOLS_FILE = ../../Utilities/FrameworkResources/exports.exp;
+				INFOPLIST_FILE = "$(SRCROOT)/../../Utilities/FrameworkResources/Info_iOS.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				MTL_FAST_MATH = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
 			};
 			name = Release;
 		};
@@ -714,6 +913,10 @@
 			buildSettings = {
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"HC_LINK_STATIC=1",
+				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
@@ -735,6 +938,10 @@
 			buildSettings = {
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"HC_LINK_STATIC=1",
+				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
@@ -768,6 +975,15 @@
 			buildConfigurations = (
 				58722D18209AD61900B071F7 /* Debug */,
 				58722D19209AD61900B071F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		58BD256922123EF9008942EB /* Build configuration list for PBXNativeTarget "libHttpClientFramework_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				58BD256722123EF9008942EB /* Debug */,
+				58BD256822123EF9008942EB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
