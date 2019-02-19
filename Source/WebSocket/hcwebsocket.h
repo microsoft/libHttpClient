@@ -32,6 +32,12 @@ typedef struct HC_WEBSOCKET
     http_internal_string proxyUri;
     http_internal_string uri;
     http_internal_string subProtocol;
+
+    HCWebSocketMessageFunction callbackMessageFunc;
+    HCWebSocketBinaryMessageFunction callbackBinaryMessageFunc;
+    HCWebSocketCloseEventFunction callbackCloseEventFunc;
+    void* callbackContext;
+
     std::shared_ptr<hc_websocket_impl> impl;
 } HC_WEBSOCKET;
 
@@ -48,6 +54,13 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_z_ const char* message,
     _Inout_ XAsyncBlock* asyncBlock
     );
+
+HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock
+);
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,

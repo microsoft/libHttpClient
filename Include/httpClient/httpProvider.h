@@ -375,6 +375,23 @@ typedef HRESULT
     _Inout_ XAsyncBlock* asyncBlock
     );
 
+
+/// <summary>
+/// Send message the WebSocket
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket</param>
+/// <param name="message">The UTF-8 encoded message to send</param>
+/// <param name="asyncBlock">The asyncBlock of the async task</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+typedef HRESULT
+(CALLBACK* HCWebSocketSendBinaryMessageFunction)(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock
+    );
+
+
 /// <summary>
 /// Closes the WebSocket
 /// </summary>
@@ -394,6 +411,8 @@ typedef HRESULT
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <param name="websocketSendBinaryMessageFunc">A callback that implements WebSocket send binary message function as desired. 
+/// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
@@ -401,23 +420,23 @@ STDAPI
 HCSetWebSocketFunctions(
     _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
+    _In_opt_ HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc,
     _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
     ) noexcept;
 
 /// <summary>
 /// Gets the functions that implement the WebSocket functions.
 /// </summary>
-/// <param name="websocketConnectFunc">A callback that implements WebSocket connect function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
-/// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
-/// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <param name="websocketConnectFunc">A callback that implements WebSocket connect function as desired.</param>
+/// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. </param>
+/// <param name="websocketSendBinaryMessageFunc">A callback that implements WebSocket send binary message function as desired.</param>
+/// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
 HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
+    _Out_ HCWebSocketSendBinaryMessageFunction* websocketSendBinaryMessageFunc,
     _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
     ) noexcept;
 
@@ -475,16 +494,6 @@ HCWebSocketGetHeaderAtIndex(
     _Out_ const char** headerName,
     _Out_ const char** headerValue
 ) noexcept;
-
-/// <summary>
-/// Gets the WebSocket functions to allow callers to respond to incoming messages and WebSocket close events.
-/// </summary>
-/// <param name="messageFunc">A pointer to the message handling callback to use, or a null pointer to remove.</param>
-/// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
-STDAPI HCWebSocketGetFunctions(
-    _Out_opt_ HCWebSocketMessageFunction* messageFunc,
-    _Out_opt_ HCWebSocketCloseEventFunction* closeFunc
-    ) noexcept;
 
 #endif // !HC_NOWEBSOCKETS
 
