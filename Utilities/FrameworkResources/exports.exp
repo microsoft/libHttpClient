@@ -37,10 +37,11 @@ _HCHttpCallResponseGetHeaderAtIndex
 _HCWebSocketCreate
 _HCWebSocketSetProxyUri
 _HCWebSocketSetHeader
-_HCWebSocketSetFunctions
+_HCWebSocketGetEventFunctions
 _HCWebSocketConnectAsync
 _HCGetWebSocketConnectResult
 _HCWebSocketSendMessageAsync
+_HCWebSocketSendBinaryMessageAsync
 _HCGetWebSocketSendMessageResult
 _HCWebSocketDisconnect
 _HCWebSocketDuplicateHandle
@@ -65,7 +66,6 @@ _HCHttpCallRequestGetRetryCacheId
 _HCHttpCallRequestGetTimeout
 _HCHttpCallRequestGetRetryDelay
 _HCHttpCallRequestGetTimeoutWindow
-#_HCHttpCallRequestGetAssertsForThrottling
 _HCHttpCallResponseSetResponseBodyBytes
 _HCHttpCallResponseAppendResponseBodyBytes
 _HCHttpCallResponseSetStatusCode
@@ -80,7 +80,6 @@ _HCWebSocketGetProxyUri
 _HCWebSocketGetHeader
 _HCWebSocketGetNumHeaders
 _HCWebSocketGetHeaderAtIndex
-_HCWebSocketGetFunctions
 #endif
 
 #
