@@ -79,13 +79,7 @@
     <ClCompile Include="$(opensslSourceRoot)ssl\t1_enc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)ssl\t1_ext.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)ssl\t1_lib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)ssl\t1_reneg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)ssl\t1_trce.c">

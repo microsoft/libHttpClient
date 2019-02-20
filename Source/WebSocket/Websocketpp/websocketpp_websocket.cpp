@@ -48,6 +48,7 @@ struct websocket_outgoing_message
 {
     XAsyncBlock* async;
     http_internal_string payload;
+    http_internal_vector<uint8_t> payloadBinary;
     websocketpp::lib::error_code error;
     uint64_t id;
 };
@@ -230,6 +231,50 @@ public:
         return S_OK;
     }
 
+    HRESULT sendBinary(XAsyncBlock* async, const uint8_t* payloadBytes, uint32_t payloadSize)
+    {
+        if (payloadBytes == nullptr)
+        {
+            return E_INVALIDARG;
+        }
+
+        if (m_state != CONNECTED)
+        {
+            HC_TRACE_ERROR(WEBSOCKET, "Client not connected");
+            return E_UNEXPECTED;
+        }
+
+        auto httpSingleton = get_http_singleton(false);
+        if (httpSingleton == nullptr)
+        {
+            return E_HC_NOT_INITIALISED;
+        }
+
+        if (payloadSize == 0)
+        {
+            return E_INVALIDARG;
+        }
+
+
+        websocket_outgoing_message message;
+        message.async = async;
+        message.payloadBinary.assign(payloadBytes, payloadBytes + payloadSize);
+        message.id = ++httpSingleton->m_lastId;
+
+        {
+            // Only actually have to take the lock if touching the queue.
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
+            m_outgoingMessageQueue.push(message);
+        }
+
+        if (++m_numSends == 1) // No sends in progress
+        {
+            // Start sending the message
+            return send_msg();
+        }
+        return S_OK;
+    }
+
     HRESULT close()
     {
         return close(HCWebSocketCloseStatus::Normal);
@@ -294,16 +339,29 @@ private:
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
         {
             HCWebSocketMessageFunction messageFunc = nullptr;
-            HCWebSocketGetFunctions(&messageFunc, nullptr);
-
+            HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr;
+            void* context = nullptr;
+            HCWebSocketGetEventFunctions(m_hcWebsocketHandle, &messageFunc, &binaryMessageFunc, nullptr, &context);
             // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
             // TODO: verify auto disconnect when closing client's websocket handle
 
-            if (messageFunc != nullptr)
+            if (msg->get_opcode() == websocketpp::frame::opcode::text)
             {
-                ASSERT(m_state >= CONNECTED && m_state < CLOSED);
-                auto& payload = msg->get_raw_payload();
-                messageFunc(m_hcWebsocketHandle, payload.data());
+                if (messageFunc != nullptr)
+                {
+                    ASSERT(m_state >= CONNECTED && m_state < CLOSED);
+                    auto& payload = msg->get_raw_payload();
+                    messageFunc(m_hcWebsocketHandle, payload.data(), context);
+                }
+            }
+            else if (msg->get_opcode() == websocketpp::frame::opcode::binary)
+            {
+                if (binaryMessageFunc != nullptr)
+                {
+                    ASSERT(m_state >= CONNECTED && m_state < CLOSED);
+                    auto& payload = msg->get_raw_payload();
+                    binaryMessageFunc(m_hcWebsocketHandle, (uint8_t*)payload.data(), (uint32_t)payload.size(), context);
+                }
             }
         });
 
@@ -476,15 +534,35 @@ private:
         try
         {
             std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
-            if (m_client->is_tls_client())
+
+            if (message.payload.empty())
             {
-                auto& client = m_client->client<websocketpp::config::asio_tls_client>();
-                client.send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                if (message.payloadBinary.size() > 0)
+                {
+                    if (m_client->is_tls_client())
+                    {
+                        m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                    }
+                    else
+                    {
+                        m_client->client<websocketpp::config::asio_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                    }
+                }
+                else
+                {
+                    hr = E_FAIL;
+                }
             }
             else
             {
-                auto& client = m_client->client<websocketpp::config::asio_client>();
-                client.send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                if (m_client->is_tls_client())
+                {
+                    m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                }
+                else
+                {
+                    m_client->client<websocketpp::config::asio_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                }
             }
 
             if (message.error.value() != 0)
@@ -590,10 +668,11 @@ private:
             pThis->m_client.reset();
 
             HCWebSocketCloseEventFunction closeFunc = nullptr;
-            HCWebSocketGetFunctions(nullptr, &closeFunc);
+            void* context = nullptr;
+            HCWebSocketGetEventFunctions(pThis->m_hcWebsocketHandle, nullptr, nullptr, &closeFunc, &context);
             if (closeFunc != nullptr)
             {
-                closeFunc(pThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(pThis->m_closeCode));
+                closeFunc(pThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(pThis->m_closeCode), context);
             }
 
             // Wait to change state to closed until the very end because 'this' may be cleaned up
@@ -726,6 +805,20 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
         return E_UNEXPECTED;
     }
     return wsppSocket->send(async, message);
+}
+
+HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock)
+{
+    std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
+    if (wsppSocket == nullptr)
+    {
+        return E_UNEXPECTED;
+    }
+    return wsppSocket->sendBinary(asyncBlock, payloadBytes, payloadSize);
 }
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(

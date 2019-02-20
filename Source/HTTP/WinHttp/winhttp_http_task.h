@@ -185,7 +185,7 @@ public:
     HRESULT connect_and_send_async();
 
 #if HC_WINHTTP_WEBSOCKETS
-    HRESULT send_websocket_message(_In_ const char* payloadPtr, _In_ size_t payloadLength);
+    HRESULT send_websocket_message(WINHTTP_WEB_SOCKET_BUFFER_TYPE eBufferType, _In_ const void* payloadPtr, _In_ size_t payloadLength);
     HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus);
     HRESULT on_websocket_disconnected(_In_ USHORT closeReason);
     std::atomic<WinHttpWebsockState> m_socketState = WinHttpWebsockState::Created;

@@ -1,17 +1,18 @@
 #pragma once
 
 // These macros define the "os"s that libHttpClient knows about
-#define HC_PLATFORM_UNKNOWN 0
+#define HC_PLATFORM_UNKNOWN 9999
 #define HC_PLATFORM_WIN32 1
 #define HC_PLATFORM_UWP 2
 #define HC_PLATFORM_XDK 3
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
 #define HC_PLATFORM_MAC 22
+#define HC_PLATFORM_GENERIC 100
 
 // These macros define the datamodels that libHttpClient knows about
 // (a datamodel defines the size of primitive types such as int and pointers)
-#define HC_DATAMODEL_UNKNOWN 0
+#define HC_DATAMODEL_UNKNOWN 9999
 #define HC_DATAMODEL_ILP32 1 // int, long and pointer are 32 bits (32 bit platforms)
 #define HC_DATAMODEL_LLP64 2 // int and long are 32 bit; long long and pointer are 64 bits (64 bit windows)
 #define HC_DATAMODEL_LP64 3 // int is 32 bit; long and pointer are 64 bits (64 bit unix)
@@ -31,6 +32,8 @@
         #define HC_PLATFORM HC_PLATFORM_UWP
     #elif WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
         #define HC_PLATFORM HC_PLATFORM_XDK
+    #else
+        #error Cannot recognize Windows flavor
     #endif
 
     #if defined(_WIN64)
@@ -54,6 +57,8 @@
         #else
             #define HC_PLATFORM HC_PLATFORM_IOS
         #endif
+    #else
+        #error Cannot recognize Apple OS flavor
     #endif
 
     #if defined(__LP64__)

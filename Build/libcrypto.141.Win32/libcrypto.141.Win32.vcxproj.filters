@@ -640,9 +640,6 @@
     <ClCompile Include="$(opensslSourceRoot)crypto\des\rand_key.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\des\rpc_enc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\des\set_key.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -757,9 +754,6 @@
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\curve25519.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\ec\ec2_mult.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ec2_oct.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -845,9 +839,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\engine\eng_cnf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\engine\eng_cryptodev.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\engine\eng_ctrl.c">
@@ -1088,9 +1079,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\evp\p_verify.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\evp\scrypt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\ex_data.c">
@@ -1351,13 +1339,7 @@
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_attr.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_dgst.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_doit.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_enc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\pkcs7\pk7_lib.c">
@@ -1373,9 +1355,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\poly1305\poly1305.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\rand\md_rand.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\rand\randfile.c">
@@ -1409,9 +1388,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\rc2\rc2_skey.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\rc2\tab.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\rc4\rc4_enc.c">
@@ -1454,9 +1430,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\rsa\rsa_none.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\rsa\rsa_null.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\rsa\rsa_oaep.c">

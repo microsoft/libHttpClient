@@ -30,6 +30,16 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     return S_OK;
 }
 
+HRESULT Internal_HCWebSocketSendBinaryMessageAsync(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock
+    )
+{
+    return S_OK;
+}
+
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus

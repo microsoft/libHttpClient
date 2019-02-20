@@ -38,6 +38,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(opensslSourceRoot)include;$(opensslGeneratedHeaders)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-D OPENSSL_NO_DEVCRYPTOENG %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);Crypt32.lib</AdditionalDependencies>
