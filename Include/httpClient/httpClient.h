@@ -573,7 +573,7 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
 /// <param name="incomingBodyString">UTF-8 encoded body of the incoming message as a string value, only if the message type is UTF-8.</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
 typedef void
-(STDAPIVCALLTYPE* HCWebSocketMessageFunction)(
+(CALLBACK* HCWebSocketMessageFunction)(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* incomingBodyString,
     _In_ void* functionContext
@@ -587,7 +587,7 @@ typedef void
 /// <param name="incomingBodyPayloadSize"></param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
 typedef void
-(STDAPIVCALLTYPE* HCWebSocketBinaryMessageFunction)(
+(CALLBACK* HCWebSocketBinaryMessageFunction)(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
@@ -601,7 +601,7 @@ typedef void
 /// <param name="closeStatus">The status of why the WebSocket was closed</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
 typedef void
-(STDAPIVCALLTYPE* HCWebSocketCloseEventFunction)(
+(CALLBACK* HCWebSocketCloseEventFunction)(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_ void* functionContext

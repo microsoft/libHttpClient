@@ -151,7 +151,7 @@ void ShutdownActiveThreads()
 HANDLE g_eventHandle;
 std::atomic<uint32_t> g_numberMessagesReceieved = 0;
 
-void message_received(
+void CALLBACK message_received(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* incomingBodyString,
     _In_opt_ void* functionContext
@@ -162,7 +162,7 @@ void message_received(
     SetEvent(g_eventHandle);
 }
 
-void websocket_closed(
+void CALLBACK websocket_closed(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_opt_ void* functionContext
