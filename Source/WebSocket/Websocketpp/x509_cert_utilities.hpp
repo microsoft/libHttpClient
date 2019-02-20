@@ -35,7 +35,7 @@
 #include "Android/utils_android.h"
 #endif
 
-#if HC_PLATFORM == HC_PLATFORM_IOS
+#if HC_PLATFORM_IS_APPLE
 #include <CoreFoundation/CFData.h>
 #include <Security/SecBase.h>
 #include <Security/SecCertificate.h>

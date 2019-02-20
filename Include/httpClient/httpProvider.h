@@ -263,24 +263,6 @@ STDAPI HCHttpCallRequestGetTimeoutWindow(
     _Out_ uint32_t* timeoutWindowInSeconds
     ) noexcept;
 
-/// <summary>
-/// Gets if assert are enabled if throttled.
-/// This means if HTTP status 429 is returned, a debug assert is triggered.
-/// This causes caller to immediately notice that their calling pattern is too fast and should be corrected.
-///
-/// It is best practice to not call this API, and instead adjust the calling pattern but this is provided
-/// as a temporary way to get unblocked while in early stages of game development.
-///
-/// Default is true.
-/// </summary>
-/// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls</param>
-/// <param name="enableAssertsForThrottling">True if assert are enabled if throttled</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCHttpCallRequestGetAssertsForThrottling(
-    _In_opt_ HCCallHandle call,
-    _Out_ bool* enableAssertsForThrottling
-    ) noexcept;
-
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Set APIs
