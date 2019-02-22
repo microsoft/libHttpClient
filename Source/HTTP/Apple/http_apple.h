@@ -6,10 +6,10 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-class ios_http_task
+class http_task_apple
 {
 public:
-    ios_http_task(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call);
+    http_task_apple(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call);
     bool initiate_request();
 
 private:
