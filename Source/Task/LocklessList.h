@@ -58,6 +58,10 @@ public:
     {
         std::atomic<std::uintptr_t> next;
         TData* data;
+
+        Node() :
+            next(0),
+            data(nullptr) {}
         
         static void* operator new(size_t sz)
         {
@@ -75,6 +79,11 @@ public:
         }
         
         static void operator delete(void* ptr)
+        {
+            aligned_free(ptr);
+        }
+
+        static void operator delete(void* ptr, const std::nothrow_t&)
         {
             aligned_free(ptr);
         }
@@ -127,7 +136,7 @@ public:
     // Pushes a new element on the list. If node is null, it will
     // be allocated.  push_back returns false if out of memory as
     // that is the only error condition.
-    bool push_back(TData* data, Node* node = nullptr) noexcept
+    bool push_back(_In_ TData* data, _In_opt_ Node* node = nullptr) noexcept
     {
         if (node == nullptr)
         {
