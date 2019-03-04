@@ -1234,10 +1234,7 @@ HRESULT TaskQueueImpl::Initialize(
     m_work.Source = referenced_ptr<ITaskQueue>(workPort->m_queue);
     m_completion.Source = referenced_ptr<ITaskQueue>(completionPort->m_queue);
 
-    m_termination.allowed = 
-        m_work.Source->CanTerminate() &&
-        m_completion.Source->CanTerminate();
-
+    m_termination.allowed = true;
     m_allowClose = true;
     
     RETURN_IF_FAILED(m_work.Port->Attach(&m_work));

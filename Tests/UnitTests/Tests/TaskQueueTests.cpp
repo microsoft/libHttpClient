@@ -870,6 +870,38 @@ public:
         XTaskQueueSetCurrentProcessTaskQueue(globalQueue);
     }
 
+    DEFINE_TEST_CASE(VerifyGlobalQueueTermination)
+    {
+        AutoQueueHandle globalQueue;
+        VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
+        VERIFY_IS_NOT_NULL(globalQueue);
+        
+        VERIFY_ARE_EQUAL(E_ACCESSDENIED, XTaskQueueTerminate(globalQueue, true, nullptr, nullptr));
+        
+        // We should be able to create a composite off of this queue and
+        // terminate the composite safely.
+        
+        XTaskQueuePortHandle port;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(globalQueue, XTaskQueuePort::Work, &port));
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(port, port, &queue));
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, true, nullptr, nullptr));
+        
+        // And termination of the composite should have no affect on the global queue.
+        
+        bool called = false;
+        auto cb = [](void* context, bool) 
+        {
+            bool* called = static_cast<bool*>(context);
+            *called = true;
+        };
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, &called, cb));
+        while (XTaskQueueDispatch(globalQueue, XTaskQueuePort::Work, 0)) {}
+
+        VERIFY_IS_TRUE(called);
+    }
+
     DEFINE_TEST_CASE(VerifyCloseInTerminationForThreadPool)
     {
         struct TestData
