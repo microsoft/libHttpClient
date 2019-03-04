@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "ThreadPool.h"
 
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+#include <httpClient/async_jvm.h>
+#endif
+
 class ThreadPoolImpl
 {
 public:
@@ -43,6 +47,16 @@ public:
                 numThreads--;
                 m_pool.emplace_back(std::thread([this]
                 {
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+                    JavaVM* jvm = s_javaVm;
+                    if (jvm)
+                    {
+                        JNIEnv* jniEnv = nullptr;
+                        jvm->AttachCurrentThread(&jniEnv, nullptr);
+                        UNREFERENCED_PARAMETER(jniEnv);
+                    }
+#endif
+
                     std::unique_lock<std::mutex> lock(m_wakeLock);
                     while(true)
                     {
@@ -94,6 +108,10 @@ public:
                             }
                         }
                     }
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+                    jvm->DetachCurrentThread();
+#endif
                 }));
             }
         }
@@ -177,6 +195,11 @@ private:
     std::vector<std::thread> m_pool;
     void* m_context = nullptr;
     ThreadPoolCallback* m_callback = nullptr;
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+public:
+    static std::atomic<JavaVM*> s_javaVm;
+#endif
 };
 
 ThreadPool::ThreadPool() noexcept :
@@ -192,7 +215,7 @@ ThreadPool::~ThreadPool() noexcept
 HRESULT ThreadPool::Initialize(_In_opt_ void* context, _In_ ThreadPoolCallback* callback) noexcept
 {
     RETURN_HR_IF(E_UNEXPECTED, m_impl != nullptr);
-    
+
     std::unique_ptr<ThreadPoolImpl> impl(new (std::nothrow) ThreadPoolImpl);
     RETURN_IF_NULL_ALLOC(impl);
 
@@ -216,3 +239,12 @@ void ThreadPool::Submit()
 {
     m_impl->Submit();
 }
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+STDAPI XTaskQueueSetJvm(_In_ JavaVM* jvm) noexcept
+{
+    assert(ThreadPoolImpl::s_javaVm == nullptr || ThreadPoolImpl::s_javaVm == jvm);
+    ThreadPoolImpl::s_javaVm = jvm;
+    return S_OK;
+}
+#endif

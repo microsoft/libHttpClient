@@ -131,6 +131,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsync.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsyncProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h" />
+    <ClInclude Include="..\..\Include\httpClient\async_jvm.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

@@ -9,6 +9,10 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
     assert(!performEnv);
     JavaVM* javaVm = args->javaVM;
     JNIEnv* jniEnv = nullptr;
+
+    // Pass the jvm down to XTaskQueue
+    XTaskQueueSetJvm(javaVm);
+
     // Java classes can only be resolved when we are on a Java-initiated thread. When we are on
     // a C++ background thread and attach to Java we do not have the full class-loader information.
     // This call should be made on JNI_OnLoad or another java thread and we will cache a global reference

@@ -186,6 +186,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\httpClient\async_jvm.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
