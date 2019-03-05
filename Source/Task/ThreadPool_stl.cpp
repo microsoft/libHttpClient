@@ -247,4 +247,6 @@ STDAPI XTaskQueueSetJvm(_In_ JavaVM* jvm) noexcept
     ThreadPoolImpl::s_javaVm = jvm;
     return S_OK;
 }
+
+std::atomic<JavaVM*> ThreadPoolImpl::s_javaVm;
 #endif
