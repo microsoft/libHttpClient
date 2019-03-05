@@ -48,13 +48,8 @@ public:
                 m_pool.emplace_back(std::thread([this]
                 {
 #if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+                    JNIEnv* jniEnv = nullptr;
                     JavaVM* jvm = s_javaVm;
-                    if (jvm)
-                    {
-                        JNIEnv* jniEnv = nullptr;
-                        jvm->AttachCurrentThread(&jniEnv, nullptr);
-                        UNREFERENCED_PARAMETER(jniEnv);
-                    }
 #endif
 
                     std::unique_lock<std::mutex> lock(m_wakeLock);
@@ -66,6 +61,20 @@ public:
                         {
                             break;
                         }
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+                        // lazy check for the JavaVM, we do it here so that we
+                        // will attach even if the thread pool is initialized
+                        // before we're given the jvm
+                        if (!jniEnv)
+                        {
+                            jvm = s_javaVm;
+                            if (jvm)
+                            {
+                                jvm->AttachCurrentThread(&jniEnv, nullptr);
+                            }
+                        }
+#endif
 
                         if (m_calls != 0)
                         {
@@ -83,7 +92,7 @@ public:
                             // member state is no longer accessed, but the
                             // final release does need to wait on outstanding
                             // calls.
-                            
+
                             ActionCompleteImpl ac(this);
 
                             lock.unlock();
@@ -110,12 +119,15 @@ public:
                     }
 
 #if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
-                    jvm->DetachCurrentThread();
+                    if (jniEnv && jvm)
+                    {
+                        jvm->DetachCurrentThread();
+                    }
 #endif
                 }));
             }
         }
-        catch(const std::bad_alloc&)
+        catch (const std::bad_alloc&)
         {
             return E_OUTOFMEMORY;
         }
@@ -181,15 +193,15 @@ private:
         ThreadPoolImpl * m_owner = nullptr;
     };
 
-    std::atomic<uint32_t> m_refs { 1 };
+    std::atomic<uint32_t> m_refs{ 1 };
 
     std::mutex m_wakeLock;
     std::condition_variable m_wake;
-    std::atomic<uint32_t> m_calls { 0 };
+    std::atomic<uint32_t> m_calls{ 0 };
 
     std::mutex m_activeLock;
     std::condition_variable m_active;
-    std::atomic<uint32_t> m_activeCalls { 0 };
+    std::atomic<uint32_t> m_activeCalls{ 0 };
 
     std::atomic<bool> m_terminate = { false };
     std::vector<std::thread> m_pool;
