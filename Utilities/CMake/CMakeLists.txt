@@ -77,7 +77,7 @@ include_directories(
     $(ProjectDir)../../../include
     $(ProjectDir)../../../include/httpClient
     )
-    
+
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Public_Source_Files
@@ -113,6 +113,7 @@ set(Task_Windows_Source_Files
     )
 
 set(Task_Android_Source_Files
+    ../../../Include/httpClient/async_jvm.h
     ../../../Source/Task/ThreadPool_stl.cpp
     ../../../Source/Task/WaitTimer_stl.cpp
     )
@@ -169,7 +170,7 @@ set(Common_Windows_Source_Files
     ../../../Source/Common/Win/utils_win.cpp
     ../../../Source/Common/Win/utils_win.h
     )
-    
+
 set(Common_Android_Source_Files
     ../../../Source/Common/Android/utils_android.cpp
     ../../../Source/Common/Android/utils_android.h
@@ -406,4 +407,3 @@ set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
 message(STATUS "CMAKE_SYSTEM_VERSION='${CMAKE_SYSTEM_VERSION}'")
 message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")
 message(STATUS "SHORT_VERSION='${SHORT_VERSION}'")
-

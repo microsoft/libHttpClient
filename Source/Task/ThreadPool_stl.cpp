@@ -49,7 +49,7 @@ public:
                 {
 #if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
                     JNIEnv* jniEnv = nullptr;
-                    JavaVM* jvm = s_javaVm;
+                    JavaVM* jvm = nullptr;
 #endif
 
                     std::unique_lock<std::mutex> lock(m_wakeLock);

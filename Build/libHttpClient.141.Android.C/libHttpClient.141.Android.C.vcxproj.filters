@@ -75,6 +75,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async_jvm.h">
+      <Filter>C++ Source\Task\Android</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.h">
       <Filter>C++ Source\Common\Android</Filter>
     </ClInclude>
@@ -184,9 +187,6 @@
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\httpClient\async_jvm.h">
       <Filter>C++ Public Includes</Filter>
     </ClInclude>
   </ItemGroup>
