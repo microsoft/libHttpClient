@@ -5,7 +5,10 @@
 #include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
+
+#if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
+#endif
 
 using namespace xbox::httpclient;
 
