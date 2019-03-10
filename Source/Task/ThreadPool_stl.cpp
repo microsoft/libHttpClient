@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "ThreadPool.h"
 
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+#include <httpClient/async_jvm.h>
+#endif
+
 class ThreadPoolImpl
 {
 public:
@@ -43,6 +47,11 @@ public:
                 numThreads--;
                 m_pool.emplace_back(std::thread([this]
                 {
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+                    JNIEnv* jniEnv = nullptr;
+                    JavaVM* jvm = nullptr;
+#endif
+
                     std::unique_lock<std::mutex> lock(m_wakeLock);
                     while(true)
                     {
@@ -52,6 +61,20 @@ public:
                         {
                             break;
                         }
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+                        // lazy check for the JavaVM, we do it here so that we
+                        // will attach even if the thread pool is initialized
+                        // before we're given the jvm
+                        if (!jniEnv)
+                        {
+                            jvm = s_javaVm;
+                            if (jvm)
+                            {
+                                jvm->AttachCurrentThread(&jniEnv, nullptr);
+                            }
+                        }
+#endif
 
                         if (m_calls != 0)
                         {
@@ -69,7 +92,7 @@ public:
                             // member state is no longer accessed, but the
                             // final release does need to wait on outstanding
                             // calls.
-                            
+
                             ActionCompleteImpl ac(this);
 
                             lock.unlock();
@@ -94,10 +117,17 @@ public:
                             }
                         }
                     }
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+                    if (jniEnv && jvm)
+                    {
+                        jvm->DetachCurrentThread();
+                    }
+#endif
                 }));
             }
         }
-        catch(const std::bad_alloc&)
+        catch (const std::bad_alloc&)
         {
             return E_OUTOFMEMORY;
         }
@@ -163,20 +193,25 @@ private:
         ThreadPoolImpl * m_owner = nullptr;
     };
 
-    std::atomic<uint32_t> m_refs { 1 };
+    std::atomic<uint32_t> m_refs{ 1 };
 
     std::mutex m_wakeLock;
     std::condition_variable m_wake;
-    std::atomic<uint32_t> m_calls { 0 };
+    std::atomic<uint32_t> m_calls{ 0 };
 
     std::mutex m_activeLock;
     std::condition_variable m_active;
-    std::atomic<uint32_t> m_activeCalls { 0 };
+    std::atomic<uint32_t> m_activeCalls{ 0 };
 
     std::atomic<bool> m_terminate = { false };
     std::vector<std::thread> m_pool;
     void* m_context = nullptr;
     ThreadPoolCallback* m_callback = nullptr;
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+public:
+    static std::atomic<JavaVM*> s_javaVm;
+#endif
 };
 
 ThreadPool::ThreadPool() noexcept :
@@ -192,7 +227,7 @@ ThreadPool::~ThreadPool() noexcept
 HRESULT ThreadPool::Initialize(_In_opt_ void* context, _In_ ThreadPoolCallback* callback) noexcept
 {
     RETURN_HR_IF(E_UNEXPECTED, m_impl != nullptr);
-    
+
     std::unique_ptr<ThreadPoolImpl> impl(new (std::nothrow) ThreadPoolImpl);
     RETURN_IF_NULL_ALLOC(impl);
 
@@ -216,3 +251,14 @@ void ThreadPool::Submit()
 {
     m_impl->Submit();
 }
+
+#if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID
+STDAPI XTaskQueueSetJvm(_In_ JavaVM* jvm) noexcept
+{
+    assert(ThreadPoolImpl::s_javaVm == nullptr || ThreadPoolImpl::s_javaVm == jvm);
+    ThreadPoolImpl::s_javaVm = jvm;
+    return S_OK;
+}
+
+std::atomic<JavaVM*> ThreadPoolImpl::s_javaVm;
+#endif

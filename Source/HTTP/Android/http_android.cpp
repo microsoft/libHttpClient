@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
 #include <httpClient/httpClient.h>
+#include <httpClient/httpProvider.h>
 #include "android_http_request.h"
 #include "android_platform_context.h"
 
@@ -17,6 +18,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 
     if (response == nullptr) 
     {
+        HCHttpCallResponseSetNetworkErrorCode(sourceCall, E_FAIL, 0);
         XAsyncComplete(sourceRequest->GetAsyncBlock(), E_FAIL, 0);
     }
     else 

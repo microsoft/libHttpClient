@@ -15,3 +15,7 @@
 #include <XAsyncProvider.h>
 #include <XTaskQueue.h>
 #endif
+
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#include <httpClient/async_jvm.h>
+#endif
