@@ -28,7 +28,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
     }
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequestGS_OnRequestFailed(JNIEnv* env, jobject instance, jlong call, jstring errorMessage)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(JNIEnv* env, jobject instance, jlong call, jstring errorMessage)
 {
     HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
