@@ -65,7 +65,7 @@ public class HttpClientRequest {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(final Call call, IOException e) {
-                OnRequestCompleted(sourceCall, null);
+                OnRequestFailed(sourceCall, e.getClass().getCanonicalName());
             }
 
             @Override
@@ -76,4 +76,5 @@ public class HttpClientRequest {
     }
 
     private native void OnRequestCompleted(long call, HttpClientResponse response);
+    private native void OnRequestFailed(long call, String errorMessage);
 }

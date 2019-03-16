@@ -31,6 +31,7 @@ struct HC_CALL
     uint32_t statusCode = 0;
     HRESULT networkErrorCode = S_OK;
     uint32_t platformNetworkErrorCode = 0;
+    http_internal_string platformNetworkErrorMessage;
     std::shared_ptr<xbox::httpclient::hc_task> task;
 
     uint64_t id = 0;

@@ -28,6 +28,22 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
     }
 }
 
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequestGS_OnRequestFailed(JNIEnv* env, jobject instance, jlong call, jstring errorMessage)
+{
+    HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
+    HttpRequest* request = nullptr;
+    HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
+    std::unique_ptr<HttpRequest> sourceRequest{ request };
+
+    HCHttpCallResponseSetNetworkErrorCode(sourceCall, E_FAIL, 0);
+
+    const char *nativeErrorString = env->GetStringUTFChars(errorMessage, nullptr);
+    HCHttpCallResponseSetPlatformNetworkErrorMessage(sourceCall, nativeErrorString);
+    env->ReleaseStringUTFChars(errorMessage, nativeErrorString);
+
+    XAsyncComplete(sourceRequest->GetAsyncBlock(), E_FAIL, 0);
+}
+
 }
 
 void Internal_HCHttpCallPerformAsync(
