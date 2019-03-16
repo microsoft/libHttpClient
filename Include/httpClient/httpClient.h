@@ -510,6 +510,19 @@ STDAPI HCHttpCallResponseGetNetworkErrorCode(
     ) noexcept;
 
 /// <summary>
+/// Get the platform network error message of the HTTP call
+/// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="platformNetworkErrorMessage">The platform specific network error message of the HTTP call to be
+/// used for tracing / debugging</param> <returns>Result code for this API operation.  Possible values are S_OK,
+/// E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseGetPlatformNetworkErrorMessage(
+    _In_ HCCallHandle call,
+    _Out_ const char** platformNetworkErrorMessage
+    ) noexcept;
+
+/// <summary>
 /// Get a response header for the HTTP call for a given header name
 /// This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
 /// </summary>
