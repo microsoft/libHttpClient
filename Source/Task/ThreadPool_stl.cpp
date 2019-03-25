@@ -55,7 +55,10 @@ public:
                     std::unique_lock<std::mutex> lock(m_wakeLock);
                     while(true)
                     {
-                        m_wake.wait(lock);
+                        if (m_calls == 0)
+                        {
+                            m_wake.wait(lock);
+                        }
 
                         if (m_terminate)
                         {
@@ -166,8 +169,13 @@ public:
 
     void Submit() noexcept
     {
-        m_calls++;
-        m_activeCalls++;
+        {
+            std::unique_lock<std::mutex> lock(m_wakeLock);
+            m_calls++;
+            m_activeCalls++;
+        }
+
+        // Release lock before notify_all to optimize immediate awakes
         m_wake.notify_all();
     }
 
@@ -197,7 +205,7 @@ private:
 
     std::mutex m_wakeLock;
     std::condition_variable m_wake;
-    std::atomic<uint32_t> m_calls{ 0 };
+    uint32_t m_calls{ 0 };
 
     std::mutex m_activeLock;
     std::condition_variable m_active;
