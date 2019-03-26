@@ -96,6 +96,11 @@ public:
                             // final release does need to wait on outstanding
                             // calls.
 
+                            {
+                                std::unique_lock<std::mutex> lock(m_activeLock);
+                                m_activeCalls++;
+                            }
+
                             ActionCompleteImpl ac(this);
 
                             lock.unlock();
@@ -140,17 +145,20 @@ public:
 
     void Terminate() noexcept
     {
-        std::unique_lock<std::mutex> lock(m_activeLock);
+        std::unique_lock<std::mutex> wakeLock(m_wakeLock); // Must lock before m_activeLock
+        std::unique_lock<std::mutex> activeLock(m_activeLock);
         m_terminate = true;
+        wakeLock.unlock();
+
         m_wake.notify_all();
 
         // Wait for the active call count
         // to go to zero.
         while (m_activeCalls != 0)
         {
-            m_active.wait(lock);
+            m_active.wait(activeLock);
         }
-        lock.unlock();
+        activeLock.unlock();
 
         for (auto &t : m_pool)
         {
@@ -172,7 +180,6 @@ public:
         {
             std::unique_lock<std::mutex> lock(m_wakeLock);
             m_calls++;
-            m_activeCalls++;
         }
 
         // Release lock before notify_all to optimize immediate awakes
