@@ -193,7 +193,13 @@ private:
         void operator()() override
         {
             Invoked = true;
-            m_owner->m_activeCalls--;
+
+            {
+                std::unique_lock<std::mutex> lock(m_owner->m_activeLock);
+                m_owner->m_activeCalls--;
+            }
+
+            // Release lock before notify_all to optimize immediate awakes
             m_owner->m_active.notify_all();
         }
 
