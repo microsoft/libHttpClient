@@ -55,7 +55,10 @@ public:
                     std::unique_lock<std::mutex> lock(m_wakeLock);
                     while(true)
                     {
-                        m_wake.wait(lock);
+                        if (m_calls == 0)
+                        {
+                            m_wake.wait(lock);
+                        }
 
                         if (m_terminate)
                         {
@@ -92,6 +95,11 @@ public:
                             // member state is no longer accessed, but the
                             // final release does need to wait on outstanding
                             // calls.
+
+                            {
+                                std::unique_lock<std::mutex> lock(m_activeLock);
+                                m_activeCalls++;
+                            }
 
                             ActionCompleteImpl ac(this);
 
@@ -137,17 +145,21 @@ public:
 
     void Terminate() noexcept
     {
-        std::unique_lock<std::mutex> lock(m_activeLock);
-        m_terminate = true;
+        {
+            std::unique_lock<std::mutex> wakeLock(m_wakeLock); // Must lock before m_activeLock
+            m_terminate = true;
+        }
         m_wake.notify_all();
+
+        std::unique_lock<std::mutex> activeLock(m_activeLock);
 
         // Wait for the active call count
         // to go to zero.
         while (m_activeCalls != 0)
         {
-            m_active.wait(lock);
+            m_active.wait(activeLock);
         }
-        lock.unlock();
+        activeLock.unlock();
 
         for (auto &t : m_pool)
         {
@@ -166,8 +178,12 @@ public:
 
     void Submit() noexcept
     {
-        m_calls++;
-        m_activeCalls++;
+        {
+            std::unique_lock<std::mutex> lock(m_wakeLock);
+            m_calls++;
+        }
+
+        // Release lock before notify_all to optimize immediate awakes
         m_wake.notify_all();
     }
 
@@ -185,7 +201,13 @@ private:
         void operator()() override
         {
             Invoked = true;
-            m_owner->m_activeCalls--;
+
+            {
+                std::unique_lock<std::mutex> lock(m_owner->m_activeLock);
+                m_owner->m_activeCalls--;
+            }
+
+            // Release lock before notify_all to optimize immediate awakes
             m_owner->m_active.notify_all();
         }
 
@@ -197,13 +219,13 @@ private:
 
     std::mutex m_wakeLock;
     std::condition_variable m_wake;
-    std::atomic<uint32_t> m_calls{ 0 };
+    uint32_t m_calls{ 0 };
+    bool m_terminate{ false };
 
     std::mutex m_activeLock;
     std::condition_variable m_active;
-    std::atomic<uint32_t> m_activeCalls{ 0 };
+    uint32_t m_activeCalls{ 0 };
 
-    std::atomic<bool> m_terminate = { false };
     std::vector<std::thread> m_pool;
     void* m_context = nullptr;
     ThreadPoolCallback* m_callback = nullptr;
