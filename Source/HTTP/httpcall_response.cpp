@@ -188,6 +188,47 @@ try
 }
 CATCH_RETURN()
 
+STDAPI
+HCHttpCallResponseGetPlatformNetworkErrorMessage(
+    _In_ HCCallHandle call,
+    _Out_ const char** platformNetworkErrorMessage
+    ) noexcept
+try
+{
+    if (call == nullptr || platformNetworkErrorMessage == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *platformNetworkErrorMessage = call->platformNetworkErrorMessage.c_str();
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallResponseSetPlatformNetworkErrorMessage(
+    _In_ HCCallHandle call,
+    _In_z_ const char* platformNetworkErrorMessage
+    ) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    // do a thing to/from string
+    call->platformNetworkErrorMessage = platformNetworkErrorMessage;
+    if (call->traceCall)
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT,
+            "HCHttpCallResponseSetErrorMessage [ID %llu]: errorMessage=%s",
+            call->id,
+            platformNetworkErrorMessage);
+    }
+    return S_OK;
+}
+CATCH_RETURN()
+
 STDAPI 
 HCHttpCallResponseGetHeader(
     _In_ HCCallHandle call,

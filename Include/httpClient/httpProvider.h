@@ -319,6 +319,17 @@ STDAPI HCHttpCallResponseSetNetworkErrorCode(
     ) noexcept;
 
 /// <summary>
+/// Set the platform network error message of the HTTP call
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="platformNetworkErrorMessage">The platform specific network error message of the HTTP call to be used for logging / debugging</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallResponseSetPlatformNetworkErrorMessage(
+    _In_ HCCallHandle call,
+    _In_z_ const char* platformNetworkErrorMessage
+    ) noexcept;
+
+/// <summary>
 /// Set a response header for the HTTP call
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
