@@ -145,12 +145,13 @@ public:
 
     void Terminate() noexcept
     {
-        std::unique_lock<std::mutex> wakeLock(m_wakeLock); // Must lock before m_activeLock
-        std::unique_lock<std::mutex> activeLock(m_activeLock);
-        m_terminate = true;
-        wakeLock.unlock();
-
+        {
+            std::unique_lock<std::mutex> wakeLock(m_wakeLock); // Must lock before m_activeLock
+            m_terminate = true;
+        }
         m_wake.notify_all();
+
+        std::unique_lock<std::mutex> activeLock(m_activeLock);
 
         // Wait for the active call count
         // to go to zero.
