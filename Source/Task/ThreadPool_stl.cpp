@@ -105,7 +105,7 @@ public:
 
                             lock.unlock();
                             AddRef();
-                            m_callback(m_context, ac);
+                            m_callback(m_context, ac); 
                             lock.lock();
 
                             if (!ac.Invoked)
