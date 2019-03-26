@@ -219,12 +219,12 @@ private:
     std::mutex m_wakeLock;
     std::condition_variable m_wake;
     uint32_t m_calls{ 0 };
+    bool m_terminate{ false };
 
     std::mutex m_activeLock;
     std::condition_variable m_active;
-    std::atomic<uint32_t> m_activeCalls{ 0 };
+    uint32_t m_activeCalls{ 0 };
 
-    std::atomic<bool> m_terminate = { false };
     std::vector<std::thread> m_pool;
     void* m_context = nullptr;
     ThreadPoolCallback* m_callback = nullptr;
