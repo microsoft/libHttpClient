@@ -781,8 +781,6 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
-    assert(env != nullptr);
-
     // TODO: Handle double connecting on same HCWebsocketHandle, and ensure disconnect/reconnect case works
 
     websocket->uri = uri;

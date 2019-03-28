@@ -5,7 +5,10 @@
 #include "../httpcall.h"
 #include "uri.h"
 #include "winhttp_http_task.h"
+
+#if !HC_NOWEBSOCKETS
 #include "hcwebsocket.h"
+#endif
 
 #define CRLF L"\r\n"
 

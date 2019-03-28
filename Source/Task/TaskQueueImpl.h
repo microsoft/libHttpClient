@@ -96,7 +96,7 @@ public:
 
     SubmitCallback(_In_ XTaskQueueHandle queue);
 
-    HRESULT Register(_In_ void* context, _In_ XTaskQueueMonitorCallback* callback, _Out_ XTaskQueueRegistrationToken* token);
+    HRESULT Register(_In_opt_ void* context, _In_ XTaskQueueMonitorCallback* callback, _Out_ XTaskQueueRegistrationToken* token);
     void Unregister(_In_ XTaskQueueRegistrationToken token);
     void Invoke(_In_ XTaskQueuePort port);
 
@@ -164,7 +164,7 @@ public:
         _In_ ITaskQueuePortContext* portContext,
         _In_ uint32_t waitMs,
         _In_opt_ void* callbackContext,
-        XTaskQueueCallback* callback);
+        _In_ XTaskQueueCallback* callback);
 
     HRESULT __stdcall RegisterWaitHandle(
         _In_ ITaskQueuePortContext* portContext,

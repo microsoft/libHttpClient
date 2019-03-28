@@ -43,7 +43,7 @@ SubmitCallback::SubmitCallback(
     memset(m_buffer2, 0, sizeof(m_buffer2));
 }
 
-HRESULT SubmitCallback::Register(_In_ void* context, _In_ XTaskQueueMonitorCallback* callback, _Out_ XTaskQueueRegistrationToken* token)
+HRESULT SubmitCallback::Register(_In_opt_ void* context, _In_ XTaskQueueMonitorCallback* callback, _Out_ XTaskQueueRegistrationToken* token)
 {
     RETURN_HR_IF(E_POINTER, callback == nullptr || token == nullptr);
 
@@ -1004,7 +1004,7 @@ void CALLBACK TaskQueuePortImpl::WaitCallback(
     UNREFERENCED_PARAMETER(instance);
     UNREFERENCED_PARAMETER(wait);
 
-    if (waitResult == WAIT_OBJECT_0)
+    if (waitResult == WAIT_OBJECT_0 && context != nullptr)
     {
         WaitRegistration* waitReg = static_cast<WaitRegistration*>(context);
         waitReg->port->ProcessWaitCallback(waitReg);
@@ -1234,10 +1234,7 @@ HRESULT TaskQueueImpl::Initialize(
     m_work.Source = referenced_ptr<ITaskQueue>(workPort->m_queue);
     m_completion.Source = referenced_ptr<ITaskQueue>(completionPort->m_queue);
 
-    m_termination.allowed = 
-        m_work.Source->CanTerminate() &&
-        m_completion.Source->CanTerminate();
-
+    m_termination.allowed = true;
     m_allowClose = true;
     
     RETURN_IF_FAILED(m_work.Port->Attach(&m_work));

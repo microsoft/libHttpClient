@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <httpClient/async.h>
+#include "XTaskQueue.h"
 
 /// <summary>
 /// Returns TRUE if there is no outstanding work in this

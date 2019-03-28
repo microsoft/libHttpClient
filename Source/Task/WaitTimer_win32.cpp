@@ -57,8 +57,11 @@ private:
         _Inout_opt_ void* context,
         _Inout_ PTP_TIMER)
     {
-        WaitTimerImpl* pthis = static_cast<WaitTimerImpl*>(context);
-        pthis->m_callback(pthis->m_context);
+        if (context != nullptr)
+        {
+            WaitTimerImpl* pthis = static_cast<WaitTimerImpl*>(context);
+            pthis->m_callback(pthis->m_context);
+        }
     }
 };
 
