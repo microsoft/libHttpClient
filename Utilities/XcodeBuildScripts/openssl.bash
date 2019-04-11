@@ -1,10 +1,15 @@
 #!/bin/bash
-# set | grep ARCH
-# set -x
+set | grep ARCH
+set -x
 
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
 OPENSSL_TMP="$OPENSSL_SRC/tmp"
-LIB_OUTPUT="$SRCROOT/../../Binaries/iOS"
+LIB_OUTPUT="${SCRIPT_INPUT_FILE_0}"
+
+if [ "$LIB_OUTPUT" == "" ]; then
+echo "***** No library output directory specified - bailing out *****"
+exit 1
+fi
 
 BUILDARCHS="$ARCHS"
 
