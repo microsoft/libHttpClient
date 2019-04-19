@@ -244,6 +244,10 @@ private:
         _In_ winhttp_http_task* pRequestContext,
         _In_ void* statusInfo);
 
+    static char* winhttp_web_socket_buffer_type_to_string(
+        _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
+    );
+
     HRESULT send(_In_ const xbox::httpclient::Uri& cUri, _In_ const char* method);
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);

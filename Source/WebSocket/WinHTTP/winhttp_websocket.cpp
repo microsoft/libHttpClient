@@ -190,7 +190,8 @@ public:
             sendContext->message = std::move(m_outgoingMessageQueue.front());
             m_outgoingMessageQueue.pop();
         }
-
+        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", m_hcWebsocketHandle->id, sendContext->message.id);
+        
         auto hr = XAsyncBegin(sendContext->message.asyncBlock, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
@@ -200,7 +201,9 @@ public:
                 case XAsyncOp::DoWork:
                 {
                     auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
-                    return sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
+                    HRESULT hr = sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
+                    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] send message[ID %llu] completed: hr=%08X", sendMsgContext->pThis->m_hcWebsocketHandle->id, sendMsgContext->message.id, hr);
+                    return hr;
                 }
 
                 case XAsyncOp::GetResult:
@@ -284,6 +287,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     auto storedPtr = shared_ptr_cache::store<websocket_connect_context>(connectContext);
     websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(storedPtr);
 
+    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] trying to connect...", websocket->id);
     HRESULT hr = XAsyncBegin(asyncBlock, rawConnectContext, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
@@ -309,6 +313,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
                             rawConnectContext->outerAsyncBlock,
                             rawConnectContext->env->m_hSession,
                             rawConnectContext->env->m_proxyType);
+                        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] connect complete: hr=%08X", rawConnectContext->websocket->id, hr);
                         if (FAILED(hr))
                         {
                             return hr;
@@ -356,6 +361,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     {
         return E_UNEXPECTED;
     }
+    httpSocket->m_hcWebsocketHandle = websocket;
     return httpSocket->send_websocket_message_async(async, message);
 }
 
@@ -375,6 +381,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     {
         return E_UNEXPECTED;
     }
+    httpSocket->m_hcWebsocketHandle = websocket;
     return httpSocket->send_websocket_binary_message_async(asyncBlock, payloadBytes, payloadSize);
 }
 
@@ -393,6 +400,7 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     {
         return E_UNEXPECTED;
     }
+    httpSocket->m_hcWebsocketHandle = websocket;
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
     return httpSocket->disconnect_websocket(closeStatus);
 }
