@@ -224,6 +224,9 @@ int main()
         uint32_t numberOfMessagesToSend = 100;
         for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
         {
+            char webMsg[100];
+            snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
+
             asyncBlock = new XAsyncBlock{};
             asyncBlock->queue = g_queue;
             asyncBlock->callback = [](XAsyncBlock* asyncBlock)
@@ -236,11 +239,8 @@ int main()
                 delete asyncBlock;
             };
 
-            char webMsg[100];
-            snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
             printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", webMsg);
             hr = HCWebSocketSendMessageAsync(websocket, webMsg, asyncBlock);
-
 
             asyncBlock = new XAsyncBlock{};
             asyncBlock->queue = g_queue;
@@ -257,7 +257,7 @@ int main()
             hr = HCWebSocketSendBinaryMessageAsync(websocket, (uint8_t*)webMsg, 100, asyncBlock);
         }
 
-        while (g_numberMessagesReceieved < numberOfMessagesToSend)
+        while (g_numberMessagesReceieved < numberOfMessagesToSend * 2)
         {
             WaitForSingleObject(g_eventHandle, INFINITE);
         }

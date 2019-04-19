@@ -1147,7 +1147,7 @@ HRESULT winhttp_http_task::websocket_read_message()
         dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, nullptr, nullptr);
         if (dwError)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "websocket_read_message[WinHttp] [ID %llu] [TID %ul] errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
         }
     }
 
