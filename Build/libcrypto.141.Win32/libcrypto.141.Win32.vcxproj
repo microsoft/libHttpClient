@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
@@ -28,6 +36,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <LinkIncremental>true</LinkIncremental>
     <HCLibPlatformType>Win32</HCLibPlatformType>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
@@ -65,6 +74,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>
         WIN32;
+        _WIN32_WINNT=0x601;
         WIN32_LEAN_AND_MEAN;
         _LIB;
         DSO_WIN32;
