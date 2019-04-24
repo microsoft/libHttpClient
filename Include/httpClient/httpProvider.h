@@ -373,6 +373,8 @@ STDAPI HCHttpCallResponseSetHeaderWithLength(
 /// <param name="subProtocol">The UTF-8 encoded subProtocol to connect to</param>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
+/// <param name="context">The context registered with the callback.</param>
+/// <param name="env">The environment for the default callback.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCWebSocketConnectFunction)(
@@ -380,6 +382,7 @@ typedef HRESULT
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context,
     _In_ HCPerformEnv env
     );
 
@@ -389,12 +392,14 @@ typedef HRESULT
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="message">The UTF-8 encoded message to send</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
+/// <param name="context">The context registered with the callback.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCWebSocketSendMessageFunction)(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
-    _Inout_ XAsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context
     );
 
 
@@ -404,13 +409,15 @@ typedef HRESULT
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="message">The UTF-8 encoded message to send</param>
 /// <param name="asyncBlock">The asyncBlock of the async task</param>
+/// <param name="context">The context registered with the callback.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCWebSocketSendBinaryMessageFunction)(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context
     );
 
 
@@ -419,11 +426,13 @@ typedef HRESULT
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="closeStatus">The close status of the WebSocket</param>
+/// <param name="context">The context registered with the callback.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCWebSocketDisconnectFunction)(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus,
+    _In_opt_ void* context
     );
 
 /// <summary>
@@ -437,13 +446,15 @@ typedef HRESULT
 /// Pass in nullptr to use the default implementation based on the current platform</param>
 /// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired. 
 /// Pass in nullptr to use the default implementation based on the current platform</param>
+/// <param name="context">The context pointer for the callbacks</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
 HCSetWebSocketFunctions(
-    _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
-    _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
-    _In_opt_ HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc,
-    _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
+    _In_ HCWebSocketConnectFunction websocketConnectFunc,
+    _In_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
+    _In_ HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc,
+    _In_ HCWebSocketDisconnectFunction websocketDisconnectFunc,
+    _In_opt_ void* context
     ) noexcept;
 
 /// <summary>
@@ -453,13 +464,15 @@ HCSetWebSocketFunctions(
 /// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. </param>
 /// <param name="websocketSendBinaryMessageFunc">A callback that implements WebSocket send binary message function as desired.</param>
 /// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired.</param>
+/// <param name="context">The context pointer for the callbacks</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
 HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
     _Out_ HCWebSocketSendBinaryMessageFunction* websocketSendBinaryMessageFunc,
-    _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
+    _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc,
+    _Out_ void** context
     ) noexcept;
 
 /// <summary>

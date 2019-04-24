@@ -123,7 +123,7 @@ HRESULT perform_http_call(
 
                 if (!matchedMocks) // if there wasn't a matched mock, then real call
                 {
-                    PerformInfo info = httpSingleton->m_perform;
+                    HttpPerformInfo const& info = httpSingleton->m_httpPerform;
                     if (info.handler != nullptr)
                     {
                         try
