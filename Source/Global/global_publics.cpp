@@ -46,13 +46,18 @@ HCSetHttpCallPerformFunction(
     _In_opt_ void* performContext
     ) noexcept
 {
+    if (performFunc == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
     auto httpSingleton = get_http_singleton(false);
     if (httpSingleton)
     {
         return E_HC_ALREADY_INITIALISED;
     }
 
-    auto& info = GetUserPerformHandler();
+    auto& info = GetUserHttpPerformHandler();
     info.handler = performFunc;
     info.context = performContext;
     return S_OK;
@@ -70,7 +75,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto& info = GetUserPerformHandler();
+    auto& info = GetUserHttpPerformHandler();
     *performFunc = info.handler;
     *performContext = info.context;
     return S_OK;

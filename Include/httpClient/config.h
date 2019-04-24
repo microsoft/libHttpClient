@@ -14,8 +14,8 @@
 // (a datamodel defines the size of primitive types such as int and pointers)
 #define HC_DATAMODEL_UNKNOWN 9999
 #define HC_DATAMODEL_ILP32 1 // int, long and pointer are 32 bits (32 bit platforms)
-#define HC_DATAMODEL_LLP64 2 // int and long are 32 bit; long long and pointer are 64 bits (64 bit windows)
-#define HC_DATAMODEL_LP64 3 // int is 32 bit; long and pointer are 64 bits (64 bit unix)
+#define HC_DATAMODEL_LLP64 2 // int and long are 32 bit; long long and pointer are 64 bits (64 bit Windows)
+#define HC_DATAMODEL_LP64 3 // int is 32 bit; long and pointer are 64 bits (64 bit Unix)
 // see http://www.unix.org/version2/whatsnew/lp64_wp.html for detailed descriptions
 
 #if defined(HC_PLATFORM) 

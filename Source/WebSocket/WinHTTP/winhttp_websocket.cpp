@@ -262,6 +262,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* /*context*/,
     _In_ HCPerformEnv env
     )
 {
@@ -348,7 +349,8 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
-    _Inout_ XAsyncBlock* async
+    _Inout_ XAsyncBlock* async,
+    _In_opt_ void* /*context*/
     )
 {
     if (websocket == nullptr)
@@ -369,7 +371,8 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock)
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* /*context*/)
 {
     if (websocket == nullptr)
     {
@@ -387,7 +390,8 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus,
+    _In_opt_ void* /*context*/
     )
 {
     if (websocket == nullptr)
