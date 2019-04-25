@@ -463,8 +463,7 @@ try
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
         {
-            auto context = static_cast<retry_context*>(data->context);
-            HCHttpCallCloseHandle(context->call); // Call is done so remove internal keep alive ref
+            // TODO: put context->call handle in RAII wrapper to avoid handle leak during shutdown while task in flight
             return E_HC_NOT_INITIALISED;
         }
 
