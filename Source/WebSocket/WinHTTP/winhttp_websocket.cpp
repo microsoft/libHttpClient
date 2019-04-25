@@ -301,7 +301,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
                 if (nullptr == httpSingleton)
                     return E_HC_NOT_INITIALISED;
 
-                auto connectFunc = httpSingleton->m_websocketConnectFunc;
+                auto connectFunc = httpSingleton->m_websocketPerform.connect;
                 HRESULT hr = S_OK;
                 if (connectFunc != nullptr)
                 {
