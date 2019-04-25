@@ -102,15 +102,17 @@ HRESULT perform_http_call(
     HRESULT hr = XAsyncBegin(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
         [](XAsyncOp opCode, const XAsyncProviderData* data)
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+        {
+            return E_HC_NOT_INITIALISED;
+        }
+
         switch (opCode)
         {
             case XAsyncOp::DoWork:
             {
                 HCCallHandle call = static_cast<HCCallHandle>(data->context);
-                auto httpSingleton = get_http_singleton(false);
-                if (nullptr == httpSingleton)
-                    return E_INVALIDARG;
-
                 bool matchedMocks = false;
                 if (httpSingleton->m_mocksEnabled)
                 {
@@ -458,6 +460,12 @@ try
     HRESULT hr = XAsyncBegin(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+        {
+            return E_HC_NOT_INITIALISED;
+        }
+
         switch (op)
         {
             case XAsyncOp::DoWork:

@@ -606,28 +606,24 @@ private:
         auto hr = XAsyncBegin(sendContext->message.async, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto httpSingleton = get_http_singleton(false);
+            if (nullptr == httpSingleton)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
+
             WebSocketCompletionResult* result;
             switch (op)
             {
                 case XAsyncOp::DoWork:
                 {
                     auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
-                    if (context == nullptr)
-                    {
-                        XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
-                        return E_HC_NOT_INITIALISED;
-                    }
                     return context->pThis->send_msg_do_work(context->message);
                 }
             
                 case XAsyncOp::GetResult:
                 {
                     auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
-                    if (context == nullptr)
-                    {
-                        XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
-                        return E_HC_NOT_INITIALISED;
-                    }
                     result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                     result->platformErrorCode = context->message.error.value();
                     result->errorCode = XAsyncGetStatus(data->async, false);

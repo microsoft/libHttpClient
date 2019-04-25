@@ -203,20 +203,22 @@ public:
             XAsyncComplete(sendContext->message.asyncBlock, E_HC_NOT_INITIALISED, 0);
             return E_HC_NOT_INITIALISED;
         }
+
         auto hr = XAsyncBegin(sendContext->message.asyncBlock, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto httpSingleton = get_http_singleton(false);
+            if (nullptr == httpSingleton)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
+
             WebSocketCompletionResult* result;
             switch (op)
             {
                 case XAsyncOp::DoWork:
                 {
                     auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
-                    if (sendMsgContext == nullptr)
-                    {
-                        XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
-                        return E_HC_NOT_INITIALISED;
-                    }
                     HRESULT hr = sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
                     HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] send message[ID %llu] completed: hr=%08X", sendMsgContext->pThis->m_hcWebsocketHandle->id, sendMsgContext->message.id, hr);
                     return hr;
@@ -225,11 +227,6 @@ public:
                 case XAsyncOp::GetResult:
                 {
                     auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
-                    if (sendMsgContext == nullptr)
-                    {
-                        XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
-                        return E_HC_NOT_INITIALISED;
-                    }
                     result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                     result->platformErrorCode = sendMsgContext->message.hr;
                     result->errorCode = XAsyncGetStatus(data->async, false);
@@ -318,15 +315,17 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     HRESULT hr = XAsyncBegin(asyncBlock, rawConnectContext, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+        {
+            return E_HC_NOT_INITIALISED;
+        }        
+        
         switch (op)
         {
             case XAsyncOp::DoWork:
             {
                 websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(data->context);
-                auto httpSingleton = get_http_singleton(true);
-                if (nullptr == httpSingleton)
-                    return E_HC_NOT_INITIALISED;
-
                 auto connectFunc = httpSingleton->m_websocketConnectFunc;
                 HRESULT hr = S_OK;
                 if (connectFunc != nullptr)
