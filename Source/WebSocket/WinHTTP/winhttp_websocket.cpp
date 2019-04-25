@@ -57,7 +57,13 @@ public:
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
         m_httpTask->m_websocketHandle = websocket;
 
-        shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
+        auto raw = shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
+        if (raw == nullptr)
+        {
+            XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
+
         return m_httpTask->connect_and_send_async();
     }
 
@@ -191,8 +197,13 @@ public:
             m_outgoingMessageQueue.pop();
         }
         HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", m_hcWebsocketHandle->id, sendContext->message.id);
-        
-        auto hr = XAsyncBegin(sendContext->message.asyncBlock, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
+        auto rawSendContext = shared_ptr_cache::store(sendContext);
+        if (rawSendContext == nullptr)
+        {
+            XAsyncComplete(sendContext->message.asyncBlock, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
+        auto hr = XAsyncBegin(sendContext->message.asyncBlock, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
             WebSocketCompletionResult* result;
@@ -201,6 +212,11 @@ public:
                 case XAsyncOp::DoWork:
                 {
                     auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    if (sendMsgContext == nullptr)
+                    {
+                        XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
+                        return E_HC_NOT_INITIALISED;
+                    }
                     HRESULT hr = sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
                     HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] send message[ID %llu] completed: hr=%08X", sendMsgContext->pThis->m_hcWebsocketHandle->id, sendMsgContext->message.id, hr);
                     return hr;
@@ -209,6 +225,11 @@ public:
                 case XAsyncOp::GetResult:
                 {
                     auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    if (sendMsgContext == nullptr)
+                    {
+                        XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
+                        return E_HC_NOT_INITIALISED;
+                    }
                     result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                     result->platformErrorCode = sendMsgContext->message.hr;
                     result->errorCode = XAsyncGetStatus(data->async, false);
@@ -287,6 +308,11 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     connectContext->env = env;
     auto storedPtr = shared_ptr_cache::store<websocket_connect_context>(connectContext);
     websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(storedPtr);
+    if (rawConnectContext == nullptr)
+    {
+        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+        return E_HC_NOT_INITIALISED;
+    }
 
     HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] trying to connect...", websocket->id);
     HRESULT hr = XAsyncBegin(asyncBlock, rawConnectContext, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
