@@ -544,8 +544,7 @@ void MessageWebSocketSendMessage(
     void* rawContext = shared_ptr_cache::store<SendMessageCallbackContext>(callbackContext);
     if (rawContext == nullptr)
     {
-        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
-        return E_HC_NOT_INITIALISED;
+        return;
     }
     HCWebSocketDuplicateHandle(websocketTask->m_websocketHandle);
 
