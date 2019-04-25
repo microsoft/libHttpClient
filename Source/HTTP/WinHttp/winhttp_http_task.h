@@ -190,6 +190,8 @@ public:
     HRESULT on_websocket_disconnected(_In_ USHORT closeReason);
     std::atomic<WinHttpWebsockState> m_socketState = WinHttpWebsockState::Created;
     HCWebsocketHandle m_websocketHandle = nullptr;
+    HRESULT m_connectHr{ S_OK };
+    uint32_t m_connectPlatformError{ 0 };
 #endif
 
 private:

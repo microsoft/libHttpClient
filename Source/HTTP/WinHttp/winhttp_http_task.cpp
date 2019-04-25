@@ -142,8 +142,19 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
 {
     if (m_asyncBlock != nullptr)
     {
-        HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
-        XAsyncComplete(m_asyncBlock, S_OK, 0);
+#if !HC_NOWEBSOCKETS
+        if (m_isWebSocket)
+        {
+            m_connectHr = translatedHR;
+            m_connectPlatformError = platformSpecificError;
+            XAsyncComplete(m_asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
+        }
+        else
+#endif
+        {
+            HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
+            XAsyncComplete(m_asyncBlock, S_OK, 0);
+        }
         m_asyncBlock = nullptr;
     }
 

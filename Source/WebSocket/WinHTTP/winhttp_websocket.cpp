@@ -65,17 +65,20 @@ public:
         m_httpTask->m_websocketHandle = websocket;
         auto context = shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
 
-        hr = XAsyncBegin(asyncBlock, context, nullptr, __FUNCTION__,
+        hr = XAsyncBegin(asyncBlock, context, HCWebSocketConnectAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
-            if (op == XAsyncOp::DoWork)
+            auto httpTask = shared_ptr_cache::fetch<winhttp_http_task>(data->context, false);
+            if (!httpTask)
             {
-                auto httpTask = shared_ptr_cache::fetch<winhttp_http_task>(data->context, false);
-                if (!httpTask)
-                {
-                    XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
-                    return E_HC_NOT_INITIALISED;
-                }
+                XAsyncComplete(data->async, E_HC_NOT_INITIALISED, 0);
+                return E_HC_NOT_INITIALISED;
+            }
+
+            switch (op)
+            {
+            case XAsyncOp::DoWork:
+            {
                 HRESULT hr = httpTask->connect_and_send_async();
                 if (FAILED(hr))
                 {
@@ -83,7 +86,16 @@ public:
                 }
                 return E_PENDING;
             }
-            return S_OK;
+            case XAsyncOp::GetResult:
+            {
+                auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                result->websocket = httpTask->m_websocketHandle;
+                result->platformErrorCode = httpTask->m_connectPlatformError;
+                result->errorCode = httpTask->m_connectHr;
+                return S_OK;
+            }
+            default: return S_OK;
+            }
         });
 
         if (SUCCEEDED(hr))
