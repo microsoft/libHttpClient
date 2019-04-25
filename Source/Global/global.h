@@ -129,7 +129,6 @@ public:
         }
     }
 
-    template<typename T>
     static void remove(void *rawContextPtr)
     {
         auto httpSingleton = get_http_singleton(false);

@@ -20,10 +20,10 @@ public:
     {
         HC_TRACE_VERBOSE(WEBSOCKET, "winhttp_websocket_impl dtor");
         if(m_call != nullptr) HCHttpCallCloseHandle(m_call);
-        shared_ptr_cache::remove<winhttp_http_task>(m_httpTask.get());
+        shared_ptr_cache::remove(m_httpTask.get());
     }
 
-    HRESULT connect_async(
+    HRESULT connect_websocket(
         _In_ HCWebsocketHandle websocket,
         _In_ XAsyncBlock* asyncBlock,
         _In_ HINTERNET hSession,
@@ -52,12 +52,11 @@ public:
 
         m_httpTask = http_allocate_shared<winhttp_http_task>(
             asyncBlock, m_call, hSession, proxyType, isWebsocket
-            );
+        );
 
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
         m_httpTask->m_websocketHandle = websocket;
 
-        shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
         return m_httpTask->connect_and_send_async();
     }
 
@@ -214,7 +213,7 @@ public:
 
                 case XAsyncOp::Cleanup:
                 {
-                    shared_ptr_cache::remove<send_msg_context>(data->context);
+                    shared_ptr_cache::remove(data->context);
                     return S_OK;
                 }
             }
@@ -232,7 +231,12 @@ public:
 
     HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
     {
-        return m_httpTask->disconnect_websocket(closeStatus);
+        assert(m_httpTask);
+        if (m_httpTask)
+        {
+            return m_httpTask->disconnect_websocket(closeStatus);
+        }
+        return S_OK;
     }
 
     std::shared_ptr<xbox::httpclient::winhttp_http_task> m_httpTask;
@@ -242,17 +246,9 @@ public:
     std::recursive_mutex m_httpClientLock; // Guards access to HTTP socket
     HCWebsocketHandle m_hcWebsocketHandle = nullptr;
     std::recursive_mutex m_outgoingMessageQueueLock; // Guards access to m_outgoing_msg_queue
-    http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue; // Queue to order the sends   
+    http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue; // Queue to order the sends
     std::atomic<int> m_numSends = 0; // Number of sends in progress and queued up.
 };
-
-
-typedef struct websocket_connect_context
-{
-    HCWebsocketHandle websocket;
-    XAsyncBlock* outerAsyncBlock;
-    HCPerformEnv env;
-} websocket_connect_context;
 
 HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* uri,
@@ -269,75 +265,21 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
         return E_INVALIDARG;
     }
 
+    websocket->uri = uri;
+    websocket->subProtocol = subProtocol;
+
+    std::shared_ptr<winhttp_websocket_impl> impl{ nullptr };
     if (websocket->impl == nullptr)
     {
-        auto httpSocket = http_allocate_shared<winhttp_websocket_impl>();
-        websocket->uri = uri;
-        websocket->subProtocol = subProtocol;
-        websocket->impl = httpSocket;
+        impl = http_allocate_shared<winhttp_websocket_impl>();
+        websocket->impl = impl;
+    }
+    else
+    {
+        impl = std::dynamic_pointer_cast<winhttp_websocket_impl>(websocket->impl);
     }
 
-    std::shared_ptr<websocket_connect_context> connectContext = std::make_shared<websocket_connect_context>();
-    connectContext->websocket = websocket;
-    connectContext->outerAsyncBlock = asyncBlock;
-    connectContext->env = env;
-    auto storedPtr = shared_ptr_cache::store<websocket_connect_context>(connectContext);
-    websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(storedPtr);
-
-    HRESULT hr = XAsyncBegin(asyncBlock, rawConnectContext, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
-        [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
-    {
-        switch (op)
-        {
-            case XAsyncOp::DoWork:
-            {
-                websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(data->context);
-                auto httpSingleton = get_http_singleton(true);
-                if (nullptr == httpSingleton)
-                    return E_HC_NOT_INITIALISED;
-
-                auto connectFunc = httpSingleton->m_websocketConnectFunc;
-                HRESULT hr = S_OK;
-                if (connectFunc != nullptr)
-                {
-                    try
-                    {
-                        rawConnectContext->websocket->connectCalled = true;
-                        std::shared_ptr<winhttp_websocket_impl> winhttpSocket = std::dynamic_pointer_cast<winhttp_websocket_impl>(rawConnectContext->websocket->impl);
-                        hr = winhttpSocket->connect_async(
-                            rawConnectContext->websocket, 
-                            rawConnectContext->outerAsyncBlock,
-                            rawConnectContext->env->m_hSession,
-                            rawConnectContext->env->m_proxyType);
-                        if (FAILED(hr))
-                        {
-                            return hr;
-                        }
-                    }
-                    catch (...)
-                    {
-                        HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", rawConnectContext->websocket->id);
-                    }
-                }
-                return E_PENDING;
-            }
-
-            case XAsyncOp::Cleanup:
-            {
-                shared_ptr_cache::remove<websocket_connect_context>(data->context);
-                break;
-            }
-        }
-
-        return S_OK;
-    });
-
-    if (hr == S_OK)
-    {
-        hr = XAsyncSchedule(asyncBlock, 0);
-    }
-
-    return hr;
+    return impl->connect_websocket(websocket, asyncBlock, env->m_hSession, env->m_proxyType);
 }
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(

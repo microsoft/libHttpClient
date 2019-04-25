@@ -150,7 +150,7 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
     if (m_hRequest != nullptr && !m_isWebSocket)
     {
         WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
-        shared_ptr_cache::remove<winhttp_http_task>(this);
+        shared_ptr_cache::remove(this);
     }
 }
 
@@ -680,7 +680,7 @@ HRESULT winhttp_http_task::connect(
     )
 {
     if (!m_hSession)
-    {        
+    {
         HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] no session", HCHttpCallGetId(m_call), GetCurrentThreadId());
         return E_INVALIDARG;
     }
@@ -999,6 +999,7 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 
 HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
 {
+    // TODO this is not true
     // HCWebSocketCloseEventFunction is triggered inside HCWebSocketDisconnect()
 
     m_socketState = WinHttpWebsockState::Closed;
