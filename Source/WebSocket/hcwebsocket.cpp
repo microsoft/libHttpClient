@@ -78,7 +78,14 @@ void HC_WEBSOCKET::MessageFunc(
 {
     if (websocket->m_clientMessageFunc)
     {
-        websocket->m_clientMessageFunc(websocket, message, websocket->m_clientContext);
+        try
+        {
+            websocket->m_clientMessageFunc(websocket, message, websocket->m_clientContext);
+        }
+        catch (...)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketMessageFunction");
+        }
     }
 }
 
@@ -91,7 +98,14 @@ void HC_WEBSOCKET::BinaryMessageFunc(
 {
     if (websocket->m_clientBinaryMessageFunc)
     {
-        websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
+        try
+        {
+            websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
+        }
+        catch (...)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketBinaryMessageFunction");
+        }
     }
 }
 
@@ -103,7 +117,14 @@ void HC_WEBSOCKET::CloseFunc(
 {
     if (websocket->m_clientCloseEventFunc)
     {
-        websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+        try
+        {
+            websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+        }
+        catch (...)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketCloseEventFunction");
+        }
     }
     // Release the providers ref
     websocket->disconnectCallExpected = false;
