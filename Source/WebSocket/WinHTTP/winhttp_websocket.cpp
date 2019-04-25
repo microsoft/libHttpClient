@@ -57,6 +57,14 @@ public:
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
         m_httpTask->m_websocketHandle = websocket;
 
+        XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
+            [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            // winhttp_http_task invokes WinHttp and completes the async block in a WinHttp callback.
+            // No reason to kick off that work asynchronously, but we still need to begin the async block
+            return S_OK;
+        });
+        shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
         return m_httpTask->connect_and_send_async();
     }
 
