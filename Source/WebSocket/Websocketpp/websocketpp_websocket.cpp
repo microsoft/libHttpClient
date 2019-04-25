@@ -412,6 +412,7 @@ private:
             {
                 auto context = shared_ptr_cache::fetch<wspp_websocket_impl>(data->context, true);
                 auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                result->websocket = context->m_hcWebsocketHandle;
                 result->platformErrorCode = context->m_connectError.value();
                 result->errorCode = context->m_connectError ? E_FAIL : S_OK;
             }
@@ -763,8 +764,6 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
-    // TODO: Handle double connecting on same HCWebsocketHandle, and ensure disconnect/reconnect case works
-
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
     auto wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket);

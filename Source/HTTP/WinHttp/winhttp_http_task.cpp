@@ -142,7 +142,7 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
 {
     if (m_asyncBlock != nullptr)
     {
-#if !HC_NOWEBSOCKETS
+#if HC_WINHTTP_WEBSOCKETS
         if (m_isWebSocket)
         {
             m_connectHr = translatedHR;
@@ -606,12 +606,13 @@ void CALLBACK winhttp_http_task::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE:
             {
+#if HC_WINHTTP_WEBSOCKETS
                 USHORT closeReason = 0;
                 DWORD dwReasonLengthConsumed = 0;
                 WinHttpWebSocketQueryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
 
                 pRequestContext->on_websocket_disconnected(closeReason);
-
+#endif
                 break;
             }
         }
