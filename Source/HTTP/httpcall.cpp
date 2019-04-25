@@ -102,15 +102,17 @@ HRESULT perform_http_call(
     HRESULT hr = XAsyncBegin(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
         [](XAsyncOp opCode, const XAsyncProviderData* data)
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+        {
+            return E_HC_NOT_INITIALISED;
+        }
+
         switch (opCode)
         {
             case XAsyncOp::DoWork:
             {
                 HCCallHandle call = static_cast<HCCallHandle>(data->context);
-                auto httpSingleton = get_http_singleton(false);
-                if (nullptr == httpSingleton)
-                    return E_INVALIDARG;
-
                 bool matchedMocks = false;
                 if (httpSingleton->m_mocksEnabled)
                 {
@@ -123,7 +125,7 @@ HRESULT perform_http_call(
 
                 if (!matchedMocks) // if there wasn't a matched mock, then real call
                 {
-                    PerformInfo info = httpSingleton->m_perform;
+                    HttpPerformInfo const& info = httpSingleton->m_httpPerform;
                     if (info.handler != nullptr)
                     {
                         try
@@ -449,10 +451,22 @@ try
     retryContext->outerAsyncBlock = asyncBlock;
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
+    if (rawRetryContext == nullptr)
+    {
+        HCHttpCallCloseHandle(call);
+        return E_HC_NOT_INITIALISED;
+    }
 
     HRESULT hr = XAsyncBegin(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+        {
+            // TODO: put context->call handle in RAII wrapper to avoid handle leak during shutdown while task in flight
+            return E_HC_NOT_INITIALISED;
+        }
+
         switch (op)
         {
             case XAsyncOp::DoWork:

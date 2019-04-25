@@ -563,9 +563,22 @@ private:
             m_outgoingMessageQueue.pop();
         }
 
-        auto hr = XAsyncBegin(sendContext->message.async, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
+        auto rawSendContext = shared_ptr_cache::store(sendContext);
+        if (rawSendContext == nullptr)
+        {
+            XAsyncComplete(sendContext->message.async, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
+
+        auto hr = XAsyncBegin(sendContext->message.async, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto httpSingleton = get_http_singleton(false);
+            if (nullptr == httpSingleton)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
+
             WebSocketCompletionResult* result;
             switch (op)
             {
@@ -746,6 +759,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* async,
+    _In_opt_ void* context,
     _In_ HCPerformEnv env
     )
 {
@@ -762,7 +776,8 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
-    _Inout_ XAsyncBlock* async
+    _Inout_ XAsyncBlock* async,
+    _In_opt_ void* context
     )
 {
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
@@ -777,7 +792,9 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock)
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context
+    )
 {
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
     if (wsppSocket == nullptr)
@@ -789,7 +806,8 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus,
+    _In_opt_ void* context
     )
 {
     if (websocket == nullptr)

@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <httpClient/config.h>
+
 #pragma warning(disable: 4503) // C4503: decorated name length exceeded, name was truncated  
 #pragma warning(disable: 4242) 
 
@@ -15,9 +17,7 @@
 #include <SDKDDKVer.h>
 
 // Windows
-#if HC_UWP_API
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-#endif
 #define NOMINMAX
 
 #include <WinSock2.h>

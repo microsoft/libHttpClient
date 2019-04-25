@@ -205,17 +205,32 @@ public:
             sendContext->message = std::move(m_outgoingMessageQueue.front());
             m_outgoingMessageQueue.pop();
         }
+        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", m_hcWebsocketHandle->id, sendContext->message.id);
+        auto rawSendContext = shared_ptr_cache::store(sendContext);
+        if (rawSendContext == nullptr)
+        {
+            XAsyncComplete(sendContext->message.asyncBlock, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
 
-        auto hr = XAsyncBegin(sendContext->message.asyncBlock, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
+        auto hr = XAsyncBegin(sendContext->message.asyncBlock, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto httpSingleton = get_http_singleton(false);
+            if (nullptr == httpSingleton)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
+
             WebSocketCompletionResult* result;
             switch (op)
             {
                 case XAsyncOp::DoWork:
                 {
                     auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
-                    return sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
+                    HRESULT hr = sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
+                    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] send message[ID %llu] completed: hr=%08X", sendMsgContext->pThis->m_hcWebsocketHandle->id, sendMsgContext->message.id, hr);
+                    return hr;
                 }
 
                 case XAsyncOp::GetResult:
@@ -272,6 +287,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* /*context*/,
     _In_ HCPerformEnv env
     )
 {
@@ -302,7 +318,8 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
-    _Inout_ XAsyncBlock* async
+    _Inout_ XAsyncBlock* async,
+    _In_opt_ void* /*context*/
     )
 {
     if (websocket == nullptr)
@@ -315,6 +332,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     {
         return E_UNEXPECTED;
     }
+    httpSocket->m_hcWebsocketHandle = websocket;
     return httpSocket->send_websocket_message_async(async, message);
 }
 
@@ -322,7 +340,8 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock)
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* /*context*/)
 {
     if (websocket == nullptr)
     {
@@ -334,12 +353,14 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     {
         return E_UNEXPECTED;
     }
+    httpSocket->m_hcWebsocketHandle = websocket;
     return httpSocket->send_websocket_binary_message_async(asyncBlock, payloadBytes, payloadSize);
 }
 
 HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus
+    _In_ HCWebSocketCloseStatus closeStatus,
+    _In_opt_ void* /*context*/
     )
 {
     if (websocket == nullptr)
@@ -352,6 +373,7 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     {
         return E_UNEXPECTED;
     }
+    httpSocket->m_hcWebsocketHandle = websocket;
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
     return httpSocket->disconnect_websocket(closeStatus);
 }
