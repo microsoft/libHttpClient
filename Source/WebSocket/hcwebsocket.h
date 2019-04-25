@@ -96,6 +96,7 @@ struct WebSocketPerformInfo
         connect{ conn },
         sendText{ st },
         sendBinary{ sb },
+        disconnect{ dc },
         context{ ctx }
     {}
 
