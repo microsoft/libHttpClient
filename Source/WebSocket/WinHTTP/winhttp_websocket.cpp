@@ -301,29 +301,24 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
                 if (nullptr == httpSingleton)
                     return E_HC_NOT_INITIALISED;
 
-                auto connectFunc = httpSingleton->m_websocketConnectFunc;
-                HRESULT hr = S_OK;
-                if (connectFunc != nullptr)
+                try
                 {
-                    try
+                    rawConnectContext->websocket->connectCalled = true;
+                    std::shared_ptr<winhttp_websocket_impl> winhttpSocket = std::dynamic_pointer_cast<winhttp_websocket_impl>(rawConnectContext->websocket->impl);
+                    HRESULT hr = winhttpSocket->connect_async(
+                        rawConnectContext->websocket, 
+                        rawConnectContext->outerAsyncBlock,
+                        rawConnectContext->env->m_hSession,
+                        rawConnectContext->env->m_proxyType);
+                    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] connect complete: hr=%08X", rawConnectContext->websocket->id, hr);
+                    if (FAILED(hr))
                     {
-                        rawConnectContext->websocket->connectCalled = true;
-                        std::shared_ptr<winhttp_websocket_impl> winhttpSocket = std::dynamic_pointer_cast<winhttp_websocket_impl>(rawConnectContext->websocket->impl);
-                        hr = winhttpSocket->connect_async(
-                            rawConnectContext->websocket, 
-                            rawConnectContext->outerAsyncBlock,
-                            rawConnectContext->env->m_hSession,
-                            rawConnectContext->env->m_proxyType);
-                        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] connect complete: hr=%08X", rawConnectContext->websocket->id, hr);
-                        if (FAILED(hr))
-                        {
-                            return hr;
-                        }
+                        return hr;
                     }
-                    catch (...)
-                    {
-                        HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", rawConnectContext->websocket->id);
-                    }
+                }
+                catch (...)
+                {
+                    HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", rawConnectContext->websocket->id);
                 }
                 return E_PENDING;
             }
