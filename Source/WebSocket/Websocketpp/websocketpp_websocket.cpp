@@ -596,9 +596,22 @@ private:
             m_outgoingMessageQueue.pop();
         }
 
-        auto hr = XAsyncBegin(sendContext->message.async, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
+        auto rawSendContext = shared_ptr_cache::store(sendContext);
+        if (rawSendContext == nullptr)
+        {
+            XAsyncComplete(sendContext->message.async, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
+
+        auto hr = XAsyncBegin(sendContext->message.async, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto httpSingleton = get_http_singleton(false);
+            if (nullptr == httpSingleton)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
+
             WebSocketCompletionResult* result;
             switch (op)
             {

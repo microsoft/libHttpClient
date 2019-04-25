@@ -57,7 +57,13 @@ public:
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
         m_httpTask->m_websocketHandle = websocket;
 
-        shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
+        auto raw = shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
+        if (raw == nullptr)
+        {
+            XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
+
         return m_httpTask->connect_and_send_async();
     }
 
@@ -191,10 +197,22 @@ public:
             m_outgoingMessageQueue.pop();
         }
         HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", m_hcWebsocketHandle->id, sendContext->message.id);
-        
-        auto hr = XAsyncBegin(sendContext->message.asyncBlock, shared_ptr_cache::store(sendContext), (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
+        auto rawSendContext = shared_ptr_cache::store(sendContext);
+        if (rawSendContext == nullptr)
+        {
+            XAsyncComplete(sendContext->message.asyncBlock, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
+
+        auto hr = XAsyncBegin(sendContext->message.asyncBlock, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto httpSingleton = get_http_singleton(false);
+            if (nullptr == httpSingleton)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
+
             WebSocketCompletionResult* result;
             switch (op)
             {
@@ -287,11 +305,22 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     connectContext->env = env;
     auto storedPtr = shared_ptr_cache::store<websocket_connect_context>(connectContext);
     websocket_connect_context* rawConnectContext = static_cast<websocket_connect_context*>(storedPtr);
+    if (rawConnectContext == nullptr)
+    {
+        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+        return E_HC_NOT_INITIALISED;
+    }
 
     HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] trying to connect...", websocket->id);
     HRESULT hr = XAsyncBegin(asyncBlock, rawConnectContext, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+        {
+            return E_HC_NOT_INITIALISED;
+        }        
+        
         switch (op)
         {
             case XAsyncOp::DoWork:
@@ -300,7 +329,6 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
                 auto httpSingleton = get_http_singleton(true);
                 if (nullptr == httpSingleton)
                     return E_HC_NOT_INITIALISED;
-
                 try
                 {
                     rawConnectContext->websocket->connectCalled = true;

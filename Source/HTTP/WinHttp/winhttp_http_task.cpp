@@ -941,7 +941,13 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
     bool isWebsocket = false;
     std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(
         asyncBlock, call, env->m_hSession, env->m_proxyType, isWebsocket);
-    shared_ptr_cache::store<winhttp_http_task>(httpTask);
+    auto raw = shared_ptr_cache::store<winhttp_http_task>(httpTask);
+    if (raw == nullptr)
+    {
+        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+        return;
+    }
+
     HCHttpCallSetContext(call, httpTask.get());
     httpTask->connect_and_send_async();
 }
