@@ -453,7 +453,7 @@ try
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
     if (rawRetryContext == nullptr)
     {
-        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+        HCHttpCallCloseHandle(call);
         return E_HC_NOT_INITIALISED;
     }
 
@@ -463,6 +463,8 @@ try
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
         {
+            auto context = static_cast<retry_context*>(data->context);
+            HCHttpCallCloseHandle(context->call); // Call is done so remove internal keep alive ref
             return E_HC_NOT_INITIALISED;
         }
 
