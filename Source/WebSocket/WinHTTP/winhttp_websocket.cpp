@@ -19,7 +19,10 @@ public:
     ~winhttp_websocket_impl()
     {
         HC_TRACE_VERBOSE(WEBSOCKET, "winhttp_websocket_impl dtor");
-        if(m_call != nullptr) HCHttpCallCloseHandle(m_call);
+        if (m_call != nullptr)
+        {
+            HCHttpCallCloseHandle(m_call);
+        }
         shared_ptr_cache::remove(m_httpTask.get());
     }
 
@@ -48,6 +51,10 @@ public:
                 XAsyncComplete(asyncBlock, S_OK, 0);
                 return S_OK;
             }
+            else
+            {
+                shared_ptr_cache::remove(m_httpTask.get());
+            }
         }
 
         m_httpTask = http_allocate_shared<winhttp_http_task>(
@@ -56,6 +63,7 @@ public:
 
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
         m_httpTask->m_websocketHandle = websocket;
+        shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
 
         XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
@@ -64,7 +72,7 @@ public:
             // No reason to kick off that work asynchronously, but we still need to begin the async block
             return S_OK;
         });
-        shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
+
         return m_httpTask->connect_and_send_async();
     }
 
@@ -240,11 +248,12 @@ public:
     HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
     {
         assert(m_httpTask);
+        HRESULT hr = S_OK;
         if (m_httpTask)
         {
-            return m_httpTask->disconnect_websocket(closeStatus);
+            hr = m_httpTask->disconnect_websocket(closeStatus);
         }
-        return S_OK;
+        return hr;
     }
 
     std::shared_ptr<xbox::httpclient::winhttp_http_task> m_httpTask;

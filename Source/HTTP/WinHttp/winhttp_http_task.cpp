@@ -1013,9 +1013,6 @@ HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus clos
     m_socketState = WinHttpWebsockState::Closed;
     DWORD dwError = WinHttpWebSocketClose(m_hRequest, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
 
-    // Handlers will be setup again upon connect
-    WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
-
     return HRESULT_FROM_WIN32(dwError);
 }
 
