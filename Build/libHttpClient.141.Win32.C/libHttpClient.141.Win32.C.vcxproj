@@ -75,7 +75,7 @@
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x601;HC_WINHTTP_WEBSOCKETS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x601;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
