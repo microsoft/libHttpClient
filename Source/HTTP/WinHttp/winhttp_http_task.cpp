@@ -592,6 +592,17 @@ void CALLBACK winhttp_http_task::completion_callback(
                 }
                 break;
             }
+
+            case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE:
+            {
+                USHORT closeReason = 0;
+                DWORD dwReasonLengthConsumed = 0;
+                WinHttpWebSocketQueryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
+
+                pRequestContext->on_websocket_disconnected(closeReason);
+
+                break;
+            }
         }
     }
     catch (std::bad_alloc const& e)
@@ -999,9 +1010,6 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 
 HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
 {
-    // TODO this is not true
-    // HCWebSocketCloseEventFunction is triggered inside HCWebSocketDisconnect()
-
     m_socketState = WinHttpWebsockState::Closed;
     DWORD dwError = WinHttpWebSocketClose(m_hRequest, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
 
