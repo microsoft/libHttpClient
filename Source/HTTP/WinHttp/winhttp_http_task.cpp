@@ -142,15 +142,26 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
 {
     if (m_asyncBlock != nullptr)
     {
-        HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
-        XAsyncComplete(m_asyncBlock, S_OK, 0);
+#if HC_WINHTTP_WEBSOCKETS
+        if (m_isWebSocket)
+        {
+            m_connectHr = translatedHR;
+            m_connectPlatformError = platformSpecificError;
+            XAsyncComplete(m_asyncBlock, S_OK, sizeof(WebSocketCompletionResult));
+        }
+        else
+#endif
+        {
+            HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
+            XAsyncComplete(m_asyncBlock, S_OK, 0);
+        }
         m_asyncBlock = nullptr;
     }
 
     if (m_hRequest != nullptr && !m_isWebSocket)
     {
         WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
-        shared_ptr_cache::remove<winhttp_http_task>(this);
+        shared_ptr_cache::remove(this);
     }
 }
 
@@ -592,6 +603,18 @@ void CALLBACK winhttp_http_task::completion_callback(
                 }
                 break;
             }
+
+            case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE:
+            {
+#if HC_WINHTTP_WEBSOCKETS
+                USHORT closeReason = 0;
+                DWORD dwReasonLengthConsumed = 0;
+                WinHttpWebSocketQueryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
+
+                pRequestContext->on_websocket_disconnected(closeReason);
+#endif
+                break;
+            }
         }
     }
     catch (std::bad_alloc const& e)
@@ -680,7 +703,7 @@ HRESULT winhttp_http_task::connect(
     )
 {
     if (!m_hSession)
-    {        
+    {
         HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] no session", HCHttpCallGetId(m_call), GetCurrentThreadId());
         return E_INVALIDARG;
     }
@@ -1005,13 +1028,8 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 
 HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
 {
-    // HCWebSocketCloseEventFunction is triggered inside HCWebSocketDisconnect()
-
     m_socketState = WinHttpWebsockState::Closed;
     DWORD dwError = WinHttpWebSocketClose(m_hRequest, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
-
-    // Handlers will be setup again upon connect
-    WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
 
     return HRESULT_FROM_WIN32(dwError);
 }

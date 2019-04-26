@@ -220,7 +220,7 @@ int main()
         printf_s("Calling HCWebSocketConnect...\n");
         hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
         WaitForSingleObject(g_eventHandle, INFINITE);
-        
+
         uint32_t numberOfMessagesToSend = 100;
         for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
         {
@@ -269,6 +269,7 @@ int main()
 
     HCWebSocketCloseHandle(websocket);
     CloseHandle(g_eventHandle);
+    HCCleanup();
     return 0;
 }
 

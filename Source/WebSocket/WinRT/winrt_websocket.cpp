@@ -562,7 +562,7 @@ void MessageWebSocketSendMessage(
                 if (context != nullptr)
                 {
                     HCWebSocketCloseHandle(context->websocketTask->m_websocketHandle);
-                    shared_ptr_cache::remove<SendMessageCallbackContext>(data->context);
+                    shared_ptr_cache::remove(data->context);
                 }
                 break;
             }
