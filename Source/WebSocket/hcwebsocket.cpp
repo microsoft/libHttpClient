@@ -33,18 +33,24 @@ HC_WEBSOCKET::~HC_WEBSOCKET()
 
 void HC_WEBSOCKET::AddClientRef()
 {
-    ++m_clientRefCount;
+    {
+        std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+        ++m_clientRefCount;
+    }
     AddRef();
 }
 
 void HC_WEBSOCKET::DecClientRef()
 {
-    if (--m_clientRefCount == 0)
     {
-        if (disconnectCallExpected)
+        std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+        if (--m_clientRefCount == 0)
         {
-            HC_TRACE_WARNING(WEBSOCKET, "No client reference remain for HC_WEBSOCKET but it is either connected/connecting. Disconnecting now.");
-            HCWebSocketDisconnect(this);
+            if (disconnectCallExpected)
+            {
+                HC_TRACE_WARNING(WEBSOCKET, "No client reference remain for HC_WEBSOCKET but it is either connected/connecting. Disconnecting now.");
+                HCWebSocketDisconnect(this);
+            }
         }
     }
     DecRef();
@@ -72,6 +78,7 @@ void HC_WEBSOCKET::MessageFunc(
     void* context
 )
 {
+    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
     if (websocket->m_clientRefCount > 0)
     {
         try
@@ -92,6 +99,7 @@ void HC_WEBSOCKET::BinaryMessageFunc(
     void* context
 )
 {
+    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
     if (websocket->m_clientRefCount > 0)
     {
         try
@@ -111,6 +119,7 @@ void HC_WEBSOCKET::CloseFunc(
     void* context
 )
 {
+    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
     if (websocket->m_clientRefCount > 0)
     {
         try

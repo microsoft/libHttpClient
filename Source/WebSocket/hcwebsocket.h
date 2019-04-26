@@ -48,6 +48,7 @@ private:
     HCWebSocketCloseEventFunction const m_clientCloseEventFunc;
     void* m_clientContext;
 
+    std::recursive_mutex m_mutex;
     std::atomic<int> m_clientRefCount{ 0 };
     std::atomic<int> m_totalRefCount{ 0 };
     std::shared_ptr<HC_WEBSOCKET> m_extraRefHolder;
