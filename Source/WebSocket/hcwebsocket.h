@@ -43,9 +43,9 @@ public:
 
     std::shared_ptr<hc_websocket_impl> impl;
 private:
-    HCWebSocketMessageFunction m_clientMessageFunc;
-    HCWebSocketBinaryMessageFunction m_clientBinaryMessageFunc;
-    HCWebSocketCloseEventFunction m_clientCloseEventFunc;
+    HCWebSocketMessageFunction const m_clientMessageFunc;
+    HCWebSocketBinaryMessageFunction const m_clientBinaryMessageFunc;
+    HCWebSocketCloseEventFunction const m_clientCloseEventFunc;
     void* m_clientContext;
 
     std::atomic<int> m_clientRefCount{ 0 };

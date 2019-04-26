@@ -41,10 +41,6 @@ void HC_WEBSOCKET::DecClientRef()
 {
     if (--m_clientRefCount == 0)
     {
-        m_clientMessageFunc = nullptr;
-        m_clientBinaryMessageFunc = nullptr;
-        m_clientCloseEventFunc = nullptr;
-
         if (disconnectCallExpected)
         {
             HC_TRACE_WARNING(WEBSOCKET, "No client reference remain for HC_WEBSOCKET but it is either connected/connecting. Disconnecting now.");
@@ -76,7 +72,7 @@ void HC_WEBSOCKET::MessageFunc(
     void* context
 )
 {
-    if (websocket->m_clientMessageFunc)
+    if (websocket->m_clientRefCount > 0)
     {
         try
         {
@@ -96,7 +92,7 @@ void HC_WEBSOCKET::BinaryMessageFunc(
     void* context
 )
 {
-    if (websocket->m_clientBinaryMessageFunc)
+    if (websocket->m_clientRefCount > 0)
     {
         try
         {
@@ -115,7 +111,7 @@ void HC_WEBSOCKET::CloseFunc(
     void* context
 )
 {
-    if (websocket->m_clientCloseEventFunc)
+    if (websocket->m_clientRefCount > 0)
     {
         try
         {
