@@ -40,7 +40,6 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>Android</ApplicationType>
     <ApplicationTypeRevision>3.0</ApplicationTypeRevision>
-    <AndroidAPILevel>android-19</AndroidAPILevel>
     <HCLibPlatformType>Android</HCLibPlatformType>
     <AndroidAPILevel Condition="'$(Platform)'!='ARM64'">android-19</AndroidAPILevel>
     <AndroidAPILevel Condition="'$(Platform)'=='ARM64'">android-21</AndroidAPILevel>
