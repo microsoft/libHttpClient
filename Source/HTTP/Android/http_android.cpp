@@ -68,6 +68,7 @@ void Internal_HCHttpCallPerformAsync(
 
     if (!SUCCEEDED(result))
     {
+        HCHttpCallResponseSetNetworkErrorCode(call, result, 0);
         XAsyncComplete(asyncBlock, result, 0);
         return;
     }
