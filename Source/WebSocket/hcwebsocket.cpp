@@ -119,16 +119,18 @@ void HC_WEBSOCKET::CloseFunc(
     void* context
 )
 {
-    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
-    if (websocket->m_clientRefCount > 0)
     {
-        try
+        std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+        if (websocket->m_clientRefCount > 0)
         {
-            websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
-        }
-        catch (...)
-        {
-            HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketCloseEventFunction");
+            try
+            {
+                websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+            }
+            catch (...)
+            {
+                HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketCloseEventFunction");
+            }
         }
     }
     // Release the providers ref
