@@ -24,6 +24,6 @@ void Internal_HCHttpCallPerformAsync(
     _In_ HCPerformEnv env
 ) noexcept
 {
-    // TODO fail the async block with E_NOT_SUPPORTED
+    // Register a custom Http handler
     assert(false);
 }

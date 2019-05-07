@@ -50,10 +50,10 @@ struct HC_CALL
     bool performCalled = false;
 };
 
-struct PerformInfo
+struct HttpPerformInfo
 {
-    PerformInfo(_In_ HCCallPerformFunction h) 
-        : handler(h) 
+    HttpPerformInfo(_In_ HCCallPerformFunction h, _In_opt_ void* ctx)
+        : handler(h), context(ctx)
     { }
     HCCallPerformFunction handler = nullptr;
     void* context = nullptr; // non owning

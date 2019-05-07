@@ -16,20 +16,17 @@ static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-http_singleton::http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv) :
-    m_perform{ performInfo },
+http_singleton::http_singleton(
+    HttpPerformInfo const& httpPerformInfo,
+    WebSocketPerformInfo const& websocketPerformInfo,
+    PerformEnv&& performEnv
+) :
+    m_httpPerform{ httpPerformInfo },
     m_performEnv{ std::move(performEnv) }
-{
-    m_callRoutedHandlersContext = 0;
-    m_lastId = 0;
-
 #if !HC_NOWEBSOCKETS
-    m_websocketConnectFunc = Internal_HCWebSocketConnectAsync;
-    m_websocketSendMessageFunc = Internal_HCWebSocketSendMessageAsync;
-    m_websocketSendBinaryMessageFunc = Internal_HCWebSocketSendBinaryMessageAsync;
-    m_websocketDisconnectFunc = Internal_HCWebSocketDisconnect;
+    , m_websocketPerform{ websocketPerformInfo }
 #endif
-}
+{}
 
 http_singleton::~http_singleton()
 {
@@ -57,7 +54,7 @@ HRESULT init_http_singleton(HCInitArgs* args)
 {
     HRESULT hr = S_OK;
 
-    // TODO do as a run once? to avoid platform code being initided twice?
+    // TODO do as a run once? to avoid platform code being inited twice?
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
     if (!httpSingleton)
     {
@@ -67,7 +64,8 @@ HRESULT init_http_singleton(HCInitArgs* args)
         if (SUCCEEDED(hr))
         {
             auto newSingleton = http_allocate_shared<http_singleton>(
-                GetUserPerformHandler(),
+                GetUserHttpPerformHandler(),
+                GetUserWebSocketPerformHandlers(),
                 std::move(performEnv)
             );
             std::atomic_compare_exchange_strong(
@@ -141,10 +139,22 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
     m_retryAfterCache.erase(retryAfterCacheId);
 }
 
-PerformInfo& GetUserPerformHandler() noexcept
+HttpPerformInfo& GetUserHttpPerformHandler() noexcept
 {
-    static PerformInfo handler(&Internal_HCHttpCallPerformAsync);
+    static HttpPerformInfo handler(&Internal_HCHttpCallPerformAsync, nullptr);
     return handler;
+}
+
+WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept
+{
+    static WebSocketPerformInfo handlers(
+        Internal_HCWebSocketConnectAsync,
+        Internal_HCWebSocketSendMessageAsync,
+        Internal_HCWebSocketSendBinaryMessageAsync,
+        Internal_HCWebSocketDisconnect,
+        nullptr
+    );
+    return handlers;
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

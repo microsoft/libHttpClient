@@ -752,6 +752,8 @@ STDAPI HCWebSocketSendMessageAsync(
 
 /// <summary>
 /// Send binary message to the WebSocket
+/// To get the result, first call HCGetWebSocketSendMessageResult
+/// inside the AsyncBlock callback or after the AsyncBlock is complete.
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="payloadBytes"></param>

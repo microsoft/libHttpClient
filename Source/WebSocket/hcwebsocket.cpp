@@ -9,6 +9,134 @@
 
 using namespace xbox::httpclient;
 
+HC_WEBSOCKET::HC_WEBSOCKET(
+    _In_ uint64_t _id,
+    _In_opt_ HCWebSocketMessageFunction messageFunc,
+    _In_opt_ HCWebSocketBinaryMessageFunction binaryMessageFunc,
+    _In_opt_ HCWebSocketCloseEventFunction closeFunc,
+    _In_opt_ void* functionContext
+) :
+    id{ _id },
+    m_clientMessageFunc{ messageFunc },
+    m_clientBinaryMessageFunc{ binaryMessageFunc },
+    m_clientCloseEventFunc{ closeFunc },
+    m_clientContext{ functionContext }
+{
+}
+
+HC_WEBSOCKET::~HC_WEBSOCKET()
+{
+#if !HC_NOWEBSOCKETS
+    HC_TRACE_VERBOSE(WEBSOCKET, "HCWebsocketHandle dtor");
+#endif
+}
+
+void HC_WEBSOCKET::AddClientRef()
+{
+    {
+        std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+        ++m_clientRefCount;
+    }
+    AddRef();
+}
+
+void HC_WEBSOCKET::DecClientRef()
+{
+    {
+        std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+        if (--m_clientRefCount == 0)
+        {
+            if (disconnectCallExpected)
+            {
+                HC_TRACE_WARNING(WEBSOCKET, "No client reference remain for HC_WEBSOCKET but it is either connected/connecting. Disconnecting now.");
+                HCWebSocketDisconnect(this);
+            }
+        }
+    }
+    DecRef();
+}
+
+void HC_WEBSOCKET::AddRef()
+{
+    if (m_totalRefCount++ == 0)
+    {
+        m_extraRefHolder = shared_from_this();
+    }
+}
+
+void HC_WEBSOCKET::DecRef()
+{
+    if (--m_totalRefCount == 0)
+    {
+        m_extraRefHolder.reset();
+    }
+}
+
+void HC_WEBSOCKET::MessageFunc(
+    HC_WEBSOCKET* websocket,
+    const char* message,
+    void* context
+)
+{
+    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+    if (websocket->m_clientRefCount > 0)
+    {
+        try
+        {
+            websocket->m_clientMessageFunc(websocket, message, websocket->m_clientContext);
+        }
+        catch (...)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketMessageFunction");
+        }
+    }
+}
+
+void HC_WEBSOCKET::BinaryMessageFunc(
+    HC_WEBSOCKET* websocket,
+    const uint8_t* bytes,
+    uint32_t payloadSize,
+    void* context
+)
+{
+    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+    if (websocket->m_clientRefCount > 0)
+    {
+        try
+        {
+            websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
+        }
+        catch (...)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketBinaryMessageFunction");
+        }
+    }
+}
+
+void HC_WEBSOCKET::CloseFunc(
+    HC_WEBSOCKET* websocket,
+    HCWebSocketCloseStatus status,
+    void* context
+)
+{
+    {
+        std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+        if (websocket->m_clientRefCount > 0)
+        {
+            try
+            {
+                websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+            }
+            catch (...)
+            {
+                HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketCloseEventFunction");
+            }
+        }
+    }
+    // Release the providers ref
+    websocket->disconnectCallExpected = false;
+    websocket->DecRef();
+}
 
 STDAPI
 HCWebSocketCreate(
@@ -27,18 +155,22 @@ try
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
-    HC_WEBSOCKET* socket = new HC_WEBSOCKET();
-    socket->id = ++httpSingleton->m_lastId;
-    socket->callbackMessageFunc = messageFunc;
-    socket->callbackBinaryMessageFunc = binaryMessageFunc;
-    socket->callbackCloseEventFunc = closeFunc;
-    socket->callbackContext = functionContext;
+    std::shared_ptr<HC_WEBSOCKET> socket = http_allocate_shared<HC_WEBSOCKET>(
+        ++httpSingleton->m_lastId,
+        messageFunc,
+        binaryMessageFunc,
+        closeFunc,
+        functionContext
+    );
 
     HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketCreate [ID %llu]", socket->id);
 
-    *websocket = socket;
+    socket->AddClientRef();
+    *websocket = socket.get();
     return S_OK;
 }
 CATCH_RETURN()
@@ -50,9 +182,16 @@ HCWebSocketSetProxyUri(
     ) noexcept
 try
 {
-    RETURN_IF_WEBSOCKET_CONNECT_CALLED(websocket);
-    websocket->proxyUri = proxyUri;
+    if (websocket == nullptr || proxyUri == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    else if (websocket->disconnectCallExpected)
+    {
+        return E_HC_CONNECT_ALREADY_CALLED;
+    }
 
+    websocket->proxyUri = proxyUri;
     return S_OK;
 }
 CATCH_RETURN()
@@ -69,7 +208,10 @@ try
     {
         return E_INVALIDARG;
     }
-    RETURN_IF_WEBSOCKET_CONNECT_CALLED(websocket);
+    else if (websocket->disconnectCallExpected)
+    {
+        return E_HC_CONNECT_ALREADY_CALLED;
+    }
 
     websocket->connectHeaders[headerName] = headerValue;
 
@@ -95,13 +237,17 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    auto connectFunc = httpSingleton->m_websocketConnectFunc;
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto connectFunc = info.connect;
     if (connectFunc != nullptr)
     {
         try
         {
-            websocket->connectCalled = true;
-            connectFunc(uri, subProtocol, websocket, asyncBlock, httpSingleton->m_performEnv.get());
+            // Add a ref for the provider. This guarantees the HC_WEBSOCKET is alive until disconnect.
+            websocket->AddRef();
+            websocket->disconnectCallExpected = true;
+            connectFunc(uri, subProtocol, websocket, asyncBlock, info.context, httpSingleton->m_performEnv.get());
         }
         catch (...)
         {
@@ -128,14 +274,18 @@ try
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
-    auto sendFunc = httpSingleton->m_websocketSendMessageFunc;
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto sendFunc = info.sendText;
     if (sendFunc != nullptr)
     {
         try
         {
-            sendFunc(websocket, message, asyncBlock);
+            sendFunc(websocket, message, asyncBlock, info.context);
         }
         catch (...)
         {
@@ -165,12 +315,14 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    auto sendFunc = httpSingleton->m_websocketSendBinaryMessageFunc;
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto sendFunc = info.sendBinary;
     if (sendFunc != nullptr)
     {
         try
         {
-            sendFunc(websocket, payloadBytes, payloadSize, asyncBlock);
+            sendFunc(websocket, payloadBytes, payloadSize, asyncBlock, info.context);
         }
         catch (...)
         {
@@ -197,19 +349,15 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    auto disconnectFunc = httpSingleton->m_websocketDisconnectFunc;
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto disconnectFunc = info.disconnect;
     if (disconnectFunc != nullptr)
     {
         try
         {
-            HCWebSocketCloseStatus closeStatus = HCWebSocketCloseStatus::Normal;
-            disconnectFunc(websocket, closeStatus);
-
-            HCWebSocketCloseEventFunction closeEventFunc = websocket->callbackCloseEventFunc;
-            if (closeEventFunc != nullptr)
-            {
-                closeEventFunc(websocket, closeStatus, websocket->callbackContext);
-            }
+            websocket->disconnectCallExpected = false;
+            disconnectFunc(websocket, HCWebSocketCloseStatus::Normal, info.context);
         }
         catch (...)
         {
@@ -232,7 +380,7 @@ try
     }
 
     HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketDuplicateHandle [ID %llu]", websocket->id);
-    ++websocket->refCount;
+    websocket->AddClientRef();
 
     return websocket;
 }
@@ -250,16 +398,7 @@ try
     }
 
     HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketCloseHandle [ID %llu]", websocket->id);
-    int refCount = --websocket->refCount;
-    if (refCount <= 0)
-    {
-        auto httpSingleton = get_http_singleton(true);
-        if (nullptr == httpSingleton)
-            return E_HC_NOT_INITIALISED;
-        
-        ASSERT(refCount == 0); // should only fire at 0
-        delete websocket;
-    }
+    websocket->DecClientRef();
 
     return S_OK;
 }
@@ -267,32 +406,11 @@ CATCH_RETURN()
 
 STDAPI
 HCSetWebSocketFunctions(
-    _In_opt_ HCWebSocketConnectFunction websocketConnectFunc,
-    _In_opt_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
-    _In_opt_ HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc,
-    _In_opt_ HCWebSocketDisconnectFunction websocketDisconnectFunc
-    ) noexcept
-try
-{
-    auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-        return E_HC_NOT_INITIALISED;
-
-    httpSingleton->m_websocketConnectFunc = (websocketConnectFunc) ? websocketConnectFunc : Internal_HCWebSocketConnectAsync;
-    httpSingleton->m_websocketSendMessageFunc = (websocketSendMessageFunc) ? websocketSendMessageFunc : Internal_HCWebSocketSendMessageAsync;
-    httpSingleton->m_websocketSendBinaryMessageFunc = (websocketSendBinaryMessageFunc) ? websocketSendBinaryMessageFunc : Internal_HCWebSocketSendBinaryMessageAsync;
-    httpSingleton->m_websocketDisconnectFunc = (websocketDisconnectFunc) ? websocketDisconnectFunc : Internal_HCWebSocketDisconnect;
-
-    return S_OK;
-}
-CATCH_RETURN()
-
-STDAPI
-HCGetWebSocketFunctions(
-    _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
-    _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
-    _Out_ HCWebSocketSendBinaryMessageFunction* websocketSendBinaryMessageFunc,
-    _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc
+    _In_ HCWebSocketConnectFunction websocketConnectFunc,
+    _In_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
+    _In_ HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc,
+    _In_ HCWebSocketDisconnectFunction websocketDisconnectFunc,
+    _In_opt_ void* context
     ) noexcept
 try
 {
@@ -304,15 +422,49 @@ try
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-        return E_HC_NOT_INITIALISED;
+    auto httpSingleton = get_http_singleton(false);
+    if (httpSingleton)
+    {
+        return E_HC_ALREADY_INITIALISED;
+    }
 
-    *websocketConnectFunc = httpSingleton->m_websocketConnectFunc;
-    *websocketSendMessageFunc = httpSingleton->m_websocketSendMessageFunc;
-    *websocketSendBinaryMessageFunc = httpSingleton->m_websocketSendBinaryMessageFunc;
-    *websocketDisconnectFunc = httpSingleton->m_websocketDisconnectFunc;
+    auto& info = GetUserWebSocketPerformHandlers();
 
+    info.connect = websocketConnectFunc;
+    info.sendText = websocketSendMessageFunc;
+    info.sendBinary = websocketSendBinaryMessageFunc;
+    info.disconnect = websocketDisconnectFunc;
+    info.context = context;
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCGetWebSocketFunctions(
+    _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
+    _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
+    _Out_ HCWebSocketSendBinaryMessageFunction* websocketSendBinaryMessageFunc,
+    _Out_ HCWebSocketDisconnectFunction* websocketDisconnectFunc,
+    _Out_ void** context
+) noexcept
+try
+{
+    if (websocketConnectFunc == nullptr ||
+        websocketSendMessageFunc == nullptr ||
+        websocketSendBinaryMessageFunc == nullptr ||
+        websocketDisconnectFunc == nullptr ||
+        context == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    auto const& info = GetUserWebSocketPerformHandlers();
+
+    *websocketConnectFunc = info.connect;
+    *websocketSendMessageFunc = info.sendText;
+    *websocketSendBinaryMessageFunc = info.sendBinary;
+    *websocketDisconnectFunc = info.disconnect;
+    *context = info.context;
     return S_OK;
 }
 CATCH_RETURN()
@@ -427,26 +579,28 @@ try
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     if (messageFunc != nullptr)
     {
-        *messageFunc = websocket->callbackMessageFunc;
+        *messageFunc = HC_WEBSOCKET::MessageFunc;
     }
 
     if (binaryMessageFunc != nullptr)
     {
-        *binaryMessageFunc = websocket->callbackBinaryMessageFunc;
+        *binaryMessageFunc = HC_WEBSOCKET::BinaryMessageFunc;
     }
 
     if (closeFunc != nullptr)
     {
-        *closeFunc = websocket->callbackCloseEventFunc;
+        *closeFunc = HC_WEBSOCKET::CloseFunc;
     }
 
     if (context != nullptr)
     {
-        *context = websocket->callbackContext;
+        *context = nullptr;
     }
 
     return S_OK;

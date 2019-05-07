@@ -3,6 +3,7 @@
 #pragma once
 #include <httpClient/httpProvider.h>
 #include "../HTTP/httpcall.h"
+#include "../WebSocket/hcwebsocket.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -36,7 +37,11 @@ static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 
 typedef struct http_singleton
 {
-    http_singleton(PerformInfo const& performInfo, PerformEnv&& performEnv);
+    http_singleton(
+        HttpPerformInfo const& httpPerformInfo,
+        WebSocketPerformInfo const& websocketPerformInfo,
+        PerformEnv&& performEnv
+    );
     ~http_singleton();
 
     std::recursive_mutex m_singletonLock;
@@ -48,27 +53,21 @@ typedef struct http_singleton
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
 
     std::recursive_mutex m_callRoutedHandlersLock;
-    std::atomic<int32_t> m_callRoutedHandlersContext;
+    std::atomic<int32_t> m_callRoutedHandlersContext{ 0 };
     http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 
     // HTTP state
-    PerformInfo const m_perform;
+    HttpPerformInfo const m_httpPerform;
     PerformEnv const m_performEnv;
 
-    std::atomic<std::uint64_t> m_lastId;
+    std::atomic<std::uint64_t> m_lastId{ 0 };
     bool m_retryAllowed = true;
     uint32_t m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
     uint32_t m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     uint32_t m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
 
 #if !HC_NOWEBSOCKETS
-    // Platform implementation handlers
-    HCWebSocketMessageFunction m_websocketMessageFunc = nullptr;
-    HCWebSocketCloseEventFunction m_websocketCloseEventFunc = nullptr;
-    HCWebSocketConnectFunction m_websocketConnectFunc = nullptr;
-    HCWebSocketSendMessageFunction m_websocketSendMessageFunc = nullptr;
-    HCWebSocketSendBinaryMessageFunction m_websocketSendBinaryMessageFunc = nullptr;
-    HCWebSocketDisconnectFunction m_websocketDisconnectFunc = nullptr;
+    WebSocketPerformInfo const m_websocketPerform;
 #endif
 
     // Mock state
@@ -129,7 +128,6 @@ public:
         }
     }
 
-    template<typename T>
     static void remove(void *rawContextPtr)
     {
         auto httpSingleton = get_http_singleton(false);
@@ -148,7 +146,6 @@ public:
     static void cleanup(_In_ std::shared_ptr<http_singleton> httpSingleton)
     {
         std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_sharedPtrsLock);
-        ASSERT(httpSingleton->m_sharedPtrs.size() == 0);
         httpSingleton->m_sharedPtrs.clear();
     }
 
@@ -158,6 +155,7 @@ private:
     shared_ptr_cache& operator=(const shared_ptr_cache&);
 };
 
-PerformInfo& GetUserPerformHandler() noexcept;
+HttpPerformInfo& GetUserHttpPerformHandler() noexcept;
+WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept;
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

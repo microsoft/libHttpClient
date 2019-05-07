@@ -190,6 +190,8 @@ public:
     HRESULT on_websocket_disconnected(_In_ USHORT closeReason);
     std::atomic<WinHttpWebsockState> m_socketState = WinHttpWebsockState::Created;
     HCWebsocketHandle m_websocketHandle = nullptr;
+    HRESULT m_connectHr{ S_OK };
+    uint32_t m_connectPlatformError{ 0 };
 #endif
 
 private:
@@ -243,6 +245,10 @@ private:
         _In_ HINTERNET hRequestHandle,
         _In_ winhttp_http_task* pRequestContext,
         _In_ void* statusInfo);
+
+    static char* winhttp_web_socket_buffer_type_to_string(
+        _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
+    );
 
     HRESULT send(_In_ const xbox::httpclient::Uri& cUri, _In_ const char* method);
 
