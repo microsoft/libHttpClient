@@ -252,7 +252,7 @@ void winhttp_http_task::callback_status_request_error(
 
         if (pRequestContext->m_asyncBlock == nullptr)
         {
-            pRequestContext->on_websocket_disconnected(4000); // HCWebSocketCloseStatus::Unknown
+            pRequestContext->on_websocket_disconnected(errorCode);
         }
     }
 #endif
