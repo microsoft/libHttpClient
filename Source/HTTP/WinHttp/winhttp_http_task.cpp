@@ -244,6 +244,18 @@ void winhttp_http_task::callback_status_request_error(
 
     const DWORD errorCode = error_result->dwError;
     HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), error_result->dwResult, error_result->dwError);
+
+#if HC_WINHTTP_WEBSOCKETS
+    if (pRequestContext->m_isWebSocket)
+    {
+        pRequestContext->m_socketState = WinHttpWebsockState::Closed;
+
+        if (pRequestContext->m_asyncBlock == nullptr)
+        {
+            pRequestContext->on_websocket_disconnected(4000); // HCWebSocketCloseStatus::Unknown
+        }
+    }
+#endif
     pRequestContext->complete_task(E_FAIL, errorCode);
 }
 
