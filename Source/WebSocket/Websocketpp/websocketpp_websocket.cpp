@@ -621,6 +621,10 @@ private:
     template <typename WebsocketConfigType>
     void shutdown_wspp_impl()
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+            return;
+
         auto &client = m_client->client<WebsocketConfigType>();
         const auto &connection = client.get_con_from_hdl(m_con);
         m_closeCode = connection->get_local_close_code();
