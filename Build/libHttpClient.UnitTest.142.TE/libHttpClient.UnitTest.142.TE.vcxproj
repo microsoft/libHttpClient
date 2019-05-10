@@ -48,7 +48,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>libHttpClient.141.UnitTest</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>libHttpClient.UnitTest.141.TE</ProjectName>
+    <ProjectName>libHttpClient.UnitTest.142.TE</ProjectName>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <HCLibPlatformType>Win32</HCLibPlatformType>
     <HCLibImpl>true</HCLibImpl>
