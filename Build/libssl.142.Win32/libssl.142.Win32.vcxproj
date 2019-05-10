@@ -32,7 +32,7 @@
     <ProjectGuid>{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <LinkIncremental>true</LinkIncremental>
     <HCLibPlatformType>Win32</HCLibPlatformType>

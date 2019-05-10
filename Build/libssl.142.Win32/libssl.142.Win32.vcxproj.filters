@@ -118,5 +118,26 @@
     <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_srvr.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)ssl\packet.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record_tls13.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_clnt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_cust.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_srvr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)ssl\tls13_enc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

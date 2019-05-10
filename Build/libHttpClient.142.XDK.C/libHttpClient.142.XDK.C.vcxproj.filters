@@ -243,14 +243,4 @@
       <UniqueIdentifier>{2F64C9BE-5116-3E71-971F-592C0D76A89D}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\Source\Shared\Logger\ERA_ETW.man">
-      <Filter>C++ source\Shared\Logger</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\..\Source\Shared\Logger\ERA_ETW.rc">
-      <Filter>C++ source\Shared\Logger</Filter>
-    </ResourceCompile>
-  </ItemGroup>
 </Project>
