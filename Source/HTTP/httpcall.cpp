@@ -536,7 +536,7 @@ CATCH_RETURN()
 STDAPI 
 HCHttpCallSetContext(
     _In_ HCCallHandle call,
-    _In_ void* context
+    _In_opt_ void* context
     ) noexcept
 try
 {
