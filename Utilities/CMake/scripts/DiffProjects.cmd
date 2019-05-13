@@ -16,6 +16,10 @@ set PROJECT_PROCESSOR=%ROOT_FOLDER%\Utilities\CMake\ProjectFileProcessor\bin\Deb
 %PROJECT_PROCESSOR% %ROOT_FOLDER% diff %ROOT_FOLDER%\Build\Microsoft.Xbox.Services.141.UWP.Cpp\Microsoft.Xbox.Services.141.UWP.Ship.Cpp.vcxproj %ROOT_FOLDER%\Utilities\CMake\output\Microsoft.Xbox.Services.141.UWP.Ship.Cpp.vcxproj
 %PROJECT_PROCESSOR% %ROOT_FOLDER% diff %ROOT_FOLDER%\Build\Microsoft.Xbox.Services.141.XDK.Cpp\Microsoft.Xbox.Services.141.XDK.Cpp.vcxproj %ROOT_FOLDER%\Utilities\CMake\output\Microsoft.Xbox.Services.141.XDK.Cpp.vcxproj
 %PROJECT_PROCESSOR% %ROOT_FOLDER% diff %ROOT_FOLDER%\Build\Microsoft.Xbox.Services.141.XDK.Cpp\Microsoft.Xbox.Services.141.XDK.Ship.Cpp.vcxproj %ROOT_FOLDER%\Utilities\CMake\output\Microsoft.Xbox.Services.141.XDK.Ship.Cpp.vcxproj
+%PROJECT_PROCESSOR% %ROOT_FOLDER% diff %ROOT_FOLDER%\Build\Microsoft.Xbox.Services.142.UWP.Cpp\Microsoft.Xbox.Services.142.UWP.Cpp.vcxproj %ROOT_FOLDER%\Utilities\CMake\output\Microsoft.Xbox.Services.142.UWP.Cpp.vcxproj
+%PROJECT_PROCESSOR% %ROOT_FOLDER% diff %ROOT_FOLDER%\Build\Microsoft.Xbox.Services.142.UWP.Cpp\Microsoft.Xbox.Services.142.UWP.Ship.Cpp.vcxproj %ROOT_FOLDER%\Utilities\CMake\output\Microsoft.Xbox.Services.142.UWP.Ship.Cpp.vcxproj
+%PROJECT_PROCESSOR% %ROOT_FOLDER% diff %ROOT_FOLDER%\Build\Microsoft.Xbox.Services.142.XDK.Cpp\Microsoft.Xbox.Services.142.XDK.Cpp.vcxproj %ROOT_FOLDER%\Utilities\CMake\output\Microsoft.Xbox.Services.142.XDK.Cpp.vcxproj
+%PROJECT_PROCESSOR% %ROOT_FOLDER% diff %ROOT_FOLDER%\Build\Microsoft.Xbox.Services.142.XDK.Cpp\Microsoft.Xbox.Services.142.XDK.Ship.Cpp.vcxproj %ROOT_FOLDER%\Utilities\CMake\output\Microsoft.Xbox.Services.142.XDK.Ship.Cpp.vcxproj
 
 goto done
 :help

@@ -36,6 +36,12 @@ copy %NEW_FOLDER%\libHttpClient.141.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.
 copy %NEW_FOLDER%\libHttpClient.141.Android.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.Android.C
 copy %NEW_FOLDER%\libHttpClient.UnitTest.141.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.141.TAEF
 copy %NEW_FOLDER%\libHttpClient.UnitTest.141.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.141.TE
+copy %NEW_FOLDER%\libHttpClient.142.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.UWP.C
+copy %NEW_FOLDER%\libHttpClient.142.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.XDK.C
+copy %NEW_FOLDER%\libHttpClient.142.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.Win32.C
+copy %NEW_FOLDER%\libHttpClient.142.Android.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.Android.C
+copy %NEW_FOLDER%\libHttpClient.UnitTest.142.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.142.TAEF
+copy %NEW_FOLDER%\libHttpClient.UnitTest.142.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.142.TE
 
 :skipCopy
 
