@@ -546,7 +546,6 @@ void MessageWebSocketSendMessage(
     {
         return;
     }
-    HCWebSocketDuplicateHandle(websocketTask->m_websocketHandle);
 
     HRESULT hr = XAsyncBegin(msg->m_asyncBlock, rawContext, HCWebSocketSendMessageAsync, __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
