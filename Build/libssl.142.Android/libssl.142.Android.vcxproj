@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{51b9c654-fbc9-4224-8751-d7d0c05b7bc9}</ProjectGuid>
+    <ProjectGuid>{f2fe27e9-898d-47dd-ac6a-802680293ece}</ProjectGuid>
     <Keyword>Android</Keyword>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>Android</ApplicationType>
