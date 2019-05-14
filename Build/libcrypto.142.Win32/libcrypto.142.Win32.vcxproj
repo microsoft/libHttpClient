@@ -29,7 +29,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}</ProjectGuid>
+    <ProjectGuid>{2C8E7AF1-A395-4695-A116-63000F910ABD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
