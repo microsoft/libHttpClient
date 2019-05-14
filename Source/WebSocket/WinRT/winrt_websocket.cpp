@@ -294,11 +294,6 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
         {
             case XAsyncOp::DoWork: return WebsocketConnectDoWork(data->async, data->context);
             case XAsyncOp::GetResult: return WebsocketConnectGetResult(data);
-            case XAsyncOp::Cleanup:
-            {
-                HCWebSocketCloseHandle(static_cast<HCWebsocketHandle>(data->context));
-                break;
-            }
         }
 
         return S_OK;
@@ -560,7 +555,6 @@ void MessageWebSocketSendMessage(
                 auto context = shared_ptr_cache::fetch<SendMessageCallbackContext>(data->context, false);
                 if (context != nullptr)
                 {
-                    HCWebSocketCloseHandle(context->websocketTask->m_websocketHandle);
                     shared_ptr_cache::remove(data->context);
                 }
                 break;
