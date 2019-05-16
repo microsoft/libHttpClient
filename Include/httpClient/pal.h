@@ -350,6 +350,10 @@ typedef struct _LIST_ENTRY {
 #define _Ret_z_
 #endif
 
+#ifndef _Deref_out_opt_
+#define _Deref_out_opt_
+#endif
+
 #ifndef __analysis_assume
 #define __analysis_assume(condition)
 #endif
@@ -444,6 +448,7 @@ extern "C"
 
 // Error codes from https://www.iana.org/assignments/websocket/websocket.xml#close-code-number
 // and from https://docs.microsoft.com/en-us/windows/desktop/api/winhttp/ne-winhttp-_winhttp_web_socket_close_status
+// and from https://docs.microsoft.com/en-us/windows/desktop/winhttp/error-messages
 enum class HCWebSocketCloseStatus : uint32_t
 {
     Normal = 1000,
@@ -458,7 +463,8 @@ enum class HCWebSocketCloseStatus : uint32_t
     NegotiateError = 1010,
     ServerTerminate = 1011,
     HandshakeError = 1015,
-    UnknownError = 4000
+    UnknownError = 4000,
+    ErrorWinhttpTimeout = 12002
 };
 
 }

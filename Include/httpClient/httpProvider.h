@@ -89,7 +89,7 @@ STDAPI HCHttpCallGetContext(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallSetContext(
     _In_ HCCallHandle call,
-    _In_ void* context
+    _In_opt_ void* context
     ) noexcept;
 
 
