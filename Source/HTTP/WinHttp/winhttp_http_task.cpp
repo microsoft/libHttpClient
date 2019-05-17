@@ -637,6 +637,7 @@ void CALLBACK winhttp_http_task::completion_callback(
 void winhttp_http_task::set_autodiscover_proxy(
     _In_ const xbox::httpclient::Uri& cUri)
 {
+#if HC_PLATFORM != HC_PLATFORM_GSDK
     WINHTTP_PROXY_INFO info = { 0 };
 
     WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
@@ -669,6 +670,9 @@ void winhttp_http_task::set_autodiscover_proxy(
     {
         // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
     }
+#else
+    UNREFERENCED_PARAMETER(cUri);
+#endif
 }
 
 http_internal_wstring flatten_http_headers(_In_ const http_header_map& headers)
