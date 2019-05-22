@@ -386,6 +386,13 @@ void retry_http_call_until_done(
 
     nestedBlock->callback = [](XAsyncBlock* nestedAsyncBlock)
     {
+        auto httpSingleton = get_http_singleton(false);
+        if (nullptr == httpSingleton)
+        {
+            HC_TRACE_INFORMATION(HTTPCLIENT, "Http completed after HCCleanup was called. Aborting call.");
+            return;
+        }
+
         retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
         auto responseReceivedTime = chrono_clock_t::now();
 
