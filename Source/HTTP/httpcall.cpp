@@ -389,7 +389,7 @@ void retry_http_call_until_done(
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
         {
-            HC_TRACE_INFORMATION(HTTPCLIENT, "Http completed after HCCleanup was called. Aborting call.");
+            HC_TRACE_WARNING(HTTPCLIENT, "Http completed after HCCleanup was called. Aborting call.");
             return;
         }
 
