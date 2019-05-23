@@ -242,6 +242,10 @@ typedef struct _LIST_ENTRY {
 #define _In_reads_(size) 
 #endif
 
+#ifndef _In_reads_opt_
+#define _In_reads_opt_(size) 
+#endif
+
 #ifndef _In_reads_bytes_
 #define _In_reads_bytes_(size) 
 #endif
@@ -344,6 +348,10 @@ typedef struct _LIST_ENTRY {
 
 #ifndef _Ret_z_
 #define _Ret_z_
+#endif
+
+#ifndef _Deref_out_opt_
+#define _Deref_out_opt_
 #endif
 
 #ifndef __analysis_assume

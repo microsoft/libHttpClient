@@ -107,11 +107,16 @@ void WaitTimer::Cancel() noexcept
 uint64_t WaitTimer::GetAbsoluteTime(_In_ uint32_t msFromNow) noexcept
 {
     FILETIME ft;
-    LARGE_INTEGER li;
+    ULARGE_INTEGER li;
     GetSystemTimeAsFileTime(&ft);
     ASSERT((ft.dwHighDateTime & 0x80000000) == 0);
+
+    uint64_t hundredNanosFromNow = msFromNow;
+    hundredNanosFromNow *= 10000ULL;
+
     li.HighPart = ft.dwHighDateTime;
     li.LowPart = ft.dwLowDateTime;
-    li.QuadPart += (msFromNow * 10000);
+    li.QuadPart += hundredNanosFromNow;
+    
     return li.QuadPart;
 }

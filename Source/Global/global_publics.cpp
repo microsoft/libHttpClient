@@ -84,7 +84,7 @@ CATCH_RETURN()
 
 STDAPI_(int32_t) HCAddCallRoutedHandler(
     _In_ HCCallRoutedHandler handler,
-    _In_ void* context
+    _In_opt_ void* context
     ) noexcept
 {
     if (handler == nullptr)

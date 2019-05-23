@@ -148,7 +148,7 @@ STDAPI HCGetLibVersion(_Outptr_ const char** version) noexcept;
 typedef void
 (STDAPIVCALLTYPE* HCCallRoutedHandler)(
     _In_ HCCallHandle call,
-    _In_ void* context
+    _In_opt_ void* context
     );
 
 /// <summary>
@@ -160,7 +160,7 @@ typedef void
 /// <returns>An unique id that can be used to remove the handler.</returns>
 STDAPI_(int32_t) HCAddCallRoutedHandler(
     _In_ HCCallRoutedHandler handler,
-    _In_ void* context
+    _In_opt_ void* context
     ) noexcept;
 
 /// <summary>
