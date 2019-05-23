@@ -282,7 +282,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
 {
     UNREFERENCED_PARAMETER(env);
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
-    websocketTask->m_websocketHandle = HCWebSocketDuplicateHandle(websocket);
+    websocketTask->m_websocketHandle = websocket;
     websocket->uri = uri;
     websocket->subProtocol = subProtocol;
     websocket->impl = std::dynamic_pointer_cast<hc_websocket_impl>(websocketTask);
@@ -294,11 +294,6 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
         {
             case XAsyncOp::DoWork: return WebsocketConnectDoWork(data->async, data->context);
             case XAsyncOp::GetResult: return WebsocketConnectGetResult(data);
-            case XAsyncOp::Cleanup:
-            {
-                HCWebSocketCloseHandle(static_cast<HCWebsocketHandle>(data->context));
-                break;
-            }
         }
 
         return S_OK;
@@ -546,7 +541,6 @@ void MessageWebSocketSendMessage(
     {
         return;
     }
-    HCWebSocketDuplicateHandle(websocketTask->m_websocketHandle);
 
     HRESULT hr = XAsyncBegin(msg->m_asyncBlock, rawContext, HCWebSocketSendMessageAsync, __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
@@ -561,7 +555,6 @@ void MessageWebSocketSendMessage(
                 auto context = shared_ptr_cache::fetch<SendMessageCallbackContext>(data->context, false);
                 if (context != nullptr)
                 {
-                    HCWebSocketCloseHandle(context->websocketTask->m_websocketHandle);
                     shared_ptr_cache::remove(data->context);
                 }
                 break;

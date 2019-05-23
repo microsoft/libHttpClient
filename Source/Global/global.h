@@ -3,7 +3,9 @@
 #pragma once
 #include <httpClient/httpProvider.h>
 #include "../HTTP/httpcall.h"
+#if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -39,7 +41,9 @@ typedef struct http_singleton
 {
     http_singleton(
         HttpPerformInfo const& httpPerformInfo,
+#if !HC_NOWEBSOCKETS
         WebSocketPerformInfo const& websocketPerformInfo,
+#endif
         PerformEnv&& performEnv
     );
     ~http_singleton();
@@ -156,6 +160,8 @@ private:
 };
 
 HttpPerformInfo& GetUserHttpPerformHandler() noexcept;
+#if !HC_NOWEBSOCKETS
 WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept;
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

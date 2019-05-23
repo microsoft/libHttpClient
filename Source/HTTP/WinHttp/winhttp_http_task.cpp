@@ -166,7 +166,7 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
 }
 
 // Helper function to query/read next part of response data from winhttp.
-void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD bytesRead)
+void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD /*bytesRead*/)
 {
     if (!WinHttpQueryDataAvailable(pRequestContext->m_hRequest, nullptr))
     {
@@ -234,7 +234,7 @@ void winhttp_http_task::callback_status_write_complete(
 }
 
 void winhttp_http_task::callback_status_request_error(
-    _In_ HINTERNET hRequestHandle,
+    _In_ HINTERNET /*hRequestHandle*/,
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
@@ -252,7 +252,7 @@ void winhttp_http_task::callback_status_request_error(
 
         if (pRequestContext->m_asyncBlock == nullptr)
         {
-            pRequestContext->on_websocket_disconnected(errorCode);
+            pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
         }
     }
 #endif
@@ -262,7 +262,7 @@ void winhttp_http_task::callback_status_request_error(
 void winhttp_http_task::callback_status_sendrequest_complete(
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext,
-    _In_ void* statusInfo)
+    _In_ void* /*statusInfo*/)
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId() );
 
@@ -373,7 +373,7 @@ void winhttp_http_task::parse_headers_string(
 void winhttp_http_task::callback_status_headers_available(
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext,
-    _In_ void* statusInfo)
+    _In_ void* /*statusInfo*/)
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId() );
 
@@ -404,7 +404,7 @@ void winhttp_http_task::callback_status_headers_available(
         return;
     }
 
-    uint32_t statusCode = parse_status_code(pRequestContext->m_call, hRequestHandle, pRequestContext);
+    parse_status_code(pRequestContext->m_call, hRequestHandle, pRequestContext);
     parse_headers_string(pRequestContext->m_call, headerBuffer);
     read_next_response_chunk(pRequestContext, 0);
 }
@@ -457,7 +457,7 @@ void winhttp_http_task::callback_status_data_available(
 
 
 void winhttp_http_task::callback_status_read_complete(
-    _In_ HINTERNET hRequestHandle,
+    _In_ HINTERNET /*hRequestHandle*/,
     _In_ winhttp_http_task* pRequestContext,
     _In_ DWORD statusInfoLength)
 {
@@ -951,6 +951,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
     assert(args == nullptr);
+    UNREFERENCED_PARAMETER(args);
 
     performEnv.reset(new (std::nothrow) HC_PERFORM_ENV());
     if (!performEnv) { return E_OUTOFMEMORY; }

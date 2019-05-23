@@ -18,7 +18,9 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 http_singleton::http_singleton(
     HttpPerformInfo const& httpPerformInfo,
+#if !HC_NOWEBSOCKETS
     WebSocketPerformInfo const& websocketPerformInfo,
+#endif
     PerformEnv&& performEnv
 ) :
     m_httpPerform{ httpPerformInfo },
@@ -65,7 +67,9 @@ HRESULT init_http_singleton(HCInitArgs* args)
         {
             auto newSingleton = http_allocate_shared<http_singleton>(
                 GetUserHttpPerformHandler(),
+#if !HC_NOWEBSOCKETS
                 GetUserWebSocketPerformHandlers(),
+#endif
                 std::move(performEnv)
             );
             std::atomic_compare_exchange_strong(
@@ -145,6 +149,7 @@ HttpPerformInfo& GetUserHttpPerformHandler() noexcept
     return handler;
 }
 
+#if !HC_NOWEBSOCKETS
 WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept
 {
     static WebSocketPerformInfo handlers(
@@ -156,5 +161,6 @@ WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept
     );
     return handlers;
 }
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
