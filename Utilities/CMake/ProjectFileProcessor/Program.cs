@@ -108,6 +108,14 @@ namespace ProjectFileProcessor
 
             var fileNodes = new List<FileNode>();
 
+            //libHttpClient.142.UWP.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.UWP.C.vcxproj",
+                template = @"template-libHttpClient.142.UWP.C.vcxproj",
+                output = @"libHttpClient.142.UWP.C.vcxproj",
+            });
+
             //libHttpClient.141.UWP.Cpp
             fileNodes.Add(new FileNode
             {
@@ -122,6 +130,14 @@ namespace ProjectFileProcessor
                 cmake_vcxproj = @"libHttpClient.UWP.C.vcxproj",
                 template = @"template-libHttpClient.140.UWP.C.vcxproj",
                 output = @"libHttpClient.140.UWP.C.vcxproj",
+            });
+
+            //libHttpClient.142.Win32.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.Win32.C.vcxproj",
+                template = @"template-libHttpClient.142.Win32.C.vcxproj",
+                output = @"libHttpClient.142.Win32.C.vcxproj",
             });
 
             //libHttpClient.141.Win32.Cpp
@@ -140,12 +156,28 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.140.Win32.C.vcxproj",
             });
 
+            //libHttpClient.142.Android.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.Android.C.vcxproj",
+                template = @"template-libHttpClient.142.Android.C.vcxproj",
+                output = @"libHttpClient.142.Android.C.vcxproj",
+            });
+
             //libHttpClient.141.Android.Cpp
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.Android.C.vcxproj",
                 template = @"template-libHttpClient.141.Android.C.vcxproj",
                 output = @"libHttpClient.141.Android.C.vcxproj",
+            });
+
+            //libHttpClient.142.XDK.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.XDK.C.vcxproj",
+                template = @"template-libHttpClient.142.XDK.C.vcxproj",
+                output = @"libHttpClient.142.XDK.C.vcxproj",
             });
 
             //libHttpClient.141.XDK.Cpp
@@ -188,12 +220,28 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.110.XDK.C.vcxproj",
             });
 
+            //libHttpClient.UnitTest.142.TAEF
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.UnitTest.142.TAEF.vcxproj",
+                template = @"template-libHttpClient.UnitTest.142.TAEF.vcxproj",
+                output = @"libHttpClient.UnitTest.142.TAEF.vcxproj",
+            });
+
             //libHttpClient.UnitTest.141.TAEF
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.UnitTest.141.TAEF.vcxproj",
                 template = @"template-libHttpClient.UnitTest.141.TAEF.vcxproj",
                 output = @"libHttpClient.UnitTest.141.TAEF.vcxproj",
+            });
+
+            //libHttpClient.UnitTest.142.TE
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.UnitTest.142.TE.vcxproj",
+                template = @"template-libHttpClient.UnitTest.142.TE.vcxproj",
+                output = @"libHttpClient.UnitTest.142.TE.vcxproj",
             });
 
             //libHttpClient.UnitTest.141.TE
@@ -228,6 +276,14 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.141.XDK.Ship.C.vcxproj",
             });
 
+            //libHttpClient.142.XDK.Ship.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
+                template = @"template-libHttpClient.142.XDK.C.vcxproj",
+                output = @"libHttpClient.142.XDK.Ship.C.vcxproj",
+            });
+
             //libHttpClient.140.UWP.Ship.Cpp
             fileNodes.Add(new FileNode
             {
@@ -242,6 +298,14 @@ namespace ProjectFileProcessor
                 cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
                 template = @"template-libHttpClient.141.UWP.C.vcxproj",
                 output = @"libHttpClient.141.UWP.Ship.C.vcxproj",
+            });
+
+            //libHttpClient.142.UWP.Ship.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
+                template = @"template-libHttpClient.142.UWP.C.vcxproj",
+                output = @"libHttpClient.142.UWP.Ship.C.vcxproj",
             });
 
             foreach (FileNode fn in fileNodes)
