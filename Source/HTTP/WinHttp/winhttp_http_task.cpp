@@ -5,6 +5,7 @@
 #include "../httpcall.h"
 #include "uri.h"
 #include "winhttp_http_task.h"
+#include <schannel.h>
 
 #if !HC_NOWEBSOCKETS
 #include "hcwebsocket.h"
@@ -234,7 +235,7 @@ void winhttp_http_task::callback_status_write_complete(
 }
 
 void winhttp_http_task::callback_status_request_error(
-    _In_ HINTERNET /*hRequestHandle*/,
+    _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
@@ -242,21 +243,96 @@ void winhttp_http_task::callback_status_request_error(
     if (error_result == nullptr)
         return;
 
-    const DWORD errorCode = error_result->dwError;
+    DWORD errorCode = error_result->dwError;
     HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), error_result->dwResult, error_result->dwError);
 
-#if HC_WINHTTP_WEBSOCKETS
-    if (pRequestContext->m_isWebSocket)
-    {
-        pRequestContext->m_socketState = WinHttpWebsockState::Closed;
+    bool reissueSend{ false };
 
-        if (pRequestContext->m_asyncBlock == nullptr)
+    if (error_result->dwError == ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED)
+    {
+        SecPkgContext_IssuerListInfoEx* pIssuerList{ nullptr };
+        DWORD dwBufferSize{ sizeof(void*) };
+
+        if (WinHttpQueryOption(
+            hRequestHandle,
+            WINHTTP_OPTION_CLIENT_CERT_ISSUER_LIST,
+            &pIssuerList,
+            &dwBufferSize
+        ))
         {
-            pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
+            PCERT_CONTEXT pClientCert{ nullptr };
+            PCCERT_CHAIN_CONTEXT pClientCertChain{ nullptr };
+
+            CERT_CHAIN_FIND_BY_ISSUER_PARA searchCriteria{};
+            searchCriteria.cbSize = sizeof(CERT_CHAIN_FIND_BY_ISSUER_PARA);
+            searchCriteria.cIssuer = pIssuerList->cIssuers;
+            searchCriteria.rgIssuer = pIssuerList->aIssuers;
+
+            HCERTSTORE hCertStore = CertOpenSystemStore(0, L"MY");
+            if (hCertStore)
+            {
+                pClientCertChain = CertFindChainInStore(
+                    hCertStore,
+                    X509_ASN_ENCODING,
+                    CERT_CHAIN_FIND_BY_ISSUER_CACHE_ONLY_URL_FLAG | CERT_CHAIN_FIND_BY_ISSUER_CACHE_ONLY_FLAG,
+                    CERT_CHAIN_FIND_BY_ISSUER,
+                    &searchCriteria,
+                    nullptr
+                );
+
+                if (pClientCertChain)
+                {
+                    pClientCert = (PCERT_CONTEXT)pClientCertChain->rgpChain[0]->rgpElement[0]->pCertContext;
+
+                    reissueSend = WinHttpSetOption(
+                        hRequestHandle,
+                        WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
+                        (LPVOID)pClientCert,
+                        sizeof(CERT_CONTEXT)
+                    );
+
+                    CertFreeCertificateChain(pClientCertChain);
+                }
+                CertCloseStore(hCertStore, 0);
+            }
+            GlobalFree(pIssuerList);
+        }
+        else
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "WinHttp returned ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED but unable to get cert issuer list.");
         }
     }
+
+    if (reissueSend)
+    {
+        const char* url{ nullptr };
+        const char* method{ nullptr };
+        HRESULT hr = HCHttpCallRequestGetUrl(pRequestContext->m_call, &method, &url);
+        if (SUCCEEDED(hr))
+        {
+            hr = pRequestContext->send(xbox::httpclient::Uri{ url }, method);
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task Failure to send HTTP request 0x%0.8x", hr);
+                pRequestContext->complete_task(E_FAIL, hr);
+            }
+        }
+    }
+    else
+    {
+#if HC_WINHTTP_WEBSOCKETS
+        if (pRequestContext->m_isWebSocket)
+        {
+            pRequestContext->m_socketState = WinHttpWebsockState::Closed;
+
+            if (pRequestContext->m_asyncBlock == nullptr)
+            {
+                pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
+            }
+        }
 #endif
-    pRequestContext->complete_task(E_FAIL, errorCode);
+        pRequestContext->complete_task(E_FAIL, errorCode);
+    }
 }
 
 void winhttp_http_task::callback_status_sendrequest_complete(
@@ -842,6 +918,18 @@ HRESULT winhttp_http_task::send(
     {
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetStatusCallback errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+        return HRESULT_FROM_WIN32(dwError);
+    }
+
+    if (!WinHttpSetOption(
+        m_hRequest,
+        WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
+        WINHTTP_NO_CLIENT_CERT_CONTEXT,
+        0
+    ))
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
         return HRESULT_FROM_WIN32(dwError);
     }
 
