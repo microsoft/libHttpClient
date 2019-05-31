@@ -299,7 +299,8 @@ void winhttp_http_task::callback_status_request_error(
         }
         else
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "WinHttp returned ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED but unable to get cert issuer list.");
+            auto certError = GetLastError();
+            HC_TRACE_ERROR(HTTPCLIENT, "WinHttp returned ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED but unable to get cert issuer list, dwError=%d", certError);
         }
     }
 
