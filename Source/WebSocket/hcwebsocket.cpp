@@ -83,7 +83,10 @@ void HC_WEBSOCKET::MessageFunc(
     {
         try
         {
-            websocket->m_clientMessageFunc(websocket, message, websocket->m_clientContext);
+            if (websocket->m_clientMessageFunc)
+            {
+                websocket->m_clientMessageFunc(websocket, message, websocket->m_clientContext);
+            }
         }
         catch (...)
         {
@@ -104,7 +107,10 @@ void HC_WEBSOCKET::BinaryMessageFunc(
     {
         try
         {
-            websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
+            if (websocket->m_clientBinaryMessageFunc)
+            {
+                websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
+            }
         }
         catch (...)
         {
@@ -125,7 +131,10 @@ void HC_WEBSOCKET::CloseFunc(
         {
             try
             {
-                websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+                if (websocket->m_clientCloseEventFunc)
+                {
+                    websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+                }
             }
             catch (...)
             {
