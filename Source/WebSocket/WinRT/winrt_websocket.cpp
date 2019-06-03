@@ -407,11 +407,10 @@ HRESULT WebsockSendMessageDoWork(
     )
 try
 {
-    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContext>(executionRoutineContext, false);
+    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContext>(executionRoutineContext);
     if (sendMsgContext == nullptr)
     {
-        HC_TRACE_ERROR(WEBSOCKET, "Websocket: Send message execute null");
-        return E_INVALIDARG;
+        return E_HC_NOT_INITIALISED;
     }
 
     auto websocketTask = sendMsgContext->websocketTask;
@@ -486,11 +485,10 @@ HRESULT WebsockSendMessageGetResult(_In_ const XAsyncProviderData* data)
         return E_INVALIDARG;
     }
 
-    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContext>(data->context, false);
+    auto sendMsgContext = shared_ptr_cache::fetch<SendMessageCallbackContext>(data->context);
     if (sendMsgContext == nullptr)
     {
-        HC_TRACE_ERROR(WEBSOCKET, "Websocket GetResult null");
-        return E_INVALIDARG;
+        return E_HC_NOT_INITIALISED;
     }
 
     auto msg = sendMsgContext->nextMessage;
@@ -552,11 +550,7 @@ void MessageWebSocketSendMessage(
 
             case XAsyncOp::Cleanup: 
             {
-                auto context = shared_ptr_cache::fetch<SendMessageCallbackContext>(data->context, false);
-                if (context != nullptr)
-                {
-                    shared_ptr_cache::remove(data->context);
-                }
+                shared_ptr_cache::remove(data->context);
                 break;
             }
         }
