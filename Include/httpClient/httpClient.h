@@ -77,6 +77,7 @@ typedef void
 /// pointer to restore the default.</param>
 /// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null 
 /// pointer to restore the default.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, or E_HC_ALREADY_INITIALIZED.</returns>
 STDAPI HCMemSetFunctions(
     _In_opt_ HCMemAllocFunction memAllocFunc,
     _In_opt_ HCMemFreeFunction memFreeFunc
@@ -129,6 +130,7 @@ STDAPI HCInitialize(_In_opt_ HCInitArgs* args) noexcept;
 /// Immediately reclaims all resources associated with the library.
 /// If you called HCMemSetFunctions(), call this before shutting down your app's memory manager.
 /// </summary>
+/// <returns></returns>
 STDAPI_(void) HCCleanup() noexcept;
 
 /// <summary>
@@ -167,6 +169,7 @@ STDAPI_(int32_t) HCAddCallRoutedHandler(
 /// Removes a previously added HCCallRoutedHandler.
 /// </summary>
 /// <param name="handlerId">Id returned from the HCAddCallRoutedHandler call.</param>
+/// <returns></returns>
 STDAPI_(void) HCRemoveCallRoutedHandler(
     _In_ int32_t handlerId
     ) noexcept;
@@ -490,6 +493,7 @@ STDAPI HCHttpCallResponseGetResponseBodyBytes(
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <param name="statusCode">the HTTP status code of the HTTP call response</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseGetStatusCode(
     _In_ HCCallHandle call,
     _Out_ uint32_t* statusCode
@@ -678,6 +682,7 @@ STDAPI HCWebSocketSetHeader(
 /// <param name="binaryMessageFunc">A pointer to the binary message handling callback to use, or a null pointer to remove.</param>
 /// <param name="closeFunc">A pointer to the close callback to use, or a null pointer to remove.</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_HC_NOT_INITIALISED, or E_FAIL.</returns>
 STDAPI HCWebSocketGetEventFunctions(
     _In_ HCWebsocketHandle websocket,
     _Out_opt_ HCWebSocketMessageFunction* messageFunc,
