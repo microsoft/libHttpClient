@@ -725,6 +725,7 @@ void CALLBACK winhttp_http_task::completion_callback(
     }
 }
 
+#if HC_PLATFORM != HC_PLATFORM_GSDK
 void winhttp_http_task::set_autodiscover_proxy(
     _In_ const xbox::httpclient::Uri& cUri)
 {
@@ -761,6 +762,7 @@ void winhttp_http_task::set_autodiscover_proxy(
         // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
     }
 }
+#endif
 
 http_internal_wstring flatten_http_headers(_In_ const http_header_map& headers)
 {
@@ -866,10 +868,12 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
+#if HC_PLATFORM != HC_PLATFORM_GSDK
     if (m_proxyType == proxy_type::autodiscover_proxy)
     {
         set_autodiscover_proxy(cUri);
     }
+#endif
 
     const BYTE* requestBody = nullptr;
     uint32_t requestBodyBytes = 0;
