@@ -943,9 +943,9 @@ HRESULT winhttp_http_task::send(
 #if HC_WINHTTP_WEBSOCKETS
     if (m_isWebSocket)
     {
-        if (!m_websocketHandle->connectHeaders.empty())
+        if (!m_websocketHandle->Headers().empty())
         {
-            http_internal_wstring flattenedHeaders = flatten_http_headers(m_websocketHandle->connectHeaders);
+            http_internal_wstring flattenedHeaders = flatten_http_headers(m_websocketHandle->Headers());
             if (!WinHttpAddRequestHeaders(
                 m_hRequest,
                 flattenedHeaders.c_str(),

@@ -31,6 +31,244 @@ HC_WEBSOCKET::~HC_WEBSOCKET()
 #endif
 }
 
+HRESULT HC_WEBSOCKET::Connect(
+    _In_z_ const char* uri,
+    _In_z_ const char* subProtocol,
+    _Inout_ XAsyncBlock* asyncBlock
+) noexcept
+{
+    auto httpSingleton = get_http_singleton(true);
+    if (!httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    m_uri = uri;
+    m_subProtocol = subProtocol;
+
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto connectFunc = info.connect;
+    if (connectFunc != nullptr)
+    {
+        try
+        {
+            // Intercept the result of the connect before returning to client. Otherwise we have no way of knowing
+            // if we are in a connected state.
+            ZeroMemory(&m_connectAsyncBlock, sizeof(XAsyncBlock));
+            m_connectAsyncBlock.queue = asyncBlock->queue;
+            m_connectAsyncBlock.context = this;
+            m_connectAsyncBlock.callback = [](XAsyncBlock* async)
+            {
+                auto thisPtr{ static_cast<HC_WEBSOCKET*>(async->context) };
+                HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
+                if (SUCCEEDED(hr))
+                {
+                    thisPtr->m_state = State::Connected;
+                }
+                else
+                {
+                    // Release providers ref if connect fails. We do not expect a close event in this case.
+                    thisPtr->DecRef();
+                }
+                XAsyncComplete(thisPtr->m_clientConnectAsyncBlock, hr, sizeof(WebSocketCompletionResult));
+            };
+
+            m_clientConnectAsyncBlock = asyncBlock;
+            XAsyncBegin(m_clientConnectAsyncBlock, this, HCWebSocketConnectAsync, __FUNCTION__,
+                [](XAsyncOp op, const XAsyncProviderData* data)
+                {
+                    auto thisPtr{ static_cast<HC_WEBSOCKET*>(data->context) };
+
+                    switch (op)
+                    {
+                    case XAsyncOp::DoWork: return E_PENDING;
+                    case XAsyncOp::GetResult:
+                    {
+#if HC_PLATFORM_IS_MICROSOFT
+                        memcpy_s(data->buffer, data->bufferSize, &thisPtr->m_connectResult, sizeof(WebSocketCompletionResult));
+#else
+                        memcpy(data->buffer, &thisPtr->m_connectResult, sizeof(WebSocketCompletionResult));
+#endif
+                    }
+                    }
+                    return S_OK;
+                }
+            );
+
+            HRESULT hr = connectFunc(uri, subProtocol, this, &m_connectAsyncBlock, info.context, httpSingleton->m_performEnv.get());
+            if (SUCCEEDED(hr))
+            {
+                {
+                    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+                    m_state = State::Connecting;
+                }
+                // Add a ref for the provider. This guarantees the HC_WEBSOCKET is alive until disconnect.
+                AddRef();
+            }
+            return hr;
+        }
+        catch (...)
+        {
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", id);
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Connect [ID %llu]: Websocket connect implementation not found!", id);
+        return E_UNEXPECTED;
+    }
+}
+
+HRESULT HC_WEBSOCKET::Send(
+    _In_z_ const char* message,
+    _Inout_ XAsyncBlock* asyncBlock
+) noexcept
+{
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto sendFunc = info.sendText;
+    if (sendFunc != nullptr)
+    {
+        try
+        {
+            return sendFunc(this, message, asyncBlock, info.context);
+        }
+        catch (...)
+        {
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendMessage [ID %llu]: failed", id);
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Send [ID %llu]: Websocket send implementation not found!", id);
+        return E_UNEXPECTED;
+    }
+    return S_OK;
+}
+
+HRESULT HC_WEBSOCKET::SendBinary(
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _Inout_ XAsyncBlock* asyncBlock
+) noexcept
+{
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto sendFunc = info.sendBinary;
+    if (sendFunc != nullptr)
+    {
+        try
+        {
+            return sendFunc(this, payloadBytes, payloadSize, asyncBlock, info.context);
+        }
+        catch (...)
+        {
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendBinaryMessageAsync [ID %llu]: failed", id);
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Send [ID %llu]: Websocket send implementation not found!", id);
+        return E_UNEXPECTED;
+    }
+}
+
+HRESULT HC_WEBSOCKET::Disconnect()
+{
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
+
+    auto disconnectFunc = info.disconnect;
+    if (disconnectFunc != nullptr)
+    {
+        try
+        {
+            HRESULT hr = disconnectFunc(this, HCWebSocketCloseStatus::Normal, info.context);
+            if (SUCCEEDED(hr))
+            {
+                std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+                m_state = State::Disconnecting;
+            }
+            return hr;
+        }
+        catch (...)
+        {
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketClose [ID %llu]: failed", id);
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Disconnect [ID %llu]: Websocket disconnect implementation not found!", id);
+        return E_UNEXPECTED;
+    }
+}
+
+const http_header_map& HC_WEBSOCKET::Headers() const noexcept
+{
+    return m_connectHeaders;
+}
+
+const http_internal_string& HC_WEBSOCKET::ProxyUri() const noexcept
+{
+    return m_proxyUri;
+}
+
+const http_internal_string& HC_WEBSOCKET::Uri() const noexcept
+{
+    return m_uri;
+}
+
+const http_internal_string& HC_WEBSOCKET::SubProtocol() const noexcept
+{
+    return m_subProtocol;
+}
+
+HRESULT HC_WEBSOCKET::SetProxyUri(
+    http_internal_string&& proxyUri
+) noexcept
+{
+    if (m_state != State::Disconnected)
+    {
+        return E_HC_CONNECT_ALREADY_CALLED;
+    }
+    m_proxyUri = std::move(proxyUri);
+    return S_OK;
+}
+HRESULT HC_WEBSOCKET::SetHeader(
+    http_internal_string&& headerName,
+    http_internal_string&& headerValue
+) noexcept
+{
+    if (m_state != State::Disconnected)
+    {
+        return E_HC_CONNECT_ALREADY_CALLED;
+    }
+    m_connectHeaders[headerName] = headerValue;
+    return S_OK;
+}
+
 void HC_WEBSOCKET::AddClientRef()
 {
     {
@@ -42,16 +280,21 @@ void HC_WEBSOCKET::AddClientRef()
 
 void HC_WEBSOCKET::DecClientRef()
 {
+    bool doDisconnect{ false };
     {
         std::lock_guard<std::recursive_mutex> lock{ m_mutex };
         if (--m_clientRefCount == 0)
         {
-            if (disconnectCallExpected)
+            if (m_state == State::Connected ||  m_state == State::Connecting)
             {
                 HC_TRACE_WARNING(WEBSOCKET, "No client reference remain for HC_WEBSOCKET but it is either connected/connecting. Disconnecting now.");
-                HCWebSocketDisconnect(this);
+                doDisconnect = true;
             }
         }
+    }
+    if (doDisconnect)
+    {
+        Disconnect();
     }
     DecRef();
 }
@@ -127,6 +370,9 @@ void HC_WEBSOCKET::CloseFunc(
 {
     {
         std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+
+        websocket->m_state = State::Disconnected;
+
         if (websocket->m_clientRefCount > 0)
         {
             try
@@ -143,7 +389,6 @@ void HC_WEBSOCKET::CloseFunc(
         }
     }
     // Release the providers ref
-    websocket->disconnectCallExpected = false;
     websocket->DecRef();
 }
 
@@ -195,13 +440,7 @@ try
     {
         return E_INVALIDARG;
     }
-    else if (websocket->disconnectCallExpected)
-    {
-        return E_HC_CONNECT_ALREADY_CALLED;
-    }
-
-    websocket->proxyUri = proxyUri;
-    return S_OK;
+    return websocket->SetProxyUri(proxyUri);
 }
 CATCH_RETURN()
 
@@ -217,14 +456,7 @@ try
     {
         return E_INVALIDARG;
     }
-    else if (websocket->disconnectCallExpected)
-    {
-        return E_HC_CONNECT_ALREADY_CALLED;
-    }
-
-    websocket->connectHeaders[headerName] = headerValue;
-
-    return S_OK;
+    return websocket->SetHeader(headerName, headerValue);
 }
 CATCH_RETURN()
 
@@ -241,30 +473,7 @@ try
     {
         return E_INVALIDARG;
     }
-
-    auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-        return E_HC_NOT_INITIALISED;
-
-    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
-
-    auto connectFunc = info.connect;
-    if (connectFunc != nullptr)
-    {
-        try
-        {
-            // Add a ref for the provider. This guarantees the HC_WEBSOCKET is alive until disconnect.
-            websocket->AddRef();
-            websocket->disconnectCallExpected = true;
-            connectFunc(uri, subProtocol, websocket, asyncBlock, info.context, httpSingleton->m_performEnv.get());
-        }
-        catch (...)
-        {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", websocket->id);
-        }
-    }
-
-    return S_OK;
+    return websocket->Connect(uri, subProtocol, asyncBlock);
 }
 CATCH_RETURN()
 
@@ -280,29 +489,7 @@ try
     {
         return E_INVALIDARG;
     }
-
-    auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-    {
-        return E_HC_NOT_INITIALISED;
-    }
-
-    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
-
-    auto sendFunc = info.sendText;
-    if (sendFunc != nullptr)
-    {
-        try
-        {
-            sendFunc(websocket, message, asyncBlock, info.context);
-        }
-        catch (...)
-        {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendMessage [ID %llu]: failed", websocket->id);
-        }
-    }
-
-    return S_OK;
+    return websocket->Send(message, asyncBlock);
 }
 CATCH_RETURN()
 
@@ -319,27 +506,7 @@ try
     {
         return E_INVALIDARG;
     }
-
-    auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-        return E_HC_NOT_INITIALISED;
-
-    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
-
-    auto sendFunc = info.sendBinary;
-    if (sendFunc != nullptr)
-    {
-        try
-        {
-            sendFunc(websocket, payloadBytes, payloadSize, asyncBlock, info.context);
-        }
-        catch (...)
-        {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendBinaryMessageAsync [ID %llu]: failed", websocket->id);
-        }
-    }
-
-    return S_OK;
+    return websocket->SendBinary(payloadBytes, payloadSize, asyncBlock);
 }
 CATCH_RETURN()
 
@@ -353,28 +520,7 @@ try
     {
         return E_INVALIDARG;
     }
-
-    auto httpSingleton = get_http_singleton(true);
-    if (nullptr == httpSingleton)
-        return E_HC_NOT_INITIALISED;
-
-    WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
-
-    auto disconnectFunc = info.disconnect;
-    if (disconnectFunc != nullptr)
-    {
-        try
-        {
-            websocket->disconnectCallExpected = false;
-            disconnectFunc(websocket, HCWebSocketCloseStatus::Normal, info.context);
-        }
-        catch (...)
-        {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketClose [ID %llu]: failed", websocket->id);
-        }
-    }
-
-    return S_OK;
+    return websocket->Disconnect();
 }
 CATCH_RETURN()
 
@@ -482,7 +628,7 @@ STDAPI
 HCWebSocketGetProxyUri(
     _In_ HCWebsocketHandle websocket,
     _Out_ const char** proxyUri
-    ) noexcept
+) noexcept
 try
 {
     if (websocket == nullptr || proxyUri == nullptr)
@@ -490,7 +636,7 @@ try
         return E_INVALIDARG;
     }
 
-    *proxyUri = websocket->proxyUri.c_str();
+    *proxyUri = websocket->ProxyUri().data();
     return S_OK;
 }
 CATCH_RETURN()
@@ -500,7 +646,7 @@ HCWebSocketGetHeader(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
-    ) noexcept
+) noexcept
 try
 {
     if (websocket == nullptr || headerName == nullptr || headerValue == nullptr)
@@ -508,8 +654,9 @@ try
         return E_INVALIDARG;
     }
 
-    auto it = websocket->connectHeaders.find(headerName);
-    if (it != websocket->connectHeaders.end())
+    auto headers{ websocket->Headers() };
+    auto it = headers.find(headerName);
+    if (it != headers.end())
     {
         *headerValue = it->second.c_str();
     }
@@ -533,7 +680,7 @@ try
         return E_INVALIDARG;
     }
 
-    *numHeaders = static_cast<uint32_t>(websocket->connectHeaders.size());
+    *numHeaders = static_cast<uint32_t>(websocket->Headers().size());
     return S_OK;
 }
 CATCH_RETURN()
@@ -553,7 +700,8 @@ try
     }
 
     uint32_t index = 0;
-    for (auto it = websocket->connectHeaders.cbegin(); it != websocket->connectHeaders.cend(); ++it)
+    auto& headers{ websocket->Headers() };
+    for (auto it = headers.cbegin(); it != headers.cend(); ++it)
     {
         if (index == headerIndex)
         {

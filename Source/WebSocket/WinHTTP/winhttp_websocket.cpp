@@ -38,7 +38,7 @@ public:
             return hr;
         }
 
-        HCHttpCallRequestSetUrl(m_call, "GET", websocket->uri.c_str());
+        HCHttpCallRequestSetUrl(m_call, "GET", websocket->Uri().c_str());
 
         bool isWebsocket = true;
 
@@ -334,9 +334,6 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     {
         return E_INVALIDARG;
     }
-
-    websocket->uri = uri;
-    websocket->subProtocol = subProtocol;
 
     std::shared_ptr<winhttp_websocket_impl> impl{ nullptr };
     if (websocket->impl == nullptr)
