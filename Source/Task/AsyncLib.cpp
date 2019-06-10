@@ -255,7 +255,20 @@ private:
     static AsyncBlockInternal* DoLock(_In_ XAsyncBlock* asyncBlock)
     {
         AsyncBlockInternal* lockedResult = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
+
         ASSERT(lockedResult);
+
+        // If the signature of this block is wrong, that means that it's not currently
+        // in play.  We fill in the interal data with sane values that will ensure
+        // we don't forever spin trying to get the lock.
+
+        if (lockedResult->signature != ASYNC_BLOCK_SIG)
+        {
+            new (&lockedResult->lock) std::atomic_flag {ATOMIC_FLAG_INIT};
+            lockedResult->state = nullptr;
+            lockedResult->status = E_UNEXPECTED;
+        }
+
         while (lockedResult->lock.test_and_set()) {}
 
         // We've locked the async block. We only ever want to keep a lock on one block
