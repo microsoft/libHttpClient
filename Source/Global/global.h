@@ -108,7 +108,7 @@ public:
     }
 
     template<typename T>
-    static std::shared_ptr<T> fetch(void *rawContextPtr, bool assertIfNotFound)
+    static std::shared_ptr<T> fetch(void *rawContextPtr)
     {
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
@@ -122,14 +122,8 @@ public:
             auto returnPtr = std::shared_ptr<T>(iter->second, reinterpret_cast<T*>(iter->second.get()));
             return returnPtr;
         }
-        else
-        {
-            if (assertIfNotFound)
-            {
-                ASSERT(false && "Context not found!");
-            }
-            return std::shared_ptr<T>();
-        }
+
+        return nullptr;
     }
 
     static void remove(void *rawContextPtr)

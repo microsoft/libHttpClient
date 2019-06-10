@@ -410,7 +410,12 @@ private:
         {
             if (op == XAsyncOp::GetResult)
             {
-                auto context = shared_ptr_cache::fetch<wspp_websocket_impl>(data->context, true);
+                auto context = shared_ptr_cache::fetch<wspp_websocket_impl>(data->context);
+                if (context == nullptr)
+                {
+                    return E_HC_NOT_INITIALISED;
+                }
+
                 auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                 result->websocket = context->m_hcWebsocketHandle;
                 result->platformErrorCode = context->m_connectError.value();
@@ -585,13 +590,21 @@ private:
             {
                 case XAsyncOp::DoWork:
                 {
-                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
+                    if (context == nullptr)
+                    {
+                        return E_HC_NOT_INITIALISED;
+                    }
                     return context->pThis->send_msg_do_work(context->message);
                 }
             
                 case XAsyncOp::GetResult:
                 {
-                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context, true);
+                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
+                    if (context == nullptr)
+                    {
+                        return E_HC_NOT_INITIALISED;
+                    }
                     result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                     result->platformErrorCode = context->message.error.value();
                     result->errorCode = XAsyncGetStatus(data->async, false);
@@ -642,7 +655,11 @@ private:
 
         XAsyncRun(async, [](XAsyncBlock* async)
         {
-            auto sharedThis = shared_ptr_cache::fetch<wspp_websocket_impl>(async->context, true);
+            auto sharedThis = shared_ptr_cache::fetch<wspp_websocket_impl>(async->context);
+            if (sharedThis == nullptr)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
 
             // Wait for background thread to finish
             if (sharedThis->m_websocketThread.joinable())
