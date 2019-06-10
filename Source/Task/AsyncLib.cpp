@@ -3,7 +3,8 @@
 
 #include "pch.h"
 
-#define ASYNC_STATE_SIG 0x41535445
+#define ASYNC_BLOCK_SIG 0x41535942 // ASYB
+#define ASYNC_STATE_SIG 0x41535445 // ASTE
 
 // Used by unit tests to verify we cleanup memory correctly.
 std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
@@ -13,23 +14,20 @@ std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
 // and there is our own local copy.  We pass the local copy to
 // async provider callbacks, and pass the user pointer to all
 // user-visible callbacks.  The AsyncBlockInternalGuard class keeps
-// the state of these two classes in sync under a lock.  We
-// do this because it is possible for a user to cancel an async
-// call while that call is still running.  We issue the completion
-// callback for the cancel immediately, which gives the user an
-// opportunity to delete the user async block.  This would leave
-// the async provider callback with a dangling pointer.
+// the state of these two classes in sync under a lock.  This allows
+// us to provide our own local task queue for use by the provider
+// without the confusion of offering two queue pointers or modifying
+// a structure the user passed to us.
 
 struct AsyncState
 {
     uint32_t signature = ASYNC_STATE_SIG;
     std::atomic<uint32_t> refs{ 1 };
     std::atomic<bool> workScheduled{ false };
-    bool canceled = false;
     bool valid = true;
     XAsyncProvider* provider = nullptr;
     XAsyncProviderData providerData{ };
-    XAsyncBlock asyncBlock { };
+    XAsyncBlock providerAsyncBlock { };
     XAsyncBlock* userAsyncBlock = nullptr;
     XTaskQueueHandle queue = nullptr;
     std::mutex waitMutex;
@@ -89,6 +87,7 @@ struct AsyncBlockInternal
 {
     AsyncState* state = nullptr;
     HRESULT status = E_PENDING;
+    DWORD signature = ASYNC_BLOCK_SIG;
     std::atomic_flag lock = ATOMIC_FLAG_INIT;
 };
 static_assert(sizeof(AsyncBlockInternal) <= sizeof(XAsyncBlock::internal),
@@ -213,7 +212,9 @@ public:
     {
         AsyncStateRef state{ m_internal->state };
         m_internal->state = nullptr;
+        m_internal->signature = 0;
         m_userInternal->state = nullptr;
+        m_userInternal->signature = 0;
 
         if (state != nullptr && state->signature != ASYNC_STATE_SIG)
         {
@@ -262,7 +263,7 @@ private:
         // on this block, we ensure the async block we're locking is the permanent one
         // associated with the async state.  
 
-        if (lockedResult->state != nullptr && asyncBlock != &lockedResult->state->asyncBlock)
+        if (lockedResult->state != nullptr && asyncBlock != &lockedResult->state->providerAsyncBlock)
         {
             // Grab a state ref here because releasing the lock can allow
             // the state to be cleared / released.
@@ -270,7 +271,7 @@ private:
             lockedResult->lock.clear();
 
             // Now lock the async block on the state struct
-            AsyncBlockInternal* stateAsyncBlockInternal = reinterpret_cast<AsyncBlockInternal*>(state->asyncBlock.internal);
+            AsyncBlockInternal* stateAsyncBlockInternal = reinterpret_cast<AsyncBlockInternal*>(state->providerAsyncBlock.internal);
             while (stateAsyncBlockInternal->lock.test_and_set()) {}
 
             // We locked the right object, but we need to check here to see if we
@@ -326,13 +327,13 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
     }
    
     state->userAsyncBlock = asyncBlock;
-    state->providerData.async = &state->asyncBlock;
+    state->providerData.async = &state->providerAsyncBlock;
     
     internal->state = state.Detach();
 
     // Duplicate the async block we've just configured
-    internal->state->asyncBlock = *asyncBlock;
-    internal->state->asyncBlock.queue = internal->state->queue;
+    internal->state->providerAsyncBlock = *asyncBlock;
+    internal->state->providerAsyncBlock.queue = internal->state->queue;
 
     return S_OK;
 }
@@ -342,12 +343,11 @@ static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSi
     // If the async block is already associated with another
     // call, fail.
 
-    // There is no great way to tell if the AsyncBlockInternal has already been
-    // initialized, because uninitialized memory can look like anything.
-    // Here we rely on the client zeoring out the entirety of the XAsyncBlock
-    // object so we can check that the state pointer of the internal data is zero.
+    // We need to guard against use of an active async block.  We don't want
+    // to rely on the caller zeroing memory so we check a signature
+    // DWORD. This signature is cleared when the block can be reused.
     auto internal = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
-    if (internal->state != nullptr)
+    if (internal->signature == ASYNC_BLOCK_SIG)
     {
         return E_INVALIDARG;
     }
@@ -445,15 +445,28 @@ static void CALLBACK WorkerCallback(
     state.Attach(static_cast<AsyncState*>(context));
     state->workScheduled = false;
 
-    if (state->canceled || !state->valid)
+    if (!state->valid)
     {
         return;
     }
 
-    // If the queue is canceling callbacks, simply cancel this work.
+    // If the queue is canceling callbacks, simply cancel this work. Since no
+    // new work for this call will be scheduled, if the call didn't cancel
+    // immediately do it ourselves.
+
     if (canceled)
     {
         XAsyncCancel(state->userAsyncBlock);
+        HRESULT callStatus;
+        {
+            AsyncBlockInternalGuard internal{ state->userAsyncBlock };
+            callStatus = internal.GetStatus();
+        }
+
+        if (callStatus != E_ABORT)
+        {
+            XAsyncComplete(state->userAsyncBlock, E_ABORT, 0);
+        }
     }
     else
     {
@@ -462,7 +475,8 @@ static void CALLBACK WorkerCallback(
         // Work routine can return E_PENDING if there is more work to do.  Otherwise
         // it either needs to be a failure or it should have called XAsyncComplete, which
         // would have set a new value into the status.
-        if (result != E_PENDING && !state->canceled)
+
+        if (result != E_PENDING)
         {
             if (SUCCEEDED(result))
             {
@@ -472,13 +486,19 @@ static void CALLBACK WorkerCallback(
             bool completedNow = false;
 
             {
-                AsyncBlockInternalGuard internal{ &state->asyncBlock };
+                AsyncBlockInternalGuard internal{ &state->providerAsyncBlock };
                 completedNow = internal.TrySetTerminalStatus(result);
+
+                if (completedNow)
+                {
+                    internal.ExtractState();
+                }
             }
 
             if (completedNow)
             {
                 SignalCompletion(state);
+                CleanupState(std::move(state));
             }
         }
     }
@@ -559,9 +579,8 @@ STDAPI XAsyncGetResultSize(
 }
 
 /// <summary>
-/// Cancels an asynchronous operation. The status result will return E_ABORT,
-/// the completion callback will be invoked and the event in the async block will be
-/// signaled.
+/// Tries to cancel an asynchronous operation. If canceled the status result will return E_ABORT
+/// and the completion callback will be invoked.
 /// </summary>
 STDAPI_(void) XAsyncCancel(
     _Inout_ XAsyncBlock* asyncBlock
@@ -570,20 +589,13 @@ STDAPI_(void) XAsyncCancel(
     AsyncStateRef state;
     {
         AsyncBlockInternalGuard internal{ asyncBlock };
-        if (!internal.TrySetTerminalStatus(E_ABORT))
-        {
-            return;
-        }
-        state = internal.ExtractState();
-        state->canceled = true;
+        state = internal.GetState();
     }
 
-    (void)state->provider(XAsyncOp::Cancel, &state->providerData);
-    SignalCompletion(state);
-
-    // At this point asyncBlock may be unsafe to touch.
-
-    CleanupState(std::move(state));
+    if (state != nullptr)
+    {
+        (void)state->provider(XAsyncOp::Cancel, &state->providerData);
+    }
 }
 
 /// <summary>
@@ -786,29 +798,34 @@ STDAPI_(void) XAsyncComplete(
     AsyncStateRef state;
     {
         AsyncBlockInternalGuard internal{ asyncBlock };
-        HRESULT priorStatus = internal.GetStatus();
 
         completedNow = internal.TrySetTerminalStatus(result);
 
         // If the required buffer is zero, there is no payload and we need to
-        // clean up now. Also clean up if the status is abort, as that indicates
-        // the user cancelled the call.
-        if (requiredBufferSize == 0 || priorStatus == E_ABORT)
+        // clean up now. Also clean up if the call failed.  The caller should
+        // have passed zero in here in that case but be tolerant for cases like
+        // sizeof().
+        if (requiredBufferSize == 0 || FAILED(result))
         {
             // If we are going to cleanup steal the reference from the block.
             doCleanup = true;
+            requiredBufferSize = 0;
             state = internal.ExtractState();
         }
         else
         {
             state = internal.GetState();
         }
+
+        if (completedNow)
+        {
+            state->providerData.bufferSize = requiredBufferSize;
+        }
     }
 
-    // If prior status was not pending, we either already completed or were canceled.
+    // Only signal / adjust needed buffer size if we were first to complete.
     if (completedNow)
     {
-        state->providerData.bufferSize = requiredBufferSize;
         SignalCompletion(state);
     }
 
