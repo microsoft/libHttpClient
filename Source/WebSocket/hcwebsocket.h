@@ -26,8 +26,8 @@ public:
     virtual ~HC_WEBSOCKET();
 
     HRESULT Connect(
-        _In_ const char* uri,
-        _In_ const char* subProtocol,
+        _In_z_ const char* uri,
+        _In_z_ const char* subProtocol,
         _Inout_ XAsyncBlock* asyncBlock
     ) noexcept;
 

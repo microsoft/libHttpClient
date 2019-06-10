@@ -252,25 +252,29 @@ public:
 
     HRESULT close(HCWebSocketCloseStatus status)
     {
-        websocketpp::lib::error_code ec;
+        std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
+        if (m_state == CONNECTED)
         {
-            std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
-            if (m_state == CONNECTED)
+            m_state = CLOSING;
+
+            websocketpp::lib::error_code ec{};
+            if (m_client->is_tls_client())
             {
-                m_state = CLOSING;
-                if (m_client->is_tls_client())
-                {
-                    auto &client = m_client->client<websocketpp::config::asio_tls_client>();
-                    client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
-                }
-                else
-                {
-                    auto &client = m_client->client<websocketpp::config::asio_client>();
-                    client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
-                }
+                auto &client = m_client->client<websocketpp::config::asio_tls_client>();
+                client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
             }
+            else
+            {
+                auto &client = m_client->client<websocketpp::config::asio_client>();
+                client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
+            }
+
+            return ec ? E_FAIL : S_OK;
         }
-        return S_OK;
+        else
+        {
+            return E_UNEXPECTED;
+        }
     }
 
 private:
@@ -754,8 +758,8 @@ private:
 
     websocketpp::connection_hdl m_con;
 
-    websocketpp::lib::error_code m_connectError;
-    websocketpp::close::status::value m_closeCode;
+    websocketpp::lib::error_code m_connectError{};
+    websocketpp::close::status::value m_closeCode{};
 
     // Used to safe guard the wspp client.
     std::recursive_mutex m_wsppClientLock;

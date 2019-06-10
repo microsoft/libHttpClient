@@ -43,6 +43,11 @@ HRESULT HC_WEBSOCKET::Connect(
         return E_HC_NOT_INITIALISED;
     }
 
+    if (m_state == State::Connected || m_state == State::Connecting)
+    {
+        return E_UNEXPECTED;
+    }
+
     m_uri = uri;
     m_subProtocol = subProtocol;
 
@@ -53,8 +58,10 @@ HRESULT HC_WEBSOCKET::Connect(
     {
         try
         {
-            // Intercept the result of the connect before returning to client. Otherwise we have no way of knowing
-            // if we are in a connected state.
+            // Trap the result of the connect before returning to client. Otherwise we have no way of knowing
+            // if we are in a connected state. This also helps us handle proper disconnection if we were connecting,
+            // when the client closed their handle.
+
             ZeroMemory(&m_connectAsyncBlock, sizeof(XAsyncBlock));
             m_connectAsyncBlock.queue = asyncBlock->queue;
             m_connectAsyncBlock.context = this;
@@ -64,7 +71,22 @@ HRESULT HC_WEBSOCKET::Connect(
                 HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
                 if (SUCCEEDED(hr))
                 {
-                    thisPtr->m_state = State::Connected;
+                    bool doDisconnect{ false };
+                    {
+                        std::lock_guard<std::recursive_mutex> lock{ thisPtr->m_mutex };
+                        if (thisPtr->m_clientRefCount > 0)
+                        {
+                            thisPtr->m_state = State::Connected;
+                        }
+                        else
+                        {
+                            doDisconnect = true;
+                        }
+                    }
+                    if (doDisconnect)
+                    {
+                        thisPtr->Disconnect();
+                    }
                 }
                 else
                 {
@@ -75,7 +97,7 @@ HRESULT HC_WEBSOCKET::Connect(
             };
 
             m_clientConnectAsyncBlock = asyncBlock;
-            XAsyncBegin(m_clientConnectAsyncBlock, this, HCWebSocketConnectAsync, __FUNCTION__,
+            XAsyncBegin(m_clientConnectAsyncBlock, this, (void*)HCWebSocketConnectAsync, __FUNCTION__,
                 [](XAsyncOp op, const XAsyncProviderData* data)
                 {
                     auto thisPtr{ static_cast<HC_WEBSOCKET*>(data->context) };
@@ -85,11 +107,8 @@ HRESULT HC_WEBSOCKET::Connect(
                     case XAsyncOp::DoWork: return E_PENDING;
                     case XAsyncOp::GetResult:
                     {
-#if HC_PLATFORM_IS_MICROSOFT
-                        memcpy_s(data->buffer, data->bufferSize, &thisPtr->m_connectResult, sizeof(WebSocketCompletionResult));
-#else
-                        memcpy(data->buffer, &thisPtr->m_connectResult, sizeof(WebSocketCompletionResult));
-#endif
+                        auto clientResult{ reinterpret_cast<WebSocketCompletionResult*>(data->buffer) };
+                        *clientResult = thisPtr->m_connectResult;
                     }
                     }
                     return S_OK;
@@ -191,10 +210,15 @@ HRESULT HC_WEBSOCKET::SendBinary(
 
 HRESULT HC_WEBSOCKET::Disconnect()
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
+    }
+
+    if (m_state == State::Disconnected || m_state == State::Disconnecting)
+    {
+        return E_UNEXPECTED;
     }
 
     WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
@@ -285,17 +309,23 @@ void HC_WEBSOCKET::DecClientRef()
         std::lock_guard<std::recursive_mutex> lock{ m_mutex };
         if (--m_clientRefCount == 0)
         {
-            if (m_state == State::Connected ||  m_state == State::Connecting)
+            if (m_state == State::Connected)
             {
                 HC_TRACE_WARNING(WEBSOCKET, "No client reference remain for HC_WEBSOCKET but it is either connected/connecting. Disconnecting now.");
                 doDisconnect = true;
             }
         }
     }
+
     if (doDisconnect)
     {
-        Disconnect();
+        HRESULT hr = Disconnect();
+        if (FAILED(hr))
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Disconnect failed with hresult hr=%u", hr);
+        }
     }
+
     DecRef();
 }
 

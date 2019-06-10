@@ -36,7 +36,10 @@ HC_PERFORM_ENV::HC_PERFORM_ENV()
 
 HC_PERFORM_ENV::~HC_PERFORM_ENV()
 {
-    if (m_hSession != nullptr) WinHttpCloseHandle(m_hSession);
+    if (m_hSession != nullptr)
+    {
+        WinHttpCloseHandle(m_hSession);
+    }
 }
 
 void HC_PERFORM_ENV::get_proxy_name(
@@ -127,10 +130,19 @@ winhttp_http_task::~winhttp_http_task()
     }
 #endif
 
-    if (m_hRequest != nullptr) WinHttpCloseHandle(m_hRequest);
-    if (m_hConnection != nullptr) WinHttpCloseHandle(m_hConnection);
+    if (m_hRequest != nullptr)
+    {
+        WinHttpCloseHandle(m_hRequest);
+    }
+    if (m_hConnection != nullptr)
+    {
+        WinHttpCloseHandle(m_hConnection);
+    }
 #if HC_WINHTTP_WEBSOCKETS
-    if (m_hWebsocketWriteComplete != nullptr) CloseHandle(m_hWebsocketWriteComplete);
+    if (m_hWebsocketWriteComplete != nullptr)
+    {
+        CloseHandle(m_hWebsocketWriteComplete);
+    }
 #endif
 }
 
@@ -1137,7 +1149,7 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
 {
     m_socketState = WinHttpWebsockState::Closed;
-    DWORD dwError = WinHttpWebSocketClose(m_hRequest, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+    DWORD dwError = WinHttpWebSocketShutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
 
     return HRESULT_FROM_WIN32(dwError);
 }
