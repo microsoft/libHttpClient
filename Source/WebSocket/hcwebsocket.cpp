@@ -110,8 +110,8 @@ HRESULT HC_WEBSOCKET::Connect(
                         auto clientResult{ reinterpret_cast<WebSocketCompletionResult*>(data->buffer) };
                         *clientResult = thisPtr->m_connectResult;
                     }
+                    default: return S_OK;
                     }
-                    return S_OK;
                 }
             );
 
