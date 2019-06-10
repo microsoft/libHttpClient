@@ -46,11 +46,11 @@ using namespace xbox::httpclient;
 
 struct websocket_outgoing_message
 {
-    XAsyncBlock* async;
+    XAsyncBlock* async{ nullptr };
     http_internal_string payload;
     http_internal_vector<uint8_t> payloadBinary;
     websocketpp::lib::error_code error;
-    uint64_t id;
+    uint64_t id{ 0 };
 };
 
 struct wspp_websocket_impl : public hc_websocket_impl, public std::enable_shared_from_this<wspp_websocket_impl>
@@ -66,9 +66,14 @@ private:
     };
 
 public:
-    wspp_websocket_impl(HCWebsocketHandle hcHandle) :
+    wspp_websocket_impl(
+        HCWebsocketHandle hcHandle,
+        const char* uri,
+        const char* subprotocol
+    ) :
         m_hcWebsocketHandle{ hcHandle },
-        m_uri(hcHandle->uri)
+        m_uri{ uri },
+        m_subprotocol{ subprotocol }
     {
     }
 
@@ -247,25 +252,29 @@ public:
 
     HRESULT close(HCWebSocketCloseStatus status)
     {
-        websocketpp::lib::error_code ec;
+        std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
+        if (m_state == CONNECTED)
         {
-            std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
-            if (m_state == CONNECTED)
+            m_state = CLOSING;
+
+            websocketpp::lib::error_code ec{};
+            if (m_client->is_tls_client())
             {
-                m_state = CLOSING;
-                if (m_client->is_tls_client())
-                {
-                    auto &client = m_client->client<websocketpp::config::asio_tls_client>();
-                    client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
-                }
-                else
-                {
-                    auto &client = m_client->client<websocketpp::config::asio_client>();
-                    client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
-                }
+                auto &client = m_client->client<websocketpp::config::asio_tls_client>();
+                client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
             }
+            else
+            {
+                auto &client = m_client->client<websocketpp::config::asio_client>();
+                client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
+            }
+
+            return ec ? E_FAIL : S_OK;
         }
-        return S_OK;
+        else
+        {
+            return E_UNEXPECTED;
+        }
     }
 
 private:
@@ -336,7 +345,7 @@ private:
         });
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
-        const auto& headers = m_hcWebsocketHandle->connectHeaders;
+        const auto& headers = m_hcWebsocketHandle->Headers();
 
         auto user_agent_it = headers.find(websocketpp::user_agent);
         if (user_agent_it != headers.end())
@@ -366,9 +375,9 @@ private:
         }
 
         // Add any specified subprotocols.
-        if (!m_hcWebsocketHandle->subProtocol.empty())
+        if (!m_subprotocol.empty())
         {
-            con->add_subprotocol(m_hcWebsocketHandle->subProtocol.data(), ec);
+            con->add_subprotocol(m_subprotocol.data(), ec);
             if (ec.value())
             {
                 HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: add_subprotocol failed", m_hcWebsocketHandle->id);
@@ -377,9 +386,9 @@ private:
         }
 
         // Setup proxy options.
-        if (!m_hcWebsocketHandle->proxyUri.empty())
+        if (!m_hcWebsocketHandle->ProxyUri().empty())
         {
-            con->set_proxy(m_hcWebsocketHandle->proxyUri.data(), ec);
+            con->set_proxy(m_hcWebsocketHandle->ProxyUri().data(), ec);
             if (ec)
             {
                 HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", m_hcWebsocketHandle->id);
@@ -749,8 +758,8 @@ private:
 
     websocketpp::connection_hdl m_con;
 
-    websocketpp::lib::error_code m_connectError;
-    websocketpp::close::status::value m_closeCode;
+    websocketpp::lib::error_code m_connectError{};
+    websocketpp::close::status::value m_closeCode{};
 
     // Used to safe guard the wspp client.
     std::recursive_mutex m_wsppClientLock;
@@ -774,6 +783,7 @@ private:
     HCWebsocketHandle m_hcWebsocketHandle{ nullptr };
 
     Uri m_uri;
+    http_internal_string m_subprotocol;
 };
 
 HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
@@ -785,9 +795,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
-    websocket->uri = uri;
-    websocket->subProtocol = subProtocol;
-    auto wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket);
+    auto wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket, uri, subProtocol);
     websocket->impl = wsppSocket;
 
     return wsppSocket->connect(async);

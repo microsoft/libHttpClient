@@ -190,7 +190,7 @@ try
             }
         }
 
-        auto protocols = parse_subprotocols(websocket->subProtocol);
+        auto protocols = parse_subprotocols(websocket->SubProtocol());
         for (const auto& value : protocols)
         {
             websocketTask->m_messageWebSocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
@@ -200,13 +200,13 @@ try
         websocketTask->m_context = ref new ReceiveContext();
         websocketTask->m_context->m_websocket = websocket;
 
-        http_internal_wstring aUrl = utf16_from_utf8(websocket->uri);
+        http_internal_wstring aUrl = utf16_from_utf8(websocket->Uri());
         const auto cxUri = ref new Windows::Foundation::Uri(Platform::StringReference(aUrl.c_str()));
 
         websocketTask->m_messageWebSocket->MessageReceived += ref new TypedEventHandler<MessageWebSocket^, MessageWebSocketMessageReceivedEventArgs^>(websocketTask->m_context, &ReceiveContext::OnReceive);
         websocketTask->m_messageWebSocket->Closed += ref new TypedEventHandler<IWebSocket^, WebSocketClosedEventArgs^>(websocketTask->m_context, &ReceiveContext::OnClosed);
 
-        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: connecting to %s", websocket->id, websocket->uri.c_str());
+        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: connecting to %s", websocket->id, websocket->Uri().c_str());
 
         websocketTask->m_connectAsyncOp = websocketTask->m_messageWebSocket->ConnectAsync(cxUri);
 
@@ -283,8 +283,6 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     UNREFERENCED_PARAMETER(env);
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
     websocketTask->m_websocketHandle = websocket;
-    websocket->uri = uri;
-    websocket->subProtocol = subProtocol;
     websocket->impl = std::dynamic_pointer_cast<hc_websocket_impl>(websocketTask);
 
     HRESULT hr = XAsyncBegin(asyncBlock, websocket, HCWebSocketConnectAsync, __FUNCTION__,

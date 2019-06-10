@@ -25,6 +25,34 @@ public:
     );
     virtual ~HC_WEBSOCKET();
 
+    HRESULT Connect(
+        _In_z_ const char* uri,
+        _In_z_ const char* subProtocol,
+        _Inout_ XAsyncBlock* asyncBlock
+    ) noexcept;
+
+    HRESULT Send(
+        _In_z_ const char* message,
+        _Inout_ XAsyncBlock* asyncBlock
+    ) noexcept;
+
+    HRESULT SendBinary(
+        _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+        _In_ uint32_t payloadSize,
+        _Inout_ XAsyncBlock* asyncBlock
+    ) noexcept;
+
+    HRESULT Disconnect();
+
+    const uint64_t id;
+    const http_header_map& Headers() const noexcept;
+    const http_internal_string& ProxyUri() const noexcept;
+    const http_internal_string& Uri() const noexcept;
+    const http_internal_string& SubProtocol() const noexcept;
+
+    HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
+    HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
+
     void AddClientRef();
     void DecClientRef();
     void AddRef();
@@ -34,15 +62,26 @@ public:
     static void CALLBACK BinaryMessageFunc(HC_WEBSOCKET* websocket, const uint8_t* bytes, uint32_t payloadSize, void* context);
     static void CALLBACK CloseFunc(HC_WEBSOCKET* websocket, HCWebSocketCloseStatus status, void* context);
 
-    uint64_t id;
-    bool disconnectCallExpected{ false };
-    http_header_map connectHeaders;
-    http_internal_string proxyUri;
-    http_internal_string uri;
-    http_internal_string subProtocol;
-
     std::shared_ptr<hc_websocket_impl> impl;
+
 private:
+    XAsyncBlock m_connectAsyncBlock{};
+    WebSocketCompletionResult m_connectResult;
+    XAsyncBlock* m_clientConnectAsyncBlock{ nullptr };
+
+    enum class State
+    {
+        Disconnecting,
+        Disconnected,
+        Connecting,
+        Connected
+    } m_state{ State::Disconnected };
+
+    http_header_map m_connectHeaders;
+    http_internal_string m_proxyUri;
+    http_internal_string m_uri;
+    http_internal_string m_subProtocol;
+
     HCWebSocketMessageFunction const m_clientMessageFunc;
     HCWebSocketBinaryMessageFunction const m_clientBinaryMessageFunc;
     HCWebSocketCloseEventFunction const m_clientCloseEventFunc;
