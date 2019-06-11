@@ -245,7 +245,7 @@ public:
     bool TrySetTerminalStatus(HRESULT status) noexcept
     {
         ASSERT(m_locked || m_internal->status != E_PENDING);
-        if (m_internal->status == E_PENDING)
+        if (m_locked && m_internal->status == E_PENDING)
         {
             ASSERT(m_userInternal->status == E_PENDING);
             m_userInternal->status = status;
