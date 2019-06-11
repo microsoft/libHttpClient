@@ -264,7 +264,7 @@ private:
 
         if (lockedResult->signature != ASYNC_BLOCK_SIG)
         {
-            new (&lockedResult->lock) std::atomic_flag {ATOMIC_FLAG_INIT};
+            new (&lockedResult->lock) std::atomic_flag(false);
             lockedResult->state = nullptr;
             lockedResult->status = E_UNEXPECTED;
         }
