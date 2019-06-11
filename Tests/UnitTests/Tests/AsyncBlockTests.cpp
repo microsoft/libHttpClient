@@ -81,6 +81,7 @@ private:
         std::vector<XAsyncOp> opCodes;
         std::atomic<int> inWork = 0;
         std::atomic<int> refs = 1;
+        std::atomic<bool> canceled = false;
 
         void AddRef() { refs++; }
         void Release() { if (--refs == 0) delete this; }
@@ -119,6 +120,10 @@ private:
 
         switch (opCode)
         {
+        case XAsyncOp::Cancel:
+            d->canceled = true;
+            break;
+
         case XAsyncOp::Cleanup:
             VERIFY_IS_TRUE(d->inWork == 0);
             d->Release();
@@ -145,7 +150,7 @@ private:
             }
 
             d->inWork--;
-            XAsyncComplete(data->async, S_OK, sizeof(DWORD));
+            XAsyncComplete(data->async, d->canceled ? E_ABORT : S_OK, sizeof(DWORD));
             break;
         }
 
@@ -160,6 +165,10 @@ private:
 
         switch (opCode)
         {
+        case XAsyncOp::Cancel:
+            d->canceled = true;
+            break;
+
         case XAsyncOp::Cleanup:
             VERIFY_IS_TRUE(d->inWork == 0);
             d->Release();
@@ -175,6 +184,12 @@ private:
             if (d->result == 0) d->result = 1;
             if (d->value != 0)
             {
+                if (d->canceled)
+                {
+                    d->inWork--;
+                    return E_ABORT;
+                }
+
                 d->result *= d->value;
                 d->value--;
 
@@ -434,6 +449,48 @@ public:
 
         VerifyOps(data.Ref->opCodes, ops);
         VERIFY_QUEUE_EMPTY(queue);
+    }
+
+    DEFINE_TEST_CASE(VerifyAsyncBlockReuse)
+    {
+        // Specifically allow stack garbage here.
+        XAsyncBlock async;
+
+        auto data = AutoRef<FactorialCallData>(new FactorialCallData {});
+        DWORD result;
+
+        CompletionThunk cb([&](XAsyncBlock* async)
+        {
+            VERIFY_SUCCEEDED(FactorialResult(async, &result));
+        });
+
+        async.context = &cb;
+        async.callback = CompletionThunk::Callback;
+        async.queue = queue;
+
+        data.Ref->value = 5;
+        VERIFY_SUCCEEDED(FactorialAsync(data.Ref, &async));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
+
+        VERIFY_ARE_EQUAL(result, (DWORD)120);
+
+        // Now reuse the async block -- that should be fine.
+        // Don't configure a callback so we can leave the
+        // block open.
+
+        async.callback = nullptr;
+        data.Ref->value = 6;
+        VERIFY_SUCCEEDED(FactorialAsync(data.Ref, &async));
+
+        // It shoould NOT be fine to try to reuse it again before
+        // we've pulled results.
+
+        VERIFY_ARE_EQUAL(E_INVALIDARG, FactorialAsync(data.Ref, &async));
+
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
+        VERIFY_SUCCEEDED(FactorialResult(&async, &result));
+
+        VERIFY_ARE_EQUAL(result, (DWORD)720);
     }
 
     DEFINE_TEST_CASE(VerifyCancellation)
@@ -777,14 +834,19 @@ public:
     {
         XAsyncBlock async = { };
 
-        auto nopProvider = [](XAsyncOp, const XAsyncProviderData*)
+        auto nopProvider = [](XAsyncOp op, const XAsyncProviderData* d)
         {
+            if (op == XAsyncOp::Cancel)
+            {
+                XAsyncComplete(d->async, E_ABORT, 0);
+            }
             return S_OK;
         };
 
         // Verify we use the global queue
         VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, nopProvider));
         XAsyncCancel(&async);
+        VERIFY_ARE_EQUAL(E_ABORT, XAsyncGetStatus(&async, true));
 
         // Now null the global queue and verify the right error happens
         XTaskQueueHandle globalQueue;
