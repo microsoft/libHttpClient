@@ -166,6 +166,15 @@ public:
     AsyncBlockInternalGuard(_Inout_ XAsyncBlock* asyncBlock) noexcept :
         m_internal(DoLock(asyncBlock))
     {
+        m_locked = m_internal != nullptr;
+
+        if (!m_locked)
+        {
+            // We never locked because the block contains an invalid signature.  We still
+            // need the block for access though (although that access will be read only).
+            m_internal = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
+        }
+
         if (m_internal->state != nullptr)
         {
             m_userInternal = reinterpret_cast<AsyncBlockInternal*>(m_internal->state->userAsyncBlock->internal);
@@ -188,10 +197,13 @@ public:
 
     ~AsyncBlockInternalGuard() noexcept
     {
-        m_internal->lock.clear();
-        if (m_userInternal != m_internal)
+        if (m_locked)
         {
-            m_userInternal->lock.clear();
+            m_internal->lock.clear();
+            if (m_userInternal != m_internal)
+            {
+                m_userInternal->lock.clear();
+            }
         }
     }
 
@@ -232,6 +244,7 @@ public:
 
     bool TrySetTerminalStatus(HRESULT status) noexcept
     {
+        ASSERT(m_locked || m_internal->status != E_PENDING);
         if (m_internal->status == E_PENDING)
         {
             ASSERT(m_userInternal->status == E_PENDING);
@@ -247,8 +260,9 @@ public:
     }
 
 private:
-    AsyncBlockInternal * const m_internal;
+    AsyncBlockInternal * m_internal;
     AsyncBlockInternal * m_userInternal;
+    bool m_locked = false;
 
     // Locks the correct async block and returns a pointer to the one
     // we locked.
@@ -259,14 +273,16 @@ private:
         ASSERT(lockedResult);
 
         // If the signature of this block is wrong, that means that it's not currently
-        // in play.  We fill in the interal data with sane values that will ensure
-        // we don't forever spin trying to get the lock.
+        // in play. We can't lock because the lock flag could be invalid, and we can't
+        // fix up the lock flag without introducing a race condition with other potential
+        // lock calls.  All calls further down guard against an invalid state, so all
+        // we do in this case is set the state to null.  We return null as an indicator
+        // that we didn't lock.
 
         if (lockedResult->signature != ASYNC_BLOCK_SIG)
         {
-            new (&lockedResult->lock) std::atomic_flag(false);
             lockedResult->state = nullptr;
-            lockedResult->status = E_UNEXPECTED;
+            return nullptr;
         }
 
         while (lockedResult->lock.test_and_set()) {}
