@@ -36,7 +36,10 @@ HC_PERFORM_ENV::HC_PERFORM_ENV()
 
 HC_PERFORM_ENV::~HC_PERFORM_ENV()
 {
-    if (m_hSession != nullptr) WinHttpCloseHandle(m_hSession);
+    if (m_hSession != nullptr)
+    {
+        WinHttpCloseHandle(m_hSession);
+    }
 }
 
 void HC_PERFORM_ENV::get_proxy_name(
@@ -127,10 +130,19 @@ winhttp_http_task::~winhttp_http_task()
     }
 #endif
 
-    if (m_hRequest != nullptr) WinHttpCloseHandle(m_hRequest);
-    if (m_hConnection != nullptr) WinHttpCloseHandle(m_hConnection);
+    if (m_hRequest != nullptr)
+    {
+        WinHttpCloseHandle(m_hRequest);
+    }
+    if (m_hConnection != nullptr)
+    {
+        WinHttpCloseHandle(m_hConnection);
+    }
 #if HC_WINHTTP_WEBSOCKETS
-    if (m_hWebsocketWriteComplete != nullptr) CloseHandle(m_hWebsocketWriteComplete);
+    if (m_hWebsocketWriteComplete != nullptr)
+    {
+        CloseHandle(m_hWebsocketWriteComplete);
+    }
 #endif
 }
 
@@ -725,6 +737,7 @@ void CALLBACK winhttp_http_task::completion_callback(
     }
 }
 
+#if HC_PLATFORM != HC_PLATFORM_GSDK
 void winhttp_http_task::set_autodiscover_proxy(
     _In_ const xbox::httpclient::Uri& cUri)
 {
@@ -761,6 +774,7 @@ void winhttp_http_task::set_autodiscover_proxy(
         // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
     }
 }
+#endif
 
 http_internal_wstring flatten_http_headers(_In_ const http_header_map& headers)
 {
@@ -866,10 +880,12 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
+#if HC_PLATFORM != HC_PLATFORM_GSDK
     if (m_proxyType == proxy_type::autodiscover_proxy)
     {
         set_autodiscover_proxy(cUri);
     }
+#endif
 
     const BYTE* requestBody = nullptr;
     uint32_t requestBodyBytes = 0;
@@ -939,9 +955,9 @@ HRESULT winhttp_http_task::send(
 #if HC_WINHTTP_WEBSOCKETS
     if (m_isWebSocket)
     {
-        if (!m_websocketHandle->connectHeaders.empty())
+        if (!m_websocketHandle->Headers().empty())
         {
-            http_internal_wstring flattenedHeaders = flatten_http_headers(m_websocketHandle->connectHeaders);
+            http_internal_wstring flattenedHeaders = flatten_http_headers(m_websocketHandle->Headers());
             if (!WinHttpAddRequestHeaders(
                 m_hRequest,
                 flattenedHeaders.c_str(),
@@ -1133,7 +1149,7 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 HRESULT winhttp_http_task::disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
 {
     m_socketState = WinHttpWebsockState::Closed;
-    DWORD dwError = WinHttpWebSocketClose(m_hRequest, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+    DWORD dwError = WinHttpWebSocketShutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
 
     return HRESULT_FROM_WIN32(dwError);
 }

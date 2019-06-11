@@ -178,12 +178,14 @@ typedef void (CALLBACK HCTraceCallback)(
 /// Set client callback for tracing 
 /// </summary>
 /// <param name="callback">Trace callback</param>
+/// <returns></returns>
 STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
 
 /// <summary>
 /// Sets or unsets if the trace is sent to the debugger.
 /// </summary>
 /// <param name="traceToDebugger">If True, sends the trace to the debugger.</param>
+/// <returns></returns>
 STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 
 
@@ -285,6 +287,14 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 typedef uint64_t (CALLBACK HCTracePlatformThisThreadIdCallback)(void*);
 typedef void (CALLBACK HCTracePlatformWriteMessageToDebuggerCallback)(char const*, HCTraceLevel, char const*, void*);
 
+/// <summary>
+/// Sets the Platform Callbacks.
+/// </summary>
+/// <param name="threadIdCallback">The thread ID callback.</param>
+/// <param name="threadIdContext">The thread ID context.</param>
+/// <param name="writeToDebuggerCallback">The write to debbugger callback.</param>
+/// <param name="writeToDebuggerContext">The write to debbugger context.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, or E_HC_NOT_INITIALISED.</returns>
 STDAPI HCTraceSetPlatformCallbacks(
     _In_ HCTracePlatformThisThreadIdCallback* threadIdCallback,
     _In_opt_ void* threadIdContext,
@@ -313,6 +323,13 @@ typedef struct HCTraceImplArea
     HCTraceLevel Verbosity;
 } HCTraceImplArea;
 
+/// <summary>
+/// Set the verbosity level of an trace area. This should be accessed through macros, such as 
+/// HC_TRACE_SET_VERBOSITY, rather than called directly.
+/// </summary>
+/// <param name="area">The trace area.</param>
+/// <param name="verbosity">The verbosity level.</param>
+/// <returns></returns>
 EXTERN_C inline
 void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     struct HCTraceImplArea* area,
@@ -322,12 +339,26 @@ void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     area->Verbosity = verbosity;
 }
 
+/// <summary>
+/// Get the trace verbosity level of an trace area. This should be accessed through macros, such as 
+/// HC_TRACE_GET_VERBOSITY, rather than called directly.
+/// </summary>
+/// <param name="area">The trace area.</param>
+/// <returns>The verbosity level of the area.</returns>
 EXTERN_C inline
 HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area) noexcept
 {
     return area->Verbosity;
 }
 
+/// <summary>
+/// Send a trace message. This should be accessed through macros, such as HC_TRACE_MESSAGE, 
+/// rather than called directly.
+/// </summary>
+/// <param name="area">The trace area.</param>
+/// <param name="level">The trace level.</param>
+/// <param name="format">The message format and arguments.</param>
+/// <returns></returns>
 STDAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     HCTraceLevel level,
@@ -353,6 +384,14 @@ private:
     unsigned long long const m_id;
 };
 
+/// <summary>
+/// HCTraceImplScopeHelper constructor. This should be accessed through macros, such as HC_TRACE_SCOPE, 
+/// rather than called directly.
+/// </summary>
+/// <param name="area">The trace area.</param>
+/// <param name="level">The trace level.</param>
+/// <param name="scope">The trace scope.</param>
+/// <returns></returns>
 inline
 HCTraceImplScopeHelper::HCTraceImplScopeHelper(
     HCTraceImplArea const* area,
@@ -363,6 +402,10 @@ HCTraceImplScopeHelper::HCTraceImplScopeHelper(
     HCTraceImplMessage(m_area, m_level, ">>> %s (%016llX)", m_scope, m_id);
 }
 
+/// <summary>
+/// HCTraceImplScopeHelper destructor.
+/// </summary>
+/// <returns></returns>
 inline
 HCTraceImplScopeHelper::~HCTraceImplScopeHelper() noexcept
 {
