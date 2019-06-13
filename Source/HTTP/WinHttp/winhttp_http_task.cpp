@@ -296,12 +296,12 @@ void winhttp_http_task::callback_status_request_error(
                 {
                     pClientCert = (PCERT_CONTEXT)pClientCertChain->rgpChain[0]->rgpElement[0]->pCertContext;
 
-                    reissueSend = WinHttpSetOption(
+                    reissueSend = (0 != WinHttpSetOption(
                         hRequestHandle,
                         WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
                         (LPVOID)pClientCert,
                         sizeof(CERT_CONTEXT)
-                    );
+                    ));
 
                     CertFreeCertificateChain(pClientCertChain);
                 }
