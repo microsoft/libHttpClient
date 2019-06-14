@@ -103,16 +103,22 @@ STDAPI HCMemGetFunctions(
 // Global APIs
 // 
 
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
 /// <summary>
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
 /// </summary>
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
 typedef struct HCInitArgs {
+	/// <summary>The Java Virtual machine.</summary>
     JavaVM *javaVM;
+	/// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
 #else 
+/// <summary>
+/// Dummy init args used by non-Android devices.
+/// </summary>
 typedef struct HCInitArgs {
+	/// <summary>A dummy field.</summary>
     void* dummy;
 } HCInitArgs;
 #endif
@@ -697,13 +703,13 @@ STDAPI HCWebSocketGetEventFunctions(
 /// </summary>
 typedef struct WebSocketCompletionResult
 {
-    /// <param name="websocket">The handle of the HTTP call</param>
+    /// <summary>The handle of the HTTP call</summary>
     HCWebsocketHandle websocket;
 
-    /// <param name="errorCode">The error code of the call. Possible values are S_OK, or E_FAIL.</param>
+    /// <summary>The error code of the call. Possible values are S_OK, or E_FAIL.</summary>
     HRESULT errorCode;
 
-    /// <param name="platformErrorCode">The platform specific network error code of the call to be used for tracing / debugging</param>
+    /// <summary>The platform specific network error code of the call to be used for tracing / debugging</summary>
     uint32_t platformErrorCode;
 } WebSocketCompletionResult;
 
