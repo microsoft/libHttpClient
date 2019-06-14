@@ -672,7 +672,7 @@ private:
     {
         // By design, wspp doesn't raise any sort of event when the client's connection
         // is terminated (i.e. by disconnecting the network cable). Sending periodic ping
-        // allows us to detect this situation.
+        // allows us to detect this situation. See https://github.com/zaphoyd/websocketpp/issues/695.
 
         RunAsync(
             [

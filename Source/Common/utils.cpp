@@ -104,7 +104,10 @@ HRESULT RunAsync(
             if (op == XAsyncOp::DoWork)
             {
                 AsyncWork* work{ reinterpret_cast<AsyncWork*>(data->context) };
-                (*work)();
+                if (work)
+                {
+                    (*work)();
+                }
                 XAsyncComplete(data->async, S_OK, 0);
             }
             return S_OK;
