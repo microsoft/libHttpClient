@@ -296,7 +296,8 @@ void winhttp_http_task::callback_status_request_error(
                 {
                     pClientCert = (PCERT_CONTEXT)pClientCertChain->rgpChain[0]->rgpElement[0]->pCertContext;
 
-                    reissueSend = WinHttpSetOption(
+                    // "!!" to cast from BOOL to bool
+                    reissueSend = !!WinHttpSetOption(
                         hRequestHandle,
                         WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
                         (LPVOID)pClientCert,
