@@ -76,6 +76,50 @@ bool StringToUint(String const& s, uint64_t& v, int32_t base)
     return StringToUint4(s.data(), s.data() + s.size(), v, base);
 }
 
+HRESULT RunAsync(
+    AsyncWork&& work,
+    XTaskQueueHandle queue,
+    uint64_t delayInMs
+)
+{
+    auto workPointer = new AsyncWork(std::move(work));
+
+    XAsyncBlock* asyncOp = new XAsyncBlock();
+    asyncOp->queue = queue;
+    asyncOp->context = workPointer;
+    asyncOp->callback = [](XAsyncBlock* asyncOp)
+    {
+        auto context = static_cast<AsyncWork*>(asyncOp->context);
+        delete context;
+        delete asyncOp;
+    };
+
+    HRESULT hr = XAsyncBegin(
+        asyncOp,
+        reinterpret_cast<void*>(workPointer),
+        nullptr,
+        __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            if (op == XAsyncOp::DoWork)
+            {
+                AsyncWork* work{ reinterpret_cast<AsyncWork*>(data->context) };
+                if (work)
+                {
+                    (*work)();
+                }
+                XAsyncComplete(data->async, S_OK, 0);
+            }
+            return S_OK;
+        });
+
+    if (SUCCEEDED(hr))
+    {
+        XAsyncSchedule(asyncOp, static_cast<uint32_t>(delayInMs));
+    }
+    return hr;
+}
+
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN

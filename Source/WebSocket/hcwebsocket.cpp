@@ -69,7 +69,7 @@ HRESULT HC_WEBSOCKET::Connect(
             {
                 auto thisPtr{ static_cast<HC_WEBSOCKET*>(async->context) };
                 HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
-                if (SUCCEEDED(hr))
+                if (SUCCEEDED(hr) && SUCCEEDED(thisPtr->m_connectResult.errorCode))
                 {
                     bool doDisconnect{ false };
                     {
@@ -90,7 +90,10 @@ HRESULT HC_WEBSOCKET::Connect(
                 }
                 else
                 {
+                    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket connection attempt failed");
+
                     // Release providers ref if connect fails. We do not expect a close event in this case.
+                    thisPtr->m_state = State::Disconnected;
                     thisPtr->DecRef();
                 }
                 XAsyncComplete(thisPtr->m_clientConnectAsyncBlock, hr, sizeof(WebSocketCompletionResult));
@@ -116,6 +119,7 @@ HRESULT HC_WEBSOCKET::Connect(
             );
 
             HRESULT hr = connectFunc(uri, subProtocol, this, &m_connectAsyncBlock, info.context, httpSingleton->m_performEnv.get());
+
             if (SUCCEEDED(hr))
             {
                 {
