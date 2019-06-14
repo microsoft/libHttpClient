@@ -37,7 +37,9 @@ enum class XAsyncOp : uint32_t
     GetResult,
 
     /// <summary>
-    /// An async provider is invoked with this opcode when the async work should be canceled.
+    /// An async provider is invoked with this opcode when the async work should be canceled. If
+    /// you can cancel your work you should call XAsyncComplete with an error code of E_ABORT when
+    /// the work has been canceled.
     /// </summary>
     Cancel,
 
@@ -85,7 +87,7 @@ struct XAsyncProviderData
 /// <param name='op'>The async operatiopn to perform.</param>
 /// <param name='data'>Data used to track the async call.</param>
 /// <seealso cref='XAsyncProviderData' />
-typedef HRESULT CALLBACK XAsyncProvider(_In_ XAsyncOp op, _In_ const XAsyncProviderData* data);
+typedef HRESULT CALLBACK XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsyncProviderData* data);
 
 /// <summary>
 /// Initializes an async block for use.  Once begun calls such
@@ -158,7 +160,7 @@ STDAPI XAsyncSchedule(
 /// has no data payload, pass zero.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to XAsyncBegin.</param>
-/// <param name='result'>The resut of the call.  This should not be E_PENDING as that result is reserved for an incomplete call.</param>
+/// <param name='result'>The resut of the call.  This should not be E_PENDING as that result is reserved for an incomplete call. If you are canceling this call you should pass E_ABORT.</param>
 /// <param name='requiredBufferSize'>The required size in bytes of the call result.  If the call has no data to return this should be zero.</param>
 STDAPI_(void) XAsyncComplete(
     _Inout_ XAsyncBlock* asyncBlock,

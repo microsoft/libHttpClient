@@ -75,7 +75,20 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
 {
     try
     {
-        DataReader^ reader = args->GetDataReader();
+        DataReader^ reader;
+
+        try
+        {
+            reader = args->GetDataReader();
+        }
+        catch (Platform::Exception ^e)
+        {
+            // Close websocket on this error
+            // https://docs.microsoft.com/en-us/uwp/api/windows.networking.sockets.messagewebsocket.messagereceived
+            sender->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::UnknownError), nullptr);
+            return;
+        }
+
         const auto len = reader->UnconsumedBufferLength;
         if (len > 0)
         {
