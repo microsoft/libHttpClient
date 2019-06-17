@@ -25,13 +25,21 @@
       <Configuration>Release</Configuration>
       <Platform>x86</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5e0ce391-1ac5-4930-921e-2577a4b5c530}</ProjectGuid>
     <Keyword>Android</Keyword>
     <PlatformToolset>Clang_5_0</PlatformToolset>
-    <AndroidAPILevel Condition="'$(Platform)'!='ARM64'">android-19</AndroidAPILevel>
-    <AndroidAPILevel Condition="'$(Platform)'=='ARM64'">android-21</AndroidAPILevel>
+    <AndroidAPILevel Condition="'$(Platform)'!='ARM64' AND '$(Platform)'!='x64'">android-19</AndroidAPILevel>
+    <AndroidAPILevel Condition="'$(Platform)'=='ARM64' OR '$(Platform)'=='x64'">android-21</AndroidAPILevel>
     <RootNamespace>libHttpClient_142_Android_C</RootNamespace>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>Android</ApplicationType>
