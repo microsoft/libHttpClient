@@ -293,6 +293,7 @@ private:
     proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
     bool m_isWebSocket = false;
+    bool m_isSecure = false;
 
 #if HC_WINHTTP_WEBSOCKETS
     // websocket state
