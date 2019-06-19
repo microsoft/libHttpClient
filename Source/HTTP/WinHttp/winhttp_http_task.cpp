@@ -133,18 +133,15 @@ winhttp_http_task::~winhttp_http_task()
     if (m_hRequest != nullptr)
     {
         WinHttpCloseHandle(m_hRequest);
-        m_hRequest = nullptr;
     }
     if (m_hConnection != nullptr)
     {
         WinHttpCloseHandle(m_hConnection);
-        m_hConnection = nullptr;
     }
 #if HC_WINHTTP_WEBSOCKETS
     if (m_hWebsocketWriteComplete != nullptr)
     {
         CloseHandle(m_hWebsocketWriteComplete);
-        m_hWebsocketWriteComplete = nullptr;
     }
 #endif
 }
