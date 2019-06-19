@@ -348,7 +348,7 @@ private:
 
         client.set_close_handler([sharedThis](websocketpp::connection_hdl)
         {
-            ASSERT(sharedThis->m_state == CONNECTED);
+            ASSERT(sharedThis->m_state == CONNECTED || sharedThis->m_state == DISCONNECTING);
             sharedThis->shutdown_wspp_impl<WebsocketConfigType>([sharedThis]()
                 {
                     HCWebSocketCloseEventFunction closeFunc{ nullptr };
