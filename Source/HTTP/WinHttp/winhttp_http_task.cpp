@@ -1021,7 +1021,7 @@ HRESULT winhttp_http_task::connect_and_send_async()
         {
             xbox::httpclient::Uri cUri(url);
 
-            HRESULT hr = connect(cUri);
+            hr = connect(cUri);
             if (SUCCEEDED(hr))
             {
                 hr = send(cUri, method);
