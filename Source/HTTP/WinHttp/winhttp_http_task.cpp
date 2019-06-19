@@ -133,15 +133,18 @@ winhttp_http_task::~winhttp_http_task()
     if (m_hRequest != nullptr)
     {
         WinHttpCloseHandle(m_hRequest);
+        m_hRequest = nullptr;
     }
     if (m_hConnection != nullptr)
     {
         WinHttpCloseHandle(m_hConnection);
+        m_hConnection = nullptr;
     }
 #if HC_WINHTTP_WEBSOCKETS
     if (m_hWebsocketWriteComplete != nullptr)
     {
         CloseHandle(m_hWebsocketWriteComplete);
+        m_hWebsocketWriteComplete = nullptr;
     }
 #endif
 }
@@ -837,8 +840,9 @@ HRESULT winhttp_http_task::connect(
         }
     }
  
+    m_isSecure = cUri.IsSecure();
     unsigned int port = cUri.IsPortDefault() ?
-        (cUri.IsSecure() ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
+        (m_isSecure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
         cUri.Port();
     http_internal_wstring wUrlHost = utf16_from_utf8(cUri.Host());
 
@@ -941,16 +945,18 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
-    if (!WinHttpSetOption(
-        m_hRequest,
-        WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
-        WINHTTP_NO_CLIENT_CERT_CONTEXT,
-        0
-    ))
+    if (m_isSecure)
     {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
-        return HRESULT_FROM_WIN32(dwError);
+        if (!WinHttpSetOption(
+            m_hRequest,
+            WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
+            WINHTTP_NO_CLIENT_CERT_CONTEXT,
+            0))
+        {
+            DWORD dwError = GetLastError();
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            return HRESULT_FROM_WIN32(dwError);
+        }
     }
 
 #if HC_WINHTTP_WEBSOCKETS
