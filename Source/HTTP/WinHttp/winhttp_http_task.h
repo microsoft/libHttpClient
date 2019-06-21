@@ -11,14 +11,8 @@ struct HC_PERFORM_ENV
 public:
     HC_PERFORM_ENV();
     virtual ~HC_PERFORM_ENV();
-    void get_proxy_name(
-        _In_ xbox::httpclient::proxy_type proxyType,
-        _Out_ DWORD* pAccessType,
-        _Out_ const wchar_t** pwProxyName);
 
     HINTERNET m_hSession = nullptr;
-    xbox::httpclient::Uri m_proxyUri;
-    http_internal_wstring m_wProxyName;
     xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::default_proxy;
 };
 
