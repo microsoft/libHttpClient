@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 #include "pch.h"
-#include <wrl.h>
 #include <winhttp.h>
 #include "utils.h"
 #include "uri.h"
@@ -83,7 +82,7 @@ public:
         HRESULT hr = S_OK;
         if (dataByteCount > 0)
         {
-            m_buffer = static_cast<byte*>(http_memory::mem_alloc(dataByteCount));
+            m_buffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount));
             if (m_buffer != nullptr)
             {
                 m_bufferByteCapacity = dataByteCount;
@@ -128,7 +127,7 @@ public:
 
         if (dataByteCount > m_bufferByteCapacity)
         {
-            newBuffer = static_cast<byte*>(http_memory::mem_alloc(dataByteCount));
+            newBuffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount));
             if (newBuffer != nullptr)
             {
                 // Copy the contents of the old buffer
