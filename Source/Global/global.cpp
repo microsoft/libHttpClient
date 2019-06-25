@@ -143,6 +143,15 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
     m_retryAfterCache.erase(retryAfterCacheId);
 }
 
+HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
+{
+#if HC_PLATFORM == HC_PLATFORM_WIN32
+    return Internal_SetGlobalProxy(m_performEnv.get(), proxyUri);
+#else
+    return E_NOTIMPL;
+#endif
+}
+
 HttpPerformInfo& GetUserHttpPerformHandler() noexcept
 {
     static HttpPerformInfo handler(&Internal_HCHttpCallPerformAsync, nullptr);

@@ -31,4 +31,13 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
     assert(!env);
     XAsyncComplete(asyncBlock, S_OK, 0);
 }
+
+HRESULT
+Internal_SetGlobalProxy(
+    _In_ HC_PERFORM_ENV* performEnv,
+    _In_ const char* proxyUri) noexcept
+{
+    return E_NOTIMPL;
+}
+
 #endif
