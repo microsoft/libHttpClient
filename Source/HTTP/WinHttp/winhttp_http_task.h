@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 #include "pch.h"
-#include <wrl.h>
 #include <winhttp.h>
 #include "utils.h"
 #include "uri.h"
@@ -12,14 +11,8 @@ struct HC_PERFORM_ENV
 public:
     HC_PERFORM_ENV();
     virtual ~HC_PERFORM_ENV();
-    void get_proxy_name(
-        _In_ xbox::httpclient::proxy_type proxyType,
-        _Out_ DWORD* pAccessType,
-        _Out_ const wchar_t** pwProxyName);
 
     HINTERNET m_hSession = nullptr;
-    xbox::httpclient::Uri m_proxyUri;
-    http_internal_wstring m_wProxyName;
     xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::default_proxy;
 };
 
@@ -83,7 +76,7 @@ public:
         HRESULT hr = S_OK;
         if (dataByteCount > 0)
         {
-            m_buffer = static_cast<byte*>(http_memory::mem_alloc(dataByteCount));
+            m_buffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount));
             if (m_buffer != nullptr)
             {
                 m_bufferByteCapacity = dataByteCount;
@@ -128,7 +121,7 @@ public:
 
         if (dataByteCount > m_bufferByteCapacity)
         {
-            newBuffer = static_cast<byte*>(http_memory::mem_alloc(dataByteCount));
+            newBuffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount));
             if (newBuffer != nullptr)
             {
                 // Copy the contents of the old buffer
