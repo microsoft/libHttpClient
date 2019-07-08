@@ -333,13 +333,11 @@ private:
 
             if (msg->get_opcode() == websocketpp::frame::opcode::text)
             {
-                ASSERT(sharedThis->m_state == CONNECTED);
                 auto& payload = msg->get_raw_payload();
                 messageFunc(sharedThis->m_hcWebsocketHandle, payload.data(), context);
             }
             else if (msg->get_opcode() == websocketpp::frame::opcode::binary)
             {
-                ASSERT(sharedThis->m_state == CONNECTED);
                 auto& payload = msg->get_raw_payload();
                 binaryMessageFunc(sharedThis->m_hcWebsocketHandle, (uint8_t*)payload.data(), (uint32_t)payload.size(), context);
             }

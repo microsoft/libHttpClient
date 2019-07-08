@@ -50,6 +50,7 @@
 #include <vector>
 #include <codecvt>
 #include <iomanip>
+#include <functional>
 
 #if HC_UWP_API
 #include <collection.h>
