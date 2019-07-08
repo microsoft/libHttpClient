@@ -355,6 +355,8 @@ void HC_WEBSOCKET::MessageFunc(
     void* context
 )
 {
+    UNREFERENCED_PARAMETER(context);
+
     std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
     if (websocket->m_clientRefCount > 0)
     {
@@ -379,6 +381,8 @@ void HC_WEBSOCKET::BinaryMessageFunc(
     void* context
 )
 {
+    UNREFERENCED_PARAMETER(context);
+
     std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
     if (websocket->m_clientRefCount > 0)
     {
@@ -402,6 +406,8 @@ void HC_WEBSOCKET::CloseFunc(
     void* context
 )
 {
+    UNREFERENCED_PARAMETER(context);
+
     {
         std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
 
