@@ -108,9 +108,9 @@ STDAPI HCMemGetFunctions(
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
 /// </summary>
 typedef struct HCInitArgs {
-	/// <summary>The Java Virtual machine.</summary>
+    /// <summary>The Java Virtual machine.</summary>
     JavaVM *javaVM;
-	/// <summary>The Java Application Context.</summary>
+    /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
 #else 
@@ -118,7 +118,7 @@ typedef struct HCInitArgs {
 /// Dummy init args used by non-Android devices.
 /// </summary>
 typedef struct HCInitArgs {
-	/// <summary>A dummy field.</summary>
+    /// <summary>A dummy field.</summary>
     void* dummy;
 } HCInitArgs;
 #endif
