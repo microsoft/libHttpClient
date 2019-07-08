@@ -774,7 +774,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
