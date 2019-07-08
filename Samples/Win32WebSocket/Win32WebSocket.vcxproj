@@ -31,7 +31,7 @@
     <ProjectGuid>{591520A6-680D-4AD7-AACB-8C2C877F8BAE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Win32WebSocket</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <HCLibPlatformType>Win32</HCLibPlatformType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

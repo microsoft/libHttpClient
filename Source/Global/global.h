@@ -64,6 +64,8 @@ typedef struct http_singleton
     HttpPerformInfo const m_httpPerform;
     PerformEnv const m_performEnv;
 
+    HRESULT set_global_proxy(_In_ const char* proxyUri);
+
     std::atomic<std::uint64_t> m_lastId{ 0 };
     bool m_retryAllowed = true;
     uint32_t m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
