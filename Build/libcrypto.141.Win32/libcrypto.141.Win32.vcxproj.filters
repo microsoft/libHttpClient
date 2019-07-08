@@ -688,9 +688,6 @@
     <ClCompile Include="$(opensslSourceRoot)crypto\dh\dh_rfc5114.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\dllmain.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\dsa\dsa_ameth.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -782,9 +779,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nist.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nistz256.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_oct.c">
@@ -1784,6 +1778,150 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(opensslSourceRoot)engines\e_padlock.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\aria\aria.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\asn1\asn1_item_list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\conf\conf_ssl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ctype.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\dh\dh_rfc7919.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ebcdic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\curve448\arch_32\f_impl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\curve448\curve448.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\curve448\curve448_tables.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\curve448\eddsa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\curve448\f_generic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\curve448\scalar.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nistp224.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nistp256.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nistp521.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ec\ecp_nistputil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\evp\e_aria.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\evp\e_sm4.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\evp\m_sha3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\evp\pbe_scrypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\getenv.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\kdf\scrypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\poly1305\poly1305_ameth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\poly1305\poly1305_pmeth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\rand\drbg_ctr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\rand\drbg_lib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\rand\rand_egd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\rsa\rsa_mp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sha\keccak1600.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\siphash\siphash.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\siphash\siphash_ameth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\siphash\siphash_pmeth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sm2\sm2_crypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sm2\sm2_err.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sm2\sm2_pmeth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sm2\sm2_sign.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sm3\m_sm3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sm3\sm3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\sm4\sm4.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\store\loader_file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\store\store_err.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\store\store_init.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\store\store_lib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\store\store_register.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\store\store_strings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\ui\ui_null.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\x509\x509_meth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(opensslSourceRoot)crypto\x509v3\v3_admis.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

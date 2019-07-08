@@ -324,24 +324,25 @@ private:
             HCWebSocketMessageFunction messageFunc{ nullptr };
             HCWebSocketBinaryMessageFunction binaryMessageFunc{ nullptr };
             void* context{ nullptr };
-            HCWebSocketGetEventFunctions(sharedThis->m_hcWebsocketHandle, &messageFunc, &binaryMessageFunc, nullptr, &context);
+            auto hr = HCWebSocketGetEventFunctions(sharedThis->m_hcWebsocketHandle, &messageFunc, &binaryMessageFunc, nullptr, &context);
 
-            ASSERT(messageFunc && binaryMessageFunc);
-
-            // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
-            // TODO: verify auto disconnect when closing client's websocket handle
-
-            if (msg->get_opcode() == websocketpp::frame::opcode::text)
+            if (SUCCEEDED(hr))
             {
-                ASSERT(sharedThis->m_state == CONNECTED);
-                auto& payload = msg->get_raw_payload();
-                messageFunc(sharedThis->m_hcWebsocketHandle, payload.data(), context);
-            }
-            else if (msg->get_opcode() == websocketpp::frame::opcode::binary)
-            {
-                ASSERT(sharedThis->m_state == CONNECTED);
-                auto& payload = msg->get_raw_payload();
-                binaryMessageFunc(sharedThis->m_hcWebsocketHandle, (uint8_t*)payload.data(), (uint32_t)payload.size(), context);
+                ASSERT(messageFunc && binaryMessageFunc);
+
+                // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
+                // TODO: verify auto disconnect when closing client's websocket handle
+
+                if (msg->get_opcode() == websocketpp::frame::opcode::text)
+                {
+                    auto& payload = msg->get_raw_payload();
+                    messageFunc(sharedThis->m_hcWebsocketHandle, payload.data(), context);
+                }
+                else if (msg->get_opcode() == websocketpp::frame::opcode::binary)
+                {
+                    auto& payload = msg->get_raw_payload();
+                    binaryMessageFunc(sharedThis->m_hcWebsocketHandle, (uint8_t*)payload.data(), (uint32_t)payload.size(), context);
+                }
             }
         });
 
