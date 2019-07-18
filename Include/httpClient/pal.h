@@ -440,7 +440,7 @@ typedef struct _LIST_ENTRY {
 typedef uint32_t HCMemoryType;
 typedef struct HC_WEBSOCKET* HCWebsocketHandle;
 typedef struct HC_CALL* HCCallHandle;
-typedef struct HC_CALL* HCMockCallHandle;
+typedef struct HC_MOCK_CALL* HCMockCallHandle;
 typedef struct HC_PERFORM_ENV* HCPerformEnv;
 
 extern "C"

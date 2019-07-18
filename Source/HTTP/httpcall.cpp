@@ -114,16 +114,13 @@ HRESULT perform_http_call(
             {
                 HCCallHandle call = static_cast<HCCallHandle>(data->context);
                 bool matchedMocks = false;
-                if (httpSingleton->m_mocksEnabled)
-                {
-                    matchedMocks = Mock_Internal_HCHttpCallPerformAsync(call);
-                    if (matchedMocks)
-                    {
-                        XAsyncComplete(data->async, S_OK, 0);
-                    }
-                }
 
-                if (!matchedMocks) // if there wasn't a matched mock, then real call
+                matchedMocks = Mock_Internal_HCHttpCallPerformAsync(call);
+                if (matchedMocks)
+                {
+                    XAsyncComplete(data->async, S_OK, 0);
+                }
+                else // if there wasn't a matched mock, then real call
                 {
                     HttpPerformInfo const& info = httpSingleton->m_httpPerform;
                     if (info.handler != nullptr)

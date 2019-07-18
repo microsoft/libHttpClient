@@ -5,6 +5,7 @@
 #include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
+#include "../Mock/lhc_mock.h"
 
 #if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"

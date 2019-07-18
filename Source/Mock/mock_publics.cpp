@@ -2,17 +2,39 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#include "lhc_mock.h"
 
 using namespace xbox::httpclient;
 using namespace xbox::httpclient::log;
 
-
-STDAPI 
-HCMockCallCreate(
-    _Out_ HCMockCallHandle* call
+STDAPI HCMockCallCreate(
+    _Out_ HCMockCallHandle* callHandle
     ) noexcept
 {
-    return HCHttpCallCreate(call);
+    if (callHandle == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    auto httpSingleton = get_http_singleton(true);
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    HC_MOCK_CALL* call = new HC_MOCK_CALL();
+
+    call->retryAllowed = httpSingleton->m_retryAllowed;
+    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
+    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
+    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
+    call->retryIterationNumber = 0;
+    call->id = ++httpSingleton->m_lastId;
+
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCMockCallCreate [ID %llu]", call->id);
+
+    *callHandle = call;
+    return S_OK;
 }
 
 STDAPI 
@@ -32,7 +54,9 @@ try
 
     auto httpSingleton = get_http_singleton(true);
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     if (method != nullptr && url != nullptr)
     {
@@ -54,8 +78,52 @@ try
 
     std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
     httpSingleton->m_mocks.push_back(call);
-    httpSingleton->m_mocksEnabled = true;
     return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI HCMockSetMockMatchedCallback(
+    _In_ HCMockCallHandle call,
+    _In_ HCMockMatchedCallback callback,
+    _In_opt_ void* context
+)
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    call->matchedCallback = callback;
+    call->matchCallbackContext = context;
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI HCMockRemoveMock(
+    _In_ HCMockCallHandle call
+)
+try
+{
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
+    auto& mocks{ httpSingleton->m_mocks };
+
+    for (auto iter = mocks.begin(); iter != mocks.end(); ++iter)
+    {
+        if (*iter == call)
+        {
+            mocks.erase(iter);
+            return S_OK;
+        }
+    }
+
+    return E_INVALIDARG; // Mock not found
 }
 CATCH_RETURN()
 
@@ -75,7 +143,6 @@ try
     }
 
     httpSingleton->m_mocks.clear();
-    httpSingleton->m_mocksEnabled = false;
     return S_OK;
 }
 CATCH_RETURN()
