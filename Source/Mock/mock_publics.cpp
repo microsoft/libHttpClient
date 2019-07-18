@@ -22,13 +22,7 @@ STDAPI HCMockCallCreate(
         return E_HC_NOT_INITIALISED;
     }
 
-    HC_MOCK_CALL* call = new HC_MOCK_CALL();
-
-    call->retryAllowed = httpSingleton->m_retryAllowed;
-    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
-    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
-    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
-    call->retryIterationNumber = 0;
+    HC_MOCK_CALL* call = new HC_MOCK_CALL{};
     call->id = ++httpSingleton->m_lastId;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCMockCallCreate [ID %llu]", call->id);
