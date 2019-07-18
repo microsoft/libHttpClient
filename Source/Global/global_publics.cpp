@@ -41,6 +41,20 @@ try
 CATCH_RETURN_WITH(;)
 
 STDAPI
+HCSetGlobalProxy(_In_ const char* proxyUri) noexcept
+try
+{
+    auto httpSingleton = get_http_singleton(false);
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    return httpSingleton->set_global_proxy(proxyUri);
+}
+CATCH_RETURN()
+
+STDAPI
 HCSetHttpCallPerformFunction(
     _In_ HCCallPerformFunction performFunc,
     _In_opt_ void* performContext

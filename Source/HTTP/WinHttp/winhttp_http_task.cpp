@@ -18,18 +18,25 @@ using namespace xbox::httpclient;
 #define WINHTTP_WEBSOCKET_RECVBUFFER_SIZE (1024 * 4)
 #define WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE (1024 * 20)
 
+void get_proxy_name(
+    _In_ xbox::httpclient::proxy_type proxyType,
+    _In_ xbox::httpclient::Uri proxyUri,
+    _Out_ DWORD* pAccessType,
+    _Out_ http_internal_wstring* pwProxyName);
+
 HC_PERFORM_ENV::HC_PERFORM_ENV()
 {
-    m_proxyType = get_ie_proxy_info(proxy_protocol::https, m_proxyUri);
+    xbox::httpclient::Uri proxyUri;
+    m_proxyType = get_ie_proxy_info(proxy_protocol::https, proxyUri);
 
     DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-    const wchar_t* wProxyName = nullptr;
-    get_proxy_name(m_proxyType, &accessType, &wProxyName);
+    http_internal_wstring wProxyName;
+    get_proxy_name(m_proxyType, proxyUri, &accessType, &wProxyName);
 
     m_hSession = WinHttpOpen(
         nullptr,
         accessType,
-        wProxyName,
+        wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS,
         WINHTTP_FLAG_ASYNC);
 }
@@ -42,17 +49,18 @@ HC_PERFORM_ENV::~HC_PERFORM_ENV()
     }
 }
 
-void HC_PERFORM_ENV::get_proxy_name(
+void get_proxy_name(
     _In_ proxy_type proxyType,
+    _In_ xbox::httpclient::Uri proxyUri,
     _Out_ DWORD* pAccessType,
-    _Out_ const wchar_t** pwProxyName)
+    _Out_ http_internal_wstring* pwProxyName)
 {
     switch (proxyType)
     {
         case proxy_type::no_proxy:
         {
             *pAccessType = WINHTTP_ACCESS_TYPE_NO_PROXY;
-            *pwProxyName = WINHTTP_NO_PROXY_NAME;
+            *pwProxyName = L"";
             break;
         }
 
@@ -60,28 +68,25 @@ void HC_PERFORM_ENV::get_proxy_name(
         {
             *pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
 
-            http_internal_wstring wProxyHost = utf16_from_utf8(m_proxyUri.Host());
+            http_internal_wstring wProxyHost = utf16_from_utf8(proxyUri.Host());
 
             // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
-            if (m_proxyUri.IsPortDefault())
+            if (proxyUri.IsPortDefault())
             {
-                m_wProxyName = wProxyHost;
-                *pwProxyName = m_wProxyName.c_str();
+                *pwProxyName = wProxyHost;
             }
             else
             {
-                if (m_proxyUri.Port() > 0)
+                if (proxyUri.Port() > 0)
                 {
                     http_internal_basic_stringstream<wchar_t> ss;
                     ss.imbue(std::locale::classic());
-                    ss << wProxyHost << L":" << m_proxyUri.Port();
-                    m_wProxyName = ss.str();
-                    *pwProxyName = m_wProxyName.c_str();
+                    ss << wProxyHost << L":" << proxyUri.Port();
+                    *pwProxyName = ss.str().c_str();
                 }
                 else
                 {
-                    m_wProxyName = wProxyHost;
-                    *pwProxyName = m_wProxyName.c_str();
+                    *pwProxyName = wProxyHost;
                 }
             }
             break;
@@ -92,7 +97,7 @@ void HC_PERFORM_ENV::get_proxy_name(
         case proxy_type::default_proxy:
         {
             *pAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-            *pwProxyName = WINHTTP_NO_PROXY_NAME;
+            *pwProxyName = L"";
             break;
         }
     }
@@ -837,8 +842,9 @@ HRESULT winhttp_http_task::connect(
         }
     }
  
+    m_isSecure = cUri.IsSecure();
     unsigned int port = cUri.IsPortDefault() ?
-        (cUri.IsSecure() ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
+        (m_isSecure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
         cUri.Port();
     http_internal_wstring wUrlHost = utf16_from_utf8(cUri.Host());
 
@@ -941,16 +947,18 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
-    if (!WinHttpSetOption(
-        m_hRequest,
-        WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
-        WINHTTP_NO_CLIENT_CERT_CONTEXT,
-        0
-    ))
+    if (m_isSecure)
     {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
-        return HRESULT_FROM_WIN32(dwError);
+        if (!WinHttpSetOption(
+            m_hRequest,
+            WINHTTP_OPTION_CLIENT_CERT_CONTEXT,
+            WINHTTP_NO_CLIENT_CERT_CONTEXT,
+            0))
+        {
+            DWORD dwError = GetLastError();
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            return HRESULT_FROM_WIN32(dwError);
+        }
     }
 
 #if HC_WINHTTP_WEBSOCKETS
@@ -1021,7 +1029,7 @@ HRESULT winhttp_http_task::connect_and_send_async()
         {
             xbox::httpclient::Uri cUri(url);
 
-            HRESULT hr = connect(cUri);
+            hr = connect(cUri);
             if (SUCCEEDED(hr))
             {
                 hr = send(cUri, method);
@@ -1070,6 +1078,64 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 {
     delete performEnv;
+}
+
+HRESULT
+Internal_SetGlobalProxy(
+    _In_ HC_PERFORM_ENV* performEnv,
+    _In_ const char* proxyUri) noexcept
+{
+    assert(performEnv != nullptr);
+
+    auto desiredType = xbox::httpclient::proxy_type::default_proxy;
+    WINHTTP_PROXY_INFO info = { 0 };
+    http_internal_wstring wProxyName;
+
+    if (proxyUri == nullptr)
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] reseting proxy", GetCurrentThreadId());
+
+        xbox::httpclient::Uri ieProxyUri;
+        desiredType = get_ie_proxy_info(proxy_protocol::https, ieProxyUri);
+
+        DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+        get_proxy_name(desiredType, ieProxyUri, &accessType, &wProxyName);
+
+        info.dwAccessType = accessType;
+        if (wProxyName.length() > 0)
+        {
+            info.lpszProxy = const_cast<LPWSTR>(wProxyName.c_str());
+        }
+    }
+    else
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] setting proxy to '%s'", GetCurrentThreadId(), proxyUri);
+
+        wProxyName = utf16_from_utf8(proxyUri);
+
+        info.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+        info.lpszProxy = const_cast<LPWSTR>(wProxyName.c_str());
+
+        desiredType = xbox::httpclient::proxy_type::named_proxy;
+    }
+
+    auto result = WinHttpSetOption(
+        performEnv->m_hSession,
+        WINHTTP_OPTION_PROXY,
+        &info,
+        sizeof(WINHTTP_PROXY_INFO));
+    if (!result)
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] WinHttpSetOption errorcode %d", GetCurrentThreadId(), dwError);
+        return E_FAIL;
+    }
+    else
+    {
+        performEnv->m_proxyType = desiredType;
+    }
+
+    return S_OK;
 }
 
 void CALLBACK Internal_HCHttpCallPerformAsync(

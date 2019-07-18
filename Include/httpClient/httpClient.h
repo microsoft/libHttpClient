@@ -108,9 +108,9 @@ STDAPI HCMemGetFunctions(
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
 /// </summary>
 typedef struct HCInitArgs {
-	/// <summary>The Java Virtual machine.</summary>
+    /// <summary>The Java Virtual machine.</summary>
     JavaVM *javaVM;
-	/// <summary>The Java Application Context.</summary>
+    /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
 #else 
@@ -118,7 +118,7 @@ typedef struct HCInitArgs {
 /// Dummy init args used by non-Android devices.
 /// </summary>
 typedef struct HCInitArgs {
-	/// <summary>A dummy field.</summary>
+    /// <summary>A dummy field.</summary>
     void* dummy;
 } HCInitArgs;
 #endif
@@ -179,6 +179,14 @@ STDAPI_(int32_t) HCAddCallRoutedHandler(
 STDAPI_(void) HCRemoveCallRoutedHandler(
     _In_ int32_t handlerId
     ) noexcept;
+
+/// <summary>
+/// Manually sets an explicit proxy address. If it is passed a null proxy, it will reset
+/// to default. Does not include proxying web socket traffic.
+/// </summary>
+/// <param name="proxyUri">The proxy address to use in the "[ip]:[port]" format</param> 
+/// <returns>Result code for this API operation. Possible values are S_OK, E_HC_NOT_INITIALISED, or E_FAIL.</returns>
+STDAPI HCSetGlobalProxy(_In_ const char* proxyUri) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Http APIs
