@@ -15,7 +15,7 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     }
     else
     {
-        if (originalCall->url == mockCall->url)
+        if (originalCall->url.substr(0, mockCall->url.size()) == mockCall->url)
         {
             if (mockCall->requestBodyBytes.empty())
             {
@@ -34,7 +34,7 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     return false;
 }
 
-long GetIndexOfMock(const http_internal_vector<HC_CALL*>& mocks, HC_CALL* lastMatchingMock)
+long GetIndexOfMock(const http_internal_vector<HC_MOCK_CALL*>& mocks, HC_MOCK_CALL* lastMatchingMock)
 {
     if (lastMatchingMock == nullptr)
     {
@@ -52,17 +52,19 @@ long GetIndexOfMock(const http_internal_vector<HC_CALL*>& mocks, HC_CALL* lastMa
     return -1;
 }
 
-HC_CALL* GetMatchingMock(
+HC_MOCK_CALL* GetMatchingMock(
     _In_ HC_CALL* originalCall
-    )
+)
 {
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
+    {
         return nullptr;
+    }
 
-    http_internal_vector<HC_CALL*> mocks;
-    HC_CALL* lastMatchingMock = nullptr;
-    HC_CALL* matchingMock = nullptr;
+    http_internal_vector<HC_MOCK_CALL*> mocks;
+    HC_MOCK_CALL* lastMatchingMock = nullptr;
+    HC_MOCK_CALL* matchingMock = nullptr;
 
     {
         std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
@@ -121,10 +123,22 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     )
 {
     HC_CALL* originalCall = static_cast<HC_CALL*>(originalCallHandle);
-    HC_CALL* matchingMock = GetMatchingMock(originalCall);
+    HC_MOCK_CALL* matchingMock = GetMatchingMock(originalCall);
     if (matchingMock == nullptr)
     {
         return false;
+    }
+
+    if (matchingMock->matchedCallback)
+    {
+        matchingMock->matchedCallback(
+            matchingMock,
+            originalCall->method.data(),
+            originalCall->url.data(),
+            originalCall->requestBodyBytes.data(),
+            static_cast<uint32_t>(originalCall->requestBodyBytes.size()),
+            matchingMock->matchCallbackContext
+        );
     }
 
     size_t byteBuf;

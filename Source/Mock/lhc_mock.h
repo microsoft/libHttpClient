@@ -4,4 +4,10 @@
 #pragma once
 #include "pch.h"
 
+struct HC_MOCK_CALL : public HC_CALL
+{
+    HCMockMatchedCallback matchedCallback{ nullptr };
+    void* matchCallbackContext{ nullptr };
+};
+
 bool Mock_Internal_HCHttpCallPerformAsync(_In_ HCCallHandle originalCall);
