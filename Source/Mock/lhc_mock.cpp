@@ -62,6 +62,11 @@ HC_MOCK_CALL* GetMatchingMock(
         return nullptr;
     }
 
+    if (httpSingleton->m_mocks.size() == 0)
+    {
+        return nullptr;
+    }
+
     http_internal_vector<HC_MOCK_CALL*> mocks;
     HC_MOCK_CALL* lastMatchingMock = nullptr;
     HC_MOCK_CALL* matchingMock = nullptr;
