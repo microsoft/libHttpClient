@@ -14,7 +14,7 @@ if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual 
 if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
  
 copy ..\CMakeLists.txt .
-%CMAKE_EXE% -G "Visual Studio 16 2019" %* CMakeLists.txt %CMAKE_FOLDER%\build
+%CMAKE_EXE% -G "Visual Studio 15 2017" %* CMakeLists.txt %CMAKE_FOLDER%\build
 if %ERRORLEVEL% NEQ 0 goto ignore
 call :subCopy
 goto done

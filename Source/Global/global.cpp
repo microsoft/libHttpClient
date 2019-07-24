@@ -149,6 +149,7 @@ HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
 #if HC_PLATFORM == HC_PLATFORM_WIN32
     return Internal_SetGlobalProxy(m_performEnv.get(), proxyUri);
 #else
+    UNREFERENCED_PARAMETER(proxyUri);
     return E_NOTIMPL;
 #endif
 }
