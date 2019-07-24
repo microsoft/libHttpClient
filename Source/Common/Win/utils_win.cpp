@@ -180,6 +180,9 @@ proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpcli
     {
         proxyType = proxy_type::no_proxy;
     }
+#else
+    UNREFERENCED_PARAMETER(protocol);
+    UNREFERENCED_PARAMETER(proxyUri);
 #endif
 
     return proxyType;

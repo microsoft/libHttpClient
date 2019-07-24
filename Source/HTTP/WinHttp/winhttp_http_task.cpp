@@ -579,40 +579,6 @@ void winhttp_http_task::callback_status_read_complete(
     }
 }
 
-
-static std::string HttpCallbackStatusCodeToString(DWORD statusCode)
-{
-    switch (statusCode)
-    {
-    case WINHTTP_CALLBACK_STATUS_RESOLVING_NAME: return "WINHTTP_CALLBACK_STATUS_RESOLVING_NAME";
-    case WINHTTP_CALLBACK_STATUS_NAME_RESOLVED: return "WINHTTP_CALLBACK_STATUS_NAME_RESOLVED";
-    case WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER: return "WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER";
-    case WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER: return "WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER";
-    case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST: return "WINHTTP_CALLBACK_STATUS_SENDING_REQUEST";
-    case WINHTTP_CALLBACK_STATUS_REQUEST_SENT: return "WINHTTP_CALLBACK_STATUS_REQUEST_SENT";
-    case WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE: return "WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE";
-    case WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED: return "WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED";
-    case WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION: return "WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION";
-    case WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED: return "WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED";
-    case WINHTTP_CALLBACK_STATUS_HANDLE_CREATED: return "WINHTTP_CALLBACK_STATUS_HANDLE_CREATED";
-    case WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING: return "WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING";
-    case WINHTTP_CALLBACK_STATUS_DETECTING_PROXY: return "WINHTTP_CALLBACK_STATUS_DETECTING_PROXY";
-    case WINHTTP_CALLBACK_STATUS_REDIRECT: return "WINHTTP_CALLBACK_STATUS_REDIRECT";
-    case WINHTTP_CALLBACK_STATUS_INTERMEDIATE_RESPONSE: return "WINHTTP_CALLBACK_STATUS_INTERMEDIATE_RESPONSE";
-    case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE: return "WINHTTP_CALLBACK_STATUS_SECURE_FAILURE";
-    case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE: return "WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE";
-    case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE: return "WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE";
-    case WINHTTP_CALLBACK_STATUS_READ_COMPLETE: return "WINHTTP_CALLBACK_STATUS_READ_COMPLETE";
-    case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE: return "WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE";
-    case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR: return "WINHTTP_CALLBACK_STATUS_REQUEST_ERROR";
-    case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE: return "WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE";
-    case WINHTTP_CALLBACK_STATUS_GETPROXYFORURL_COMPLETE: return "WINHTTP_CALLBACK_STATUS_GETPROXYFORURL_COMPLETE";
-    case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE: return "WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE";
-    case WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE: return "WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE";
-    default: return "Unknown";
-    }
-}
-
 void CALLBACK winhttp_http_task::completion_callback(
     HINTERNET hRequestHandle,
     DWORD_PTR context,
@@ -667,7 +633,7 @@ void CALLBACK winhttp_http_task::completion_callback(
                 if (pRequestContext->m_isWebSocket)
                 {
 #if HC_WINHTTP_WEBSOCKETS
-                    callback_websocket_status_headers_available(hRequestHandle, pRequestContext, statusInfo);
+                    callback_websocket_status_headers_available(hRequestHandle, pRequestContext);
 #endif
                 }
                 else
@@ -688,7 +654,7 @@ void CALLBACK winhttp_http_task::completion_callback(
                 if (pRequestContext->m_isWebSocket)
                 {
 #if HC_WINHTTP_WEBSOCKETS
-                    callback_websocket_status_read_complete(hRequestHandle, pRequestContext, statusInfo);
+                    callback_websocket_status_read_complete(pRequestContext, statusInfo);
 #endif
                 }
                 else
@@ -764,7 +730,7 @@ void winhttp_http_task::set_autodiscover_proxy(
         &info);
     if (result)
     {
-        auto result = WinHttpSetOption(
+        result = WinHttpSetOption(
             m_hRequest,
             WINHTTP_OPTION_PROXY,
             &info,
@@ -1237,7 +1203,6 @@ char* winhttp_http_task::winhttp_web_socket_buffer_type_to_string(
 }
 
 void winhttp_http_task::callback_websocket_status_read_complete(
-    _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
@@ -1367,8 +1332,7 @@ HRESULT winhttp_http_task::websocket_read_message()
 
 void winhttp_http_task::callback_websocket_status_headers_available(
     _In_ HINTERNET hRequestHandle,
-    _In_ winhttp_http_task* pRequestContext,
-    _In_ void* statusInfo)
+    _In_ winhttp_http_task* pRequestContext)
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId());
 

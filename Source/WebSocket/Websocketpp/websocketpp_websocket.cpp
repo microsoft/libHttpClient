@@ -27,6 +27,8 @@
 #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
 
+#pragma warning(disable: 4244) 
+
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
@@ -848,6 +850,8 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
     auto wsppSocket{ std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl) };
 
     if (!wsppSocket)
@@ -866,6 +870,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
     if (wsppSocket == nullptr)
     {
@@ -882,6 +887,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
     if (wsppSocket == nullptr)
     {
@@ -896,6 +902,7 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
     if (websocket == nullptr)
     {
         return E_INVALIDARG;
