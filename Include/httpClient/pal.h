@@ -5,8 +5,10 @@
 #endif
 
 #pragma once
+#if HC_PLATFORM != HC_PLATFORM_ANDROID
 #pragma warning(disable: 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 #pragma warning(disable: 4702) // unreachable code
+#endif
 
 #include <stdbool.h>
 #include <stddef.h>
