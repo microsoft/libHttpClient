@@ -1055,18 +1055,21 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
             GetNetworkConnectivityHintProc getNetworkConnectivityHint =
                 (GetNetworkConnectivityHintProc)GetProcAddress(hModule, "GetNetworkConnectivityHint");
            
+            HRESULT hr = S_OK;
+            bool networkNotReady = false;
+
             if (getNetworkConnectivityHint != nullptr)
             {
-                NL_NETWORK_CONNECTIVITY_HINT connectivityHint;
-                HRESULT hr = HRESULT_FROM_WIN32(getNetworkConnectivityHint(&connectivityHint));
-                bool networkNotReady = connectivityHint.ConnectivityLevel == NetworkConnectivityLevelHintUnknown;
+                NL_NETWORK_CONNECTIVITY_HINT connectivityHint{};
+                hr = HRESULT_FROM_WIN32(getNetworkConnectivityHint(&connectivityHint));
+                networkNotReady = connectivityHint.ConnectivityLevel == NetworkConnectivityLevelHintUnknown;
+            }
 
-                FreeLibrary(hModule);
+            FreeLibrary(hModule);
 
-                if (SUCCEEDED(hr) && networkNotReady)
-                {
-                    return E_HC_NETWORK_NOT_READY;
-                }
+            if (SUCCEEDED(hr) && networkNotReady)
+            {
+                return E_HC_NETWORK_NOT_READY;
             }
         }
     }
