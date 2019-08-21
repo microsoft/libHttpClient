@@ -29,7 +29,7 @@ HC_PERFORM_ENV::HC_PERFORM_ENV()
     xbox::httpclient::Uri proxyUri;
     m_proxyType = get_ie_proxy_info(proxy_protocol::https, proxyUri);
 
-    DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+    DWORD accessType = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
     http_internal_wstring wProxyName;
     get_proxy_name(m_proxyType, proxyUri, &accessType, &wProxyName);
 
