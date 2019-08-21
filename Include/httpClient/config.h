@@ -5,6 +5,7 @@
 #define HC_PLATFORM_WIN32 1
 #define HC_PLATFORM_UWP 2
 #define HC_PLATFORM_XDK 3
+#define HC_PLATFORM_GSDK 4
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
 #define HC_PLATFORM_MAC 22
@@ -32,6 +33,8 @@
         #define HC_PLATFORM HC_PLATFORM_UWP
     #elif WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
         #define HC_PLATFORM HC_PLATFORM_XDK
+    #elif WINAPI_FAMILY == WINAPI_FAMILY_GAMES
+        #define HC_PLATFORM HC_PLATFORM_GSDK
     #else
         #error Cannot recognize Windows flavor
     #endif
@@ -88,7 +91,7 @@
 
 #if !defined(HC_PLATFORM_IS_MICROSOFT)
 #define HC_PLATFORM_IS_MICROSOFT \
-(HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK)
+(HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK  || HC_PLATFORM == HC_PLATFORM_GSDK)
 #endif
 
 #if !defined(HC_PLATFORM_IS_APPLE)
@@ -98,4 +101,9 @@
 
 #if defined(HC_PLATFORM_MSBUILD_GUESS) && (HC_PLATFORM_MSBUILD_GUESS != HC_PLATFORM)
     #error The platform guessed by MSBuild does not agree with the platform selected by config.h
+#endif
+
+#if !defined(HC_WINHTTP_WEBSOCKETS)
+#define HC_WINHTTP_WEBSOCKETS \
+(HC_PLATFORM == HC_PLATFORM_GSDK)
 #endif
