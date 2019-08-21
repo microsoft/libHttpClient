@@ -11,6 +11,12 @@
 #include "hcwebsocket.h"
 #endif
 
+#if HC_PLATFORM == HC_PLATFORM_GSDK
+#include "XGameRuntimeFeature.h"
+#include <winsock2.h>
+#include <iphlpapi.h>
+#endif
+
 #define CRLF L"\r\n"
 
 using namespace xbox::httpclient;
@@ -1030,10 +1036,41 @@ HRESULT winhttp_http_task::connect_and_send_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
+#if HC_PLATFORM == HC_PLATFORM_GSDK
+typedef DWORD(WINAPI *GetNetworkConnectivityHintProc)(NL_NETWORK_CONNECTIVITY_HINT*);
+#endif
+
 HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
     assert(args == nullptr);
     UNREFERENCED_PARAMETER(args);
+
+#if HC_PLATFORM == HC_PLATFORM_GSDK
+    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
+    {
+        HMODULE hModule = LoadLibrary(TEXT("iphlpapi.dll"));
+
+        if (hModule != nullptr)
+        {
+            GetNetworkConnectivityHintProc getNetworkConnectivityHint =
+                (GetNetworkConnectivityHintProc)GetProcAddress(hModule, "GetNetworkConnectivityHint");
+           
+            if (getNetworkConnectivityHint != nullptr)
+            {
+                NL_NETWORK_CONNECTIVITY_HINT connectivityHint;
+                HRESULT hr = HRESULT_FROM_WIN32(getNetworkConnectivityHint(&connectivityHint));
+                bool networkNotReady = connectivityHint.ConnectivityLevel == NetworkConnectivityLevelHintUnknown;
+
+                FreeLibrary(hModule);
+
+                if (SUCCEEDED(hr) && networkNotReady)
+                {
+                    return E_HC_NETWORK_NOT_READY;
+                }
+            }
+        }
+    }
+#endif
 
     performEnv.reset(new (std::nothrow) HC_PERFORM_ENV());
     if (!performEnv) { return E_OUTOFMEMORY; }
