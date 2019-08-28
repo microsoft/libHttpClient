@@ -1150,7 +1150,7 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
     UNREFERENCED_PARAMETER(context);
 
 
-#if HC_PLATFORM == HC_PLATFORM_GSDK
+#if HC_PLATFORM == HC_PLATFORM_GSDK 
     if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
     {
         auto singleton = get_http_singleton(true);
