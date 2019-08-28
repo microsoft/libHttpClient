@@ -72,6 +72,11 @@ typedef struct http_singleton
     uint32_t m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     uint32_t m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
 
+#if HC_PLATFORM == HC_PLATFORM_GSDK
+    bool m_networkInitialized{ true };
+    HMODULE m_networkModule{ nullptr };
+#endif
+
 #if !HC_NOWEBSOCKETS
     WebSocketPerformInfo const m_websocketPerform;
 #endif

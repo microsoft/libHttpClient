@@ -1038,42 +1038,28 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 
 #if HC_PLATFORM == HC_PLATFORM_GSDK
 typedef DWORD(WINAPI *GetNetworkConnectivityHintProc)(NL_NETWORK_CONNECTIVITY_HINT*);
+typedef DWORD(WINAPI *NotifyNetworkConnectivityHintChangeProc)(PNETWORK_CONNECTIVITY_HINT_CHANGE_CALLBACK, PVOID, BOOLEAN, PHANDLE);
+
+static void NetworkConnectivityHintChangedCallback(
+    _In_ void* context,
+    _In_ NL_NETWORK_CONNECTIVITY_HINT connectivityHint
+)
+{
+    UNREFERENCED_PARAMETER(context);
+
+    auto singleton = get_http_singleton(false);
+
+    if (singleton != nullptr)
+    {
+        singleton->m_networkInitialized = connectivityHint.ConnectivityLevel != NetworkConnectivityLevelHintUnknown;
+    }
+}
 #endif
 
 HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
     assert(args == nullptr);
     UNREFERENCED_PARAMETER(args);
-
-#if HC_PLATFORM == HC_PLATFORM_GSDK
-    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
-    {
-        HMODULE hModule = LoadLibrary(TEXT("iphlpapi.dll"));
-
-        if (hModule != nullptr)
-        {
-            GetNetworkConnectivityHintProc getNetworkConnectivityHint =
-                (GetNetworkConnectivityHintProc)GetProcAddress(hModule, "GetNetworkConnectivityHint");
-           
-            HRESULT hr = S_OK;
-            bool networkNotReady = false;
-
-            if (getNetworkConnectivityHint != nullptr)
-            {
-                NL_NETWORK_CONNECTIVITY_HINT connectivityHint{};
-                hr = HRESULT_FROM_WIN32(getNetworkConnectivityHint(&connectivityHint));
-                networkNotReady = connectivityHint.ConnectivityLevel == NetworkConnectivityLevelHintUnknown;
-            }
-
-            FreeLibrary(hModule);
-
-            if (SUCCEEDED(hr) && networkNotReady)
-            {
-                return E_HC_NETWORK_NOT_READY;
-            }
-        }
-    }
-#endif
 
     performEnv.reset(new (std::nothrow) HC_PERFORM_ENV());
     if (!performEnv) { return E_OUTOFMEMORY; }
@@ -1083,6 +1069,12 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 
 void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 {
+#if HC_PLATFORM == HC_PLATFORM_GSDK
+    auto singleton = get_http_singleton(true);
+    FreeLibrary(get_http_singleton(true)->m_networkModule);
+    singleton->m_networkModule = nullptr;
+#endif
+
     delete performEnv;
 }
 
@@ -1153,6 +1145,51 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 {
     assert(env != nullptr);
     UNREFERENCED_PARAMETER(context);
+
+
+#if HC_PLATFORM == HC_PLATFORM_GSDK
+    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
+    {
+        auto singleton = get_http_singleton(true);
+        if (singleton->m_networkModule == nullptr)
+        {
+            singleton->m_networkModule = LoadLibrary(TEXT("iphlpapi.dll"));
+
+            if (singleton->m_networkModule != nullptr)
+            {
+                GetNetworkConnectivityHintProc getNetworkConnectivityHint =
+                    (GetNetworkConnectivityHintProc)GetProcAddress(singleton->m_networkModule, "GetNetworkConnectivityHint");
+
+                if (getNetworkConnectivityHint != nullptr)
+                {
+                    NL_NETWORK_CONNECTIVITY_HINT connectivityHint{};
+                    HRESULT hr = HRESULT_FROM_WIN32(getNetworkConnectivityHint(&connectivityHint));
+                    singleton->m_networkInitialized = SUCCEEDED(hr) && connectivityHint.ConnectivityLevel != NetworkConnectivityLevelHintUnknown;
+                }
+
+                NotifyNetworkConnectivityHintChangeProc notifyNetworkConnectivityHintChange =
+                    (NotifyNetworkConnectivityHintChangeProc)GetProcAddress(singleton->m_networkModule, "NotifyNetworkConnectivityHintChange");
+
+                if (notifyNetworkConnectivityHintChange != nullptr)
+                {
+                    HANDLE networkConnectivityChangedHandle;
+                    std::weak_ptr<http_singleton> singletonWeakPtr = singleton;
+                    (void)HRESULT_FROM_WIN32(NotifyNetworkConnectivityHintChange(
+                        NetworkConnectivityHintChangedCallback,
+                        nullptr,
+                        TRUE,
+                        &networkConnectivityChangedHandle));
+                }
+            }
+        }
+
+        if (!singleton->m_networkInitialized)
+        {
+            XAsyncComplete(asyncBlock, E_HC_NETWORK_NOT_INITIALIZED, 0);
+            return;
+        }
+    }
+#endif
 
     bool isWebsocket = false;
     std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(
