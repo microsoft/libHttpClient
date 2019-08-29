@@ -390,6 +390,8 @@ void retry_http_call_until_done(
             return;
         }
 
+        auto callStatus = XAsyncGetStatus(nestedAsyncBlock, false);
+
         retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
         auto responseReceivedTime = chrono_clock_t::now();
 
@@ -402,7 +404,7 @@ void retry_http_call_until_done(
         }
         delete nestedAsyncBlock;
 
-        if (http_call_should_retry(retryContext->call, responseReceivedTime))
+        if (SUCCEEDED(callStatus) && http_call_should_retry(retryContext->call, responseReceivedTime))
         {
             if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", retryContext->call->id, retryContext->call->delayBeforeRetry.count()); }
             std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
@@ -416,7 +418,7 @@ void retry_http_call_until_done(
         }
         else
         {
-            XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
+            XAsyncComplete(retryContext->outerAsyncBlock, callStatus, 0);
         }
     };
 
