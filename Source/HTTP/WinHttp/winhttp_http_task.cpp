@@ -1176,7 +1176,7 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 
                         HANDLE networkConnectivityChangedHandle;
                         std::weak_ptr<http_singleton> singletonWeakPtr = singleton;
-                        (void)HRESULT_FROM_WIN32(NotifyNetworkConnectivityHintChange(
+                        (void)HRESULT_FROM_WIN32(notifyNetworkConnectivityHintChange(
                             NetworkConnectivityHintChangedCallback,
                             nullptr,
                             TRUE,
