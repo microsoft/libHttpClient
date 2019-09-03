@@ -176,7 +176,7 @@ public:
         m_pool.clear();
     }
 
-    void Submit() noexcept
+    void Submit(bool isTerminating) noexcept
     {
         {
             std::unique_lock<std::mutex> lock(m_wakeLock);
@@ -269,9 +269,9 @@ void ThreadPool::Terminate() noexcept
     }
 }
 
-void ThreadPool::Submit()
+void ThreadPool::Submit(bool isTerminating)
 {
-    m_impl->Submit();
+    m_impl->Submit(isTerminating);
 }
 
 #if defined(HC_PLATFORM) && HC_PLATFORM == HC_PLATFORM_ANDROID

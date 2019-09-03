@@ -26,7 +26,7 @@ public:
     // Submits a new callback to the thread pool.  The callback passed to Initialize will
     // be invoked on a thread pool thread. May throw / crash if called after termination
     // or before init.
-    void Submit();
+    void Submit(bool isTerminating = false);
 
 private:
     ThreadPoolImpl* m_impl;

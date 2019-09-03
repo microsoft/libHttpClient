@@ -61,10 +61,21 @@ public:
         }
     }
 
-    void Submit() noexcept
+    // SubmitThreadpoolWork (seems to be an alias for NTDLL.TpPostWork) cannot be called during application shutdown
+    // It throws: Exception thrown at 0x00007FFD726AF220 (ntdll.dll) in CTA_PC.exe: 0xC000000D: An invalid parameter was passed to a service or function. occurred
+    // The client application that uses this crashes when we close the application using (X) close button on the upper right corner
+    //  
+    void Submit(bool isTerminating) noexcept
     {
-        m_activeCalls++;
-        SubmitThreadpoolWork(m_work);
+        if (isTerminating)
+        {
+            TPCallback(nullptr, static_cast<void*>(this), m_work);
+        }
+        else
+        {
+            m_activeCalls++;
+            SubmitThreadpoolWork(m_work);
+        }
     }
 
 private:
@@ -161,7 +172,7 @@ void ThreadPool::Terminate() noexcept
     }
 }
 
-void ThreadPool::Submit()
+void ThreadPool::Submit(bool isTerminating)
 {
-    m_impl->Submit();
+    m_impl->Submit(isTerminating);
 }

@@ -530,7 +530,7 @@ void __stdcall TaskQueuePortImpl::Terminate(
     {
     case XTaskQueueDispatchMode::SerializedThreadPool:
     case XTaskQueueDispatchMode::ThreadPool:
-        m_threadPool.Submit();
+        m_threadPool.Submit(true);
         break;
 
     case XTaskQueueDispatchMode::Immediate:
