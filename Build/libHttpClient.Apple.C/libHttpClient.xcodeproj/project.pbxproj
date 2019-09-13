@@ -1090,6 +1090,7 @@
 			buildSettings = {
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"HC_LINK_STATIC=1",
@@ -1115,6 +1116,7 @@
 			buildSettings = {
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"HC_LINK_STATIC=1",
