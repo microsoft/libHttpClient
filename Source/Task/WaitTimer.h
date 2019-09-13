@@ -13,6 +13,7 @@ public:
     ~WaitTimer() noexcept;
 
     HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept;
+    void Terminate() noexcept;
 
     void Start(_In_ uint64_t absoluteTime) noexcept;
     void Cancel() noexcept;

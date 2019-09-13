@@ -10,12 +10,7 @@ public:
 
     ~WaitTimerImpl()
     {
-        if (m_timer != nullptr)
-        {
-            SetThreadpoolTimer(m_timer, nullptr, 0, 0);
-            WaitForThreadpoolTimerCallbacks(m_timer, TRUE);
-            CloseThreadpoolTimer(m_timer);
-        }
+        Terminate();
     }
 
     HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback)
@@ -27,6 +22,17 @@ public:
         RETURN_LAST_ERROR_IF_NULL(m_timer);
 
         return S_OK;
+    }
+
+    void Terminate()
+    {
+        if (m_timer != nullptr)
+        {
+            SetThreadpoolTimer(m_timer, nullptr, 0, 0);
+            WaitForThreadpoolTimerCallbacks(m_timer, TRUE);
+            CloseThreadpoolTimer(m_timer);
+            m_timer = nullptr;
+        }
     }
 
     void Start(_In_ uint64_t absoluteTime)
@@ -71,10 +77,7 @@ WaitTimer::WaitTimer() noexcept
 
 WaitTimer::~WaitTimer() noexcept
 {
-    if (m_impl != nullptr)
-    {
-        delete m_impl;
-    }
+    Terminate();
 }
 
 HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
@@ -92,6 +95,16 @@ HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* ca
     m_impl = timer.release();
 
     return S_OK;
+}
+
+void WaitTimer::Terminate() noexcept
+{
+    WaitTimerImpl* impl = static_cast<WaitTimerImpl*>(InterlockedExchangePointer(reinterpret_cast<volatile PVOID*>(&m_impl), nullptr));
+    if (impl != nullptr)
+    {
+        impl->Terminate();
+        delete impl;
+    }
 }
 
 void WaitTimer::Start(_In_ uint64_t absoluteTime) noexcept
