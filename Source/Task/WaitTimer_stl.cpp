@@ -218,10 +218,7 @@ WaitTimer::WaitTimer() noexcept
 
 WaitTimer::~WaitTimer() noexcept
 {
-    if (m_impl != nullptr)
-    {
-        delete m_impl;
-    }
+    Terminate();
 }
 
 HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
@@ -239,6 +236,17 @@ HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* ca
     m_impl = timer.release();
 
     return S_OK;
+}
+
+void WaitTimer::Terminate() noexcept
+{
+    auto impl = m_impl;
+    m_impl = nullptr;
+    
+    if (impl != nullptr)
+    {
+        delete impl;
+    }
 }
 
 void WaitTimer::Start(_In_ uint64_t absoluteTime) noexcept
