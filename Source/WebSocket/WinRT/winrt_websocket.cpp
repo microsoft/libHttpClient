@@ -266,7 +266,7 @@ try
                 {
                     // Cleaning up the websocket state
                     websocketTask->m_connectClosing = true;
-                    websocketTask->m_messageWebSocket->Close(1000, "");
+                    websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
                     websocketTask->m_messageWebSocket = nullptr;
                 }
                 catch (...)
@@ -287,7 +287,7 @@ try
         {
             // Cleaning up the websocket state
             websocketTask->m_connectClosing = true;
-            websocketTask->m_messageWebSocket->Close(1000, "");
+            websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
             websocketTask->m_messageWebSocket = nullptr;
         }
         catch (...)
