@@ -211,6 +211,15 @@ static bool verify_X509_cert_chain(const http_internal_vector<http_internal_stri
         "([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V");
     CHECK_JMID(env, X509TrustManagerCheckServerTrustedMethod);
 
+    // RootTrustManager
+    java_local_ref<jclass> RootTrustManagerClass(env->FindClass("android/security/net/config/RootTrustManager"));
+    CHECK_JREF(env, RootTrustManagerClass);
+    jmethodID RootTrustManagerCheckServerTrustedMethod = env->GetMethodID(
+        RootTrustManagerClass.get(),
+        "checkServerTrusted",
+        "([Ljava/security/cert/X509Certificate;Ljava/lang/String;Ljava/lang/String;)Ljava/util/List;");
+    CHECK_JMID(env, RootTrustManagerCheckServerTrustedMethod);
+
     // StrictHostnameVerifier
     java_local_ref<jclass> strictHostnameVerifierClass(env->FindClass("org/apache/http/conn/ssl/StrictHostnameVerifier"));
     CHECK_JREF(env, strictHostnameVerifierClass);
@@ -281,22 +290,44 @@ static bool verify_X509_cert_chain(const http_internal_vector<http_internal_stri
     java_local_ref<jobject> trustManager(env->GetObjectArrayElement(trustManagerArray.get(), 0));
     CHECK_JREF(env, trustManager);
 
-    // Validate certificate chain.
-    java_local_ref<jstring> RSAString(env->NewStringUTF("RSA"));
-    CHECK_JREF(env, RSAString);
-    env->CallVoidMethod(
-        trustManager.get(),
-        X509TrustManagerCheckServerTrustedMethod,
-        certsArray.get(),
-        RSAString.get());
-    CHECK_JNI(env);
+    java_local_ref<jstring> hostNameString(env->NewStringUTF(hostName.c_str()));
+    CHECK_JREF(env, hostNameString);
+
+    // If the app has a network security manifest, checkServerTrusted will throw a CertificateException
+    // indicating "Domain specific configurations require that hostname aware
+    // checkServerTrusted(X509Certificate[], String, String) is used". To handle this, check if
+    // the TrustManager is a RootTrustManager and call that API instead.
+    bool isRootTrustManager = (bool)env->IsInstanceOf(trustManager.get(), RootTrustManagerClass.get());
+    if (isRootTrustManager)
+    {
+        // Validate certificate chain.
+        java_local_ref<jstring> RSAString(env->NewStringUTF("RSA"));
+        CHECK_JREF(env, RSAString);
+        env->CallObjectMethod(
+            trustManager.get(),
+            RootTrustManagerCheckServerTrustedMethod,
+            certsArray.get(),
+            RSAString.get(),
+            hostNameString.get());
+        CHECK_JNI(env);
+    }
+    else
+    {
+        // Validate certificate chain.
+        java_local_ref<jstring> RSAString(env->NewStringUTF("RSA"));
+        CHECK_JREF(env, RSAString);
+        env->CallVoidMethod(
+            trustManager.get(),
+            X509TrustManagerCheckServerTrustedMethod,
+            certsArray.get(),
+            RSAString.get());
+        CHECK_JNI(env);
+    }
 
     // Verify hostname on certificate according to RFC 2818.
     java_local_ref<jobject> hostnameVerifier(env->NewObject(
         strictHostnameVerifierClass.get(), strictHostnameVerifierConstructorMethod));
     CHECK_JREF(env, hostnameVerifier);
-    java_local_ref<jstring> hostNameString(env->NewStringUTF(hostName.c_str()));
-    CHECK_JREF(env, hostNameString);
     java_local_ref<jobject> cert(env->GetObjectArrayElement(certsArray.get(), 0));
     CHECK_JREF(env, cert);
     env->CallVoidMethod(
