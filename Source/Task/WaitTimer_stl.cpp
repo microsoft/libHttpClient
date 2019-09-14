@@ -245,6 +245,7 @@ void WaitTimer::Terminate() noexcept
     
     if (impl != nullptr)
     {
+        impl->Cancel();
         delete impl;
     }
 }
