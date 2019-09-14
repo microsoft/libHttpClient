@@ -75,7 +75,20 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
 {
     try
     {
-        DataReader^ reader = args->GetDataReader();
+        DataReader^ reader;
+
+        try
+        {
+            reader = args->GetDataReader();
+        }
+        catch (Platform::Exception ^e)
+        {
+            // Close websocket on this error
+            // https://docs.microsoft.com/en-us/uwp/api/windows.networking.sockets.messagewebsocket.messagereceived
+            sender->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::UnknownError), nullptr);
+            return;
+        }
+
         const auto len = reader->UnconsumedBufferLength;
         if (len > 0)
         {
@@ -280,7 +293,11 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_opt_ void* context,
     _In_ HCPerformEnv env)
 {
+    UNREFERENCED_PARAMETER(uri);
+    UNREFERENCED_PARAMETER(subProtocol);
     UNREFERENCED_PARAMETER(env);
+    UNREFERENCED_PARAMETER(context);
+
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
     websocketTask->m_websocketHandle = websocket;
     websocket->impl = std::dynamic_pointer_cast<hc_websocket_impl>(websocketTask);
@@ -312,6 +329,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
     if (message == nullptr)
     {
         return E_INVALIDARG;
@@ -357,6 +375,8 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context)
 {
+    UNREFERENCED_PARAMETER(context);
+
     if (payloadBytes == nullptr)
     {
         return E_INVALIDARG;
@@ -574,6 +594,8 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
+
     if (websocket == nullptr)
     {
         return E_INVALIDARG;

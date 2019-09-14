@@ -114,16 +114,13 @@ HRESULT perform_http_call(
             {
                 HCCallHandle call = static_cast<HCCallHandle>(data->context);
                 bool matchedMocks = false;
-                if (httpSingleton->m_mocksEnabled)
-                {
-                    matchedMocks = Mock_Internal_HCHttpCallPerformAsync(call);
-                    if (matchedMocks)
-                    {
-                        XAsyncComplete(data->async, S_OK, 0);
-                    }
-                }
 
-                if (!matchedMocks) // if there wasn't a matched mock, then real call
+                matchedMocks = Mock_Internal_HCHttpCallPerformAsync(call);
+                if (matchedMocks)
+                {
+                    XAsyncComplete(data->async, S_OK, 0);
+                }
+                else // if there wasn't a matched mock, then real call
                 {
                     HttpPerformInfo const& info = httpSingleton->m_httpPerform;
                     if (info.handler != nullptr)
@@ -393,6 +390,8 @@ void retry_http_call_until_done(
             return;
         }
 
+        auto callStatus = XAsyncGetStatus(nestedAsyncBlock, false);
+
         retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
         auto responseReceivedTime = chrono_clock_t::now();
 
@@ -405,18 +404,13 @@ void retry_http_call_until_done(
         }
         delete nestedAsyncBlock;
 
-        if (http_call_should_retry(retryContext->call, responseReceivedTime))
+        if (SUCCEEDED(callStatus) && http_call_should_retry(retryContext->call, responseReceivedTime))
         {
             if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", retryContext->call->id, retryContext->call->delayBeforeRetry.count()); }
-
-            auto httpSingleton = get_http_singleton(false);
-            if (httpSingleton != nullptr)
+            std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+            for (const auto& pair : httpSingleton->m_callRoutedHandlers)
             {
-                std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
-                for (const auto& pair : httpSingleton->m_callRoutedHandlers)
-                {
-                    pair.second.first(retryContext->call, pair.second.second);
-                }
+                pair.second.first(retryContext->call, pair.second.second);
             }
 
             clear_http_call_response(retryContext->call);
@@ -424,7 +418,7 @@ void retry_http_call_until_done(
         }
         else
         {
-            XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
+            XAsyncComplete(retryContext->outerAsyncBlock, callStatus, 0);
         }
     };
 

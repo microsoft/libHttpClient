@@ -18,23 +18,15 @@ DEFINE_TEST_CLASS(MockTests)
 public:
     DEFINE_TEST_CLASS_PROPS(MockTests);
 
-    HCCallHandle CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
+    HCMockCallHandle CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
-        HCCallHandle mockCall;
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&mockCall));
-        if (makeSpecificUrl)
-        {
-            VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(mockCall, "1", "2"));
-        }
-        if (makeSpecificBody)
-        {
-            VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyString(mockCall, "requestBody"));
-        }
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetNetworkErrorCode(mockCall, E_OUTOFMEMORY, 300));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetStatusCode(mockCall, 400));
+        HCMockCallHandle mockCall;
+        VERIFY_ARE_EQUAL(S_OK, HCMockCallCreate(&mockCall));
+        VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetNetworkErrorCode(mockCall, E_OUTOFMEMORY, 300));
+        VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetStatusCode(mockCall, 400));
         std::string s1 = strResponse;
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetResponseBodyBytes(mockCall, (uint8_t*)&s1[0], s1.length()));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(mockCall, "mockHeader", "mockValue"));
+        VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetResponseBodyBytes(mockCall, (uint8_t*)&s1[0], (uint32_t)s1.length()));
+        VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetHeader(mockCall, "mockHeader", "mockValue"));
         return mockCall;
     }
 
@@ -47,7 +39,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
 
-        HCCallHandle mockCall = CreateMockCall("Mock1", false, false);
+        HCMockCallHandle mockCall = CreateMockCall("Mock1", false, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, "", "", nullptr, 0));
 
         XTaskQueueHandle queue;
@@ -97,7 +89,7 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
-        HCCallHandle mockCall = CreateMockCall("Mock1", true, false);
+        HCMockCallHandle mockCall = CreateMockCall("Mock1", true, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
 
         HCCallHandle call = nullptr;
@@ -193,7 +185,7 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
-        HCCallHandle mockCall = CreateMockCall("Mock1", true, true);
+        HCMockCallHandle mockCall = CreateMockCall("Mock1", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
 
         HCCallHandle call = nullptr;
@@ -364,8 +356,8 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
-        HCCallHandle mockCall1 = CreateMockCall("Mock1", true, true);
-        HCCallHandle mockCall2 = CreateMockCall("Mock2", true, true);
+        HCMockCallHandle mockCall1 = CreateMockCall("Mock1", true, true);
+        HCMockCallHandle mockCall2 = CreateMockCall("Mock2", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall1, nullptr, nullptr, nullptr, 0));
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall2, nullptr, nullptr, nullptr, 0));
 

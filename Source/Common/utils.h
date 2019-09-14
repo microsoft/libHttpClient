@@ -185,4 +185,12 @@ static inline int str_icmp(const http_internal_string& left, const http_internal
 #endif
 }
 
+typedef std::function<void()> AsyncWork;
+
+HRESULT RunAsync(
+    AsyncWork&& work,
+    XTaskQueueHandle queue = nullptr,
+    uint64_t delayInMs = 0
+);
+
 NAMESPACE_XBOX_HTTP_CLIENT_END

@@ -73,6 +73,45 @@ STDAPI HCMockAddMock(
     ) noexcept;
 
 /// <summary>
+/// Callback to be invoked when a mock is matched (before completing the call).
+/// </summary>
+/// <param name="matchedMock">The matched mock.</param>
+/// <param name="method">Method of the original call.</param>
+/// <param name="url">Url of the original call.</param>
+/// <param name="requestBodyBytes">Request body from the original call.</param>
+/// <param name="requestBodySize">Size of the request body.</param>
+/// <param name="context">Client context.</param>
+typedef void (CALLBACK* HCMockMatchedCallback)(
+    _In_ HCMockCallHandle matchedMock,
+    _In_ const char* method,
+    _In_ const char* url,
+    _In_ const uint8_t* requestBodyBytes,
+    _In_ uint32_t requestBodySize,
+    _In_ void* context
+    );
+
+/// <summary>
+/// Add an intermediate callback that will be called when the specified mock is matched.
+/// This gives the client another opportunity to specify the mock response.
+/// </summary>
+/// <param name="call">The matched mock.</param>
+/// <param name="callback">Callback to be invoked when the mock is matched.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCMockSetMockMatchedCallback(
+    _In_ HCMockCallHandle call,
+    _In_ HCMockMatchedCallback callback,
+    _In_opt_ void* context
+    );
+
+/// <summary>
+/// Removes and cleans up the mock.
+/// </summary>
+/// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
+STDAPI HCMockRemoveMock(
+    _In_ HCMockCallHandle call
+    );
+
+/// <summary>
 /// Removes and cleans up all mock calls added by HCMockAddMock
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>

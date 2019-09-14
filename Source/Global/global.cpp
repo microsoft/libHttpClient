@@ -5,6 +5,7 @@
 #include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
+#include "../Mock/lhc_mock.h"
 
 #if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
@@ -141,6 +142,16 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 {
     std::lock_guard<std::recursive_mutex> lock(m_retryAfterCacheLock); // STL is not safe for multithreaded writes
     m_retryAfterCache.erase(retryAfterCacheId);
+}
+
+HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
+{
+#if HC_PLATFORM == HC_PLATFORM_WIN32
+    return Internal_SetGlobalProxy(m_performEnv.get(), proxyUri);
+#else
+    UNREFERENCED_PARAMETER(proxyUri);
+    return E_NOTIMPL;
+#endif
 }
 
 HttpPerformInfo& GetUserHttpPerformHandler() noexcept

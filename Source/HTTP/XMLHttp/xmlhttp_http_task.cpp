@@ -286,6 +286,9 @@ XAsyncBlock* xmlhttp_http_task::async_block()
 
 HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
+    UNREFERENCED_PARAMETER(args);
+    UNREFERENCED_PARAMETER(performEnv);
+
     // No-op
     assert(args == nullptr);
     assert(performEnv == nullptr);
@@ -294,6 +297,8 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 
 void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 {
+    UNREFERENCED_PARAMETER(performEnv);
+
     // No-op
     assert(performEnv == nullptr);
 }

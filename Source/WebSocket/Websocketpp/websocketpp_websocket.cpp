@@ -27,6 +27,8 @@
 #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
 
+#pragma warning(disable: 4244) 
+
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
@@ -41,6 +43,7 @@
 #endif
 
 #define SUB_PROTOCOL_HEADER "Sec-WebSocket-Protocol"
+#define WSPP_PING_INTERVAL_MS 1000
 
 using namespace xbox::httpclient;
 
@@ -56,13 +59,12 @@ struct websocket_outgoing_message
 struct wspp_websocket_impl : public hc_websocket_impl, public std::enable_shared_from_this<wspp_websocket_impl>
 {
 private:
+
     enum State {
-        CREATED,
         CONNECTING,
         CONNECTED,
-        CLOSING,
-        CLOSED,
-        DESTROYED
+        DISCONNECTING,
+        DISCONNECTED
     };
 
 public:
@@ -80,7 +82,7 @@ public:
     ~wspp_websocket_impl()
     {
         // Because we pass shared pointers to wspp_client handlers we should never blow up while we are connected
-        ASSERT(m_state == CREATED || m_state == CLOSED);
+        ASSERT(m_state == DISCONNECTED);
 
         if (m_backgroundQueue)
         {
@@ -255,7 +257,7 @@ public:
         std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
         if (m_state == CONNECTED)
         {
-            m_state = CLOSING;
+            m_state = DISCONNECTING;
 
             websocketpp::lib::error_code ec{};
             if (m_client->is_tls_client())
@@ -295,21 +297,28 @@ private:
 
         auto sharedThis { shared_from_this() };
 
-        ASSERT(m_state == CREATED);
+        ASSERT(m_state == DISCONNECTED);
         client.set_open_handler([sharedThis, async](websocketpp::connection_hdl)
         {
             ASSERT(sharedThis->m_state == CONNECTING);
             sharedThis->m_state = CONNECTED;
             sharedThis->set_connection_error<WebsocketConfigType>();
+            sharedThis->send_ping();
             XAsyncComplete(async, S_OK, sizeof(WebSocketCompletionResult));
         });
 
         client.set_fail_handler([sharedThis, async](websocketpp::connection_hdl)
         {
             ASSERT(sharedThis->m_state == CONNECTING);
-            sharedThis->shutdown_wspp_impl<WebsocketConfigType>();
             sharedThis->set_connection_error<WebsocketConfigType>();
-            XAsyncComplete(async, S_OK, sizeof(WebSocketCompletionResult));
+            sharedThis->shutdown_wspp_impl<WebsocketConfigType>(
+                [
+                    sharedThis,
+                    async
+                ]
+            {
+                XAsyncComplete(async, S_OK, sizeof(WebSocketCompletionResult));
+            });
         });
 
         client.set_message_handler([sharedThis](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
@@ -317,31 +326,42 @@ private:
             HCWebSocketMessageFunction messageFunc{ nullptr };
             HCWebSocketBinaryMessageFunction binaryMessageFunc{ nullptr };
             void* context{ nullptr };
-            HCWebSocketGetEventFunctions(sharedThis->m_hcWebsocketHandle, &messageFunc, &binaryMessageFunc, nullptr, &context);
+            auto hr = HCWebSocketGetEventFunctions(sharedThis->m_hcWebsocketHandle, &messageFunc, &binaryMessageFunc, nullptr, &context);
 
-            ASSERT(messageFunc && binaryMessageFunc);
-
-            // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
-            // TODO: verify auto disconnect when closing client's websocket handle
-
-            if (msg->get_opcode() == websocketpp::frame::opcode::text)
+            if (SUCCEEDED(hr))
             {
-                ASSERT(sharedThis->m_state >= CONNECTED && sharedThis->m_state < CLOSED);
-                auto& payload = msg->get_raw_payload();
-                messageFunc(sharedThis->m_hcWebsocketHandle, payload.data(), context);
-            }
-            else if (msg->get_opcode() == websocketpp::frame::opcode::binary)
-            {
-                ASSERT(sharedThis->m_state >= CONNECTED && sharedThis->m_state < CLOSED);
-                auto& payload = msg->get_raw_payload();
-                binaryMessageFunc(sharedThis->m_hcWebsocketHandle, (uint8_t*)payload.data(), (uint32_t)payload.size(), context);
+                ASSERT(messageFunc && binaryMessageFunc);
+
+                // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
+                // TODO: verify auto disconnect when closing client's websocket handle
+
+                if (msg->get_opcode() == websocketpp::frame::opcode::text)
+                {
+                    auto& payload = msg->get_raw_payload();
+                    messageFunc(sharedThis->m_hcWebsocketHandle, payload.data(), context);
+                }
+                else if (msg->get_opcode() == websocketpp::frame::opcode::binary)
+                {
+                    auto& payload = msg->get_raw_payload();
+                    binaryMessageFunc(sharedThis->m_hcWebsocketHandle, (uint8_t*)payload.data(), (uint32_t)payload.size(), context);
+                }
             }
         });
 
         client.set_close_handler([sharedThis](websocketpp::connection_hdl)
         {
-            ASSERT(sharedThis->m_state != CLOSED);
-            sharedThis->shutdown_wspp_impl<WebsocketConfigType>();
+            ASSERT(sharedThis->m_state == CONNECTED || sharedThis->m_state == DISCONNECTING);
+            sharedThis->shutdown_wspp_impl<WebsocketConfigType>([sharedThis]()
+                {
+                    HCWebSocketCloseEventFunction closeFunc{ nullptr };
+                    void* context{ nullptr };
+
+                    HCWebSocketGetEventFunctions(sharedThis->m_hcWebsocketHandle, nullptr, nullptr, &closeFunc, &context);
+                    if (closeFunc)
+                    {
+                        closeFunc(sharedThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(sharedThis->m_closeCode), context);
+                    }
+                });
         });
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
@@ -451,7 +471,10 @@ private:
                 };
                 auto context = http_allocate_shared<client_context>(client);
 
-                m_websocketThread = std::thread([context](){
+                m_websocketThread = std::thread([context, id{ m_hcWebsocketHandle->id }]()
+                {
+                    HC_TRACE_INFORMATION(WEBSOCKET, "id=%u Wspp client work thread starting", id);
+
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
                     JavaVM* javaVm = nullptr;
                     {   // Allow our singleton to go out of scope quickly once we're done with it
@@ -472,9 +495,15 @@ private:
                         assert(false);
                     }
 #endif
+                    try
+                    {
+                        context->client.run();
+                    }
+                    catch (...)
+                    {
+                        HC_TRACE_ERROR(WEBSOCKET, "Caught exception in wspp client::run!");
+                    }
 
-                    context->client.run();
-                    
                     // OpenSSL stores some per thread state that never will be cleaned up until
                     // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                     // at all and will be reported as leaks.
@@ -490,6 +519,8 @@ private:
 #else
                     ERR_remove_thread_state(nullptr);
 #endif // HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE
+
+                    HC_TRACE_INFORMATION(WEBSOCKET, "id=%u Wspp client work thread end", id);
                 });
                 hr = S_OK;
             }
@@ -640,59 +671,83 @@ private:
         return hr;
     }
 
-    template <typename WebsocketConfigType>
-    void shutdown_wspp_impl()
+    void send_ping()
     {
-        auto httpSingleton = get_http_singleton(false);
-        if (nullptr == httpSingleton)
-            return;
+        // By design, wspp doesn't raise any sort of event when the client's connection
+        // is terminated (i.e. by disconnecting the network cable). Sending periodic ping
+        // allows us to detect this situation. See https://github.com/zaphoyd/websocketpp/issues/695.
 
+        RunAsync(
+            [
+                weakThis = std::weak_ptr<wspp_websocket_impl>{ shared_from_this() }
+            ]
+        {
+            auto sharedThis{ weakThis.lock() };
+            if (sharedThis)
+            {
+                try
+                {
+                    std::lock_guard<std::recursive_mutex> lock{ sharedThis->m_wsppClientLock };
+
+                    if (sharedThis->m_state == CONNECTED)
+                    {
+                        if (sharedThis->m_client->is_tls_client())
+                        {
+                            sharedThis->m_client->client<websocketpp::config::asio_tls_client>().ping(sharedThis->m_con, std::string{});
+                        }
+                        else
+                        {
+                            sharedThis->m_client->client<websocketpp::config::asio_client>().ping(sharedThis->m_con, std::string{});
+                        }
+
+                        sharedThis->send_ping();
+                    }
+                }
+                catch (...)
+                {
+                    HC_TRACE_ERROR(WEBSOCKET, "Websocket: caught exception in ping!");
+                }
+            }
+        },
+            m_backgroundQueue,
+            WSPP_PING_INTERVAL_MS
+        );
+    }
+
+    template <typename WebsocketConfigType>
+    void shutdown_wspp_impl(std::function<void()> shutdownCompleteCallback)
+    {
         auto &client = m_client->client<WebsocketConfigType>();
         const auto &connection = client.get_con_from_hdl(m_con);
         m_closeCode = connection->get_local_close_code();
         client.stop_perpetual();
 
-        // Can't join thread directly since it is the current thread.
-        XAsyncBlock* async = new (xbox::httpclient::http_memory::mem_alloc(sizeof(XAsyncBlock))) XAsyncBlock {};
-        async->queue = m_backgroundQueue;
-        async->context = shared_ptr_cache::store(shared_from_this());
-        async->callback = [](XAsyncBlock* async)
+        // Yield and wait for background thread to finish
+        RunAsync(
+            [
+                sharedThis{ shared_from_this() },
+                shutdownCompleteCallback
+            ]
         {
-            shared_ptr_cache::remove(async->context);
-            xbox::httpclient::http_memory::mem_free(async);
-        };
-
-        XAsyncRun(async, [](XAsyncBlock* async)
-        {
-            auto sharedThis = shared_ptr_cache::fetch<wspp_websocket_impl>(async->context);
-            if (sharedThis == nullptr)
-            {
-                return E_HC_NOT_INITIALISED;
-            }
-
             // Wait for background thread to finish
             if (sharedThis->m_websocketThread.joinable())
             {
                 sharedThis->m_websocketThread.join();
             }
 
-            // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
-            sharedThis->m_client.reset();
-
-            HCWebSocketCloseEventFunction closeFunc = nullptr;
-            void* context = nullptr;
-            HCWebSocketGetEventFunctions(sharedThis->m_hcWebsocketHandle, nullptr, nullptr, &closeFunc, &context);
-            if (closeFunc != nullptr)
             {
-                closeFunc(sharedThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(sharedThis->m_closeCode), context);
+                std::lock_guard<std::recursive_mutex> lock{ sharedThis->m_wsppClientLock };
+
+                // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
+                sharedThis->m_client.reset();
+                sharedThis->m_state = DISCONNECTED;
             }
 
-            // Wait to change state to closed until the very end because 'this' may be cleaned up
-            // after the state reaches closed
-            sharedThis->m_state = CLOSED;
-
-            return S_OK;
-        });
+            shutdownCompleteCallback();
+        },
+            m_backgroundQueue,
+            0
+        );
     }
 
     template <typename WebsocketConfigType>
@@ -763,7 +818,7 @@ private:
 
     // Used to safe guard the wspp client.
     std::recursive_mutex m_wsppClientLock;
-    std::atomic<State> m_state{ State::CREATED };
+    std::atomic<State> m_state{ State::DISCONNECTED };
     std::unique_ptr<websocketpp_client_base> m_client;
 
     // Guards access to m_outgoing_msg_queue
@@ -795,8 +850,15 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
-    auto wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket, uri, subProtocol);
-    websocket->impl = wsppSocket;
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+    auto wsppSocket{ std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl) };
+
+    if (!wsppSocket)
+    {
+        wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket, uri, subProtocol);
+        websocket->impl = wsppSocket;
+    }
 
     return wsppSocket->connect(async);
 }
@@ -808,6 +870,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
     if (wsppSocket == nullptr)
     {
@@ -824,6 +887,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
     if (wsppSocket == nullptr)
     {
@@ -838,6 +902,7 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(context);
     if (websocket == nullptr)
     {
         return E_INVALIDARG;

@@ -64,11 +64,18 @@ typedef struct http_singleton
     HttpPerformInfo const m_httpPerform;
     PerformEnv const m_performEnv;
 
+    HRESULT set_global_proxy(_In_ const char* proxyUri);
+
     std::atomic<std::uint64_t> m_lastId{ 0 };
     bool m_retryAllowed = true;
     uint32_t m_timeoutInSeconds = DEFAULT_HTTP_TIMEOUT_IN_SECONDS;
     uint32_t m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     uint32_t m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
+
+#if HC_PLATFORM == HC_PLATFORM_GSDK
+    bool m_networkInitialized{ true };
+    HMODULE m_networkModule{ nullptr };
+#endif
 
 #if !HC_NOWEBSOCKETS
     WebSocketPerformInfo const m_websocketPerform;
@@ -76,9 +83,8 @@ typedef struct http_singleton
 
     // Mock state
     std::recursive_mutex m_mocksLock;
-    http_internal_vector<HC_CALL*> m_mocks;
-    HC_CALL* m_lastMatchingMock = nullptr;
-    bool m_mocksEnabled = false;
+    http_internal_vector<HC_MOCK_CALL*> m_mocks;
+    HC_MOCK_CALL* m_lastMatchingMock = nullptr;
 
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
