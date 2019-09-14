@@ -69,6 +69,7 @@ HRESULT HC_WEBSOCKET::Connect(
             {
                 auto thisPtr{ static_cast<HC_WEBSOCKET*>(async->context) };
                 HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
+                
                 if (SUCCEEDED(hr) && SUCCEEDED(thisPtr->m_connectResult.errorCode))
                 {
                     bool doDisconnect{ false };
@@ -155,6 +156,11 @@ HRESULT HC_WEBSOCKET::Send(
         return E_HC_NOT_INITIALISED;
     }
 
+    if (m_state != State::Connected)
+    {
+        return E_UNEXPECTED;
+    }
+
     WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;
 
     auto sendFunc = info.sendText;
@@ -188,6 +194,11 @@ HRESULT HC_WEBSOCKET::SendBinary(
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
+    }
+
+    if (m_state != State::Connected)
+    {
+        return E_UNEXPECTED;
     }
 
     WebSocketPerformInfo const& info = httpSingleton->m_websocketPerform;

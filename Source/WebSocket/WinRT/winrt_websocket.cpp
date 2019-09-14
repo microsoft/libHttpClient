@@ -55,6 +55,7 @@ public:
     }
 
     Windows::Networking::Sockets::MessageWebSocket^ m_messageWebSocket;
+    bool m_connectClosing{ false };
     Windows::Storage::Streams::DataWriter^ m_messageDataWriter;
     HRESULT m_connectAsyncOpResult;
     ReceiveContext^ m_context;
@@ -130,6 +131,12 @@ void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args
 {
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: on closed event triggered", m_websocket->id);
 
+    std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(m_websocket->impl);
+    if (websocketTask->m_connectClosing)
+    {
+        return;
+    }
+
     HCWebSocketCloseEventFunction closeFunc = nullptr;
     void* context = nullptr;
     HCWebSocketGetEventFunctions(m_websocket, nullptr, nullptr, &closeFunc, &context);
@@ -178,6 +185,7 @@ try
 
     try
     {
+        websocketTask->m_connectClosing = false;
         websocketTask->m_messageWebSocket = ref new MessageWebSocket();
 
         uint32_t numHeaders = 0;
@@ -249,9 +257,21 @@ try
             {
                 websocketTask->m_connectAsyncOpResult = E_FAIL;
             }
+
             if (FAILED(websocketTask->m_connectAsyncOpResult))
             {
                 HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: connect failed 0x%0.8x", websocket->id, websocketTask->m_connectAsyncOpResult);
+
+                try
+                {
+                    // Cleaning up the websocket state
+                    websocketTask->m_connectClosing = true;
+                    websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
+                    websocketTask->m_messageWebSocket = nullptr;
+                }
+                catch (...)
+                {
+                }
             }
             else
             {
@@ -263,6 +283,17 @@ try
     }
     catch (Platform::Exception^ e)
     {
+        try
+        {
+            // Cleaning up the websocket state
+            websocketTask->m_connectClosing = true;
+            websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
+            websocketTask->m_messageWebSocket = nullptr;
+        }
+        catch (...)
+        {
+        }
+
         HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: ConnectAsync failed = 0x%0.8x", websocketTask->m_websocketHandle->id, e->HResult);
         return e->HResult;
     }
