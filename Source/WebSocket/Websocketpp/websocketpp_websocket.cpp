@@ -44,7 +44,7 @@
 
 #define SUB_PROTOCOL_HEADER "Sec-WebSocket-Protocol"
 #define WSPP_PING_INTERVAL_MS 1000
-#define WSPP_SHUTDOWN_TIMEOUT 5000
+#define WSPP_SHUTDOWN_TIMEOUT_MS 5000
 
 using namespace xbox::httpclient;
 
@@ -734,7 +734,7 @@ private:
             if (sharedThis->m_websocketThread.joinable())
             {
                 auto future = std::async(std::launch::async, &std::thread::join, &sharedThis->m_websocketThread);
-                if (future.wait_for(std::chrono::milliseconds(WSPP_SHUTDOWN_TIMEOUT)) == std::future_status::timeout)
+                if (future.wait_for(std::chrono::milliseconds(WSPP_SHUTDOWN_TIMEOUT_MS)) == std::future_status::timeout)
                 {
                     HC_TRACE_WARNING(WEBSOCKET, "Warning: WSPP client thread didn't complete execution within the expected timeout. Force stopping processing loop.");
                     sharedThis->m_client->client<WebsocketConfigType>().stop();
