@@ -21,5 +21,5 @@ public:
     uint64_t GetAbsoluteTime(_In_ uint32_t msFromNow) noexcept;
 
 private:
-    WaitTimerImpl* m_impl;
+    std::atomic<WaitTimerImpl*> m_impl;
 };
