@@ -197,7 +197,7 @@ TaskQueuePortImpl::TaskQueuePortImpl()
 
 TaskQueuePortImpl::~TaskQueuePortImpl()
 {
-    m_timer.Cancel();
+    m_timer.Terminate();
 
     EraseQueue(m_queueList.get());
     EraseQueue(m_pendingList.get());

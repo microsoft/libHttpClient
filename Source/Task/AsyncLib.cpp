@@ -9,6 +9,13 @@
 // Used by unit tests to verify we cleanup memory correctly.
 std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
 
+enum class ProviderCleanupLocation
+{
+    Destructor,
+    AfterDoWork,
+    CleanedUp
+};
+
 // Note that there are two XAsyncBlock structures in play.
 // There is the pointer allocated and passed to us by the user
 // and there is our own local copy.  We pass the local copy to
@@ -23,6 +30,7 @@ struct AsyncState
 {
     uint32_t signature = ASYNC_STATE_SIG;
     std::atomic<uint32_t> refs{ 1 };
+    std::atomic<ProviderCleanupLocation> providerCleanup{ ProviderCleanupLocation::Destructor };
     std::atomic<bool> workScheduled{ false };
     bool valid = true;
     XAsyncProvider* provider = nullptr;
@@ -71,7 +79,12 @@ private:
     {
         if (provider != nullptr)
         {
-            (void)provider(XAsyncOp::Cleanup, &providerData);
+            // Have we already called cleanup?
+            ProviderCleanupLocation loc = providerCleanup.exchange(ProviderCleanupLocation::CleanedUp);
+            if (loc != ProviderCleanupLocation::CleanedUp)
+            {
+                (void)provider(XAsyncOp::Cleanup, &providerData);
+            }
         }
 
         if (queue != nullptr)
@@ -331,6 +344,7 @@ static void SignalWait(_In_ AsyncStateRef const& state);
 static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal, _In_ size_t contextSize);
 static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSize);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
+static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, ProviderCleanupLocation location);
 
 static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal, _In_ size_t contextSize)
 {
@@ -415,6 +429,15 @@ static void CleanupState(_Inout_ AsyncStateRef&& state)
     }
 }
 
+static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, ProviderCleanupLocation location)
+{
+    if (state->providerCleanup.compare_exchange_strong(location, ProviderCleanupLocation::CleanedUp))
+    {
+        (void)state->provider(XAsyncOp::Cleanup, &state->providerData);
+    }
+}
+
+
 static void SignalCompletion(_In_ AsyncStateRef const& state)
 {
     if (state->providerData.async->callback != nullptr)
@@ -479,6 +502,8 @@ static void CALLBACK WorkerCallback(
         return;
     }
 
+    bool completedNow = false;
+
     // If the queue is canceling callbacks, simply cancel this work. Since no
     // new work for this call will be scheduled, if the call didn't cancel
     // immediately do it ourselves.
@@ -512,8 +537,6 @@ static void CALLBACK WorkerCallback(
                 result = E_UNEXPECTED;
             }
 
-            bool completedNow = false;
-
             {
                 AsyncBlockInternalGuard internal{ &state->providerAsyncBlock };
                 completedNow = internal.TrySetTerminalStatus(result);
@@ -527,9 +550,18 @@ static void CALLBACK WorkerCallback(
             if (completedNow)
             {
                 SignalCompletion(state);
-                CleanupState(std::move(state));
             }
         }
+    }
+
+    // If the result of this call caused a completion with no payload, XAsyncComplete
+    // will change the provider cleanup to be "AfterWork", which is here.  Cleanup
+    // the provider if we need to.
+    CleanupProviderForLocation(state, ProviderCleanupLocation::AfterDoWork);
+
+    if (completedNow)
+    {
+        CleanupState(std::move(state));
     }
 }
 
@@ -858,10 +890,14 @@ STDAPI_(void) XAsyncComplete(
         SignalCompletion(state);
     }
 
-    // At this point asyncBlock may be unsafe to touch.
+    // At this point asyncBlock may be unsafe to touch. As we've cleaned up
+    // state we will mark the state so that the DoWork callback calls
+    // the Cleanup op on the provider.  This gets it cleaned up sooner
+    // so it doesn't have to wait for the task queue to process it.
 
     if (doCleanup)
     {
+        state->providerCleanup = ProviderCleanupLocation::AfterDoWork;
         CleanupState(std::move(state));
     }
 }

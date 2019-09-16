@@ -873,4 +873,50 @@ public:
         VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, failProvider));
         VERIFY_ARE_EQUAL(E_FAIL, XAsyncGetStatus(&async, true));
     }
+
+    DEFINE_TEST_CASE(VerifyZeroPayloadCleansUpFast)
+    {
+        XAsyncBlock async{};
+
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &async.queue));
+
+        struct Context
+        {
+            uint32_t cleanupCount = 0;
+        };
+
+        auto emptyProvider = [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+                VERIFY_SUCCEEDED(XAsyncSchedule(data->async, 0));
+                break;
+
+            case XAsyncOp::DoWork:
+                XAsyncComplete(data->async, S_OK, 0);
+                break;
+
+            case XAsyncOp::Cleanup:
+                ((Context*)data->context)->cleanupCount++;
+                break;
+            }
+
+            return S_OK;
+        };
+
+        Context cxt;
+        cxt.cleanupCount = 0;
+
+        VERIFY_SUCCEEDED(XAsyncBegin(&async, &cxt, nullptr, nullptr, emptyProvider));
+        VERIFY_IS_TRUE(XTaskQueueDispatch(async.queue, XTaskQueuePort::Work, 0));
+        VERIFY_ARE_EQUAL((uint32_t)1, cxt.cleanupCount);
+        
+        while(XTaskQueueDispatch(async.queue, XTaskQueuePort::Completion, 0));
+
+        // Should only call cleanup once.
+        VERIFY_ARE_EQUAL((uint32_t)1, cxt.cleanupCount);
+
+        XTaskQueueCloseHandle(async.queue);
+    }
 };

@@ -10,12 +10,7 @@ public:
 
     ~WaitTimerImpl()
     {
-        if (m_timer != nullptr)
-        {
-            SetThreadpoolTimer(m_timer, nullptr, 0, 0);
-            WaitForThreadpoolTimerCallbacks(m_timer, TRUE);
-            CloseThreadpoolTimer(m_timer);
-        }
+        Terminate();
     }
 
     HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback)
@@ -27,6 +22,17 @@ public:
         RETURN_LAST_ERROR_IF_NULL(m_timer);
 
         return S_OK;
+    }
+
+    void Terminate()
+    {
+        if (m_timer != nullptr)
+        {
+            SetThreadpoolTimer(m_timer, nullptr, 0, 0);
+            WaitForThreadpoolTimerCallbacks(m_timer, TRUE);
+            CloseThreadpoolTimer(m_timer);
+            m_timer = nullptr;
+        }
     }
 
     void Start(_In_ uint64_t absoluteTime)
@@ -71,15 +77,12 @@ WaitTimer::WaitTimer() noexcept
 
 WaitTimer::~WaitTimer() noexcept
 {
-    if (m_impl != nullptr)
-    {
-        delete m_impl;
-    }
+    Terminate();
 }
 
 HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
 {
-    if (m_impl != nullptr || callback == nullptr)
+    if (m_impl.load() != nullptr || callback == nullptr)
     {
         ASSERT(FALSE);
         return E_UNEXPECTED;
@@ -94,14 +97,23 @@ HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* ca
     return S_OK;
 }
 
+void WaitTimer::Terminate() noexcept
+{
+    std::unique_ptr<WaitTimerImpl> timer(m_impl.exchange(nullptr));
+    if (timer != nullptr)
+    {
+        timer->Terminate();
+    }
+}
+
 void WaitTimer::Start(_In_ uint64_t absoluteTime) noexcept
 {
-    m_impl->Start(absoluteTime);
+    m_impl.load()->Start(absoluteTime);
 }
 
 void WaitTimer::Cancel() noexcept
 {
-    m_impl->Cancel();
+    m_impl.load()->Cancel();
 }
 
 uint64_t WaitTimer::GetAbsoluteTime(_In_ uint32_t msFromNow) noexcept

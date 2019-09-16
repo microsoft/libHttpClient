@@ -6,6 +6,8 @@
 #endif
 
 #pragma once
+
+#include <stdint.h>
 #include "XAsync.h"
 
 extern "C"
