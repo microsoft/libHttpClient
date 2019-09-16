@@ -498,8 +498,6 @@ private:
 #endif
                     try
                     {
-                        
-
                         context->client.run();
                     }
                     catch (...)
