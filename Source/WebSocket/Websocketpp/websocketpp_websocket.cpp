@@ -549,6 +549,13 @@ private:
         {
             std::lock_guard<std::recursive_mutex> lock(m_wsppClientLock);
 
+            if (m_state != State::CONNECTED)
+            {
+                hr = E_UNEXPECTED;
+                XAsyncComplete(message.async, hr, sizeof(WebSocketCompletionResult));
+                return hr;
+            }
+
             if (message.payload.empty())
             {
                 if (message.payloadBinary.size() > 0)
