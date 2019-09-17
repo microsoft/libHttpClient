@@ -552,37 +552,37 @@ private:
             if (m_state != State::CONNECTED)
             {
                 hr = E_UNEXPECTED;
-                XAsyncComplete(message.async, hr, sizeof(WebSocketCompletionResult));
-                return hr;
-            }
-
-            if (message.payload.empty())
-            {
-                if (message.payloadBinary.size() > 0)
-                {
-                    if (m_client->is_tls_client())
-                    {
-                        m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
-                    }
-                    else
-                    {
-                        m_client->client<websocketpp::config::asio_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
-                    }
-                }
-                else
-                {
-                    hr = E_FAIL;
-                }
             }
             else
             {
-                if (m_client->is_tls_client())
+                if (message.payload.empty())
                 {
-                    m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                    if (message.payloadBinary.size() > 0)
+                    {
+                        if (m_client->is_tls_client())
+                        {
+                            m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                        }
+                        else
+                        {
+                            m_client->client<websocketpp::config::asio_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                        }
+                    }
+                    else
+                    {
+                        hr = E_FAIL;
+                    }
                 }
                 else
                 {
-                    m_client->client<websocketpp::config::asio_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                    if (m_client->is_tls_client())
+                    {
+                        m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                    }
+                    else
+                    {
+                        m_client->client<websocketpp::config::asio_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                    }
                 }
             }
 
