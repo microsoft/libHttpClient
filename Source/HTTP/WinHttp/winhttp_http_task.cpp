@@ -207,8 +207,10 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
 
     const BYTE* requestBody = nullptr;
     uint32_t requestBodyBytes = 0;
-    if (HCHttpCallRequestGetRequestBodyBytes(pRequestContext->m_call, &requestBody, &requestBodyBytes) != S_OK)
+    if ((HCHttpCallRequestGetRequestBodyBytes(pRequestContext->m_call, &requestBody, &requestBodyBytes) != S_OK) || 
+        requestBody == nullptr)
     {
+        pRequestContext->complete_task(E_FAIL, static_cast<uint32_t>(E_FAIL));
         return;
     }
 
@@ -389,6 +391,8 @@ HRESULT winhttp_http_task::query_header_length(
     _In_ DWORD header,
     _Out_ DWORD* pLength)
 {
+    *pLength = 0;
+
     if (!WinHttpQueryHeaders(
         hRequestHandle,
         header,
@@ -952,7 +956,8 @@ HRESULT winhttp_http_task::send(
         }
 
         // Request protocol upgrade from http to websocket.
-        #pragma prefast(suppress:6387, "WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET does not take any arguments.")
+        #pragma warning( push )
+        #pragma warning( disable : 6387 )  // WinHttpSetOption's SAL doesn't understand WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET
 
         bool status = WinHttpSetOption(m_hRequest, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, nullptr, 0);
         if (!status)
@@ -961,6 +966,7 @@ HRESULT winhttp_http_task::send(
             HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
             return HRESULT_FROM_WIN32(dwError);
         }
+        #pragma warning( pop )
     }
 #endif
 
@@ -1400,7 +1406,9 @@ HRESULT winhttp_http_task::websocket_read_message()
         uint8_t* bufferPtr = m_websocketResponseBuffer.GetNextWriteLocation();
         uint64_t bufferSize = m_websocketResponseBuffer.GetRemainingCapacity();
         DWORD dwError = ERROR_SUCCESS;
-        dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, nullptr, nullptr);
+        DWORD bytesRead{ 0 }; // not used by required.  bytes read comes from FinishWriteData(wsStatus->dwBytesTransferred)
+        WINHTTP_WEB_SOCKET_BUFFER_TYPE bufType{};
+        dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
         if (dwError)
         {
             HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);

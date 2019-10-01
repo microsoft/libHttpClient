@@ -19,7 +19,7 @@ http_internal_wstring utf16_from_utf8(_In_reads_(size) const char* utf8, size_t 
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-enum proxy_type
+enum class proxy_type
 {
     no_proxy,
     default_proxy,
@@ -27,7 +27,7 @@ enum proxy_type
     named_proxy
 };
 
-enum proxy_protocol
+enum class proxy_protocol
 {
     http,
     https,
