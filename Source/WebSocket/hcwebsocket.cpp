@@ -150,7 +150,7 @@ HRESULT HC_WEBSOCKET::Send(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;

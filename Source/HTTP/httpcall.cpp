@@ -402,7 +402,6 @@ void retry_http_call_until_done(
         {
             XTaskQueueCloseHandle(nestedAsyncBlock->queue);
         }
-        delete nestedAsyncBlock;
 
         if (SUCCEEDED(callStatus) && http_call_should_retry(retryContext->call, responseReceivedTime))
         {
@@ -420,6 +419,9 @@ void retry_http_call_until_done(
         {
             XAsyncComplete(retryContext->outerAsyncBlock, callStatus, 0);
         }
+
+        retryContext = nullptr;
+        delete nestedAsyncBlock;
     };
 
     HRESULT hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
