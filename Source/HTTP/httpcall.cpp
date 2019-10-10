@@ -327,9 +327,39 @@ bool should_fast_fail(
     }
 }
 
+
+class HcCallWrapper
+{
+public:
+    HcCallWrapper(_In_ HC_CALL* call)
+    {
+        assert(call != nullptr);
+        if (call != nullptr)
+        {
+            m_call = HCHttpCallDuplicateHandle(call);
+        }
+    }
+
+    ~HcCallWrapper()
+    {
+        if (m_call)
+        {
+            HCHttpCallCloseHandle(m_call);
+        }
+    }
+
+    HC_CALL* get()
+    {
+        return m_call;
+    }
+
+private:
+    HC_CALL* m_call{ nullptr };
+};
+
 typedef struct retry_context
 {
-    HC_CALL* call;
+    std::shared_ptr<HcCallWrapper> call;
     XAsyncBlock* outerAsyncBlock;
     XTaskQueueHandle outerQueue;
 } retry_context;
@@ -345,28 +375,29 @@ void retry_http_call_until_done(
     }
 
     auto requestStartTime = chrono_clock_t::now();
-    if (retryContext->call->retryIterationNumber == 0)
+    HC_CALL* call = retryContext->call->get();
+    if (call->retryIterationNumber == 0)
     {
-        retryContext->call->firstRequestStartTime = requestStartTime;
+        call->firstRequestStartTime = requestStartTime;
     }
-    retryContext->call->retryIterationNumber++;
-    if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d", retryContext->call->id, retryContext->call->retryIterationNumber); }
+    call->retryIterationNumber++;
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d", call->id, call->retryIterationNumber); }
 
-    http_retry_after_api_state apiState = httpSingleton->get_retry_state(retryContext->call->retryAfterCacheId);
+    http_retry_after_api_state apiState = httpSingleton->get_retry_state(call->retryAfterCacheId);
     if (apiState.statusCode >= 400)
     {
         bool clearState = false;
-        if (should_fast_fail(apiState, retryContext->call, requestStartTime, &clearState))
+        if (should_fast_fail(apiState, call, requestStartTime, &clearState))
         {
-            HCHttpCallResponseSetStatusCode(retryContext->call, apiState.statusCode);
-            if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", retryContext->call->id, apiState.statusCode); }
+            HCHttpCallResponseSetStatusCode(call, apiState.statusCode);
+            if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", call->id, apiState.statusCode); }
             XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
             return;
         }
 
         if( clearState )
         {
-            httpSingleton->clear_retry_state(retryContext->call->retryAfterCacheId);
+            httpSingleton->clear_retry_state(call->retryAfterCacheId);
         }
     }
 
@@ -396,23 +427,24 @@ void retry_http_call_until_done(
         auto responseReceivedTime = chrono_clock_t::now();
 
         uint32_t timeoutWindowInSeconds = 0;
-        HCHttpCallRequestGetTimeoutWindow(retryContext->call, &timeoutWindowInSeconds);
+        HC_CALL* call = retryContext->call->get();
+        HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
 
         if (nestedAsyncBlock->queue != nullptr)
         {
             XTaskQueueCloseHandle(nestedAsyncBlock->queue);
         }
 
-        if (SUCCEEDED(callStatus) && http_call_should_retry(retryContext->call, responseReceivedTime))
+        if (SUCCEEDED(callStatus) && http_call_should_retry(call, responseReceivedTime))
         {
-            if (retryContext->call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", retryContext->call->id, retryContext->call->delayBeforeRetry.count()); }
+            if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", call->id, call->delayBeforeRetry.count()); }
             std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
             for (const auto& pair : httpSingleton->m_callRoutedHandlers)
             {
-                pair.second.first(retryContext->call, pair.second.second);
+                pair.second.first(call, pair.second.second);
             }
 
-            clear_http_call_response(retryContext->call);
+            clear_http_call_response(call);
             retry_http_call_until_done(retryContext);
         }
         else
@@ -424,7 +456,7 @@ void retry_http_call_until_done(
         delete nestedAsyncBlock;
     };
 
-    HRESULT hr = perform_http_call(httpSingleton, retryContext->call, nestedBlock);
+    HRESULT hr = perform_http_call(httpSingleton, call, nestedBlock);
     if (FAILED(hr))
     {
         XAsyncComplete(retryContext->outerAsyncBlock, hr, 0);
@@ -444,13 +476,11 @@ try
         return E_INVALIDARG;
     }
 
-    HCHttpCallDuplicateHandle(call); // Keep the HCCallHandle alive during HTTP call
-
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id); }
     call->performCalled = true;
 
     std::shared_ptr<retry_context> retryContext = std::make_shared<retry_context>();
-    retryContext->call = static_cast<HC_CALL*>(call);
+    retryContext->call = std::make_shared<HcCallWrapper>(static_cast<HC_CALL*>(call)); // RAII will keep the HCCallHandle alive during HTTP call
     retryContext->outerAsyncBlock = asyncBlock;
     retryContext->outerQueue = asyncBlock->queue;
     retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
@@ -466,7 +496,6 @@ try
         auto httpSingleton = get_http_singleton(false);
         if (nullptr == httpSingleton)
         {
-            // TODO: put context->call handle in RAII wrapper to avoid handle leak during shutdown while task in flight
             return E_HC_NOT_INITIALISED;
         }
 
@@ -484,8 +513,6 @@ try
 
             case XAsyncOp::Cleanup:
             {
-                auto context = static_cast<retry_context*>(data->context);
-                HCHttpCallCloseHandle(context->call); // Call is done so remove internal keep alive ref
                 shared_ptr_cache::remove(data->context);
                 break;
             }
