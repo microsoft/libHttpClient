@@ -17,7 +17,7 @@ struct HC_CALL
     {
         refCount = 1;
     }
-    ~HC_CALL();
+    virtual ~HC_CALL();
 
     http_internal_string method;
     http_internal_string url;

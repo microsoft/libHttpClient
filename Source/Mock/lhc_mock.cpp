@@ -34,142 +34,72 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     return false;
 }
 
-long GetIndexOfMock(const http_internal_vector<HC_MOCK_CALL*>& mocks, HC_MOCK_CALL* lastMatchingMock)
-{
-    if (lastMatchingMock == nullptr)
-    {
-        return -1;
-    }
-
-    for (long i = 0; i < static_cast<long>(mocks.size()); i++)
-    {
-        if (mocks[i] == lastMatchingMock)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-HC_MOCK_CALL* GetMatchingMock(
-    _In_ HC_CALL* originalCall
-)
+bool Mock_Internal_HCHttpCallPerformAsync(
+    _In_ HCCallHandle originalCall
+    )
 {
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
     {
-        return nullptr;
+        return false;
     }
+
+    std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
 
     if (httpSingleton->m_mocks.size() == 0)
-    {
-        return nullptr;
-    }
-
-    http_internal_vector<HC_MOCK_CALL*> mocks;
-    HC_MOCK_CALL* lastMatchingMock = nullptr;
-    HC_MOCK_CALL* matchingMock = nullptr;
-
-    {
-        std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
-        mocks = httpSingleton->m_mocks;
-        lastMatchingMock = httpSingleton->m_lastMatchingMock;
-    }
-
-    // ignore last matching call if it doesn't match the current call
-    if (lastMatchingMock != nullptr && !DoesMockCallMatch(lastMatchingMock, originalCall))
-    {
-        lastMatchingMock = nullptr;
-    }
-
-    auto lastMockIndex = GetIndexOfMock(mocks, lastMatchingMock);
-    if (lastMockIndex == -1)
-    {
-        // if there was no last matching call, then look through all mocks for first match
-        for (auto& mockCall : mocks)
-        {
-            if (DoesMockCallMatch(mockCall, originalCall))
-            {
-                matchingMock = mockCall;
-                break;
-            }
-        }
-    }
-    else
-    {
-        // if there was last matching call, looking through the rest of the mocks to see if there's more that match
-        for (auto j = lastMockIndex + 1; j < static_cast<long>(mocks.size()); j++)
-        {
-            if (DoesMockCallMatch(mocks[j], originalCall))
-            {
-                matchingMock = mocks[j];
-                break;
-            }
-        }
-
-        // if last after matches, then just keep returning last match
-        if (matchingMock == nullptr)
-        {
-            matchingMock = lastMatchingMock;
-        }
-    }
-
-    {
-        std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
-        httpSingleton->m_lastMatchingMock = matchingMock;
-    }
-
-    return matchingMock;
-}
-
-bool Mock_Internal_HCHttpCallPerformAsync(
-    _In_ HCCallHandle originalCallHandle
-    )
-{
-    HC_CALL* originalCall = static_cast<HC_CALL*>(originalCallHandle);
-    HC_MOCK_CALL* matchingMock = GetMatchingMock(originalCall);
-    if (matchingMock == nullptr)
     {
         return false;
     }
 
-    if (matchingMock->matchedCallback)
+    auto& mocks{ httpSingleton->m_mocks };
+    HC_MOCK_CALL* mock{ nullptr };
+
+    // Use the most recently added mock that matches (similar to a stack).
+    for (auto iter = mocks.rbegin(); iter != mocks.rend(); ++iter)
     {
-        matchingMock->matchedCallback(
-            matchingMock,
+        if (DoesMockCallMatch(*iter, originalCall))
+        {
+            mock = *iter;
+            break;
+        }
+    }
+
+    if (mock->matchedCallback)
+    {
+        mock->matchedCallback(
+            mock,
             originalCall->method.data(),
             originalCall->url.data(),
             originalCall->requestBodyBytes.data(),
             static_cast<uint32_t>(originalCall->requestBodyBytes.size()),
-            matchingMock->matchCallbackContext
+            mock->matchCallbackContext
         );
     }
 
     size_t byteBuf;
-    HCHttpCallResponseGetResponseBodyBytesSize(matchingMock, &byteBuf);
+    HCHttpCallResponseGetResponseBodyBytesSize(mock, &byteBuf);
     http_memory_buffer buffer(byteBuf);
-    HCHttpCallResponseGetResponseBodyBytes(matchingMock, byteBuf, static_cast<uint8_t*>(buffer.get()), nullptr);
+    HCHttpCallResponseGetResponseBodyBytes(mock, byteBuf, static_cast<uint8_t*>(buffer.get()), nullptr);
     HCHttpCallResponseSetResponseBodyBytes(originalCall, static_cast<uint8_t*>(buffer.get()), byteBuf);
 
     uint32_t code;
-    HCHttpCallResponseGetStatusCode(matchingMock, &code);
+    HCHttpCallResponseGetStatusCode(mock, &code);
     HCHttpCallResponseSetStatusCode(originalCall, code);
 
     HRESULT genCode;
-    HCHttpCallResponseGetNetworkErrorCode(matchingMock, &genCode, &code);
+    HCHttpCallResponseGetNetworkErrorCode(mock, &genCode, &code);
     HCHttpCallResponseSetNetworkErrorCode(originalCall, genCode, code);
 
     uint32_t numheaders;
-    HCHttpCallResponseGetNumHeaders(matchingMock, &numheaders);
+    HCHttpCallResponseGetNumHeaders(mock, &numheaders);
 
     const char* str1;
     const char* str2;
     for (uint32_t i = 0; i < numheaders; i++)
     {
-        HCHttpCallResponseGetHeaderAtIndex(matchingMock, i, &str1, &str2);
+        HCHttpCallResponseGetHeaderAtIndex(mock, i, &str1, &str2);
         HCHttpCallResponseSetHeader(originalCall, str1, str2);
     }
-    
+
     return true;
 }

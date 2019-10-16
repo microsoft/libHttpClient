@@ -113,6 +113,7 @@ try
         if (*iter == call)
         {
             mocks.erase(iter);
+            HCHttpCallCloseHandle(call);
             return S_OK;
         }
     }

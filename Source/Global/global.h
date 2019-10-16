@@ -84,7 +84,6 @@ typedef struct http_singleton
     // Mock state
     std::recursive_mutex m_mocksLock;
     http_internal_vector<HC_MOCK_CALL*> m_mocks;
-    HC_MOCK_CALL* m_lastMatchingMock = nullptr;
 
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
