@@ -64,6 +64,11 @@ bool Mock_Internal_HCHttpCallPerformAsync(
         }
     }
 
+    if (!mock)
+    {
+        return false;
+    }
+
     if (mock->matchedCallback)
     {
         mock->matchedCallback(
