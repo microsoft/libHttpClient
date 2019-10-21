@@ -24,6 +24,24 @@ public:
     http_memory& operator=(const http_memory&) = delete;
 };
 
+
+template<typename T, class... TArgs>
+inline T* Make(TArgs&&... args)
+{
+    auto mem = http_memory::mem_alloc(sizeof(T));
+    return new (mem) T(std::forward<TArgs>(args)...);
+}
+
+template<typename T>
+inline void Delete(T* ptr)
+{
+    if (ptr != nullptr)
+    {
+        ptr->~T();
+        http_memory::mem_free((void*)ptr);
+    }
+}
+
 class http_memory_buffer
 {
 public:

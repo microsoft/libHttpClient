@@ -82,16 +82,20 @@ HRESULT RunAsync(
     uint64_t delayInMs
 )
 {
-    auto workPointer = new AsyncWork(std::move(work));
+    auto workPointer = Make<AsyncWork>(std::move(work));
+    XAsyncBlock* asyncOp = Make<XAsyncBlock>();
+    if (workPointer == nullptr || asyncOp == nullptr)
+    {
+        return E_OUTOFMEMORY;
+    }
 
-    XAsyncBlock* asyncOp = new XAsyncBlock();
     asyncOp->queue = queue;
     asyncOp->context = workPointer;
     asyncOp->callback = [](XAsyncBlock* asyncOp)
     {
         auto context = static_cast<AsyncWork*>(asyncOp->context);
-        delete context;
-        delete asyncOp;
+        Delete(context);
+        Delete(asyncOp);
     };
 
     HRESULT hr = XAsyncBegin(

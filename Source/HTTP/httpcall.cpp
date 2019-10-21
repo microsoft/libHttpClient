@@ -37,8 +37,11 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    HC_CALL* call = new HC_CALL();
-
+    HC_CALL* call = Make<HC_CALL>();
+    if (call == nullptr)
+    {
+        return E_OUTOFMEMORY;
+    }
     call->retryAllowed = httpSingleton->m_retryAllowed;
     call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
     call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
@@ -371,7 +374,8 @@ void retry_http_call_until_done(
     auto httpSingleton = get_http_singleton(false);
     if (nullptr == httpSingleton)
     {
-        XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
+        HC_TRACE_WARNING(HTTPCLIENT, "Http call after HCCleanup was called. Aborting call.");
+        XAsyncComplete(retryContext->outerAsyncBlock, E_HC_NOT_INITIALISED, 0);
     }
 
     auto requestStartTime = chrono_clock_t::now();
@@ -401,6 +405,13 @@ void retry_http_call_until_done(
         }
     }
 
+    XAsyncBlock* nestedBlock = Make<XAsyncBlock>();
+    if (nestedBlock == nullptr)
+    {
+        XAsyncComplete(retryContext->outerAsyncBlock, E_OUTOFMEMORY, 0);
+        return;
+    }
+
     XTaskQueueHandle nestedQueue = nullptr;
     if (retryContext->outerQueue != nullptr)
     {
@@ -408,50 +419,50 @@ void retry_http_call_until_done(
         XTaskQueueGetPort(retryContext->outerQueue, XTaskQueuePort::Work, &workPort);
         XTaskQueueCreateComposite(workPort, workPort, &nestedQueue);
     }
-    XAsyncBlock* nestedBlock = new XAsyncBlock{};
     nestedBlock->queue = nestedQueue;
     nestedBlock->context = retryContext;
-
     nestedBlock->callback = [](XAsyncBlock* nestedAsyncBlock)
     {
         auto httpSingleton = get_http_singleton(false);
-        if (nullptr == httpSingleton)
+        if (httpSingleton == nullptr)
         {
             HC_TRACE_WARNING(HTTPCLIENT, "Http completed after HCCleanup was called. Aborting call.");
-            return;
+            retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
+            XAsyncComplete(retryContext->outerAsyncBlock, E_HC_NOT_INITIALISED, 0);
         }
+        else
+        {
+            auto callStatus = XAsyncGetStatus(nestedAsyncBlock, false);
 
-        auto callStatus = XAsyncGetStatus(nestedAsyncBlock, false);
+            retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
+            auto responseReceivedTime = chrono_clock_t::now();
+            uint32_t timeoutWindowInSeconds = 0;
+            HC_CALL* call = retryContext->call->get();
+            HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
 
-        retry_context* retryContext = static_cast<retry_context*>(nestedAsyncBlock->context);
-        auto responseReceivedTime = chrono_clock_t::now();
+            if (SUCCEEDED(callStatus) && http_call_should_retry(call, responseReceivedTime))
+            {
+                if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", call->id, call->delayBeforeRetry.count()); }
+                std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+                for (const auto& pair : httpSingleton->m_callRoutedHandlers)
+                {
+                    pair.second.first(call, pair.second.second);
+                }
 
-        uint32_t timeoutWindowInSeconds = 0;
-        HC_CALL* call = retryContext->call->get();
-        HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
+                clear_http_call_response(call);
+                retry_http_call_until_done(retryContext);
+            }
+            else
+            {
+                XAsyncComplete(retryContext->outerAsyncBlock, callStatus, 0);
+            }
+        }
 
         if (nestedAsyncBlock->queue != nullptr)
         {
             XTaskQueueCloseHandle(nestedAsyncBlock->queue);
         }
-        delete nestedAsyncBlock;
-
-        if (SUCCEEDED(callStatus) && http_call_should_retry(call, responseReceivedTime))
-        {
-            if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", call->id, call->delayBeforeRetry.count()); }
-            std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
-            for (const auto& pair : httpSingleton->m_callRoutedHandlers)
-            {
-                pair.second.first(call, pair.second.second);
-            }
-
-            clear_http_call_response(call);
-            retry_http_call_until_done(retryContext);
-        }
-        else
-        {
-            XAsyncComplete(retryContext->outerAsyncBlock, callStatus, 0);
-        }
+        Delete(nestedAsyncBlock);
     };
 
     HRESULT hr = perform_http_call(httpSingleton, call, nestedBlock);
@@ -477,18 +488,19 @@ try
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu]", call->id); }
     call->performCalled = true;
 
-    std::shared_ptr<retry_context> retryContext = std::make_shared<retry_context>();
-    retryContext->call = std::make_shared<HcCallWrapper>(static_cast<HC_CALL*>(call)); // RAII will keep the HCCallHandle alive during HTTP call
-    retryContext->outerAsyncBlock = asyncBlock;
-    retryContext->outerQueue = asyncBlock->queue;
-    retry_context* rawRetryContext = static_cast<retry_context*>(shared_ptr_cache::store<retry_context>(retryContext));
-    if (rawRetryContext == nullptr)
+    retry_context* retryContext = Make<retry_context>();
+    if (retryContext == nullptr)
     {
         HCHttpCallCloseHandle(call);
         return E_HC_NOT_INITIALISED;
     }
+    retryContext->call = http_allocate_shared<HcCallWrapper>(static_cast<HC_CALL*>(call)); // RAII will keep the HCCallHandle alive during HTTP call
+    retryContext->outerAsyncBlock = asyncBlock;
+    retryContext->outerQueue = asyncBlock->queue;
+    HC_TRACE_INFORMATION(HTTPCLIENT, "** HCHttpCallPerformAsync: call: 0x%0.8x -> uri %s", call, call->url.c_str());
+    HC_TRACE_INFORMATION(HTTPCLIENT, "** HCHttpCallPerformAsync: retryContext raw: 0x%0.8x", retryContext);    
 
-    HRESULT hr = XAsyncBegin(asyncBlock, rawRetryContext, reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
+    HRESULT hr = XAsyncBegin(asyncBlock, retryContext, reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
         auto httpSingleton = get_http_singleton(false);
@@ -511,7 +523,8 @@ try
 
             case XAsyncOp::Cleanup:
             {
-                shared_ptr_cache::remove(data->context);
+                HC_TRACE_INFORMATION(HTTPCLIENT, "** HCHttpCallPerformAsync: XAsyncOp::Cleanup. retryContext raw: 0x%0.8x", data->context);
+                Delete(data->context);
                 break;
             }
                 
