@@ -53,7 +53,14 @@ void Internal_HCHttpCallPerformAsync(
     _In_ HCPerformEnv env
 ) noexcept
 {
-    auto httpSingleton = xbox::httpclient::get_http_singleton(true);
+    auto httpSingleton = xbox::httpclient::get_http_singleton();
+    if (httpSingleton == nullptr)
+    {
+        HCHttpCallResponseSetNetworkErrorCode(call, E_HC_NOT_INITIALISED, 0);
+        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+        return;
+    }
+
     std::unique_ptr<HttpRequest> httpRequest{
         new HttpRequest(
             asyncBlock,

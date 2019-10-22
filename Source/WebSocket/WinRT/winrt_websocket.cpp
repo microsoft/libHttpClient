@@ -366,7 +366,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
@@ -418,7 +418,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);

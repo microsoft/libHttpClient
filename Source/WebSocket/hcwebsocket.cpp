@@ -37,7 +37,7 @@ HRESULT HC_WEBSOCKET::Connect(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (!httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -150,7 +150,7 @@ HRESULT HC_WEBSOCKET::Send(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -190,7 +190,7 @@ HRESULT HC_WEBSOCKET::SendBinary(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -225,7 +225,7 @@ HRESULT HC_WEBSOCKET::SendBinary(
 
 HRESULT HC_WEBSOCKET::Disconnect()
 {
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -455,7 +455,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -625,7 +625,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (httpSingleton)
     {
         return E_HC_ALREADY_INITIALISED;

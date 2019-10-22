@@ -16,7 +16,7 @@ STDAPI HCMockCallCreate(
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -46,7 +46,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -99,7 +99,7 @@ STDAPI HCMockRemoveMock(
 )
 try
 {
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -126,7 +126,7 @@ STDAPI
 HCMockClearMocks() noexcept
 try 
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 

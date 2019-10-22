@@ -38,7 +38,7 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     _In_ HCCallHandle originalCall
     )
 {
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return false;

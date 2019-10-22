@@ -41,15 +41,9 @@ http_singleton::~http_singleton()
     m_mocks.clear();
 }
 
-std::shared_ptr<http_singleton> get_http_singleton(bool assertIfNull)
+std::shared_ptr<http_singleton> get_http_singleton()
 {
     auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
-    if (assertIfNull && httpSingleton == nullptr)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "Call HCInitialize() fist");
-        ASSERT(httpSingleton != nullptr);
-    }
-
     return httpSingleton;
 }
 

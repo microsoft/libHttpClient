@@ -110,11 +110,11 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestInit);
 
-        VERIFY_IS_NULL(get_http_singleton(false));
+        VERIFY_IS_NULL(get_http_singleton());
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        VERIFY_IS_NOT_NULL(get_http_singleton(false));
+        VERIFY_IS_NOT_NULL(get_http_singleton());
         HCCleanup();
-        VERIFY_IS_NULL(get_http_singleton(false));
+        VERIFY_IS_NULL(get_http_singleton());
     }
 
     DEFINE_TEST_CASE(TestPerformCallback)

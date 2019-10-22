@@ -20,7 +20,7 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
@@ -46,7 +46,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
@@ -70,7 +70,7 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
@@ -278,7 +278,7 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
@@ -309,7 +309,7 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
@@ -351,7 +351,7 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
@@ -383,7 +383,7 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
@@ -407,7 +407,7 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
@@ -439,7 +439,7 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
@@ -467,7 +467,7 @@ try
 
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
@@ -490,7 +490,7 @@ try
 {
     if (call == nullptr)
     {
-        auto httpSingleton = get_http_singleton(true);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 

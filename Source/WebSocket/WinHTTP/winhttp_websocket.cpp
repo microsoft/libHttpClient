@@ -111,7 +111,7 @@ public:
             return E_INVALIDARG;
         }
 
-        auto httpSingleton = get_http_singleton(false);
+        auto httpSingleton = get_http_singleton();
         if (httpSingleton == nullptr)
         {
             return E_HC_NOT_INITIALISED;
@@ -153,7 +153,7 @@ public:
             return E_INVALIDARG;
         }
 
-        auto httpSingleton = get_http_singleton(false);
+        auto httpSingleton = get_http_singleton();
         if (httpSingleton == nullptr)
         {
             return E_HC_NOT_INITIALISED;
@@ -244,7 +244,7 @@ public:
         auto hr = XAsyncBegin(sendContext->message.asyncBlock, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
-            auto httpSingleton = get_http_singleton(false);
+            auto httpSingleton = get_http_singleton();
             if (nullptr == httpSingleton)
             {
                 return E_HC_NOT_INITIALISED;
