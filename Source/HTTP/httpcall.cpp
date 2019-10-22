@@ -376,6 +376,7 @@ void retry_http_call_until_done(
     {
         HC_TRACE_WARNING(HTTPCLIENT, "Http call after HCCleanup was called. Aborting call.");
         XAsyncComplete(retryContext->outerAsyncBlock, E_HC_NOT_INITIALISED, 0);
+        return;
     }
 
     auto requestStartTime = chrono_clock_t::now();
