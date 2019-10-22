@@ -33,7 +33,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
@@ -105,7 +105,7 @@ HRESULT perform_http_call(
     HRESULT hr = XAsyncBegin(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
         [](XAsyncOp opCode, const XAsyncProviderData* data)
     {
-        auto httpSingleton = get_http_singleton(false);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
         {
             return E_HC_NOT_INITIALISED;
@@ -259,7 +259,7 @@ bool http_call_should_retry(
         {
             auto retryAfterTime = retryAfter + responseReceivedTime;
             http_retry_after_api_state state(retryAfterTime, httpStatus);
-            auto httpSingleton = get_http_singleton(false);
+            auto httpSingleton = get_http_singleton();
             if (httpSingleton)
             {
                 httpSingleton->set_retry_state(call->retryAfterCacheId, state);
@@ -371,7 +371,7 @@ void retry_http_call_until_done(
     _In_ HC_UNIQUE_PTR<retry_context> retryContext
     )
 {
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         HC_TRACE_WARNING(HTTPCLIENT, "Http call after HCCleanup was called. Aborting call.");
@@ -426,7 +426,7 @@ void retry_http_call_until_done(
         HC_UNIQUE_PTR<XAsyncBlock> nestedAsyncPtr{ nestedAsyncBlock };
         HC_UNIQUE_PTR<retry_context> retryContext{ static_cast<retry_context*>(nestedAsyncBlock->context) };
 
-        auto httpSingleton = get_http_singleton(false);
+        auto httpSingleton = get_http_singleton();
         if (httpSingleton == nullptr)
         {
             HC_TRACE_WARNING(HTTPCLIENT, "Http completed after HCCleanup was called. Aborting call.");
@@ -507,7 +507,7 @@ try
     HRESULT hr = XAsyncBegin(asyncBlock, retryContext.get(), reinterpret_cast<void*>(HCHttpCallPerformAsync), __FUNCTION__,
         [](_In_ XAsyncOp op, _In_ const XAsyncProviderData* data)
     {
-        auto httpSingleton = get_http_singleton(false);
+        auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
         {
             return E_HC_NOT_INITIALISED;

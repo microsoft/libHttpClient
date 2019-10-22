@@ -1053,7 +1053,7 @@ static void NetworkConnectivityHintChangedCallback(
 {
     UNREFERENCED_PARAMETER(context);
 
-    auto singleton = get_http_singleton(false);
+    auto singleton = get_http_singleton();
 
     if (singleton != nullptr)
     {
@@ -1076,7 +1076,7 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 {
 #if HC_PLATFORM == HC_PLATFORM_GSDK
-    auto singleton = get_http_singleton(false);
+    auto singleton = get_http_singleton();
     if (singleton != nullptr && singleton->m_networkModule != nullptr)
     {
         FreeLibrary(singleton->m_networkModule);
@@ -1159,7 +1159,7 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 #if HC_PLATFORM == HC_PLATFORM_GSDK 
     if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
     {
-        auto singleton = get_http_singleton(true);
+        auto singleton = get_http_singleton();
         if (singleton != nullptr)
         {
             if (singleton->m_networkModule == nullptr)

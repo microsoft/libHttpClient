@@ -9,18 +9,23 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 JNIEnv* get_jvm_env()
 {
-    auto httpSingleton = xbox::httpclient::get_http_singleton(true);
-    HC_PERFORM_ENV* platformContext = httpSingleton->m_performEnv.get();
-    JavaVM* javaVm = platformContext->GetJavaVm();
-
-    if (javaVm == nullptr)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "javaVm is null");
-        throw std::runtime_error("JavaVm is null");
-    }
-
     JNIEnv* jniEnv = nullptr;
-    jint jniResult = javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+    jint jniResult = JNI_ERR;
+
+    auto httpSingleton = xbox::httpclient::get_http_singleton();
+    if (httpSingleton)
+    {
+        HC_PERFORM_ENV* platformContext = httpSingleton->m_performEnv.get();
+        JavaVM* javaVm = platformContext->GetJavaVm();
+
+        if (javaVm == nullptr)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "javaVm is null");
+            throw std::runtime_error("JavaVm is null");
+        }
+
+        jniResult = javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+    }
 
     if (jniResult != JNI_OK)
     {

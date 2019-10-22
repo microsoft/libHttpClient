@@ -44,7 +44,7 @@ STDAPI
 HCSetGlobalProxy(_In_ const char* proxyUri) noexcept
 try
 {
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
         return E_HC_NOT_INITIALISED;
@@ -65,7 +65,7 @@ HCSetHttpCallPerformFunction(
         return E_INVALIDARG;
     }
 
-    auto httpSingleton = get_http_singleton(false);
+    auto httpSingleton = get_http_singleton();
     if (httpSingleton)
     {
         return E_HC_ALREADY_INITIALISED;
@@ -106,7 +106,7 @@ STDAPI_(int32_t) HCAddCallRoutedHandler(
         return -1;
     }
 
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
@@ -120,7 +120,7 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
     _In_ int32_t handlerContext
     ) noexcept
 {
-    auto httpSingleton = get_http_singleton(true);
+    auto httpSingleton = get_http_singleton();
     if (nullptr != httpSingleton)
     {
         std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);

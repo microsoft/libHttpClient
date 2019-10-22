@@ -174,7 +174,7 @@ public:
             return E_UNEXPECTED;
         }
 
-        auto httpSingleton = get_http_singleton(false);
+        auto httpSingleton = get_http_singleton();
         if (httpSingleton == nullptr)
         {
             return E_HC_NOT_INITIALISED;
@@ -218,7 +218,7 @@ public:
             return E_UNEXPECTED;
         }
 
-        auto httpSingleton = get_http_singleton(false);
+        auto httpSingleton = get_http_singleton();
         if (httpSingleton == nullptr)
         {
             return E_HC_NOT_INITIALISED;
@@ -478,10 +478,14 @@ private:
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
                     JavaVM* javaVm = nullptr;
-                    {   // Allow our singleton to go out of scope quickly once we're done with it
-                        auto httpSingleton = xbox::httpclient::get_http_singleton(true);
-                        HC_PERFORM_ENV* platformContext = reinterpret_cast<HC_PERFORM_ENV*>(httpSingleton->m_performEnv.get());
-                        javaVm = platformContext->GetJavaVm();
+                    {   
+                        // Allow our singleton to go out of scope quickly once we're done with it
+                        auto httpSingleton = xbox::httpclient::get_http_singleton();
+                        if (httpSingleton)
+                        {
+                            HC_PERFORM_ENV* platformContext = reinterpret_cast<HC_PERFORM_ENV*>(httpSingleton->m_performEnv.get());
+                            javaVm = platformContext->GetJavaVm();
+                        }
                     }
 
                     if (javaVm == nullptr)
@@ -627,7 +631,7 @@ private:
         auto hr = XAsyncBegin(sendContext->message.async, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
-            auto httpSingleton = get_http_singleton(false);
+            auto httpSingleton = get_http_singleton();
             if (nullptr == httpSingleton)
             {
                 return E_HC_NOT_INITIALISED;
