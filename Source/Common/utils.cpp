@@ -93,7 +93,7 @@ HRESULT RunAsync(
     asyncOp->context = workPointer.get();
     asyncOp->callback = [](XAsyncBlock* asyncOp)
     {
-        HC_UNIQUE_PTR<AsyncWork> context{ reinterpret_cast<AsyncWork*>(asyncOp->context) };
+        HC_UNIQUE_PTR<AsyncWork> context{ static_cast<AsyncWork*>(asyncOp->context) };
         HC_UNIQUE_PTR<XAsyncBlock> asyncPtr{ asyncOp };
         // Cleanup with happen when unique ptr's go out of scope
     };
