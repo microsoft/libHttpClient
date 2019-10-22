@@ -329,7 +329,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     UNREFERENCED_PARAMETER(env);
     UNREFERENCED_PARAMETER(context);
 
-    std::shared_ptr<winrt_websocket_impl> websocketTask = std::make_shared<winrt_websocket_impl>();
+    std::shared_ptr<winrt_websocket_impl> websocketTask = http_allocate_shared<winrt_websocket_impl>();
     websocketTask->m_websocketHandle = websocket;
     websocket->impl = std::dynamic_pointer_cast<hc_websocket_impl>(websocketTask);
 
@@ -373,7 +373,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     if(websocketTask == nullptr)
         return E_HC_NOT_INITIALISED;
 
-    std::shared_ptr<websocket_outgoing_message> msg = std::make_shared<websocket_outgoing_message>();
+    std::shared_ptr<websocket_outgoing_message> msg = http_allocate_shared<websocket_outgoing_message>();
     msg->m_message = message;
     msg->m_asyncBlock = asyncBlock;
     msg->m_id = ++httpSingleton->m_lastId;
@@ -423,7 +423,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
         return E_HC_NOT_INITIALISED;
     std::shared_ptr<winrt_websocket_impl> websocketTask = std::dynamic_pointer_cast<winrt_websocket_impl>(websocket->impl);
 
-    std::shared_ptr<websocket_outgoing_message> msg = std::make_shared<websocket_outgoing_message>();
+    std::shared_ptr<websocket_outgoing_message> msg = http_allocate_shared<websocket_outgoing_message>();
     msg->m_messageBinary.assign(payloadBytes, payloadBytes + payloadSize);
     msg->m_asyncBlock = asyncBlock;
     msg->m_id = ++httpSingleton->m_lastId;
@@ -580,7 +580,7 @@ void MessageWebSocketSendMessage(
         return;
     }
 
-    std::shared_ptr<SendMessageCallbackContext> callbackContext = std::make_shared<SendMessageCallbackContext>();
+    std::shared_ptr<SendMessageCallbackContext> callbackContext = http_allocate_shared<SendMessageCallbackContext>();
     callbackContext->nextMessage = msg;
     callbackContext->websocketTask = websocketTask;
     void* rawContext = shared_ptr_cache::store<SendMessageCallbackContext>(callbackContext);

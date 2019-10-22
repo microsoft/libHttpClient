@@ -82,21 +82,25 @@ HRESULT RunAsync(
     uint64_t delayInMs
 )
 {
-    auto workPointer = new AsyncWork(std::move(work));
+    auto workPointer = http_allocate_unique<AsyncWork>(std::move(work));
+    auto asyncOp = http_allocate_unique<XAsyncBlock>();
+    if (workPointer == nullptr || asyncOp == nullptr)
+    {
+        return E_OUTOFMEMORY;
+    }
 
-    XAsyncBlock* asyncOp = new XAsyncBlock();
     asyncOp->queue = queue;
-    asyncOp->context = workPointer;
+    asyncOp->context = workPointer.get();
     asyncOp->callback = [](XAsyncBlock* asyncOp)
     {
-        auto context = static_cast<AsyncWork*>(asyncOp->context);
-        delete context;
-        delete asyncOp;
+        HC_UNIQUE_PTR<AsyncWork> context{ static_cast<AsyncWork*>(asyncOp->context) };
+        HC_UNIQUE_PTR<XAsyncBlock> asyncPtr{ asyncOp };
+        // Cleanup with happen when unique ptr's go out of scope
     };
 
     HRESULT hr = XAsyncBegin(
-        asyncOp,
-        reinterpret_cast<void*>(workPointer),
+        asyncOp.get(), // don't release yet as it could still fail
+        reinterpret_cast<void*>(workPointer.get()), // don't release yet as it could still fail
         nullptr,
         __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
@@ -115,9 +119,15 @@ HRESULT RunAsync(
 
     if (SUCCEEDED(hr))
     {
-        XAsyncSchedule(asyncOp, static_cast<uint32_t>(delayInMs));
+        hr = XAsyncSchedule(asyncOp.get(), static_cast<uint32_t>(delayInMs));
+        if (SUCCEEDED(hr))
+        {
+            workPointer.release(); // at this point we know do work will be called eventually
+            asyncOp.release(); // at this point we know do work will be called eventually
+        }
     }
-    return hr;
+    
+    return hr; // Cleanup with happen when unique ptr's go out of scope if they weren't released
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
