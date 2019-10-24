@@ -626,7 +626,7 @@
 			buildConfigurationList = 67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL" */;
 			buildPhases = (
 				67EE817A2362599C00A5F3DE /* Sources */,
-				67EE8187236259D700A5F3DE /* Build SSL */,
+				67EE8187236259D700A5F3DE /* Build openssl */,
 				67EE817B2362599C00A5F3DE /* Frameworks */,
 				67EE817C2362599C00A5F3DE /* CopyFiles */,
 			);
@@ -721,7 +721,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		67EE8187236259D700A5F3DE /* Build SSL */ = {
+		67EE8187236259D700A5F3DE /* Build openssl */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -731,7 +731,7 @@
 			inputPaths = (
 				"$(SRCROOT)/../../Binaries/iOS",
 			);
-			name = "Build SSL";
+			name = "Build openssl";
 			outputFileListPaths = (
 			);
 			outputPaths = (
