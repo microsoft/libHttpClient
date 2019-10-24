@@ -179,7 +179,7 @@
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		67EE817E2362599C00A5F3DE /* libDummy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libDummy.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		67EE817E2362599C00A5F3DE /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		67EE81802362599C00A5F3DE /* Dummy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Dummy.h; sourceTree = "<group>"; };
 		67EE81812362599C00A5F3DE /* Dummy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Dummy.m; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -307,7 +307,7 @@
 				7DB100A72119206B00AE22F5 /* libHttpClient.a */,
 				58BD256222123EF9008942EB /* HttpClient.framework */,
 				2C872C65221C91BD0054F791 /* HttpClient.framework */,
-				67EE817E2362599C00A5F3DE /* libDummy.a */,
+				67EE817E2362599C00A5F3DE /* libSSL.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -628,9 +628,9 @@
 			productReference = 58BD256222123EF9008942EB /* HttpClient.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		67EE817D2362599C00A5F3DE /* Dummy */ = {
+		67EE817D2362599C00A5F3DE /* SSL */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "Dummy" */;
+			buildConfigurationList = 67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL" */;
 			buildPhases = (
 				67EE817A2362599C00A5F3DE /* Sources */,
 				67EE8187236259D700A5F3DE /* Build SSL */,
@@ -641,9 +641,9 @@
 			);
 			dependencies = (
 			);
-			name = Dummy;
+			name = SSL;
 			productName = Dummy;
-			productReference = 67EE817E2362599C00A5F3DE /* libDummy.a */;
+			productReference = 67EE817E2362599C00A5F3DE /* libSSL.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 		7DB100A62119206B00AE22F5 /* libHttpClient_mac */ = {
@@ -701,7 +701,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				67EE817D2362599C00A5F3DE /* Dummy */,
+				67EE817D2362599C00A5F3DE /* SSL */,
 				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
 				7DB100A62119206B00AE22F5 /* libHttpClient_mac */,
 				58BD256122123EF9008942EB /* libHttpClientFramework_iOS */,
@@ -1281,7 +1281,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "Dummy" */ = {
+		67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				67EE81852362599C00A5F3DE /* Debug */,
