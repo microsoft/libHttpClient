@@ -58,8 +58,6 @@
 		58BD25C42214DFD2008942EB /* XAsync.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85521C0E47F0009C7F6 /* XAsync.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85621C0E47F0009C7F6 /* XAsyncProvider.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85421C0E47F0009C7F6 /* XTaskQueue.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		67EE81822362599C00A5F3DE /* Empty.m in Sources */ = {isa = PBXBuildFile; fileRef = 67EE81812362599C00A5F3DE /* Empty.m */; };
-		67EE81832362599C00A5F3DE /* Empty.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 67EE81802362599C00A5F3DE /* Empty.h */; };
 		7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		7DB100BF2119276B00AE22F5 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		7DB100C02119276B00AE22F5 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
@@ -116,7 +114,6 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
-				67EE81832362599C00A5F3DE /* Empty.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -187,8 +184,6 @@
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		67EE817E2362599C00A5F3DE /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		67EE81802362599C00A5F3DE /* Empty.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Empty.h; sourceTree = "<group>"; };
-		67EE81812362599C00A5F3DE /* Empty.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Empty.m; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
@@ -302,7 +297,6 @@
 				58A7EA15209AE8BB00CC6774 /* Include */,
 				58722D0F209AD61900B071F7 /* Products */,
 				58A7E971209ADEB100CC6774 /* Source */,
-				67EE817F2362599C00A5F3DE /* SSL */,
 				2CE97717225EA543001F5E22 /* XcodeBuildScripts */,
 			);
 			sourceTree = "<group>";
@@ -486,15 +480,6 @@
 				58A7EA2A209AE8BB00CC6774 /* trace.h */,
 			);
 			path = httpClient;
-			sourceTree = "<group>";
-		};
-		67EE817F2362599C00A5F3DE /* SSL */ = {
-			isa = PBXGroup;
-			children = (
-				67EE81802362599C00A5F3DE /* Empty.h */,
-				67EE81812362599C00A5F3DE /* Empty.m */,
-			);
-			path = SSL;
 			sourceTree = "<group>";
 		};
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
@@ -823,7 +808,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				67EE81822362599C00A5F3DE /* Empty.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
