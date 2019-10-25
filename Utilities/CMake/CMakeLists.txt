@@ -28,19 +28,35 @@ else()
     endif()
 endif()
 
+macro(print_variables)
+    message(STATUS "print_variables ------------------------{")
+    get_cmake_property(_variableNames VARIABLES)
+    foreach (_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endForEach()
+    message(STATUS "print_variables ------------------------}")
+endmacro()
 
 project (${PROJECT_NAME})
 
-if(MSVC_VERSION GREATER 1919)
-  set(COMPILER_VERSION "16")
-elseif(MSVC_VERSION GREATER 1909)
-  set(COMPILER_VERSION "15")
-elseif(MSVC_VERSION GREATER 1899)
-  set(COMPILER_VERSION "14")
-elseif(MSVC_VERSION GREATER 1700)
-  set(COMPILER_VERSION "12")
-elseif(MSVC_VERSION GREATER 1600)
-  set(COMPILER_VERSION "11")
+if (NOT BUILDANDROID)
+  if(MSVC_VERSION GREATER 1919)
+    set(COMPILER_VERSION "16")
+  elseif(MSVC_VERSION GREATER 1909)
+    set(COMPILER_VERSION "15")
+  elseif(MSVC_VERSION GREATER 1899)
+    set(COMPILER_VERSION "14")
+  elseif(MSVC_VERSION GREATER 1700)
+    set(COMPILER_VERSION "12")
+  elseif(MSVC_VERSION GREATER 1600)
+    set(COMPILER_VERSION "11")
+  endif()
+endif()
+
+if (BUILDANDROID)   # needed because the rel path from here (CMAKE) is different than the rel path from the VS Proj files
+  set(REL_PATH_TO_PROJECT_DIR "../../")
+else()
+  set(REL_PATH_TO_PROJECT_DIR "../../../")
 endif()
 
 if(CMAKE_CONFIGURATION_TYPES)
@@ -56,212 +72,223 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_compile_options(/Zm300 /bigobj)
+if (NOT BUILDANDROID)  # no equivalent for these in Clang that I can find
+  add_compile_options(/Zm300 /bigobj)
+endif()
+
 if (WINDOWS_STORE OR WINDOWS_PHONE)
-    add_compile_options(/ZW)
+  add_compile_options(/ZW)
 endif()
 
 add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
 
-set_source_files_properties(../../../Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+if (NOT BUILDANDROID)
+  set_source_files_properties(${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+endif()
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
-    set_property(SOURCE ../../../Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
-    set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
+  set_property(SOURCE ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
+  set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
+endif()
+
+if (BUILDANDROID)
+  set(ProjectDir "${PROJECT_SOURCE_DIR}/")
 endif()
 
 include_directories(
     $(ProjectDir)
-    $(ProjectDir)../../../Source
-    $(ProjectDir)../../../Source/Common
-    $(ProjectDir)../../../Source/HTTP
-    $(ProjectDir)../../../Source/Logger
-    $(ProjectDir)../../../include
-    $(ProjectDir)../../../include/httpClient
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source/Common
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source/HTTP
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source/Logger
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}include
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}include/httpClient
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}External/asio/asio/include
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}External/openssl/include
+    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}External/websocketpp
     )
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Public_Source_Files
-    ../../../include/httpClient/config.h
-    ../../../include/httpClient/httpClient.h
-    ../../../include/httpClient/httpProvider.h
-    ../../../include/httpClient/mock.h
-    ../../../include/xasync.h
-    ../../../include/xasyncProvider.h
-    ../../../include/xtaskQueue.h
-    ../../../include/httpClient/trace.h
-    ../../../include/httpClient/pal.h
-    ../../../include/httpClient/async.h
+    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/config.h
+    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/httpClient.h
+    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/httpProvider.h
+    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/mock.h
+    ${REL_PATH_TO_PROJECT_DIR}include/xasync.h
+    ${REL_PATH_TO_PROJECT_DIR}include/xasyncProvider.h
+    ${REL_PATH_TO_PROJECT_DIR}include/xtaskQueue.h
+    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/trace.h
+    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/pal.h
+    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/async.h
     )
 
 set(Task_Source_Files
-    ../../../Source/Task/AsyncLib.cpp
-    ../../../Source/Task/AtomicVector.h
-    ../../../Source/Task/LocklessQueue.h
-    ../../../Source/Task/referenced_ptr.h
-    ../../../Source/Task/StaticArray.h
-    ../../../Source/Task/TaskQueue.cpp
-    ../../../Source/Task/TaskQueueImpl.h
-    ../../../Source/Task/TaskQueueP.h
-    ../../../Source/Task/ThreadPool.h
-    ../../../Source/Task/WaitTimer.h
-    ../../../Source/Task/XTaskQueuePriv.h
-    ../../../Source/Task/XAsyncProviderPriv.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/AsyncLib.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/AtomicVector.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/LocklessList.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/referenced_ptr.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/StaticArray.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/TaskQueue.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/TaskQueueImpl.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/TaskQueueP.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/ThreadPool.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/WaitTimer.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/XTaskQueuePriv.h
     )
 
 set(Task_Windows_Source_Files
-    ../../../Source/Task/ThreadPool_win32.cpp
-    ../../../Source/Task/WaitTimer_win32.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/ThreadPool_win32.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/WaitTimer_win32.cpp
     )
 
 set(Task_Android_Source_Files
-    ../../../Include/httpClient/async_jvm.h
-    ../../../Source/Task/ThreadPool_stl.cpp
-    ../../../Source/Task/WaitTimer_stl.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Include/httpClient/async_jvm.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/ThreadPool_stl.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/WaitTimer_stl.cpp
     )
 
 set(Global_Source_Files
-    ../../../Source/Global/mem.cpp
-    ../../../Source/Global/mem.h
-    ../../../Source/Global/global_publics.cpp
-    ../../../Source/Global/global.cpp
-    ../../../Source/Global/global.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Global/mem.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Global/mem.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Global/global_publics.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Global/global.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Global/global.h
     )
 
 set(WebSocket_Source_Files
-    ../../../Source/WebSocket/hcwebsocket.h
-    ../../../Source/WebSocket/hcwebsocket.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/hcwebsocket.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/hcwebsocket.cpp
     )
 
 set(WinRT_WebSocket_Source_Files
-    ../../../Source/WebSocket/WinRT/winrt_websocket.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/WinRT/winrt_websocket.cpp
     )
 
 set(Win32_WebSocket_Source_Files
-    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
-    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
-    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/WinHTTP/winhttp_websocket.cpp
     )
 
 set(Android_WebSocket_Source_Files
-    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
-    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
     )
 
 set(Mock_Source_Files
-    ../../../Source/Mock/lhc_mock.cpp
-    ../../../Source/Mock/lhc_mock.h
-    ../../../Source/Mock/mock_publics.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Mock/lhc_mock.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Mock/lhc_mock.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Mock/mock_publics.cpp
     )
 
 set(Common_Source_Files
-    ../../../Source/Common/buildver.h
-    ../../../Source/Common/EntryList.h
-    ../../../Source/Common/pch.cpp
-    ../../../Source/Common/pch.h
-    ../../../Source/Common/pch_common.h
-    ../../../Source/Common/pal_internal.h
-    ../../../Source/Common/ResultMacros.h
-    ../../../Source/Common/uri.cpp
-    ../../../Source/Common/uri.h
-    ../../../Source/Common/utils.cpp
-    ../../../Source/Common/utils.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/buildver.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/EntryList.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch_common.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pal_internal.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/ResultMacros.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/uri.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/uri.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/utils.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/utils.h
     )
 
 set(Common_Windows_Source_Files
-    ../../../Source/Common/Win/utils_win.cpp
-    ../../../Source/Common/Win/utils_win.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/Win/utils_win.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/Win/utils_win.h
     )
 
 set(Common_Android_Source_Files
-    ../../../Source/Common/Android/utils_android.cpp
-    ../../../Source/Common/Android/utils_android.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/Android/utils_android.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Common/Android/utils_android.h
     )
 
 set(HTTP_Source_Files
-    ../../../Source/HTTP/httpcall.cpp
-    ../../../Source/HTTP/httpcall.h
-    ../../../Source/HTTP/httpcall_request.cpp
-    ../../../Source/HTTP/httpcall_response.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall_request.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall_response.cpp
     )
 
 set(Unittest_HTTP_Source_Files
-    ../../../Source/HTTP/Unittest/http_unittest.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Unittest/http_unittest.cpp
     )
 
 set(Unittest_WebSocket_Source_Files
-    ../../../Source/WebSocket/Unittest/websocket_unittest.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/Unittest/websocket_unittest.cpp
     )
 
 set(WinHttp_HTTP_Source_Files
-    ../../../Source/HTTP/WinHttp/winhttp_http_task.cpp
-    ../../../Source/HTTP/WinHttp/winhttp_http_task.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/WinHttp/winhttp_http_task.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/WinHttp/winhttp_http_task.h
     )
 
 set(Android_HTTP_Source_Files
-   ../../../Source/HTTP/Android/http_android.cpp
-   ../../../Source/HTTP/Android/android_http_request.cpp
-   ../../../Source/HTTP/Android/android_http_request.h
-   ../../../Source/HTTP/Android/android_platform_context.cpp
-   ../../../Source/HTTP/Android/android_platform_context.h
+   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/http_android.cpp
+   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_http_request.cpp
+   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_http_request.h
+   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_platform_context.cpp
+   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_platform_context.h
    )
 
 set(XMLHttp_HTTP_Source_Files
-    ../../../Source/HTTP/XMLHttp/http_buffer.cpp
-    ../../../Source/HTTP/XMLHttp/http_buffer.h
-    ../../../Source/HTTP/XMLHttp/http_request_callback.cpp
-    ../../../Source/HTTP/XMLHttp/http_request_callback.h
-    ../../../Source/HTTP/XMLHttp/http_response_stream.cpp
-    ../../../Source/HTTP/XMLHttp/http_response_stream.h
-    ../../../Source/HTTP/XMLHttp/http_request_stream.cpp
-    ../../../Source/HTTP/XMLHttp/http_request_stream.h
-    ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
-    ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_buffer.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_buffer.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_request_callback.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_request_callback.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_response_stream.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_response_stream.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_request_stream.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_request_stream.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
 
 set(Logger_Source_Files
-    ../../../Source/Logger/trace.cpp
-    ../../../Source/Logger/trace_internal.h
-    ../../../Source/Logger/log_publics.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/trace.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/trace_internal.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/log_publics.cpp
     )
 
 set(Windows_Logger_Source_Files
-   ../../../Source/Logger/Win/win_logger.cpp
+   ${REL_PATH_TO_PROJECT_DIR}Source/Logger/Win/win_logger.cpp
    )
 
 set(Android_Logger_Source_Files
-    ../../../Source/Logger/Android/android_logger.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/Android/android_logger.cpp
     )
 
 set(UnitTests_Source_Files_Support
-    ../../../Tests/UnitTests/Support/DefineTestMacros.h
-    ../../../Tests/UnitTests/Support/UnitTestIncludes.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/DefineTestMacros.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/UnitTestIncludes.h
     )
 
 set(Taef_UnitTests_Source_Files
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TAEF/UnitTestBase.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
     )
 
 set(TE_UnitTests_Source_Files
-    ../../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
-    ../../../Tests/UnitTests/Support/TE/unittesthelpers.h
-    ../../../Tests/UnitTests/Support/TE/unittestincludes_te.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TE/unittesthelpers.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TE/unittesthelpers.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/TE/unittestincludes_te.h
     )
 
 set(UnitTests_Source_Files_Tests
-    ../../../Tests/UnitTests/Tests/AsyncBlockTests.cpp
-    ../../../Tests/UnitTests/Tests/CallbackThunk.h
-    ../../../Tests/UnitTests/Tests/GlobalTests.cpp
-    ../../../Tests/UnitTests/Tests/HttpTests.cpp
-    ../../../Tests/UnitTests/Tests/LocklessQueueTests.cpp
-    ../../../Tests/UnitTests/Tests/MockTests.cpp
-    ../../../Tests/UnitTests/Tests/TaskQueueTests.cpp
-    ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/AsyncBlockTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/CallbackThunk.h
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/GlobalTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/HttpTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/LocklessListTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/MockTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/TaskQueueTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 
 message(STATUS "Common source group")
@@ -402,10 +429,31 @@ if( TE )
 endif()
 
 list( SORT SOURCE_FILES )
-add_library(${PROJECT_NAME} ${SOURCE_FILES})
 
-set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "/INCREMENTAL:NO")
-set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
+#[[
+if (BUILDANDROID)
+    set (REL_SOURCE_FILES ${SOURCE_FILES})
+    foreach (src_file ${REL_SOURCE_FILES})
+        get_filename_component(src_file_abs_path  "${src_file}" ABSOLUTE)
+        # message("removing file")
+        # message("${src_file}")
+        list(REMOVE_ITEM SOURCE_FILES "${src_file}")
+        # message("replacing with file")
+        # message("${src_file_abs_path}")
+        list(APPEND SOURCE_FILES "${src_file_abs_path}")
+    endforeach()
+endif()
+]]
+
+print_variables()
+
+add_library(${PROJECT_NAME} "${SOURCE_FILES}")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
+
+if (NOT BUILDANDROID)
+  set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "/INCREMENTAL:NO")
+  set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
+endif()
 
 message(STATUS "CMAKE_SYSTEM_VERSION='${CMAKE_SYSTEM_VERSION}'")
 message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")

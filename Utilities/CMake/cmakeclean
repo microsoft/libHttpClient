@@ -1,0 +1,4 @@
+rm -rf CMakeFiles
+rm CMakeCache.txt
+rm android_gradle_build.json
+rm cmake_install.cmake
