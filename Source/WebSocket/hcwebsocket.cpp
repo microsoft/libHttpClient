@@ -145,6 +145,33 @@ HRESULT HC_WEBSOCKET::Connect(
     }
 }
 
+void notify_websocket_routed_handlers(
+    std::shared_ptr<http_singleton> httpSingleton,
+    _In_ HCWebsocketHandle websocket,
+    _In_ bool receiving,
+    _In_opt_z_ const char* message,
+    _In_opt_ const uint8_t* payloadBytes,
+    _In_ size_t payloadSize
+    )
+{
+    if (httpSingleton == nullptr)
+    {
+        return;
+    }
+
+    std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+    for (const auto& pair : httpSingleton->m_webSocketRoutedHandlers)
+    {
+        pair.second.first(
+            websocket,
+            receiving,
+            message,
+            payloadBytes,
+            payloadSize,
+            pair.second.second);
+    }
+}
+
 HRESULT HC_WEBSOCKET::Send(
     _In_z_ const char* message,
     _Inout_ XAsyncBlock* asyncBlock
@@ -168,6 +195,7 @@ HRESULT HC_WEBSOCKET::Send(
     {
         try
         {
+            notify_websocket_routed_handlers(httpSingleton, this, false, message, nullptr, 0);
             return sendFunc(this, message, asyncBlock, info.context);
         }
         catch (...)
@@ -208,6 +236,7 @@ HRESULT HC_WEBSOCKET::SendBinary(
     {
         try
         {
+            notify_websocket_routed_handlers(httpSingleton, this, false, nullptr, payloadBytes, payloadSize);
             return sendFunc(this, payloadBytes, payloadSize, asyncBlock, info.context);
         }
         catch (...)
@@ -374,6 +403,8 @@ void HC_WEBSOCKET::MessageFunc(
         {
             if (websocket->m_clientMessageFunc)
             {
+                auto httpSingleton = get_http_singleton();
+                notify_websocket_routed_handlers(httpSingleton, websocket, true, message, nullptr, 0);
                 websocket->m_clientMessageFunc(websocket, message, websocket->m_clientContext);
             }
         }
@@ -399,6 +430,8 @@ void HC_WEBSOCKET::BinaryMessageFunc(
         {
             if (websocket->m_clientBinaryMessageFunc)
             {
+                auto httpSingleton = get_http_singleton();
+                notify_websocket_routed_handlers(httpSingleton, websocket, true, nullptr, bytes, payloadSize);
                 websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
             }
         }
