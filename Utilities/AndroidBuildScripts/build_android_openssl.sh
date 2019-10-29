@@ -9,17 +9,20 @@
 
 function usage() {
   echo ""
-  echo "build_android"
+  echo "build_android_openssl"
   echo ""
-  echo "This is a command-line script for building for Android using the CMake file"
-  echo "directly.  Some variables have to be passed to this script as arguments or"
+  echo "This is a command-line script for building the openssl stack for Android using"
+  echo "command-line NDK.  Some variables have to be passed to this script as arguments or"
   echo "else defined as environment variables."
   echo ""
   echo "Note that this builds libHttpClient assuming that OpenSSL and Crypto have been"
   echo "built first. Outputs of this script are put in the path"
-  echo "  libHttpClient/Binaries/ {Debug, Release}/{ABI}"
-  echo "e.g. Binaries/Debug/x86_64"
-  echo ""
+  echo "libHttpClient/External/openssl.  these include the following:"
+  echo "- libcrypto.a"
+  echo "- libcrypto.so"
+  echo "- libssl.a"
+  echo "- libssl.so"
+\  echo ""
   echo "Required arguments:"
   echo "  --android-sdk <path>"
   echo "    the path to the Android SDK to use.  this is required if ANDROID_SDK is not set."
@@ -31,8 +34,6 @@ function usage() {
   echo "    do not clean the build first"
   echo "  --dry-run"
   echo "    do not actually do the important commands, just show what would happen"
-  echo "  --cmake-file <path>"
-  echo "    the path to the CMakeLists.txt file to use.  defaults to ../CMake"
   echo "  --android-abi <abi>"
   echo "    the single abi to build for (x86, x86_64, armeabi-v7a, arm64-v8a). defaults to x86_64"
   echo "  --android-abis \"<abi-1> <abi-2> ...\""
@@ -45,11 +46,28 @@ function usage() {
   echo "    the type of build variant (Debug or Release).  defaults to Release."
   echo "  --all-build-types"
   echo "    builds all build variants (both Debug and Release)"
-  echo "  --cmake-exec <path>"
-  echo "    the path to the CMake executable.  if not provided, it attempts to find this in the Android SDK."
-  echo "  --cmake-toolchain-file <path>"
-  echo "    the path to the CMake toolchain file.  if not provided, it attempts to find this in the NDK."
   echo ""
+}
+
+function arch_name() {
+    abi=$3
+    arch=
+    if [[ -z "$abi" ]]; then
+      return 1
+    fi
+    if [[ "$abi" == "x86_64" ]]; then
+      arch=android-x86_64
+    elif [[ "$abi" == "x86" ]]; then
+      arch=android-x86
+    elif [[ "$abi" == "armeabi-v7a" ]]; then
+      arch=android-arm
+    elif [[ "$abi" == "arm64-v8a" ]]; then
+      arch=android-arm64
+    else
+      return 1
+    fi
+    echo $arch
+    return 0
 }
 
 function destination_dir() {
@@ -85,6 +103,20 @@ function destination_dir() {
     return 0
 }
 
+function copy_build_output() {
+    srcpath=$1
+    binariesDir=$2
+    archpath=$3
+    if [[ -z "$archpath" || -z "$binariesDir" || -z "$srcpath" ]]; then
+      echo "unable to copy build outputs, src or destination path are empty"
+      return 1
+    fi
+    if [ ! -d ${binariesDir}/include ]; then
+      mkdir -p ${binariesDir}/include
+    fi
+}
+
+
 # setup paths
 workingdir=`pwd`
 cmdline=$0
@@ -94,31 +126,29 @@ if [[ "$basepath" == "." ]]; then
 fi
 fullpath=${workingdir}/${basepath}
 libHttpClientRoot=${fullpath}../..
-binariesDir=${libHttpClientRoot}/Binaries
+opensslRelPath=External/openssl
+opensslDir="${libHttpClientRoot}/${opensslRelPath}"
+os_arch_name=darwin-x86_64    # we could calculate this if we had to with uname -a
+toolchainsRelPath=toolchains/llvm/prebuilt/${os_arch_name}
+toolchainsPath=
 
 # iterate through arguments and process options
 androidSdk=
 androidNdk=
-cmakeExec=
-cmakeToolchainFile=
-cmakeRoot=
-cmakeVersion=
-cmakeToolchainRelPath=build/cmake/android.toolchain.cmake
+
 androidAbiList=
-cmakeBuildTypeList=
+makeBuildTypeList=
 
 androidAbi=x86_64
 androidNativeApiLevel=21
 androidToolchain=clang
-cmakeBuildType=Release
-cmakeFile=
-cmakeFileDir=
+makeBuildType=Release
 noClean=
 quiet=0
 dryrun=0
 
 # how to get this dynamically?  sucks that this has to be hardcoded
-outputFile=liblibHttpClient.Android.C.a
+outputFile=
 
 # find path to CMake file
 
@@ -145,17 +175,8 @@ while [ -n "$1" ]; do
   elif [[ "$arg" == "--android-toolchain" ]]; then
     androidToolchain=$1
     shift
-  elif [[ "$arg" == "--cmake-file" ]]; then
-    cmakeFile=$1
-    shift
-  elif [[ "$arg" == "--cmake-exec" ]]; then
-    cmakeExec=$1
-    shift
-  elif [[ "$arg" == "--cmake-toolchain-file" ]]; then
-    cmakeToolchainFile=$1
-    shift
   elif [[ "$arg" == "--build-type" ]]; then
-    cmakeBuildType=$1
+    makeBuildType=$1
     shift
   elif [[ "$arg" == "--all-build-types" ]]; then
     cmakeBuildTypeList="Debug Release"
@@ -172,19 +193,6 @@ while [ -n "$1" ]; do
   fi
 
 done
-
-# find the CMake file if it wasn't specified
-parentDir=${fullpath%/}
-parentDir=${parentDir%/*}
-cmakeFileDir=${parentDir}/CMake
-if [ -d "${cmakeFileDir}" ]; then
-  # the directory exists, check if CMake file is there
-  if [ -f "${cmakeFileDir}/CMakeLists.txt" ]; then
-    cmakeFile=${cmakeFileDir}/CMakeFiles.txt
-    [[ "$quiet" == "0" ]] && echo "using CMakeFiles.txt found at $cmakeFile"
-  fi
-fi
-
 
 # set the variables to environment variables if they weren't passed as command args
 
@@ -210,39 +218,24 @@ fi
 if [[ -z "$androidSdk" || -z "$androidNdk" ]]; then
   echo "Android SDK and NDK paths must be provided. Either pass arguments"
   echo "--android-sdk and --android-ndk or set the environment variables"
-  echo "ANDROID_SDK and ANDROID_NDK"
+  echo "ANDROID_SDK_HOME and ANDROID_NDK_HOME"
   exit 1
 fi
 
-if [ -z "$cmakeExec" ]; then
-  # see if we can find CMake
-  cmakeRoot=
-  cmakeVersion=
-  cmakeExec=
-  if [ -n "$androidSdk" ]; then
-    if [ -d "$androidSdk/cmake" ]; then
-      cmakeVersion=`ls $androidSdk/cmake`
-      cmakeRoot=${androidSdk}/cmake/${cmakeVersion}
-      cmakeExec=${cmakeRoot}/bin/cmake
-      [[ "$quiet" == "0" ]] && echo "using CMake executable found at $cmakeExec"
-    fi
-  fi
-fi
+export ANDROID_NDK_HOME=$androidNdk
+export ANDROID_SDK_HOME=$androidSdk
 
-# set the cmake toolchaing file
-if [ -z "$cmakeToolchainFile" ]; then
-  if [ -n "$androidNdk" ]; then
-    if [ -f "${androidNdk}/${cmakeToolchainRelPath}" ]; then
-      cmakeToolchainFile=${androidNdk}/${cmakeToolchainRelPath}
-      [[ "$quiet" == "0" ]] && echo "using Cmake toolchain file found at $cmakeToolchainFile"
-    fi
-  fi
-fi
+CC=$androidToolchain
+
+toolchainsPath=${androidNdk}/${toolchainsRelPath}
+PATH=${toolchainsPath}/bin:$PATH
+ANDROID_API=${androidNativeApiLevel}
+
 
 # create target directories
 for build in Debug Release; do
   for abi in x86 x86_64 armeabi-v7a arm64-v8a; do
-    destpath=`destination_dir $libHttpClientRoot $build $abi`
+    destpath=`destination_dir $opensslDir $build $abi`
     result=$?
     if [[ "$result" == "0" ]]; then
       [[ "$quiet" == "0" ]] && echo "creating target path $destpath"
@@ -251,33 +244,12 @@ for build in Debug Release; do
   done
 done
 
-#if [ ! -d "${binariesDir}" ]; then
-#  mkdir -p $binariesDir
-#fi
-#for p in Debug Release; do
-#  if [ ! -d ${binariesDir}/$p ]; then
-#    mkdir ${binariesDir}/$p
-#  fi
-#  for d in ARM ARM64 x64 x86; do
-#    if [ ! -d ${binariesDir}/$p/$d ]; then
-#      mkdir ${binariesDir}/$p/$d
-#    fi
-#  done
-#done
-# example command-line for the CMakeLists.txt in ../CMake:
-# $cmakeExec -DBUILDANDROID=ON -DCMAKE_TOOLCHAIN_FILE=/Users/jjclose/Library/Android/sdk/ndk/20.0.5594570/build/cmake/android.toolchain.cmake  \
-#   -DANDROID_ABI=x86_64 \
-#   -DANDROID_NATIVE_API_LEVEL=21 \
-#   -DANDROID_TOOLCHAIN=clang \
-#   -DANDROID_NDK=${ANDROID_NDK} \
-#   -DCMAKE_BUILD_TYPE=Release
-
 # if there is no list of build types, make the single one a list
-if [ -z "$cmakeBuildTypeList" ]; then
-  cmakeBuildTypeList=$cmakeBuildType
+if [ -z "$makeBuildTypeList" ]; then
+  makeBuildTypeList=$cmakeBuildType
 fi
 # convert to array
-cmakeBuildTypeList=($cmakeBuildTypeList)
+makeBuildTypeList=($makeBuildTypeList)
 
 # if they didn't provide a list, make the single Abi a list
 if [ -z "$androidAbiList" ]; then
@@ -287,27 +259,31 @@ fi
 androidAbiList=($androidAbiList)
 
 # go to directory and build
-cd $cmakeFileDir
-for buildType in ${cmakeBuildTypeList[@]}; do
+cd $opensslDir
+
+for buildType in ${makeBuildTypeList[@]}; do
   [[ "$quiet" == "0" ]] && echo ""
   [[ "$quiet" == "0" ]] && echo "building for ${buildType} build variant --"
   for abi in ${androidAbiList[@]}; do
     [[ "$quiet" == "0" ]] && echo ""
     [[ "$quiet" == "0" ]] && echo "building ${buildType} for $abi ABI --"
-    commandline="$cmakeExec -DBUILDANDROID=ON -DCMAKE_TOOLCHAIN_FILE=${cmakeToolchainFile}  \
-      -DANDROID_ABI=${abi} \
-      -DANDROID_NATIVE_API_LEVEL=${androidNativeApiLevel} \
-      -DANDROID_TOOLCHAIN=${cmakeToolchain} \
-      -DANDROID_NDK=${androidNdk} \
-      -DCMAKE_BUILD_TYPE=${buildType}"
+
+    architecture=`arch_name $abi`
+    result=$?
+    if [[ "$result" != "0" ]]; then
+      echo "cannot determine android architecture from ABI"
+      exit 1
+    fi
+
+    commandline="./Configure ${architecture} -D__ANDROID_API__=$ANDROID_API"
     [[ "$quiet" == "0" ]] && echo "command line ="
     [[ "$quiet" == "0" ]] && echo $commandline
-    [[ "$quiet" == "0" ]] && echo "running cmake"
+    [[ "$quiet" == "0" ]] && echo "running Configure"
     if [[ "$dryrun" == "0" ]]; then
       $commandline
       result=$?
       if [[ "$result" != "0" ]]; then
-        echo "the 'cmake' command returned an error"
+        echo "the 'Configure' command returned an error"
         exit $result
       fi
     fi
@@ -336,6 +312,7 @@ for buildType in ${cmakeBuildTypeList[@]}; do
       destpath=`destination_dir $libHttpClientRoot $buildType $abi`
       result=$?
       if [[ "$result" == "0" ]]; then
+        copy_outputs ${destpath}
         cp ${outputFile} ${destpath}
         if [[ "$?" != "0" ]]; then
           echo "unable to copy project output to destination ${destpath}!"
