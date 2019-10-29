@@ -98,7 +98,26 @@
 			remoteGlobalIDString = 58722D0D209AD61900B071F7;
 			remoteInfo = libHttpClient_iOS;
 		};
+		67EE818823626A5100A5F3DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58722D06209AD61900B071F7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 67EE817D2362599C00A5F3DE;
+			remoteInfo = SSL;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		67EE817C2362599C00A5F3DE /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2C872C65221C91BD0054F791 /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,6 +183,7 @@
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		67EE817E2362599C00A5F3DE /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
@@ -219,6 +239,13 @@
 				58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */,
 				584BFB952217994000CDCCBE /* Foundation.framework in Frameworks */,
 				584BFB942217993500CDCCBE /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67EE817B2362599C00A5F3DE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +308,7 @@
 				7DB100A72119206B00AE22F5 /* libHttpClient.a */,
 				58BD256222123EF9008942EB /* HttpClient.framework */,
 				2C872C65221C91BD0054F791 /* HttpClient.framework */,
+				67EE817E2362599C00A5F3DE /* libSSL.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -561,13 +589,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58722D17209AD61900B071F7 /* Build configuration list for PBXNativeTarget "libHttpClient_iOS" */;
 			buildPhases = (
-				9C3B2537212F25AB0080AEC6 /* Build openssl */,
 				58722D0A209AD61900B071F7 /* Sources */,
 				58722D0B209AD61900B071F7 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				67EE818923626A5100A5F3DE /* PBXTargetDependency */,
 			);
 			name = libHttpClient_iOS;
 			productName = libHttpClient;
@@ -592,6 +620,24 @@
 			productName = HttpClient;
 			productReference = 58BD256222123EF9008942EB /* HttpClient.framework */;
 			productType = "com.apple.product-type.framework";
+		};
+		67EE817D2362599C00A5F3DE /* SSL */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL" */;
+			buildPhases = (
+				67EE817A2362599C00A5F3DE /* Sources */,
+				67EE8187236259D700A5F3DE /* Build openssl */,
+				67EE817B2362599C00A5F3DE /* Frameworks */,
+				67EE817C2362599C00A5F3DE /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SSL;
+			productName = Dummy;
+			productReference = 67EE817E2362599C00A5F3DE /* libSSL.a */;
+			productType = "com.apple.product-type.library.static";
 		};
 		7DB100A62119206B00AE22F5 /* libHttpClient_mac */ = {
 			isa = PBXNativeTarget;
@@ -628,6 +674,9 @@
 					58BD256122123EF9008942EB = {
 						CreatedOnToolsVersion = 10.1;
 					};
+					67EE817D2362599C00A5F3DE = {
+						CreatedOnToolsVersion = 10.3;
+					};
 					7DB100A62119206B00AE22F5 = {
 						CreatedOnToolsVersion = 9.4.1;
 					};
@@ -645,6 +694,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				67EE817D2362599C00A5F3DE /* SSL */,
 				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
 				7DB100A62119206B00AE22F5 /* libHttpClient_mac */,
 				58BD256122123EF9008942EB /* libHttpClientFramework_iOS */,
@@ -671,15 +721,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		9C3B2537212F25AB0080AEC6 /* Build openssl */ = {
+		67EE8187236259D700A5F3DE /* Build openssl */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			inputFileListPaths = (
 			);
 			inputPaths = (
 				"$(SRCROOT)/../../Binaries/iOS",
 			);
 			name = "Build openssl";
+			outputFileListPaths = (
+			);
 			outputPaths = (
 				"$(SRCROOT)/../../Binaries/iOS/lib/libcrypto.a",
 				"$(SRCROOT)/../../Binaries/iOS/lib/libssl.a",
@@ -750,6 +804,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		67EE817A2362599C00A5F3DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7DB100A32119206B00AE22F5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -790,6 +851,11 @@
 			isa = PBXTargetDependency;
 			target = 58722D0D209AD61900B071F7 /* libHttpClient_iOS */;
 			targetProxy = 58BD259222136482008942EB /* PBXContainerItemProxy */;
+		};
+		67EE818923626A5100A5F3DE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 67EE817D2362599C00A5F3DE /* SSL */;
+			targetProxy = 67EE818823626A5100A5F3DE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1087,6 +1153,38 @@
 			};
 			name = Release;
 		};
+		67EE81852362599C00A5F3DE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		67EE81862362599C00A5F3DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		7DB100AD2119206B00AE22F5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1174,6 +1272,15 @@
 			buildConfigurations = (
 				58BD256722123EF9008942EB /* Debug */,
 				58BD256822123EF9008942EB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67EE81852362599C00A5F3DE /* Debug */,
+				67EE81862362599C00A5F3DE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
