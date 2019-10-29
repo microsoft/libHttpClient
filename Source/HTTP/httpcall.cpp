@@ -367,6 +367,15 @@ typedef struct retry_context
     XTaskQueueHandle outerQueue;
 } retry_context;
 
+void notify_call_routed_handlers(std::shared_ptr<http_singleton> httpSingleton, HC_CALL* call)
+{
+    std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+    for (const auto& pair : httpSingleton->m_callRoutedHandlers)
+    {
+        pair.second.first(call, pair.second.second);
+    }
+}
+
 void retry_http_call_until_done(
     _In_ HC_UNIQUE_PTR<retry_context> retryContext
     )
@@ -440,16 +449,11 @@ void retry_http_call_until_done(
             uint32_t timeoutWindowInSeconds = 0;
             HC_CALL* call = retryContext->call->get();
             HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
+            notify_call_routed_handlers(httpSingleton, call);
 
             if (SUCCEEDED(callStatus) && http_call_should_retry(call, responseReceivedTime))
             {
                 if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", call->id, call->delayBeforeRetry.count()); }
-                std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
-                for (const auto& pair : httpSingleton->m_callRoutedHandlers)
-                {
-                    pair.second.first(call, pair.second.second);
-                }
-
                 clear_http_call_response(call);
                 retry_http_call_until_done(std::move(retryContext));
             }

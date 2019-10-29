@@ -148,10 +148,9 @@ STDAPI_(void) HCCleanup() noexcept;
 STDAPI HCGetLibVersion(_Outptr_ const char** version) noexcept;
 
 /// <summary>
-/// A callback that will be synchronously invoked each time an HTTP call fails but will be automatically be
-/// retried. Can be used to track intermittent failures similar to fiddler.
+/// A callback that will be synchronously invoked each time an HTTP call is performed
 /// </summary>
-/// <param name="call">Handle to the HTTP call that failed.</param>
+/// <param name="call">Handle to the HTTP call.</param>
 /// <param name="context">Client context pass when the handler was added.</param>
 typedef void
 (STDAPIVCALLTYPE* HCCallRoutedHandler)(
@@ -160,8 +159,7 @@ typedef void
     );
 
 /// <summary>
-/// Adds a callback to be invoked on intermediate http errors (errors that are non-fatal and will
-/// automatically be retried).
+/// Adds a callback to be invoked on intermediate http calls in order to debug or trace the traffic.
 /// </summary>
 /// <param name="handler">The handler to be called.</param>
 /// <param name="context">Client context to pass to callback function.</param>
@@ -775,8 +773,8 @@ STDAPI HCWebSocketSendMessageAsync(
 /// inside the AsyncBlock callback or after the AsyncBlock is complete.
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket</param>
-/// <param name="payloadBytes"></param>
-/// <param name="payloadSize"></param>
+/// <param name="payloadBytes">Binary data to send in byte buffer</param>
+/// <param name="payloadSize">Size of byte buffer</param>
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketSendBinaryMessageAsync(
@@ -824,6 +822,47 @@ STDAPI_(HCWebsocketHandle) HCWebSocketDuplicateHandle(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCWebSocketCloseHandle(
     _In_ HCWebsocketHandle websocket
+    ) noexcept;
+
+/// <summary>
+/// A callback that will be synchronously invoked when websocket traffic is sent or received
+/// </summary>
+/// <param name="call">Handle to the HTTP call.</param>
+/// <param name="receiving">True if receiving the data, false if sending the data.</param>
+/// <param name="message">Optional UTF-8 encoded message.
+/// Either message or payloadBytes should be non-null depending if its text or binary message</param>
+/// <param name="payloadBytes">Binary data in byte buffer.
+/// Either message or payloadBytes should be non-null depending if its text or binary message</param>
+/// <param name="payloadSize">Size of byte buffer</param>
+/// <param name="context">Client context pass when the handler was added.</param>
+typedef void
+(STDAPIVCALLTYPE* HCWebSocketRoutedHandler)(
+    _In_ HCWebsocketHandle websocket,
+    _In_ bool receiving,
+    _In_opt_z_ const char* message,
+    _In_opt_ const uint8_t* payloadBytes,
+    _In_ size_t payloadSize,
+    _In_opt_ void* context
+    );
+
+/// <summary>
+/// Adds a callback to be invoked on websocket traffic in order to debug or trace the traffic.
+/// </summary>
+/// <param name="handler">The handler to be called.</param>
+/// <param name="context">Client context to pass to callback function.</param>
+/// <returns>An unique id that can be used to remove the handler.</returns>
+STDAPI_(int32_t) HCAddWebSocketRoutedHandler(
+    _In_ HCWebSocketRoutedHandler handler,
+    _In_opt_ void* context
+    ) noexcept;
+
+/// <summary>
+/// Removes a previously added HCWebSocketRoutedHandler.
+/// </summary>
+/// <param name="handlerId">Id returned from the HCAddWebSocketRoutedHandler call.</param>
+/// <returns></returns>
+STDAPI_(void) HCRemoveWebSocketRoutedHandler(
+    _In_ int32_t handlerId
     ) noexcept;
 
 #endif // !HC_NOWEBSOCKETS

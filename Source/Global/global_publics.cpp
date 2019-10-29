@@ -128,3 +128,35 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
     }
 }
 
+STDAPI_(int32_t) HCAddWebSocketRoutedHandler(
+    _In_ HCWebSocketRoutedHandler handler,
+    _In_opt_ void* context
+) noexcept
+{
+    if (handler == nullptr)
+    {
+        return -1;
+    }
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+    auto functionContext = httpSingleton->m_callRoutedHandlersContext++;
+    httpSingleton->m_webSocketRoutedHandlers[functionContext] = std::make_pair(handler, context);
+    return functionContext;
+}
+
+STDAPI_(void) HCRemoveWebSocketRoutedHandler(
+    _In_ int32_t handlerContext
+) noexcept
+{
+    auto httpSingleton = get_http_singleton();
+    if (nullptr != httpSingleton)
+    {
+        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
+        httpSingleton->m_webSocketRoutedHandlers.erase(handlerContext);
+    }
+}
+
