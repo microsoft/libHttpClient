@@ -27,14 +27,14 @@
     #include <sdkddkver.h>
     #include <winapifamily.h>
 
-    #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+    #if _GAMING_DESKTOP || _GAMING_XBOX
+        #define HC_PLATFORM HC_PLATFORM_GSDK
+    #elif !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         #define HC_PLATFORM HC_PLATFORM_WIN32
     #elif WINAPI_FAMILY == WINAPI_FAMILY_PC_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10
         #define HC_PLATFORM HC_PLATFORM_UWP
     #elif WINAPI_FAMILY == WINAPI_FAMILY_TV_APP || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
         #define HC_PLATFORM HC_PLATFORM_XDK
-    #elif WINAPI_FAMILY == WINAPI_FAMILY_GAMES
-        #define HC_PLATFORM HC_PLATFORM_GSDK
     #else
         #error Cannot recognize Windows flavor
     #endif
