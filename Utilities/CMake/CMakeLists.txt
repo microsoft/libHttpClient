@@ -445,7 +445,7 @@ if (BUILDANDROID)
 endif()
 ]]
 
-print_variables()
+# print_variables()
 
 add_library(${PROJECT_NAME} "${SOURCE_FILES}")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
