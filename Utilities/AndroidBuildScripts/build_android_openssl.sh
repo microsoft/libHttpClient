@@ -4,8 +4,8 @@
 # as environment variables.
 
 # Note that this builds libHttpClient assuming that OpenSSL and Crypto have been built first
-# Outputs of this script are put in libHttpClient/Binaries/{Debug, Release}/{ABI}
-# e.g. Binaries/Debug/x86_64
+# Outputs of this script are put in libHttpClient/output/libs/{Debug, Release}/{ABI}
+# e.g. output/libs/Debug/x86_64
 
 function usage() {
   echo ""
@@ -16,13 +16,17 @@ function usage() {
   echo "else defined as environment variables."
   echo ""
   echo "Note that this builds libHttpClient assuming that OpenSSL and Crypto have been"
-  echo "built first. Outputs of this script are put in the path"
-  echo "libHttpClient/External/openssl.  these include the following:"
+  echo "built first. Outputs of openssl build make command are put in the path"
+  echo "openssl project root.  these include the following:"
   echo "- libcrypto.a"
   echo "- libcrypto.so"
   echo "- libssl.a"
   echo "- libssl.so"
-\  echo ""
+  echo "These are written to the same name regardless whether it is a debug or release"
+  echo "build, and independent of architecture.  Therefore this script copies them"
+  echo "to a subdirectory output/libs under openssl in order to preserve the outputs"
+  echo "of different builds. The headers are copied to output/include."
+  echo ""
   echo "Required arguments:"
   echo "  --android-sdk <path>"
   echo "    the path to the Android SDK to use.  this is required if ANDROID_SDK is not set."
@@ -50,7 +54,7 @@ function usage() {
 }
 
 function arch_name() {
-    abi=$3
+    abi=$1
     arch=
     if [[ -z "$abi" ]]; then
       return 1
@@ -70,50 +74,75 @@ function arch_name() {
     return 0
 }
 
-function destination_dir() {
-    projectRoot=$1
-    buildType=$2
-    abi=$3
-    abiDirname=
-    buildDirname=
-    if [[ -z "$projectRoot" || -z "$abi" || -z "$buildType" ]]; then
-      return 1
-    fi
-    binariesDir=${projectRoot}/Binaries
-    if [[ "$abi" == "x86_64" ]]; then
-      abiDirname=x64
-    elif [[ "$abi" == "x86" ]]; then
-      abiDirname=x86
-    elif [[ "$abi" == "armeabi-v7a" ]]; then
-      abiDirname=ARM
-    elif [[ "$abi" == "arm64-v8a" ]]; then
-      abiDirname=ARM64
-    else
-      return 1
-    fi
-    if [[ "$buildType" == "Debug" || "$buildType" == "debug" ]]; then
-      buildDirname=Debug
-    elif [[ "$buildType" == "Release" || "$buildType" == "release" ]]; then
-      buildDirname=Release
-    else
-      return 1
-    fi
-    destdir=${binariesDir}/${buildDirname}/${abiDirname}
-    echo $destdir
-    return 0
+function destination_arch_dir() {
+  # this returns the proper libs directory for a given build type and arch
+  # it does NOT make the directory, only returns the name
+  projectRoot=$1
+  buildType=$2
+  abi=$3
+  abiDirname=
+  buildDirname=
+  if [[ -z "$projectRoot" || -z "$abi" || -z "$buildType" ]]; then
+    return 1
+  fi
+  libsDir=${projectRoot}/output/libs
+  if [[ "$abi" == "x86_64" ]]; then
+    abiDirname=x64
+  elif [[ "$abi" == "x86" ]]; then
+    abiDirname=x86
+  elif [[ "$abi" == "armeabi-v7a" ]]; then
+    abiDirname=ARM
+  elif [[ "$abi" == "arm64-v8a" ]]; then
+    abiDirname=ARM64
+  else
+    return 1
+  fi
+  if [[ "$buildType" == "Debug" || "$buildType" == "debug" ]]; then
+    buildDirname=Debug
+  elif [[ "$buildType" == "Release" || "$buildType" == "release" ]]; then
+    buildDirname=Release
+  else
+    return 1
+  fi
+  destdir=${libsDir}/${buildDirname}/${abiDirname}
+  echo $destdir
+  return 0
+}
+
+function destination_include_dir() {
+  # this returns the proper include directory for a given build type and arch
+  # it does NOT make the directory, only returns the name
+  projectRoot=$1
+  buildType=$2
+  abi=$3
+  if [[ -z "$projectRoot" || -z "$abi" || -z "$buildType" ]]; then
+    return 1
+  fi
+  includeDir=${projectRoot}/output/include
+  echo $includeDir
+  return 0
 }
 
 function copy_build_output() {
-    srcpath=$1
-    binariesDir=$2
-    archpath=$3
-    if [[ -z "$archpath" || -z "$binariesDir" || -z "$srcpath" ]]; then
-      echo "unable to copy build outputs, src or destination path are empty"
+    projectRoot=$1
+    destIncludeDir=$2
+    destArchDir=$3
+    if [[ -z "$projectRoot" || -z "$destIncludeDir" || -z "$destArchDir" ]]; then
+      echo "unable to copy build outputs, a path argument is empty"
       return 1
     fi
-    if [ ! -d ${binariesDir}/include ]; then
-      mkdir -p ${binariesDir}/include
+    mkdir -p ${destIncludeDir}
+    result1=$?
+    mkdir -p ${destArchDir}
+    if [[ "$?" != "0"  || "$result1" != "0" ]]; then
+      echo "error creating output directory"
+      return 1
     fi
+    cp -RL ${projectRoot}/include/openssl ${destIncludeDir}
+    cp libcrypto.so ${destArchDir}
+    cp libcrypto.a ${destArchDir}
+    cp libssl.so ${destArchDir}
+    cp libssl.a ${destArchDir}
 }
 
 
@@ -137,12 +166,12 @@ androidSdk=
 androidNdk=
 
 androidAbiList=
-makeBuildTypeList=
+configBuildTypeList=
 
 androidAbi=x86_64
 androidNativeApiLevel=21
 androidToolchain=clang
-makeBuildType=Release
+configBuildType=Release
 noClean=
 quiet=0
 dryrun=0
@@ -176,10 +205,10 @@ while [ -n "$1" ]; do
     androidToolchain=$1
     shift
   elif [[ "$arg" == "--build-type" ]]; then
-    makeBuildType=$1
+    configBuildType=$1
     shift
   elif [[ "$arg" == "--all-build-types" ]]; then
-    cmakeBuildTypeList="Debug Release"
+    configBuildTypeList="Debug Release"
   elif [[ "$arg" == "--noclean" ]]; then
     noclean=1
   elif [[ "$arg" == "--dry-run" ]]; then
@@ -233,9 +262,9 @@ ANDROID_API=${androidNativeApiLevel}
 
 
 # create target directories
-for build in Debug Release; do
+for buildType in Debug Release; do
   for abi in x86 x86_64 armeabi-v7a arm64-v8a; do
-    destpath=`destination_dir $opensslDir $build $abi`
+    destpath=`destination_arch_dir $opensslDir $buildType $abi`
     result=$?
     if [[ "$result" == "0" ]]; then
       [[ "$quiet" == "0" ]] && echo "creating target path $destpath"
@@ -245,11 +274,11 @@ for build in Debug Release; do
 done
 
 # if there is no list of build types, make the single one a list
-if [ -z "$makeBuildTypeList" ]; then
-  makeBuildTypeList=$cmakeBuildType
+if [ -z "$configBuildTypeList" ]; then
+  configBuildTypeList=$configBuildType
 fi
 # convert to array
-makeBuildTypeList=($makeBuildTypeList)
+configBuildTypeList=($configBuildTypeList)
 
 # if they didn't provide a list, make the single Abi a list
 if [ -z "$androidAbiList" ]; then
@@ -261,7 +290,7 @@ androidAbiList=($androidAbiList)
 # go to directory and build
 cd $opensslDir
 
-for buildType in ${makeBuildTypeList[@]}; do
+for buildType in ${configBuildTypeList[@]}; do
   [[ "$quiet" == "0" ]] && echo ""
   [[ "$quiet" == "0" ]] && echo "building for ${buildType} build variant --"
   for abi in ${androidAbiList[@]}; do
@@ -275,7 +304,12 @@ for buildType in ${makeBuildTypeList[@]}; do
       exit 1
     fi
 
-    commandline="./Configure ${architecture} -D__ANDROID_API__=$ANDROID_API"
+    if [[ "$buildType" == "Release" ]]; then
+      configureBuildTypeArg="--release"
+    else
+      configureBuildTypeArg="--debug"
+    fi
+    commandline="./Configure ${architecture} -D__ANDROID_API__=$ANDROID_API ${configureBuildTypeArg}"
     [[ "$quiet" == "0" ]] && echo "command line ="
     [[ "$quiet" == "0" ]] && echo $commandline
     [[ "$quiet" == "0" ]] && echo "running Configure"
@@ -308,20 +342,16 @@ for buildType in ${makeBuildTypeList[@]}; do
       fi
     fi
     # copy output file to destination dir
-    if [ -f ${outputFile} ]; then
-      destpath=`destination_dir $libHttpClientRoot $buildType $abi`
-      result=$?
-      if [[ "$result" == "0" ]]; then
-        copy_outputs ${destpath}
-        cp ${outputFile} ${destpath}
+    destArchDir=`destination_arch_dir $opensslDir $buildType $abi`
+    if [[ "$?" == "0" ]]; then
+      destIncludeDir=`destination_include_dir ${opensslDir} ${buildType} $abi`
+      if [[ "$?" == "0" ]]; then
+        copy_build_output ${opensslDir} ${destIncludeDir} ${destArchDir}
         if [[ "$?" != "0" ]]; then
-          echo "unable to copy project output to destination ${destpath}!"
+          echo "copy_outputs failed, unable to copy project outputs to destination!"
           exit 1
         fi
       fi
-    else
-      echo "project target output file ${outputFile} not found!"
-      exit 1
     fi
   done
 done
