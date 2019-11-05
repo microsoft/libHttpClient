@@ -110,7 +110,7 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
 }
 
 bool g_HCWebSocketSendBinaryMessage_Called = false;
-HRESULT Test_Internal_HCWebSocketSendBinaryMessageAsync(
+HRESULT CALLBACK Test_Internal_HCWebSocketSendBinaryMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,

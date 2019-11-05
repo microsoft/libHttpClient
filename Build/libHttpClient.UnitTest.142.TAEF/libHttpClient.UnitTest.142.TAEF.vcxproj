@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>libHttpClient.UnitTest.142.TAEF</ProjectName>
-    <ProjectGuid>{15F89B6A-312D-49A6-BBA6-CFD9242DB58E}</ProjectGuid>
+    <ProjectGuid>{EBFE0314-0869-46B8-ABCE-A3EE223893B8}</ProjectGuid>
     <RootNamespace>libHttpClient.Test</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
