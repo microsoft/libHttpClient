@@ -5,9 +5,8 @@ model {
         compileSdkVersion = 21
         buildToolsVersion = "28.0.3"
 
-        defaultConfig.with {
-            
-            minSdkVersion.apiLevel = 21
+        defaultConfig.with {            
+            minSdkVersion.apiLevel = 19
             targetSdkVersion.apiLevel = 21
         }
 
@@ -29,15 +28,19 @@ model {
     android.productFlavors {
         create("arm7") {
             ndk.abiFilters.add("armeabi-v7a")
+            minSdkVersion.apiLevel = 19
         }
         create("arm8") {
             ndk.abiFilters.add("arm64-v8a")
+            minSdkVersion.apiLevel = 21
         }
         create("x86") {
             ndk.abiFilters.add("x86")
+            minSdkVersion.apiLevel = 19
         }
         create("x86-64") {
             ndk.abiFilters.add("x86_64")
+            minSdkVersion.apiLevel = 21
         }
         create("all")
     }
