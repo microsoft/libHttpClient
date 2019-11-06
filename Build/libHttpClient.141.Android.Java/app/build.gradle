@@ -7,8 +7,8 @@ model {
 
         defaultConfig.with {
             
-            minSdkVersion.apiLevel = 19
-            targetSdkVersion.apiLevel = 23
+            minSdkVersion.apiLevel = 21
+            targetSdkVersion.apiLevel = 21
         }
 
         compileOptions.with {
