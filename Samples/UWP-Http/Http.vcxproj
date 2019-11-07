@@ -243,9 +243,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Build\libHttpClient.141.UWP.C\libHttpClient.141.UWP.C.vcxproj">
-      <Project>{30753B00-85F9-43E0-B0E0-A5A5F3E4B62A}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

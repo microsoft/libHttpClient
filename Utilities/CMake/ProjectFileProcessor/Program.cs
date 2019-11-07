@@ -172,14 +172,6 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.141.Android.C.vcxproj",
             });
 
-            //libHttpClient.142.XDK.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.XDK.C.vcxproj",
-                template = @"template-libHttpClient.142.XDK.C.vcxproj",
-                output = @"libHttpClient.142.XDK.C.vcxproj",
-            });
-
             //libHttpClient.141.XDK.Cpp
             fileNodes.Add(new FileNode
             {
@@ -223,7 +215,7 @@ namespace ProjectFileProcessor
             //libHttpClient.UnitTest.142.TAEF
             fileNodes.Add(new FileNode
             {
-                cmake_vcxproj = @"libHttpClient.UnitTest.142.TAEF.vcxproj",
+                cmake_vcxproj = @"libHttpClient.UnitTest.TAEF.vcxproj",
                 template = @"template-libHttpClient.UnitTest.142.TAEF.vcxproj",
                 output = @"libHttpClient.UnitTest.142.TAEF.vcxproj",
             });
@@ -231,7 +223,7 @@ namespace ProjectFileProcessor
             //libHttpClient.UnitTest.141.TAEF
             fileNodes.Add(new FileNode
             {
-                cmake_vcxproj = @"libHttpClient.UnitTest.141.TAEF.vcxproj",
+                cmake_vcxproj = @"libHttpClient.UnitTest.TAEF.vcxproj",
                 template = @"template-libHttpClient.UnitTest.141.TAEF.vcxproj",
                 output = @"libHttpClient.UnitTest.141.TAEF.vcxproj",
             });
@@ -239,7 +231,7 @@ namespace ProjectFileProcessor
             //libHttpClient.UnitTest.142.TE
             fileNodes.Add(new FileNode
             {
-                cmake_vcxproj = @"libHttpClient.UnitTest.142.TE.vcxproj",
+                cmake_vcxproj = @"libHttpClient.UnitTest.TE.vcxproj",
                 template = @"template-libHttpClient.UnitTest.142.TE.vcxproj",
                 output = @"libHttpClient.UnitTest.142.TE.vcxproj",
             });
@@ -247,7 +239,7 @@ namespace ProjectFileProcessor
             //libHttpClient.UnitTest.141.TE
             fileNodes.Add(new FileNode
             {
-                cmake_vcxproj = @"libHttpClient.UnitTest.141.TE.vcxproj",
+                cmake_vcxproj = @"libHttpClient.UnitTest.TE.vcxproj",
                 template = @"template-libHttpClient.UnitTest.141.TE.vcxproj",
                 output = @"libHttpClient.UnitTest.141.TE.vcxproj",
             });
@@ -274,14 +266,6 @@ namespace ProjectFileProcessor
                 cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
                 template = @"template-libHttpClient.141.XDK.C.vcxproj",
                 output = @"libHttpClient.141.XDK.Ship.C.vcxproj",
-            });
-
-            //libHttpClient.142.XDK.Ship.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
-                template = @"template-libHttpClient.142.XDK.C.vcxproj",
-                output = @"libHttpClient.142.XDK.Ship.C.vcxproj",
             });
 
             //libHttpClient.140.UWP.Ship.Cpp
