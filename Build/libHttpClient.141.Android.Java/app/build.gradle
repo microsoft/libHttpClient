@@ -3,9 +3,10 @@ apply plugin: 'com.android.model.library'
 model {
     android {
         compileSdkVersion = 21
-        buildToolsVersion = "28.0.3"
+        buildToolsVersion = "25.0.3"
 
-        defaultConfig.with {            
+        defaultConfig.with {
+            
             minSdkVersion.apiLevel = 19
             targetSdkVersion.apiLevel = 21
         }

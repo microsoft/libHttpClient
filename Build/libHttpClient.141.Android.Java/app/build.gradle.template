@@ -3,7 +3,7 @@ apply plugin: 'com.android.model.$(ConfigurationType)'
 model {
     android {
         compileSdkVersion = $(AndroidAPILevelNumber)
-        buildToolsVersion = "$(AndroidBuildToolsVersion)"
+        buildToolsVersion = "25.0.3"
 
         defaultConfig.with {
             $(ApplicationId)
