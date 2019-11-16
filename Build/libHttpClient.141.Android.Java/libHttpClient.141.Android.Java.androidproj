@@ -34,6 +34,9 @@
       <Platform>x86</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <Import Project="$(AndroidTargetsPath)\Android.Default.props" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 
+libHttpClient.paths.props))\libHttpClient.paths.props" />
   <PropertyGroup Label="Globals">
     <AndroidBuildType>Gradle</AndroidBuildType>
     <RootNamespace>libHttpClient</RootNamespace>
@@ -45,9 +48,8 @@
     <_PackagingProjectWithoutNativeComponent>true</_PackagingProjectWithoutNativeComponent>
     <LaunchActivity Condition="'$(LaunchActivity)' == ''">com.libHttpClient.libHttpClient</LaunchActivity>
     <JavaSourceRoots>src\main\java</JavaSourceRoots>
+	<AndroidSdkBuildToolsVersion>25.0.3</AndroidSdkBuildToolsVersion>
   </PropertyGroup>
-  <Import Project="$(AndroidTargetsPath)\Android.Default.props" />
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.paths.props))\libHttpClient.paths.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <ConfigurationType>Library</ConfigurationType>
   </PropertyGroup>

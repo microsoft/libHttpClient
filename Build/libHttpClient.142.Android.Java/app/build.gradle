@@ -6,9 +6,8 @@ model {
         buildToolsVersion = "25.0.3"
 
         defaultConfig.with {
-            
             minSdkVersion.apiLevel = 19
-            targetSdkVersion.apiLevel = 23
+            targetSdkVersion.apiLevel = 21
         }
 
         compileOptions.with {
@@ -32,12 +31,14 @@ model {
         }
         create("arm8") {
             ndk.abiFilters.add("arm64-v8a")
+            minSdkVersion.apiLevel = 21
         }
         create("x86") {
             ndk.abiFilters.add("x86")
         }
         create("x86-64") {
             ndk.abiFilters.add("x86_64")
+            minSdkVersion.apiLevel = 21
         }
         create("all")
     }
