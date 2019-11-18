@@ -32,6 +32,7 @@
     <HCLibToolset Condition="'$(PlatformToolset)'=='v140'">140</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
+    <HCLibToolset Condition="'$(HCLibPlatformType)'=='Android'">141</HCLibToolset>
 
     <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
   </PropertyGroup>
