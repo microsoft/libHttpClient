@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{80FE2440-4F89-4A47-88C6-E86447BC2319}</ProjectGuid>
+    <ProjectGuid>{5e0ce391-1ac5-4930-921e-2577a4b5c530}</ProjectGuid>
     <Keyword>Android</Keyword>
     <PlatformToolset>Clang_5_0</PlatformToolset>
     <AndroidAPILevel Condition="'$(Platform)'!='ARM64' AND '$(Platform)'!='x64'">android-19</AndroidAPILevel>
