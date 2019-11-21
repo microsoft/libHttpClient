@@ -260,7 +260,7 @@ HRESULT HC_WEBSOCKET::Disconnect()
         return E_HC_NOT_INITIALISED;
     }
 
-    if (m_state == State::Disconnected || m_state == State::Disconnecting)
+    if (m_state != State::Connected)
     {
         return E_UNEXPECTED;
     }
