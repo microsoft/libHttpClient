@@ -59,7 +59,9 @@ typedef struct http_singleton
     std::recursive_mutex m_callRoutedHandlersLock;
     std::atomic<int32_t> m_callRoutedHandlersContext{ 0 };
     http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
+#if !HC_NOWEBSOCKETS
     http_internal_unordered_map<int32_t, std::pair<HCWebSocketRoutedHandler, void*>> m_webSocketRoutedHandlers;
+#endif
 
     // HTTP state
     HttpPerformInfo const m_httpPerform;

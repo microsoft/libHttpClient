@@ -9,7 +9,7 @@
 
 using namespace xbox::httpclient;
 
-STDAPI 
+STDAPI
 HCGetLibVersion(_Outptr_ const char** version) noexcept
 try
 {
@@ -23,7 +23,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCInitialize(_In_opt_ HCInitArgs* args) noexcept
 try
 {
@@ -77,7 +77,7 @@ HCSetHttpCallPerformFunction(
     return S_OK;
 }
 
-STDAPI 
+STDAPI
 HCGetHttpCallPerformFunction(
     _Out_ HCCallPerformFunction* performFunc,
     _Out_ void** performContext
@@ -128,6 +128,7 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
     }
 }
 
+#if !HC_NOWEBSOCKETS
 STDAPI_(int32_t) HCAddWebSocketRoutedHandler(
     _In_ HCWebSocketRoutedHandler handler,
     _In_opt_ void* context
@@ -159,4 +160,4 @@ STDAPI_(void) HCRemoveWebSocketRoutedHandler(
         httpSingleton->m_webSocketRoutedHandlers.erase(handlerContext);
     }
 }
-
+#endif
