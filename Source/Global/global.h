@@ -37,15 +37,14 @@ static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
 static const uint32_t DEFAULT_HTTP_TIMEOUT_IN_SECONDS = 30;
 static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 
-typedef struct http_singleton
+typedef struct http_singleton : public std::enable_shared_from_this<http_singleton>
 {
-    http_singleton(
-        HttpPerformInfo const& httpPerformInfo,
-#if !HC_NOWEBSOCKETS
-        WebSocketPerformInfo const& websocketPerformInfo,
-#endif
-        PerformEnv&& performEnv
-    );
+public:
+    static HRESULT create(_In_ HCInitArgs* args) noexcept;
+    static HRESULT cleanup_async(_In_ XAsyncBlock* async) noexcept;
+
+    http_singleton(const http_singleton&) = delete;
+    http_singleton& operator=(http_singleton) = delete;
     ~http_singleton();
 
     std::recursive_mutex m_singletonLock;
@@ -90,13 +89,22 @@ typedef struct http_singleton
 
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
+
+private:
+    http_singleton(
+        HttpPerformInfo const& httpPerformInfo,
+#if !HC_NOWEBSOCKETS
+        WebSocketPerformInfo const& websocketPerformInfo,
+#endif
+        PerformEnv&& performEnv
+    );
+
+    // Self reference to prevent deletion on static shutdown.
+    std::shared_ptr<http_singleton> m_self{ nullptr };
 } http_singleton;
 
 
 std::shared_ptr<http_singleton> get_http_singleton();
-HRESULT init_http_singleton(HCInitArgs* args);
-void cleanup_http_singleton();
-
 
 class shared_ptr_cache
 {

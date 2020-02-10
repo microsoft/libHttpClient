@@ -13,9 +13,124 @@
 
 using namespace xbox::httpclient;
 
-static std::shared_ptr<http_singleton> g_httpSingleton_atomicReadsOnly;
-
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+enum class singleton_access_mode
+{
+    get,
+    set
+};
+
+std::shared_ptr<http_singleton> singleton_access(
+    _In_ singleton_access_mode mode,
+    _In_opt_ std::shared_ptr<http_singleton> singleton = nullptr
+) noexcept
+{
+    static std::mutex s_mutex;
+    static std::shared_ptr<http_singleton> s_singleton{ nullptr };
+
+    std::lock_guard<std::mutex> lock{ s_mutex };
+    switch (mode)
+    {
+    case singleton_access_mode::get:
+    {
+        assert(!singleton);
+        return s_singleton;
+    }
+    case singleton_access_mode::set:
+    {
+        std::swap(s_singleton, singleton);
+        return singleton;
+    }
+    default: 
+    {
+        assert(false);
+        return nullptr;
+    }
+    }
+}
+
+HRESULT http_singleton::create(
+    _In_ HCInitArgs* args
+) noexcept
+{
+    if (singleton_access(singleton_access_mode::get))
+    {
+        return E_HC_ALREADY_INITIALISED;
+    }
+
+    PerformEnv performEnv;
+    auto hr = Internal_InitializeHttpPlatform(args, performEnv);
+
+    if (SUCCEEDED(hr))
+    {
+        auto rawSingleton = new (http_memory::mem_alloc(sizeof(http_singleton))) http_singleton(
+            GetUserHttpPerformHandler(),
+#if !HC_NOWEBSOCKETS
+            GetUserWebSocketPerformHandlers(),
+#endif
+            std::move(performEnv)
+            );
+
+        auto singleton = std::shared_ptr<http_singleton>(rawSingleton, http_alloc_deleter<http_singleton>());
+
+        // Store self reference to be remove on http_singleton::cleanup_async
+        singleton->m_self = singleton;
+
+        singleton = singleton_access(singleton_access_mode::set, singleton);
+    }
+
+    return S_OK;
+}
+
+HRESULT http_singleton::cleanup_async(
+    _In_ XAsyncBlock* async
+) noexcept
+{
+    auto singleton{ singleton_access(singleton_access_mode::set, nullptr) };
+    if (!singleton)
+    {
+        E_HC_NOT_INITIALISED;
+    }
+
+    return XAsyncBegin(
+        async,
+        singleton.get(),
+        reinterpret_cast<void*>(cleanup_async),
+        __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+    {
+        switch (op)
+        {
+        case XAsyncOp::Begin:
+        {
+            auto singleton{ static_cast<http_singleton*>(data->context)->shared_from_this() };
+            singleton->m_self.reset();
+
+            shared_ptr_cache::cleanup(singleton);
+
+            // Wait for all other references to the singleton to go away
+            // Note that the use count check here is only valid because we never create
+            // a weak_ptr to the singleton. If we did that could cause the use count
+            // to increase even though we are the only strong reference
+            while (singleton.use_count() > 1)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds{ 10 });
+            }
+
+            // Destroy singleton on this thread
+            singleton.reset();
+
+            XAsyncComplete(data->async, S_OK, 0);
+            return S_OK;
+        }
+        default:
+        {
+            return S_OK;
+        }
+        }
+    });
+}
 
 http_singleton::http_singleton(
     HttpPerformInfo const& httpPerformInfo,
@@ -33,7 +148,6 @@ http_singleton::http_singleton(
 
 http_singleton::~http_singleton()
 {
-    g_httpSingleton_atomicReadsOnly = nullptr;
     for (auto& mockCall : m_mocks)
     {
         HCHttpCallCloseHandle(mockCall);
@@ -43,66 +157,7 @@ http_singleton::~http_singleton()
 
 std::shared_ptr<http_singleton> get_http_singleton()
 {
-    auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
-    return httpSingleton;
-}
-
-HRESULT init_http_singleton(HCInitArgs* args)
-{
-    HRESULT hr = S_OK;
-
-    // TODO do as a run once? to avoid platform code being inited twice?
-    auto httpSingleton = std::atomic_load(&g_httpSingleton_atomicReadsOnly);
-    if (!httpSingleton)
-    {
-        PerformEnv performEnv;
-        hr = Internal_InitializeHttpPlatform(args, performEnv);
-
-        if (SUCCEEDED(hr))
-        {
-            auto newSingleton = http_allocate_shared<http_singleton>(
-                GetUserHttpPerformHandler(),
-#if !HC_NOWEBSOCKETS
-                GetUserWebSocketPerformHandlers(),
-#endif
-                std::move(performEnv)
-            );
-            std::atomic_compare_exchange_strong(
-                &g_httpSingleton_atomicReadsOnly,
-                &httpSingleton,
-                newSingleton
-            );
-
-            if (newSingleton == nullptr)
-            {
-                hr = E_OUTOFMEMORY;
-            }
-            // At this point there is a singleton (ours or someone else's)
-        }
-    }
-
-    return hr;
-}
-
-void cleanup_http_singleton()
-{
-    std::shared_ptr<http_singleton> httpSingleton;
-    httpSingleton = std::atomic_exchange(&g_httpSingleton_atomicReadsOnly, httpSingleton);
-
-    if (httpSingleton != nullptr)
-    {
-        shared_ptr_cache::cleanup(httpSingleton);
-
-        // Wait for all other references to the singleton to go away
-        // Note that the use count check here is only valid because we never create
-        // a weak_ptr to the singleton. If we did that could cause the use count
-        // to increase even though we are the only strong reference
-        while (httpSingleton.use_count() > 1)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds{ 10 });
-        }
-        // httpSingleton will be destroyed on this thread now
-    }
+    return singleton_access(singleton_access_mode::get);
 }
 
 void http_singleton::set_retry_state(
