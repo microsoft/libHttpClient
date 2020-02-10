@@ -104,6 +104,10 @@ HRESULT http_singleton::cleanup_async(
         {
         case XAsyncOp::Begin:
         {
+            return XAsyncSchedule(data->async, 0);
+        }
+        case XAsyncOp::DoWork:
+        {
             auto singleton{ static_cast<http_singleton*>(data->context)->shared_from_this() };
             singleton->m_self.reset();
 

@@ -735,7 +735,7 @@ try
         return E_INVALIDARG;
     }
 
-    auto headers{ websocket->Headers() };
+    auto& headers{ websocket->Headers() };
     auto it = headers.find(headerName);
     if (it != headers.end())
     {

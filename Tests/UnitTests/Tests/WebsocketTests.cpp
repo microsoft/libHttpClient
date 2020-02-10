@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
@@ -93,8 +93,22 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
-    g_HCWebSocketConnect_Called = true;
-    return S_OK;
+    // TODO bug - inconsistent behavior for websocket providers: Connect calls XAsyncBegin before
+    // invoke the client handler, Send does not.
+    return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+            {
+                g_HCWebSocketConnect_Called = true;
+                XAsyncComplete(data->async, S_OK, 0);
+                return S_OK;
+            }
+            default: return S_OK;
+            }
+        });
 }
 
 bool g_HCWebSocketSendMessage_Called = false;
@@ -105,8 +119,20 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
     _In_opt_ void* context
     )
 {
-    g_HCWebSocketSendMessage_Called = true;
-    return S_OK;
+    return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+            {
+                g_HCWebSocketSendMessage_Called = true;
+                XAsyncComplete(data->async, S_OK, 0);
+                return S_OK;
+            }
+            default: return S_OK;
+            }
+        });
 }
 
 bool g_HCWebSocketSendBinaryMessage_Called = false;
@@ -118,7 +144,20 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendBinaryMessageAsync(
     _In_opt_ void* context
 )
 {
-    g_HCWebSocketSendBinaryMessage_Called = true;
+    return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+            {
+                g_HCWebSocketSendBinaryMessage_Called = true;
+                XAsyncComplete(data->async, S_OK, 0);
+                return S_OK;
+            }
+            default: return S_OK;
+            }
+        });
     return S_OK;
 }
 
@@ -188,22 +227,24 @@ public:
 
     DEFINE_TEST_CASE(TestConnect)
     {
-        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-
         HCWebSocketConnectFunction websocketConnectFunc = nullptr;
         HCWebSocketSendMessageFunction websocketSendMessageFunc = nullptr;
         HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc = nullptr;
         HCWebSocketDisconnectFunction websocketDisconnectFunc = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc, nullptr));
+        void* context = nullptr;
+
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc, &context));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
 
         VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
-        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc, &context));
         VERIFY_IS_NOT_NULL(websocketConnectFunc);
         VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
         VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
+
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         HCWebsocketHandle websocket;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
@@ -217,12 +258,15 @@ public:
         VERIFY_ARE_EQUAL_STR("1234", proxy);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketConnect_Called);
-        XAsyncBlock* asyncBlock = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, asyncBlock));
+        XAsyncBlock asyncBlock{};
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketConnect_Called);
 
+        ZeroMemory(&asyncBlock, sizeof(XAsyncBlock));
         VERIFY_ARE_EQUAL(false, g_HCWebSocketSendMessage_Called);
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSendMessageAsync(websocket, "test", nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSendMessageAsync(websocket, "test", &asyncBlock));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketSendMessage_Called);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketDisconnect_Called);
