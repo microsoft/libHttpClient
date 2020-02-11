@@ -43,6 +43,13 @@ public:
     static HRESULT create(_In_ HCInitArgs* args) noexcept;
     static HRESULT cleanup_async(_In_ XAsyncBlock* async) noexcept;
 
+    http_singleton(
+        HttpPerformInfo const& httpPerformInfo,
+#if !HC_NOWEBSOCKETS
+        WebSocketPerformInfo const& websocketPerformInfo,
+#endif
+        PerformEnv&& performEnv
+    );
     http_singleton(const http_singleton&) = delete;
     http_singleton& operator=(http_singleton) = delete;
     ~http_singleton();
@@ -91,14 +98,6 @@ public:
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
 private:
-    http_singleton(
-        HttpPerformInfo const& httpPerformInfo,
-#if !HC_NOWEBSOCKETS
-        WebSocketPerformInfo const& websocketPerformInfo,
-#endif
-        PerformEnv&& performEnv
-    );
-
     // Self reference to prevent deletion on static shutdown.
     std::shared_ptr<http_singleton> m_self{ nullptr };
 } http_singleton;

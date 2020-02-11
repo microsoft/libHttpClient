@@ -17,13 +17,14 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 enum class singleton_access_mode
 {
+    create,
     get,
-    set
+    cleanup
 };
 
 std::shared_ptr<http_singleton> singleton_access(
     _In_ singleton_access_mode mode,
-    _In_opt_ std::shared_ptr<http_singleton> singleton = nullptr
+    _In_opt_ PerformEnv createArgs = {}
 ) noexcept
 {
     static std::mutex s_mutex;
@@ -32,17 +33,39 @@ std::shared_ptr<http_singleton> singleton_access(
     std::lock_guard<std::mutex> lock{ s_mutex };
     switch (mode)
     {
+    case singleton_access_mode::create:
+    {
+        if (s_singleton)
+        {
+            return nullptr;
+        }
+
+        s_singleton = http_allocate_shared<http_singleton>(
+            GetUserHttpPerformHandler(),
+#if !HC_NOWEBSOCKETS
+            GetUserWebSocketPerformHandlers(),
+#endif
+            std::move(createArgs)
+        );
+
+        return s_singleton;
+        
+    }
     case singleton_access_mode::get:
     {
-        assert(!singleton);
+        assert(!createArgs);
         return s_singleton;
     }
-    case singleton_access_mode::set:
+    case singleton_access_mode::cleanup:
     {
-        std::swap(s_singleton, singleton);
+        assert(!createArgs);
+
+        auto singleton{ std::move(s_singleton) };
+        s_singleton.reset();
+
         return singleton;
     }
-    default: 
+    default:
     {
         assert(false);
         return nullptr;
@@ -54,32 +77,14 @@ HRESULT http_singleton::create(
     _In_ HCInitArgs* args
 ) noexcept
 {
-    if (singleton_access(singleton_access_mode::get))
+    PerformEnv performEnv;
+    RETURN_IF_FAILED(Internal_InitializeHttpPlatform(args, performEnv));
+
+    auto singleton{ singleton_access(singleton_access_mode::create, std::move(performEnv)) };
+    if (!singleton)
     {
         return E_HC_ALREADY_INITIALISED;
     }
-
-    PerformEnv performEnv;
-    auto hr = Internal_InitializeHttpPlatform(args, performEnv);
-
-    if (SUCCEEDED(hr))
-    {
-        auto rawSingleton = new (http_memory::mem_alloc(sizeof(http_singleton))) http_singleton(
-            GetUserHttpPerformHandler(),
-#if !HC_NOWEBSOCKETS
-            GetUserWebSocketPerformHandlers(),
-#endif
-            std::move(performEnv)
-            );
-
-        auto singleton = std::shared_ptr<http_singleton>(rawSingleton, http_alloc_deleter<http_singleton>());
-
-        // Store self reference to be remove on http_singleton::cleanup_async
-        singleton->m_self = singleton;
-
-        singleton = singleton_access(singleton_access_mode::set, singleton);
-    }
-
     return S_OK;
 }
 
@@ -87,10 +92,10 @@ HRESULT http_singleton::cleanup_async(
     _In_ XAsyncBlock* async
 ) noexcept
 {
-    auto singleton{ singleton_access(singleton_access_mode::set, nullptr) };
+    auto singleton{ singleton_access(singleton_access_mode::cleanup) };
     if (!singleton)
     {
-        E_HC_NOT_INITIALISED;
+        return E_HC_NETWORK_NOT_INITIALIZED;
     }
 
     return XAsyncBegin(
