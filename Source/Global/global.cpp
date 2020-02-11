@@ -179,6 +179,7 @@ std::shared_ptr<http_singleton> get_http_singleton()
 
     // get should never fail
     assert(SUCCEEDED(hr));
+    UNREFERENCED_PARAMETER(hr);
 
     return singleton;
 }
