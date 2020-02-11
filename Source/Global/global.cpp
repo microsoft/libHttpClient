@@ -91,6 +91,10 @@ HRESULT http_singleton::create(
     auto hr = singleton_access(singleton_access_mode::create, args, singleton);
     if (SUCCEEDED(hr))
     {
+        // Now that the singleton has been created successfully, set self owning pointer
+        // so it isn't destroyed on static teardown. We are guaranteed that the singleton will be
+        // created successfully exactly once. Setting m_self has to be done here since singleton_access
+        // doesn't have access to the singleton's private members.
         singleton->m_self = singleton;
     }
     return hr;
