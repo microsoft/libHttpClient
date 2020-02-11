@@ -126,7 +126,7 @@ HRESULT http_singleton::cleanup_async(
 
             shared_ptr_cache::cleanup(self);
 
-            // self is the only reference at this point, singleton will be destroyed on this thread.
+            // self is the only reference at this point, the singleton will be destroyed on this thread.
             self.reset();
 
             XAsyncComplete(data->async, S_OK, 0);
