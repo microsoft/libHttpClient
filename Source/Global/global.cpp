@@ -24,8 +24,8 @@ enum class singleton_access_mode
 
 HRESULT singleton_access(
     _In_ singleton_access_mode mode,
-    _Out_ std::shared_ptr<http_singleton>& singleton,
-    _In_opt_ HCInitArgs* createArgs = nullptr
+    _In_opt_ HCInitArgs* createArgs,
+    _Out_ std::shared_ptr<http_singleton>& singleton
 ) noexcept
 {
     static std::mutex s_mutex;
@@ -65,6 +65,11 @@ HRESULT singleton_access(
     {
         assert(!createArgs);
 
+        if (!s_singleton)
+        {
+            return E_HC_NOT_INITIALISED;
+        }
+
         singleton = std::move(s_singleton);
         s_singleton.reset();
 
@@ -83,7 +88,7 @@ HRESULT http_singleton::create(
 ) noexcept
 {
     std::shared_ptr<http_singleton> singleton{};
-    return singleton_access(singleton_access_mode::create, singleton, args);
+    return singleton_access(singleton_access_mode::create, args, singleton);
 }
 
 HRESULT http_singleton::cleanup_async(
@@ -91,7 +96,7 @@ HRESULT http_singleton::cleanup_async(
 ) noexcept
 {
     std::shared_ptr<http_singleton> singleton{};
-    RETURN_IF_FAILED(singleton_access(singleton_access_mode::cleanup, singleton));
+    RETURN_IF_FAILED(singleton_access(singleton_access_mode::cleanup, nullptr, singleton));
 
     return XAsyncBegin(
         async,
@@ -161,7 +166,7 @@ http_singleton::~http_singleton()
 std::shared_ptr<http_singleton> get_http_singleton()
 {
     std::shared_ptr<http_singleton> singleton{};
-    auto hr = singleton_access(singleton_access_mode::get, singleton);
+    auto hr = singleton_access(singleton_access_mode::get, nullptr, singleton);
 
     // get should never fail
     assert(SUCCEEDED(hr));
