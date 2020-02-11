@@ -22,9 +22,10 @@ enum class singleton_access_mode
     cleanup
 };
 
-std::shared_ptr<http_singleton> singleton_access(
+HRESULT singleton_access(
     _In_ singleton_access_mode mode,
-    _In_opt_ PerformEnv createArgs = {}
+    _Out_ std::shared_ptr<http_singleton>& singleton,
+    _In_opt_ HCInitArgs* createArgs = nullptr
 ) noexcept
 {
     static std::mutex s_mutex;
@@ -37,38 +38,42 @@ std::shared_ptr<http_singleton> singleton_access(
     {
         if (s_singleton)
         {
-            return nullptr;
+            return E_HC_ALREADY_INITIALISED;
         }
+
+        PerformEnv performEnv;
+        RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
 
         s_singleton = http_allocate_shared<http_singleton>(
             GetUserHttpPerformHandler(),
 #if !HC_NOWEBSOCKETS
             GetUserWebSocketPerformHandlers(),
 #endif
-            std::move(createArgs)
+            std::move(performEnv)
         );
 
-        return s_singleton;
-        
+        singleton = s_singleton;
+        return S_OK;
     }
     case singleton_access_mode::get:
     {
         assert(!createArgs);
-        return s_singleton;
+        singleton = s_singleton;
+        return S_OK;
     }
     case singleton_access_mode::cleanup:
     {
         assert(!createArgs);
 
-        auto singleton{ std::move(s_singleton) };
+        singleton = std::move(s_singleton);
         s_singleton.reset();
 
-        return singleton;
+        return S_OK;
     }
     default:
     {
         assert(false);
-        return nullptr;
+        return S_OK;
     }
     }
 }
@@ -77,26 +82,16 @@ HRESULT http_singleton::create(
     _In_ HCInitArgs* args
 ) noexcept
 {
-    PerformEnv performEnv;
-    RETURN_IF_FAILED(Internal_InitializeHttpPlatform(args, performEnv));
-
-    auto singleton{ singleton_access(singleton_access_mode::create, std::move(performEnv)) };
-    if (!singleton)
-    {
-        return E_HC_ALREADY_INITIALISED;
-    }
-    return S_OK;
+    std::shared_ptr<http_singleton> singleton{};
+    return singleton_access(singleton_access_mode::create, singleton, args);
 }
 
 HRESULT http_singleton::cleanup_async(
     _In_ XAsyncBlock* async
 ) noexcept
 {
-    auto singleton{ singleton_access(singleton_access_mode::cleanup) };
-    if (!singleton)
-    {
-        return E_HC_NETWORK_NOT_INITIALIZED;
-    }
+    std::shared_ptr<http_singleton> singleton{};
+    RETURN_IF_FAILED(singleton_access(singleton_access_mode::cleanup, singleton));
 
     return XAsyncBegin(
         async,
@@ -165,7 +160,13 @@ http_singleton::~http_singleton()
 
 std::shared_ptr<http_singleton> get_http_singleton()
 {
-    return singleton_access(singleton_access_mode::get);
+    std::shared_ptr<http_singleton> singleton{};
+    auto hr = singleton_access(singleton_access_mode::get, singleton);
+
+    // get should never fail
+    assert(SUCCEEDED(hr));
+
+    return singleton;
 }
 
 void http_singleton::set_retry_state(
