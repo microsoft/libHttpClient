@@ -108,22 +108,21 @@ HRESULT http_singleton::cleanup_async(
         }
         case XAsyncOp::DoWork:
         {
-            auto singleton{ static_cast<http_singleton*>(data->context)->shared_from_this() };
-            singleton->m_self.reset();
-
-            shared_ptr_cache::cleanup(singleton);
+            auto& self{ static_cast<http_singleton*>(data->context)->m_self };
 
             // Wait for all other references to the singleton to go away
             // Note that the use count check here is only valid because we never create
             // a weak_ptr to the singleton. If we did that could cause the use count
             // to increase even though we are the only strong reference
-            while (singleton.use_count() > 1)
+            if (self.use_count() > 1)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds{ 10 });
+                return XAsyncSchedule(data->async, 10);
             }
 
-            // Destroy singleton on this thread
-            singleton.reset();
+            shared_ptr_cache::cleanup(self);
+
+            // self is the only reference at this point, singleton will be destroyed on this thread.
+            self.reset();
 
             XAsyncComplete(data->async, S_OK, 0);
             return S_OK;

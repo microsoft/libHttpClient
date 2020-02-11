@@ -37,7 +37,7 @@ static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
 static const uint32_t DEFAULT_HTTP_TIMEOUT_IN_SECONDS = 30;
 static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 
-typedef struct http_singleton : public std::enable_shared_from_this<http_singleton>
+typedef struct http_singleton
 {
 public:
     static HRESULT create(_In_ HCInitArgs* args) noexcept;
