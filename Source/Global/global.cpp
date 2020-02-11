@@ -88,7 +88,12 @@ HRESULT http_singleton::create(
 ) noexcept
 {
     std::shared_ptr<http_singleton> singleton{};
-    return singleton_access(singleton_access_mode::create, args, singleton);
+    auto hr = singleton_access(singleton_access_mode::create, args, singleton);
+    if (SUCCEEDED(hr))
+    {
+        singleton->m_self = singleton;
+    }
+    return hr;
 }
 
 HRESULT http_singleton::cleanup_async(
