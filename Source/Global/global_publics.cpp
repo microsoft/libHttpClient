@@ -28,14 +28,20 @@ HCInitialize(_In_opt_ HCInitArgs* args) noexcept
 try
 {
     HCTraceImplInit();
-    return xbox::httpclient::init_http_singleton(args);
+    return http_singleton::create(args);
 }
 CATCH_RETURN()
 
 STDAPI_(void) HCCleanup() noexcept
 try
 {
-    xbox::httpclient::cleanup_http_singleton();
+    XAsyncBlock async{};
+    HRESULT hr = http_singleton::cleanup_async(&async);
+    if (SUCCEEDED(hr))
+    {
+        XAsyncGetStatus(&async, true);
+    }
+
     HCTraceImplCleanup();
 }
 CATCH_RETURN_WITH(;)

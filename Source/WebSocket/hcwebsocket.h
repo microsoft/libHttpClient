@@ -66,7 +66,7 @@ public:
 
 private:
     XAsyncBlock m_connectAsyncBlock{};
-    WebSocketCompletionResult m_connectResult;
+    WebSocketCompletionResult m_connectResult{};
     XAsyncBlock* m_clientConnectAsyncBlock{ nullptr };
 
     enum class State
