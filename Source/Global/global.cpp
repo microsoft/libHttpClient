@@ -30,27 +30,27 @@ HRESULT singleton_access(
 {
     static std::mutex s_mutex;
     static std::shared_ptr<http_singleton> s_singleton{ nullptr };
+    static uint8_t s_useCount{ 0 };
 
     std::lock_guard<std::mutex> lock{ s_mutex };
     switch (mode)
     {
     case singleton_access_mode::create:
     {
-        if (s_singleton)
+        // Create the singleton only for the first client calling create
+        if (!s_useCount++)
         {
-            return E_HC_ALREADY_INITIALISED;
-        }
+            PerformEnv performEnv;
+            RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
 
-        PerformEnv performEnv;
-        RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
-
-        s_singleton = http_allocate_shared<http_singleton>(
-            GetUserHttpPerformHandler(),
+            s_singleton = http_allocate_shared<http_singleton>(
+                GetUserHttpPerformHandler(),
 #if !HC_NOWEBSOCKETS
-            GetUserWebSocketPerformHandlers(),
+                GetUserWebSocketPerformHandlers(),
 #endif
-            std::move(performEnv)
-        );
+                std::move(performEnv)
+                );
+        }
 
         singleton = s_singleton;
         return S_OK;
@@ -67,12 +67,15 @@ HRESULT singleton_access(
 
         if (!s_singleton)
         {
+            assert(!s_useCount);
             return E_HC_NOT_INITIALISED;
         }
 
-        singleton = std::move(s_singleton);
-        s_singleton.reset();
-
+        singleton = s_singleton;
+        if (!--s_useCount)
+        {
+            s_singleton.reset();
+        }
         return S_OK;
     }
     default:
