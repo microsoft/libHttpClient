@@ -445,6 +445,7 @@ typedef struct _LIST_ENTRY {
 #define E_HC_CONNECT_ALREADY_CALLED     MAKE_E_HC(0x5005) // 0x89235005
 #define E_HC_NO_NETWORK                 MAKE_E_HC(0x5006) // 0x89235006
 #define E_HC_NETWORK_NOT_INITIALIZED    MAKE_E_HC(0x5007) // 0x89235007
+#define E_HC_INTERNAL_STILLINUSE        MAKE_E_HC(0x5008) // 0x89235008
 
 typedef uint32_t HCMemoryType;
 typedef struct HC_WEBSOCKET* HCWebsocketHandle;

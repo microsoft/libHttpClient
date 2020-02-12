@@ -40,16 +40,10 @@ static const uint32_t DEFAULT_RETRY_DELAY_IN_SECONDS = 2;
 typedef struct http_singleton
 {
 public:
+    static std::shared_ptr<http_singleton> get() noexcept;
     static HRESULT create(_In_ HCInitArgs* args) noexcept;
     static HRESULT cleanup_async(_In_ XAsyncBlock* async) noexcept;
 
-    http_singleton(
-        HttpPerformInfo const& httpPerformInfo,
-#if !HC_NOWEBSOCKETS
-        WebSocketPerformInfo const& websocketPerformInfo,
-#endif
-        PerformEnv&& performEnv
-    );
     http_singleton(const http_singleton&) = delete;
     http_singleton& operator=(http_singleton) = delete;
     ~http_singleton();
@@ -98,6 +92,27 @@ public:
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
 private:
+    http_singleton(
+        HttpPerformInfo const& httpPerformInfo,
+#if !HC_NOWEBSOCKETS
+        WebSocketPerformInfo const& websocketPerformInfo,
+#endif
+        PerformEnv&& performEnv
+    );
+
+    enum class singleton_access_mode
+    {
+        create,
+        get,
+        cleanup
+    };
+
+    static HRESULT singleton_access(
+        _In_ singleton_access_mode mode,
+        _In_opt_ HCInitArgs* createArgs,
+        _Out_ std::shared_ptr<http_singleton>& singleton
+    ) noexcept;
+
     // Self reference to prevent deletion on static shutdown.
     std::shared_ptr<http_singleton> m_self{ nullptr };
 } http_singleton;
