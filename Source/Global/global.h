@@ -100,8 +100,15 @@ private:
         PerformEnv&& performEnv
     );
 
+    enum class singleton_access_mode
+    {
+        create,
+        get,
+        cleanup
+    };
+
     static HRESULT singleton_access(
-        _In_ enum singleton_access_mode mode,
+        _In_ singleton_access_mode mode,
         _In_opt_ HCInitArgs* createArgs,
         _Out_ std::shared_ptr<http_singleton>& singleton
     ) noexcept;

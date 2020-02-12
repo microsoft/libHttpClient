@@ -15,13 +15,6 @@ using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-enum singleton_access_mode
-{
-    create,
-    get,
-    cleanup
-};
-
 HRESULT http_singleton::singleton_access(
     _In_ singleton_access_mode mode,
     _In_opt_ HCInitArgs* createArgs,
@@ -38,7 +31,7 @@ HRESULT http_singleton::singleton_access(
     case singleton_access_mode::create:
     {
         // Create the singleton only for the first client calling create
-        if (!s_useCount++)
+        if (!s_useCount)
         {
             PerformEnv performEnv;
             RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
@@ -55,7 +48,9 @@ HRESULT http_singleton::singleton_access(
             s_singleton->m_self = s_singleton;
         }
 
+        ++s_useCount;
         singleton = s_singleton;
+
         return S_OK;
     }
     case singleton_access_mode::get:
@@ -70,14 +65,17 @@ HRESULT http_singleton::singleton_access(
 
         if (!s_singleton)
         {
-            assert(!s_useCount);
+            assert(s_useCount == 0);
             return E_HC_NOT_INITIALISED;
         }
 
+        --s_useCount;
         singleton = s_singleton;
-        if (!--s_useCount)
+
+        if (s_useCount == 0)
         {
             s_singleton.reset();
+            return E_HC_INTERNAL_STILLINUSE;
         }
         return S_OK;
     }
