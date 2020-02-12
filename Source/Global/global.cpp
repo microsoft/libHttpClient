@@ -15,14 +15,14 @@ using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-enum class singleton_access_mode
+enum singleton_access_mode
 {
     create,
     get,
     cleanup
 };
 
-HRESULT singleton_access(
+HRESULT http_singleton::singleton_access(
     _In_ singleton_access_mode mode,
     _In_opt_ HCInitArgs* createArgs,
     _Out_ std::shared_ptr<http_singleton>& singleton
@@ -43,13 +43,16 @@ HRESULT singleton_access(
             PerformEnv performEnv;
             RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
 
-            s_singleton = http_allocate_shared<http_singleton>(
+            auto rawSingleton = new (http_memory::mem_alloc(sizeof(http_singleton))) http_singleton(
                 GetUserHttpPerformHandler(),
 #if !HC_NOWEBSOCKETS
                 GetUserWebSocketPerformHandlers(),
 #endif
                 std::move(performEnv)
-                );
+            );
+
+            s_singleton = std::shared_ptr<http_singleton>(rawSingleton, http_alloc_deleter<http_singleton>());
+            s_singleton->m_self = s_singleton;
         }
 
         singleton = s_singleton;
@@ -86,21 +89,24 @@ HRESULT singleton_access(
     }
 }
 
+std::shared_ptr<http_singleton> http_singleton::get() noexcept
+{
+    std::shared_ptr<http_singleton> singleton{};
+    auto hr = singleton_access(singleton_access_mode::get, nullptr, singleton);
+
+    // get should never fail
+    assert(SUCCEEDED(hr));
+    UNREFERENCED_PARAMETER(hr);
+
+    return singleton;
+}
+
 HRESULT http_singleton::create(
     _In_ HCInitArgs* args
 ) noexcept
 {
     std::shared_ptr<http_singleton> singleton{};
-    auto hr = singleton_access(singleton_access_mode::create, args, singleton);
-    if (SUCCEEDED(hr))
-    {
-        // Now that the singleton has been created successfully, set self owning pointer
-        // so it isn't destroyed on static teardown. We are guaranteed that the singleton will be
-        // created successfully exactly once. Setting m_self has to be done here since singleton_access
-        // doesn't have access to the singleton's private members.
-        singleton->m_self = singleton;
-    }
-    return hr;
+    return singleton_access(singleton_access_mode::create, args, singleton);
 }
 
 HRESULT http_singleton::cleanup_async(
@@ -177,14 +183,7 @@ http_singleton::~http_singleton()
 
 std::shared_ptr<http_singleton> get_http_singleton()
 {
-    std::shared_ptr<http_singleton> singleton{};
-    auto hr = singleton_access(singleton_access_mode::get, nullptr, singleton);
-
-    // get should never fail
-    assert(SUCCEEDED(hr));
-    UNREFERENCED_PARAMETER(hr);
-
-    return singleton;
+    return http_singleton::get();
 }
 
 void http_singleton::set_retry_state(
