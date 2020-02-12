@@ -72,11 +72,12 @@ HRESULT http_singleton::singleton_access(
         --s_useCount;
         singleton = s_singleton;
 
-        if (s_useCount == 0)
+        if (s_useCount > 0)
         {
-            s_singleton.reset();
             return E_HC_INTERNAL_STILLINUSE;
         }
+
+        s_singleton.reset();
         return S_OK;
     }
     default:
