@@ -2,6 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!--If the HCPlatform is not set, infer it-->
   <Choose>
+    <When Condition="'$(HCPlatform)'=='GDK' OR '$(HCPlatform)'=='GXDK'">
+      <PropertyGroup>
+        <HCPlatform>GSDK</HCPlatform>
+      </PropertyGroup>
+    </When>
     <When Condition="'$(HCPlatform)'!=''">
     </When>
     <When Condition="'$(ApplicationType)'=='Android'">
@@ -21,7 +26,7 @@
     </When>
     <When Condition="'$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64'">
       <PropertyGroup>
-        <HCPlatform>GXDK</HCPlatform>
+        <HCPlatform>GSDK</HCPlatform>
       </PropertyGroup>
     </When>
     <Otherwise>
@@ -36,7 +41,7 @@
       <PreprocessorDefinitions Condition="'$(HCPlatform)'=='Android'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(HCPlatform)'=='UWP'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_UWP</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(HCPlatform)'=='XDK'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_XDK</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(HCPlatform)'=='GXDK'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_GSDK</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(HCPlatform)'=='GSDK'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_GSDK</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(HCPlatform)'=='Win32'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_WIN32</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>

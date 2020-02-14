@@ -15,15 +15,20 @@
       UWP
       Win32
       XDK
-      GXDK
+      GSDK
     -->
 
   <PropertyGroup Condition="'$(HCLibPlatformType)' == ''">
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Windows Store'">UWP</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">XDK</HCLibPlatformType>
-    <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND ('$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64')">GXDK</HCLibPlatformType>
+    <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND ('$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64')">GSDK</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango' AND '$(Platform)'!='Gaming.Desktop.x64' AND '$(Platform)'!='Gaming.Xbox.XboxOne.x64' AND '$(Platform)'!='Gaming.Xbox.Scarlett.x64'">Win32</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Android'">Android</HCLibPlatformType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Back compat reasons -->
+    <HCLibPlatformType Condition="'$(HCLibPlatformType)'=='GDK' OR '$(HCLibPlatformType)'=='GXDK'">GSDK</HCLibPlatformType>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -80,8 +85,8 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);winhttp.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition="'$(HCLibPlatformType)'=='GXDK'">$(GameDKLatest)\GXDK\gameKit\lib\amd64</AdditionalLibraryDirectories>
-      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='GXDK'">%(AdditionalDependencies);XGamePlatform.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition="'$(HCLibPlatformType)'=='GSDK'">$(GameDKLatest)\GXDK\gameKit\lib\amd64</AdditionalLibraryDirectories>
+      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='GSDK'">%(AdditionalDependencies);XGamePlatform.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
