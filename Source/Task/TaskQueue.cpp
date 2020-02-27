@@ -291,7 +291,7 @@ HRESULT TaskQueuePortImpl::Initialize(
 
     case XTaskQueueDispatchMode::ThreadPool:
     case XTaskQueueDispatchMode::SerializedThreadPool:
-        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context, ThreadPoolActionComplete& complete)
+        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context, OS::ThreadPoolActionComplete& complete)
         {
             TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
             pthis->ProcessThreadPoolCallback(complete);
@@ -928,7 +928,7 @@ void TaskQueuePortImpl::SubmitPendingCallback()
 }
 
 // Called from thread pool callback
-void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ ThreadPoolActionComplete& complete)
+void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionComplete& complete)
 {
     referenced_ptr<ITaskQueuePort> ref(this);
     uint32_t wasProcessing = m_processingCallback++;

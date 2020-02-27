@@ -246,8 +246,8 @@ private:
     std::unique_ptr<LocklessQueue<QueueEntry>> m_queueList;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
     std::unique_ptr<LocklessQueue<TerminationEntry*>> m_terminationList;
-    WaitTimer m_timer;
-    ThreadPool m_threadPool;
+    OS::WaitTimer m_timer;
+    OS::ThreadPool m_threadPool;
     std::atomic<uint64_t> m_timerDue = { UINT64_MAX };
     std::atomic<uint64_t> m_nextId = { 0 };
 
@@ -288,7 +288,7 @@ private:
 
     void SignalQueue();
 
-    void ProcessThreadPoolCallback(_In_ ThreadPoolActionComplete& complete);
+    void ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionComplete& complete);
 
 #ifdef _WIN32
     HRESULT InitializeWaitRegistration(
