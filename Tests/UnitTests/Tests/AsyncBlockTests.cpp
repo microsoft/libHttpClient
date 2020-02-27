@@ -80,7 +80,7 @@ private:
         DWORD workThread = 0;
         std::vector<XAsyncOp> opCodes;
         std::atomic<int> inWork = 0;
-        std::atomic<int> refs = 1;
+        std::atomic<int> refs = 0;
         std::atomic<bool> canceled = false;
 
         void AddRef() { refs++; }
@@ -120,6 +120,10 @@ private:
 
         switch (opCode)
         {
+        case XAsyncOp::Begin:
+            d->AddRef();
+            break;
+
         case XAsyncOp::Cancel:
             d->canceled = true;
             break;
@@ -165,6 +169,10 @@ private:
 
         switch (opCode)
         {
+        case XAsyncOp::Begin:
+            d->AddRef();
+            break;
+
         case XAsyncOp::Cancel:
             d->canceled = true;
             break;
@@ -239,7 +247,15 @@ private:
         {
             FactorialCallData* data = new (context) FactorialCallData;
             data->value = value;
-            data->AddRef(); // leak a ref on this guy so we don't try to free it.
+
+            // leak a ref on this guy so we don't try to free it. We need
+            // to do two addrefs because a new object starts with refcount
+            // of zero.  The factorial async process will addref/release so
+            // we need two to "leak" it (not really leaked; the memory is
+            // owned by the async logic)
+            
+            data->AddRef();
+            data->AddRef();
             hr = XAsyncSchedule(async, 0);
         }
         return hr;
@@ -457,6 +473,7 @@ public:
         XAsyncBlock async;
 
         auto data = AutoRef<FactorialCallData>(new FactorialCallData {});
+
         DWORD result;
 
         CompletionThunk cb([&](XAsyncBlock* async)
@@ -918,5 +935,40 @@ public:
         VERIFY_ARE_EQUAL((uint32_t)1, cxt.cleanupCount);
 
         XTaskQueueCloseHandle(async.queue);
+    }
+
+    DEFINE_TEST_CASE(VerifyCompleteInBegin)
+    {
+        bool completed = false;
+
+        XAsyncBlock async{};
+        async.queue = queue;
+        async.context = &completed;
+        async.callback = [](XAsyncBlock* async)
+        {
+            *((bool*)async->context) = true;
+        };
+
+        auto provider = [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch(op)
+            {
+                case XAsyncOp::Begin:
+                    XAsyncComplete(data->async, S_OK, 0);
+                    break;
+
+                case XAsyncOp::Cleanup:
+                    break;
+
+                default:
+                    VERIFY_FAIL();
+                    break;
+            }
+            return S_OK;
+        };
+
+        VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
+        VERIFY_IS_TRUE(completed);
     }
 };

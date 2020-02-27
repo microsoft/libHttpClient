@@ -212,7 +212,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessList.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessQueue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\StaticArray.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueue.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueImpl.h" />
@@ -235,7 +235,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessListTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueueTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />

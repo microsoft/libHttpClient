@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>libHttpClient.UnitTest.142.TAEF</ProjectName>
-    <ProjectGuid>{EBFE0314-0869-46B8-ABCE-A3EE223893B8}</ProjectGuid>
+    <ProjectGuid>{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</ProjectGuid>
     <RootNamespace>libHttpClient.Test</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
@@ -136,7 +136,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessList.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessQueue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\StaticArray.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueue.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueImpl.h" />
@@ -161,7 +161,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessListTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueueTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />

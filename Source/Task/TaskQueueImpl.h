@@ -4,7 +4,7 @@
 #pragma once
 
 #include "AtomicVector.h"
-#include "LocklessList.h"
+#include "LocklessQueue.h"
 #include "StaticArray.h"
 #include "ThreadPool.h"
 #include "WaitTimer.h"
@@ -213,20 +213,16 @@ private:
         XTaskQueueCallback* callback;
         WaitRegistration* waitRegistration;
         uint64_t enqueueTime;
-        std::atomic<uint32_t> refs;
+        uint64_t id;
     };
-
-    typedef LocklessList<QueueEntry>::Node QueueEntryNode;
 
     struct TerminationEntry
     {
         ITaskQueuePortContext* portContext;
         void* callbackContext;
         XTaskQueueTerminatedCallback* callback;
-        LocklessList<TerminationEntry>::Node* node;
+        std::uint64_t node;
     };
-
-    typedef LocklessList<TerminationEntry>::Node TerminationEntryNode;
 
 #ifdef _WIN32
     struct WaitRegistration
@@ -234,10 +230,11 @@ private:
         uint64_t token;
         HANDLE waitHandle;
         PTP_WAIT threadpoolWait;
-        ITaskQueuePortContext* portContext;
         TaskQueuePortImpl* port;
-        QueueEntry* queueEntry;
+        QueueEntry queueEntry;
         std::atomic_flag appended;
+        std::atomic<uint32_t> refs;
+        bool deleted;
     };
 #endif
 
@@ -245,47 +242,45 @@ private:
     XTaskQueueDispatchMode m_dispatchMode = XTaskQueueDispatchMode::Manual;
     AtomicVector<ITaskQueuePortContext*> m_attachedContexts;
     std::atomic<uint32_t> m_processingCallback{ 0 };
-    std::condition_variable_any m_event;
     std::mutex m_lock;
-    std::unique_ptr<LocklessList<QueueEntry>> m_queueList;
-    std::unique_ptr<LocklessList<QueueEntry>> m_pendingList;
-    std::unique_ptr<LocklessList<TerminationEntry>> m_terminationList;
+    std::unique_ptr<LocklessQueue<QueueEntry>> m_queueList;
+    std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
+    std::unique_ptr<LocklessQueue<TerminationEntry*>> m_terminationList;
     WaitTimer m_timer;
     ThreadPool m_threadPool;
     std::atomic<uint64_t> m_timerDue = { UINT64_MAX };
+    std::atomic<uint64_t> m_nextId = { 0 };
 
 #ifdef _WIN32
     StaticArray<WaitRegistration*, PORT_WAIT_MAX> m_waits;
     StaticArray<HANDLE, PORT_EVENT_MAX> m_events;
     uint64_t m_nextWaitToken = 0;
+#else
+    std::condition_variable_any m_event;
 #endif
 
     HRESULT VerifyNotTerminated(_In_ ITaskQueuePortContext* portContext);
     
-    bool IsCallCanceled(_In_ QueueEntry* entry);
+    bool IsCallCanceled(_In_ const QueueEntry& entry);
 
     // Appends the given entry to the active queue.  The entry should already
     // be add-refd.
     bool AppendEntry(
-        _In_ QueueEntry* entry,
-        _In_opt_ QueueEntryNode* node = nullptr,
+        _In_ const QueueEntry& entry,
+        _In_opt_ uint64_t node = 0,
         _In_ bool signal = true);
 
-    // Releases the entry.
-    void ReleaseEntry(
-        _In_ QueueEntry* entry);
-    
     void CancelPendingEntries(
         _In_ ITaskQueuePortContext* portContext,
         _In_ bool appendToQueue);
 
     static void EraseQueue(
-        _In_opt_ LocklessList<QueueEntry>* queue);
+        _In_opt_ LocklessQueue<QueueEntry>* queue);
 
-    void ScheduleNextPendingCallback(
+    bool ScheduleNextPendingCallback(
         _In_ uint64_t dueTime,
-        _Out_ QueueEntry** dueEntry,
-        _Out_ QueueEntryNode** dueEntryNode);
+        _Out_ QueueEntry& dueEntry,
+        _Out_ uint64_t& dueEntryNode);
 
     void SubmitPendingCallback();
 
@@ -301,8 +296,10 @@ private:
 
     bool AppendWaitRegistrationEntry(
         _In_ WaitRegistration* waitReg,
-        _In_ bool addRef = true,
         _In_ bool signal = true);
+
+    bool ReleaseWaitRegistration(
+        _In_ WaitRegistration* waitReg);
 
     void ProcessWaitCallback(
         _In_ WaitRegistration* waitReg);
