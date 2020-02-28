@@ -318,7 +318,7 @@ private:
             uint64_t v;
 
             // Note: this looks horribly inefficient.  General consensus
-            // is this is the best way of doing type puning in a c++ compliant
+            // is this is the best way of doing type punning in a c++ compliant
             // way, and disassembly of this code shows it amounts to the following:
             //
             //      mov	rax, QWORD PTR [rdx]
