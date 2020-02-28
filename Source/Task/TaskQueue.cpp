@@ -226,7 +226,6 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
 
             // Note: queue entries that are parked on the wait registration
             // don't take a reference on the port context, so don't release here.
-            delete waits[idx]->queueEntry;
             delete waits[idx];
         }
     }
@@ -242,6 +241,12 @@ TaskQueuePortImpl::~TaskQueuePortImpl()
         CloseHandle(m_events[0]);
     }
 #endif
+
+    // Destroy these lists in order, since the pending lsit shares
+    // the node heap with the queue list.
+    
+    m_pendingList.reset();
+    m_queueList.reset();
 }
 
 HRESULT TaskQueuePortImpl::Initialize(
@@ -249,13 +254,21 @@ HRESULT TaskQueuePortImpl::Initialize(
 {
     m_dispatchMode = mode;
 
-    m_queueList.reset(new (std::nothrow) LocklessList<QueueEntry>);
+    m_queueList.reset(new (std::nothrow) LocklessQueue<QueueEntry>);
     RETURN_IF_NULL_ALLOC(m_queueList);
 
-    m_pendingList.reset(new (std::nothrow) LocklessList<QueueEntry>);
+    // Lockless lists can share their underlying heaps.  This both reduces
+    // memory costs and allows node addresses from one list to be transferred
+    // to another.  We use this frequently when transferring data across
+    // lists to eliminate the possibility of allocation failures.
+
+    m_pendingList.reset(new (std::nothrow) LocklessQueue<QueueEntry>(*m_queueList.get()));
     RETURN_IF_NULL_ALLOC(m_pendingList);
 
-    m_terminationList.reset(new (std::nothrow) LocklessList<TerminationEntry>);
+    // There should be very few simultaneous termination requests, so we can set the
+    // default heap size to the minimum.
+
+    m_terminationList.reset(new (std::nothrow) LocklessQueue<TerminationEntry*>(0));
     RETURN_IF_NULL_ALLOC(m_terminationList);
 
     RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
@@ -278,7 +291,7 @@ HRESULT TaskQueuePortImpl::Initialize(
 
     case XTaskQueueDispatchMode::ThreadPool:
     case XTaskQueueDispatchMode::SerializedThreadPool:
-        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context, ThreadPoolActionComplete& complete)
+        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context, OS::ThreadPoolActionComplete& complete)
         {
             TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
             pthis->ProcessThreadPoolCallback(complete);
@@ -301,36 +314,35 @@ HRESULT __stdcall TaskQueuePortImpl::QueueItem(
 {
     RETURN_IF_FAILED(VerifyNotTerminated(portContext));
 
-    std::unique_ptr<QueueEntry> entry(new (std::nothrow) QueueEntry);
-    RETURN_IF_NULL_ALLOC(entry);
+    QueueEntry entry;
+    referenced_ptr<ITaskQueuePortContext> portContextHolder(portContext);
 
-    entry->portContext = portContext;
-    entry->portContext->AddRef();
-    entry->callback = callback;
-    entry->callbackContext = callbackContext;
-    entry->waitRegistration = nullptr;
-    entry->refs = 1;
+    entry.portContext = portContext;
+    entry.callback = callback;
+    entry.callbackContext = callbackContext;
+    entry.waitRegistration = nullptr;
+    entry.id = m_nextId++;
 
     if (waitMs == 0)
     {
-        entry->enqueueTime = 0;
-        RETURN_HR_IF_FALSE(E_OUTOFMEMORY, AppendEntry(entry.get()));
+        entry.enqueueTime = 0;
+        RETURN_HR_IF(E_OUTOFMEMORY, !AppendEntry(entry));
     }
     else
     {
-        entry->enqueueTime = m_timer.GetAbsoluteTime(waitMs);
-        RETURN_HR_IF_FALSE(E_OUTOFMEMORY, m_pendingList->push_back(entry.get()));
+        entry.enqueueTime = m_timer.GetAbsoluteTime(waitMs);
+        RETURN_HR_IF(E_OUTOFMEMORY, !m_pendingList->push_back(entry));
 
         // If the entry's enqueue time is < our current time,
         // update the timer.
         while (true)
         {
             uint64_t due = m_timerDue;
-            if (entry->enqueueTime < due)
+            if (entry.enqueueTime < due)
             {
-                if (m_timerDue.compare_exchange_weak(due, entry->enqueueTime))
+                if (m_timerDue.compare_exchange_weak(due, entry.enqueueTime))
                 {
-                    m_timer.Start(entry->enqueueTime);
+                    m_timer.Start(entry.enqueueTime);
                     break;
                 }
             }
@@ -341,7 +353,8 @@ HRESULT __stdcall TaskQueuePortImpl::QueueItem(
         }
     }
 
-    entry.release();
+    // QueueEntry now owns the ref.
+    portContextHolder.release();
     return S_OK;
 }
 
@@ -360,26 +373,23 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     std::unique_ptr<WaitRegistration> waitReg(new (std::nothrow) WaitRegistration);
     RETURN_IF_NULL_ALLOC(waitReg);
 
-    std::unique_ptr<QueueEntry> entry(new (std::nothrow) QueueEntry);
-    RETURN_IF_NULL_ALLOC(entry);
+    // Entries in waitReg get a port context, but it is not
+    // addref'd because a web registration does not keep the
+    // queue alive.  When a wait registration queue entry is
+    // added to the queue the port context will be addref'd.
+    waitReg->queueEntry.portContext = portContext;
+    waitReg->queueEntry.callback = callback;
+    waitReg->queueEntry.callbackContext = callbackContext;
+    waitReg->queueEntry.waitRegistration = waitReg.get();
+    waitReg->queueEntry.id = m_nextId++;
 
-    // Entry gets its port context and an addref on it when it
-    // is added to the queue
-    entry->portContext = nullptr;
-    entry->callback = callback;
-    entry->callbackContext = callbackContext;
-    entry->waitRegistration = waitReg.get();
-    entry->refs = 1;
-
-    // Port context on waitReg is not add-ref'd because a registered
-    // waiter does not keep the queue alive.
     waitReg->waitHandle = waitHandle;
     waitReg->token = ++m_nextWaitToken;
-    waitReg->portContext = portContext;
     waitReg->port = this;
-    waitReg->queueEntry = entry.get();
     waitReg->threadpoolWait = nullptr;
     waitReg->appended.clear();
+    waitReg->refs = 1;
+    waitReg->deleted = false;
 
     std::lock_guard<std::mutex> lock(m_lock);
     RETURN_HR_IF(E_OUTOFMEMORY, m_events.capacity() == 0);
@@ -392,7 +402,6 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
 
     token->token = waitReg->token;
 
-    entry.release();
     waitReg.release();
 
     // The queue may be waiting on our handle array, but
@@ -419,6 +428,7 @@ void __stdcall TaskQueuePortImpl::UnregisterWaitHandle(
             if (m_waits[idx]->token == token.token)
             {
                 toDelete = m_waits[idx];
+                toDelete->deleted = true;
                 m_waits.removeAt(idx);
                 break;
             }
@@ -426,10 +436,6 @@ void __stdcall TaskQueuePortImpl::UnregisterWaitHandle(
 
         if (toDelete != nullptr)
         {
-            // Any running entry will look for this and re-register,
-            // so clear it under the lock.
-            toDelete->queueEntry->waitRegistration = nullptr;
-
             // Remove the handle from our event list
             for (uint32_t idx = 1; idx < m_events.count(); idx++)
             {
@@ -447,8 +453,7 @@ void __stdcall TaskQueuePortImpl::UnregisterWaitHandle(
         SetThreadpoolWait(toDelete->threadpoolWait, nullptr, nullptr);
         WaitForThreadpoolWaitCallbacks(toDelete->threadpoolWait, TRUE);
         CloseThreadpoolWait(toDelete->threadpoolWait);
-        ReleaseEntry(toDelete->queueEntry);
-        delete toDelete;
+        ReleaseWaitRegistration(toDelete);
     }
 
     // The queue may be waiting on our handle array, but
@@ -472,13 +477,11 @@ HRESULT __stdcall TaskQueuePortImpl::PrepareTerminate(
     std::unique_ptr<TerminationEntry> term(new (std::nothrow) TerminationEntry);
     RETURN_IF_NULL_ALLOC(term);
 
-    std::unique_ptr<LocklessList<TerminationEntry>::Node> node(new (std::nothrow) LocklessList<TerminationEntry>::Node);
-    RETURN_IF_NULL_ALLOC(node);
+    RETURN_HR_IF(E_OUTOFMEMORY, !m_terminationList->reserve_node(term->node));
 
     term->callbackContext = callbackContext;
     term->callback = callback;
     term->portContext = portContext;
-    term->node = node.release();
 
     // Mark the port as canceled, but don't overwrite
     // terminating or terminated status.
@@ -493,7 +496,12 @@ void __stdcall TaskQueuePortImpl::CancelTermination(
 {
     TerminationEntry* term = static_cast<TerminationEntry*>(token);
     term->portContext->TrySetStatus(TaskQueuePortStatus::Canceled, TaskQueuePortStatus::Active);
-    delete term->node;
+
+    if (term->node != 0)
+    {
+        m_terminationList->free_node(term->node);
+    }
+
     delete term;
 }
 
@@ -514,8 +522,8 @@ void __stdcall TaskQueuePortImpl::Terminate(
     {
         // This never fails because we preallocate the
         // list node.
-        (void)m_terminationList->push_back(term, term->node);
-        term->node = nullptr; // now owned by the list
+        m_terminationList->push_back(term, term->node);
+        term->node = 0; // now owned by the list
     }
 
     // We will not signal until we are marked as terminated. The queue could
@@ -561,35 +569,36 @@ void __stdcall TaskQueuePortImpl::Detach(
 bool __stdcall TaskQueuePortImpl::DrainOneItem()
 {
     m_processingCallback++;
-    QueueEntry* entry = m_queueList->pop_front();
-    if (entry == nullptr)
-    {
-        m_processingCallback--;
-    }
-    else
-    {
-        ASSERT(entry->refs.load() != 0);
-    }
+    QueueEntry entry;
+    bool popped = false;
 
-    if (entry != nullptr)
+    if (m_queueList->pop_front(entry))
     {
-        entry->callback(entry->callbackContext, IsCallCanceled(entry));
+        popped = true;
+        entry.callback(entry.callbackContext, IsCallCanceled(entry));
         m_processingCallback--;
 
 #ifdef _WIN32
         // If this entry has a wait registration, it needs
         // to be reinitialized as we mark it to only execute
-        // once.
-        if (entry->waitRegistration != nullptr)
+        // once. When the queue entry was aded the wait registration
+        // was addref'd, so release it. If not destroyed it
+        // should be reinitialized.
+        if (entry.waitRegistration != nullptr)
         {
             std::lock_guard<std::mutex> lock(m_lock);            
-            if (entry->waitRegistration != nullptr)
+            if (!ReleaseWaitRegistration(entry.waitRegistration))
             {
-                InitializeWaitRegistration(entry->waitRegistration);
+                InitializeWaitRegistration(entry.waitRegistration);
             }            
         }
+
 #endif
-        ReleaseEntry(entry);
+        entry.portContext->Release();
+    }
+    else
+    {
+        m_processingCallback--;
     }
 
     if (m_queueList->empty())
@@ -598,7 +607,7 @@ bool __stdcall TaskQueuePortImpl::DrainOneItem()
         SignalTerminations();
     }
 
-    return entry != nullptr;
+    return popped;
 }
 
 bool __stdcall TaskQueuePortImpl::Wait(
@@ -684,19 +693,23 @@ HRESULT TaskQueuePortImpl::VerifyNotTerminated(
     return S_OK;
 }
 
-bool TaskQueuePortImpl::IsCallCanceled(_In_ QueueEntry* entry)
+bool TaskQueuePortImpl::IsCallCanceled(_In_ const QueueEntry& entry)
 {
-    return entry->portContext->GetStatus() != TaskQueuePortStatus::Active;
+    return entry.portContext->GetStatus() != TaskQueuePortStatus::Active;
 }
 
 // Appends the given entry to the active queue.  The entry should already
 // be add-refd. This will return false on failure.
 bool TaskQueuePortImpl::AppendEntry(
-    _In_ QueueEntry* entry,
-    _In_opt_ QueueEntryNode* node,
+    _In_ const QueueEntry& entry,
+    _In_opt_ uint64_t node,
     _In_ bool signal)
 {
-    if (!m_queueList->push_back(entry, node))
+    if (node != 0)
+    {
+        m_queueList->push_back(entry, node);
+    }
+    else if (!m_queueList->push_back(entry))
     {
         return false;
     }
@@ -736,20 +749,6 @@ bool TaskQueuePortImpl::AppendEntry(
     return true;
 }
 
-// Releases the entry and the ref on the port context.
-void TaskQueuePortImpl::ReleaseEntry(
-    _In_ QueueEntry* entry)
-{
-    if (--entry->refs == 0)
-    {
-        if (entry->portContext != nullptr)
-        {
-            entry->portContext->Release();
-        }
-        delete entry;
-    }
-}
-
 void TaskQueuePortImpl::CancelPendingEntries(
     _In_ ITaskQueuePortContext* portContext,
     _In_ bool appendToQueue)
@@ -761,34 +760,34 @@ void TaskQueuePortImpl::CancelPendingEntries(
     m_timer.Cancel();
     m_timerDue = UINT64_MAX;
     
-    QueueEntryNode* queueEntryNode;
-    QueueEntry* queueEntry = m_pendingList->pop_front(&queueEntryNode);
-    QueueEntry* initialPushedEntry = nullptr;
-    while(queueEntry != nullptr)
+    QueueEntry queueEntry;
+    uint64_t queueEntryNode;
+    uint64_t initialPushedId = UINT64_MAX;
+
+    while(m_pendingList->pop_front(queueEntry, queueEntryNode))
     {
-        if (queueEntry == initialPushedEntry)
+        if (queueEntry.id == initialPushedId)
         {
             m_pendingList->push_back(queueEntry, queueEntryNode);
             break;
         }
-        
-        if (queueEntry->portContext == portContext)
+
+        if (queueEntry.portContext == portContext)
         {
             if (!appendToQueue || !AppendEntry(queueEntry, queueEntryNode))
             {
-                ReleaseEntry(queueEntry);
-                delete queueEntryNode;
+                queueEntry.portContext->Release();
+                m_pendingList->free_node(queueEntryNode);
             }
         }
         else
         {
-            if (initialPushedEntry == nullptr)
+            if (initialPushedId == UINT64_MAX)
             {
-                 initialPushedEntry = queueEntry;
+                 initialPushedId = queueEntry.id;
             }
             m_pendingList->push_back(queueEntry, queueEntryNode);
         }
-        queueEntry = m_pendingList->pop_front(&queueEntryNode);
     }
     
     SubmitPendingCallback();
@@ -802,18 +801,14 @@ void TaskQueuePortImpl::CancelPendingEntries(
     for (uint32_t index = m_waits.count(); index > 0; index--)
     {
         uint32_t idx = index - 1;
-        if (m_waits[idx]->portContext == portContext)
+        if (m_waits[idx]->queueEntry.portContext == portContext)
         {
             CloseThreadpoolWait(m_waits[idx]->threadpoolWait);
-            m_waits[idx]->queueEntry->waitRegistration = nullptr;
+            m_waits[idx]->queueEntry.waitRegistration = nullptr;
 
             if (appendToQueue)
             {
-                AppendWaitRegistrationEntry(m_waits[idx], false);
-            }
-            else
-            {
-                ReleaseEntry(m_waits[idx]->queueEntry);
+                AppendWaitRegistrationEntry(m_waits[idx]);
             }
             
             delete m_waits[idx];
@@ -826,31 +821,31 @@ void TaskQueuePortImpl::CancelPendingEntries(
 }
 
 void TaskQueuePortImpl::EraseQueue(
-    _In_opt_ LocklessList<QueueEntry>* queue)
+    _In_opt_ LocklessQueue<QueueEntry>* queue)
 {
     if (queue != nullptr)
     {
-        QueueEntry* entry = queue->pop_front();
-        while(entry != nullptr)
+        QueueEntry entry;
+        
+        while(queue->pop_front(entry))
         {
-            ASSERT(entry->portContext != nullptr);
-            entry->portContext->Release();
-            delete entry;
-            entry = queue->pop_front();
+            entry.portContext->Release();
         }
     }
 }
 
 // Examines the pending callback list, optionally popping the entry off the
 // list that matches m_timerDue, and schedules the timer for the next entry.
-void TaskQueuePortImpl::ScheduleNextPendingCallback(
+bool TaskQueuePortImpl::ScheduleNextPendingCallback(
     _In_ uint64_t dueTime,
-    _Out_ QueueEntry** dueEntry,
-    _Out_ QueueEntryNode** dueEntryNode)
+    _Out_ QueueEntry& dueEntry,
+    _Out_ uint64_t& dueEntryNode)
 {
-    QueueEntry* nextItem = nullptr;
-    *dueEntry = nullptr;
-    *dueEntryNode = nullptr;
+    QueueEntry nextItem = {};
+    bool hasDueEntry = false;
+    bool hasNextItem = false;
+
+    dueEntryNode = 0;
 
     // We pop items off the pending list till it is empty, looking for 
     // our due time.  We can do this without a lock because we only call
@@ -858,49 +853,48 @@ void TaskQueuePortImpl::ScheduleNextPendingCallback(
     // and messing with this list.  We must not rely on a lock here because 
     // we need to allow QueueItem to remain lock free.
 
-    LocklessList<QueueEntry> pendingList;
-    QueueEntryNode* node;
-    QueueEntry* entry = m_pendingList->pop_front(&node);
-    while (entry != nullptr)
+    LocklessQueue<QueueEntry> pendingList(*(m_pendingList.get()));
+    uint64_t node;
+    QueueEntry entry;
+
+    while (m_pendingList->pop_front(entry, node))
     {
-        if ((*dueEntry) == nullptr && entry->enqueueTime == dueTime)
+        if (!hasDueEntry && entry.enqueueTime == dueTime)
         {
-            *dueEntry = entry;
-            *dueEntryNode = node;
+            dueEntry = entry;
+            dueEntryNode = node;
+            hasDueEntry = true;
         }
-        else if (nextItem == nullptr || nextItem->enqueueTime > entry->enqueueTime)
+        else if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
         {
             nextItem = entry;
+            hasNextItem = true;
             pendingList.push_back(entry, node);
         }
         else
         {
             pendingList.push_back(entry, node);
         }
-
-        entry = m_pendingList->pop_front(&node);
     }
 
-    entry = pendingList.pop_front(&node);
-    while (entry != nullptr)
+    while (pendingList.pop_front(entry, node))
     {
         m_pendingList->push_back(entry, node);
-        entry = pendingList.pop_front(&node);
     }
 
-    if (nextItem != nullptr)
+    if (hasNextItem)
     {
         while (true)
         {
-            if (m_timerDue.compare_exchange_weak(dueTime, nextItem->enqueueTime))
+            if (m_timerDue.compare_exchange_weak(dueTime, nextItem.enqueueTime))
             {
-                m_timer.Start(nextItem->enqueueTime);
+                m_timer.Start(nextItem.enqueueTime);
                 break;
             }
 
             dueTime = m_timerDue.load();
 
-            if (dueTime <= nextItem->enqueueTime)
+            if (dueTime <= nextItem.enqueueTime)
             {
                 break;
             }
@@ -914,25 +908,27 @@ void TaskQueuePortImpl::ScheduleNextPendingCallback(
             m_timer.Cancel();
         }
     }
+
+    return hasDueEntry;
 }
 
 void TaskQueuePortImpl::SubmitPendingCallback()
 {
-    QueueEntry* dueEntry;
-    QueueEntryNode* dueEntryNode;
-    ScheduleNextPendingCallback(m_timerDue.load(), &dueEntry, &dueEntryNode);
-
-    if (dueEntry != nullptr)
+    QueueEntry dueEntry;
+    uint64_t dueEntryNode;
+    
+    if (ScheduleNextPendingCallback(m_timerDue.load(), dueEntry, dueEntryNode))
     {
         if (!AppendEntry(dueEntry, dueEntryNode))
         {
-            ReleaseEntry(dueEntry);
+            dueEntry.portContext->Release();
+            m_queueList->free_node(dueEntryNode);
         }
     }
 }
 
 // Called from thread pool callback
-void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ ThreadPoolActionComplete& complete)
+void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionComplete& complete)
 {
     referenced_ptr<ITaskQueuePort> ref(this);
     uint32_t wasProcessing = m_processingCallback++;
@@ -958,17 +954,18 @@ void TaskQueuePortImpl::SignalQueue()
 {
 #ifdef _WIN32
     SetEvent(m_events[0]);
-#endif
+#else
     m_event.notify_all();
+#endif
 }
 
 void TaskQueuePortImpl::SignalTerminations()
 {
-    TerminationEntryNode* termNode;
-    TerminationEntry* term = m_terminationList->pop_front(&termNode);
+    uint64_t termNode;
+    TerminationEntry* term;
     TerminationEntry* initialPushBackNode = nullptr;
     
-    while(term != nullptr)
+    while(m_terminationList->pop_front(term, termNode))
     {
         if (term == initialPushBackNode)
         {
@@ -980,7 +977,7 @@ void TaskQueuePortImpl::SignalTerminations()
         {
             term->callback(term->callbackContext);
             delete term;
-            delete termNode;
+            m_terminationList->free_node(termNode);
         }
         else
         {
@@ -990,7 +987,6 @@ void TaskQueuePortImpl::SignalTerminations()
             }
             m_terminationList->push_back(term, termNode);
         }
-        term = m_terminationList->pop_front(&termNode);
     }
 }
 
@@ -1014,12 +1010,6 @@ void CALLBACK TaskQueuePortImpl::WaitCallback(
 HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
     _In_ WaitRegistration* waitReg)
 {
-    if (waitReg->queueEntry->portContext != nullptr)
-    {
-        waitReg->queueEntry->portContext->Release();
-        waitReg->queueEntry->portContext = nullptr;
-    }
-
     waitReg->appended.clear();
 
     if (waitReg->threadpoolWait == nullptr)
@@ -1040,36 +1030,43 @@ HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
 // correctly releases the queue entry.
 bool TaskQueuePortImpl::AppendWaitRegistrationEntry(
     _In_ WaitRegistration* waitReg,
-    _In_ bool addRef,
     _In_ bool signal)
 {
     // Prepare the queue entry for insert
-    QueueEntry* entry = waitReg->queueEntry;
-
+    QueueEntry entry = waitReg->queueEntry;
     bool success = true;
 
     if (waitReg->appended.test_and_set() == false)
     {
-        if (addRef)
-        {
-            entry->refs++;
-        }
+        entry.portContext->AddRef();
+        waitReg->refs++;
 
-        ASSERT(entry->portContext == nullptr);
-        entry->portContext = waitReg->portContext;
-        entry->portContext->AddRef();
-
-        success = AppendEntry(entry, nullptr, signal);
-
+        success = AppendEntry(entry, 0, signal);
         if (!success)
         {
-            entry->portContext->Release();
-            entry->portContext = nullptr;
-            ReleaseEntry(entry);
+            entry.portContext->Release();
+            waitReg->refs--;
         }
     }
 
     return success;
+}
+
+bool TaskQueuePortImpl::ReleaseWaitRegistration(
+    _In_ WaitRegistration* waitReg)
+{
+    bool deleted = waitReg->deleted;
+
+    if (--waitReg->refs == 0)
+    {
+        delete waitReg;
+        return true;
+    }
+
+    // We return true for the final release if the reg
+    // is being deleted. This prevents a race during
+    // reinit.
+    return deleted;
 }
 
 // Called from thread pool when a wait is satisfied

@@ -79,6 +79,7 @@
 		9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		9CC0523821374B5D0009B69A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
 		9CC0523921374B5D0009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
+		D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D335CABE24085A9A005958B3 /* LocklessQueue.h */; };
 		D3DAA85121C0E4090009C7F6 /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
 		D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
 /* End PBXBuildFile section */
@@ -190,6 +191,7 @@
 		9CC0523621374B5D0009B69A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../Binaries/iOS/lib/libcrypto.a; sourceTree = "<group>"; };
 		9CC0523721374B5D0009B69A /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../Binaries/iOS/lib/libssl.a; sourceTree = "<group>"; };
 		A529DDBC20A4C88F00D50640 /* http_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_apple.h; sourceTree = "<group>"; };
+		D335CABE24085A9A005958B3 /* LocklessQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocklessQueue.h; sourceTree = "<group>"; };
 		D3C5B5502148481F004BE1FF /* WaitTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaitTimer.h; sourceTree = "<group>"; };
 		D3C5B552214848B6004BE1FF /* ios_WaitTimer_target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_WaitTimer_target.h; sourceTree = "<group>"; };
 		D3C5B553214848B6004BE1FF /* ios_WaitTimer_target.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_WaitTimer_target.mm; sourceTree = "<group>"; };
@@ -204,7 +206,6 @@
 		D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadPool_stl.cpp; sourceTree = "<group>"; };
 		D3DAA84D21C0E4090009C7F6 /* TaskQueueImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskQueueImpl.h; sourceTree = "<group>"; };
 		D3DAA84F21C0E4090009C7F6 /* ThreadPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadPool.h; sourceTree = "<group>"; };
-		D3DAA85021C0E4090009C7F6 /* LocklessList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocklessList.h; sourceTree = "<group>"; };
 		D3DAA85421C0E47F0009C7F6 /* XTaskQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XTaskQueue.h; sourceTree = "<group>"; };
 		D3DAA85521C0E47F0009C7F6 /* XAsync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XAsync.h; sourceTree = "<group>"; };
 		D3DAA85621C0E47F0009C7F6 /* XAsyncProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XAsyncProvider.h; sourceTree = "<group>"; };
@@ -401,8 +402,8 @@
 		58A7E9AD209ADEB100CC6774 /* Task */ = {
 			isa = PBXGroup;
 			children = (
+				D335CABE24085A9A005958B3 /* LocklessQueue.h */,
 				D3C6513F21DA3C4D002A8F59 /* AtomicVector.h */,
-				D3DAA85021C0E4090009C7F6 /* LocklessList.h */,
 				D3DAA84A21C0E4090009C7F6 /* referenced_ptr.h */,
 				D3DAA84B21C0E4090009C7F6 /* StaticArray.h */,
 				D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */,
@@ -560,6 +561,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -344,7 +344,7 @@ static void SignalWait(_In_ AsyncStateRef const& state);
 static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal, _In_ size_t contextSize);
 static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSize);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
-static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, ProviderCleanupLocation location);
+static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, _In_ ProviderCleanupLocation location);
 
 static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal, _In_ size_t contextSize)
 {
@@ -429,14 +429,13 @@ static void CleanupState(_Inout_ AsyncStateRef&& state)
     }
 }
 
-static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, ProviderCleanupLocation location)
+static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, _In_ ProviderCleanupLocation location)
 {
     if (state->providerCleanup.compare_exchange_strong(location, ProviderCleanupLocation::CleanedUp))
     {
         (void)state->provider(XAsyncOp::Cleanup, &state->providerData);
     }
 }
-
 
 static void SignalCompletion(_In_ AsyncStateRef const& state)
 {
