@@ -985,6 +985,6 @@ public:
 
         VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
-        VERIFY_ARE_EQUAL(WAIT_OBJECT_0, WaitForSingleObject(context.evt, 2500));
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(context.evt, 2500));
     }
 };
