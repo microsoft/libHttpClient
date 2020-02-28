@@ -939,14 +939,30 @@ public:
 
     DEFINE_TEST_CASE(VerifyCompleteInBegin)
     {
-        bool completed = false;
+        struct Context
+        {
+            HANDLE evt = nullptr;
 
+            Context()
+            {
+                evt = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+                VERIFY_IS_NOT_NULL(evt);
+            }
+
+            ~Context()
+            {
+                if (evt) CloseHandle(evt);
+            }
+        };
+
+        Context context;
         XAsyncBlock async{};
         async.queue = queue;
-        async.context = &completed;
+        async.context = &context;
         async.callback = [](XAsyncBlock* async)
         {
-            *((bool*)async->context) = true;
+            Context* cxt = static_cast<Context*>(async->context);
+            SetEvent(cxt->evt);
         };
 
         auto provider = [](XAsyncOp op, const XAsyncProviderData* data)
@@ -969,6 +985,6 @@ public:
 
         VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
-        VERIFY_IS_TRUE(completed);
+        VERIFY_ARE_EQUAL(WAIT_OBJECT_0, WaitForSingleObject(context.evt, 2500));
     }
 };

@@ -157,7 +157,7 @@ public:
 
         if (n != nullptr)
         {
-            address = a.value;
+            address = a;
             return true;
         }
         else
@@ -175,7 +175,7 @@ public:
     void free_node(_In_ uint64_t address) noexcept
     {
         Address a;
-        a.value = address;
+        a = address;
         Node* n = to_node(a);
         m_heap.free(n, a);
     }
@@ -201,6 +201,25 @@ public:
     }
 
     //
+    // Pushes the given data onto the back
+    // of the queue, moving TData.
+    //
+    bool push_back(_In_ TData&& data) noexcept
+    {
+        Address address;
+        Node* node = m_heap.alloc(address);
+
+        if (node != nullptr)
+        {
+            node->data = std::move(data);
+            m_activeList.push(node, address);
+            return true;
+        }
+
+        return false;
+    }
+
+    //
     // Pushes the given data onto the back of the queue,
     // using a reserved node pointer.  This never fails as
     // the node pointer was preallocated.
@@ -208,7 +227,7 @@ public:
     void push_back(_In_ TData data, _In_ uint64_t address)
     {
         Address a;
-        a.value = address;
+        a = address;
         Node* n = to_node(a);
         n->data = std::move(data);
         m_activeList.push(n, a);
@@ -253,7 +272,7 @@ public:
         {
             data = std::move(node->data);
             node->data = TData {};
-            address = a.value;
+            address = a;
             return true;
         }
         
@@ -272,27 +291,48 @@ private:
     // Nodes live in a contiguous memory block, and there are multiple
     // blocks. Address represents the position of the
     // node and must be 64 bits.
+    
     struct Address
     {
-        union
-        {
-            struct
-            {
-                uint32_t index;
-                uint16_t block;
-                uint16_t aba;
-            } s;
-            uint64_t value;
-        };
+        uint64_t index : 32;
+        uint64_t block : 16;
+        uint64_t aba   : 16;
         
         inline bool operator == (_In_ const Address& other) const
         {
-            return value == other.value;
+            uint64_t v = *this;
+            uint64_t ov = other;
+            return v == ov;
         }
 
         inline bool operator != (_In_ const Address& other) const
         {
-            return value != other.value;
+            uint64_t v = *this;
+            uint64_t ov = other;
+            return v != ov;
+        }
+
+        inline operator uint64_t () const
+        {
+            C_ASSERT(sizeof(Address) == sizeof(uint64_t));
+            uint64_t v;
+
+            // Note: this looks horribly inefficient.  General consensus
+            // is this is the best way of doing type puning in a c++ compliant
+            // way, and disassembly of this code shows it amounts to the following:
+            //
+            //      mov	rax, QWORD PTR [rdx]
+            //
+            // So, no real call out to memcpy for retail.
+
+            memcpy(&v, this, sizeof(v));
+            return v;
+        }
+
+        inline Address& operator = (_In_ uint64_t v)
+        {
+            memcpy(this, &v, sizeof(v));
+            return *this;
         }
     };
 
@@ -371,7 +411,7 @@ private:
         inline void push(_In_ Node* node, _In_ Address address) noexcept
         {
             node->next = m_end;
-            address.s.aba++;
+            address.aba++;
             push_range(address, address);
         }
         
@@ -490,6 +530,12 @@ private:
             {
                 Block* d = block;
                 block = block->next;
+
+                for (uint32_t idx = 0; idx < m_blockSize; idx++)
+                {
+                    d->nodes[idx].~Node();
+                }
+
                 aligned_free(d);
             }
         }
@@ -517,11 +563,11 @@ private:
         {
             Block* block = blockCache.load();
 
-            if (block == nullptr || block->id != address.s.block)
+            if (block == nullptr || block->id != address.block)
             {
                 for(block = m_blockList; block != nullptr; block = block->next)
                 {
-                    if (block->id == address.s.block)
+                    if (block->id == address.block)
                     {
                         blockCache = block;
                         break;
@@ -529,7 +575,7 @@ private:
                 }
             }
 
-            return &block->nodes[address.s.index];
+            return &block->nodes[address.index];
         }
 
         // Returns a node back to the heap
@@ -605,9 +651,9 @@ private:
             for (uint32_t index = 0; index < m_blockSize; index++)
             {
                 block->nodes[index].next = prev;
-                prev.s.block = static_cast<uint16_t>(block->id);
-                prev.s.index = index;
-                prev.s.aba = 0;
+                prev.block = static_cast<uint16_t>(block->id);
+                prev.index = index;
+                prev.aba = 0;
             }
 
             // Now connect this block to the tail. Because we never delete
@@ -625,7 +671,7 @@ private:
 
                 Address end = { 0 };
                 Address a = { 0 };
-                a.s.block = static_cast<uint16_t>(block->id);
+                a.block = static_cast<uint16_t>(block->id);
                 
                 block->nodes[0].next = end;
                 block->nodes[1].next = end;
@@ -662,9 +708,9 @@ private:
             Address rangeBegin { 0 };
             Address rangeEnd { 0 };
 
-            rangeBegin.s.block = rangeEnd.s.block = static_cast<uint16_t>(block->id);
-            rangeBegin.s.index = m_blockSize - 1;
-            rangeEnd.s.index = startIndex;
+            rangeBegin.block = rangeEnd.block = static_cast<uint16_t>(block->id);
+            rangeBegin.index = m_blockSize - 1;
+            rangeEnd.index = startIndex;
             m_freeList.push_range(rangeBegin, rangeEnd);
             
             return true;
@@ -693,7 +739,7 @@ private:
     void Initialize()
     {
         Address end = m_heap.end();
-        end.s.index++;
+        end.index++;
 
         Address dummy;
         Node* n = m_heap.alloc(dummy);
