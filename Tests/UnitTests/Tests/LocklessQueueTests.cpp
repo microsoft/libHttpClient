@@ -2,21 +2,21 @@
 
 #include "pch.h"
 #include "UnitTestIncludes.h"
-#include "LocklessList.h"
+#include "LocklessQueue.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 
-DEFINE_TEST_CLASS(LocklessListTests)
+DEFINE_TEST_CLASS(LocklessQueueTests)
 {
 public:
 
 #ifdef USING_TAEF
 
-    BEGIN_TEST_CLASS(LocklessListTests)
+    BEGIN_TEST_CLASS(LocklessQueueTests)
     END_TEST_CLASS()
 
 #else
-    DEFINE_TEST_CLASS_PROPS(LocklessListTests);
+    DEFINE_TEST_CLASS_PROPS(LocklessQueueTests);
 #endif
 
     TEST_METHOD(VerifyBasicOps)
@@ -25,7 +25,7 @@ public:
         std::unique_ptr<bool[]> ops(new bool[opCount]);
         memset(ops.get(), 0, sizeof(bool) * opCount);
 
-        LocklessList<uint32_t> list;
+        LocklessQueue<uint32_t*> list;
         VERIFY_IS_TRUE(list.empty());
 
         for(uint32_t idx = 0; idx < opCount; idx++)
@@ -39,9 +39,9 @@ public:
         while(true)
         {
             bool wasEmpty = list.empty();
-            auto node = list.pop_front();
+            uint32_t* node;
 
-            if (node == nullptr)
+            if (!list.pop_front(node))
             {
                 VERIFY_IS_TRUE(wasEmpty);
                 break;
@@ -70,7 +70,7 @@ public:
 
         //while(!IsDebuggerPresent()) Sleep(1000);
 
-        LocklessList<uint32_t> list;
+        LocklessQueue<uint32_t*> list;
 
         std::thread pushThreads[totalPushThreads];
 
@@ -104,8 +104,8 @@ public:
         {
             std::thread newThread([&list, slotsPtr]
             {
-                uint32_t* node = list.pop_front();
-                while(node != nullptr)
+                uint32_t* node;
+                while(list.pop_front(node))
                 {
                     if (slotsPtr[*node])
                     {
@@ -114,7 +114,6 @@ public:
                     }
                     slotsPtr[*node] = true;
                     delete node;
-                    node = list.pop_front();
                 }
             });
             popThreads[threadIndex].swap(newThread);
@@ -151,7 +150,7 @@ public:
         std::unique_ptr<bool[]> ops(new bool[opCount]);
         memset(ops.get(), 0, sizeof(bool) * opCount);
 
-        LocklessList<uint32_t> list1;
+        LocklessQueue<uint32_t*> list1;
 
         for(uint32_t idx = 0; idx < opCount; idx++)
         {
@@ -160,26 +159,28 @@ public:
             VERIFY_IS_TRUE(list1.push_back(value));
         }
 
-        LocklessList<uint32_t> list2;
+        // Setup list2 to use the same node heap as list1
+        // so they can share nodes.
+        LocklessQueue<uint32_t*> list2(list1);
 
         while(true)
         {
-            LocklessList<uint32_t>::Node* node;
-            auto value = list1.pop_front(&node);
+            std::uint64_t node;
+            std::uint32_t* value;
 
-            if (value == nullptr)
+            if (!list1.pop_front(value, node))
             {
                 break;
             }
 
-            VERIFY_IS_TRUE(list2.push_back(value, node));
+            list2.push_back(value, node);
         }
 
         while(true)
         {
-            auto value = list2.pop_front();
+            std::uint32_t* value;
 
-            if (value == nullptr)
+            if (!list2.pop_front(value))
             {
                 break;
             }
@@ -196,7 +197,7 @@ public:
 
     TEST_METHOD(VerifyRemoveAndReAdd)
     {
-        LocklessList<uint32_t> list;
+        LocklessQueue<uint32_t*> list;
         const uint32_t total = 10;
 
         for (uint32_t idx = 0; idx < total; idx++)
@@ -209,9 +210,9 @@ public:
         uint32_t evenCount = 0;
         uint32_t evenPushCount = 0;
         uint32_t oddCount = 0;
+        uint32_t* node;
 
-        uint32_t* node = list.pop_front();
-        while (node != nullptr)
+        while (list.pop_front(node))
         {
             if (node == initial)
             {
@@ -233,19 +234,15 @@ public:
                 list.push_back(node);
                 evenPushCount++;
             }
-
-            node = list.pop_front();
         }
 
         // Now pop off what's left - they should be all the
         // evens.
-        node = list.pop_front();
-        while (node != nullptr)
+        while (list.pop_front(node))
         {
             VERIFY_ARE_EQUAL(0u, ((*node) & 1u));
             delete node;
             evenCount++;
-            node = list.pop_front();
         }
 
         VERIFY_ARE_EQUAL(oddCount, evenPushCount);

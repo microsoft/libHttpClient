@@ -98,7 +98,7 @@ set(Public_Source_Files
 set(Task_Source_Files
     ../../../Source/Task/AsyncLib.cpp
     ../../../Source/Task/AtomicVector.h
-    ../../../Source/Task/LocklessList.h
+    ../../../Source/Task/LocklessQueue.h
     ../../../Source/Task/referenced_ptr.h
     ../../../Source/Task/StaticArray.h
     ../../../Source/Task/TaskQueue.cpp
@@ -257,7 +257,7 @@ set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/CallbackThunk.h
     ../../../Tests/UnitTests/Tests/GlobalTests.cpp
     ../../../Tests/UnitTests/Tests/HttpTests.cpp
-    ../../../Tests/UnitTests/Tests/LocklessListTests.cpp
+    ../../../Tests/UnitTests/Tests/LocklessQueueTests.cpp
     ../../../Tests/UnitTests/Tests/MockTests.cpp
     ../../../Tests/UnitTests/Tests/TaskQueueTests.cpp
     ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
