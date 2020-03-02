@@ -190,7 +190,7 @@ public:
     bool push_back(_In_ const TData& data)
     {
         TData copy = data;
-        return move_back(copy);
+        return move_back(std::move(copy));
     }
 
     //
@@ -212,7 +212,7 @@ public:
     void push_back(_In_ const TData& data, _In_ uint64_t address)
     {
         TData copy = data;
-        move_back(copy, address);
+        move_back(std::move(copy), address);
     }
 
     //
@@ -729,7 +729,7 @@ private:
 
     // Workers for pushing nodes to the back
     // of the queue.  This always moves data
-    bool move_back(_In_ TData& data) noexcept
+    bool move_back(_In_ TData&& data) noexcept
     {
         Address address;
         Node* node = m_heap.alloc(address);
@@ -746,7 +746,7 @@ private:
 
     // Workers for pushing nodes to the back
     // of the queue.  This always moves data
-    void move_back(_In_ TData& data, _In_ uint64_t address) noexcept
+    void move_back(_In_ TData&& data, _In_ uint64_t address) noexcept
     {
         Address a;
         a = address;
