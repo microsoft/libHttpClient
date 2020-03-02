@@ -196,7 +196,7 @@ public:
     //
     bool push_back(_In_ TData&& data) noexcept
     {
-        return move_back(data);
+        return move_back(std::move(data));
     }
 
     //
@@ -216,7 +216,7 @@ public:
     //
     void push_back(_In_ TData&& data, _In_ uint64_t address)
     {
-        move_back(data, address);
+        move_back(std::move(data), address);
     }
 
     //
