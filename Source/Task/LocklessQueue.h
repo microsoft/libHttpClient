@@ -182,12 +182,15 @@ public:
 
     //
     // Pushes the given data onto the back
-    // of the queue.  A copy is made of TData.
+    // of the queue.  A copy is made of TData
+    // (which may throw, if TData's copy constructor can
+    // throw exceptions).
     // If the push fails this returns false.
     //
-    bool push_back(_In_ TData data) noexcept
+    bool push_back(_In_ const TData& data)
     {
-        return move_back(data);
+        TData copy = data;
+        return move_back(copy);
     }
 
     //
@@ -202,11 +205,14 @@ public:
     //
     // Pushes the given data onto the back of the queue,
     // using a reserved node pointer.  This never fails as
-    // the node pointer was preallocated.
+    // the node pointer was preallocated. A copy of TData is
+    // made (which may throw, if TData's copy constructor can
+    // throw exceptions).
     //
-    void push_back(_In_ TData data, _In_ uint64_t address)
+    void push_back(_In_ const TData& data, _In_ uint64_t address)
     {
-        move_back(data, address);
+        TData copy = data;
+        move_back(copy, address);
     }
 
     //
@@ -214,7 +220,7 @@ public:
     // using a reserved node pointer.  This never fails as
     // the node pointer was preallocated.
     //
-    void push_back(_In_ TData&& data, _In_ uint64_t address)
+    void push_back(_In_ TData&& data, _In_ uint64_t address) noexcept
     {
         move_back(std::move(data), address);
     }
@@ -740,7 +746,7 @@ private:
 
     // Workers for pushing nodes to the back
     // of the queue.  This always moves data
-    void move_back(_In_ TData& data, _In_ uint64_t address)
+    void move_back(_In_ TData& data, _In_ uint64_t address) noexcept
     {
         Address a;
         a = address;
