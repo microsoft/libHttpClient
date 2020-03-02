@@ -83,7 +83,7 @@ public:
     {
         aligned_free(ptr);
     }
-    
+
     //
     // Creates a new lockless queue.  The blockSize parameter indicates how many
     // node elements are contained in a block.  Additional blocks will be allocated
@@ -93,8 +93,8 @@ public:
     //
     LocklessQueue(_In_ uint32_t blockSize = 0x400) noexcept :
         m_localHeap(*this),
-        m_activeList(*this),
         m_heap(m_localHeap),
+        m_activeList(*this),
         m_blockCache(nullptr)
     {
         m_localHeap.init(blockSize);
@@ -112,8 +112,8 @@ public:
     //
     LocklessQueue(_In_ LocklessQueue& shared) noexcept :
         m_localHeap(*this),
-        m_activeList(*this),
         m_heap(shared.m_heap),
+        m_activeList(*this),
         m_blockCache(nullptr)
     {
         Initialize();
@@ -179,7 +179,7 @@ public:
         Node* n = to_node(a);
         m_heap.free(n, a);
     }
-    
+
     //
     // Pushes the given data onto the back
     // of the queue.  A copy is made of TData.
@@ -187,36 +187,16 @@ public:
     //
     bool push_back(_In_ TData data) noexcept
     {
-        Address address;
-        Node* node = m_heap.alloc(address);
-        
-        if (node != nullptr)
-        {
-            node->data = std::move(data);
-            m_activeList.push(node, address);
-            return true;
-        }
-        
-        return false;
+        return move_back(data);
     }
 
     //
     // Pushes the given data onto the back
-    // of the queue, moving TData.
+    // of the queue.
     //
     bool push_back(_In_ TData&& data) noexcept
     {
-        Address address;
-        Node* node = m_heap.alloc(address);
-
-        if (node != nullptr)
-        {
-            node->data = std::move(data);
-            m_activeList.push(node, address);
-            return true;
-        }
-
-        return false;
+        return move_back(data);
     }
 
     //
@@ -226,13 +206,19 @@ public:
     //
     void push_back(_In_ TData data, _In_ uint64_t address)
     {
-        Address a;
-        a = address;
-        Node* n = to_node(a);
-        n->data = std::move(data);
-        m_activeList.push(n, a);
+        move_back(data, address);
     }
-    
+
+    //
+    // Pushes the given data onto the back of the queue,
+    // using a reserved node pointer.  This never fails as
+    // the node pointer was preallocated.
+    //
+    void push_back(_In_ TData&& data, _In_ uint64_t address)
+    {
+        move_back(data, address);
+    }
+
     //
     // Pops TData off the head of the queue, returning
     // true if successful or false if the queue is
@@ -286,12 +272,12 @@ private:
      * Structure Definitions
      *
      */
-    
+
     // Address - This represents the address of a node.
     // Nodes live in a contiguous memory block, and there are multiple
     // blocks. Address represents the position of the
     // node and must be 64 bits.
-    
+
     struct Address
     {
         uint64_t index : 32;
@@ -314,9 +300,6 @@ private:
 
         inline operator uint64_t () const
         {
-#ifdef C_ASSERT
-            C_ASSERT(sizeof(Address) == sizeof(uint64_t));
-#endif
             uint64_t v;
 
             // Note: this looks horribly inefficient.  General consensus
@@ -338,6 +321,8 @@ private:
         }
     };
 
+    static_assert(sizeof(Address) == sizeof(uint64_t), "LocklessQueue Address field must be 64 bits exactly");
+
 #if _MSVC_LANG >= 201703L
     static_assert(std::atomic<Address>::is_always_lock_free, "LocklessQueue requires atomic<Address> to be lock free");
 #endif
@@ -353,7 +338,7 @@ private:
         std::atomic<Address> next;
         TData data;
     };
-    
+
     // Block - Represents a contiguous block of nodes. Blocks are
     // only created.  Ideally only one block would be created for
     // a particular use case of this queue, but if the queue runs
@@ -416,7 +401,7 @@ private:
             address.aba++;
             push_range(address, address);
         }
-        
+
         // Push a range of nodes into the tail of the list.  The tailAddress
         // is the last node to push and the beginAddress is the first.  The
         // nodes all need to be pre-confgured to follow each other.
@@ -437,7 +422,7 @@ private:
                         // point to our new node.  If this succeeds we try to
                         // adjust the tail, which isn't guaranteed to succeed.
                         // That's OK, we can fix it up later.
-                        
+
                         if (tailNode->next.compare_exchange_strong(tailNext, beginAddress))
                         {
                             m_tail.compare_exchange_strong(tail, tailAddress);
@@ -448,7 +433,7 @@ private:
                     {
                         // What we thought was the tail is really not pointing to the
                         // end, so advance down the list.
-                        
+
                         m_tail.compare_exchange_strong(tail, tailNext);
                     }
                 }
@@ -468,7 +453,7 @@ private:
                 Address tail = m_tail.load();
                 Node* headNode = m_owner.to_node(head);
                 Address next = headNode->next.load();
-                
+
                 if (head == m_head.load())
                 {
                     if (head == tail)
@@ -479,7 +464,7 @@ private:
                             address = m_end;
                             return nullptr;
                         }
-                        
+
                         // List is not empty, but is out of
                         // sync. Advance the tail.
 
@@ -492,9 +477,9 @@ private:
                         // actually uses a dummy head node, so we must copy the
                         // data out of the next node, save it off, and then
                         // put it into the head node once we safely detach it.
-                        
+
                         TData data = m_owner.to_node(next)->data;
-                        
+
                         if (m_head.compare_exchange_strong(head, next))
                         {
                             headNode->data = std::move(data);
@@ -547,7 +532,7 @@ private:
             if (blockSize < 0x40)
             {
                 blockSize = 0x40;
-            }            
+            }
 
             m_blockSize = blockSize;
 
@@ -663,9 +648,9 @@ private:
             // no locks or fanciness. The startIndex will be zero except when
             // we are first initializing m_blockList.  Then we steal the first
             // node to act as the free list's dummy node.
-            
+
             uint32_t startIndex = 0;
-            
+
             if (m_blockList == nullptr)
             {
                 // Initial contruction.  We need to store the block list
@@ -674,7 +659,7 @@ private:
                 Address end = { 0 };
                 Address a = { 0 };
                 a.block = static_cast<uint16_t>(block->id);
-                
+
                 block->nodes[0].next = end;
                 block->nodes[1].next = end;
                 startIndex = 1;
@@ -700,11 +685,11 @@ private:
                     {
                         break;
                     }
-                    
+
                     next = tail->next.load();
                 }
             }
-            
+
             // Now add the tail and the head to the free list.
 
             Address rangeBegin { 0 };
@@ -714,20 +699,20 @@ private:
             rangeBegin.index = m_blockSize - 1;
             rangeEnd.index = startIndex;
             m_freeList.push_range(rangeBegin, rangeEnd);
-            
+
             return true;
         }
     };
-    
+
     /*
      *
      * Members
      *
      */
     
-    List m_activeList;
     Heap m_localHeap;
     Heap& m_heap;
+    List m_activeList;
     std::atomic<Block*> m_blockCache;
     
     /*
@@ -735,6 +720,34 @@ private:
      * Private APIs
      * 
      */
+
+    // Workers for pushing nodes to the back
+    // of the queue.  This always moves data
+    bool move_back(_In_ TData& data) noexcept
+    {
+        Address address;
+        Node* node = m_heap.alloc(address);
+
+        if (node != nullptr)
+        {
+            node->data = std::move(data);
+            m_activeList.push(node, address);
+            return true;
+        }
+
+        return false;
+    }
+
+    // Workers for pushing nodes to the back
+    // of the queue.  This always moves data
+    void move_back(_In_ TData& data, _In_ uint64_t address)
+    {
+        Address a;
+        a = address;
+        Node* n = to_node(a);
+        n->data = std::move(data);
+        m_activeList.push(n, a);
+    }
 
     // Called during construction after the heap
     // is setup.
@@ -757,7 +770,7 @@ private:
 
         m_activeList.init(dummy, end);
     }
-        
+
     Node* to_node(_In_ const Address& address)
     {
         return m_heap.to_node(m_blockCache, address);
