@@ -85,8 +85,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);winhttp.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition="'$(HCLibPlatformType)'=='GSDK'">$(GameDKLatest)\GXDK\gameKit\lib\amd64</AdditionalLibraryDirectories>
-      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='GSDK'">%(AdditionalDependencies);XGamePlatform.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
