@@ -138,7 +138,8 @@ HRESULT http_singleton::cleanup_async(
             // to increase even though we are the only strong reference
             if (self.use_count() > 1)
             {
-                return XAsyncSchedule(data->async, 10);
+                RETURN_IF_FAILED(XAsyncSchedule(data->async, 10));
+                return E_PENDING;
             }
 
             shared_ptr_cache::cleanup(self);
