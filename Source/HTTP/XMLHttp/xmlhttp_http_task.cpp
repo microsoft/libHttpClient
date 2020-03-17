@@ -64,7 +64,7 @@ void xmlhttp_http_task::perform_async(
             reinterpret_cast<void**>(m_hRequest.GetAddressOf()));
         if (FAILED(hr))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "Failure to create IXMLHTTPRequest2 instance %lu", hr);
+            HC_TRACE_ERROR(HTTPCLIENT, "Failure to create IXMLHTTPRequest2 instance 0x%0.8x", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
             XAsyncComplete(asyncBlock, S_OK, 0);
             return;
@@ -85,7 +85,7 @@ void xmlhttp_http_task::perform_async(
             nullptr);
         if (FAILED(hr))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "Failure to open HTTP request %lu", hr);
+            HC_TRACE_ERROR(HTTPCLIENT, "Failure to open HTTP request 0x%0.8x", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
             XAsyncComplete(asyncBlock, S_OK, 0);
             return;
@@ -125,7 +125,7 @@ void xmlhttp_http_task::perform_async(
         hr = m_hRequest->SetCustomResponseStream(Microsoft::WRL::Make<http_response_stream>(httpTask).Get());
         if (FAILED(hr))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "Failure to set HTTP response stream %lu", hr);
+            HC_TRACE_ERROR(HTTPCLIENT, "Failure to set HTTP response stream 0x%0.8x", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
             XAsyncComplete(asyncBlock, S_OK, 0);
             return;
@@ -160,7 +160,7 @@ void xmlhttp_http_task::perform_async(
 
         if (FAILED(hr))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request %lu", hr);
+            HC_TRACE_ERROR(HTTPCLIENT, "Failure to send HTTP request 0x%0.8x", hr);
             HCHttpCallResponseSetNetworkErrorCode(call, hr, hr);
             XAsyncComplete(asyncBlock, S_OK, 0);
             return;
