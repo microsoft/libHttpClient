@@ -385,7 +385,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
 
     {
         std::lock_guard<std::recursive_mutex> lock(websocketTask->m_outgoingMessageQueueLock);
-        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %lld", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
+        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %zu", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
         websocketTask->m_outgoingMessageQueue.push(msg);
     }
 
@@ -430,7 +430,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
 
     {
         std::lock_guard<std::recursive_mutex> lock(websocketTask->m_outgoingMessageQueueLock);
-        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %lld", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
+        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: send msg queue size: %zu", websocketTask->m_websocketHandle->id, websocketTask->m_outgoingMessageQueue.size());
         websocketTask->m_outgoingMessageQueue.push(msg);
     }
 

@@ -88,7 +88,7 @@ try
     call->responseBodyBytes.assign(bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%llu", call->id, bodySize); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%zu", call->id, bodySize); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -109,7 +109,7 @@ try
     call->responseBodyBytes.insert(call->responseBodyBytes.end(), bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%llu (total=%llu)", call->id, bodySize, call->responseBodyBytes.size()); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%zu (total=%llu)", call->id, bodySize, call->responseBodyBytes.size()); }
     return S_OK;
 }
 CATCH_RETURN()
