@@ -4,7 +4,12 @@ set -x
 
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
 OPENSSL_TMP="$OPENSSL_SRC/tmp"
+
+LIB_OUTPUT="${OPENSSL_LIB_OUTPUT}"
+
+if [ "$LIB_OUTPUT" == ""]; then
 LIB_OUTPUT="${SCRIPT_INPUT_FILE_0}"
+fi
 
 if [ "$LIB_OUTPUT" == "" ]; then
 echo "***** No library output directory specified - bailing out *****"
