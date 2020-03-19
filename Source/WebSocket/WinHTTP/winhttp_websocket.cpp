@@ -233,7 +233,7 @@ public:
             sendContext->message = std::move(m_outgoingMessageQueue.front());
             m_outgoingMessageQueue.pop();
         }
-        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", m_hcWebsocketHandle->id, sendContext->message.id);
+        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", TO_ULL(m_hcWebsocketHandle->id), sendContext->message.id);
         auto rawSendContext = shared_ptr_cache::store(sendContext);
         if (rawSendContext == nullptr)
         {
@@ -261,7 +261,7 @@ public:
                         return E_HC_NOT_INITIALISED;
                     }
                     HRESULT hr = sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
-                    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] send message[ID %llu] completed: hr=%08X", sendMsgContext->pThis->m_hcWebsocketHandle->id, sendMsgContext->message.id, hr);
+                    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] send message[ID %llu] completed: hr=%08X", TO_ULL(sendMsgContext->pThis->m_hcWebsocketHandle->id), sendMsgContext->message.id, hr);
                     return hr;
                 }
 
@@ -408,7 +408,7 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
         return E_UNEXPECTED;
     }
     httpSocket->m_hcWebsocketHandle = websocket;
-    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
+    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocket->id));
     return httpSocket->disconnect_websocket(closeStatus);
 }
 

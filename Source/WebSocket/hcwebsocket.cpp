@@ -134,13 +134,13 @@ HRESULT HC_WEBSOCKET::Connect(
         }
         catch (...)
         {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", id);
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketConnect [ID %llu]: failed", TO_ULL(id));
             return E_FAIL;
         }
     }
     else
     {
-        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Connect [ID %llu]: Websocket connect implementation not found!", id);
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Connect [ID %llu]: Websocket connect implementation not found!", TO_ULL(id));
         return E_UNEXPECTED;
     }
 }
@@ -200,13 +200,13 @@ HRESULT HC_WEBSOCKET::Send(
         }
         catch (...)
         {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendMessage [ID %llu]: failed", id);
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendMessage [ID %llu]: failed", TO_ULL(id));
             return E_FAIL;
         }
     }
     else
     {
-        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Send [ID %llu]: Websocket send implementation not found!", id);
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Send [ID %llu]: Websocket send implementation not found!", TO_ULL(id));
         return E_UNEXPECTED;
     }
     return S_OK;
@@ -241,13 +241,13 @@ HRESULT HC_WEBSOCKET::SendBinary(
         }
         catch (...)
         {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendBinaryMessageAsync [ID %llu]: failed", id);
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketSendBinaryMessageAsync [ID %llu]: failed", TO_ULL(id));
             return E_FAIL;
         }
     }
     else
     {
-        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Send [ID %llu]: Websocket send implementation not found!", id);
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Send [ID %llu]: Websocket send implementation not found!", TO_ULL(id));
         return E_UNEXPECTED;
     }
 }
@@ -282,13 +282,13 @@ HRESULT HC_WEBSOCKET::Disconnect()
         }
         catch (...)
         {
-            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketClose [ID %llu]: failed", id);
+            HC_TRACE_ERROR(WEBSOCKET, "HCWebSocketClose [ID %llu]: failed", TO_ULL(id));
             return E_FAIL;
         }
     }
     else
     {
-        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Disconnect [ID %llu]: Websocket disconnect implementation not found!", id);
+        HC_TRACE_ERROR(WEBSOCKET, "HC_WEBSOCKET::Disconnect [ID %llu]: Websocket disconnect implementation not found!", TO_ULL(id));
         return E_UNEXPECTED;
     }
 }
@@ -502,7 +502,7 @@ try
         functionContext
     );
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketCreate [ID %llu]", socket->id);
+    HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketCreate [ID %llu]", TO_ULL(socket->id));
 
     socket->AddClientRef();
     *websocket = socket.get();
@@ -615,7 +615,7 @@ try
         return nullptr;
     }
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketDuplicateHandle [ID %llu]", websocket->id);
+    HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketDuplicateHandle [ID %llu]", TO_ULL(websocket->id));
     websocket->AddClientRef();
 
     return websocket;
@@ -633,7 +633,7 @@ try
         return E_INVALIDARG;
     }
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketCloseHandle [ID %llu]", websocket->id);
+    HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketCloseHandle [ID %llu]", TO_ULL(websocket->id));
     websocket->DecClientRef();
 
     return S_OK;

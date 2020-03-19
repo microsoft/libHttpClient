@@ -49,7 +49,7 @@ try
     call->retryIterationNumber = 0;
     call->id = ++httpSingleton->m_lastId;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", TO_ULL(call->id));
 
     *callHandle = call;
     return S_OK;
@@ -66,7 +66,7 @@ try
         return nullptr;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallDuplicateHandle [ID %llu]", static_cast<HC_CALL*>(call)->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallDuplicateHandle [ID %llu]", TO_ULL(static_cast<HC_CALL*>(call)->id));
     ++call->refCount;
 
     return call;
@@ -84,7 +84,7 @@ try
         return E_INVALIDARG;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCloseHandle [ID %llu]", call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCloseHandle [ID %llu]", TO_ULL(call->id));
     int refCount = --call->refCount;
     if (refCount <= 0)
     {
@@ -134,7 +134,7 @@ HRESULT perform_http_call(
                         }
                         catch (...)
                         {
-                            if (call->traceCall) { HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", static_cast<HC_CALL*>(call)->id); }
+                            if (call->traceCall) { HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", TO_ULL(static_cast<HC_CALL*>(call)->id)); }
                         }
                     }
                 }
@@ -224,7 +224,7 @@ bool http_call_should_retry(
         HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
         std::chrono::seconds timeoutWindow = std::chrono::seconds(timeoutWindowInSeconds);
         std::chrono::milliseconds remainingTimeBeforeTimeout = timeoutWindow - timeElapsedSinceFirstCall;
-        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", call->id, remainingTimeBeforeTimeout.count()); }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", TO_ULL(call->id), remainingTimeBeforeTimeout.count()); }
 
         // Based on the retry iteration, delay 2,4,8,16,etc seconds by default between retries
         // Jitter the response between the current and next delay based on system clock
@@ -250,7 +250,7 @@ bool http_call_should_retry(
         {
             call->delayBeforeRetry = waitTime;
         }
-        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %lld ms", call->id, call->delayBeforeRetry.count()); }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %lld ms", TO_ULL(call->id), call->delayBeforeRetry.count()); }
 
         // Remember result if there was an error and there was a Retry-After header
         if (call->retryAfterCacheId != 0 &&
@@ -395,7 +395,7 @@ void retry_http_call_until_done(
         call->firstRequestStartTime = requestStartTime;
     }
     call->retryIterationNumber++;
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d", call->id, call->retryIterationNumber); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d", TO_ULL(call->id), call->retryIterationNumber); }
 
     http_retry_after_api_state apiState = httpSingleton->get_retry_state(call->retryAfterCacheId);
     if (apiState.statusCode >= 400)
@@ -404,7 +404,7 @@ void retry_http_call_until_done(
         if (should_fast_fail(apiState, call, requestStartTime, &clearState))
         {
             HCHttpCallResponseSetStatusCode(call, apiState.statusCode);
-            if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", call->id, apiState.statusCode); }
+            if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", TO_ULL(call->id), apiState.statusCode); }
             XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
             return;
         }
@@ -453,7 +453,7 @@ void retry_http_call_until_done(
 
             if (SUCCEEDED(callStatus) && http_call_should_retry(call, responseReceivedTime))
             {
-                if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", call->id, call->delayBeforeRetry.count()); }
+                if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", TO_ULL(call->id), call->delayBeforeRetry.count()); }
                 clear_http_call_response(call);
                 retry_http_call_until_done(std::move(retryContext));
             }
@@ -496,7 +496,7 @@ try
         return E_INVALIDARG;
     }
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] uri: %s", call->id, call->url.c_str()); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] uri: %s", TO_ULL(call->id), call->url.c_str()); }
     call->performCalled = true;
 
     auto retryContext = http_allocate_unique<retry_context>();
