@@ -7,7 +7,7 @@ OPENSSL_TMP="$OPENSSL_SRC/tmp"
 
 LIB_OUTPUT="${OPENSSL_LIB_OUTPUT}"
 
-if [ "$LIB_OUTPUT" == ""]; then
+if [ "$LIB_OUTPUT" == "" ]; then
 LIB_OUTPUT="${SCRIPT_INPUT_FILE_0}"
 fi
 
