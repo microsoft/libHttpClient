@@ -3,8 +3,13 @@ set | grep ARCH
 set -x
 
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
-OPENSSL_TMP="$OPENSSL_SRC/tmp"
-LIB_OUTPUT="${SCRIPT_INPUT_FILE_0}"
+OPENSSL_TMP="$OPENSSL_TMP_DIR"
+LIB_OUTPUT="$OPENSSL_LIB_OUTPUT"
+
+if [ "$OPENSSL_TMP" == "" ]; then
+echo "***** No tmp build directory specified - bailing out *****"
+exit 1
+fi
 
 if [ "$LIB_OUTPUT" == "" ]; then
 echo "***** No library output directory specified - bailing out *****"

@@ -731,18 +731,17 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../../Binaries/iOS",
 			);
 			name = "Build openssl";
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(SRCROOT)/../../Binaries/iOS/lib/libcrypto.a",
-				"$(SRCROOT)/../../Binaries/iOS/lib/libssl.a",
+				"$(BUILT_PRODUCTS_DIR)/openssl/lib/libcrypto.a",
+				"$(BUILT_PRODUCTS_DIR)/openssl/lib/libssl.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\nsource \"$SRCROOT/../../Utilities/XcodeBuildScripts/openssl.bash\"\n";
+			shellScript = "\nOPENSSL_LIB_OUTPUT=\"$BUILT_PRODUCTS_DIR/openssl\" \\\n    OPENSSL_TMP_DIR=\"$DERIVED_FILE_DIR/openssl\" \\\n    source \"$SRCROOT/../../Utilities/XcodeBuildScripts/openssl.bash\"\n";
 		};
 		9CC0523A213776DB0009B69A /* Build openssl */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -750,16 +749,15 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../../Binaries/mac",
 			);
 			name = "Build openssl";
 			outputPaths = (
-				"$(SRCROOT)/../../Binaries/mac/lib/libcrypto.a",
-				"$(SRCROOT)/../../Binaries/mac/lib/libssl.a",
+				"$(BUILT_PRODUCTS_DIR)/openssl/lib/libcrypto.a",
+				"$(BUILT_PRODUCTS_DIR)/openssl/lib/libssl.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\nsource \"$SRCROOT/../../Utilities/XcodeBuildScripts/openssl.bash\"\n";
+			shellScript = "\nOPENSSL_LIB_OUTPUT=\"$BUILT_PRODUCTS_DIR/openssl\" \\\n    OPENSSL_TMP_DIR=\"$DERIVED_FILE_DIR/openssl\" \\\n    source \"$SRCROOT/../../Utilities/XcodeBuildScripts/openssl.bash\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1058,9 +1056,9 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../Binaries/iOS/include",
+					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1084,9 +1082,9 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../Binaries/iOS/include",
+					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1111,7 +1109,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1142,7 +1140,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/iOS/lib";
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				MTL_FAST_MATH = YES;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
@@ -1202,10 +1200,10 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../Binaries/mac/include",
+					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/mac/lib";
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
@@ -1228,10 +1226,10 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(SRCROOT)/../../Binaries/mac/include",
+					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../Binaries/mac/lib";
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
