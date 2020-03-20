@@ -195,7 +195,7 @@ void winhttp_http_task::read_next_response_chunk(_In_ winhttp_http_task* pReques
     if (!WinHttpQueryDataAvailable(pRequestContext->m_hRequest, nullptr))
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryDataAvailable errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryDataAvailable errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
     }
 }
@@ -221,7 +221,7 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
         nullptr))
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWriteData errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWriteData errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
         return;
     }
@@ -241,7 +241,7 @@ void winhttp_http_task::callback_status_write_complete(
     _In_ void* statusInfo)
 {
     DWORD bytesWritten = *((DWORD *)statusInfo);
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), bytesWritten);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesWritten);
 
     if (pRequestContext->m_requestBodyType == content_length_chunked)
     {
@@ -252,7 +252,7 @@ void winhttp_http_task::callback_status_write_complete(
         if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
             pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
             return;
         }
@@ -269,7 +269,7 @@ void winhttp_http_task::callback_status_request_error(
         return;
 
     DWORD errorCode = error_result->dwError;
-    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), error_result->dwResult, error_result->dwError);
+    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), error_result->dwResult, error_result->dwError);
 
     bool reissueSend{ false };
 
@@ -367,7 +367,7 @@ void winhttp_http_task::callback_status_sendrequest_complete(
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* /*statusInfo*/)
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId() );
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId() );
 
     if (pRequestContext->m_requestBodyType == content_length_chunked)
     {
@@ -378,7 +378,7 @@ void winhttp_http_task::callback_status_sendrequest_complete(
         if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
             pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
             return;
         }
@@ -404,7 +404,7 @@ HRESULT winhttp_http_task::query_header_length(
         DWORD dwError = GetLastError();
         if (dwError != ERROR_INSUFFICIENT_BUFFER)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", HCHttpCallGetId(call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", TO_ULL(HCHttpCallGetId(call)), GetCurrentThreadId(), dwError);
             return E_FAIL;
         }
     }
@@ -438,7 +438,7 @@ uint32_t winhttp_http_task::parse_status_code(
         WINHTTP_NO_HEADER_INDEX))
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
         return 0;
     }
@@ -480,7 +480,7 @@ void winhttp_http_task::callback_status_headers_available(
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* /*statusInfo*/)
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId() );
+    HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId() );
 
     // First need to query to see what the headers size is.
     DWORD headerBufferLength = 0;
@@ -504,7 +504,7 @@ void winhttp_http_task::callback_status_headers_available(
         WINHTTP_NO_HEADER_INDEX))
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
         return;
     }
@@ -522,7 +522,7 @@ void winhttp_http_task::callback_status_data_available(
     // Status information contains pointer to DWORD containing number of bytes available.
     DWORD newBytesAvailable = *(PDWORD)statusInfo;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE newBytesAvailable=%d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), newBytesAvailable);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE newBytesAvailable=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), newBytesAvailable);
 
     if (newBytesAvailable > 0)
     {
@@ -538,7 +538,7 @@ void winhttp_http_task::callback_status_data_available(
             nullptr))
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpReadData errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), GetLastError());
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpReadData errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), GetLastError());
             pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
             return;
         }
@@ -569,7 +569,7 @@ void winhttp_http_task::callback_status_read_complete(
     // Status information length contains the number of bytes read.
     const DWORD bytesRead = statusInfoLength;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_READ_COMPLETE bytesRead=%d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), bytesRead);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_READ_COMPLETE bytesRead=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesRead);
 
     // If no bytes have been read, then this is the end of the response.
     if (bytesRead == 0)
@@ -748,7 +748,7 @@ void winhttp_http_task::set_autodiscover_proxy(
         if (!result)
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
         }
     }
     else
@@ -791,7 +791,7 @@ HRESULT winhttp_http_task::connect(
 {
     if (!m_hSession)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] no session", HCHttpCallGetId(m_call), GetCurrentThreadId());
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] no session", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId());
         return E_INVALIDARG;
     }
 
@@ -813,7 +813,7 @@ HRESULT winhttp_http_task::connect(
             timeoutInMilliseconds))
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetTimeouts errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetTimeouts errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
             return HRESULT_FROM_WIN32(dwError);
         }
     }
@@ -832,7 +832,7 @@ HRESULT winhttp_http_task::connect(
     if (m_hConnection == nullptr)
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpConnect errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpConnect errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
         return HRESULT_FROM_WIN32(dwError);
     }
 
@@ -859,7 +859,7 @@ HRESULT winhttp_http_task::send(
     if (m_hRequest == nullptr)
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpOpenRequest errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpOpenRequest errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
         return HRESULT_FROM_WIN32(dwError);
     }
 
@@ -907,7 +907,7 @@ HRESULT winhttp_http_task::send(
                 WINHTTP_ADDREQ_FLAG_ADD))
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
             return HRESULT_FROM_WIN32(dwError);
         }
     }
@@ -919,7 +919,7 @@ HRESULT winhttp_http_task::send(
         0))
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetStatusCallback errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetStatusCallback errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
         return HRESULT_FROM_WIN32(dwError);
     }
 
@@ -932,7 +932,7 @@ HRESULT winhttp_http_task::send(
             0))
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
             return HRESULT_FROM_WIN32(dwError);
         }
     }
@@ -950,7 +950,7 @@ HRESULT winhttp_http_task::send(
                 WINHTTP_ADDREQ_FLAG_ADD))
             {
                 DWORD dwError = GetLastError();
-                HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+                HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
                 return HRESULT_FROM_WIN32(dwError);
             }
         }
@@ -963,7 +963,7 @@ HRESULT winhttp_http_task::send(
         if (!status)
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpAddRequestHeaders errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
             return HRESULT_FROM_WIN32(dwError);
         }
         #pragma warning( pop )
@@ -988,7 +988,7 @@ HRESULT winhttp_http_task::send(
         (DWORD_PTR)this))
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSendRequest errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSendRequest errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
         return HRESULT_FROM_WIN32(dwError);
     }
 
@@ -1235,7 +1235,7 @@ HRESULT winhttp_http_task::send_websocket_message(
     DWORD dwResult = WaitForSingleObject(m_hWebsocketWriteComplete, 30000);
     if (dwResult == WAIT_TIMEOUT)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] write complete timeout", HCHttpCallGetId(m_call), GetCurrentThreadId());
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] write complete timeout", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId());
         return E_FAIL;
     }
 
@@ -1369,7 +1369,7 @@ void winhttp_http_task::callback_websocket_status_read_complete(
 
 HRESULT winhttp_http_task::websocket_start_listening()
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "WINHTTP_WEB_SOCKET_UTF8 [ID %llu] [TID %ul] listening", HCHttpCallGetId(m_call), GetCurrentThreadId());
+    HC_TRACE_VERBOSE(HTTPCLIENT, "WINHTTP_WEB_SOCKET_UTF8 [ID %llu] [TID %ul] listening", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId());
     HRESULT hr = m_websocketResponseBuffer.Resize(WINHTTP_WEBSOCKET_RECVBUFFER_SIZE);
     if (SUCCEEDED(hr))
     {
@@ -1411,7 +1411,7 @@ HRESULT winhttp_http_task::websocket_read_message()
         dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
         if (dwError)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
+            HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
         }
     }
 
@@ -1422,7 +1422,7 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext)
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId());
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
 
     // Application should check what is the HTTP status code returned by the server and behave accordingly.
     // WinHttpWebSocketCompleteUpgrade will fail if the HTTP status code is different than 101.
@@ -1430,7 +1430,7 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     if (pRequestContext->m_hRequest == NULL)
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
     }
 
@@ -1438,7 +1438,7 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     if (!WinHttpSetOption(pRequestContext->m_hRequest, WINHTTP_OPTION_CONTEXT_VALUE, &pThis, sizeof(pThis)))
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
     }
 

@@ -25,7 +25,7 @@ STDAPI HCMockCallCreate(
     HC_MOCK_CALL* call = new HC_MOCK_CALL{};
     call->id = ++httpSingleton->m_lastId;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCMockCallCreate [ID %llu]", call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCMockCallCreate [ID %llu]", TO_ULL(call->id));
 
     *callHandle = call;
     return S_OK;

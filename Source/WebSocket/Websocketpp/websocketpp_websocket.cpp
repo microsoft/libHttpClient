@@ -381,7 +381,7 @@ private:
         m_con = con;
         if (ec.value() != 0)
         {
-            HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp get_connection failed", m_hcWebsocketHandle->id);
+            HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp get_connection failed", TO_ULL(m_hcWebsocketHandle->id));
             return E_FAIL;
         }
 
@@ -401,7 +401,7 @@ private:
             con->add_subprotocol(m_subprotocol.data(), ec);
             if (ec.value())
             {
-                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: add_subprotocol failed", m_hcWebsocketHandle->id);
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: add_subprotocol failed", TO_ULL(m_hcWebsocketHandle->id));
                 return E_FAIL;
             }
         }
@@ -412,7 +412,7 @@ private:
             con->set_proxy(m_hcWebsocketHandle->ProxyUri().data(), ec);
             if (ec)
             {
-                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", m_hcWebsocketHandle->id);
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", TO_ULL(m_hcWebsocketHandle->id));
                 return E_FAIL;
             }
         }
@@ -428,7 +428,7 @@ private:
                 con->set_proxy(proxyUri.FullPath().data(), ec);
                 if (ec)
                 {
-                    HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", m_hcWebsocketHandle->id);
+                    HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", TO_ULL(m_hcWebsocketHandle->id));
                     return E_FAIL;
                 }
             }
@@ -931,7 +931,7 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
         return E_UNEXPECTED;
     }
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", websocket->id);
+    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocket->id));
     return wsppSocket->close(closeStatus);
 }
 
