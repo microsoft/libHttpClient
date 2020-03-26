@@ -79,6 +79,13 @@ struct XAsyncProviderData
     /// to XAsyncBegin.  It should be freed during the Cleanup opcode.
     /// </summary>
     void* context;
+
+    /// <summary>
+    /// Valid during a Begin opcode and contains user-provided context passed into
+    /// XAsyncBeginAlloc. This gives the Begin opcode a chance to copy parameters
+    /// from the async call into the allocated context.
+    /// </summary>
+    void* initContext;
 };
 
 /// <summary>
@@ -132,6 +139,7 @@ STDAPI XAsyncBegin(
 /// <param name='identity'>An optional arbitrary pointer that can be used to identify this call.</param>
 /// <param name='identityName'>An optional string that names the async call.  This is typically the __FUNCTION__ compiler macro.</param>
 /// <param name='provider'>The function callback to invoke to implement the async call.</param>
+/// <param name='initContext'>An optional context pointer that can be used to intialize the newly allocated context in the async provider.</param>
 /// <param name='contextSize'>The size, in bytes, of additional context memory to allocate.</param>
 /// <param name='context'>The allocated context object pointer.</param>
 STDAPI XAsyncBeginAlloc(
@@ -139,6 +147,7 @@ STDAPI XAsyncBeginAlloc(
     _In_opt_ const void* identity,
     _In_opt_ const char* identityName,
     _In_ XAsyncProvider* provider,
+    _In_opt_ void* initContext,
     _In_ size_t contextSize,
     _Out_ void** context
     ) noexcept;

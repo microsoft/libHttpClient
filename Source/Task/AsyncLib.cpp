@@ -9,6 +9,9 @@
 // Used by unit tests to verify we cleanup memory correctly.
 std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
 
+// Set externally to enable pumping waits.
+bool s_AsyncLibEnablePumpingWait = false;
+
 enum class ProviderCleanupLocation
 {
     Destructor,
@@ -41,6 +44,10 @@ struct AsyncState
     std::mutex waitMutex;
     std::condition_variable waitCondition;
     bool waitSatisfied = false;
+
+#if _WIN32
+    HANDLE waitEvent = nullptr;
+#endif
 
     const void* identity = nullptr;
     const char* identityName = nullptr;
@@ -91,6 +98,13 @@ private:
         {
             XTaskQueueCloseHandle(queue);
         }
+
+#if _WIN32
+        if (waitEvent != nullptr)
+        {
+            CloseHandle(waitEvent);
+        }
+#endif
 
         --s_AsyncLibGlobalStateCount;
     }
@@ -272,6 +286,24 @@ public:
         }
     }
 
+    // If a call is successful but we failed to schedule the
+    // completion, this can override that success.
+    bool TryOverrideSuccessfulTerminalStatus(HRESULT status) noexcept
+    {
+        ASSERT(m_locked && m_internal->status != E_PENDING && FAILED(status));
+        if (m_locked && SUCCEEDED(m_internal->status) && FAILED(status))
+        {
+            ASSERT(SUCCEEDED(m_userInternal->status));
+            m_userInternal->status = status;
+            m_internal->status = status;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
 private:
     AsyncBlockInternal * m_internal;
     AsyncBlockInternal * m_userInternal;
@@ -339,8 +371,8 @@ private:
 
 static void CALLBACK CompletionCallback(_In_ void* context, _In_ bool canceled);
 static void CALLBACK WorkerCallback(_In_ void* context, _In_ bool canceled);
-static void SignalCompletion(_In_ AsyncStateRef const& state);
 static void SignalWait(_In_ AsyncStateRef const& state);
+static HRESULT SignalCompletion(_In_ AsyncStateRef const& state);
 static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal, _In_ size_t contextSize);
 static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSize);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
@@ -371,6 +403,11 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
    
     state->userAsyncBlock = asyncBlock;
     state->providerData.async = &state->providerAsyncBlock;
+
+#if _WIN32
+    state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+    RETURN_LAST_ERROR_IF(state->waitEvent == nullptr);
+#endif
     
     internal->state = state.Detach();
 
@@ -437,12 +474,14 @@ static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, _In_ Provid
     }
 }
 
-static void SignalCompletion(_In_ AsyncStateRef const& state)
+static HRESULT SignalCompletion(_In_ AsyncStateRef const& state)
 {
+    HRESULT hr = S_OK;
+
     if (state->providerData.async->callback != nullptr)
     {
         AsyncStateRef callbackState(state.Get());
-        HRESULT hr = XTaskQueueSubmitCallback(
+        hr = XTaskQueueSubmitCallback(
             state->queue,
             XTaskQueuePort::Completion,
             callbackState.Get(),
@@ -457,6 +496,8 @@ static void SignalCompletion(_In_ AsyncStateRef const& state)
     {
         SignalWait(state);
     }
+
+    return hr;
 }
 
 static void SignalWait(_In_ AsyncStateRef const& state)
@@ -465,6 +506,9 @@ static void SignalWait(_In_ AsyncStateRef const& state)
         std::lock_guard<std::mutex> lock(state->waitMutex);
         state->waitSatisfied = true;
     }
+#if _WIN32
+    SetEvent(state->waitEvent);
+#endif
     state->waitCondition.notify_all();
 }
 
@@ -501,8 +545,6 @@ static void CALLBACK WorkerCallback(
         return;
     }
 
-    bool completedNow = false;
-
     // If the queue is canceling callbacks, simply cancel this work. Since no
     // new work for this call will be scheduled, if the call didn't cancel
     // immediately do it ourselves.
@@ -536,20 +578,7 @@ static void CALLBACK WorkerCallback(
                 result = E_UNEXPECTED;
             }
 
-            {
-                AsyncBlockInternalGuard internal{ &state->providerAsyncBlock };
-                completedNow = internal.TrySetTerminalStatus(result);
-
-                if (completedNow)
-                {
-                    internal.ExtractState();
-                }
-            }
-
-            if (completedNow)
-            {
-                SignalCompletion(state);
-            }
+            XAsyncComplete(&state->providerAsyncBlock, result, 0);
         }
     }
 
@@ -557,11 +586,6 @@ static void CALLBACK WorkerCallback(
     // will change the provider cleanup to be "AfterWork", which is here.  Cleanup
     // the provider if we need to.
     CleanupProviderForLocation(state, ProviderCleanupLocation::AfterDoWork);
-
-    if (completedNow)
-    {
-        CleanupState(std::move(state));
-    }
 }
 
 //
@@ -600,6 +624,22 @@ STDAPI XAsyncGetStatus(
         }
         else
         {
+#if (_WIN32 && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP))
+            // If we're being asked to wait from a STA thread, use a CoWait to ensure we
+            // don't totally gum up the thread.  Then fall back to our normal condition
+            // variable check (both are signaled during completion).
+
+            if (s_AsyncLibEnablePumpingWait)
+            {
+                APTTYPE aptType;
+                APTTYPEQUALIFIER aptQualifier;
+                if (SUCCEEDED(CoGetApartmentType(&aptType, &aptQualifier)) && aptType != APTTYPE_MTA && aptType != APTTYPE_NA)
+                {
+                    DWORD idx;
+                    (void)CoWaitForMultipleHandles(COWAIT_DEFAULT, INFINITE, 1, &state->waitEvent, &idx);
+                }
+            }
+#endif
             {
                 std::unique_lock<std::mutex> lock(state->waitMutex);
 
@@ -610,7 +650,10 @@ STDAPI XAsyncGetStatus(
                 }
             }
 
-            result = XAsyncGetStatus(asyncBlock, false);
+            {
+                AsyncBlockInternalGuard internal{ asyncBlock };
+                result = internal.GetStatus();
+            }        
         }
     }
 
@@ -673,16 +716,26 @@ STDAPI XAsyncRun(
         __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
     {
-        if (op == XAsyncOp::DoWork)
+        switch (op)
         {
-            XAsyncWork* work = reinterpret_cast<XAsyncWork*>(data->context);
-            HRESULT hr = work(data->async);
-            XAsyncComplete(data->async, hr, 0);
+            case XAsyncOp::Begin:
+                RETURN_IF_FAILED(XAsyncSchedule(data->async, 0));
+                break;
+                
+            case XAsyncOp::DoWork:
+                {
+                    XAsyncWork* work = reinterpret_cast<XAsyncWork*>(data->context);
+                    HRESULT hr = work(data->async);
+                    XAsyncComplete(data->async, hr, 0);
+                }
+                break;
+
         }
+
         return S_OK;
     }));
 
-    RETURN_HR(XAsyncSchedule(asyncBlock, 0));
+    return S_OK;
 }
 
 //
@@ -718,7 +771,9 @@ STDAPI XAsyncBegin(
 
     // We've successfully setup the call.  Now kick off a
     // Begin opcode.  If this call fails, we use it to fail
-    // the async call, instead of failing XAsyncBegin.
+    // the async call, instead of failing XAsyncBegin. This is
+    // necessary to ensure that the async call state is properly
+    // cleaned up, both for us and for the user call.
 
     HRESULT hr = provider(XAsyncOp::Begin, &state->providerData);
     if (FAILED(hr))
@@ -749,8 +804,9 @@ STDAPI XAsyncBeginAlloc(
     _In_opt_ const void* identity,
     _In_opt_ const char* identityName,
     _In_ XAsyncProvider* provider,
+    _In_opt_ void* initContext,
     _In_ size_t contextSize,
-    _Out_ void** context
+    _Inout_ void** context
     ) noexcept
 {
     RETURN_HR_IF(E_INVALIDARG, contextSize == 0);
@@ -772,16 +828,24 @@ STDAPI XAsyncBeginAlloc(
 
     ASSERT(state->providerData.context != nullptr);
     memset(state->providerData.context, 0, contextSize);
-    *context = state->providerData.context;
 
     // We've successfully setup the call.  Now kick off a
     // Begin opcode.  If this call fails, we use it to fail
-    // the async call, instead of failing XAsyncBegin.
-    
+    // the async call, instead of failing XAsyncBegin. This is
+    // necessary to ensure that the async call state is properly
+    // cleaned up, both for us and for the user call.
+
+    state->providerData.initContext = initContext;
     HRESULT hr = provider(XAsyncOp::Begin, &state->providerData);
+    state->providerData.initContext = nullptr;
+
     if (FAILED(hr))
     {
         XAsyncComplete(asyncBlock, hr, 0);
+    }
+    else
+    {
+        *context = state->providerData.context;
     }
 
     return S_OK;
@@ -865,7 +929,7 @@ STDAPI_(void) XAsyncComplete(
         // clean up now. Also clean up if the call failed.  The caller should
         // have passed zero in here in that case but be tolerant for cases like
         // sizeof().
-        if (requiredBufferSize == 0 || FAILED(result))
+        if ((requiredBufferSize == 0 || FAILED(result)) && completedNow)
         {
             // If we are going to cleanup steal the reference from the block.
             doCleanup = true;
@@ -886,7 +950,34 @@ STDAPI_(void) XAsyncComplete(
     // Only signal / adjust needed buffer size if we were first to complete.
     if (completedNow)
     {
-        SignalCompletion(state);
+        HRESULT hrCompletion = SignalCompletion(state);
+        if (FAILED(hrCompletion))
+        {
+            // We failed to signal completion.  The only avenue
+            // for this is if we failed to schedule the completion
+            // callback. We have to invoke that callback synchronously
+            // or else the app could deadlock waiting on the call to 
+            // complete, but we need to force it to a failed result first.
+
+            if (SUCCEEDED(result))
+            {
+                AsyncBlockInternalGuard internal{ asyncBlock };
+                if (internal.TryOverrideSuccessfulTerminalStatus(hrCompletion))
+                {
+                    // Always do cleanup here since we're forcing it
+                    doCleanup = true;
+                    state->providerData.bufferSize = 0;
+                    state = internal.ExtractState();
+                }
+            }
+
+            if (asyncBlock->callback != nullptr)
+            {
+                asyncBlock->callback(state->userAsyncBlock);
+            }
+
+            SignalWait(state);
+        }
     }
 
     // At this point asyncBlock may be unsafe to touch. As we've cleaned up

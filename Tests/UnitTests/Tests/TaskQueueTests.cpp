@@ -110,6 +110,11 @@ public:
 
     TEST_CLASS_CLEANUP(ClassCleanup)
     {
+        //
+        // Note: this is a global refcount for tracking
+        // leaks in the task queue.  If any other tests fail
+        // this may also fail, as those tests could have leaked.
+        //
         uint32_t gr = ApiDiag::g_globalApiRefs;
         VERIFY_ARE_EQUAL(0u, gr);
         return true;
