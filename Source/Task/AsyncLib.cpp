@@ -624,7 +624,11 @@ STDAPI XAsyncGetStatus(
         }
         else
         {
-#if (_WIN32 && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP))
+// This codebase compiles for multiple platforms on GitHub.  This is only
+// supported on win32 desktop platforms.  It is enabled for Windows builds.
+#if _WIN32
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
             // If we're being asked to wait from a STA thread, use a CoWait to ensure we
             // don't totally gum up the thread.  Then fall back to our normal condition
             // variable check (both are signaled during completion).
@@ -639,6 +643,7 @@ STDAPI XAsyncGetStatus(
                     (void)CoWaitForMultipleHandles(COWAIT_DEFAULT, INFINITE, 1, &state->waitEvent, &idx);
                 }
             }
+#endif
 #endif
             {
                 std::unique_lock<std::mutex> lock(state->waitMutex);
@@ -719,8 +724,7 @@ STDAPI XAsyncRun(
         switch (op)
         {
             case XAsyncOp::Begin:
-                RETURN_IF_FAILED(XAsyncSchedule(data->async, 0));
-                break;
+                return XAsyncSchedule(data->async, 0);
                 
             case XAsyncOp::DoWork:
                 {
@@ -728,6 +732,11 @@ STDAPI XAsyncRun(
                     HRESULT hr = work(data->async);
                     XAsyncComplete(data->async, hr, 0);
                 }
+                break;
+
+            case XAsyncOp::Cancel:
+            case XAsyncOp::Cleanup:
+            case XAsyncOp::GetResult:
                 break;
 
         }

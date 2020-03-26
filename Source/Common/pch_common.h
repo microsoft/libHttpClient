@@ -27,7 +27,7 @@
 
 #include <WinSock2.h>
 #include <windows.h>
-#include <combaseapi.h>
+#include <objbase.h>
 
 #else
 #define __STDC_LIMIT_MACROS
