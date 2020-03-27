@@ -1264,7 +1264,6 @@ TaskQueueImpl::TaskQueueImpl() :
 
     m_termination.allowed = true;
     m_termination.terminated = false;
-    m_termination.terminating = false;
 }
 
 TaskQueueImpl::~TaskQueueImpl()
@@ -1412,11 +1411,6 @@ void __stdcall TaskQueueImpl::UnregisterSubmitCallback(
     m_callbackSubmitted.Unregister(token);
 }
 
-bool __stdcall TaskQueueImpl::IsTerminated()
-{
-    return m_termination.terminating || m_termination.terminated;
-}
-
 bool __stdcall TaskQueueImpl::CanTerminate()
 {
     return m_termination.allowed;
@@ -1452,8 +1446,6 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
         m_work.Port->CancelTermination(workToken);
         RETURN_HR(hr);
     }
-
-    m_termination.terminating = true;
 
     // At this point both ports have been marked for termination and have pre-alocated any state they
     // need, so we can proceed with the actual termination.

@@ -188,8 +188,6 @@ public:
     void __stdcall Terminate(
         _In_ void* token);
 
-    void __stdcall ResumeTerminations();
-
     virtual HRESULT __stdcall Attach(
         _In_ ITaskQueuePortContext* portContext);
 
@@ -405,7 +403,6 @@ public:
     void __stdcall UnregisterSubmitCallback(
         _In_ XTaskQueueRegistrationToken token) override;
 
-    bool __stdcall IsTerminated() override;
     bool __stdcall CanTerminate() override;
     bool __stdcall CanClose() override;
 
@@ -444,7 +441,6 @@ private:
     {
         bool allowed;
         bool terminated;
-        bool terminating;
         std::mutex lock;
         std::condition_variable cv;
     };
