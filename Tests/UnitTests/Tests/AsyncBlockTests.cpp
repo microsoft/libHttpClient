@@ -4,6 +4,7 @@
 #include "UnitTestIncludes.h"
 #include "XAsync.h"
 #include "XAsyncProvider.h"
+#include "XAsyncProviderPriv.h"
 #include "XTaskQueue.h"
 #include "XTaskQueuePriv.h"
 
@@ -71,7 +72,7 @@ DEFINE_TEST_CLASS(AsyncBlockTests)
 private:
 
     XTaskQueueHandle queue = nullptr;
-
+    
     struct FactorialCallData
     {
         DWORD value = 0;
@@ -219,6 +220,32 @@ private:
         return S_OK;
     }
 
+    static HRESULT CALLBACK FactorialWorkerDistributedWithSchedule(XAsyncOp opCode, const XAsyncProviderData* data)
+    {
+        if (opCode == XAsyncOp::Begin)
+        {
+            FactorialCallData* d = (FactorialCallData*)data->context;
+
+            // leak a ref on this guy so we don't try to free it. We need
+            // to do two addrefs because a new object starts with refcount
+            // of zero.  The factorial async process will addref/release so
+            // we need two to "leak" it (not really leaked; the memory is
+            // owned by the async logic)
+
+            d->AddRef();
+            d->AddRef();
+        }
+
+        HRESULT hr =  FactorialWorkerDistributed(opCode, data);
+
+        if (SUCCEEDED(hr) && opCode == XAsyncOp::Begin)
+        {
+            hr = XAsyncSchedule(data->async, 0);
+        }
+
+        return hr;
+    }
+
     static HRESULT FactorialAsync(FactorialCallData* data, XAsyncBlock* async)
     {
         HRESULT hr = XAsyncBegin(async, data, FactorialAsync, __FUNCTION__, FactorialWorkerSimple);
@@ -241,23 +268,7 @@ private:
 
     static HRESULT FactorialAllocateAsync(DWORD value, XAsyncBlock* async)
     {
-        void* context;
-        HRESULT hr = XAsyncBeginAlloc(async, FactorialAsync, __FUNCTION__, FactorialWorkerDistributed, sizeof(FactorialCallData), &context);
-        if (SUCCEEDED(hr))
-        {
-            FactorialCallData* data = new (context) FactorialCallData;
-            data->value = value;
-
-            // leak a ref on this guy so we don't try to free it. We need
-            // to do two addrefs because a new object starts with refcount
-            // of zero.  The factorial async process will addref/release so
-            // we need two to "leak" it (not really leaked; the memory is
-            // owned by the async logic)
-            
-            data->AddRef();
-            data->AddRef();
-            hr = XAsyncSchedule(async, 0);
-        }
+        HRESULT hr = XAsyncBeginAlloc(async, FactorialAsync, __FUNCTION__, FactorialWorkerDistributedWithSchedule, sizeof(FactorialCallData), sizeof(DWORD), &value);
         return hr;
     }
 
@@ -342,6 +353,7 @@ public:
     AsyncBlockTests::~AsyncBlockTests()
     {
         VERIFY_ARE_EQUAL(s_AsyncLibGlobalStateCount, (DWORD)0);
+        XTaskQueueTerminate(queue, true, nullptr, nullptr);
         XTaskQueueCloseHandle(queue);
     }
 
@@ -986,5 +998,59 @@ public:
         VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
         VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(context.evt, 2500));
+    }
+
+    DEFINE_TEST_CASE(VerifyBeginAfterTerminate)
+    {
+        XAsyncBlock async{};
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &async.queue));
+
+        auto provider = [](XAsyncOp, const XAsyncProviderData*)
+        {
+            return S_OK;
+        };
+
+        // Terminate the queue
+        XTaskQueueTerminate(async.queue, true, nullptr, nullptr);
+
+        // XAsyncBegin should fail early with an abort.
+        VERIFY_ARE_EQUAL(E_ABORT, XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
+
+        XTaskQueueCloseHandle(async.queue);
+    }
+
+    DEFINE_TEST_CASE(VerifyFailureInDoWork)
+    {
+        XAsyncBlock async{};
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &async.queue));
+
+        constexpr static HRESULT hrSpecial = 0x8009ABCD;
+
+        auto provider = [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch(op)
+            {
+                case XAsyncOp::Begin:
+                    return XAsyncSchedule(data->async, 0);
+
+                case XAsyncOp::Cleanup:
+                    break;
+
+                case XAsyncOp::DoWork:
+                    return hrSpecial;
+
+                default:
+                    VERIFY_FAIL();
+                    break;
+            }
+            return S_OK;
+        };
+
+        // Ensure that the call runs through and correctly reports our special 
+        // error.
+        VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
+        VERIFY_ARE_EQUAL(hrSpecial, XAsyncGetStatus(&async, true));
+
+        XTaskQueueCloseHandle(async.queue);
     }
 };

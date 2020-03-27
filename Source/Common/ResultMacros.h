@@ -18,3 +18,5 @@
     HC_TRACE_ERROR(HTTPCLIENT, fmt, ##__VA_ARGS__);    \
     ASSERT(false);                                     \
 
+
+#define FAIL_FAST_IF_FAILED(hr)                                 do { HRESULT __hrRet = hr; if (FAILED(__hrRet)) { FAIL_FAST_MSG("%s 0x%08", #hr, __hrRet); }} while (0, 0)
