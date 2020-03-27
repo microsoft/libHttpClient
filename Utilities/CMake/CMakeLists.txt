@@ -107,6 +107,7 @@ set(Task_Source_Files
     ../../../Source/Task/ThreadPool.h
     ../../../Source/Task/WaitTimer.h
     ../../../Source/Task/XTaskQueuePriv.h
+    ../../../Source/Task/XAsyncProviderPriv.h
     )
 
 set(Task_Windows_Source_Files

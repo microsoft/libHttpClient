@@ -4,6 +4,7 @@
 #include "UnitTestIncludes.h"
 #include "XAsync.h"
 #include "XAsyncProvider.h"
+#include "XAsyncProviderPriv.h"
 #include "XTaskQueue.h"
 #include "XTaskQueuePriv.h"
 
@@ -71,7 +72,7 @@ DEFINE_TEST_CLASS(AsyncBlockTests)
 private:
 
     XTaskQueueHandle queue = nullptr;
-
+    
     struct FactorialCallData
     {
         DWORD value = 0;
@@ -224,7 +225,6 @@ private:
         if (opCode == XAsyncOp::Begin)
         {
             FactorialCallData* d = (FactorialCallData*)data->context;
-            d->value = *(static_cast<DWORD*>(data->initContext));
 
             // leak a ref on this guy so we don't try to free it. We need
             // to do two addrefs because a new object starts with refcount
@@ -268,8 +268,7 @@ private:
 
     static HRESULT FactorialAllocateAsync(DWORD value, XAsyncBlock* async)
     {
-        void* context;
-        HRESULT hr = XAsyncBeginAlloc(async, FactorialAsync, __FUNCTION__, FactorialWorkerDistributedWithSchedule, &value, sizeof(FactorialCallData), &context);
+        HRESULT hr = XAsyncBeginAlloc(async, FactorialAsync, __FUNCTION__, FactorialWorkerDistributedWithSchedule, sizeof(FactorialCallData), sizeof(DWORD), &value);
         return hr;
     }
 
@@ -1005,40 +1004,16 @@ public:
         XAsyncBlock async{};
         VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &async.queue));
 
-        async.callback = [](XAsyncBlock* async)
+        auto provider = [](XAsyncOp, const XAsyncProviderData*)
         {
-            (*(bool*)async->context) = true;
-        };
-
-        auto provider = [](XAsyncOp op, const XAsyncProviderData* data)
-        {
-            switch(op)
-            {
-                case XAsyncOp::Begin:
-                    return XAsyncSchedule(data->async, 0);
-
-                case XAsyncOp::Cleanup:
-                    break;
-
-                default:
-                    VERIFY_FAIL();
-                    break;
-            }
             return S_OK;
         };
 
         // Terminate the queue
         XTaskQueueTerminate(async.queue, true, nullptr, nullptr);
 
-        bool callbackCalled = false;
-        async.context = &callbackCalled;
-
-        // XAsyncBegin should succeed.  The callback should have been called anyway, even
-        // without the queue.
-        VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
-        VERIFY_IS_TRUE(callbackCalled);
-
-        VERIFY_ARE_EQUAL(E_ABORT, XAsyncGetStatus(&async, true));
+        // XAsyncBegin should fail early with an abort.
+        VERIFY_ARE_EQUAL(E_ABORT, XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
 
         XTaskQueueCloseHandle(async.queue);
     }
