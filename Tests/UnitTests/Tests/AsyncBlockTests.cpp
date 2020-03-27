@@ -353,6 +353,7 @@ public:
     AsyncBlockTests::~AsyncBlockTests()
     {
         VERIFY_ARE_EQUAL(s_AsyncLibGlobalStateCount, (DWORD)0);
+        XTaskQueueTerminate(queue, true, nullptr, nullptr);
         XTaskQueueCloseHandle(queue);
     }
 

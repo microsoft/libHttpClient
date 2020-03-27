@@ -1189,4 +1189,28 @@ public:
         NextStep(&step, 7, L"Closing outer queue");
         XTaskQueueCloseHandle(outer.Release());
     }
+
+    DEFINE_TEST_CASE(VerifyTerminateWaitsForSuspends)
+    {
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &queue));
+
+        AutoHandle waitHandle = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        VERIFY_IS_NOT_NULL(waitHandle);
+
+        auto terminatedCallback = [](void* context)
+        {
+            HANDLE h = (HANDLE)context;
+            SetEvent(h);
+        };
+
+        VERIFY_SUCCEEDED(XTaskQueueSuspendTermination(queue));
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, waitHandle.Handle(), terminatedCallback));
+
+        VERIFY_ARE_EQUAL((DWORD)WAIT_TIMEOUT, WaitForSingleObject(waitHandle, 2000));
+
+        XTaskQueueResumeTermination(queue);
+
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(waitHandle, 2000));
+    }
 };

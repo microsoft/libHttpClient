@@ -67,12 +67,18 @@ struct ITaskQueuePort: IApi
         _In_ ITaskQueuePortContext* portContext) = 0;
 
     virtual bool __stdcall DrainOneItem() = 0;
-    
+
     virtual bool __stdcall Wait(
         _In_ ITaskQueuePortContext* portContext,
         _In_ uint32_t timeout) = 0;
 
     virtual bool __stdcall IsEmpty() = 0;
+
+    virtual HRESULT __stdcall SuspendTermination(
+        _In_ ITaskQueuePortContext* portContext) = 0;
+
+    virtual void __stdcall ResumeTermination(
+        _In_ ITaskQueuePortContext* portContext) = 0;
 };
 
 // The status of a port on the queue.
@@ -102,6 +108,9 @@ struct ITaskQueuePortContext : IApi
         _In_ TaskQueuePortStatus status) = 0;
 
     virtual void __stdcall ItemQueued() = 0;
+
+    virtual bool __stdcall AddSuspend() = 0;
+    virtual bool __stdcall RemoveSuspend() = 0;
 };
 
 // The task queue.  The public flat API is built entirely on

@@ -271,6 +271,9 @@ HRESULT TaskQueuePortImpl::Initialize(
     m_terminationList.reset(new (std::nothrow) LocklessQueue<TerminationEntry*>(0));
     RETURN_IF_NULL_ALLOC(m_terminationList);
 
+    m_pendingTerminationList.reset(new (std::nothrow) LocklessQueue<TerminationEntry*>(*m_terminationList.get()));
+    RETURN_IF_NULL_ALLOC(m_pendingTerminationList);
+
     RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
     {
         TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
@@ -509,9 +512,31 @@ void __stdcall TaskQueuePortImpl::Terminate(
     _In_ void* token)
 {
     TerminationEntry* term = static_cast<TerminationEntry*>(token);
-    
+
+    // Prevent anything else from coming into the queue
+    term->portContext->SetStatus(TaskQueuePortStatus::Terminated);
+
     CancelPendingEntries(term->portContext, true);
 
+    // Are there existing suspends?  AddSuspend returns
+    // true if this is the first suspend added.
+    if (term->portContext->AddSuspend())
+    {
+        ScheduleTermination(term);
+    }
+    else
+    {
+        m_pendingTerminationList->push_back(term, term->node);
+        term->node = 0;
+    }
+
+    // Balance our add
+    term->portContext->RemoveSuspend();
+}
+
+void __stdcall TaskQueuePortImpl::ScheduleTermination(
+    _In_ TerminationEntry* term)
+{
     // Insert the termination callback into the queue.  Even if the
     // main queue is empty, we still signal it and run through
     // a cycle.  This ensures we flush the queue out with no 
@@ -529,7 +554,6 @@ void __stdcall TaskQueuePortImpl::Terminate(
     // We will not signal until we are marked as terminated. The queue could
     // still be moving while we are running this terminate call.
 
-    term->portContext->SetStatus(TaskQueuePortStatus::Terminated);
     SignalQueue();
 
     // We must ensure we poke the queue threads in case there's
@@ -681,6 +705,42 @@ bool __stdcall TaskQueuePortImpl::IsEmpty()
         (m_processingCallback == 0);
 
     return empty;
+}
+
+HRESULT __stdcall TaskQueuePortImpl::SuspendTermination(
+    _In_ ITaskQueuePortContext* portContext
+    )
+{
+    // This is necessary to ensure there is no race.
+    portContext->AddSuspend();
+    HRESULT hr = VerifyNotTerminated(portContext);
+    
+    if (FAILED(hr))
+    {
+        portContext->RemoveSuspend();
+        RETURN_HR(hr);
+    }
+
+    return S_OK;
+}
+
+void __stdcall TaskQueuePortImpl::ResumeTermination(
+    _In_ ITaskQueuePortContext* portContext)
+{
+    if (portContext->RemoveSuspend())
+    {
+        // Removed the last external callback.  Look for
+        // parked terminations and reschedule them.
+
+        TerminationEntry *entry;
+        uint64_t address;
+
+        while (m_pendingTerminationList->pop_front(entry, address))
+        {
+            entry->node = address;
+            ScheduleTermination(entry);
+        }
+    }
 }
 
 HRESULT TaskQueuePortImpl::VerifyNotTerminated(
@@ -1160,6 +1220,34 @@ void __stdcall TaskQueuePortContextImpl::ItemQueued()
     m_submitCallback->Invoke(m_type);
 }
 
+bool __stdcall TaskQueuePortContextImpl::AddSuspend()
+{
+    return (m_suspendCount.fetch_add(1) == 0);
+}
+
+bool __stdcall TaskQueuePortContextImpl::RemoveSuspend()
+{
+    for(;;)
+    {
+        uint32_t current = m_suspendCount.load();
+
+        // These should always be balanced and there is no
+        // valid case where this should happen, even
+        // for multiple therads racing.
+
+        if (current == 0)
+        {
+            ASSERT(false);
+            return true;
+        }
+
+        if (m_suspendCount.compare_exchange_weak(current, current -1))
+        {
+            return current == 1;
+        }
+    }
+}
+
 //
 // TaskQueueImpl
 //
@@ -1560,22 +1648,6 @@ STDAPI_(bool) XTaskQueueIsEmpty(
 }
 
 //
-// Returns TRUE if this task queue is terminated or
-// is in the process of terminating.
-//
-STDAPI_(bool) XTaskQueueIsTerminated(
-    _In_ XTaskQueueHandle queue)
-{
-    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
-    if (aq == nullptr || aq->IsTerminated())
-    {
-        return true;
-    }
-
-    return false;
-}
-
-//
 // Closes the task queue.  A queue can only be closed if it
 // is not in use by a task or is empty.  If not true, the queue
 // will be marked for closure and closed when it can. 
@@ -1637,7 +1709,8 @@ STDAPI XTaskQueueSubmitDelayedCallback(
     referenced_ptr<ITaskQueuePortContext> portContext;
     RETURN_IF_FAILED(aq->GetPortContext(port, portContext.address_of()));
 
-    RETURN_HR(portContext->GetPort()->QueueItem(portContext.get(), delayMs, callbackContext, callback));
+    RETURN_IF_FAILED(portContext->GetPort()->QueueItem(portContext.get(), delayMs, callbackContext, callback));
+    return S_OK;
 }
 
 //
@@ -1715,7 +1788,8 @@ STDAPI XTaskQueueRegisterMonitor(
 {
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
-    RETURN_HR(aq->RegisterSubmitCallback(callbackContext, callback, token));
+    RETURN_IF_FAILED(aq->RegisterSubmitCallback(callbackContext, callback, token));
+    return S_OK;
 }
 
 //
@@ -1818,4 +1892,46 @@ STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
     {
         XTaskQueueCloseHandle(previous);
     }
+}
+
+//
+// Submits a callback that will be invoked asynchronously via some external
+// system.  This is used to prevent queue termination while other work
+// is happening.
+//
+STDAPI XTaskQueueSuspendTermination(
+    _In_ XTaskQueueHandle queue
+    ) noexcept
+{
+    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
+    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
+
+    referenced_ptr<ITaskQueuePortContext> portContext;
+    RETURN_IF_FAILED(aq->GetPortContext(XTaskQueuePort::Work, portContext.address_of()));
+
+    RETURN_IF_FAILED(portContext->GetPort()->SuspendTermination(portContext.get()));
+    return S_OK;
+}
+
+//
+// Tells the queue that a previously submitted external callback
+// has been dispatched.
+//
+STDAPI_(void) XTaskQueueResumeTermination(
+    _In_ XTaskQueueHandle queue
+    ) noexcept
+{
+    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
+    if (aq == nullptr)
+    {
+        return;
+    }
+    
+    referenced_ptr<ITaskQueuePortContext> portContext;
+    if (FAILED(aq->GetPortContext(XTaskQueuePort::Work, portContext.address_of())))
+    {
+        return;
+    }
+        
+    portContext->GetPort()->ResumeTermination(portContext.get());
 }

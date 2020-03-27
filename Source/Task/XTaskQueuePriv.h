@@ -14,13 +14,23 @@
 /// <param name='port'>The port to check.</param>
 STDAPI_(bool) XTaskQueueIsEmpty(
     _In_ XTaskQueueHandle queue,
-    _In_ XTaskQueuePort port);
+    _In_ XTaskQueuePort port
+    ) noexcept;
 
 /// <summary>
-/// Returns TRUE if this task queue is terminated or 
-/// is in the process of being terminated. There
-/// is no guarantee new callback submissions will succeed.
+/// Suspends terminations on the task queue.  May return an error if
+/// the queue is already terminated.
 /// </summary>
-/// <param name='queue'>The queue to check.</param>
-STDAPI_(bool) XTaskQueueIsTerminated(
-    _In_ XTaskQueueHandle queue);
+/// <param name='queue'>The queue to suspend terminations.</param>
+STDAPI XTaskQueueSuspendTermination(
+    _In_ XTaskQueueHandle queue
+    ) noexcept;
+
+/// <summary>
+/// Resumes the ability to terminate the task queue. If a termination was
+/// attempted it will be continued.
+/// </summary>
+/// <param name='queue'>The queue resume terminations.</param>
+STDAPI_(void) XTaskQueueResumeTermination(
+    _In_ XTaskQueueHandle queue
+    ) noexcept;

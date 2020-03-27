@@ -97,6 +97,7 @@ private:
 
         if (queue != nullptr)
         {
+            XTaskQueueResumeTermination(queue);
             XTaskQueueCloseHandle(queue);
         }
 
@@ -383,7 +384,9 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
     {
         RETURN_IF_FAILED(XTaskQueueDuplicateHandle(queue, &state->queue));
     }
-   
+
+    RETURN_IF_FAILED(XTaskQueueSuspendTermination(state->queue));
+    
     state->userAsyncBlock = asyncBlock;
     state->providerData.async = &state->providerAsyncBlock;
 
@@ -761,14 +764,6 @@ STDAPI XAsyncBegin(
     state->identity = identity;
     state->identityName = identityName;
 
-    if (XTaskQueueIsTerminated(state->queue))
-    {
-        AsyncBlockInternalGuard internal{ asyncBlock };
-        internal.ExtractState();
-        CleanupState(std::move(state));
-        RETURN_HR(E_ABORT);
-    }
-
     // We've successfully setup the call.  Now kick off a
     // Begin opcode.  If this call fails, we use it to fail
     // the async call, instead of failing XAsyncBegin. This is
@@ -779,77 +774,6 @@ STDAPI XAsyncBegin(
     if (FAILED(hr))
     {
         XAsyncComplete(asyncBlock, hr, 0);
-    }
-
-    return S_OK;
-}
-
-/// <summary>
-/// Initializes an async block for use.  Once begun calls such
-/// as XAsyncGetStatus will provide meaningful data. It is assumed the
-/// async work will begin on some system defined thread after this call
-/// returns. The token and function parameters can be used to help identify
-/// mismatched Begin/GetResult calls.  The token is typically the function
-/// pointer of the async API you are implementing, and the functionName parameter
-/// is typically the __FUNCTION__ compiler macro.  
-///
-/// This variant of XAsyncBegin will allocate additional memory of size contextSize
-/// and use this as the context pointer for async provider callbacks.  The memory
-/// pointer is returned in 'context'.  The lifetime of this memory is managed
-/// by the async library and will be freed automatically when the call 
-/// completes.
-/// </summary>
-STDAPI XAsyncBeginAlloc_V1(
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ const void* identity,
-    _In_opt_ const char* identityName,
-    _In_ XAsyncProvider* provider,
-    _In_ size_t contextSize,
-    _Inout_ void** context
-    ) noexcept
-{
-    RETURN_HR_IF(E_INVALIDARG, contextSize == 0);
-    RETURN_IF_FAILED(AllocState(asyncBlock, contextSize));
-
-    AsyncStateRef state;
-    {
-        AsyncBlockInternalGuard internal{ asyncBlock };
-        state = internal.GetState();
-    }
-
-    // Alloc using a context size should always fail and not
-    // try to send a completion.
-    ASSERT(state != nullptr);
-
-    state->provider = provider;
-    state->identity = identity;
-    state->identityName = identityName;
-
-    ASSERT(state->providerData.context != nullptr);
-    memset(state->providerData.context, 0, contextSize);
-
-    if (XTaskQueueIsTerminated(state->queue))
-    {
-        AsyncBlockInternalGuard internal{ asyncBlock };
-        internal.ExtractState();
-        CleanupState(std::move(state));
-        RETURN_HR(E_ABORT);
-    }
-
-    // We've successfully setup the call.  Now kick off a
-    // Begin opcode.  If this call fails, we use it to fail
-    // the async call, instead of failing XAsyncBegin. This is
-    // necessary to ensure that the async call state is properly
-    // cleaned up, both for us and for the user call.
-
-    HRESULT hr = provider(XAsyncOp::Begin, &state->providerData);
-    if (FAILED(hr))
-    {
-        XAsyncComplete(asyncBlock, hr, 0);
-    }
-    else
-    {
-        *context = state->providerData.context;
     }
 
     return S_OK;
@@ -913,14 +837,6 @@ STDAPI XAsyncBeginAlloc(
     if (parameterBlockSize != 0)
     {
         memcpy(state->providerData.context, parameterBlock, parameterBlockSize);
-    }
-
-    if (XTaskQueueIsTerminated(state->queue))
-    {
-        AsyncBlockInternalGuard internal{ asyncBlock };
-        internal.ExtractState();
-        CleanupState(std::move(state));
-        RETURN_HR(E_ABORT);
     }
 
     // We've successfully setup the call.  Now kick off a
