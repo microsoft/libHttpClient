@@ -534,7 +534,7 @@ void __stdcall TaskQueuePortImpl::Terminate(
     term->portContext->RemoveSuspend();
 }
 
-void __stdcall TaskQueuePortImpl::ScheduleTermination(
+void TaskQueuePortImpl::ScheduleTermination(
     _In_ TerminationEntry* term)
 {
     // Insert the termination callback into the queue.  Even if the
