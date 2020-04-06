@@ -9,9 +9,9 @@
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
 #define HC_PLATFORM_MAC 22
-#define HC_PLATFORM_NINTENDO_SWITCH 31
-#define HC_PLATFORM_SONY_PLAYSTATION_4 41
 #define HC_PLATFORM_GENERIC 100
+#define HC_PLATFORM_NINTENDO_SWITCH 111
+#define HC_PLATFORM_SONY_PLAYSTATION_4 121
 
 // These macros define the datamodels that libHttpClient knows about
 // (a datamodel defines the size of primitive types such as int and pointers)
@@ -101,9 +101,10 @@
 (HC_PLATFORM == HC_PLATFORM_MAC || HC_PLATFORM == HC_PLATFORM_IOS)
 #endif
 
+// HC_PLATFORM_IS_EXTERNAL describes platforms where the implementation is outside of the libHttpClient repository
 #if !defined(HC_PLATFORM_IS_EXTERNAL)
 #define HC_PLATFORM_IS_EXTERNAL \
-(HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM == HC_PLATFORM_PLAYSTATION || HC_PLATFORM == HC_PLATFORM_GENERIC)
+(HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM == HC_PLATFORM_GENERIC)
 #endif
 
 #if defined(HC_PLATFORM_MSBUILD_GUESS) && (HC_PLATFORM_MSBUILD_GUESS != HC_PLATFORM)
