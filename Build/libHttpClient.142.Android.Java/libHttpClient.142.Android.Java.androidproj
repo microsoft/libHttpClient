@@ -31,7 +31,7 @@
     <RootNamespace>libHttpClient</RootNamespace>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ProjectVersion>1.0</ProjectVersion>
-    <ProjectGuid>{eef4b78b-7d2b-4a54-9944-5953d7df5b51}</ProjectGuid>
+    <ProjectGuid>{A91A390A-C4F0-40A9-A519-27FFDD20DEC2}</ProjectGuid>
     <AndroidAPILevel>android-19</AndroidAPILevel>
     <TargetExt>.aar</TargetExt>
     <_PackagingProjectWithoutNativeComponent>true</_PackagingProjectWithoutNativeComponent>

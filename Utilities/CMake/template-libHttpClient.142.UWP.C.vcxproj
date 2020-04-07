@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9164C6C9-3872-4922-A3E3-3822622D3E71}</ProjectGuid>
+    <ProjectGuid>{09B1A97C-FADC-4E06-B962-7C8AE6EA19A3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
