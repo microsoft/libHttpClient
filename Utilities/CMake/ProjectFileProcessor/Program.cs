@@ -97,7 +97,7 @@ namespace ProjectFileProcessor
                 rootFolder = @"C:\git\forks\xbox-live-api";
             else
                 rootFolder = args[0];
-            
+
             if (args.Length == 4 && args[1] == "diff")
             {
                 string fileOld = args[2];
@@ -170,6 +170,14 @@ namespace ProjectFileProcessor
                 cmake_vcxproj = @"libHttpClient.Android.C.vcxproj",
                 template = @"template-libHttpClient.141.Android.C.vcxproj",
                 output = @"libHttpClient.141.Android.C.vcxproj",
+            });
+
+            //libHttpClient.142.XDK.Cpp
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.XDK.C.vcxproj",
+                template = @"template-libHttpClient.142.XDK.C.vcxproj",
+                output = @"libHttpClient.142.XDK.C.vcxproj",
             });
 
             //libHttpClient.141.XDK.Cpp
@@ -368,8 +376,8 @@ namespace ProjectFileProcessor
         }
 
         public static string CaseInsenstiveReplace(
-            string originalString, 
-            string oldValue, 
+            string originalString,
+            string oldValue,
             string newValue)
         {
             StringComparison comparisonType = StringComparison.OrdinalIgnoreCase;
@@ -609,4 +617,3 @@ namespace ProjectFileProcessor
 
     }
 }
-
