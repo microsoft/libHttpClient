@@ -255,7 +255,7 @@ private:
         _Out_ const wchar_t** pwProxyName
         );
 
-#if HC_PLATFORM != HC_PLATFORM_GSDK
+#if HC_PLATFORM != HC_PLATFORM_GDK
     void set_autodiscover_proxy(_In_ const xbox::httpclient::Uri& cUri);
 #endif
 

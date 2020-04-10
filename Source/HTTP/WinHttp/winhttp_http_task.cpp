@@ -11,7 +11,7 @@
 #include "hcwebsocket.h"
 #endif
 
-#if HC_PLATFORM == HC_PLATFORM_GSDK
+#if HC_PLATFORM == HC_PLATFORM_GDK
 #include "XGameRuntimeFeature.h"
 #include <winsock2.h>
 #include <iphlpapi.h>
@@ -719,7 +719,7 @@ void CALLBACK winhttp_http_task::completion_callback(
     }
 }
 
-#if HC_PLATFORM != HC_PLATFORM_GSDK
+#if HC_PLATFORM != HC_PLATFORM_GDK
 void winhttp_http_task::set_autodiscover_proxy(
     _In_ const xbox::httpclient::Uri& cUri)
 {
@@ -863,7 +863,7 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
-#if HC_PLATFORM != HC_PLATFORM_GSDK
+#if HC_PLATFORM != HC_PLATFORM_GDK
     if (m_proxyType == proxy_type::autodiscover_proxy)
     {
         set_autodiscover_proxy(cUri);
@@ -1042,7 +1042,7 @@ HRESULT winhttp_http_task::connect_and_send_async()
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-#if HC_PLATFORM == HC_PLATFORM_GSDK
+#if HC_PLATFORM == HC_PLATFORM_GDK
 typedef DWORD(WINAPI *GetNetworkConnectivityHintProc)(NL_NETWORK_CONNECTIVITY_HINT*);
 typedef DWORD(WINAPI *NotifyNetworkConnectivityHintChangeProc)(PNETWORK_CONNECTIVITY_HINT_CHANGE_CALLBACK, PVOID, BOOLEAN, PHANDLE);
 
@@ -1075,7 +1075,7 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
 
 void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 {
-#if HC_PLATFORM == HC_PLATFORM_GSDK
+#if HC_PLATFORM == HC_PLATFORM_GDK
     auto singleton = get_http_singleton();
     if (singleton != nullptr && singleton->m_networkModule != nullptr)
     {
@@ -1156,7 +1156,7 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
     UNREFERENCED_PARAMETER(context);
 
 
-#if HC_PLATFORM == HC_PLATFORM_GSDK 
+#if HC_PLATFORM == HC_PLATFORM_GDK 
     if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
     {
         auto singleton = get_http_singleton();

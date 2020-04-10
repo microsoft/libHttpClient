@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ApplicationEnvironment>title</ApplicationEnvironment>
-    <ProjectGuid>{57C681F7-280F-45B8-9FA9-D556C24F2053}</ProjectGuid>
+    <ProjectGuid>{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ProjectName>libHttpClient.142.XDK.C</ProjectName>
     <RootNamespace>xbox.httpclient</RootNamespace>
@@ -131,6 +131,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XAsyncProviderPriv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\referenced_ptr.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.cpp" />
