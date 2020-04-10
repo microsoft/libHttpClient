@@ -16,21 +16,22 @@ namespace log
 
 typedef struct http_retry_after_api_state
 {
-    http_retry_after_api_state() : statusCode(0)
-    {
-    }
+    http_retry_after_api_state() = default;
 
     http_retry_after_api_state(
         _In_ const chrono_clock_t::time_point& _retryAfterTime,
-        _In_ uint32_t _statusCode
-        ) :
+        _In_ uint32_t _statusCode,
+        _In_ bool _callPending
+    ) :
         retryAfterTime(_retryAfterTime),
-        statusCode(_statusCode)
+        statusCode(_statusCode),
+        callPending(_callPending)
     {
     }
 
-    chrono_clock_t::time_point retryAfterTime;
-    uint32_t statusCode;
+    chrono_clock_t::time_point retryAfterTime{};
+    uint32_t statusCode{ 0 };
+    bool callPending{ false };
 } http_retry_after_api_state;
 
 static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
