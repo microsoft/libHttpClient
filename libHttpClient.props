@@ -15,20 +15,20 @@
       UWP
       Win32
       XDK
-      GSDK
+      GDK
     -->
 
   <PropertyGroup Condition="'$(HCLibPlatformType)' == ''">
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Windows Store'">UWP</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">XDK</HCLibPlatformType>
-    <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND ('$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64')">GSDK</HCLibPlatformType>
+    <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND ('$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64')">GDK</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango' AND '$(Platform)'!='Gaming.Desktop.x64' AND '$(Platform)'!='Gaming.Xbox.XboxOne.x64' AND '$(Platform)'!='Gaming.Xbox.Scarlett.x64'">Win32</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Android'">Android</HCLibPlatformType>
   </PropertyGroup>
 
   <PropertyGroup>
     <!-- Back compat reasons -->
-    <HCLibPlatformType Condition="'$(HCLibPlatformType)'=='GDK' OR '$(HCLibPlatformType)'=='GXDK'">GSDK</HCLibPlatformType>
+    <HCLibPlatformType Condition="'$(HCLibPlatformType)'=='GSDK' OR '$(HCLibPlatformType)'=='GXDK'">GDK</HCLibPlatformType>
   </PropertyGroup>
 
   <PropertyGroup>
