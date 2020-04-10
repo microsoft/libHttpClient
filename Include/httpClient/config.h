@@ -5,7 +5,6 @@
 #define HC_PLATFORM_WIN32 1
 #define HC_PLATFORM_UWP 2
 #define HC_PLATFORM_XDK 3
-#define HC_PLATFORM_GSDK 4 // For backcompat reasons
 #define HC_PLATFORM_GDK 4
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
@@ -13,6 +12,8 @@
 #define HC_PLATFORM_GENERIC 100
 #define HC_PLATFORM_NINTENDO_SWITCH 111
 #define HC_PLATFORM_SONY_PLAYSTATION_4 121
+
+#define HC_PLATFORM_GSDK HC_PLATFORM_GDK // For backcompat
 
 // These macros define the datamodels that libHttpClient knows about
 // (a datamodel defines the size of primitive types such as int and pointers)
