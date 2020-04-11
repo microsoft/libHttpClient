@@ -1042,12 +1042,18 @@ void TaskQueuePortImpl::ScheduleTermination(
         m_threadPool.Submit();
         break;
 
-    case XTaskQueueDispatchMode::Immediate:
-        DrainOneItem();
-        break;
-
     default:
         break;
+    }
+
+    m_attachedContexts.Visit([](ITaskQueuePortContext* portContext)
+    {
+        portContext->ItemQueued();
+    });
+    
+    if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
+    {
+        DrainOneItem();
     }
 }
 
