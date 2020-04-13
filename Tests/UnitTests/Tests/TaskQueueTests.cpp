@@ -963,6 +963,38 @@ public:
         VERIFY_IS_TRUE(data.terminationCalled);
     }
 
+    DEFINE_TEST_CASE(VerifyWaitTermination)
+    {
+        uint64_t start = GetTickCount64();
+        do
+        {
+            XTaskQueueHandle queue;
+            HRESULT hr = XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &queue);
+            if (FAILED(hr)) VERIFY_FAIL();
+
+            hr = XTaskQueueTerminate(queue, true, nullptr, nullptr);
+            if (FAILED(hr)) VERIFY_FAIL();
+
+            XTaskQueueCloseHandle(queue);
+        } while(GetTickCount64() - start < 5000);
+    }
+
+    DEFINE_TEST_CASE(VerifyManualDispatchAtTermination)
+    {
+        AutoQueueHandle queue;
+
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+
+        auto dispatcher = [](void*, XTaskQueueHandle queue, XTaskQueuePort port)
+        {
+            XTaskQueueDispatch(queue, port, 0);
+        };
+
+        XTaskQueueRegistrationToken token;
+        VERIFY_SUCCEEDED(XTaskQueueRegisterMonitor(queue, nullptr, dispatcher, &token));
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, true, nullptr, nullptr));
+    }
+
     DEFINE_TEST_CASE(VerifyTerminationOfCompositeQueue)
     {
         struct TestData
