@@ -1053,4 +1053,99 @@ public:
 
         XTaskQueueCloseHandle(async.queue);
     }
+
+    DEFINE_TEST_CASE(VerifyDuplicateResultCallsFail)
+    {
+        XAsyncBlock async = {};
+        auto data = AutoRef<FactorialCallData>(new FactorialCallData {});
+        DWORD result;
+        std::vector<XAsyncOp> ops;
+
+        async.queue = queue;
+
+        data.Ref->value = 5;
+
+        VERIFY_SUCCEEDED(FactorialAsync(data.Ref, &async));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
+
+        VERIFY_SUCCEEDED(FactorialResult(&async, &result));
+        VERIFY_ARE_EQUAL(E_ILLEGAL_METHOD_CALL, FactorialResult(&async, &result));
+    }
+
+    DEFINE_TEST_CASE(VerifyDuplicatePendingResultCallsSucceed)
+    {
+        struct Context
+        {
+            HANDLE complete = nullptr;
+            HANDLE waiting = nullptr;
+
+            Context()
+            {
+                complete = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+                VERIFY_IS_NOT_NULL(complete);
+
+                waiting = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+                VERIFY_IS_NOT_NULL(waiting);
+            }
+
+            ~Context()
+            {
+                if (complete) CloseHandle(complete);
+                if (waiting) CloseHandle(waiting);
+            }
+        };        
+
+        auto provider = [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            Context* cxt;
+
+            switch(op)
+            {
+                case XAsyncOp::Begin:
+                    return XAsyncSchedule(data->async, 0);
+
+                case XAsyncOp::Cleanup:
+                    break;
+
+                case XAsyncOp::DoWork:
+                    cxt = (Context*)(data->async->context);
+                    SetEvent(cxt->waiting);
+                    WaitForSingleObject(cxt->complete, INFINITE);
+                    XAsyncComplete(data->async, S_OK, 0);
+                    break;
+
+                default:
+                    VERIFY_FAIL();
+                    break;
+            }
+            return S_OK;
+        };
+
+        Context context;
+        XAsyncBlock async{};
+        async.queue = queue;
+        async.context = &context;
+
+        VERIFY_SUCCEEDED(XAsyncBegin(&async, nullptr, nullptr, nullptr, provider));
+
+        // Wait for the provider to get its do work called
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(context.waiting, 2000));
+
+        // Now try to access the results -- we should get pending and be able to 
+        // do this again and again.
+
+        for (uint32_t idx = 0; idx < 10; idx++)
+        {
+            VERIFY_ARE_EQUAL(E_PENDING, XAsyncGetResult(&async, nullptr, 0, nullptr, nullptr));
+        }
+
+        // Now complete the work
+        SetEvent(context.complete);
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
+
+        VERIFY_SUCCEEDED(XAsyncGetResult(&async, nullptr, 0, nullptr, nullptr));
+
+        // Because there was no payload this should continue to succeed
+        VERIFY_SUCCEEDED(XAsyncGetResult(&async, nullptr, 0, nullptr, nullptr));
+    }
 };
