@@ -76,6 +76,12 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
       <PreprocessorDefinitions>_WIN32_WINNT=0x601;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ProgramDatabase</DebugInformationFormat>
+      <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">false</SupportJustMyCode>
+      <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</SupportJustMyCode>
+      <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</SupportJustMyCode>
+      <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SupportJustMyCode>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
