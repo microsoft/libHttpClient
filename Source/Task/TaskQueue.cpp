@@ -695,12 +695,36 @@ void __stdcall TaskQueuePortImpl::ResumeTermination(
         // parked terminations and reschedule them.
 
         TerminationEntry *entry;
+        TerminationEntry *cycleEntry = nullptr;
         uint64_t address;
 
         while (m_pendingTerminationList->pop_front(entry, address))
         {
-            entry->node = address;
-            ScheduleTermination(entry);
+            if (entry == cycleEntry)
+            {
+                // We've wrapped
+                m_pendingTerminationList->push_back(entry, address);
+                break;
+            }
+
+            if (entry->portContext == portContext)
+            {
+                // This entry is for the port that's resuming,
+                // we can schedule it.
+                entry->node = address;
+                ScheduleTermination(entry);
+            }
+            else
+            {
+                // This entry is for another port context so
+                // we put it back for later.
+                if (cycleEntry == nullptr)
+                {
+                    cycleEntry = entry;
+                }
+
+                m_pendingTerminationList->push_back(entry, address);
+            }
         }
     }
 }
