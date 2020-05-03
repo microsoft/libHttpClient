@@ -86,7 +86,6 @@ enum class TaskQueuePortStatus
 {
     Active,
     Canceled,
-    Terminating,
     Terminated
 };
 

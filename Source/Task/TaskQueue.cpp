@@ -476,6 +476,7 @@ HRESULT __stdcall TaskQueuePortImpl::PrepareTerminate(
     _Out_ void** token)
 {
     RETURN_HR_IF(E_POINTER, token == nullptr);
+    RETURN_HR_IF(E_INVALIDARG, callback == nullptr);
 
     std::unique_ptr<TerminationEntry> term(new (std::nothrow) TerminationEntry);
     RETURN_IF_NULL_ALLOC(term);
@@ -694,12 +695,36 @@ void __stdcall TaskQueuePortImpl::ResumeTermination(
         // parked terminations and reschedule them.
 
         TerminationEntry *entry;
+        TerminationEntry *cycleEntry = nullptr;
         uint64_t address;
 
         while (m_pendingTerminationList->pop_front(entry, address))
         {
-            entry->node = address;
-            ScheduleTermination(entry);
+            if (entry == cycleEntry)
+            {
+                // We've wrapped
+                m_pendingTerminationList->push_back(entry, address);
+                break;
+            }
+
+            if (entry->portContext == portContext)
+            {
+                // This entry is for the port that's resuming,
+                // we can schedule it.
+                entry->node = address;
+                ScheduleTermination(entry);
+            }
+            else
+            {
+                // This entry is for another port context so
+                // we put it back for later.
+                if (cycleEntry == nullptr)
+                {
+                    cycleEntry = entry;
+                }
+
+                m_pendingTerminationList->push_back(entry, address);
+            }
         }
     }
 }
@@ -1020,13 +1045,10 @@ void TaskQueuePortImpl::ScheduleTermination(
     // races and that the termination callback happens on the right
     // thread.
 
-    if (term->callback != nullptr)
-    {
-        // This never fails because we preallocate the
-        // list node.
-        m_terminationList->push_back(term, term->node);
-        term->node = 0; // now owned by the list
-    }
+    // This never fails because we preallocate the
+    // list node.
+    m_terminationList->push_back(term, term->node);
+    term->node = 0; // now owned by the list
 
     // We will not signal until we are marked as terminated. The queue could
     // still be moving while we are running this terminate call.
@@ -1240,7 +1262,7 @@ bool __stdcall TaskQueuePortContextImpl::RemoveSuspend()
 
         // These should always be balanced and there is no
         // valid case where this should happen, even
-        // for multiple therads racing.
+        // for multiple threads racing.
 
         if (current == 0)
         {

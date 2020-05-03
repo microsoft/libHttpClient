@@ -154,6 +154,7 @@ typedef void* HANDLE;
 #define E_NOT_SUFFICIENT_BUFFER                 _HRESULTYPEDEF_(0x8007007AL)
 #define E_NOINTERFACE                           _HRESULTYPEDEF_(0x80004002L)
 #define E_BOUNDS                                _HRESULTYPEDEF_(0x8000000BL)
+#define E_ILLEGAL_METHOD_CALL                   _HRESULTYPEDEF_(0x8000000EL)
 #define HTTP_E_STATUS_AMBIGUOUS                 _HRESULTYPEDEF_(0x8019012CL)
 #define HTTP_E_STATUS_BAD_GATEWAY               _HRESULTYPEDEF_(0x801901F6L)
 #define HTTP_E_STATUS_BAD_METHOD                _HRESULTYPEDEF_(0x80190195L)

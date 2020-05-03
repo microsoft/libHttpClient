@@ -4,8 +4,9 @@
 #include "pch.h"
 #include "XTaskQueuePriv.h"
 
-#define ASYNC_BLOCK_SIG 0x41535942 // ASYB
-#define ASYNC_STATE_SIG 0x41535445 // ASTE
+#define ASYNC_BLOCK_SIG         0x41535942 // ASYB
+#define ASYNC_BLOCK_RESULT_SIG  0x41535242 // ASRB
+#define ASYNC_STATE_SIG         0x41535445 // ASTE
 
 // Used by unit tests to verify we cleanup memory correctly.
 std::atomic<uint32_t> s_AsyncLibGlobalStateCount{ 0 };
@@ -97,7 +98,6 @@ private:
 
         if (queue != nullptr)
         {
-            XTaskQueueResumeTermination(queue);
             XTaskQueueCloseHandle(queue);
         }
 
@@ -249,13 +249,28 @@ public:
         return state;
     }
 
-    AsyncStateRef ExtractState() const noexcept
+    AsyncStateRef ExtractState(_In_ bool resultsRetrieved = false) const noexcept
     {
         AsyncStateRef state{ m_internal->state };
         m_internal->state = nullptr;
-        m_internal->signature = 0;
         m_userInternal->state = nullptr;
-        m_userInternal->signature = 0;
+
+        // When XAsyncGetResults is called, it extracts state
+        // with resultsRetrieved set to true, which places a
+        // different signature into the async block. This is used
+        // later as a marker to prevent duplicate calls to 
+        // XAsyncGetResults.
+
+        if (resultsRetrieved)
+        {
+            m_internal->signature = ASYNC_BLOCK_RESULT_SIG;
+            m_userInternal->signature = ASYNC_BLOCK_RESULT_SIG;
+        }
+        else
+        {
+            m_internal->signature = 0;
+            m_userInternal->signature = 0;
+        }
 
         if (state != nullptr && state->signature != ASYNC_STATE_SIG)
         {
@@ -269,6 +284,11 @@ public:
     HRESULT GetStatus() const noexcept
     {
         return m_internal->status;
+    }
+
+    bool GetResultsRetrieved()
+    {
+        return m_internal->signature == ASYNC_BLOCK_RESULT_SIG;
     }
 
     bool TrySetTerminalStatus(HRESULT status) noexcept
@@ -385,8 +405,6 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
         RETURN_IF_FAILED(XTaskQueueDuplicateHandle(queue, &state->queue));
     }
 
-    RETURN_IF_FAILED(XTaskQueueSuspendTermination(state->queue));
-    
     state->userAsyncBlock = asyncBlock;
     state->providerData.async = &state->providerAsyncBlock;
 
@@ -394,7 +412,10 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
     state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
     RETURN_LAST_ERROR_IF(state->waitEvent == nullptr);
 #endif
-    
+
+    // Note: needs to be the last failable thing we do.
+    RETURN_IF_FAILED(XTaskQueueSuspendTermination(state->queue));
+
     internal->state = state.Detach();
 
     // Duplicate the async block we've just configured
@@ -415,7 +436,7 @@ static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSi
     auto internal = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
     if (internal->signature == ASYNC_BLOCK_SIG)
     {
-        return E_INVALIDARG;
+        RETURN_HR(E_INVALIDARG);
     }
 
     // This could be a reused async block from a prior
@@ -434,10 +455,12 @@ static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSi
 
     if (FAILED(hr))
     {
+        internal->signature = 0;
         internal->status = hr;
     }
 
-    RETURN_HR(hr);
+    RETURN_IF_FAILED(hr);
+    return S_OK;
 }
 
 static void CleanupState(_Inout_ AsyncStateRef&& state)
@@ -488,14 +511,27 @@ static HRESULT SignalCompletion(_In_ AsyncStateRef const& state)
 
 static void SignalWait(_In_ AsyncStateRef const& state)
 {
+    bool newlySatisfied;
     {
         std::lock_guard<std::mutex> lock(state->waitMutex);
+        newlySatisfied = !state->waitSatisfied;
         state->waitSatisfied = true;
+        state->waitCondition.notify_all();
     }
 #if _WIN32
     SetEvent(state->waitEvent);
 #endif
-    state->waitCondition.notify_all();
+
+    // We should only come in here once, but we don't want
+    // to underflow task queue resumes and we already know
+    // from above if we're first marking this wait as
+    // satisfied, so use it.
+
+    ASSERT(newlySatisfied);
+    if (newlySatisfied)
+    {
+        XTaskQueueResumeTermination(state->queue);
+    }
 }
 
 static void CALLBACK CompletionCallback(
@@ -509,10 +545,13 @@ static void CALLBACK CompletionCallback(
     AsyncStateRef state;
     state.Attach(static_cast<AsyncState*>(context));
 
+    // We always pass the user async block into the 
+    // callback, but we don't trust it -- we check
+    // the callback field on our internal copy.
     XAsyncBlock* asyncBlock = state->userAsyncBlock;
-    if (asyncBlock->callback != nullptr)
+    if (state->providerAsyncBlock.callback != nullptr)
     {
-        asyncBlock->callback(asyncBlock);
+        state->providerAsyncBlock.callback(asyncBlock);
     }
 
     SignalWait(state);
@@ -984,14 +1023,31 @@ STDAPI XAsyncGetResult(
 {
     HRESULT result = E_PENDING;
     AsyncStateRef state;
+    bool resultsAlreadyReturned;
+
     {
         AsyncBlockInternalGuard internal{ asyncBlock };
         result = internal.GetStatus();
-        state = internal.ExtractState();
+        state = internal.GetState();
+        resultsAlreadyReturned = internal.GetResultsRetrieved();
     }
 
     if (SUCCEEDED(result))
     {
+        // If the call was successful and we've already returned
+        // results, fail now to prevent us interpreting a null
+        // state object as a zero payload success.  Note if the
+        // call had completed with zero payload it gets cleaned
+        // up immediately and therefore a call to XAsyncGetResult
+        // never extracts and sets the results as retrieved.  This
+        // means you can safely call this multiple times for calls
+        // that had no result payload, which is consistent with
+        // how XAsyncGetStatus works.  We only want to guard against
+        // the case where results were offered once, but can't be
+        // offered again now that we've shut the call down.
+
+        RETURN_HR_IF(E_ILLEGAL_METHOD_CALL, resultsAlreadyReturned);
+
         if (state == nullptr)
         {
             if (bufferUsed != nullptr)
@@ -1029,11 +1085,11 @@ STDAPI XAsyncGetResult(
         }
         else if (buffer == nullptr)
         {
-            return E_INVALIDARG;
+            result = E_INVALIDARG;
         }
         else if (bufferSize < state->providerData.bufferSize)
         {
-            return E_NOT_SUFFICIENT_BUFFER;
+            result = E_NOT_SUFFICIENT_BUFFER;
         }
         else
         {
@@ -1051,6 +1107,11 @@ STDAPI XAsyncGetResult(
     // Cleanup state if needed.
     if (result != E_PENDING && state != nullptr)
     {
+        {
+            AsyncBlockInternalGuard internal{ asyncBlock };
+            internal.ExtractState(true);
+        }
+
         CleanupState(std::move(state));
     }
 
