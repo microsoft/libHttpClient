@@ -1,4 +1,4 @@
-package com.xbox.httpclient;
+package com.xbox.httpClient;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

@@ -1,5 +1,4 @@
-
-package com.xbox.httpclient;
+package com.xbox.httpClient;
 
 import android.util.Log;
 
