@@ -96,17 +96,21 @@ if (BUILDANDROID)
 endif()
 
 include_directories(
-    $(ProjectDir)
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source/Common
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source/HTTP
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}Source/Logger
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}include
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}include/httpClient
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}External/asio/asio/include
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}External/openssl/include
-    $(ProjectDir)${REL_PATH_TO_PROJECT_DIR}External/websocketpp
+    ${ProjectDir}
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source/Common
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source/HTTP
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source/Logger
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}include
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}include/httpClient
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/asio/asio/include
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/openssl/include
+    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/websocketpp
     )
+
+if (BUILDANDROID)
+  include_directories(${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/generatedHeaders/android)
+endif()
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 
