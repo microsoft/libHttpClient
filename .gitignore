@@ -1,6 +1,10 @@
 .gitconfig
 .git-credentials
 
+# Android Studio files
+**/*.iml
+**/.idea
+
 # Ignore OpenSSL and Boost build files for iOS
 
 .gitk
