@@ -452,6 +452,21 @@ endif()
 # print_variables()
 
 add_library(${PROJECT_NAME} "${SOURCE_FILES}")
+
+if (BUILDANDROID)
+  # Gradle's (so, Android Studio's) invocation of CMake won't
+  # actually produce a built library if the library type is STATIC
+  # (the default), only if it is SHARED. (Since a static lib is of
+  # limited use typically to an Android app.)
+  #
+  # This is a workaround to force creation of a static lib even
+  # from Gradle. See https://stackoverflow.com/questions/52952226.
+
+  set(DUMMY_ANDROID_PROJECT_NAME dummyAndroid${PROJECT_NAME})
+  add_library(${DUMMY_ANDROID_PROJECT_NAME} SHARED)
+  target_link_libraries(${DUMMY_ANDROID_PROJECT_NAME} ${PROJECT_NAME})
+endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 
 if (NOT BUILDANDROID)
