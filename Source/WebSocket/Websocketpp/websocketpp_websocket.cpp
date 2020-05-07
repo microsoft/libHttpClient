@@ -286,7 +286,9 @@ private:
     {
         if (async->queue)
         {
-            XTaskQueueDuplicateHandle(async->queue, &m_backgroundQueue);
+            XTaskQueuePortHandle worker{ nullptr };
+            RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &worker));
+            RETURN_IF_FAILED(XTaskQueueCreateComposite(worker, worker, &m_backgroundQueue));
         }
 
         auto &client = m_client->client<WebsocketConfigType>();
