@@ -454,17 +454,14 @@ endif()
 add_library(${PROJECT_NAME} "${SOURCE_FILES}")
 
 if (BUILDANDROID)
-  # Gradle's (so, Android Studio's) invocation of CMake won't
-  # actually produce a built library if the library type is STATIC
-  # (the default), only if it is SHARED. (Since a static lib is of
-  # limited use typically to an Android app.)
-  #
-  # This is a workaround to force creation of a static lib even
-  # from Gradle. See https://stackoverflow.com/questions/52952226.
+  # Need to build libssl and libcrypto as well for Android.
+  # Also need some added logic to work around CMake+Gradle issues.
 
-  set(DUMMY_ANDROID_PROJECT_NAME dummyAndroid${PROJECT_NAME})
-  add_library(${DUMMY_ANDROID_PROJECT_NAME} SHARED)
-  target_link_libraries(${DUMMY_ANDROID_PROJECT_NAME} ${PROJECT_NAME})
+  set(STATIC_LIB_NAMES ${PROJECT_NAME})
+
+  include(libssl.cmake)
+  include(libcrypto.cmake)
+  include(gradleStaticLib.cmake)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)

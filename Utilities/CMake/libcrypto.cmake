@@ -1,0 +1,11 @@
+if (NOT DEFINED STATIC_LIB_NAMES)
+  message(FATAL_ERROR "STATIC_LIB_NAMES must be set")
+endif()
+
+set(CRYPTO_PROJECT_NAME crypto)
+
+list(APPEND STATIC_LIB_NAMES ${CRYPTO_PROJECT_NAME})
+
+set(CRYPTO_SOURCE_FILES #[[add source files here]])
+
+add_library(${CRYPTO_PROJECT_NAME} ${CRYPTO_SOURCE_FILES})
