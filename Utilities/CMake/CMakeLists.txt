@@ -459,9 +459,9 @@ if (BUILDANDROID)
 
   set(STATIC_LIB_NAMES ${PROJECT_NAME})
 
-  include(libssl.cmake)
-  include(libcrypto.cmake)
-  include(gradleStaticLib.cmake)
+  include(Android/libssl.cmake)
+#   include(Android/libcrypto.cmake)
+  include(Android/gradleStaticLib.cmake)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
