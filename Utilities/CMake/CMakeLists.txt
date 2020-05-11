@@ -457,7 +457,7 @@ if (BUILDANDROID)
   # Need to build libssl and libcrypto as well for Android.
   # Also need some added logic to work around CMake+Gradle issues.
 
-  set(STATIC_LIB_NAMES ${PROJECT_NAME})
+  list(APPEND STATIC_LIB_NAMES ${PROJECT_NAME})
 
   include(Android/libssl.cmake)
   include(Android/libcrypto.cmake)

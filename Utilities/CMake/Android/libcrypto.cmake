@@ -653,14 +653,14 @@ set(CRYPTO_SOURCE_FILES
    )
 
 include_directories(
-  ${PATH_TO_EXTERNAL}/generatedHeaders/android
-  ${PATH_TO_EXTERNAL}/generatedHeaders/android/internal
-  ${PATH_TO_OPENSSL}
-  ${PATH_TO_CRYPTO}/include
-  ${PATH_TO_CRYPTO}/modes
-  ${PATH_TO_CRYPTO}/ec/curve448
-  ${PATH_TO_CRYPTO}/ec/curve448/arch_32
-  )
+    ${PATH_TO_EXTERNAL}/generatedHeaders/android
+    ${PATH_TO_EXTERNAL}/generatedHeaders/android/internal
+    ${PATH_TO_OPENSSL}
+    ${PATH_TO_CRYPTO}/include
+    ${PATH_TO_CRYPTO}/modes
+    ${PATH_TO_CRYPTO}/ec/curve448
+    ${PATH_TO_CRYPTO}/ec/curve448/arch_32
+    )
 
 add_library(${CRYPTO_PROJECT_NAME} ${CRYPTO_SOURCE_FILES})
 

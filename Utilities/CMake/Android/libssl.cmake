@@ -58,12 +58,12 @@ set(SSL_SOURCE_FILES
     )
 
 include_directories(
-  ${PATH_TO_EXTERNAL}/generatedHeaders/android
-  ${PATH_TO_EXTERNAL}/generatedHeaders/android/internal
-  ${PATH_TO_OPENSSL}
-  ${PATH_TO_SSL}/record
-  ${PATH_TO_SSL}/statem
-  )
+    ${PATH_TO_EXTERNAL}/generatedHeaders/android
+    ${PATH_TO_EXTERNAL}/generatedHeaders/android/internal
+    ${PATH_TO_OPENSSL}
+    ${PATH_TO_SSL}/record
+    ${PATH_TO_SSL}/statem
+    )
 
 add_library(${SSL_PROJECT_NAME} ${SSL_SOURCE_FILES})
 
