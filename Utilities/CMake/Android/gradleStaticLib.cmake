@@ -1,5 +1,5 @@
 if (NOT DEFINED STATIC_LIB_NAMES)
-  message(FATAL_ERROR "STATIC_LIB_NAMES must be set")
+    message(FATAL_ERROR "STATIC_LIB_NAMES must be set")
 endif()
 
 # Gradle's (and therefore Android Studio's) invocation of CMake
