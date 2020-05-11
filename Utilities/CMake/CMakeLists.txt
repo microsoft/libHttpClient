@@ -460,7 +460,7 @@ if (BUILDANDROID)
   set(STATIC_LIB_NAMES ${PROJECT_NAME})
 
   include(Android/libssl.cmake)
-#   include(Android/libcrypto.cmake)
+  include(Android/libcrypto.cmake)
   include(Android/gradleStaticLib.cmake)
 endif()
 
