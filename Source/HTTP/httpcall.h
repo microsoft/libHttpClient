@@ -36,6 +36,7 @@ struct HC_CALL
 
     uint64_t id = 0;
     bool traceCall = true;
+	bool sslValidation = true;
     void* context = nullptr;
     std::atomic<int> refCount;
 
