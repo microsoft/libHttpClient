@@ -664,7 +664,7 @@ include_directories(
 
 add_library(${CRYPTO_PROJECT_NAME} ${CRYPTO_SOURCE_FILES})
 
-target_compile_options(${CRYPTO_PROJECT_NAME} PRIVATE -DOPENCRYPTO_NO_DEVCRYPTOENG)
+target_compile_options(${CRYPTO_PROJECT_NAME} PRIVATE -DOPENSSL_NO_DEVCRYPTOENG)
 target_compile_options(${CRYPTO_PROJECT_NAME} PRIVATE -DDSO_DLFCN)
 target_compile_options(${CRYPTO_PROJECT_NAME} PRIVATE -DHAVE_DLFCN_H)
 target_compile_options(${CRYPTO_PROJECT_NAME} PRIVATE -DNDEBUG)
