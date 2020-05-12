@@ -130,7 +130,7 @@ set(Public_Source_Files
 set(Task_Source_Files
     ${REL_PATH_TO_PROJECT_DIR}Source/Task/AsyncLib.cpp
     ${REL_PATH_TO_PROJECT_DIR}Source/Task/AtomicVector.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/LocklessList.h
+    ${REL_PATH_TO_PROJECT_DIR}Source/Task/LocklessQueue.h
     ${REL_PATH_TO_PROJECT_DIR}Source/Task/referenced_ptr.h
     ${REL_PATH_TO_PROJECT_DIR}Source/Task/StaticArray.h
     ${REL_PATH_TO_PROJECT_DIR}Source/Task/TaskQueue.cpp
@@ -289,7 +289,7 @@ set(UnitTests_Source_Files_Tests
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/CallbackThunk.h
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/GlobalTests.cpp
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/HttpTests.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/LocklessListTests.cpp
+    ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/LocklessQueueTests.cpp
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/MockTests.cpp
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/TaskQueueTests.cpp
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/WebsocketTests.cpp
