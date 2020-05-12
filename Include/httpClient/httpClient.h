@@ -462,8 +462,8 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
 /// <param name="traceCall">Validate certificates</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestSetSSLValidation(
-	_In_ HCCallHandle call,
-	_In_ bool sslValidation
+    _In_ HCCallHandle call,
+    _In_ bool sslValidation
 ) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
