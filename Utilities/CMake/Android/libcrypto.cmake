@@ -1,6 +1,6 @@
-if (NOT DEFINED STATIC_LIB_NAMES)
-  message(FATAL_ERROR "STATIC_LIB_NAMES must be set")
-endif()
+cmake_minimum_required(VERSION 3.6)
+
+# NOTE: appends to `STATIC_LIB_NAMES`, used in `.../GradleStaticLib.cmake`
 
 set(CRYPTO_PROJECT_NAME crypto)
 

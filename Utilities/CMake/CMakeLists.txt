@@ -434,23 +434,6 @@ endif()
 
 list( SORT SOURCE_FILES )
 
-#[[
-if (BUILDANDROID)
-    set (REL_SOURCE_FILES ${SOURCE_FILES})
-    foreach (src_file ${REL_SOURCE_FILES})
-        get_filename_component(src_file_abs_path  "${src_file}" ABSOLUTE)
-        # message("removing file")
-        # message("${src_file}")
-        list(REMOVE_ITEM SOURCE_FILES "${src_file}")
-        # message("replacing with file")
-        # message("${src_file_abs_path}")
-        list(APPEND SOURCE_FILES "${src_file_abs_path}")
-    endforeach()
-endif()
-]]
-
-# print_variables()
-
 add_library(${PROJECT_NAME} "${SOURCE_FILES}")
 
 if (BUILDANDROID)
@@ -461,7 +444,7 @@ if (BUILDANDROID)
 
   include(Android/libssl.cmake)
   include(Android/libcrypto.cmake)
-  include(Android/gradleStaticLib.cmake)
+  include(Android/GradleStaticLib.cmake)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
