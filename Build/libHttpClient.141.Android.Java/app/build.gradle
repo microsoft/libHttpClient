@@ -11,12 +11,6 @@ android {
         ndk {
             abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
         }
-
-        externalNativeBuild {
-            cmake {
-                arguments "-DBUILDANDROID=TRUE"
-            }
-        }
     }
 
     compileOptions.with {
@@ -26,7 +20,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "../../../Utilities/Cmake/CMakeLists.txt"
+            path "../../../Utilities/Cmake/Android/CMakeLists.txt"
         }
     }
 }

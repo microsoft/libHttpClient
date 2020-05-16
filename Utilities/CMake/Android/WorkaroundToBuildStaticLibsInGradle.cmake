@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 
-function(CREATE_DUMMY_SHARED_TO_BUILD_STATIC_LIBS STATIC_LIB_NAMES)
+function(WORKAROUND_TO_BUILD_STATIC_LIBS_IN_GRADLE STATIC_LIB_NAMES)
     # Gradle's (and therefore Android Studio's) invocation of CMake
     # won't actually produce a built library if the library type is
     # STATIC (the default), only if it is SHARED. (Since a static lib

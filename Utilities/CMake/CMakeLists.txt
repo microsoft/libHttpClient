@@ -17,8 +17,6 @@ else()
         endif()
     elseif( BUILDWIN32 )
         set (PROJECT_NAME libHttpClient.Win32.C)
-    elseif( BUILDANDROID )
-        set (PROJECT_NAME libHttpClient.Android.C)
     else()
         if( WINRT )
             set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -39,25 +37,19 @@ endmacro()
 
 project (${PROJECT_NAME})
 
-if (NOT BUILDANDROID)
-  if(MSVC_VERSION GREATER 1919)
-    set(COMPILER_VERSION "16")
-  elseif(MSVC_VERSION GREATER 1909)
-    set(COMPILER_VERSION "15")
-  elseif(MSVC_VERSION GREATER 1899)
-    set(COMPILER_VERSION "14")
-  elseif(MSVC_VERSION GREATER 1700)
-    set(COMPILER_VERSION "12")
-  elseif(MSVC_VERSION GREATER 1600)
-    set(COMPILER_VERSION "11")
-  endif()
+if(MSVC_VERSION GREATER 1919)
+  set(COMPILER_VERSION "16")
+elseif(MSVC_VERSION GREATER 1909)
+  set(COMPILER_VERSION "15")
+elseif(MSVC_VERSION GREATER 1899)
+  set(COMPILER_VERSION "14")
+elseif(MSVC_VERSION GREATER 1700)
+  set(COMPILER_VERSION "12")
+elseif(MSVC_VERSION GREATER 1600)
+  set(COMPILER_VERSION "11")
 endif()
 
-if (BUILDANDROID)   # needed because the rel path from here (CMAKE) is different than the rel path from the VS Proj files
-  set(REL_PATH_TO_PROJECT_DIR "../../")
-else()
-  set(REL_PATH_TO_PROJECT_DIR "../../../")
-endif()
+set(REL_PATH_TO_PROJECT_DIR "../../../")
 
 if(CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_CONFIGURATION_TYPES Debug)
@@ -72,97 +64,25 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-if (NOT BUILDANDROID)  # no equivalent for these in Clang that I can find
-  add_compile_options(/Zm300 /bigobj)
-endif()
+add_compile_options(/Zm300 /bigobj)
 
 if (WINDOWS_STORE OR WINDOWS_PHONE)
   add_compile_options(/ZW)
 endif()
 
 add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
-
-if (NOT BUILDANDROID)
-  set_source_files_properties(${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
-endif()
+set_source_files_properties(${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
   set_property(SOURCE ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
   set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
 endif()
 
-if (BUILDANDROID)
-  set(ProjectDir "${PROJECT_SOURCE_DIR}/")
-endif()
-
-include_directories(
-    ${ProjectDir}
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source/Common
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source/HTTP
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}Source/Logger
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}include
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}include/httpClient
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/asio/asio/include
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/openssl/include
-    ${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/websocketpp
-    )
-
-if (BUILDANDROID)
-  include_directories(${ProjectDir}${REL_PATH_TO_PROJECT_DIR}External/generatedHeaders/android)
-endif()
-
 set(CMAKE_SUPPRESS_REGENERATION true)
-
-set(Public_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/config.h
-    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/httpClient.h
-    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/httpProvider.h
-    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/mock.h
-    ${REL_PATH_TO_PROJECT_DIR}include/xasync.h
-    ${REL_PATH_TO_PROJECT_DIR}include/xasyncProvider.h
-    ${REL_PATH_TO_PROJECT_DIR}include/xtaskQueue.h
-    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/trace.h
-    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/pal.h
-    ${REL_PATH_TO_PROJECT_DIR}include/httpClient/async.h
-    )
-
-set(Task_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/AsyncLib.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/AtomicVector.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/LocklessQueue.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/referenced_ptr.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/StaticArray.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/TaskQueue.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/TaskQueueImpl.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/TaskQueueP.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/ThreadPool.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/WaitTimer.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/XTaskQueuePriv.h
-    )
 
 set(Task_Windows_Source_Files
     ${REL_PATH_TO_PROJECT_DIR}Source/Task/ThreadPool_win32.cpp
     ${REL_PATH_TO_PROJECT_DIR}Source/Task/WaitTimer_win32.cpp
-    )
-
-set(Task_Android_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Include/httpClient/async_jvm.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/ThreadPool_stl.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Task/WaitTimer_stl.cpp
-    )
-
-set(Global_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/Global/mem.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Global/mem.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Global/global_publics.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Global/global.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Global/global.h
-    )
-
-set(WebSocket_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/hcwebsocket.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/hcwebsocket.cpp
     )
 
 set(WinRT_WebSocket_Source_Files
@@ -175,46 +95,9 @@ set(Win32_WebSocket_Source_Files
     ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/WinHTTP/winhttp_websocket.cpp
     )
 
-set(Android_WebSocket_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
-    )
-
-set(Mock_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/Mock/lhc_mock.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Mock/lhc_mock.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Mock/mock_publics.cpp
-    )
-
-set(Common_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/buildver.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/EntryList.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pch_common.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/pal_internal.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/ResultMacros.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/uri.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/uri.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/utils.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/utils.h
-    )
-
 set(Common_Windows_Source_Files
     ${REL_PATH_TO_PROJECT_DIR}Source/Common/Win/utils_win.cpp
     ${REL_PATH_TO_PROJECT_DIR}Source/Common/Win/utils_win.h
-    )
-
-set(Common_Android_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/Android/utils_android.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Common/Android/utils_android.h
-    )
-
-set(HTTP_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall_request.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/httpcall_response.cpp
     )
 
 set(Unittest_HTTP_Source_Files
@@ -230,14 +113,6 @@ set(WinHttp_HTTP_Source_Files
     ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/WinHttp/winhttp_http_task.h
     )
 
-set(Android_HTTP_Source_Files
-   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/http_android.cpp
-   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_http_request.cpp
-   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_http_request.h
-   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_platform_context.cpp
-   ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/Android/android_platform_context.h
-   )
-
 set(XMLHttp_HTTP_Source_Files
     ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_buffer.cpp
     ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/http_buffer.h
@@ -251,19 +126,9 @@ set(XMLHttp_HTTP_Source_Files
     ${REL_PATH_TO_PROJECT_DIR}Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
 
-set(Logger_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/trace.cpp
-    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/trace_internal.h
-    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/log_publics.cpp
-    )
-
 set(Windows_Logger_Source_Files
    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/Win/win_logger.cpp
    )
-
-set(Android_Logger_Source_Files
-    ${REL_PATH_TO_PROJECT_DIR}Source/Logger/Android/android_logger.cpp
-    )
 
 set(UnitTests_Source_Files_Support
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Support/DefineTestMacros.h
@@ -295,26 +160,11 @@ set(UnitTests_Source_Files_Tests
     ${REL_PATH_TO_PROJECT_DIR}Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 
-message(STATUS "Common source group")
-source_group("Header Files" FILES ${Public_Source_Files})
-source_group("C++ Source\\Common" FILES ${Common_Source_Files})
-source_group("C++ Source\\Global" FILES ${Global_Source_Files})
-source_group("C++ Source\\WebSocket" FILES ${WebSocket_Source_Files})
-source_group("C++ Source\\Task" FILES ${Task_Source_Files})
-source_group("C++ Source\\Mock" FILES ${Mock_Source_Files})
-source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
-source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
+include(SetCommonHCSourceFiles.cmake)
+set_common_hc_source_files(COMMON_SOURCE_FILES COMMON_INCLUDE_DIRS ${REL_PATH_TO_PROJECT_DIR})
 
-set( SOURCE_FILES
-    ${Public_Source_Files}
-    ${Common_Source_Files}
-    ${Global_Source_Files}
-    ${WebSocket_Source_Files}
-    ${Task_Source_Files}
-    ${Mock_Source_Files}
-    ${HTTP_Source_Files}
-    ${Logger_Source_Files}
-    )
+set(SOURCE_FILES ${COMMON_SOURCE_FILES})
+include_directories(${COMMON_INCLUDE_DIRS})
 
 if( XDK )
     message(STATUS "XDK source group")
@@ -389,23 +239,6 @@ if( BUILDWIN32 )
         )
 endif()
 
-if( BUILDANDROID )
-    source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
-    source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
-    source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
-    source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
-    source_group("C++ Source\\Common\\Android" FILES ${Common_Android_Source_Files})
-
-    list(APPEND
-        SOURCE_FILES
-        ${Task_Android_Source_Files}
-        ${Android_HTTP_Source_Files}
-        ${Android_Logger_Source_Files}
-        ${Android_WebSocket_Source_Files}
-        ${Common_Android_Source_Files}
-        )
-endif()
-
 if( TAEF )
     message(STATUS "TAEF source group")
     source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
@@ -436,23 +269,10 @@ list( SORT SOURCE_FILES )
 
 add_library(${PROJECT_NAME} "${SOURCE_FILES}")
 
-if (BUILDANDROID)
-  # Need to build libssl and libcrypto as well for Android.
-  # Also need some added logic to work around CMake+Gradle issues.
-
-  list(APPEND STATIC_LIB_NAMES ${PROJECT_NAME})
-
-  include(Android/libssl.cmake)
-  include(Android/libcrypto.cmake)
-  include(Android/GradleStaticLib.cmake)
-endif()
-
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 
-if (NOT BUILDANDROID)
-  set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "/INCREMENTAL:NO")
-  set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
-endif()
+set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "/INCREMENTAL:NO")
+set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
 
 message(STATUS "CMAKE_SYSTEM_VERSION='${CMAKE_SYSTEM_VERSION}'")
 message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")
