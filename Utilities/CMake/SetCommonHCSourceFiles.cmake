@@ -94,6 +94,7 @@ function(SET_COMMON_HC_SOURCE_FILES OUT_SOURCE_FILES OUT_INCLUDE_DIRS REL_PATH_T
         ${REL_PATH_TO_PROJECT_DIR}External/asio/asio/include
         ${REL_PATH_TO_PROJECT_DIR}External/openssl/include
         ${REL_PATH_TO_PROJECT_DIR}External/websocketpp
+        PARENT_SCOPE
         )
 
     set(${OUT_SOURCE_FILES}

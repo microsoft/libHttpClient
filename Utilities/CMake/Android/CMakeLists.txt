@@ -54,7 +54,7 @@ target_include_directories(
     ${LIBHC_PROJECT_NAME}
     PRIVATE
     ${COMMON_INCLUDE_DIRS}
-    {PATH_TO_ROOT}/External/generatedHeaders/android
+    ${PATH_TO_ROOT}/External/generatedHeaders/android
 )
 
 ######################
