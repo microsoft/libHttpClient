@@ -10,6 +10,7 @@ set(LIBHC_PROJECT_NAME libHttpClient.Android.C)
 
 include(../SetCommonHCSourceFiles.cmake)
 include(SetAndroidHCSourceFiles.cmake)
+include(SetHCFlags.cmake)
 
 # HC common source file paths were written without slash b/w path prefix and file name
 set_common_hc_source_files(COMMON_SOURCE_FILES COMMON_INCLUDE_DIRS "${PATH_TO_ROOT}/")
@@ -30,6 +31,8 @@ target_include_directories(
     ${ANDROID_INCLUDE_DIRS}
 )
 
+set_hc_flags(${LIBHC_PROJECT_NAME})
+
 ######################
 ####### libssl #######
 ######################
@@ -44,6 +47,7 @@ set_ssl_source_files(SSL_SOURCE_FILES SSL_INCLUDE_DIRS ${PATH_TO_ROOT})
 add_library(${SSL_PROJECT_NAME} STATIC ${SSL_SOURCE_FILES})
 
 target_include_directories(${SSL_PROJECT_NAME} PRIVATE ${SSL_INCLUDE_DIRS})
+
 set_openssl_flags(${SSL_PROJECT_NAME})
 
 #########################
@@ -60,6 +64,7 @@ set_crypto_source_files(CRYPTO_SOURCE_FILES CRYPTO_INCLUDE_DIRS ${PATH_TO_ROOT})
 add_library(${CRYPTO_PROJECT_NAME} STATIC ${CRYPTO_SOURCE_FILES})
 
 target_include_directories(${CRYPTO_PROJECT_NAME} PRIVATE ${CRYPTO_INCLUDE_DIRS})
+
 set_openssl_flags(${CRYPTO_PROJECT_NAME})
 
 #########################################
