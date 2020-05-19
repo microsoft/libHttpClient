@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 function(SET_OPENSSL_FLAGS TARGET_NAME)
     set(OPENSSL_FLAGS
+        "-Wall"
         "-DOPENSSL_NO_DEVCRYPTOENG"
         "-DDSO_DLFCN"
         "-DHAVE_DLFCN_H"

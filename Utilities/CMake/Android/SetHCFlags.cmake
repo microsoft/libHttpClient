@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.6)
 
 function(SET_HC_FLAGS TARGET_NAME)
     set(HC_FLAGS
+        "-Wall"
         "-fexceptions"
         "-std=c++14"
         "-Wno-unknown-pragmas"
         "-Wno-pragma-once-outside-header"
         "-rtti"
+        "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID"
         )
 
     set(HC_FLAGS_DEBUG
@@ -19,7 +21,7 @@ function(SET_HC_FLAGS TARGET_NAME)
         "-DHC_TRACE_BUILD_LEVEL=3"
         )
 
-    foreach(flag ${OPENSSL_FLAGS})
+    foreach(flag ${HC_FLAGS})
         target_compile_options(${TARGET_NAME} PRIVATE ${flag})
     endforeach()
 
