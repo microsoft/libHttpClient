@@ -4,10 +4,10 @@ function(SET_HC_FLAGS TARGET_NAME)
     set(HC_FLAGS
         "-Wall"
         "-fexceptions"
+        "-frtti"
         "-std=c++14"
         "-Wno-unknown-pragmas"
         "-Wno-pragma-once-outside-header"
-        "-rtti"
         "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID"
         )
 
