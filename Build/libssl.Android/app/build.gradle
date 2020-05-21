@@ -22,7 +22,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "../../../../Utilities/Cmake/Android/openssl/libssl/CMakeLists.txt"
+            path "../../../Utilities/Cmake/Android/openssl/libssl/CMakeLists.txt"
         }
     }
 }

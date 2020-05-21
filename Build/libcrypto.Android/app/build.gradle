@@ -22,7 +22,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "../../../../Utilities/Cmake/Android/openssl/libcrypto/CMakeLists.txt"
+            path "../../../Utilities/Cmake/Android/openssl/libcrypto/CMakeLists.txt"
         }
     }
 }

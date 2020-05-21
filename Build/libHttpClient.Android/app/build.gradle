@@ -33,8 +33,12 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "../../../../Utilities/Cmake/Android/libHttpClient/CMakeLists.txt"
+            path "../../../Utilities/CMake/Android/libHttpClient/CMakeLists.txt"
         }
+    }
+
+    packagingOptions {
+        exclude "**/*.so" // To build static libs, we generate a dummy .so - but we don't actually want to package it.
     }
 }
 

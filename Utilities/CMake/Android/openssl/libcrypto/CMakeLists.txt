@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.6)
 
 get_filename_component(PATH_TO_ROOT "../../../../.." ABSOLUTE)
 
-project("crypto")
+set(CMAKE_STATIC_LIBRARY_PREFIX "")
+project("libcrypto")
 
 ###########################################
 ### Set up paths for source and include ###
