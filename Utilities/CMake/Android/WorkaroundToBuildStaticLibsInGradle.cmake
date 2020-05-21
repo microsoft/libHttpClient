@@ -9,7 +9,7 @@ function(WORKAROUND_TO_BUILD_STATIC_LIBS_IN_GRADLE STATIC_LIB_NAMES)
     # This is a workaround to force creation of a static lib even
     # from Gradle. See https://stackoverflow.com/questions/52952226.
 
-    set(DUMMY_ANDROID_PROJECT_NAME dummyAndroidProjectName)
-    add_library(${DUMMY_ANDROID_PROJECT_NAME} SHARED)
-    target_link_libraries(${DUMMY_ANDROID_PROJECT_NAME} ${STATIC_LIB_NAMES})
+    set(DUMMY_ANDROID_PROJECT_NAME "dummyAndroidProjectName")
+    add_library("${DUMMY_ANDROID_PROJECT_NAME}" SHARED)
+    target_link_libraries("${DUMMY_ANDROID_PROJECT_NAME}" "${STATIC_LIB_NAMES}")
 endfunction()
