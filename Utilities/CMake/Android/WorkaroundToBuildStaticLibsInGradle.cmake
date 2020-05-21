@@ -11,5 +11,7 @@ function(WORKAROUND_TO_BUILD_STATIC_LIBS_IN_GRADLE STATIC_LIB_NAMES)
 
     set(DUMMY_ANDROID_PROJECT_NAME "dummyAndroidProjectName")
     add_library("${DUMMY_ANDROID_PROJECT_NAME}" SHARED)
+    set_target_properties("${DUMMY_ANDROID_PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
+
     target_link_libraries("${DUMMY_ANDROID_PROJECT_NAME}" "${STATIC_LIB_NAMES}")
 endfunction()
