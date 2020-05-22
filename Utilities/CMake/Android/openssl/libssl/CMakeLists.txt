@@ -2,8 +2,12 @@ cmake_minimum_required(VERSION 3.6)
 
 get_filename_component(PATH_TO_ROOT "../../../../.." ABSOLUTE)
 
-set(CMAKE_STATIC_LIBRARY_PREFIX "")
 project("libssl")
+
+include("../../SetBinaryOutputDir.cmake")
+set_binary_output_dir("${PATH_TO_ROOT}")
+
+set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
 ###########################################
 ### Set up paths for source and include ###
