@@ -40,6 +40,12 @@ android {
     packagingOptions {
         exclude "**/*.so" // To build static libs, we generate a dummy .so - but we don't actually want to package it.
     }
+
+    libraryVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName = "libHttpClient-${variant.name}.aar"
+        }
+    }
 }
 
 dependencies {
