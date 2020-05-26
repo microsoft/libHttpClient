@@ -8,6 +8,7 @@
     <opensslToolset Condition="'$(PlatformToolset)' == 'v140'">140</opensslToolset>
     <opensslToolset Condition="'$(PlatformToolset)' == 'v141'">141</opensslToolset>
     <opensslToolset Condition="'$(PlatformToolset)' == 'v142'">142</opensslToolset>
+    <opensslToolset Condition="'$(HCLibPlatformType)' == 'Android'">141</opensslToolset>
   </PropertyGroup>
   <PropertyGroup>
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), hc_settings.props))\hc_settings.props</HCSettingsFile>
@@ -24,11 +25,15 @@
 
   <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary'">
     <ProjectReference Include="$(HCBuildRoot)Build\$(libsslName)\$(libsslName).vcxproj">
+      <Project Condition="'$(HCLibPlatformType)' == 'Android' AND '$(opensslToolset)' == '142'">{f2fe27e9-898d-47dd-ac6a-802680293ece}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Android' AND '$(opensslToolset)' == '141'">{51b9c654-fbc9-4224-8751-d7d0c05b7bc9}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' AND '$(opensslToolset)' == '142'">{13457617-8476-4708-A601-AF998F6EDF21}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' AND '$(opensslToolset)' == '141'">{CF4C3985-3F37-45B6-95F7-7602C53F1F21}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' AND '$(opensslToolset)' == '140'">{362E6095-E83F-48FD-B64A-78F454D748F2}</Project>
     </ProjectReference>
     <ProjectReference Include="$(HCBuildRoot)Build\$(libcryptoName)\$(libcryptoName).vcxproj">
+      <Project Condition="'$(HCLibPlatformType)' == 'Android' AND '$(opensslToolset)' == '142'">{73b6046f-bb41-4067-a5cc-fc540a1c2cae}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Android' AND '$(opensslToolset)' == '141'">{315bc43e-e422-4d47-a2dc-300a334a3497}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' AND '$(opensslToolset)' == '142'">{2C8E7AF1-A395-4695-A116-63000F910ABD}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' AND '$(opensslToolset)' == '141'">{C043DE35-BEED-4FE1-B9D2-B15CB051CC3C}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' AND '$(opensslToolset)' == '140'">{23267E56-66D8-4C44-9A36-63B311D76370}</Project>

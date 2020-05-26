@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <!-- Valid values for HCLibPlatformType:
+      Android
       UWP
       Win32
       XDK
@@ -22,6 +23,7 @@
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">XDK</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND ('$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64')">GDK</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango' AND '$(Platform)'!='Gaming.Desktop.x64' AND '$(Platform)'!='Gaming.Xbox.XboxOne.x64' AND '$(Platform)'!='Gaming.Xbox.Scarlett.x64'">Win32</HCLibPlatformType>
+    <HCLibPlatformType Condition="'$(ApplicationType)'=='Android'">Android</HCLibPlatformType>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -31,11 +33,13 @@
 
   <PropertyGroup>
     <useWsppWebsockets>false</useWsppWebsockets>
+    <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Android'">true</useWsppWebsockets>
     <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Win32'">true</useWsppWebsockets>
 
     <HCLibToolset Condition="'$(PlatformToolset)'=='v140'">140</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
+    <HCLibToolset Condition="'$(HCLibPlatformType)'=='Android'">141</HCLibToolset>
 
     <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
   </PropertyGroup>
@@ -71,6 +75,8 @@
       <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==140">{D0A538D3-F4B6-4197-8E72-A02726B4DF50}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==141">{57C681F7-280F-45B8-9FA9-D556C24F2053}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==142">{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Android' and $(HCLibToolset)==141">{5e0ce391-1ac5-4930-921e-2577a4b5c530}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Android' and $(HCLibToolset)==142">{80FE2440-4F89-4A47-88C6-E86447BC2319}</Project>
     </ProjectReference>
   </ItemGroup>
 

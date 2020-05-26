@@ -9,6 +9,11 @@
     </When>
     <When Condition="'$(HCPlatform)'!=''">
     </When>
+    <When Condition="'$(ApplicationType)'=='Android'">
+      <PropertyGroup>
+        <HCPlatform>Android</HCPlatform>
+      </PropertyGroup>
+    </When>
     <When Condition="'$(ApplicationType)'=='Windows Store'">
       <PropertyGroup>
         <HCPlatform>UWP</HCPlatform>
@@ -33,6 +38,7 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
+      <PreprocessorDefinitions Condition="'$(HCPlatform)'=='Android'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(HCPlatform)'=='UWP'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_UWP</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(HCPlatform)'=='XDK'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_XDK</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(HCPlatform)'=='GDK'">%(PreprocessorDefinitions);HC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_GDK</PreprocessorDefinitions>
