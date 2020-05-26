@@ -14,7 +14,7 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 ###########################################
 
 include("../../SetCommonHCSourceFiles.cmake")
-set_common_hc_source_files(COMMON_SOURCE_FILES COMMON_INCLUDE_DIRS "${PATH_TO_ROOT}/")
+set_common_hc_source_files(COMMON_SOURCE_FILES COMMON_INCLUDE_DIRS "${PATH_TO_ROOT}")
 
 set(COMMON_ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.cpp"
