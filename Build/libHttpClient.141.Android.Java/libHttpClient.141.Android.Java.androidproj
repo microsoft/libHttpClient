@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <Import Project="$(AndroidTargetsPath)\Android.Default.props" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 
+libHttpClient.paths.props))\libHttpClient.paths.props" />
+  <PropertyGroup Label="Globals">
+    <AndroidBuildType>Gradle</AndroidBuildType>
+    <RootNamespace>libHttpClient</RootNamespace>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <ProjectVersion>1.0</ProjectVersion>
+    <ProjectGuid>{eef4b78b-7d2b-4a54-9944-5953d7df5b51}</ProjectGuid>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <TargetExt>.aar</TargetExt>
+    <_PackagingProjectWithoutNativeComponent>true</_PackagingProjectWithoutNativeComponent>
+    <LaunchActivity Condition="'$(LaunchActivity)' == ''">com.libHttpClient.libHttpClient</LaunchActivity>
+    <JavaSourceRoots>src\main\java</JavaSourceRoots>
+	<AndroidSdkBuildToolsVersion>25.0.3</AndroidSdkBuildToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Library</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(AndroidTargetsPath)\Android.props" />
+  <ItemDefinitionGroup>
+    <GradlePackage>
+      <ProjectDirectory>$(ProjectDir)app</ProjectDirectory>
+    </GradlePackage>
+  </ItemDefinitionGroup>
+  <ImportGroup Label="ExtensionSettings" />
+  <PropertyGroup Label="UserMacros" />
+  <ItemGroup>
+    <GradleTemplate Include="app\build.gradle.template" />
+    <GradleTemplate Include="app\src\main\AndroidManifest.xml.template" />
+    <GradleTemplate Include="build.gradle.template" />
+    <GradleTemplate Include="settings.gradle.template" />
+    <GradleTemplate Include="gradle\wrapper\gradle-wrapper.properties.template" />
+  </ItemGroup>
+  <ItemGroup>
+    <JavaCompile Include="app\src\main\java\com\xbox\httpClient\HttpClientRequest.java" />
+    <JavaCompile Include="app\src\main\java\com\xbox\httpClient\HttpClientResponse.java" />
+  </ItemGroup>
+  <Import Project="$(AndroidTargetsPath)\Android.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

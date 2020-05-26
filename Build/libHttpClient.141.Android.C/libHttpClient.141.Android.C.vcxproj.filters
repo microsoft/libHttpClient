@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.cpp">
+      <Filter>C++ Source\Common\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp">
+      <Filter>C++ Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.cpp">
+      <Filter>C++ Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp">
+      <Filter>C++ Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
+      <Filter>C++ Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.cpp">
+      <Filter>C++ Source\HTTP\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_platform_context.cpp">
+      <Filter>C++ Source\HTTP\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\http_android.cpp">
+      <Filter>C++ Source\HTTP\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\Android\android_logger.cpp">
+      <Filter>C++ Source\Logger\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp">
+      <Filter>C++ Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.cpp">
+      <Filter>C++ Source\Mock</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp">
+      <Filter>C++ Source\Mock</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp">
+      <Filter>C++ Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueue.cpp">
+      <Filter>C++ Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_stl.cpp">
+      <Filter>C++ Source\Task\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_stl.cpp">
+      <Filter>C++ Source\Task\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
+      <Filter>C++ Source\WebSocket\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
+      <Filter>C++ Source\WebSocket</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async_jvm.h">
+      <Filter>C++ Source\Task\Android</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Android\utils_android.h">
+      <Filter>C++ Source\Common\Android</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.h">
+      <Filter>C++ Source\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h">
+      <Filter>C++ Source\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_http_request.h">
+      <Filter>C++ Source\HTTP\Android</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Android\android_platform_context.h">
+      <Filter>C++ Source\HTTP\Android</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h">
+      <Filter>C++ Source\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h">
+      <Filter>C++ Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h">
+      <Filter>C++ Source\Mock</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessQueue.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\StaticArray.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueImpl.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueP.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XAsyncProviderPriv.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\referenced_ptr.h">
+      <Filter>C++ Source\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
+      <Filter>C++ Source\WebSocket\Android</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
+      <Filter>C++ Source\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsync.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsyncProvider.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="C++ Source">
+      <UniqueIdentifier>{AB68AAD7-BF0D-34C3-BFBA-FB7594810503}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Common">
+      <UniqueIdentifier>{8B9EEA6A-3165-3A83-8CEB-648270B8C445}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Common\Android">
+      <UniqueIdentifier>{F6086770-20F5-36E7-9347-F8E511A64421}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Global">
+      <UniqueIdentifier>{A616C757-EB09-3284-8BA4-4C0B391C1672}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP">
+      <UniqueIdentifier>{7607E023-D56D-300A-AAE7-35C1337C6EF3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\HTTP\Android">
+      <UniqueIdentifier>{15D2B7C4-8092-30BB-B45A-23FB8BB289F7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Logger">
+      <UniqueIdentifier>{658327C4-885D-3CF1-9061-DA642B97898A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Logger\Android">
+      <UniqueIdentifier>{5DE6DC08-DC97-3EDE-86DC-D80C73AB8212}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Mock">
+      <UniqueIdentifier>{57AC3982-96A9-3B0B-A7DF-8DF69AD19ECC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Task">
+      <UniqueIdentifier>{075BEBE6-800C-3FB2-84E2-6443C472E199}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Task\Android">
+      <UniqueIdentifier>{B2E61810-6BF3-36DB-9286-C42708123F18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\WebSocket">
+      <UniqueIdentifier>{0974FCD6-8409-3FA3-A118-A58ED0FD041C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\WebSocket\Android">
+      <UniqueIdentifier>{683D025C-B830-3477-9275-4EA8A76EDB09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Public Includes">
+      <UniqueIdentifier>{2F64C9BE-5116-3E71-971F-592C0D76A89D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
