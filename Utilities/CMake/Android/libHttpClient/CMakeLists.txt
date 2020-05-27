@@ -14,7 +14,6 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 ###########################################
 
 include("../../SetCommonHCSourceFiles.cmake")
-include(SetCommonHCSourceFiles.cmake)
 set_common_hc_source_files(
     PUBLIC_SOURCE_FILES
     COMMON_SOURCE_FILES
@@ -27,15 +26,33 @@ set_common_hc_source_files(
     "${PATH_TO_ROOT}"
     )
 
+include("../../SetAndroidHCSourceFiles.cmake")
+set_android_hc_source_files(
+    ANDROID_COMMON_SOURCE_FILES
+    ANDROID_WEBSOCKET_SOURCE_FILES
+    ANDROID_TASK_SOURCE_FILES
+    ANDROID_HTTP_SOURCE_FILES
+    ANDROID_LOGGER_SOURCE_FILES
+    "${PATH_TO_ROOT}"
+    )
+
 set(COMMON_SOURCE_FILES
-    "{PUBLIC_SOURCE_FILES}"
-    "{COMMON_SOURCE_FILES}"
-    "{GLOBAL_SOURCE_FILES}"
-    "{WEBSOCKET_SOURCE_FILES}"
-    "{TASK_SOURCE_FILES}"
-    "{MOCK_SOURCE_FILES}"
-    "{HTTP_SOURCE_FILES}"
-    "{LOGGER_SOURCE_FILES}"
+    "${PUBLIC_SOURCE_FILES}"
+    "${COMMON_SOURCE_FILES}"
+    "${GLOBAL_SOURCE_FILES}"
+    "${WEBSOCKET_SOURCE_FILES}"
+    "${TASK_SOURCE_FILES}"
+    "${MOCK_SOURCE_FILES}"
+    "${HTTP_SOURCE_FILES}"
+    "${LOGGER_SOURCE_FILES}"
+    )
+
+set(ANDROID_SOURCE_FILES
+    "${ANDROID_COMMON_SOURCE_FILES}"
+    "${ANDROID_WEBSOCKET_SOURCE_FILES}"
+    "${ANDROID_TASK_SOURCE_FILES}"
+    "${ANDROID_HTTP_SOURCE_FILES}"
+    "${ANDROID_LOGGER_SOURCE_FILES}"
     )
 
  set(COMMON_INCLUDE_DIRS
@@ -50,34 +67,6 @@ set(COMMON_SOURCE_FILES
     "${PATH_TO_ROOT}/External/websocketpp"
     )
 
-set(COMMON_ANDROID_SOURCE_FILES
-    "${PATH_TO_ROOT}/Source/Common/Android/utils_android.cpp"
-    "${PATH_TO_ROOT}/Source/Common/Android/utils_android.h"
-    )
-
-set(TASK_ANDROID_SOURCE_FILES
-    "${PATH_TO_ROOT}/Include/httpClient/async_jvm.h"
-    "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
-    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
-    )
-
-set(ANDROID_HTTP_SOURCE_FILES
-    "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.cpp"
-    "${PATH_TO_ROOT}/Source/HTTP/Android/android_http_request.cpp"
-    "${PATH_TO_ROOT}/Source/HTTP/Android/android_http_request.h"
-    "${PATH_TO_ROOT}/Source/HTTP/Android/android_platform_context.cpp"
-    "${PATH_TO_ROOT}/Source/HTTP/Android/android_platform_context.h"
-    )
-
-set(ANDROID_LOGGER_SOURCE_FILES
-    "${PATH_TO_ROOT}/Source/Logger/Android/android_logger.cpp"
-    )
-
-set(ANDROID_WEBSOCKET_SOURCE_FILES
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/x509_cert_utilities.hpp"
-    )
-
 set(ANDROID_INCLUDE_DIRS
     "${PATH_TO_ROOT}/External/generatedHeaders/android"
     )
@@ -90,11 +79,7 @@ add_library(
     "${PROJECT_NAME}"
     STATIC
     "${COMMON_SOURCE_FILES}"
-    "${COMMON_ANDROID_SOURCE_FILES}"
-    "${TASK_ANDROID_SOURCE_FILES}"
-    "${ANDROID_HTTP_SOURCE_FILES}"
-    "${ANDROID_LOGGER_SOURCE_FILES}"
-    "${ANDROID_WEBSOCKET_SOURCE_FILES}"
+    "${ANDROID_SOURCE_FILES}"
 )
 
 target_include_directories(
