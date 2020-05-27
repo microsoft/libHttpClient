@@ -81,7 +81,7 @@
       <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">false</SupportJustMyCode>
       <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</SupportJustMyCode>
       <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</SupportJustMyCode>
-      <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SupportJustMyCode>
+      <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SupportJustMyCode>     	
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
