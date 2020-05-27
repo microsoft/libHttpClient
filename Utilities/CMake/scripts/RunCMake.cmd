@@ -12,8 +12,9 @@ if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual 
 if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
 if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
 if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
- 
+
 copy ..\CMakeLists.txt .
+copy ..\SetCommonHCSourceFiles.cmake .
 %CMAKE_EXE% -G "Visual Studio 15 2017" %* CMakeLists.txt %CMAKE_FOLDER%\build
 if %ERRORLEVEL% NEQ 0 goto ignore
 call :subCopy

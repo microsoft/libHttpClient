@@ -1,20 +1,32 @@
 cmake_minimum_required(VERSION 3.6)
 
-function(SET_COMMON_HC_SOURCE_FILES OUT_SOURCE_FILES OUT_INCLUDE_DIRS PATH_TO_ROOT)
-    set(PUBLIC_SOURCE_FILES
-        "${PATH_TO_ROOT}/Include/httpClient/config.h"
-        "${PATH_TO_ROOT}/Include/httpClient/httpClient.h"
-        "${PATH_TO_ROOT}/Include/httpClient/httpProvider.h"
-        "${PATH_TO_ROOT}/Include/httpClient/mock.h"
-        "${PATH_TO_ROOT}/Include/xasync.h"
-        "${PATH_TO_ROOT}/Include/xasyncProvider.h"
-        "${PATH_TO_ROOT}/Include/xtaskQueue.h"
-        "${PATH_TO_ROOT}/Include/httpClient/trace.h"
-        "${PATH_TO_ROOT}/Include/httpClient/pal.h"
-        "${PATH_TO_ROOT}/Include/httpClient/async.h"
+function(SET_COMMON_HC_SOURCE_FILES
+         OUT_PUBLIC_SOURCE_FILES
+         OUT_COMMON_SOURCE_FILES
+         OUT_GLOBAL_SOURCE_FILES
+         OUT_WEBSOCKET_SOURCE_FILES
+         OUT_TASK_SOURCE_FILES
+         OUT_MOCK_SOURCE_FILES
+         OUT_HTTP_SOURCE_FILES
+         OUT_LOGGER_SOURCE_FILES
+         PATH_TO_ROOT
+         )
+
+    set(${OUT_PUBLIC_SOURCE_FILES}
+        "${PATH_TO_ROOT}/include/httpClient/config.h"
+        "${PATH_TO_ROOT}/include/httpClient/httpClient.h"
+        "${PATH_TO_ROOT}/include/httpClient/httpProvider.h"
+        "${PATH_TO_ROOT}/include/httpClient/mock.h"
+        "${PATH_TO_ROOT}/include/xasync.h"
+        "${PATH_TO_ROOT}/include/xasyncProvider.h"
+        "${PATH_TO_ROOT}/include/xtaskQueue.h"
+        "${PATH_TO_ROOT}/include/httpClient/trace.h"
+        "${PATH_TO_ROOT}/include/httpClient/pal.h"
+        "${PATH_TO_ROOT}/include/httpClient/async.h"
+        PARENT_SCOPE
         )
 
-    set(COMMON_SOURCE_FILES
+    set(${OUT_COMMON_SOURCE_FILES}
         "${PATH_TO_ROOT}/Source/Common/buildver.h"
         "${PATH_TO_ROOT}/Source/Common/EntryList.h"
         "${PATH_TO_ROOT}/Source/Common/pch.cpp"
@@ -26,22 +38,25 @@ function(SET_COMMON_HC_SOURCE_FILES OUT_SOURCE_FILES OUT_INCLUDE_DIRS PATH_TO_RO
         "${PATH_TO_ROOT}/Source/Common/uri.h"
         "${PATH_TO_ROOT}/Source/Common/utils.cpp"
         "${PATH_TO_ROOT}/Source/Common/utils.h"
+        PARENT_SCOPE
         )
 
-    set(GLOBAL_SOURCE_FILES
+    set(${OUT_GLOBAL_SOURCE_FILES}
         "${PATH_TO_ROOT}/Source/Global/mem.cpp"
         "${PATH_TO_ROOT}/Source/Global/mem.h"
         "${PATH_TO_ROOT}/Source/Global/global_publics.cpp"
         "${PATH_TO_ROOT}/Source/Global/global.cpp"
         "${PATH_TO_ROOT}/Source/Global/global.h"
+        PARENT_SCOPE
         )
 
-    set(WEBSOCKET_SOURCE_FILES
+    set(${OUT_WEBSOCKET_SOURCE_FILES}
         "${PATH_TO_ROOT}/Source/WebSocket/hcwebsocket.h"
         "${PATH_TO_ROOT}/Source/WebSocket/hcwebsocket.cpp"
+        PARENT_SCOPE
         )
 
-    set(TASK_SOURCE_FILES
+    set(${OUT_TASK_SOURCE_FILES}
         "${PATH_TO_ROOT}/Source/Task/AsyncLib.cpp"
         "${PATH_TO_ROOT}/Source/Task/AtomicVector.h"
         "${PATH_TO_ROOT}/Source/Task/LocklessQueue.h"
@@ -53,59 +68,29 @@ function(SET_COMMON_HC_SOURCE_FILES OUT_SOURCE_FILES OUT_INCLUDE_DIRS PATH_TO_RO
         "${PATH_TO_ROOT}/Source/Task/ThreadPool.h"
         "${PATH_TO_ROOT}/Source/Task/WaitTimer.h"
         "${PATH_TO_ROOT}/Source/Task/XTaskQueuePriv.h"
+        "${PATH_TO_ROOT}/Source/Task/XAsyncProviderPriv.h"
+        PARENT_SCOPE
         )
 
-    set(MOCK_SOURCE_FILES
+    set(${OUT_MOCK_SOURCE_FILES}
         "${PATH_TO_ROOT}/Source/Mock/lhc_mock.cpp"
         "${PATH_TO_ROOT}/Source/Mock/lhc_mock.h"
         "${PATH_TO_ROOT}/Source/Mock/mock_publics.cpp"
+        PARENT_SCOPE
         )
 
-    set(HTTP_SOURCE_FILES
+    set(${OUT_HTTP_SOURCE_FILES}
         "${PATH_TO_ROOT}/Source/HTTP/httpcall.cpp"
         "${PATH_TO_ROOT}/Source/HTTP/httpcall.h"
         "${PATH_TO_ROOT}/Source/HTTP/httpcall_request.cpp"
         "${PATH_TO_ROOT}/Source/HTTP/httpcall_response.cpp"
-        )
-
-    set(LOGGER_SOURCE_FILES
-        "${PATH_TO_ROOT}/Source/Logger/trace.cpp"
-        "${PATH_TO_ROOT}/Source/Logger/trace_internal.h"
-        "${PATH_TO_ROOT}/Source/Logger/log_publics.cpp"
-        )
-
-    message(STATUS "Common source group")
-    source_group("Header Files" FILES "${PUBLIC_SOURCE_FILES}")
-    source_group("C++ Source\\Common" FILES "${COMMON_SOURCE_FILES}")
-    source_group("C++ Source\\Global" FILES "${GLOBAL_SOURCE_FILES}")
-    source_group("C++ Source\\WebSocket" FILES "${WEBSOCKET_SOURCE_FILES}")
-    source_group("C++ Source\\Task" FILES "${TASK_SOURCE_FILES}")
-    source_group("C++ Source\\Mock" FILES "${MOCK_SOURCE_FILES}")
-    source_group("C++ Source\\HTTP" FILES "${HTTP_SOURCE_FILES}")
-    source_group("C++ Source\\Logger" FILES "${LOGGER_SOURCE_FILES}")
-
-    set(${OUT_INCLUDE_DIRS}
-        "${PATH_TO_ROOT}/Source"
-        "${PATH_TO_ROOT}/Source/Common"
-        "${PATH_TO_ROOT}/Source/HTTP"
-        "${PATH_TO_ROOT}/Source/Logger"
-        "${PATH_TO_ROOT}/Include"
-        "${PATH_TO_ROOT}/Include/httpClient"
-        "${PATH_TO_ROOT}/External/asio/asio/include"
-        "${PATH_TO_ROOT}/External/openssl/include"
-        "${PATH_TO_ROOT}/External/websocketpp"
         PARENT_SCOPE
         )
 
-    set(${OUT_SOURCE_FILES}
-        "${PUBLIC_SOURCE_FILES}"
-        "${COMMON_SOURCE_FILES}"
-        "${GLOBAL_SOURCE_FILES}"
-        "${WEBSOCKET_SOURCE_FILES}"
-        "${TASK_SOURCE_FILES}"
-        "${MOCK_SOURCE_FILES}"
-        "${HTTP_SOURCE_FILES}"
-        "${LOGGER_SOURCE_FILES}"
+    set(${OUT_LOGGER_SOURCE_FILES}
+        "${PATH_TO_ROOT}/Source/Logger/trace.cpp"
+        "${PATH_TO_ROOT}/Source/Logger/trace_internal.h"
+        "${PATH_TO_ROOT}/Source/Logger/log_publics.cpp"
         PARENT_SCOPE
         )
 

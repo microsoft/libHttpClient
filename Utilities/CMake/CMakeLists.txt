@@ -70,6 +70,16 @@ if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
     set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
 endif()
 
+include_directories(
+    $(ProjectDir)
+    $(ProjectDir)../../../Source
+    $(ProjectDir)../../../Source/Common
+    $(ProjectDir)../../../Source/HTTP
+    $(ProjectDir)../../../Source/Logger
+    $(ProjectDir)../../../include
+    $(ProjectDir)../../../include/httpClient
+    )
+
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Task_Windows_Source_Files
@@ -153,10 +163,38 @@ set(UnitTests_Source_Files_Tests
     )
 
 include(SetCommonHCSourceFiles.cmake)
-set_common_hc_source_files(COMMON_SOURCE_FILES COMMON_INCLUDE_DIRS "../../..")
+set_common_hc_source_files(
+    Public_Source_Files
+    Common_Source_Files
+    Global_Source_Files
+    WebSocket_Source_Files
+    Task_Source_Files
+    Mock_Source_Files
+    HTTP_Source_Files
+    Logger_Source_Files
+    "../../.."
+    )
 
-set(SOURCE_FILES "${COMMON_SOURCE_FILES}")
-include_directories("${COMMON_INCLUDE_DIRS}")
+message(STATUS "Common source group")
+source_group("Header Files" FILES ${Public_Source_Files})
+source_group("C++ Source\\Common" FILES ${Common_Source_Files})
+source_group("C++ Source\\Global" FILES ${Global_Source_Files})
+source_group("C++ Source\\WebSocket" FILES ${WebSocket_Source_Files})
+source_group("C++ Source\\Task" FILES ${Task_Source_Files})
+source_group("C++ Source\\Mock" FILES ${Mock_Source_Files})
+source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
+source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
+
+set( SOURCE_FILES
+    ${Public_Source_Files}
+    ${Common_Source_Files}
+    ${Global_Source_Files}
+    ${WebSocket_Source_Files}
+    ${Task_Source_Files}
+    ${Mock_Source_Files}
+    ${HTTP_Source_Files}
+    ${Logger_Source_Files}
+    )
 
 if( XDK )
     message(STATUS "XDK source group")

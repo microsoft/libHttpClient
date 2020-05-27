@@ -14,7 +14,44 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 ###########################################
 
 include("../../SetCommonHCSourceFiles.cmake")
-set_common_hc_source_files(COMMON_SOURCE_FILES COMMON_INCLUDE_DIRS "${PATH_TO_ROOT}")
+include(SetCommonHCSourceFiles.cmake)
+set_common_hc_source_files(
+    PUBLIC_SOURCE_FILES
+    COMMON_SOURCE_FILES
+    GLOBAL_SOURCE_FILES
+    WEBSOCKET_SOURCE_FILES
+    TASK_SOURCE_FILES
+    MOCK_SOURCE_FILES
+    HTTP_SOURCE_FILES
+    LOGGER_SOURCE_FILES
+    "${PATH_TO_ROOT}"
+    )
+
+set(COMMON_SOURCE_FILES
+    "{PUBLIC_SOURCE_FILES}"
+    "{COMMON_SOURCE_FILES}"
+    "{GLOBAL_SOURCE_FILES}"
+    "{WEBSOCKET_SOURCE_FILES}"
+    "{TASK_SOURCE_FILES}"
+    "{MOCK_SOURCE_FILES}"
+    "{HTTP_SOURCE_FILES}"
+    "{LOGGER_SOURCE_FILES}"
+    )
+
+ set(COMMON_INCLUDE_DIRS
+    "${PATH_TO_ROOT}/Source"
+    "${PATH_TO_ROOT}/Source/Common"
+    "${PATH_TO_ROOT}/Source/HTTP"
+    "${PATH_TO_ROOT}/Source/Logger"
+    "${PATH_TO_ROOT}/Include"
+    "${PATH_TO_ROOT}/Include/httpClient"
+    "${PATH_TO_ROOT}/External/asio/asio/include"
+    "${PATH_TO_ROOT}/External/openssl/include"
+    "${PATH_TO_ROOT}/External/websocketpp"
+    )
+
+set(COMMON_INCLUDE_DIRS
+    )
 
 set(COMMON_ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.cpp"
