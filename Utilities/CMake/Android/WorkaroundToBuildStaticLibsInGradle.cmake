@@ -9,7 +9,7 @@ function(WORKAROUND_TO_BUILD_STATIC_LIBS_IN_GRADLE STATIC_LIB_NAMES)
     # This is a workaround to force creation of a static lib even
     # from Gradle. See https://stackoverflow.com/questions/52952226.
 
-    set(DUMMY_ANDROID_PROJECT_NAME "dummyAndroidProjectName")
+    set(DUMMY_ANDROID_PROJECT_NAME "dummyAndroidSharedLibFor${PROJECT_NAME}")
     add_library("${DUMMY_ANDROID_PROJECT_NAME}" SHARED)
     set_target_properties("${DUMMY_ANDROID_PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
 

@@ -4,8 +4,9 @@ get_filename_component(PATH_TO_ROOT "../../../.." ABSOLUTE)
 
 project("libHttpClient.Android")
 
-include("../SetBinaryOutputDir.cmake")
-set_binary_output_dir("${PATH_TO_ROOT}")
+include("../GetLibHCBinaryOutputDir.cmake")
+get_libhc_binary_output_dir("${PATH_TO_ROOT}" BINARY_DIR)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_"${CMAKE_BUILD_TYPE}" "${BINARY_DIR}")
 
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
