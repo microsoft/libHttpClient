@@ -270,6 +270,16 @@ if( BUILDWIN32 )
 endif()
 
 if( BUILDANDROID )
+    include(SetAndroidHCSourceFiles.cmake)
+    set_android_hc_source_files(
+        Common_Android_Source_Files
+        Android_WebSocket_Source_Files
+        Task_Android_Source_Files
+        Android_HTTP_Source_Files
+        Android_Logger_Source_Files
+        "../../.."
+        )
+
     source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})

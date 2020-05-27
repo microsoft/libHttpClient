@@ -50,9 +50,6 @@ set(COMMON_SOURCE_FILES
     "${PATH_TO_ROOT}/External/websocketpp"
     )
 
-set(COMMON_INCLUDE_DIRS
-    )
-
 set(COMMON_ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.cpp"
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.h"
