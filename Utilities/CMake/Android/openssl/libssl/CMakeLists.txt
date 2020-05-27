@@ -5,8 +5,8 @@ get_filename_component(PATH_TO_ROOT "../../../../.." ABSOLUTE)
 project("libssl.Android")
 
 include("../../GetLibHCBinaryOutputDir.cmake")
-get_libhc_binary_output_dir("${PATH_TO_ROOT}" BINARY_DIR)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BINARY_DIR}")
+get_libhc_binary_output_dir("${PATH_TO_ROOT}" LIBHC_BINARY_DIR)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${LIBHC_BINARY_DIR}")
 
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
