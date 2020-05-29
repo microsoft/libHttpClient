@@ -56,8 +56,20 @@ android {
     }
 
     libraryVariants.all { variant ->
+        def variantFlavor = variant.getFlavorName()
+        def variantAbi = "unknown"
+        if (variantFlavor == "arm7") {
+            variantAbi = "armeabi-v7a"
+        } else if (variantFlavor == "arm64") {
+            variantAbi = "arm64-v8a"
+        } else if (variantFlavor == "x86") {
+            variantAbi = "x86"
+        } else if (variantFlavor == "x86_64") {
+            variantAbi = "x86_64"
+        }
+        
         variant.outputs.each { output ->
-            output.outputFileName = "../../../../../../Binaries/Android/java/${variant.getFlavorName()}/libHttpClient-${variant.getBuildType().getName()}.aar"
+            output.outputFileName = "../../../../../../Binaries/Android/${variantAbi}/${variant.getBuildType().getName()}/libHttpClient.aar"
         }
     }
 }
