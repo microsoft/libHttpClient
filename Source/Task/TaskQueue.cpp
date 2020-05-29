@@ -532,8 +532,10 @@ void __stdcall TaskQueuePortImpl::Terminate(
         term->node = 0;
     }
 
-    // Balance our add
-    cxt->RemoveSuspend();
+    // Balance our add.  Note we must use ResumeTermination
+    // here so we schedule the termination if this is the
+    // last remove.
+    ResumeTermination(cxt.get());
 }
 
 HRESULT __stdcall TaskQueuePortImpl::Attach(
