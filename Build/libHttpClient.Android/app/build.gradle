@@ -57,7 +57,7 @@ android {
 
     libraryVariants.all { variant ->
         variant.outputs.each { output ->
-            output.outputFileName = "../../../../../../Binaries/Android/java/libHttpClient-${variant.name}.aar"
+            output.outputFileName = "../../../../../../Binaries/Android/java/${variant.getFlavorName()}/libHttpClient-${variant.getBuildType().getName()}.aar"
         }
     }
 }
