@@ -14,7 +14,6 @@ const int MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS = 10000;
     const int MIN_HTTP_TIMEOUT_IN_MS = 5000;
 #endif
 const double MAX_DELAY_TIME_IN_SEC = 60.0;
-const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
 HC_CALL::~HC_CALL()
