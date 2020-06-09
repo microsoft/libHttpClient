@@ -90,25 +90,8 @@ target_include_directories(
     "${ANDROID_INCLUDE_DIRS}"
 )
 
-set(FLAGS
-    "-Wall"
-    "-fexceptions"
-    "-frtti"
-    "-std=c++14"
-    "-Wno-unknown-pragmas"
-    "-Wno-pragma-once-outside-header"
-    "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID"
-    )
-
-set(FLAGS_DEBUG
-    "-O0"
-    "-DHC_TRACE_BUILD_LEVEL=5"
-    )
-
-set(FLAGS_RELEASE
-    "-Os"
-    "-DHC_TRACE_BUILD_LEVEL=3"
-    )
+include("GetLibHCFlags.cmake")
+get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
 include("../TargetSetFlags.cmake")
 target_set_flags(
