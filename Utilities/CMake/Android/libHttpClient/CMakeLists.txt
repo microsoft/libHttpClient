@@ -14,8 +14,8 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 ### Set up paths for source and include ###
 ###########################################
 
-include("../../SetCommonHCSourceFiles.cmake")
-set_common_hc_source_files(
+include("../../GetCommonHCSourceFiles.cmake")
+get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
     COMMON_SOURCE_FILES
     GLOBAL_SOURCE_FILES
@@ -27,8 +27,8 @@ set_common_hc_source_files(
     "${PATH_TO_ROOT}"
     )
 
-include("../../SetAndroidHCSourceFiles.cmake")
-set_android_hc_source_files(
+include("../../GetAndroidHCSourceFiles.cmake")
+get_android_hc_source_files(
     ANDROID_COMMON_SOURCE_FILES
     ANDROID_WEBSOCKET_SOURCE_FILES
     ANDROID_TASK_SOURCE_FILES
@@ -90,25 +90,8 @@ target_include_directories(
     "${ANDROID_INCLUDE_DIRS}"
 )
 
-set(FLAGS
-    "-Wall"
-    "-fexceptions"
-    "-frtti"
-    "-std=c++14"
-    "-Wno-unknown-pragmas"
-    "-Wno-pragma-once-outside-header"
-    "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID"
-    )
-
-set(FLAGS_DEBUG
-    "-O0"
-    "-DHC_TRACE_BUILD_LEVEL=5"
-    )
-
-set(FLAGS_RELEASE
-    "-Os"
-    "-DHC_TRACE_BUILD_LEVEL=3"
-    )
+include("GetLibHCFlags.cmake")
+get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
 include("../TargetSetFlags.cmake")
 target_set_flags(
