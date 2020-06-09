@@ -14,8 +14,8 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 ### Set up paths for source and include ###
 ###########################################
 
-include("../../SetCommonHCSourceFiles.cmake")
-set_common_hc_source_files(
+include("../../GetCommonHCSourceFiles.cmake")
+get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
     COMMON_SOURCE_FILES
     GLOBAL_SOURCE_FILES
@@ -27,8 +27,8 @@ set_common_hc_source_files(
     "${PATH_TO_ROOT}"
     )
 
-include("../../SetAndroidHCSourceFiles.cmake")
-set_android_hc_source_files(
+include("../../GetAndroidHCSourceFiles.cmake")
+get_android_hc_source_files(
     ANDROID_COMMON_SOURCE_FILES
     ANDROID_WEBSOCKET_SOURCE_FILES
     ANDROID_TASK_SOURCE_FILES
