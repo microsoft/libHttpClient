@@ -33,6 +33,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            externalNativeBuild {
+                cmake {
+                    arguments "-DCMAKE_BUILD_TYPE=Debug"
+
+                    if (project.hasProperty("HC_NOWEBSOCKETS")) {
+                        arguments << "-DHC_NOWEBSOCKETS=ON"
+                    }
+                }
+            }
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android.txt")
@@ -40,6 +52,10 @@ android {
             externalNativeBuild {
                 cmake {
                     arguments "-DCMAKE_BUILD_TYPE=Release"
+
+                    if (project.hasProperty("HC_NOWEBSOCKETS")) {
+                        arguments << "-DHC_NOWEBSOCKETS=ON"
+                    }
                 }
             }
         }
@@ -67,7 +83,7 @@ android {
         } else if (variantFlavor == "x86_64") {
             variantAbi = "x86_64"
         }
-        
+
         variant.outputs.each { output ->
             output.outputFileName = "../../../../../../Binaries/Android/${variantAbi}/${variant.getBuildType().getName()}/libHttpClient.aar"
         }
