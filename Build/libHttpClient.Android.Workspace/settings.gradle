@@ -1,0 +1,5 @@
+rootProject.name = "libHttpClient.Android.Workspace"
+
+includeBuild("../libHttpClient.Android")
+includeBuild("../libssl.Android")
+includeBuild("../libcrypto.Android")
