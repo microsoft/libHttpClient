@@ -1,5 +1,7 @@
 rootProject.name = "libHttpClient.Android.Workspace"
 
-includeBuild("../libHttpClient.Android")
-includeBuild("../libssl.Android")
-includeBuild("../libcrypto.Android")
+include ":libHttpClient.Android", ":libssl.Android", ":libcrypto.Android"
+
+project(":libHttpClient.Android").projectDir = new File("../libHttpClient.Android")
+project(":libssl.Android").projectDir = new File("../libssl.Android")
+project(":libcrypto.Android").projectDir = new File("../libcrypto.Android")
