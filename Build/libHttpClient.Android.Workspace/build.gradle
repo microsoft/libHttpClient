@@ -26,5 +26,5 @@ allprojects {
 }
 
 subprojects {
-    apply from: "common_configs_and_flavors.gradle"
+    apply from: new File("common_buildtypes_and_flavors.gradle").getAbsolutePath()
 }
