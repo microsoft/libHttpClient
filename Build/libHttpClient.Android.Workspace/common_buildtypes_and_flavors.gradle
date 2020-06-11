@@ -1,0 +1,56 @@
+apply plugin: "com.android.library"
+
+android {
+    compileSdkVersion 27
+    defaultConfig.targetSdkVersion 21
+
+    flavorDimensions "default"
+
+    // We support a lower minSdkVersion for non-64 bit architectures.
+    // This allows us to break out that minimum per-ABI.
+    productFlavors {
+        arm7 {
+            minSdkVersion 19
+            ndk.abiFilters "armeabi-v7a"
+        }
+
+        x86 {
+            minSdkVersion 19
+            ndk.abiFilters "x86"
+        }
+
+        arm64 {
+            minSdkVersion 21
+            ndk.abiFilters "arm64-v8a"
+        }
+
+        x86_64 {
+            minSdkVersion 21
+            ndk.abiFilters "x86_64"
+        }
+    }
+
+    buildTypes {
+        debug {
+            externalNativeBuild {
+                cmake {
+                    // This is provided by default, but making it
+                    // explicit here to avoid build magic.
+                    arguments "-DCMAKE_BUILD_TYPE=Debug"
+                }
+            }
+        }
+
+        release {
+            externalNativeBuild {
+                cmake {
+                    // This is actually not provided by default,
+                    // so we need to set it ourselves.
+                    arguments "-DCMAKE_BUILD_TYPE=Release"
+                }
+            }
+        }
+    }
+}
+
+project.ext."libhc_common_config_applied" = true
