@@ -162,8 +162,8 @@ set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 
-include(SetCommonHCSourceFiles.cmake)
-set_common_hc_source_files(
+include(GetCommonHCSourceFiles.cmake)
+get_common_hc_source_files(
     Public_Source_Files
     Common_Source_Files
     Global_Source_Files
@@ -270,8 +270,8 @@ if( BUILDWIN32 )
 endif()
 
 if( BUILDANDROID )
-    include(SetAndroidHCSourceFiles.cmake)
-    set_android_hc_source_files(
+    include(GetAndroidHCSourceFiles.cmake)
+    get_android_hc_source_files(
         Common_Android_Source_Files
         Android_WebSocket_Source_Files
         Task_Android_Source_Files
