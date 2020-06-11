@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7DB100A62119206B00AE22F5"
-               BuildableName = "libHttpClient.a"
-               BlueprintName = "libHttpClient_mac"
+               BlueprintIdentifier = "2C872C64221C91BD0054F791"
+               BuildableName = "HttpClient.framework"
+               BlueprintName = "libHttpClientFramework_macOS"
                ReferencedContainer = "container:libHttpClient.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -43,9 +43,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7DB100A62119206B00AE22F5"
-            BuildableName = "libHttpClient.a"
-            BlueprintName = "libHttpClient_mac"
+            BlueprintIdentifier = "2C872C64221C91BD0054F791"
+            BuildableName = "HttpClient.framework"
+            BlueprintName = "libHttpClientFramework_macOS"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -59,9 +59,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7DB100A62119206B00AE22F5"
-            BuildableName = "libHttpClient.a"
-            BlueprintName = "libHttpClient_mac"
+            BlueprintIdentifier = "2C872C64221C91BD0054F791"
+            BuildableName = "HttpClient.framework"
+            BlueprintName = "libHttpClientFramework_macOS"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
