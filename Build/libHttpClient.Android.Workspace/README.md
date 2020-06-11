@@ -9,12 +9,9 @@ as sub-projects.
 ### Build
 
 To build, use:
-```sh
-[bash] $ ./gradlew assemble
 ```
-or
-```bat
 [cmd] > gradlew.bat assemble
+[bash] $ ./gradlew assemble
 ```
 NOTE:
 - To build just one architecture, use the `assemble[X86|X86_64|Arm7|Arm64]`
@@ -22,6 +19,19 @@ command.
 - To build just one config, use the `assemble[Debug|Release]` command.
 - To build just one arch+config combination, use the
 `assemble[X86|X86_64|Arm7|Arm64][Debug|Release]` command, e.g. `assembleArm7Debug`.
+
+#### Building without websockets support
+
+Passing the `-PHC_NOWEBSOCKETS` argument to Gradle (`-P` referring to "project
+properties") will result in Gradle skipping `libssl` and `libcrypto` entirely,
+as well as passing the `-DHC_NOWEBSOCKETS` compiler build flag when building
+`libHttpClient`.
+
+E.g.:
+```
+[cmd] > gradlew.bat assemble -PHC_NOWEBSOCKETS
+[bash] $ ./gradlew assemble -PHC_NOWEBSOCKETS
+```
 
 ### Clean
 
