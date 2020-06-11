@@ -1,7 +1,8 @@
 # libHttpClient.Android.Workspace
 
-This directory defines a [Gradle composite build](https://docs.gradle.org/current/userguide/composite_builds.html)
-that ties together the Gradle+CMake builds for libHttpClient, libssl, and libcrypto.
+This directory defines a Gradle build that includes the
+Gradle+CMake builds for libHttpClient, libssl, and libcrypto
+as sub-projects.
 
 ## Usage
 
@@ -15,7 +16,12 @@ or
 ```bat
 [cmd] > gradlew.bat assemble
 ```
-To build just one architecture, use the `assemble[X86|X86_64|Arm7|Arm64]` command.
+NOTE:
+- To build just one architecture, use the `assemble[X86|X86_64|Arm7|Arm64]`
+command.
+- To build just one config, use the `assemble[Debug|Release]` command.
+- To build just one arch+config combination, use the
+`assemble[X86|X86_64|Arm7|Arm64][Debug|Release]` command, e.g. `assembleArm7Debug`.
 
 ### Clean
 
@@ -27,5 +33,8 @@ or
 ```bat
 [cmd] > gradlew.bat clean
 ```
-NOTE: this will remove built `.a` files from `<root>/Binaries`, but not the built `libHttpClient.aar`
-(due to how Gradle clean works). To do a "hard clean", also delete the `<root>/Binaries` directory.
+NOTE:
+- This removes the build directory (typically `app/build`) for each dependent
+build, as well as deletes the built `.a` files from `<root>/Binaries`. It will
+not delete the built `libHttpClient.aar`, due to how Gradle clean works. To do
+a "hard clean", also delete the `<root>/Binaries` directory.

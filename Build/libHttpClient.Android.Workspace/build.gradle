@@ -1,23 +1,26 @@
-task assembleX86 {
-    dependsOn gradle.includedBuilds*.task(":app:assembleX86")
+apply plugin: 'java'
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+       jcenter()
+       mavenCentral()
+        maven {
+            url "https://maven.google.com"
+        }
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.3'
+    }
 }
 
-task assembleX86_64 {
-    dependsOn gradle.includedBuilds*.task(":app:assembleX86_64")
-}
-
-task assembleArm7 {
-    dependsOn gradle.includedBuilds*.task(":app:assembleArm7")
-}
-
-task assembleArm64 {
-    dependsOn gradle.includedBuilds*.task(":app:assembleArm64")
-}
-
-task assemble {
-    dependsOn assembleX86, assembleX86_64, assembleArm7, assembleArm64
-}
-
-task clean {
-    dependsOn gradle.includedBuilds*.task(":app:clean")
+allprojects {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url "https://maven.google.com"
+        }
+    }
 }
