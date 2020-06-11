@@ -52,3 +52,5 @@ android {
         }
     }
 }
+
+project.ext."libhc_common_config_applied" = true

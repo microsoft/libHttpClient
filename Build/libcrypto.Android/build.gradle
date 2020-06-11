@@ -1,3 +1,7 @@
+if (!project.ext."libhc_common_config_applied") {
+    throw new GradleException("Expected common configuration not applied")
+}
+
 apply plugin: "com.android.library"
 
 android {
