@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.6)
 # into the three OUT_XXX variables, respectively. These are intended to then
 # be passed to `target_set_flags`, from `TargetSetFlags.cmake`.
 function(GET_LIBHC_FLAGS OUT_FLAGS OUT_FLAGS_DEBUG OUT_FLAGS_RELEASE)
-    set("${OUT_FLAGS}"
+    set(FLAGS
         "-Wall"
         "-fexceptions"
         "-frtti"
@@ -14,6 +14,12 @@ function(GET_LIBHC_FLAGS OUT_FLAGS OUT_FLAGS_DEBUG OUT_FLAGS_RELEASE)
         "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID"
         PARENT_SCOPE
         )
+
+    if (DEFINED HC_NOWEBSOCKETS)
+        list(APPEND FLAGS "-DHC_NOWEBSOCKETS")
+    endif()
+
+    set("${OUT_FLAGS}" "${FLAGS}" PARENT_SCOPE)
 
     set("${OUT_FLAGS_DEBUG}"
         "-O0"

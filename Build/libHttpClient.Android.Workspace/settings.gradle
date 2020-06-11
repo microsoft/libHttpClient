@@ -1,7 +1,13 @@
 rootProject.name = "libHttpClient.Android.Workspace"
 
-include ":libHttpClient.Android", ":libssl.Android", ":libcrypto.Android"
-
+// Always include libHttpClient
+include ":libHttpClient.Android"
 project(":libHttpClient.Android").projectDir = new File("../libHttpClient.Android")
-project(":libssl.Android").projectDir = new File("../libssl.Android")
-project(":libcrypto.Android").projectDir = new File("../libcrypto.Android")
+
+// Unless HC_NOWEBSOCKETS is passed, include libssl and libcrypto
+if (!startParameter.getProjectProperties().containsKey("HC_NOWEBSOCKETS")) {
+    include ":libssl.Android", ":libcrypto.Android"
+
+    project(":libssl.Android").projectDir = new File("../libssl.Android")
+    project(":libcrypto.Android").projectDir = new File("../libcrypto.Android")
+}
