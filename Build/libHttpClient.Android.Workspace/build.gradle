@@ -24,3 +24,7 @@ allprojects {
         }
     }
 }
+
+subprojects {
+    apply from: new File("common_buildtypes_and_flavors.gradle").getAbsolutePath()
+}
