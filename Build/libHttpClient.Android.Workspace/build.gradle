@@ -24,3 +24,7 @@ allprojects {
         }
     }
 }
+
+subprojects {
+    apply from: "common_configs_and_flavors.gradle"
+}
