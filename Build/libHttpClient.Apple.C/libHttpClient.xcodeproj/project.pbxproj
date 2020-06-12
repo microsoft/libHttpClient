@@ -568,9 +568,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		2C872C64221C91BD0054F791 /* libHttpClientFramework_mac */ = {
+		2C872C64221C91BD0054F791 /* libHttpClientFramework_macOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2C872C6A221C91BD0054F791 /* Build configuration list for PBXNativeTarget "libHttpClientFramework_mac" */;
+			buildConfigurationList = 2C872C6A221C91BD0054F791 /* Build configuration list for PBXNativeTarget "libHttpClientFramework_macOS" */;
 			buildPhases = (
 				2C872C60221C91BD0054F791 /* Headers */,
 				2C872C61221C91BD0054F791 /* Sources */,
@@ -582,7 +582,7 @@
 			dependencies = (
 				2C872C6E221C91D90054F791 /* PBXTargetDependency */,
 			);
-			name = libHttpClientFramework_mac;
+			name = libHttpClientFramework_macOS;
 			productName = libHttpClientFramework_mac;
 			productReference = 2C872C65221C91BD0054F791 /* HttpClient.framework */;
 			productType = "com.apple.product-type.framework";
@@ -641,9 +641,9 @@
 			productReference = 67EE817E2362599C00A5F3DE /* libSSL.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		7DB100A62119206B00AE22F5 /* libHttpClient_mac */ = {
+		7DB100A62119206B00AE22F5 /* libHttpClient_macOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7DB100AF2119206B00AE22F5 /* Build configuration list for PBXNativeTarget "libHttpClient_mac" */;
+			buildConfigurationList = 7DB100AF2119206B00AE22F5 /* Build configuration list for PBXNativeTarget "libHttpClient_macOS" */;
 			buildPhases = (
 				9CC0523A213776DB0009B69A /* Build openssl */,
 				7DB100A32119206B00AE22F5 /* Sources */,
@@ -654,7 +654,7 @@
 			);
 			dependencies = (
 			);
-			name = libHttpClient_mac;
+			name = libHttpClient_macOS;
 			productName = libHttpClient_Macos;
 			productReference = 7DB100A72119206B00AE22F5 /* libHttpClient.a */;
 			productType = "com.apple.product-type.library.static";
@@ -698,9 +698,9 @@
 			targets = (
 				67EE817D2362599C00A5F3DE /* SSL */,
 				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
-				7DB100A62119206B00AE22F5 /* libHttpClient_mac */,
+				7DB100A62119206B00AE22F5 /* libHttpClient_macOS */,
 				58BD256122123EF9008942EB /* libHttpClientFramework_iOS */,
-				2C872C64221C91BD0054F791 /* libHttpClientFramework_mac */,
+				2C872C64221C91BD0054F791 /* libHttpClientFramework_macOS */,
 			);
 		};
 /* End PBXProject section */
@@ -844,7 +844,7 @@
 /* Begin PBXTargetDependency section */
 		2C872C6E221C91D90054F791 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 7DB100A62119206B00AE22F5 /* libHttpClient_mac */;
+			target = 7DB100A62119206B00AE22F5 /* libHttpClient_macOS */;
 			targetProxy = 2C872C6D221C91D90054F791 /* PBXContainerItemProxy */;
 		};
 		58BD259322136482008942EB /* PBXTargetDependency */ = {
@@ -1240,7 +1240,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2C872C6A221C91BD0054F791 /* Build configuration list for PBXNativeTarget "libHttpClientFramework_mac" */ = {
+		2C872C6A221C91BD0054F791 /* Build configuration list for PBXNativeTarget "libHttpClientFramework_macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2C872C6B221C91BD0054F791 /* Debug */,
@@ -1285,7 +1285,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7DB100AF2119206B00AE22F5 /* Build configuration list for PBXNativeTarget "libHttpClient_mac" */ = {
+		7DB100AF2119206B00AE22F5 /* Build configuration list for PBXNativeTarget "libHttpClient_macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7DB100AD2119206B00AE22F5 /* Debug */,
