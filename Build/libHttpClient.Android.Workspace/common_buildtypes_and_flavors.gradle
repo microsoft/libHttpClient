@@ -39,7 +39,7 @@ android {
                     arguments "-DCMAKE_BUILD_TYPE=Debug"
 
                     if (project.hasProperty("HC_NOWEBSOCKETS")) {
-                        arguments << "-DHC_NOWEBSOCKETS=ON"
+                        arguments << "-DHC_NOWEBSOCKETS=1"
                     }
                 }
             }
@@ -53,7 +53,7 @@ android {
                     arguments "-DCMAKE_BUILD_TYPE=Release"
 
                     if (project.hasProperty("HC_NOWEBSOCKETS")) {
-                        arguments << "-DHC_NOWEBSOCKETS=ON"
+                        arguments << "-DHC_NOWEBSOCKETS=1"
                     }
                 }
             }
