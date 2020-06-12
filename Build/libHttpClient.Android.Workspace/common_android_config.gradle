@@ -1,4 +1,6 @@
-apply plugin: "com.android.library"
+if (!pluginManager.hasPlugin("com.android.base")) {
+    throw new GradleException("An Android plugin must be applied to use this script")
+}
 
 android {
     compileSdkVersion 27
@@ -61,4 +63,4 @@ android {
     }
 }
 
-project.ext."libhc_common_config_applied" = true
+project.ext."libhc_common_android_config_applied" = true
