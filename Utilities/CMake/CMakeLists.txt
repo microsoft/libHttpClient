@@ -82,56 +82,9 @@ include_directories(
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 
-set(Public_Source_Files
-    ../../../include/httpClient/config.h
-    ../../../include/httpClient/httpClient.h
-    ../../../include/httpClient/httpProvider.h
-    ../../../include/httpClient/mock.h
-    ../../../include/xasync.h
-    ../../../include/xasyncProvider.h
-    ../../../include/xtaskQueue.h
-    ../../../include/httpClient/trace.h
-    ../../../include/httpClient/pal.h
-    ../../../include/httpClient/async.h
-    )
-
-set(Task_Source_Files
-    ../../../Source/Task/AsyncLib.cpp
-    ../../../Source/Task/AtomicVector.h
-    ../../../Source/Task/LocklessQueue.h
-    ../../../Source/Task/referenced_ptr.h
-    ../../../Source/Task/StaticArray.h
-    ../../../Source/Task/TaskQueue.cpp
-    ../../../Source/Task/TaskQueueImpl.h
-    ../../../Source/Task/TaskQueueP.h
-    ../../../Source/Task/ThreadPool.h
-    ../../../Source/Task/WaitTimer.h
-    ../../../Source/Task/XTaskQueuePriv.h
-    ../../../Source/Task/XAsyncProviderPriv.h
-    )
-
 set(Task_Windows_Source_Files
     ../../../Source/Task/ThreadPool_win32.cpp
     ../../../Source/Task/WaitTimer_win32.cpp
-    )
-
-set(Task_Android_Source_Files
-    ../../../Include/httpClient/async_jvm.h
-    ../../../Source/Task/ThreadPool_stl.cpp
-    ../../../Source/Task/WaitTimer_stl.cpp
-    )
-
-set(Global_Source_Files
-    ../../../Source/Global/mem.cpp
-    ../../../Source/Global/mem.h
-    ../../../Source/Global/global_publics.cpp
-    ../../../Source/Global/global.cpp
-    ../../../Source/Global/global.h
-    )
-
-set(WebSocket_Source_Files
-    ../../../Source/WebSocket/hcwebsocket.h
-    ../../../Source/WebSocket/hcwebsocket.cpp
     )
 
 set(WinRT_WebSocket_Source_Files
@@ -144,46 +97,9 @@ set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
     )
 
-set(Android_WebSocket_Source_Files
-    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
-    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
-    )
-
-set(Mock_Source_Files
-    ../../../Source/Mock/lhc_mock.cpp
-    ../../../Source/Mock/lhc_mock.h
-    ../../../Source/Mock/mock_publics.cpp
-    )
-
-set(Common_Source_Files
-    ../../../Source/Common/buildver.h
-    ../../../Source/Common/EntryList.h
-    ../../../Source/Common/pch.cpp
-    ../../../Source/Common/pch.h
-    ../../../Source/Common/pch_common.h
-    ../../../Source/Common/pal_internal.h
-    ../../../Source/Common/ResultMacros.h
-    ../../../Source/Common/uri.cpp
-    ../../../Source/Common/uri.h
-    ../../../Source/Common/utils.cpp
-    ../../../Source/Common/utils.h
-    )
-
 set(Common_Windows_Source_Files
     ../../../Source/Common/Win/utils_win.cpp
     ../../../Source/Common/Win/utils_win.h
-    )
-
-set(Common_Android_Source_Files
-    ../../../Source/Common/Android/utils_android.cpp
-    ../../../Source/Common/Android/utils_android.h
-    )
-
-set(HTTP_Source_Files
-    ../../../Source/HTTP/httpcall.cpp
-    ../../../Source/HTTP/httpcall.h
-    ../../../Source/HTTP/httpcall_request.cpp
-    ../../../Source/HTTP/httpcall_response.cpp
     )
 
 set(Unittest_HTTP_Source_Files
@@ -199,14 +115,6 @@ set(WinHttp_HTTP_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_http_task.h
     )
 
-set(Android_HTTP_Source_Files
-   ../../../Source/HTTP/Android/http_android.cpp
-   ../../../Source/HTTP/Android/android_http_request.cpp
-   ../../../Source/HTTP/Android/android_http_request.h
-   ../../../Source/HTTP/Android/android_platform_context.cpp
-   ../../../Source/HTTP/Android/android_platform_context.h
-   )
-
 set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_buffer.cpp
     ../../../Source/HTTP/XMLHttp/http_buffer.h
@@ -220,19 +128,9 @@ set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
 
-set(Logger_Source_Files
-    ../../../Source/Logger/trace.cpp
-    ../../../Source/Logger/trace_internal.h
-    ../../../Source/Logger/log_publics.cpp
-    )
-
 set(Windows_Logger_Source_Files
    ../../../Source/Logger/Win/win_logger.cpp
    )
-
-set(Android_Logger_Source_Files
-    ../../../Source/Logger/Android/android_logger.cpp
-    )
 
 set(UnitTests_Source_Files_Support
     ../../../Tests/UnitTests/Support/DefineTestMacros.h
@@ -262,6 +160,19 @@ set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/MockTests.cpp
     ../../../Tests/UnitTests/Tests/TaskQueueTests.cpp
     ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
+    )
+
+include(GetCommonHCSourceFiles.cmake)
+get_common_hc_source_files(
+    Public_Source_Files
+    Common_Source_Files
+    Global_Source_Files
+    WebSocket_Source_Files
+    Task_Source_Files
+    Mock_Source_Files
+    HTTP_Source_Files
+    Logger_Source_Files
+    "../../.."
     )
 
 message(STATUS "Common source group")
@@ -359,6 +270,16 @@ if( BUILDWIN32 )
 endif()
 
 if( BUILDANDROID )
+    include(GetAndroidHCSourceFiles.cmake)
+    get_android_hc_source_files(
+        Common_Android_Source_Files
+        Android_WebSocket_Source_Files
+        Task_Android_Source_Files
+        Android_HTTP_Source_Files
+        Android_Logger_Source_Files
+        "../../.."
+        )
+
     source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})

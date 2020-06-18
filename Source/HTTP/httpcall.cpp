@@ -14,7 +14,6 @@ const int MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS = 10000;
     const int MIN_HTTP_TIMEOUT_IN_MS = 5000;
 #endif
 const double MAX_DELAY_TIME_IN_SEC = 60.0;
-const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
 HC_CALL::~HC_CALL()
@@ -177,13 +176,6 @@ std::chrono::seconds GetRetryAfterHeaderTime(_In_ HC_CALL* call)
 
         if (!ss.fail())
         {
-            if (value > RETRY_AFTER_CAP_IN_SEC)
-            {
-                // Cap the Retry-After header so users won't be locked out of an endpoint 
-                // for a long time the limit is hit near the end of a period
-                value = RETRY_AFTER_CAP_IN_SEC;
-            }
-
             return std::chrono::seconds(value);
         }
     }
@@ -243,8 +235,14 @@ bool http_call_should_retry(
         std::chrono::milliseconds waitTime = std::chrono::milliseconds(static_cast<int64_t>(secondsToWait * 1000.0));
         if (retryAfter.count() > 0)
         {
-            // Use either the waitTime or Retry-After header, whichever is bigger
-            call->delayBeforeRetry = std::chrono::milliseconds(std::max(waitTime.count(), retryAfter.count()));
+            // Jitter to spread the load of Retry-After out between the devices trying to retry
+            std::chrono::milliseconds retryAfterMin = retryAfter;
+            std::chrono::milliseconds retryAfterMax = std::chrono::milliseconds(static_cast<int64_t>(retryAfter.count() * 1.2));
+            auto retryAfterDelta = retryAfterMax.count() - retryAfterMin.count();
+            std::chrono::milliseconds retryAfterJittered = std::chrono::milliseconds(static_cast<int64_t>(retryAfterMin.count() + retryAfterDelta * lerpScaler)); // lerp between min & max wait
+
+            // Use either the waitTime or the jittered Retry-After header, whichever is bigger
+            call->delayBeforeRetry = std::chrono::milliseconds(std::max(waitTime.count(), retryAfterJittered.count()));
         }
         else
         {
@@ -258,6 +256,7 @@ bool http_call_should_retry(
             if (call->delayBeforeRetry.count() < MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS)
             {
                 call->delayBeforeRetry = std::chrono::milliseconds(MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS);
+                if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] 500: delayBeforeRetry %lld ms", TO_ULL(call->id), call->delayBeforeRetry.count()); }
             }
         }
 
