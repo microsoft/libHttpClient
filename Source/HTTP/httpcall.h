@@ -36,7 +36,9 @@ struct HC_CALL
 
     uint64_t id = 0;
     bool traceCall = true;
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     bool sslValidation = true;
+#endif
     void* context = nullptr;
     std::atomic<int> refCount;
 
