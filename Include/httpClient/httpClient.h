@@ -451,6 +451,22 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     ) noexcept;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+/// <summary>
+/// Enables or disables SSL server certificate validation for this specific HTTP call.
+/// Only implemented for Win32.
+/// The default is true
+///
+/// Optional, call prior to calling HCHttpCallPerformAsync.
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="traceCall">Validate certificates</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestSetSSLValidation(
+    _In_ HCCallHandle call,
+    _In_ bool sslValidation
+) noexcept;
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Get APIs

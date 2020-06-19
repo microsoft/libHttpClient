@@ -504,3 +504,27 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+STDAPI
+HCHttpCallRequestSetSSLValidation(
+    _In_ HCCallHandle call,
+    _In_ bool sslValidation
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    else
+    {
+        RETURN_IF_PERFORM_CALLED(call);
+        call->sslValidation = sslValidation;
+
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetSSLValidation [ID %llu]: sslValidation=%s", TO_ULL(call->id), sslValidation ? "true" : "false"); }
+    }
+    return S_OK;
+}
+CATCH_RETURN()
+#endif
