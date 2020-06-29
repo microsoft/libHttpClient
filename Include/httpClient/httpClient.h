@@ -688,6 +688,21 @@ STDAPI HCWebSocketSetProxyUri(
     _In_z_ const char* proxyUri
     ) noexcept;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 
+/// <summary>
+/// Allows proxy server to decrypt and inspect traffic; should be used only for debugging purposes
+/// This must be called after calling HCWebSocketSetProxyUri.
+/// Only applies to Win32 non-GDK builds
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="allowProxyToDecryptHttps">true is proxy can decrypt, false is not allowed to decrypt</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCWebSocketSetProxyDecryptsHttps(
+	_In_ HCWebsocketHandle websocket,
+	_In_z_ bool allowProxyToDecryptHttps
+) noexcept;
+#endif
+
 /// <summary>
 /// Set a header for the WebSocket
 /// This must be called prior to calling HCWebSocketConnectAsync.

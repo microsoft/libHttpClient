@@ -111,6 +111,12 @@ public:
                 sharedThis->m_opensslFailed = false;
                 sslContext->set_verify_callback([sharedThis](bool preverified, asio::ssl::verify_context &verifyCtx)
                 {
+                    // allow to use proxies that decrypt https for debugging
+                    if (sharedThis->m_hcWebsocketHandle->ProxyDecryptsHttps())
+                    {
+                        return true;
+                    }
+
                     // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                     // stores keychains. If OpenSSL fails we will doing verification at the
                     // end using the whole certificate chain so wait until the 'leaf' cert.
