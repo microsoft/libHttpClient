@@ -688,7 +688,7 @@ STDAPI HCWebSocketSetProxyUri(
     _In_z_ const char* proxyUri
     ) noexcept;
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_WINHTTP_WEBSOCKETS
 /// <summary>
 /// Allows proxy server to decrypt and inspect traffic; should be used only for debugging purposes
 /// This must be called after calling HCWebSocketSetProxyUri.
@@ -700,7 +700,7 @@ STDAPI HCWebSocketSetProxyUri(
 STDAPI HCWebSocketSetProxyDecryptsHttps(
     _In_ HCWebsocketHandle websocket,
     _In_z_ bool allowProxyToDecryptHttps
-) noexcept;
+) noexcept; 
 #endif
 
 /// <summary>
