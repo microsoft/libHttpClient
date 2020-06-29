@@ -303,6 +303,11 @@ const http_internal_string& HC_WEBSOCKET::ProxyUri() const noexcept
     return m_proxyUri;
 }
 
+const bool HC_WEBSOCKET::ProxyDecryptsHttps() const noexcept
+{
+    return m_allowProxyToDecryptHttps;
+}
+
 const http_internal_string& HC_WEBSOCKET::Uri() const noexcept
 {
     return m_uri;
@@ -322,8 +327,22 @@ HRESULT HC_WEBSOCKET::SetProxyUri(
         return E_HC_CONNECT_ALREADY_CALLED;
     }
     m_proxyUri = std::move(proxyUri);
+    m_allowProxyToDecryptHttps = false;
     return S_OK;
 }
+
+HRESULT HC_WEBSOCKET::SetProxyDecryptsHttps(
+    bool allowProxyToDecryptHttps
+    ) noexcept
+{
+    if (m_proxyUri.empty())
+    {
+        return E_UNEXPECTED;
+    }
+    m_allowProxyToDecryptHttps = allowProxyToDecryptHttps;
+    return S_OK;
+}
+
 HRESULT HC_WEBSOCKET::SetHeader(
     http_internal_string&& headerName,
     http_internal_string&& headerValue
@@ -522,6 +541,21 @@ try
         return E_INVALIDARG;
     }
     return websocket->SetProxyUri(proxyUri);
+}
+CATCH_RETURN()
+
+STDAPI
+HCWebSocketSetProxyDecryptsHttps(
+    _In_ HCWebsocketHandle websocket,
+    _In_z_ bool allowProxyToDecryptHttps
+) noexcept
+try
+{
+    if (websocket == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    return websocket->SetProxyDecryptsHttps(allowProxyToDecryptHttps);
 }
 CATCH_RETURN()
 

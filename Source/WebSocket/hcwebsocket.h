@@ -47,10 +47,12 @@ public:
     const uint64_t id;
     const http_header_map& Headers() const noexcept;
     const http_internal_string& ProxyUri() const noexcept;
+    const bool ProxyDecryptsHttps() const noexcept;
     const http_internal_string& Uri() const noexcept;
     const http_internal_string& SubProtocol() const noexcept;
 
     HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
+    HRESULT SetProxyDecryptsHttps(bool allowProxyToDecryptHttps) noexcept;
     HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
 
     void AddClientRef();
@@ -78,6 +80,7 @@ private:
     } m_state{ State::Disconnected };
 
     http_header_map m_connectHeaders;
+    bool m_allowProxyToDecryptHttps{ false };
     http_internal_string m_proxyUri;
     http_internal_string m_uri;
     http_internal_string m_subProtocol;
