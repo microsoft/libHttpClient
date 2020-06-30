@@ -90,6 +90,7 @@ _HCWebSocketGetHeaderAtIndex
 _HCMockCallCreate
 _HCMockAddMock
 _HCMockClearMocks
+_HCMockRemoveMock
 _HCMockResponseSetResponseBodyBytes
 _HCMockResponseSetStatusCode
 _HCMockResponseSetNetworkErrorCode
