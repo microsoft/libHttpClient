@@ -10,4 +10,14 @@ android {
             path "../../Utilities/Cmake/Android/openssl/libcrypto/CMakeLists.txt"
         }
     }
+
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                // externalNativeBuild normally skips static
+                // lib targets. This forces it to build.
+                targets "libcrypto.Android"
+            }
+        }
+    }
 }

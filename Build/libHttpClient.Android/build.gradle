@@ -23,6 +23,16 @@ android {
         }
     }
 
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                // externalNativeBuild normally skips static
+                // lib targets. This forces it to build.
+                targets "libHttpClient.Android"
+            }
+        }
+    }
+
     // To build static libs, we generate a dummy .so - but we don't actually want to package it.
     packagingOptions {
         exclude "**/*.so"
