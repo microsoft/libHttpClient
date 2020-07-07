@@ -10,4 +10,12 @@ android {
             path "../../Utilities/Cmake/Android/openssl/libssl/CMakeLists.txt"
         }
     }
+
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                targets "libssl.Android"
+            }
+        }
+    }
 }

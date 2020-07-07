@@ -697,10 +697,3 @@ target_set_flags(
     "${FLAGS_DEBUG}"
     "${FLAGS_RELEASE}"
 )
-
-####################################
-### Gradle static lib workaround ###
-####################################
-
-include("../../WorkaroundToBuildStaticLibsInGradle.cmake")
-workaround_to_build_static_libs_in_gradle("${PROJECT_NAME}")
