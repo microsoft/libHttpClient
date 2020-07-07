@@ -26,6 +26,8 @@ android {
     defaultConfig {
         externalNativeBuild {
             cmake {
+                // externalNativeBuild normally skips static
+                // lib targets. This forces it to build.
                 targets "libHttpClient.Android"
             }
         }
