@@ -6,6 +6,10 @@
 #include "utils.h"
 #include "uri.h"
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include <XNetworking.h>
+#endif
+
 struct HC_PERFORM_ENV
 {
 public:
@@ -204,6 +208,11 @@ private:
         _In_ winhttp_http_task* pRequestContext,
         _In_ void* statusInfo);
 
+    static void callback_status_sending_request(
+        _In_ HINTERNET hRequestHandle,
+        _In_ winhttp_http_task* pRequestContext,
+        _In_ void* statusInfo);
+
     static void callback_status_sendrequest_complete(
         _In_ HINTERNET hRequestHandle,
         _In_ winhttp_http_task* pRequestContext,
@@ -240,6 +249,8 @@ private:
     static char* winhttp_web_socket_buffer_type_to_string(
         _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
     );
+
+    HRESULT query_security_information(_In_ http_internal_wstring wUrlHost);
 
     HRESULT send(_In_ const xbox::httpclient::Uri& cUri, _In_ const char* method);
 
@@ -292,6 +303,11 @@ private:
     HRESULT websocket_read_message();
     HANDLE m_hWebsocketWriteComplete = nullptr;
     websocket_message_buffer m_websocketResponseBuffer;
+#endif
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    http_internal_vector<uint8_t> m_securityInformationBuffer;
+    XNetworkingSecurityInformation* m_securityInformation{ nullptr }; // lifespan owned by m_securityInformationBuffer
 #endif
 };
 

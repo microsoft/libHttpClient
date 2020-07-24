@@ -33,10 +33,9 @@ void get_proxy_name(
 HC_PERFORM_ENV::HC_PERFORM_ENV()
 {
     xbox::httpclient::Uri proxyUri;
-    m_proxyType = get_ie_proxy_info(proxy_protocol::https, proxyUri);
-
-    DWORD accessType = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+    DWORD accessType{ WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY };
     http_internal_wstring wProxyName;
+    m_proxyType = get_ie_proxy_info(proxy_protocol::https, proxyUri);
     get_proxy_name(m_proxyType, proxyUri, &accessType, &wProxyName);
 
     m_hSession = WinHttpOpen(
@@ -44,7 +43,26 @@ HC_PERFORM_ENV::HC_PERFORM_ENV()
         accessType,
         wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS,
-        WINHTTP_FLAG_ASYNC);
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        WINHTTP_FLAG_SECURE_DEFAULTS
+#else
+        WINHTTP_FLAG_ASYNC
+#endif
+    );
+
+#if HC_PLATFORM == HC_PLATFORM_GDK 
+    // This might happen on older Win10 PC versions that don't support WINHTTP_FLAG_SECURE_DEFAULTS
+    DWORD error = GetLastError();
+    if (error == ERROR_INVALID_PARAMETER)
+    {
+        m_hSession = WinHttpOpen(
+            nullptr,
+            WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
+            WINHTTP_NO_PROXY_NAME,
+            WINHTTP_NO_PROXY_BYPASS,
+            WINHTTP_FLAG_ASYNC);
+    }
+#endif
 }
 
 HC_PERFORM_ENV::~HC_PERFORM_ENV()
@@ -98,11 +116,18 @@ void get_proxy_name(
             break;
         }
 
-        default:
-        case proxy_type::autodiscover_proxy:
         case proxy_type::default_proxy:
+        case proxy_type::autodiscover_proxy:
         {
             *pAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+            *pwProxyName = L"";
+            break;
+        }
+
+        default:
+        case proxy_type::automatic_proxy:
+        {
+            *pAccessType = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
             *pwProxyName = L"";
             break;
         }
@@ -361,6 +386,25 @@ void winhttp_http_task::callback_status_request_error(
         pRequestContext->complete_task(E_FAIL, errorCode);
     }
 }
+
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+void winhttp_http_task::callback_status_sending_request(
+    _In_ HINTERNET hRequestHandle,
+    _In_ winhttp_http_task* pRequestContext,
+    _In_ void* /*statusInfo*/)
+{
+    if (hRequestHandle != nullptr)
+    {
+        HRESULT hr = XNetworkingVerifyServerCertificate(hRequestHandle, pRequestContext->m_securityInformation);
+        if (FAILED(hr))
+        {
+            // Complete the request with failed HR
+            pRequestContext->complete_task(hr, hr);
+        }
+    }
+}
+#endif
 
 void winhttp_http_task::callback_status_sendrequest_complete(
     _In_ HINTERNET hRequestHandle,
@@ -632,6 +676,14 @@ void CALLBACK winhttp_http_task::completion_callback(
                 break;
             }
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+            case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+            {
+                callback_status_sending_request(hRequestHandle, pRequestContext, statusInfo);
+                break;
+            }
+#endif // HC_PLATFORM_GDK
+
             case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
             {
                 callback_status_sendrequest_complete(hRequestHandle, pRequestContext, statusInfo);
@@ -785,6 +837,56 @@ http_internal_wstring flatten_http_headers(_In_ const http_header_map& headers)
     return flattened_headers;
 }
 
+HRESULT winhttp_http_task::query_security_information(
+    http_internal_wstring wUrlHost
+    )
+{
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    XAsyncBlock asyncBlock{};
+    asyncBlock.queue = m_asyncBlock->queue; // TODO: ?
+    HRESULT hr = XNetworkingQuerySecurityInformationForUrlUtf16Async(wUrlHost.c_str(), &asyncBlock);
+    if (FAILED(hr))
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] XNetworkingQuerySecurityInformationForUrlUtf16Async 0x%0.8x", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), hr);
+        return hr;
+    }
+
+    hr = XAsyncGetStatus(&asyncBlock, true);
+    if (FAILED(hr))
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] XNetworkingQuerySecurityInformationForUrlUtf16Async status 0x%0.8x", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), hr);
+        return hr;
+    }
+
+    size_t securityInformationBufferByteCount{ 0 };
+    hr = XNetworkingQuerySecurityInformationForUrlUtf16AsyncResultSize(&asyncBlock, &securityInformationBufferByteCount);
+    if (FAILED(hr))
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] XNetworkingQuerySecurityInformationForUrlUtf16AsyncResultSize 0x%0.8x", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), hr);
+        return hr;
+    }
+
+    assert(securityInformationBufferByteCount > 0);
+    m_securityInformation = nullptr;
+    m_securityInformationBuffer.resize(securityInformationBufferByteCount);
+
+    size_t bytesUsed;
+    hr = XNetworkingQuerySecurityInformationForUrlUtf16AsyncResult(
+        &asyncBlock,
+        m_securityInformationBuffer.size(),
+        &bytesUsed,
+        m_securityInformationBuffer.data(),
+        &m_securityInformation);
+    if (FAILED(hr))
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] XNetworkingQuerySecurityInformationForUrlUtf16AsyncResult 0x%0.8x", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), hr);
+        return hr;
+    }
+#endif
+
+    return S_OK;
+}
+
 HRESULT winhttp_http_task::connect(
     _In_ const xbox::httpclient::Uri& cUri
     )
@@ -817,12 +919,16 @@ HRESULT winhttp_http_task::connect(
             return HRESULT_FROM_WIN32(dwError);
         }
     }
- 
+
     m_isSecure = cUri.IsSecure();
     unsigned int port = cUri.IsPortDefault() ?
         (m_isSecure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
         cUri.Port();
     http_internal_wstring wUrlHost = utf16_from_utf8(cUri.Host());
+
+    HRESULT hr = query_security_information(wUrlHost);
+    if (FAILED(hr))
+        return hr;
 
     m_hConnection = WinHttpConnect(
         m_hSession,
@@ -1060,10 +1166,10 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 typedef DWORD(WINAPI *GetNetworkConnectivityHintProc)(NL_NETWORK_CONNECTIVITY_HINT*);
 typedef DWORD(WINAPI *NotifyNetworkConnectivityHintChangeProc)(PNETWORK_CONNECTIVITY_HINT_CHANGE_CALLBACK, PVOID, BOOLEAN, PHANDLE);
 
-static void NetworkConnectivityHintChangedCallback(
-    _In_ void* context,
+VOID NETIOAPI_API_ NetworkConnectivityHintChangedCallback(
+    _In_ PVOID context,
     _In_ NL_NETWORK_CONNECTIVITY_HINT connectivityHint
-)
+    )
 {
     UNREFERENCED_PARAMETER(context);
 
@@ -1119,7 +1225,7 @@ Internal_SetGlobalProxy(
         xbox::httpclient::Uri ieProxyUri;
         desiredType = get_ie_proxy_info(proxy_protocol::https, ieProxyUri);
 
-        DWORD accessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+        DWORD accessType = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
         get_proxy_name(desiredType, ieProxyUri, &accessType, &wProxyName);
 
         info.dwAccessType = accessType;
