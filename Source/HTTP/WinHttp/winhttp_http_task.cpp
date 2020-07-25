@@ -30,7 +30,59 @@ void get_proxy_name(
     _Out_ DWORD* pAccessType,
     _Out_ http_internal_wstring* pwProxyName);
 
-HC_PERFORM_ENV::HC_PERFORM_ENV()
+HRESULT SetGlobalProxyForHSession(HINTERNET hSession, _In_ const char* proxyUri)
+{
+    WINHTTP_PROXY_INFO info = { 0 };
+    http_internal_wstring wProxyName;
+
+    if (proxyUri == nullptr)
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] reseting proxy", GetCurrentThreadId());
+
+        xbox::httpclient::Uri ieProxyUri;
+        auto desiredType = get_ie_proxy_info(proxy_protocol::https, ieProxyUri);
+
+        DWORD accessType = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+        get_proxy_name(desiredType, ieProxyUri, &accessType, &wProxyName);
+
+        info.dwAccessType = accessType;
+        if (wProxyName.length() > 0)
+        {
+            info.lpszProxy = const_cast<LPWSTR>(wProxyName.c_str());
+        }
+    }
+    else
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] setting proxy to '%s'", GetCurrentThreadId(), proxyUri);
+
+        wProxyName = utf16_from_utf8(proxyUri);
+
+        info.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+        info.lpszProxy = const_cast<LPWSTR>(wProxyName.c_str());
+    }
+
+    auto result = WinHttpSetOption(
+        hSession,
+        WINHTTP_OPTION_PROXY,
+        &info,
+        sizeof(WINHTTP_PROXY_INFO));
+    if (!result)
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] WinHttpSetOption errorcode %d", GetCurrentThreadId(), dwError);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+uint32_t HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7()
+{
+    uint32_t enabledHttpSecurityProtocolFlags = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
+    return enabledHttpSecurityProtocolFlags;
+}
+
+HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags)
 {
     xbox::httpclient::Uri proxyUri;
     DWORD accessType{ WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY };
@@ -38,7 +90,7 @@ HC_PERFORM_ENV::HC_PERFORM_ENV()
     m_proxyType = get_ie_proxy_info(proxy_protocol::https, proxyUri);
     get_proxy_name(m_proxyType, proxyUri, &accessType, &wProxyName);
 
-    m_hSession = WinHttpOpen(
+    HINTERNET hSession = WinHttpOpen(
         nullptr,
         accessType,
         wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
@@ -50,27 +102,78 @@ HC_PERFORM_ENV::HC_PERFORM_ENV()
 #endif
     );
 
-#if HC_PLATFORM == HC_PLATFORM_GDK 
-    // This might happen on older Win10 PC versions that don't support WINHTTP_FLAG_SECURE_DEFAULTS
+#if HC_PLATFORM == HC_PLATFORM_GDK
     DWORD error = GetLastError();
     if (error == ERROR_INVALID_PARAMETER)
     {
-        m_hSession = WinHttpOpen(
+        // This might happen on older Win10 PC versions that don't support WINHTTP_FLAG_SECURE_DEFAULTS
+        hSession = WinHttpOpen(
             nullptr,
             WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
             WINHTTP_NO_PROXY_NAME,
             WINHTTP_NO_PROXY_BYPASS,
             WINHTTP_FLAG_ASYNC);
     }
+
+    if (hSession == nullptr)
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "HC_PERFORM_ENV WinHttpOpen errorcode %d", dwError);
+        return nullptr;
+    }
+
+    auto result = WinHttpSetOption(
+        hSession,
+        WINHTTP_OPTION_SECURE_PROTOCOLS,
+        &enabledHttpSecurityProtocolFlags,
+        sizeof(enabledHttpSecurityProtocolFlags));
+    if (!result)
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "HC_PERFORM_ENV WinHttpSetOption errorcode %d", dwError);
+        return nullptr;
+    }
+#else
+    UNREFERENCED_PARAMETER(enabledHttpSecurityProtocolFlags);
 #endif
+
+    if (!globalProxy.empty())
+    {
+        (void)SetGlobalProxyForHSession(hSession, globalProxy.c_str());
+    }
+
+    return hSession;
+}
+
+HINTERNET HC_PERFORM_ENV::GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags)
+{
+    auto iter = m_hSessions.find(enabledHttpSecurityProtocolFlags); 
+    if (iter != m_hSessions.end())
+    {
+        return iter->second;
+    }
+
+    HINTERNET hSession = CreateHSessionForForHttpSecurityProtocolFlags(enabledHttpSecurityProtocolFlags);
+
+    m_hSessions[enabledHttpSecurityProtocolFlags] = hSession;
+    return hSession;
+}
+
+HC_PERFORM_ENV::HC_PERFORM_ENV()
+{
 }
 
 HC_PERFORM_ENV::~HC_PERFORM_ENV()
 {
-    if (m_hSession != nullptr)
+    for (auto& e : m_hSessions)
     {
-        WinHttpCloseHandle(m_hSession);
+        auto hSession = e.second;
+        if (hSession != nullptr)
+        {
+            WinHttpCloseHandle(hSession);
+        }
     }
+    m_hSessions.clear();
 }
 
 void get_proxy_name(
@@ -139,13 +242,13 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 winhttp_http_task::winhttp_http_task(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_ HCCallHandle call,
-    _In_ HINTERNET hSession,
+    _In_ HCPerformEnv env,
     _In_ proxy_type proxyType,
     _In_ bool isWebSocket
     ) :
     m_call(call),
     m_asyncBlock(asyncBlock),
-    m_hSession(hSession),
+    m_env(env),
     m_proxyType(proxyType),
     m_isWebSocket(isWebSocket)
 {
@@ -399,8 +502,13 @@ void winhttp_http_task::callback_status_sending_request(
         HRESULT hr = XNetworkingVerifyServerCertificate(hRequestHandle, pRequestContext->m_securityInformation);
         if (FAILED(hr))
         {
-            // Complete the request with failed HR
             pRequestContext->complete_task(hr, hr);
+
+            // Set the failure and complete the web request before calling WinHttpCloseHandle because the
+            // WinHttpCloseHandle call can cause a synchronous callback indicating the request has been canceled
+            // which would complete the web request with the wrong error.
+            (void)WinHttpCloseHandle(hRequestHandle);
+            pRequestContext->m_hRequest = nullptr;
         }
     }
 }
@@ -785,8 +893,10 @@ void winhttp_http_task::set_autodiscover_proxy(
     autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
     autoproxy_options.fAutoLogonIfChallenged = TRUE;
 
+    uint32_t enabledHttpSecurityProtocolFlags = HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7();
+    HINTERNET session = m_env->GetSessionForHttpSecurityProtocolFlags(enabledHttpSecurityProtocolFlags);
     auto result = WinHttpGetProxyForUrl(
-        m_hSession,
+        session,
         utf16_from_utf8(cUri.FullPath()).c_str(),
         &autoproxy_options,
         &info);
@@ -891,7 +1001,24 @@ HRESULT winhttp_http_task::connect(
     _In_ const xbox::httpclient::Uri& cUri
     )
 {
-    if (!m_hSession)
+    HRESULT hr = S_OK;
+    m_isSecure = cUri.IsSecure();
+    unsigned int port = cUri.IsPortDefault() ?
+        (m_isSecure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
+        cUri.Port();
+    http_internal_wstring wUrlHost = utf16_from_utf8(cUri.Host());
+
+#if HC_PLATFORM != HC_PLATFORM_GDK
+    uint32_t enabledHttpSecurityProtocolFlags = HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7();
+#else
+    hr = query_security_information(wUrlHost);
+    if (FAILED(hr))
+        return hr;
+    uint32_t enabledHttpSecurityProtocolFlags = m_securityInformation->enabledHttpSecurityProtocolFlags;
+#endif
+
+    HINTERNET hSession = m_env->GetSessionForHttpSecurityProtocolFlags(enabledHttpSecurityProtocolFlags);
+    if (!hSession)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] no session", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId());
         return E_INVALIDARG;
@@ -900,7 +1027,7 @@ HRESULT winhttp_http_task::connect(
     if (!m_isWebSocket)
     {
         uint32_t timeoutInSeconds = 0;
-        HRESULT hr = HCHttpCallRequestGetTimeout(m_call, &timeoutInSeconds);
+        hr = HCHttpCallRequestGetTimeout(m_call, &timeoutInSeconds);
         if (FAILED(hr))
         {
             return hr;
@@ -908,7 +1035,7 @@ HRESULT winhttp_http_task::connect(
 
         int timeoutInMilliseconds = static_cast<int>(timeoutInSeconds * 1000);
         if (!WinHttpSetTimeouts(
-            m_hSession,
+            hSession,
             timeoutInMilliseconds,
             timeoutInMilliseconds,
             timeoutInMilliseconds,
@@ -920,18 +1047,8 @@ HRESULT winhttp_http_task::connect(
         }
     }
 
-    m_isSecure = cUri.IsSecure();
-    unsigned int port = cUri.IsPortDefault() ?
-        (m_isSecure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
-        cUri.Port();
-    http_internal_wstring wUrlHost = utf16_from_utf8(cUri.Host());
-
-    HRESULT hr = query_security_information(wUrlHost);
-    if (FAILED(hr))
-        return hr;
-
     m_hConnection = WinHttpConnect(
-        m_hSession,
+        hSession,
         wUrlHost.c_str(),
         (INTERNET_PORT)port,
         0);
@@ -1213,53 +1330,19 @@ Internal_SetGlobalProxy(
     _In_ const char* proxyUri) noexcept
 {
     assert(performEnv != nullptr);
+    performEnv->globalProxy = proxyUri;
 
-    auto desiredType = xbox::httpclient::proxy_type::default_proxy;
-    WINHTTP_PROXY_INFO info = { 0 };
-    http_internal_wstring wProxyName;
-
-    if (proxyUri == nullptr)
+    for (auto& e : performEnv->m_hSessions)
     {
-        HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] reseting proxy", GetCurrentThreadId());
-
-        xbox::httpclient::Uri ieProxyUri;
-        desiredType = get_ie_proxy_info(proxy_protocol::https, ieProxyUri);
-
-        DWORD accessType = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
-        get_proxy_name(desiredType, ieProxyUri, &accessType, &wProxyName);
-
-        info.dwAccessType = accessType;
-        if (wProxyName.length() > 0)
+        auto hSession = e.second;
+        if (hSession != nullptr)
         {
-            info.lpszProxy = const_cast<LPWSTR>(wProxyName.c_str());
+            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri);
+            if (FAILED(hr))
+            {
+                return hr;
+            }
         }
-    }
-    else
-    {
-        HC_TRACE_INFORMATION(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] setting proxy to '%s'", GetCurrentThreadId(), proxyUri);
-
-        wProxyName = utf16_from_utf8(proxyUri);
-
-        info.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-        info.lpszProxy = const_cast<LPWSTR>(wProxyName.c_str());
-
-        desiredType = xbox::httpclient::proxy_type::named_proxy;
-    }
-
-    auto result = WinHttpSetOption(
-        performEnv->m_hSession,
-        WINHTTP_OPTION_PROXY,
-        &info,
-        sizeof(WINHTTP_PROXY_INFO));
-    if (!result)
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "Internal_SetGlobalProxy [TID %ul] WinHttpSetOption errorcode %d", GetCurrentThreadId(), dwError);
-        return E_FAIL;
-    }
-    else
-    {
-        performEnv->m_proxyType = desiredType;
     }
 
     return S_OK;
@@ -1322,7 +1405,7 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 
     bool isWebsocket = false;
     std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(
-        asyncBlock, call, env->m_hSession, env->m_proxyType, isWebsocket);
+        asyncBlock, call, env, env->m_proxyType, isWebsocket);
     auto raw = shared_ptr_cache::store<winhttp_http_task>(httpTask);
     if (raw == nullptr)
     {

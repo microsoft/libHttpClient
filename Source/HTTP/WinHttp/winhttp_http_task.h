@@ -16,8 +16,13 @@ public:
     HC_PERFORM_ENV();
     virtual ~HC_PERFORM_ENV();
 
-    HINTERNET m_hSession = nullptr;
-    xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::default_proxy;
+    static uint32_t GetDefaultHttpSecurityProtocolFlagsForWin7();
+    HINTERNET GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
+    HINTERNET CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
+
+    http_internal_map<uint32_t, HINTERNET> m_hSessions;
+    xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::automatic_proxy;
+    http_internal_string globalProxy;
 };
 
 
@@ -174,7 +179,7 @@ public:
     winhttp_http_task(
         _Inout_ XAsyncBlock* asyncBlock,
         _In_ HCCallHandle call,
-        _In_ HINTERNET hSession,
+        _In_ HCPerformEnv env,
         _In_ proxy_type proxyType,
         _In_ bool isWebSocket);
     ~winhttp_http_task();
@@ -285,7 +290,7 @@ private:
     HCCallHandle m_call = nullptr;
     XAsyncBlock* m_asyncBlock = nullptr;
 
-    HINTERNET m_hSession = nullptr;
+    HCPerformEnv m_env = nullptr;
     HINTERNET m_hConnection = nullptr;
     HINTERNET m_hRequest = nullptr;
     msg_body_type m_requestBodyType = msg_body_type::no_body;
