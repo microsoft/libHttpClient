@@ -19,10 +19,13 @@ public:
     static uint32_t GetDefaultHttpSecurityProtocolFlagsForWin7();
     HINTERNET GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
     HINTERNET CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
+    XTaskQueueHandle GetImmediateQueue();
 
     http_internal_map<uint32_t, HINTERNET> m_hSessions;
     xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::automatic_proxy;
-    http_internal_string globalProxy;
+    http_internal_string m_globalProxy;
+    XTaskQueueHandle m_immediateQueue{ nullptr };
+    std::mutex m_lock;
 };
 
 

@@ -76,6 +76,17 @@ HRESULT SetGlobalProxyForHSession(HINTERNET hSession, _In_ const char* proxyUri)
     return S_OK;
 }
 
+XTaskQueueHandle HC_PERFORM_ENV::GetImmediateQueue()
+{
+    std::lock_guard<std::mutex> lock(m_lock);
+    if (m_immediateQueue == nullptr)
+    {
+        (void)XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &m_immediateQueue);
+    }
+
+    return m_immediateQueue;
+}
+
 uint32_t HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7()
 {
     uint32_t enabledHttpSecurityProtocolFlags = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
@@ -135,9 +146,9 @@ HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uin
         return nullptr;
     }
 
-    if (!globalProxy.empty())
+    if (!m_globalProxy.empty())
     {
-        (void)SetGlobalProxyForHSession(hSession, globalProxy.c_str());
+        (void)SetGlobalProxyForHSession(hSession, m_globalProxy.c_str());
     }
 
     return hSession;
@@ -145,6 +156,7 @@ HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uin
 
 HINTERNET HC_PERFORM_ENV::GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags)
 {
+    std::lock_guard<std::mutex> lock(m_lock);
     auto iter = m_hSessions.find(enabledHttpSecurityProtocolFlags); 
     if (iter != m_hSessions.end())
     {
@@ -163,6 +175,11 @@ HC_PERFORM_ENV::HC_PERFORM_ENV()
 
 HC_PERFORM_ENV::~HC_PERFORM_ENV()
 {
+    if (m_immediateQueue)
+    {
+        XTaskQueueCloseHandle(m_immediateQueue);
+    }
+
     for (auto& e : m_hSessions)
     {
         auto hSession = e.second;
@@ -950,8 +967,9 @@ HRESULT winhttp_http_task::query_security_information(
     )
 {
 #if HC_PLATFORM == HC_PLATFORM_GDK
+
     XAsyncBlock asyncBlock{};
-    asyncBlock.queue = m_asyncBlock->queue; // TODO: ?
+    asyncBlock.queue = m_env->GetImmediateQueue();
     HRESULT hr = XNetworkingQuerySecurityInformationForUrlUtf16Async(wUrlHost.c_str(), &asyncBlock);
     if (FAILED(hr))
     {
@@ -1328,8 +1346,8 @@ Internal_SetGlobalProxy(
     _In_ const char* proxyUri) noexcept
 {
     assert(performEnv != nullptr);
-    performEnv->globalProxy = proxyUri;
-
+    std::lock_guard<std::mutex> lock(performEnv->m_lock);
+    performEnv->m_globalProxy = proxyUri;
     for (auto& e : performEnv->m_hSessions)
     {
         auto hSession = e.second;
