@@ -114,6 +114,7 @@ HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uin
             WINHTTP_NO_PROXY_BYPASS,
             WINHTTP_FLAG_ASYNC);
     }
+#endif
 
     if (hSession == nullptr)
     {
@@ -133,9 +134,6 @@ HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uin
         HC_TRACE_ERROR(HTTPCLIENT, "HC_PERFORM_ENV WinHttpSetOption errorcode %d", dwError);
         return nullptr;
     }
-#else
-    UNREFERENCED_PARAMETER(enabledHttpSecurityProtocolFlags);
-#endif
 
     if (!globalProxy.empty())
     {
