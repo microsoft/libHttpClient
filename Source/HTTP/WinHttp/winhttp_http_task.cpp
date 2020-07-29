@@ -756,6 +756,17 @@ void winhttp_http_task::callback_status_read_complete(
     }
 }
 
+void winhttp_http_task::callback_status_secure_failure(
+    _In_ HINTERNET hRequestHandle,
+    _In_ winhttp_http_task* pRequestContext,
+    _In_ void* statusInfo)
+{
+    // Status information contains pointer to DWORD containing a bitwise-OR combination of one or more error flags.
+    DWORD statusFlags = *(PDWORD)statusInfo;
+
+    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SECURE_FAILURE statusFlags=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), statusFlags);
+}
+
 void CALLBACK winhttp_http_task::completion_callback(
     HINTERNET hRequestHandle,
     DWORD_PTR context,
@@ -873,6 +884,12 @@ void CALLBACK winhttp_http_task::completion_callback(
 
                 pRequestContext->on_websocket_disconnected(closeReason);
 #endif
+                break;
+            }
+
+            case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
+            {
+                callback_status_secure_failure(hRequestHandle, pRequestContext, statusInfo);
                 break;
             }
         }
