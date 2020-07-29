@@ -29,7 +29,7 @@ public:
     HRESULT connect_websocket(
         _In_ HCWebsocketHandle websocket,
         _In_ XAsyncBlock* asyncBlock,
-        _In_ HINTERNET hSession,
+        _In_ HCPerformEnv env,
         _In_ proxy_type proxyType)
     {
         HRESULT hr = HCHttpCallCreate(&m_call);
@@ -58,7 +58,7 @@ public:
         }
 
         m_httpTask = http_allocate_shared<winhttp_http_task>(
-            asyncBlock, m_call, hSession, proxyType, isWebsocket
+            asyncBlock, m_call, env, proxyType, isWebsocket
         );
 
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
@@ -346,7 +346,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
         impl = std::dynamic_pointer_cast<winhttp_websocket_impl>(websocket->impl);
     }
 
-    return impl->connect_websocket(websocket, asyncBlock, env->m_hSession, env->m_proxyType);
+    return impl->connect_websocket(websocket, asyncBlock, env, env->m_proxyType);
 }
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
