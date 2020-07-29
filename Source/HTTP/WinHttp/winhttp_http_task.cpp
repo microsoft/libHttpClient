@@ -1022,12 +1022,12 @@ HRESULT winhttp_http_task::connect(
     unsigned int port = cUri.IsPortDefault() ?
         (m_isSecure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) :
         cUri.Port();
-    http_internal_wstring wUrlHost = utf16_from_utf8(cUri.Host());
+    http_internal_wstring wUri = utf16_from_utf8(cUri.FullPath());
 
 #if HC_PLATFORM != HC_PLATFORM_GDK
     uint32_t enabledHttpSecurityProtocolFlags = HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7();
 #else
-    hr = query_security_information(wUrlHost);
+    hr = query_security_information(wUri);
     if (FAILED(hr))
         return hr;
     uint32_t enabledHttpSecurityProtocolFlags = m_securityInformation->enabledHttpSecurityProtocolFlags;
@@ -1063,6 +1063,7 @@ HRESULT winhttp_http_task::connect(
         }
     }
 
+    http_internal_wstring wUrlHost = utf16_from_utf8(cUri.Host());
     m_hConnection = WinHttpConnect(
         hSession,
         wUrlHost.c_str(),
@@ -1168,6 +1169,9 @@ HRESULT winhttp_http_task::send(
     if (WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
         m_hRequest,
         &winhttp_http_task::completion_callback,
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        WINHTTP_CALLBACK_FLAG_SEND_REQUEST | 
+#endif
         WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS,
         0))
     {
