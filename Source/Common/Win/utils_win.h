@@ -24,7 +24,8 @@ enum class proxy_type
     no_proxy,
     default_proxy,
     autodiscover_proxy,
-    named_proxy
+    named_proxy,
+    automatic_proxy
 };
 
 enum class proxy_protocol

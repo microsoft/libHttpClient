@@ -6,14 +6,26 @@
 #include "utils.h"
 #include "uri.h"
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include <XNetworking.h>
+#endif
+
 struct HC_PERFORM_ENV
 {
 public:
     HC_PERFORM_ENV();
     virtual ~HC_PERFORM_ENV();
 
-    HINTERNET m_hSession = nullptr;
-    xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::default_proxy;
+    static uint32_t GetDefaultHttpSecurityProtocolFlagsForWin7();
+    HINTERNET GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
+    HINTERNET CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
+    XTaskQueueHandle GetImmediateQueue();
+
+    http_internal_map<uint32_t, HINTERNET> m_hSessions;
+    xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::automatic_proxy;
+    http_internal_string m_globalProxy;
+    XTaskQueueHandle m_immediateQueue{ nullptr };
+    std::mutex m_lock;
 };
 
 
@@ -170,7 +182,7 @@ public:
     winhttp_http_task(
         _Inout_ XAsyncBlock* asyncBlock,
         _In_ HCCallHandle call,
-        _In_ HINTERNET hSession,
+        _In_ HCPerformEnv env,
         _In_ proxy_type proxyType,
         _In_ bool isWebSocket);
     ~winhttp_http_task();
@@ -200,6 +212,11 @@ private:
     static void parse_headers_string(_In_ HCCallHandle call, _In_ wchar_t* headersStr);
 
     static void callback_status_request_error(
+        _In_ HINTERNET hRequestHandle,
+        _In_ winhttp_http_task* pRequestContext,
+        _In_ void* statusInfo);
+
+    static void callback_status_sending_request(
         _In_ HINTERNET hRequestHandle,
         _In_ winhttp_http_task* pRequestContext,
         _In_ void* statusInfo);
@@ -241,6 +258,8 @@ private:
         _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
     );
 
+    HRESULT query_security_information(_In_ http_internal_wstring wUrlHost);
+
     HRESULT send(_In_ const xbox::httpclient::Uri& cUri, _In_ const char* method);
 
     HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
@@ -274,7 +293,7 @@ private:
     HCCallHandle m_call = nullptr;
     XAsyncBlock* m_asyncBlock = nullptr;
 
-    HINTERNET m_hSession = nullptr;
+    HCPerformEnv m_env = nullptr;
     HINTERNET m_hConnection = nullptr;
     HINTERNET m_hRequest = nullptr;
     msg_body_type m_requestBodyType = msg_body_type::no_body;
@@ -292,6 +311,11 @@ private:
     HRESULT websocket_read_message();
     HANDLE m_hWebsocketWriteComplete = nullptr;
     websocket_message_buffer m_websocketResponseBuffer;
+#endif
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    http_internal_vector<uint8_t> m_securityInformationBuffer;
+    XNetworkingSecurityInformation* m_securityInformation{ nullptr }; // lifespan owned by m_securityInformationBuffer
 #endif
 };
 
