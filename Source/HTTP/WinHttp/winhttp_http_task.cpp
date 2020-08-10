@@ -327,7 +327,7 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
 
     if (m_hRequest != nullptr && !m_isWebSocket)
     {
-        WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
+        WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
         shared_ptr_cache::remove(this);
     }
 }
@@ -1487,7 +1487,7 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
     m_socketState = WinHttpWebsockState::Closed;
 
     // Handlers will be setup again upon connect
-    WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL); 
+    WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
 
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
     void* functionContext = nullptr;
