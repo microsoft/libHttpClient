@@ -757,7 +757,7 @@ void winhttp_http_task::callback_status_read_complete(
 }
 
 void winhttp_http_task::callback_status_secure_failure(
-    _In_ HINTERNET hRequestHandle,
+    _In_ HINTERNET /*hRequestHandle*/,
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
