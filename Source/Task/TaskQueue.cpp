@@ -1299,6 +1299,9 @@ TaskQueueImpl::TaskQueueImpl() :
 
 TaskQueueImpl::~TaskQueueImpl()
 {
+    // Zero the header so we get an early warning of using
+    // a released object.
+    m_header = {};
 }
 
 HRESULT TaskQueueImpl::Initialize(
