@@ -271,6 +271,40 @@ public:
         return false;
     }
 
+    //
+    // Removes items from the queue that satisfy the given callback.  The callback
+    // is of the form:
+    //
+    //      bool callback(TData& data, uint64_t address);
+    //
+    // If the callback returns true, it is taking ownership of the data and the
+    // address. If it returns false, the node is placed back on the queue.
+    //
+    // This is a lock-free call: if there are interleaving calls to push_back
+    // while this action is in progress final node order is not guaranteed (nodes
+    // this API processes may be interleaved with newly pushed nodes).
+    //
+    template <typename TCallback>
+    void remove_if(TCallback callback)
+    {
+        LocklessQueue<TData> retain(*this);
+        TData entry;
+        uint64_t address;
+
+        while (pop_front(entry, address))
+        {
+            if (!callback(entry, address))
+            {
+                retain.move_back(std::move(entry), address);
+            }
+        }
+
+        while (retain.pop_front(entry, address))
+        {
+            move_back(std::move(entry), address);
+        }
+    }
+
 private:
 
     /*
