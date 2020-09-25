@@ -681,6 +681,31 @@ void winhttp_http_task::callback_status_headers_available(
     read_next_response_chunk(pRequestContext, 0);
 }
 
+void winhttp_http_task::callback_status_redirect(
+    _In_ HINTERNET hRequestHandle,
+    _In_ winhttp_http_task* pRequestContext,
+    _In_ void* statusInfo)
+{
+    HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REDIRECT", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId() );
+
+    // For redirects, make sure to remove the authorization header so that this information is only sent to the original host it is intended for.
+    static const http_internal_wstring c_authHeader = utf16_from_utf8("Authorization:");
+    if (!WinHttpAddRequestHeaders(
+                hRequestHandle,
+                c_authHeader.c_str(),
+                static_cast<DWORD>(c_authHeader.length()),
+                WINHTTP_ADDREQ_FLAG_REPLACE))
+    {
+        DWORD dwError = GetLastError();
+        if (dwError != ERROR_WINHTTP_HEADER_NOT_FOUND)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REDIRECT errorcode %d", HCHttpCallGetId(pRequestContext->m_call), GetCurrentThreadId(), dwError);
+            pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+            return;
+        }
+    }
+}
+
 void winhttp_http_task::callback_status_data_available(
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext,
@@ -836,6 +861,12 @@ void CALLBACK winhttp_http_task::completion_callback(
                 {
                     callback_status_headers_available(hRequestHandle, pRequestContext, statusInfo);
                 }
+                break;
+            }
+
+            case WINHTTP_CALLBACK_STATUS_REDIRECT:
+            {
+                callback_status_redirect(hRequestHandle, pRequestContext, statusInfo);
                 break;
             }
 
@@ -1189,7 +1220,7 @@ HRESULT winhttp_http_task::send(
 #if HC_PLATFORM == HC_PLATFORM_GDK
         WINHTTP_CALLBACK_FLAG_SEND_REQUEST | 
 #endif
-        WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS,
+        WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_REDIRECT,
         0))
     {
         DWORD dwError = GetLastError();
