@@ -138,6 +138,7 @@ STDAPI HCInitialize(_In_opt_ HCInitArgs* args) noexcept;
 /// </summary>
 /// <returns></returns>
 STDAPI_(void) HCCleanup() noexcept;
+STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept;
 
 /// <summary>
 /// Returns the version of the library
