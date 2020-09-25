@@ -136,8 +136,17 @@ STDAPI HCInitialize(_In_opt_ HCInitArgs* args) noexcept;
 /// Immediately reclaims all resources associated with the library.
 /// If you called HCMemSetFunctions(), call this before shutting down your app's memory manager.
 /// </summary>
+/// <remarks>
+/// Deprecated, Use HCCleanupAsync instead which allows control of which queue is running the cleanup work and does not potentially deadlock.
+/// </remarks>
 /// <returns></returns>
 STDAPI_(void) HCCleanup() noexcept;
+
+/// <summary>
+/// Reclaims all resources associated with the library.
+/// If you called HCMemSetFunctions(), call this before shutting down your app's memory manager.
+/// </summary>
+/// <returns></returns>
 STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept;
 
 /// <summary>
