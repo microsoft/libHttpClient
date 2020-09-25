@@ -8,8 +8,6 @@
 
 using namespace xbox::httpclient;
 
-XTaskQueueHandle g_HcCleanupHackQueueHandle = nullptr;
-
 STDAPI
 HCGetLibVersion(_Outptr_ const char** version) noexcept
 try
