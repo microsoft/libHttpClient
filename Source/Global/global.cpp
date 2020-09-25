@@ -5,6 +5,7 @@
 #include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
+#include "../Logger/trace_internal.h"
 #include "../Mock/lhc_mock.h"
 
 #if !HC_NOWEBSOCKETS
@@ -33,6 +34,8 @@ HRESULT http_singleton::singleton_access(
         // Create the singleton only for the first client calling create
         if (!s_useCount)
         {
+            HCTraceImplInit();
+
             PerformEnv performEnv;
             RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
 
@@ -113,7 +116,38 @@ HRESULT http_singleton::cleanup_async(
 ) noexcept
 {
     std::shared_ptr<http_singleton> singleton{};
-    RETURN_IF_FAILED(singleton_access(singleton_access_mode::cleanup, nullptr, singleton));
+    HRESULT hr = singleton_access(singleton_access_mode::cleanup, nullptr, singleton);
+
+    // if the singleton is still in use, or already cleaned up, fail immediately
+    if (FAILED(hr))
+    {
+        intptr_t hrPtrSize = hr;
+        return XAsyncBegin(
+            async,
+            reinterpret_cast<void*>(hrPtrSize),
+            reinterpret_cast<void*>(cleanup_async),
+            __FUNCTION__,
+            [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+            {
+                intptr_t hrPtrSize = reinterpret_cast<intptr_t>(data->context);
+                return static_cast<HRESULT>(hrPtrSize);
+            }
+            case XAsyncOp::Cleanup:
+            {
+                return S_OK;
+            }
+            default:
+            {
+                assert(false);
+                return S_OK;
+            }
+            }
+        });
+    }
 
     return XAsyncBegin(
         async,
@@ -146,6 +180,9 @@ HRESULT http_singleton::cleanup_async(
 
             // self is the only reference at this point, the singleton will be destroyed on this thread.
             self.reset();
+
+            // cleanup tracing now that we are done
+            HCTraceImplCleanup();
 
             XAsyncComplete(data->async, S_OK, 0);
             return S_OK;
