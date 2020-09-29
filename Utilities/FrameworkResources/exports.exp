@@ -5,6 +5,7 @@ _HCMemSetFunctions
 _HCMemGetFunctions
 _HCInitialize
 _HCCleanup
+_HCCleanupAsync
 _HCGetLibVersion
 _HCAddCallRoutedHandler
 _HCRemoveCallRoutedHandler
