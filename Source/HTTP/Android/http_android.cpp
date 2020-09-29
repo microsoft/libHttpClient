@@ -40,7 +40,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     const char* nativeErrorString = env->GetStringUTFChars(errorMessage, nullptr);
     HCHttpCallResponseSetPlatformNetworkErrorMessage(sourceCall, nativeErrorString);
     env->ReleaseStringUTFChars(errorMessage, nativeErrorString);
-    
+
     XAsyncComplete(sourceRequest->GetAsyncBlock(), S_OK, 0);
 }
 
