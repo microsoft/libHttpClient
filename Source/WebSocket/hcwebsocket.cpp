@@ -37,6 +37,8 @@ HRESULT HC_WEBSOCKET::Connect(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
+    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+
     auto httpSingleton = get_http_singleton();
     if (!httpSingleton)
     {
@@ -69,6 +71,7 @@ HRESULT HC_WEBSOCKET::Connect(
             {
                 auto thisPtr{ static_cast<HC_WEBSOCKET*>(async->context) };
                 HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
+
                 
                 if (SUCCEEDED(hr) && SUCCEEDED(thisPtr->m_connectResult.errorCode))
                 {
@@ -123,10 +126,8 @@ HRESULT HC_WEBSOCKET::Connect(
 
             if (SUCCEEDED(hr))
             {
-                {
-                    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
-                    m_state = State::Connecting;
-                }
+                m_state = State::Connecting;
+
                 // Add a ref for the provider. This guarantees the HC_WEBSOCKET is alive until disconnect.
                 AddRef();
             }
@@ -195,6 +196,7 @@ HRESULT HC_WEBSOCKET::Send(
     {
         try
         {
+            std::lock_guard<std::recursive_mutex> lock{ m_mutex };
             notify_websocket_routed_handlers(httpSingleton, this, false, message, nullptr, 0);
             return sendFunc(this, message, asyncBlock, info.context);
         }
@@ -236,6 +238,7 @@ HRESULT HC_WEBSOCKET::SendBinary(
     {
         try
         {
+            std::lock_guard<std::recursive_mutex> lock{ m_mutex };
             notify_websocket_routed_handlers(httpSingleton, this, false, nullptr, payloadBytes, payloadSize);
             return sendFunc(this, payloadBytes, payloadSize, asyncBlock, info.context);
         }
@@ -272,10 +275,10 @@ HRESULT HC_WEBSOCKET::Disconnect()
     {
         try
         {
+            std::lock_guard<std::recursive_mutex> lock{ m_mutex };
             HRESULT hr = disconnectFunc(this, HCWebSocketCloseStatus::Normal, info.context);
             if (SUCCEEDED(hr))
             {
-                std::lock_guard<std::recursive_mutex> lock{ m_mutex };
                 m_state = State::Disconnecting;
             }
             return hr;
@@ -322,6 +325,7 @@ HRESULT HC_WEBSOCKET::SetProxyUri(
     http_internal_string&& proxyUri
 ) noexcept
 {
+    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
     if (m_state != State::Disconnected)
     {
         return E_HC_CONNECT_ALREADY_CALLED;
@@ -335,6 +339,8 @@ HRESULT HC_WEBSOCKET::SetProxyDecryptsHttps(
     bool allowProxyToDecryptHttps
     ) noexcept
 {
+    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+
     if (m_proxyUri.empty())
     {
         return E_UNEXPECTED;
@@ -348,6 +354,8 @@ HRESULT HC_WEBSOCKET::SetHeader(
     http_internal_string&& headerValue
 ) noexcept
 {
+    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+
     if (m_state != State::Disconnected)
     {
         return E_HC_CONNECT_ALREADY_CALLED;
