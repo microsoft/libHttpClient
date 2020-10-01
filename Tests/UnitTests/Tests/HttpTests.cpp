@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
@@ -31,6 +31,7 @@ _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE MemAlloc(
     _In_ HCMemoryType memoryType
     )   
 {
+    UNREFERENCED_PARAMETER(memoryType);
     g_memAllocCalled = true;
     return new (std::nothrow) int8_t[size];
 }
@@ -40,6 +41,7 @@ void STDAPIVCALLTYPE MemFree(
     _In_ HCMemoryType memoryType
     )
 {
+    UNREFERENCED_PARAMETER(memoryType);
     g_memFreeCalled = true;
     delete[] pointer;
 }
@@ -54,6 +56,8 @@ static void CALLBACK PerformCallback(
     _In_opt_ HCPerformEnv /*env*/
     )
 {
+    UNREFERENCED_PARAMETER(call);
+
     g_PerformCallbackCalled = true;
     g_PerformCallbackContext = ctx;
     XAsyncComplete(asyncBlock, S_OK, 0);
@@ -201,7 +205,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetTimeoutWindow(nullptr, 1000));
         uint32_t timeout = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetTimeoutWindow(nullptr, &timeout));
-        VERIFY_ARE_EQUAL(1000, timeout);
+        VERIFY_ARE_EQUAL((uint32_t)1000, timeout);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryDelay(nullptr, 500));
         uint32_t retryDelayInSeconds = 0;
@@ -244,7 +248,7 @@ public:
         VERIFY_ARE_EQUAL_STR("4", t3);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetRequestBodyBytes(call, &s1, &bodySize));
-        VERIFY_ARE_EQUAL(bodySize, 1);
+        VERIFY_ARE_EQUAL(bodySize, (uint32_t)1);
         VERIFY_ARE_EQUAL(s1[0], '4');
         std::string s2( reinterpret_cast<char const*>(s1), bodySize);
         VERIFY_ARE_EQUAL_STR("4", s2.c_str());
@@ -257,11 +261,11 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetTimeout(call, 2000));
         uint32_t timeout = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetTimeout(call, &timeout));
-        VERIFY_ARE_EQUAL(2000, timeout);
+        VERIFY_ARE_EQUAL((uint32_t)2000, timeout);
                 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetTimeoutWindow(call, 1000));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetTimeoutWindow(call, &timeout));
-        VERIFY_ARE_EQUAL(1000, timeout);
+        VERIFY_ARE_EQUAL((uint32_t)1000, timeout);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryDelay(call, 500));
         uint32_t retryDelayInSeconds = 0;
@@ -281,15 +285,15 @@ public:
 
         uint32_t numHeaders = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(0, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)0, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue", true));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue2", true));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         const CHAR* t1 = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetHeader(call, "testHeader", &t1));
@@ -297,12 +301,12 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetHeader(call, "testHeader2", &t1));
         VERIFY_IS_NULL(t1);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader", "testValue", true));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetHeader(call, "testHeader2", "testValue2", true));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(2, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)2, numHeaders);
 
         const CHAR* hn0 = nullptr;
         const CHAR* hv0 = nullptr;
@@ -336,14 +340,13 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetStatusCode(call, 200));
         uint32_t statusCode = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
-        VERIFY_ARE_EQUAL(200, statusCode);
+        VERIFY_ARE_EQUAL((uint32_t)200, statusCode);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetNetworkErrorCode(call, E_OUTOFMEMORY, 101));
         HRESULT errCode = S_OK;
-        uint32_t errorCode = 0;
         uint32_t platErrorCode = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrorCode));
-        VERIFY_ARE_EQUAL(101, platErrorCode);
+        VERIFY_ARE_EQUAL((uint32_t)101, platErrorCode);
         VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
@@ -360,15 +363,15 @@ public:
 
         uint32_t numHeaders = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(0, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)0, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue2"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         const CHAR* t1 = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader", &t1));
@@ -376,12 +379,12 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader2", &t1));
         VERIFY_IS_NULL(t1);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader2", "testValue2"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(2, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)2, numHeaders);
 
         const CHAR* hn0 = nullptr;
         const CHAR* hv0 = nullptr;

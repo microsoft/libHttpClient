@@ -196,7 +196,6 @@ HRESULT HC_WEBSOCKET::Send(
     {
         try
         {
-            std::lock_guard<std::recursive_mutex> lock{ m_mutex };
             notify_websocket_routed_handlers(httpSingleton, this, false, message, nullptr, 0);
             return sendFunc(this, message, asyncBlock, info.context);
         }
@@ -238,7 +237,6 @@ HRESULT HC_WEBSOCKET::SendBinary(
     {
         try
         {
-            std::lock_guard<std::recursive_mutex> lock{ m_mutex };
             notify_websocket_routed_handlers(httpSingleton, this, false, nullptr, payloadBytes, payloadSize);
             return sendFunc(this, payloadBytes, payloadSize, asyncBlock, info.context);
         }
@@ -275,10 +273,10 @@ HRESULT HC_WEBSOCKET::Disconnect()
     {
         try
         {
-            std::lock_guard<std::recursive_mutex> lock{ m_mutex };
             HRESULT hr = disconnectFunc(this, HCWebSocketCloseStatus::Normal, info.context);
             if (SUCCEEDED(hr))
             {
+                std::lock_guard<std::recursive_mutex> lock{ m_mutex };
                 m_state = State::Disconnecting;
             }
             return hr;

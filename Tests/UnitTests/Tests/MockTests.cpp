@@ -20,6 +20,8 @@ public:
 
     HCMockCallHandle CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
+        UNREFERENCED_PARAMETER(makeSpecificUrl);
+        UNREFERENCED_PARAMETER(makeSpecificBody);
         HCMockCallHandle mockCall;
         VERIFY_ARE_EQUAL(S_OK, HCMockCallCreate(&mockCall));
         VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetNetworkErrorCode(mockCall, E_OUTOFMEMORY, 300));
@@ -54,8 +56,8 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
         VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
-        VERIFY_ARE_EQUAL(300, platErrCode);
-        VERIFY_ARE_EQUAL(400, statusCode);
+        VERIFY_ARE_EQUAL((uint32_t)300, platErrCode);
+        VERIFY_ARE_EQUAL((uint32_t)400, statusCode);
         VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
 
@@ -91,8 +93,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
             VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
-            VERIFY_ARE_EQUAL(300, platErrCode);
-            VERIFY_ARE_EQUAL(400, statusCode);
+            VERIFY_ARE_EQUAL((uint32_t)300, platErrCode);
+            VERIFY_ARE_EQUAL((uint32_t)400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
@@ -115,8 +117,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
             VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
-            VERIFY_ARE_EQUAL(300, platErrCode);
-            VERIFY_ARE_EQUAL(400, statusCode);
+            VERIFY_ARE_EQUAL((uint32_t)300, platErrCode);
+            VERIFY_ARE_EQUAL((uint32_t)400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
@@ -153,8 +155,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
             VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
-            VERIFY_ARE_EQUAL(300, platErrCode);
-            VERIFY_ARE_EQUAL(400, statusCode);
+            VERIFY_ARE_EQUAL((uint32_t)300, platErrCode);
+            VERIFY_ARE_EQUAL((uint32_t)400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
@@ -177,8 +179,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
-            VERIFY_ARE_EQUAL(0, errCode);
-            VERIFY_ARE_EQUAL(0, statusCode);
+            VERIFY_ARE_EQUAL((HRESULT)0, errCode);
+            VERIFY_ARE_EQUAL((uint32_t)0, statusCode);
             VERIFY_ARE_EQUAL_STR("", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
@@ -201,8 +203,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
-            VERIFY_ARE_EQUAL(0, errCode);
-            VERIFY_ARE_EQUAL(0, statusCode);
+            VERIFY_ARE_EQUAL((HRESULT)0, errCode);
+            VERIFY_ARE_EQUAL((uint32_t)0, statusCode);
             VERIFY_ARE_EQUAL_STR("", responseStr);
         }
 
@@ -238,8 +240,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
             VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
-            VERIFY_ARE_EQUAL(300, platErrCode);
-            VERIFY_ARE_EQUAL(400, statusCode);
+            VERIFY_ARE_EQUAL((uint32_t)300, platErrCode);
+            VERIFY_ARE_EQUAL((uint32_t)400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
@@ -265,8 +267,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
             VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
-            VERIFY_ARE_EQUAL(300, platErrCode);
-            VERIFY_ARE_EQUAL(400, statusCode);
+            VERIFY_ARE_EQUAL((uint32_t)300, platErrCode);
+            VERIFY_ARE_EQUAL((uint32_t)400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
@@ -290,8 +292,8 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetResponseString(call, &responseStr));
             VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
-            VERIFY_ARE_EQUAL(300, platErrCode);
-            VERIFY_ARE_EQUAL(400, statusCode);
+            VERIFY_ARE_EQUAL((uint32_t)300, platErrCode);
+            VERIFY_ARE_EQUAL((uint32_t)400, statusCode);
             VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }

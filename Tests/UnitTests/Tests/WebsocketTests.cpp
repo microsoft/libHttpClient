@@ -29,6 +29,8 @@ void STDAPIVCALLTYPE PerformMessageCallback(
     _In_z_ PCSTR incomingBodyString
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(incomingBodyString);
     g_PerformMessageCallbackCalled = true;
 }
 
@@ -38,6 +40,8 @@ void STDAPIVCALLTYPE PerformCloseCallback(
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(closeStatus);
     g_PerformCloseCallbackCalled = true;
 }
 
@@ -61,6 +65,9 @@ void CALLBACK Internal_HCWebSocketMessage(
     _In_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(incomingBodyString);
+    UNREFERENCED_PARAMETER(context);
 }
 
 void CALLBACK Internal_HCWebSocketBinaryMessage(
@@ -70,6 +77,10 @@ void CALLBACK Internal_HCWebSocketBinaryMessage(
     _In_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(payloadBytes);
+    UNREFERENCED_PARAMETER(payloadSize);
+    UNREFERENCED_PARAMETER(context);
 }
 
 void CALLBACK Internal_HCWebSocketCloseEvent(
@@ -78,6 +89,9 @@ void CALLBACK Internal_HCWebSocketCloseEvent(
     _In_ void* context
 )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(closeStatus);
+    UNREFERENCED_PARAMETER(context);
 }
 
 
@@ -93,6 +107,12 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(uri);
+    UNREFERENCED_PARAMETER(subProtocol);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
     // TODO bug - inconsistent behavior for websocket providers: Connect calls XAsyncBegin before
     // invoke the client handler, Send does not.
     return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
@@ -119,6 +139,10 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(message);
+    UNREFERENCED_PARAMETER(context);
+
     return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
         {
@@ -144,6 +168,11 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendBinaryMessageAsync(
     _In_opt_ void* context
 )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(payloadBytes);
+    UNREFERENCED_PARAMETER(payloadSize);
+    UNREFERENCED_PARAMETER(context);
+
     return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
         {
@@ -168,6 +197,9 @@ HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(closeStatus);
+    UNREFERENCED_PARAMETER(context);
     g_HCWebSocketDisconnect_Called = true;
     return S_OK;
 }
@@ -287,15 +319,15 @@ public:
 
         uint32_t numHeaders = 0;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(0, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)0, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetHeader(call, "testHeader", "testValue"));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetHeader(call, "testHeader", "testValue2"));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         const CHAR* t1 = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetHeader(call, "testHeader", &t1));
@@ -303,12 +335,12 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetHeader(call, "testHeader2", &t1));
         VERIFY_IS_NULL(t1);
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)1, numHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetHeader(call, "testHeader", "testValue"));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetHeader(call, "testHeader2", "testValue2"));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(2, numHeaders);
+        VERIFY_ARE_EQUAL((uint32_t)2, numHeaders);
 
         const CHAR* hn0 = nullptr;
         const CHAR* hv0 = nullptr;
@@ -323,6 +355,34 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(call));
         HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(MultithreadConnect)
+    {
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCWebsocketHandle websocket;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+        VERIFY_IS_NOT_NULL(websocket);
+
+        while (true)
+        {
+            std::thread thread1{ [&]
+            {
+                XAsyncBlock asyncBlock{};
+                VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+                VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+            } };
+
+            std::thread thread2{ [&]
+            {
+                //XAsyncBlock asyncBlock{};
+                //VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+                //VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+                HCWebSocketCloseHandle(websocket);
+            } };
+        }
     }
 
 };
