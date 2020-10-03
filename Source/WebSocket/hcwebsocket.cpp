@@ -66,41 +66,46 @@ HRESULT HC_WEBSOCKET::Connect(
 
             ZeroMemory(&m_connectAsyncBlock, sizeof(XAsyncBlock));
             m_connectAsyncBlock.queue = asyncBlock->queue;
-            m_connectAsyncBlock.context = this;
+            m_connectAsyncBlock.context = Make<std::weak_ptr<HC_WEBSOCKET>>(shared_from_this());
             m_connectAsyncBlock.callback = [](XAsyncBlock* async)
             {
-                auto thisPtr{ static_cast<HC_WEBSOCKET*>(async->context) };
-                HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
+                auto weakPtrPtr{ static_cast<std::weak_ptr<HC_WEBSOCKET>*>(async->context) };
+                auto thisPtr = weakPtrPtr->lock();
+                Delete(weakPtrPtr);
 
-                
-                if (SUCCEEDED(hr) && SUCCEEDED(thisPtr->m_connectResult.errorCode))
+                if (thisPtr)
                 {
-                    bool doDisconnect{ false };
+                    HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
+
+                    if (SUCCEEDED(hr) && SUCCEEDED(thisPtr->m_connectResult.errorCode))
                     {
-                        std::lock_guard<std::recursive_mutex> lock{ thisPtr->m_mutex };
-                        if (thisPtr->m_clientRefCount > 0)
+                        bool doDisconnect{ false };
                         {
-                            thisPtr->m_state = State::Connected;
+                            std::lock_guard<std::recursive_mutex> lock{ thisPtr->m_mutex };
+                            if (thisPtr->m_clientRefCount > 0)
+                            {
+                                thisPtr->m_state = State::Connected;
+                            }
+                            else
+                            {
+                                doDisconnect = true;
+                            }
                         }
-                        else
+                        if (doDisconnect)
                         {
-                            doDisconnect = true;
+                            thisPtr->Disconnect();
                         }
                     }
-                    if (doDisconnect)
+                    else
                     {
-                        thisPtr->Disconnect();
-                    }
-                }
-                else
-                {
-                    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket connection attempt failed");
+                        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket connection attempt failed");
 
-                    // Release providers ref if connect fails. We do not expect a close event in this case.
-                    thisPtr->m_state = State::Disconnected;
-                    thisPtr->DecRef();
+                        // Release providers ref if connect fails. We do not expect a close event in this case.
+                        thisPtr->m_state = State::Disconnected;
+                        thisPtr->DecRef();
+                    }
+                    XAsyncComplete(thisPtr->m_clientConnectAsyncBlock, hr, sizeof(WebSocketCompletionResult));
                 }
-                XAsyncComplete(thisPtr->m_clientConnectAsyncBlock, hr, sizeof(WebSocketCompletionResult));
             };
 
             m_clientConnectAsyncBlock = asyncBlock;
