@@ -43,7 +43,7 @@ HRESULT HC_WEBSOCKET::Connect(
         return E_HC_NOT_INITIALISED;
     }
 
-    if (m_state == State::Connected || m_state == State::Connecting)
+    if (m_state != State::Initial)
     {
         return E_UNEXPECTED;
     }
@@ -69,12 +69,19 @@ HRESULT HC_WEBSOCKET::Connect(
             {
                 auto thisPtr{ static_cast<HC_WEBSOCKET*>(async->context) };
                 HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
-                
-                if (SUCCEEDED(hr) && SUCCEEDED(thisPtr->m_connectResult.errorCode))
+
+                bool doDisconnect{ false };
+                bool doDecRef { false };
                 {
-                    bool doDisconnect{ false };
+                    std::lock_guard<std::recursive_mutex> lock{ thisPtr->m_mutex };
+
+                    if (thisPtr->m_state != State::Connecting)
                     {
-                        std::lock_guard<std::recursive_mutex> lock{ thisPtr->m_mutex };
+                        hr = E_UNEXPECTED;
+                    }
+
+                    if (SUCCEEDED(hr) && SUCCEEDED(thisPtr->m_connectResult.errorCode))
+                    {
                         if (thisPtr->m_clientRefCount > 0)
                         {
                             thisPtr->m_state = State::Connected;
@@ -84,19 +91,26 @@ HRESULT HC_WEBSOCKET::Connect(
                             doDisconnect = true;
                         }
                     }
-                    if (doDisconnect)
+                    else
                     {
-                        thisPtr->Disconnect();
+                        HC_TRACE_INFORMATION(WEBSOCKET, "Websocket connection attempt failed");
+
+                        // Release providers ref if connect fails. We do not expect a close event in this case.
+                        thisPtr->m_state = State::Disconnected;
+                        doDecRef = true;
                     }
                 }
-                else
-                {
-                    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket connection attempt failed");
 
-                    // Release providers ref if connect fails. We do not expect a close event in this case.
-                    thisPtr->m_state = State::Disconnected;
+                if (doDisconnect)
+                {
+                    thisPtr->Disconnect();
+                }
+
+                if (doDecRef)
+                {
                     thisPtr->DecRef();
                 }
+
                 XAsyncComplete(thisPtr->m_clientConnectAsyncBlock, hr, sizeof(WebSocketCompletionResult));
             };
 
@@ -322,7 +336,7 @@ HRESULT HC_WEBSOCKET::SetProxyUri(
     http_internal_string&& proxyUri
 ) noexcept
 {
-    if (m_state != State::Disconnected)
+    if (m_state != State::Initial)
     {
         return E_HC_CONNECT_ALREADY_CALLED;
     }
@@ -348,7 +362,7 @@ HRESULT HC_WEBSOCKET::SetHeader(
     http_internal_string&& headerValue
 ) noexcept
 {
-    if (m_state != State::Disconnected)
+    if (m_state != State::Initial)
     {
         return E_HC_CONNECT_ALREADY_CALLED;
     }
@@ -468,28 +482,40 @@ void HC_WEBSOCKET::CloseFunc(
 )
 {
     UNREFERENCED_PARAMETER(context);
+
+    bool shouldNotClose { false };
+
     {
         std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
 
+        shouldNotClose = (websocket->m_state == State::Connecting || websocket->m_state == State::Disconnected);
+
         websocket->m_state = State::Disconnected;
 
-        if (websocket->m_clientRefCount > 0)
+        if (!shouldNotClose)
         {
-            try
+            if (websocket->m_clientRefCount > 0)
             {
-                if (websocket->m_clientCloseEventFunc)
+                try
                 {
-                    websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+                    if (websocket->m_clientCloseEventFunc)
+                    {
+                        websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
+                    }
                 }
-            }
-            catch (...)
-            {
-                HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketCloseEventFunction");
+                catch (...)
+                {
+                    HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketCloseEventFunction");
+                }
             }
         }
     }
-    // Release the providers ref
-    websocket->DecRef();
+
+    if (!shouldNotClose)
+    {
+        // Release the providers ref
+        websocket->DecRef();
+    }
 }
 
 STDAPI
