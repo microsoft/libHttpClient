@@ -70,7 +70,10 @@ HRESULT HC_WEBSOCKET::Connect(
                 auto thisPtr{ static_cast<HC_WEBSOCKET*>(async->context) };
                 HRESULT hr = HCGetWebSocketConnectResult(async, &thisPtr->m_connectResult);
 
+                // We auto disconnect if the client has already closed all handles.
                 bool doDisconnect{ false };
+
+                // We release the provider's reference if we don't expect any more callbacks from the WebSocket provider.
                 bool doDecRef { false };
                 {
                     std::lock_guard<std::recursive_mutex> lock{ thisPtr->m_mutex };
@@ -483,17 +486,28 @@ void HC_WEBSOCKET::CloseFunc(
 {
     UNREFERENCED_PARAMETER(context);
 
-    bool shouldNotClose { false };
-
+    // We release the provider's reference if we handle the close.
+    bool shouldDecRef { false };
     {
         std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
 
-        shouldNotClose = (websocket->m_state == State::Connecting || websocket->m_state == State::Disconnected);
-
+        auto state = websocket->m_state;
         websocket->m_state = State::Disconnected;
 
-        if (!shouldNotClose)
+        switch (state)
         {
+        case State::Initial:
+            // provider error: should not be calling CloseFunc when websocket connection hasn't been created.
+            break;
+        case State::Connecting:
+            // provider error: providers should complete connect async context rather than calling closeFunc if a connect attempt fails.
+            break;
+        case State::Disconnected:
+            // provider error: providers should call closeFunc exactly once per successful attempt.
+            break;
+        case State::Connected:
+        case State::Disconnecting:
+            shouldDecRef = true;
             if (websocket->m_clientRefCount > 0)
             {
                 try
@@ -508,10 +522,11 @@ void HC_WEBSOCKET::CloseFunc(
                     HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketCloseEventFunction");
                 }
             }
+            break;
         }
     }
 
-    if (!shouldNotClose)
+    if (shouldDecRef)
     {
         // Release the providers ref
         websocket->DecRef();
