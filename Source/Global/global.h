@@ -52,7 +52,7 @@ public:
     std::recursive_mutex m_singletonLock;
 
     std::recursive_mutex m_retryAfterCacheLock;
-    std::unordered_map<uint32_t, http_retry_after_api_state> m_retryAfterCache;
+    http_internal_unordered_map<uint32_t, http_retry_after_api_state> m_retryAfterCache;
     void set_retry_state(_In_ uint32_t retryAfterCacheId, _In_ const http_retry_after_api_state& state);
     http_retry_after_api_state get_retry_state(_In_ uint32_t retryAfterCacheId);
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
@@ -92,7 +92,6 @@ public:
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
-private:
     http_singleton(
         HttpPerformInfo const& httpPerformInfo,
 #if !HC_NOWEBSOCKETS
@@ -101,6 +100,7 @@ private:
         PerformEnv&& performEnv
     );
 
+private:
     enum class singleton_access_mode
     {
         create,
