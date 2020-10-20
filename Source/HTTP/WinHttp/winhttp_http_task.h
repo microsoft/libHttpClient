@@ -235,6 +235,11 @@ private:
         _In_ HINTERNET hRequestHandle,
         _In_ winhttp_http_task* pRequestContext,
         _In_ void* statusInfo);
+    
+    static void callback_status_redirect(
+        _In_ HINTERNET hRequestHandle,
+        _In_ winhttp_http_task* pRequestContext,
+        _In_ void* statusInfo);
 
     static void callback_status_data_available(
         _In_ HINTERNET hRequestHandle,
