@@ -1372,7 +1372,11 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
     assert(args == nullptr);
     UNREFERENCED_PARAMETER(args);
 
-    performEnv.reset(new (std::nothrow) HC_PERFORM_ENV());
+    // Mem hooked unique ptr with non-standard dtor handler in PerformEnvDeleter
+    http_stl_allocator<HC_PERFORM_ENV> alloc;
+    auto p = std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::allocate(alloc, 1);
+    auto o = new(p) HC_PERFORM_ENV();
+    performEnv.reset(o);
     if (!performEnv) { return E_OUTOFMEMORY; }
 
     return S_OK;

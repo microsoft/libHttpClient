@@ -5,7 +5,6 @@
 #include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
-#include "../Logger/trace_internal.h"
 
 using namespace xbox::httpclient;
 
@@ -27,7 +26,6 @@ STDAPI
 HCInitialize(_In_opt_ HCInitArgs* args) noexcept
 try
 {
-    HCTraceImplInit();
     return http_singleton::create(args);
 }
 CATCH_RETURN()
@@ -36,15 +34,20 @@ STDAPI_(void) HCCleanup() noexcept
 try
 {
     XAsyncBlock async{};
-    HRESULT hr = http_singleton::cleanup_async(&async);
+    HRESULT hr = HCCleanupAsync(&async);
     if (SUCCEEDED(hr))
     {
         XAsyncGetStatus(&async, true);
     }
-
-    HCTraceImplCleanup();
 }
 CATCH_RETURN_WITH(;)
+
+STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept
+try
+{
+    return http_singleton::cleanup_async(async);
+}
+CATCH_RETURN()
 
 STDAPI
 HCSetGlobalProxy(_In_ const char* proxyUri) noexcept

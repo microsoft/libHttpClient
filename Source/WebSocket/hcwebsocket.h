@@ -73,11 +73,12 @@ private:
 
     enum class State
     {
+        Initial,
         Disconnecting,
         Disconnected,
         Connecting,
         Connected
-    } m_state{ State::Disconnected };
+    } m_state{ State::Initial };
 
     http_header_map m_connectHeaders;
     bool m_allowProxyToDecryptHttps{ false };
