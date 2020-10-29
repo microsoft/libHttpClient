@@ -39,15 +39,13 @@ HRESULT http_singleton::singleton_access(
             PerformEnv performEnv;
             RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
 
-            auto rawSingleton = new (http_memory::mem_alloc(sizeof(http_singleton))) http_singleton(
+            s_singleton = http_allocate_shared<http_singleton>(
                 GetUserHttpPerformHandler(),
 #if !HC_NOWEBSOCKETS
                 GetUserWebSocketPerformHandlers(),
 #endif
                 std::move(performEnv)
-            );
-
-            s_singleton = std::shared_ptr<http_singleton>(rawSingleton, http_alloc_deleter<http_singleton>());
+                );
             s_singleton->m_self = s_singleton;
         }
 

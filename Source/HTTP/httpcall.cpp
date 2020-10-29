@@ -627,7 +627,7 @@ bool http_header_compare::operator()(http_internal_string const& l, http_interna
     return str_icmp(l, r) < 0;
 }
 
-void PerformEnvDeleter::operator()(HC_PERFORM_ENV* performEnv) noexcept
+void PerformEnvDeleter::operator()(typename std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::pointer p) noexcept
 {
-    Internal_CleanupHttpPlatform(performEnv);
+    Internal_CleanupHttpPlatform(p);
 }
