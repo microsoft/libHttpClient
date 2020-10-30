@@ -19,6 +19,8 @@ else()
         set (PROJECT_NAME libHttpClient.Win32.C)
     elseif( BUILDANDROID )
         set (PROJECT_NAME libHttpClient.Android.C)
+    elseif( GDK )
+        set (PROJECT_NAME libHttpClient.GDK.C)	
     else()
         if( WINRT )
             set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -94,6 +96,10 @@ set(WinRT_WebSocket_Source_Files
 set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
     ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
+    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
+    )
+
+set(GDK_WebSocket_Source_Files
     ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
     )
 
@@ -293,6 +299,22 @@ if( BUILDANDROID )
         ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
         ${Common_Android_Source_Files}
+        )
+endif()
+
+if( GDK )
+    message(STATUS "GDK source group")
+    source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
+    source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
+    source_group("C++ Source\\WebSocket\\Win" FILES ${GDK_WebSocket_Source_Files})
+    source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
+
+    list(APPEND
+        SOURCE_FILES
+        ${WinHttp_HTTP_Source_Files}
+        ${Common_Windows_Source_Files}
+        ${Windows_Logger_Source_Files}
+        ${GDK_WebSocket_Source_Files}
         )
 endif()
 
