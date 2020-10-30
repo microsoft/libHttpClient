@@ -1362,7 +1362,9 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
     }
 #endif
 
-    delete performEnv;
+    http_stl_allocator<HC_PERFORM_ENV> alloc;
+    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::destroy(alloc, std::addressof(*performEnv));
+    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::deallocate(alloc, performEnv, 1);
 }
 
 HRESULT
