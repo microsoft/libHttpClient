@@ -54,8 +54,8 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     auto& mocks{ httpSingleton->m_mocks };
     HC_MOCK_CALL* mock{ nullptr };
 
-    // Use the most recently added mock that matches (similar to a stack).
-    for (auto iter = mocks.rbegin(); iter != mocks.rend(); ++iter)
+    // Use the first mock that matches this call
+    for (auto iter = mocks.begin(); iter != mocks.end(); ++iter)
     {
         if (DoesMockCallMatch(*iter, originalCall))
         {
@@ -104,6 +104,18 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     {
         HCHttpCallResponseGetHeaderAtIndex(mock, i, &str1, &str2);
         HCHttpCallResponseSetHeader(originalCall, str1, str2);
+    }
+
+    // If this is not the only mock that matches, remove it from the list of mocks so that multiple can be used in sequence
+    auto countMatching = std::count_if(mocks.rbegin(), mocks.rend(), [originalCall](auto m) 
+        {
+            return DoesMockCallMatch(m, originalCall); 
+        }
+    );
+
+    if (countMatching > 1)
+    {
+        HCMockRemoveMock(mock);
     }
 
     return true;
