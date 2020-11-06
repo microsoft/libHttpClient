@@ -107,7 +107,7 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     }
 
     // If this is not the only mock that matches, remove it from the list of mocks so that multiple can be used in sequence
-    auto countMatching = std::count_if(mocks.rbegin(), mocks.rend(), [originalCall](auto m) 
+    auto countMatching = std::count_if(mocks.begin(), mocks.end(), [originalCall](auto m) 
         {
             return DoesMockCallMatch(m, originalCall); 
         }
