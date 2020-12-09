@@ -186,7 +186,6 @@ source_group("Header Files" FILES ${Public_Source_Files})
 source_group("C++ Source\\Common" FILES ${Common_Source_Files})
 source_group("C++ Source\\Global" FILES ${Global_Source_Files})
 source_group("C++ Source\\WebSocket" FILES ${WebSocket_Source_Files})
-source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 source_group("C++ Source\\Mock" FILES ${Mock_Source_Files})
 source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
 source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
@@ -196,7 +195,6 @@ set( SOURCE_FILES
     ${Common_Source_Files}
     ${Global_Source_Files}
     ${WebSocket_Source_Files}
-    ${Task_Source_Files}
     ${Mock_Source_Files}
     ${HTTP_Source_Files}
     ${Logger_Source_Files}
@@ -213,6 +211,7 @@ if( UNITTEST )
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${Task_Windows_Source_Files}
@@ -220,6 +219,7 @@ if( UNITTEST )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Unittest_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -230,6 +230,7 @@ if( UWP )
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -238,6 +239,7 @@ if( UWP )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -247,6 +249,7 @@ if( XDK )
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -255,6 +258,7 @@ if( XDK )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -264,6 +268,7 @@ if( BUILDWIN32 )
     source_group("C++ Source\\WebSocket\\Win" FILES ${Win32_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -272,6 +277,7 @@ if( BUILDWIN32 )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Win32_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -291,6 +297,7 @@ if( BUILDANDROID )
     source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
     source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
     source_group("C++ Source\\Common\\Android" FILES ${Common_Android_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -299,6 +306,7 @@ if( BUILDANDROID )
         ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
         ${Common_Android_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -323,11 +331,13 @@ if( TAEF )
     source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
     source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
     source_group("C++ Source\\UnitTests\\Support" FILES ${Taef_UnitTests_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${Taef_UnitTests_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -336,11 +346,13 @@ if( TE )
     source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
     source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
     source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${TE_UnitTests_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
