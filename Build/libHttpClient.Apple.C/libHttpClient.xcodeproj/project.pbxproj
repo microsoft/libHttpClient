@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,8 +23,6 @@
 		2C872C7B221C93620054F791 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C872C7A221C93620054F791 /* Foundation.framework */; };
 		2C872C7D221C93710054F791 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C872C7C221C93710054F791 /* Security.framework */; };
 		2C872C7F221C93810054F791 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C872C7E221C93800054F791 /* libc++.tbd */; };
-		2CE9771B225EB368001F5E22 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CE97719225EB368001F5E22 /* libcrypto.a */; };
-		2CE9771C225EB368001F5E22 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CE9771A225EB368001F5E22 /* libssl.a */; };
 		5839C51C20AA24B1006ACBD3 /* apple_logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5839C51B20AA24B1006ACBD3 /* apple_logger.cpp */; };
 		5841E99122150E900009B183 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5841E99022150E8F0009B183 /* libc++.tbd */; };
 		5841E99F22151C5B0009B183 /* async.h in Headers */ = {isa = PBXBuildFile; fileRef = 5841E99E22151A890009B183 /* async.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -77,11 +75,17 @@
 		7DB100DE2119F91B00AE22F5 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
 		9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
-		9CC0523821374B5D0009B69A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523621374B5D0009B69A /* libcrypto.a */; };
-		9CC0523921374B5D0009B69A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CC0523721374B5D0009B69A /* libssl.a */; };
 		D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D335CABE24085A9A005958B3 /* LocklessQueue.h */; };
 		D3DAA85121C0E4090009C7F6 /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
 		D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
+		D9EF873F25A3E246005C4BDF /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CE97719225EB368001F5E22 /* libcrypto.a */; platformFilter = ios; };
+		D9EF874025A3E25C005C4BDF /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CE9771A225EB368001F5E22 /* libssl.a */; platformFilter = ios; };
+		D9EF875225A3E45C005C4BDF /* libSSL_iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 67EE817E2362599C00A5F3DE /* libSSL_iOS.a */; };
+		D9EF876525A3E7F9005C4BDF /* SSLDummy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EF876425A3E7F9005C4BDF /* SSLDummy.swift */; };
+		D9EF87A525A3F0F9005C4BDF /* SSLDummy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EF876425A3E7F9005C4BDF /* SSLDummy.swift */; };
+		D9EF87A725A3F0F9005C4BDF /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CE97719225EB368001F5E22 /* libcrypto.a */; };
+		D9EF87A825A3F0F9005C4BDF /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CE9771A225EB368001F5E22 /* libssl.a */; };
+		D9EF87DC25A3F11F005C4BDF /* libSSL_macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D9EF87AD25A3F0F9005C4BDF /* libSSL_macOS.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,10 +110,26 @@
 			remoteGlobalIDString = 67EE817D2362599C00A5F3DE;
 			remoteInfo = SSL;
 		};
+		D9EF87DA25A3F11A005C4BDF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 58722D06209AD61900B071F7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D9EF87A225A3F0F9005C4BDF;
+			remoteInfo = SSL_macOS;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		67EE817C2362599C00A5F3DE /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D9EF87A925A3F0F9005C4BDF /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "include/$(PRODUCT_NAME)";
@@ -127,8 +147,8 @@
 		2C872C7C221C93710054F791 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		2C872C7E221C93800054F791 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		2CE97718225EA543001F5E22 /* openssl.bash */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = openssl.bash; sourceTree = "<group>"; };
-		2CE97719225EB368001F5E22 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../Binaries/mac/lib/libcrypto.a; sourceTree = "<group>"; };
-		2CE9771A225EB368001F5E22 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../Binaries/mac/lib/libssl.a; sourceTree = "<group>"; };
+		2CE97719225EB368001F5E22 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = "openssl/lib/libcrypto.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CE9771A225EB368001F5E22 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = "openssl/lib/libssl.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5839C51B20AA24B1006ACBD3 /* apple_logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = apple_logger.cpp; sourceTree = "<group>"; };
 		5841E99022150E8F0009B183 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
 		5841E994221515BD0009B183 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
@@ -184,12 +204,10 @@
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		67EE817E2362599C00A5F3DE /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		67EE817E2362599C00A5F3DE /* libSSL_iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL_iOS.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
-		9CC0523621374B5D0009B69A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../Binaries/iOS/lib/libcrypto.a; sourceTree = "<group>"; };
-		9CC0523721374B5D0009B69A /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../Binaries/iOS/lib/libssl.a; sourceTree = "<group>"; };
 		A529DDBC20A4C88F00D50640 /* http_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_apple.h; sourceTree = "<group>"; };
 		D335CABE24085A9A005958B3 /* LocklessQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocklessQueue.h; sourceTree = "<group>"; };
 		D3C5B5502148481F004BE1FF /* WaitTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaitTimer.h; sourceTree = "<group>"; };
@@ -209,6 +227,8 @@
 		D3DAA85421C0E47F0009C7F6 /* XTaskQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XTaskQueue.h; sourceTree = "<group>"; };
 		D3DAA85521C0E47F0009C7F6 /* XAsync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XAsync.h; sourceTree = "<group>"; };
 		D3DAA85621C0E47F0009C7F6 /* XAsyncProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XAsyncProvider.h; sourceTree = "<group>"; };
+		D9EF876425A3E7F9005C4BDF /* SSLDummy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSLDummy.swift; sourceTree = "<group>"; };
+		D9EF87AD25A3F0F9005C4BDF /* libSSL_macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL_macOS.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -227,8 +247,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9CC0523821374B5D0009B69A /* libcrypto.a in Frameworks */,
-				9CC0523921374B5D0009B69A /* libssl.a in Frameworks */,
+				D9EF875225A3E45C005C4BDF /* libSSL_iOS.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,6 +266,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D9EF873F25A3E246005C4BDF /* libcrypto.a in Frameworks */,
+				D9EF874025A3E25C005C4BDF /* libssl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -254,8 +275,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2CE9771B225EB368001F5E22 /* libcrypto.a in Frameworks */,
-				2CE9771C225EB368001F5E22 /* libssl.a in Frameworks */,
+				D9EF87DC25A3F11F005C4BDF /* libSSL_macOS.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D9EF87A625A3F0F9005C4BDF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D9EF87A725A3F0F9005C4BDF /* libcrypto.a in Frameworks */,
+				D9EF87A825A3F0F9005C4BDF /* libssl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -309,7 +338,8 @@
 				7DB100A72119206B00AE22F5 /* libHttpClient.a */,
 				58BD256222123EF9008942EB /* HttpClient.framework */,
 				2C872C65221C91BD0054F791 /* HttpClient.framework */,
-				67EE817E2362599C00A5F3DE /* libSSL.a */,
+				67EE817E2362599C00A5F3DE /* libSSL_iOS.a */,
+				D9EF87AD25A3F0F9005C4BDF /* libSSL_macOS.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -317,6 +347,7 @@
 		58A7E971209ADEB100CC6774 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				D9EF87FD25A515FE005C4BDF /* SSL */,
 				58A7E985209ADEB100CC6774 /* Common */,
 				58A7E9B4209ADEB100CC6774 /* Global */,
 				58A7E994209ADEB100CC6774 /* HTTP */,
@@ -492,8 +523,6 @@
 				2C872C7C221C93710054F791 /* Security.framework */,
 				2C872C7A221C93620054F791 /* Foundation.framework */,
 				5841E99022150E8F0009B183 /* libc++.tbd */,
-				9CC0523621374B5D0009B69A /* libcrypto.a */,
-				9CC0523721374B5D0009B69A /* libssl.a */,
 				58BD258F2213626E008942EB /* Foundation.framework */,
 				5841E994221515BD0009B183 /* Security.framework */,
 			);
@@ -518,6 +547,14 @@
 				D3C5B55821484A8A004BE1FF /* ios_WaitTimerImpl.h */,
 			);
 			path = iOS;
+			sourceTree = "<group>";
+		};
+		D9EF87FD25A515FE005C4BDF /* SSL */ = {
+			isa = PBXGroup;
+			children = (
+				D9EF876425A3E7F9005C4BDF /* SSLDummy.swift */,
+			);
+			path = SSL;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -623,12 +660,12 @@
 			productReference = 58BD256222123EF9008942EB /* HttpClient.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		67EE817D2362599C00A5F3DE /* SSL */ = {
+		67EE817D2362599C00A5F3DE /* SSL_iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL" */;
+			buildConfigurationList = 67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL_iOS" */;
 			buildPhases = (
-				67EE817A2362599C00A5F3DE /* Sources */,
 				67EE8187236259D700A5F3DE /* Build openssl */,
+				67EE817A2362599C00A5F3DE /* Sources */,
 				67EE817B2362599C00A5F3DE /* Frameworks */,
 				67EE817C2362599C00A5F3DE /* CopyFiles */,
 			);
@@ -636,16 +673,15 @@
 			);
 			dependencies = (
 			);
-			name = SSL;
+			name = SSL_iOS;
 			productName = Dummy;
-			productReference = 67EE817E2362599C00A5F3DE /* libSSL.a */;
+			productReference = 67EE817E2362599C00A5F3DE /* libSSL_iOS.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 		7DB100A62119206B00AE22F5 /* libHttpClient_macOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7DB100AF2119206B00AE22F5 /* Build configuration list for PBXNativeTarget "libHttpClient_macOS" */;
 			buildPhases = (
-				9CC0523A213776DB0009B69A /* Build openssl */,
 				7DB100A32119206B00AE22F5 /* Sources */,
 				7DB100A42119206B00AE22F5 /* Frameworks */,
 				7DB100A52119206B00AE22F5 /* Headers */,
@@ -653,10 +689,29 @@
 			buildRules = (
 			);
 			dependencies = (
+				D9EF87DB25A3F11A005C4BDF /* PBXTargetDependency */,
 			);
 			name = libHttpClient_macOS;
 			productName = libHttpClient_Macos;
 			productReference = 7DB100A72119206B00AE22F5 /* libHttpClient.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		D9EF87A225A3F0F9005C4BDF /* SSL_macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D9EF87AA25A3F0F9005C4BDF /* Build configuration list for PBXNativeTarget "SSL_macOS" */;
+			buildPhases = (
+				D9EF87A325A3F0F9005C4BDF /* Build openssl */,
+				D9EF87A425A3F0F9005C4BDF /* Sources */,
+				D9EF87A625A3F0F9005C4BDF /* Frameworks */,
+				D9EF87A925A3F0F9005C4BDF /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SSL_macOS;
+			productName = Dummy;
+			productReference = D9EF87AD25A3F0F9005C4BDF /* libSSL_macOS.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -678,6 +733,7 @@
 					};
 					67EE817D2362599C00A5F3DE = {
 						CreatedOnToolsVersion = 10.3;
+						LastSwiftMigration = 1230;
 					};
 					7DB100A62119206B00AE22F5 = {
 						CreatedOnToolsVersion = 9.4.1;
@@ -696,7 +752,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				67EE817D2362599C00A5F3DE /* SSL */,
+				67EE817D2362599C00A5F3DE /* SSL_iOS */,
+				D9EF87A225A3F0F9005C4BDF /* SSL_macOS */,
 				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
 				7DB100A62119206B00AE22F5 /* libHttpClient_macOS */,
 				58BD256122123EF9008942EB /* libHttpClientFramework_iOS */,
@@ -725,6 +782,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		67EE8187236259D700A5F3DE /* Build openssl */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -743,14 +801,19 @@
 			shellPath = /bin/sh;
 			shellScript = "\nOPENSSL_LIB_OUTPUT=\"$BUILT_PRODUCTS_DIR/openssl\" \\\n    OPENSSL_TMP_DIR=\"$DERIVED_FILE_DIR/openssl\" \\\n    source \"$SRCROOT/../../Utilities/XcodeBuildScripts/openssl.bash\"\n";
 		};
-		9CC0523A213776DB0009B69A /* Build openssl */ = {
+		D9EF87A325A3F0F9005C4BDF /* Build openssl */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			inputFileListPaths = (
 			);
 			inputPaths = (
 			);
 			name = "Build openssl";
+			outputFileListPaths = (
+			);
 			outputPaths = (
 				"$(BUILT_PRODUCTS_DIR)/openssl/lib/libcrypto.a",
 				"$(BUILT_PRODUCTS_DIR)/openssl/lib/libssl.a",
@@ -808,6 +871,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D9EF876525A3E7F9005C4BDF /* SSLDummy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -839,6 +903,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D9EF87A425A3F0F9005C4BDF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D9EF87A525A3F0F9005C4BDF /* SSLDummy.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -854,8 +926,13 @@
 		};
 		67EE818923626A5100A5F3DE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 67EE817D2362599C00A5F3DE /* SSL */;
+			target = 67EE817D2362599C00A5F3DE /* SSL_iOS */;
 			targetProxy = 67EE818823626A5100A5F3DE /* PBXContainerItemProxy */;
+		};
+		D9EF87DB25A3F11A005C4BDF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D9EF87A225A3F0F9005C4BDF /* SSL_macOS */;
+			targetProxy = D9EF87DA25A3F11A005C4BDF /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1060,7 +1137,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 				);
-				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1086,7 +1163,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 				);
-				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1158,15 +1235,24 @@
 		67EE81852362599C00A5F3DE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -1174,14 +1260,22 @@
 		67EE81862362599C00A5F3DE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -1239,6 +1333,57 @@
 			};
 			name = Release;
 		};
+		D9EF87AB25A3F0F9005C4BDF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		D9EF87AC25A3F0F9005C4BDF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1278,7 +1423,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL" */ = {
+		67EE81842362599C00A5F3DE /* Build configuration list for PBXNativeTarget "SSL_iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				67EE81852362599C00A5F3DE /* Debug */,
@@ -1292,6 +1437,15 @@
 			buildConfigurations = (
 				7DB100AD2119206B00AE22F5 /* Debug */,
 				7DB100AE2119206B00AE22F5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D9EF87AA25A3F0F9005C4BDF /* Build configuration list for PBXNativeTarget "SSL_macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D9EF87AB25A3F0F9005C4BDF /* Debug */,
+				D9EF87AC25A3F0F9005C4BDF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
