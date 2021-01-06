@@ -35,19 +35,6 @@ _HCHttpCallResponseGetHeader
 _HCHttpCallResponseGetNumHeaders
 _HCHttpCallResponseGetHeaderAtIndex
 
-_HCWebSocketCreate
-_HCWebSocketSetProxyUri
-_HCWebSocketSetHeader
-_HCWebSocketGetEventFunctions
-_HCWebSocketConnectAsync
-_HCGetWebSocketConnectResult
-_HCWebSocketSendMessageAsync
-_HCWebSocketSendBinaryMessageAsync
-_HCGetWebSocketSendMessageResult
-_HCWebSocketDisconnect
-_HCWebSocketDuplicateHandle
-_HCWebSocketCloseHandle
-
 #
 # httpProvider.h
 #
@@ -73,13 +60,6 @@ _HCHttpCallResponseSetNetworkErrorCode
 _HCHttpCallResponseSetPlatformNetworkErrorMessage
 _HCHttpCallResponseSetHeader
 _HCHttpCallResponseSetHeaderWithLength
-
-_HCSetWebSocketFunctions
-_HCGetWebSocketFunctions
-_HCWebSocketGetProxyUri
-_HCWebSocketGetHeader
-_HCWebSocketGetNumHeaders
-_HCWebSocketGetHeaderAtIndex
 
 #
 # mock.h
