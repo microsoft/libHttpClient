@@ -481,12 +481,12 @@
 		58A7E971209ADEB100CC6774 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				D9EF87FD25A515FE005C4BDF /* SSL */,
 				58A7E985209ADEB100CC6774 /* Common */,
 				58A7E9B4209ADEB100CC6774 /* Global */,
 				58A7E994209ADEB100CC6774 /* HTTP */,
 				58A7E97D209ADEB100CC6774 /* Logger */,
 				58A7E981209ADEB100CC6774 /* Mock */,
+				D9EF87FD25A515FE005C4BDF /* SSL */,
 				58A7E9AD209ADEB100CC6774 /* Task */,
 				58A7E972209ADEB100CC6774 /* WebSocket */,
 			);
@@ -653,12 +653,12 @@
 			children = (
 				2CE97719225EB368001F5E22 /* libcrypto.a */,
 				2CE9771A225EB368001F5E22 /* libssl.a */,
-				2C872C7E221C93800054F791 /* libc++.tbd */,
-				2C872C7C221C93710054F791 /* Security.framework */,
 				2C872C7A221C93620054F791 /* Foundation.framework */,
-				5841E99022150E8F0009B183 /* libc++.tbd */,
 				58BD258F2213626E008942EB /* Foundation.framework */,
+				2C872C7C221C93710054F791 /* Security.framework */,
 				5841E994221515BD0009B183 /* Security.framework */,
+				2C872C7E221C93800054F791 /* libc++.tbd */,
+				5841E99022150E8F0009B183 /* libc++.tbd */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
