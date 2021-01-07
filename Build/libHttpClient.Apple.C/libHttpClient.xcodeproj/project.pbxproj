@@ -178,7 +178,7 @@
 			containerPortal = 58722D06209AD61900B071F7 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 67EE817D2362599C00A5F3DE;
-			remoteInfo = SSL;
+			remoteInfo = SSL_iOS;
 		};
 		D9464CC325A538A9000F3228 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -842,7 +842,7 @@
 			dependencies = (
 			);
 			name = SSL_iOS;
-			productName = Dummy;
+			productName = SSL;
 			productReference = 67EE817E2362599C00A5F3DE /* libSSL.a */;
 			productType = "com.apple.product-type.library.static";
 		};
@@ -878,7 +878,7 @@
 			dependencies = (
 			);
 			name = SSL_macOS;
-			productName = Dummy;
+			productName = SSL;
 			productReference = D9EF87AD25A3F0F9005C4BDF /* libSSL.a */;
 			productType = "com.apple.product-type.library.static";
 		};
