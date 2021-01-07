@@ -1,9 +1,5 @@
-//
-//  SSLDummy.swift
-//  SSL
-//
-//  Created by Sasha Weiss on 1/4/21.
-//
+// Copyright (c) Microsoft Corporation
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import Foundation
 
