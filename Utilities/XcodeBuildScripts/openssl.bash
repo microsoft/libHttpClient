@@ -85,8 +85,8 @@ export CC="${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}"
 ./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
 fi
 
-# installs openssl for this flavor
-make install
+# installs openssl (just the software components, no docs/manpages) for this flavor
+make install_sw
 
 echo "***** renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a *****"
 cp "$OPENSSL_TMP"/lib/libcrypto.a "$CONFIGURATION_TEMP_DIR"/$BUILDARCH-libcrypto.a
