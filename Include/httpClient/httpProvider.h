@@ -57,7 +57,7 @@ STDAPI HCSetHttpCallPerformFunction(
 /// perform function on the current platform.
 /// </summary>
 /// <param name="performFunc">Set to the current HTTP perform function. Returns the default 
-/// routine if not previously set</param>
+/// routine if not previously set.</param>
 /// <param name="performContext">The context for the callback.</param>
 /// <remarks>
 /// This can be used along with HCSetHttpCallPerformFunction() to build a filter that
@@ -71,10 +71,10 @@ STDAPI HCGetHttpCallPerformFunction(
     ) noexcept;
 
 /// <summary>
-/// Gets the context pointer attached to this call object
+/// Gets the context pointer attached to this call object.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="context">the context pointer attached to this call object</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="context">the context pointer attached to this call object.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallGetContext(
     _In_ HCCallHandle call,
@@ -82,10 +82,10 @@ STDAPI HCHttpCallGetContext(
     ) noexcept;
 
 /// <summary>
-/// Sets the context pointer attached to this call object
+/// Sets the context pointer attached to this call object.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="context">the context pointer attached to this call object</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="context">the context pointer attached to this call object.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallSetContext(
     _In_ HCCallHandle call,
@@ -98,11 +98,11 @@ STDAPI HCHttpCallSetContext(
 //
 
 /// <summary>
-/// Gets the url and method for the HTTP call
+/// Gets the url and method for the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="method">UTF-8 encoded method for the HTTP call</param>
-/// <param name="url">UTF-8 encoded URL for the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="method">UTF-8 encoded method for the HTTP call.</param>
+/// <param name="url">UTF-8 encoded URL for the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetUrl(
     _In_ HCCallHandle call,
@@ -111,11 +111,11 @@ STDAPI HCHttpCallRequestGetUrl(
     ) noexcept;
 
 /// <summary>
-/// Get the request body bytes of the HTTP call
+/// Get the request body bytes of the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="requestBodyBytes">The request body bytes of the HTTP call</param>
-/// <param name="requestBodySize">The request body bytes size in bytes of the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="requestBodyBytes">The request body bytes of the HTTP call.</param>
+/// <param name="requestBodySize">The request body bytes size in bytes of the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyBytes(
     _In_ HCCallHandle call,
@@ -124,10 +124,10 @@ STDAPI HCHttpCallRequestGetRequestBodyBytes(
     ) noexcept;
 
 /// <summary>
-/// Get the request body bytes of the HTTP call
+/// Get the request body bytes of the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="requestBody">The UTF-8 encoded request body of the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="requestBody">The UTF-8 encoded request body of the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyString(
     _In_ HCCallHandle call,
@@ -135,11 +135,11 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
     ) noexcept;
 
 /// <summary>
-/// Get a request header for the HTTP call for a given header name
+/// Get a request header for the HTTP call for a given header name.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerName">UTF-8 encoded request header name for the HTTP call</param>
-/// <param name="headerValue">UTF-8 encoded request header value for the HTTP call</param>
+/// <param name="headerName">UTF-8 encoded request header name for the HTTP call.</param>
+/// <param name="headerValue">UTF-8 encoded request header value for the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetHeader(
     _In_ HCCallHandle call,
@@ -148,10 +148,10 @@ STDAPI HCHttpCallRequestGetHeader(
     ) noexcept;
 
 /// <summary>
-/// Gets the number of request headers in the HTTP call
+/// Gets the number of request headers in the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="numHeaders">the number of request headers in the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="numHeaders">the number of request headers in the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetNumHeaders(
     _In_ HCCallHandle call,
@@ -160,13 +160,13 @@ STDAPI HCHttpCallRequestGetNumHeaders(
 
 /// <summary>
 /// Gets the request headers at specific zero based index in the HTTP call.
-/// Use HCHttpCallRequestGetNumHeaders() to know how many request headers there are in the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerIndex">Specific zero based index of the request header</param>
-/// <param name="headerName">UTF-8 encoded request header name for the HTTP call</param>
-/// <param name="headerValue">UTF-8 encoded request header value for the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="headerIndex">Specific zero based index of the request header.</param>
+/// <param name="headerName">UTF-8 encoded request header name for the HTTP call.</param>
+/// <param name="headerValue">UTF-8 encoded request header value for the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>Use HCHttpCallRequestGetNumHeaders() to know how many request headers there are in the HTTP call.</remarks>
 STDAPI HCHttpCallRequestGetHeaderAtIndex(
     _In_ HCCallHandle call,
     _In_ uint32_t headerIndex,
@@ -175,12 +175,12 @@ STDAPI HCHttpCallRequestGetHeaderAtIndex(
     ) noexcept;
 
 /// <summary>
-/// Gets if retry is allowed for this HTTP call
-/// Defaults to true 
+/// Gets if retry is allowed for this HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls</param>
-/// <param name="retryAllowed">If retry is allowed for this HTTP call</param>
+/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls.</param>
+/// <param name="retryAllowed">If retry is allowed for this HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>Defaults to true.</remarks>
 STDAPI HCHttpCallRequestGetRetryAllowed(
     _In_opt_ HCCallHandle call,
     _Out_ bool* retryAllowed
@@ -188,11 +188,11 @@ STDAPI HCHttpCallRequestGetRetryAllowed(
 
 /// <summary>
 /// Gets the ID number of this REST endpoint used to cache the Retry-After header for fast fail.
-/// Defaults is 0
 /// </summary>
-/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls</param>
-/// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail.  1-1000 are reserved for XSAPI</param>
+/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls.</param>
+/// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail.  1-1000 are reserved for XSAPI.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>Defaults is 0.</remarks>
 STDAPI HCHttpCallRequestGetRetryCacheId(
     _In_ HCCallHandle call,
     _Out_ uint32_t* retryAfterCacheId
@@ -200,11 +200,11 @@ STDAPI HCHttpCallRequestGetRetryCacheId(
 
 /// <summary>
 /// Gets the timeout for this HTTP call.
-/// Defaults to 30 seconds
 /// </summary>
-/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls</param>
+/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls.</param>
 /// <param name="timeoutInSeconds">the timeout for this HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>Defaults to 30 seconds.</remarks>
 STDAPI HCHttpCallRequestGetTimeout(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutInSeconds
@@ -212,29 +212,30 @@ STDAPI HCHttpCallRequestGetTimeout(
 
 /// <summary>
 /// Gets the HTTP retry delay in seconds. The default and minimum delay is 2 seconds.
-/// 
+/// </summary>
+/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls.</param>
+/// <param name="retryDelayInSeconds">The retry delay in seconds.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
 /// Retries are delayed using a exponential back off.  By default, it will delay 2 seconds then the 
 /// next retry will delay 4 seconds, then 8 seconds, and so on up to a max of 1 min until either
 /// the call succeeds or the HTTP timeout window is reached, at which point the call will fail.
 /// The delay is also jittered between the current and next delay to spread out service load.
-/// The default for the HTTP timeout window is 20 seconds and can be changed using HCSettingsSetTimeoutWindow()
-/// 
+/// The default for the HTTP timeout window is 20 seconds and can be changed using HCSettingsSetTimeoutWindow()<br />
+/// <br />
 /// If the service returns an an HTTP error with a "Retry-After" header, then all future calls to that API 
 /// will immediately fail with the original error without contacting the service until the "Retry-After" 
-/// time has been reached.
-///
-/// Idempotent service calls are retried when a network error occurs or the server responds 
-/// with one of these HTTP status codes:
-/// 408 (Request Timeout)
-/// 429 (Too Many Requests)
-/// 500 (Internal Server Error)
-/// 502 (Bad Gateway)
-/// 503 (Service Unavailable)
-/// 504 (Gateway Timeout)
-/// </summary>
-/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls</param>
-/// <param name="retryDelayInSeconds">The retry delay in seconds</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// time has been reached.<br />
+///<br />
+/// Idempotent service calls are retried when a network error occurs or the server responds <br />
+/// with one of these HTTP status codes:<br />
+/// 408 (Request Timeout)<br />
+/// 429 (Too Many Requests)<br />
+/// 500 (Internal Server Error)<br />
+/// 502 (Bad Gateway)<br />
+/// 503 (Service Unavailable)<br />
+/// 504 (Gateway Timeout)<br />
+/// </remarks>
 STDAPI HCHttpCallRequestGetRetryDelay(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t* retryDelayInSeconds
@@ -242,22 +243,23 @@ STDAPI HCHttpCallRequestGetRetryDelay(
 
 /// <summary>
 /// Sets the HTTP timeout window in seconds.
-///
-/// This controls how long to spend attempting to retry idempotent service calls before failing.
-/// The default is 20 seconds
-///
-/// Idempotent service calls are retried when a network error occurs or the server responds 
-/// with one of these HTTP status codes:
-/// 408 (Request Timeout)
-/// 429 (Too Many Requests)
-/// 500 (Internal Server Error)
-/// 502 (Bad Gateway)
-/// 503 (Service Unavailable)
-/// 504 (Gateway Timeout)
 /// </summary>
-/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls</param>
-/// <param name="timeoutWindowInSeconds">The timeout window in seconds</param>
+/// <param name="call">The handle of the HTTP call.  Pass nullptr to get the default for future calls.</param>
+/// <param name="timeoutWindowInSeconds">The timeout window in seconds.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This controls how long to spend attempting to retry idempotent service calls before failing.<br />
+/// The default is 20 seconds.<br />
+///<br />
+/// Idempotent service calls are retried when a network error occurs or the server responds <br />
+/// with one of these HTTP status codes:<br />
+/// 408 (Request Timeout)<br />
+/// 429 (Too Many Requests)<br />
+/// 500 (Internal Server Error)<br />
+/// 502 (Bad Gateway)<br />
+/// 503 (Service Unavailable)<br />
+/// 504 (Gateway Timeout)<br />
+/// </remarks>
 STDAPI HCHttpCallRequestGetTimeoutWindow(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutWindowInSeconds
@@ -269,9 +271,9 @@ STDAPI HCHttpCallRequestGetTimeoutWindow(
 // 
 
 /// <summary>
-/// Set the response body byte buffer of the HTTP call
+/// Set the response body byte buffer of the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bodyBytes">The response body bytes of the HTTP call.</param>
 /// <param name="bodySize">The length in bytes of the body being set.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
@@ -282,9 +284,9 @@ STDAPI HCHttpCallResponseSetResponseBodyBytes(
     ) noexcept;
 
 /// <summary>
-/// Appends to the response body byte buffer of the HTTP call
+/// Appends to the response body byte buffer of the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bodyBytes">The data to append.</param>
 /// <param name="bodySize">The length in bytes of the data.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
@@ -295,10 +297,10 @@ STDAPI HCHttpCallResponseAppendResponseBodyBytes(
 ) noexcept;
 
 /// <summary>
-/// Set the HTTP status code of the HTTP call response
+/// Set the HTTP status code of the HTTP call response.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="statusCode">the HTTP status code of the HTTP call response</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="statusCode">the HTTP status code of the HTTP call response.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetStatusCode(
     _In_ HCCallHandle call,
@@ -306,11 +308,11 @@ STDAPI HCHttpCallResponseSetStatusCode(
     ) noexcept;
 
 /// <summary>
-/// Set the network error code of the HTTP call
+/// Set the network error code of the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
 /// <param name="networkErrorCode">The network error code of the HTTP call.</param>
-/// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging</param>
+/// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetNetworkErrorCode(
     _In_ HCCallHandle call,
@@ -319,10 +321,10 @@ STDAPI HCHttpCallResponseSetNetworkErrorCode(
     ) noexcept;
 
 /// <summary>
-/// Set the platform network error message of the HTTP call
+/// Set the platform network error message of the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="platformNetworkErrorMessage">The platform specific network error message of the HTTP call to be used for logging / debugging</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="platformNetworkErrorMessage">The platform specific network error message of the HTTP call to be used for logging / debugging.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetPlatformNetworkErrorMessage(
     _In_ HCCallHandle call,
@@ -330,11 +332,11 @@ STDAPI HCHttpCallResponseSetPlatformNetworkErrorMessage(
     ) noexcept;
 
 /// <summary>
-/// Set a response header for the HTTP call
+/// Set a response header for the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerName">UTF-8 encoded response header name for the HTTP call</param>
-/// <param name="headerValue">UTF-8 encoded response header value for the HTTP call</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="headerName">UTF-8 encoded response header name for the HTTP call.</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetHeader(
     _In_ HCCallHandle call,
@@ -343,13 +345,13 @@ STDAPI HCHttpCallResponseSetHeader(
     ) noexcept;
 
 /// <summary>
-/// Set a response header for the HTTP call
+/// Set a response header for the HTTP call.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="headerName">UTF-8 encoded response header name for the HTTP call</param>
-/// <param name="nameSize">The length in bytes of the header name string</param>
-/// <param name="headerValue">UTF-8 encoded response header value for the HTTP call</param>
-/// <param name="valueSize">The length in bytes of the header value string</param>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="headerName">UTF-8 encoded response header name for the HTTP call.</param>
+/// <param name="nameSize">The length in bytes of the header name string.</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the HTTP call.</param>
+/// <param name="valueSize">The length in bytes of the header value string.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseSetHeaderWithLength(
     _In_ HCCallHandle call,
@@ -439,14 +441,14 @@ typedef HRESULT
 /// Optionally allows the caller to implement the WebSocket functions.
 /// </summary>
 /// <param name="websocketConnectFunc">A callback that implements WebSocket connect function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// Pass in nullptr to use the default implementation based on the current platform.</param>
 /// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// Pass in nullptr to use the default implementation based on the current platform.</param>
 /// <param name="websocketSendBinaryMessageFunc">A callback that implements WebSocket send binary message function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
+/// Pass in nullptr to use the default implementation based on the current platform.</param>
 /// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired. 
-/// Pass in nullptr to use the default implementation based on the current platform</param>
-/// <param name="context">The context pointer for the callbacks</param>
+/// Pass in nullptr to use the default implementation based on the current platform.</param>
+/// <param name="context">The context pointer for the callbacks.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
 HCSetWebSocketFunctions(
@@ -464,7 +466,7 @@ HCSetWebSocketFunctions(
 /// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. </param>
 /// <param name="websocketSendBinaryMessageFunc">A callback that implements WebSocket send binary message function as desired.</param>
 /// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired.</param>
-/// <param name="context">The context pointer for the callbacks</param>
+/// <param name="context">The context pointer for the callbacks.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI 
 HCGetWebSocketFunctions(
@@ -476,10 +478,10 @@ HCGetWebSocketFunctions(
     ) noexcept;
 
 /// <summary>
-/// Get the proxy URI for the WebSocket
+/// Get the proxy URI for the WebSocket.
 /// </summary>
-/// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="proxyUri">The UTF-8 encoded proxy URI for the WebSocket</param>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="proxyUri">The UTF-8 encoded proxy URI for the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetProxyUri(
@@ -488,11 +490,11 @@ HCWebSocketGetProxyUri(
     ) noexcept;
 
 /// <summary>
-/// Get a header for the WebSocket
+/// Get a header for the WebSocket.
 /// </summary>
-/// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="headerName">UTF-8 encoded header name for the WebSocket</param>
-/// <param name="headerValue">UTF-8 encoded header value for the WebSocket</param>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerName">UTF-8 encoded header name for the WebSocket.</param>
+/// <param name="headerValue">UTF-8 encoded header value for the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetHeader(
@@ -502,10 +504,10 @@ HCWebSocketGetHeader(
     ) noexcept;
 
 /// <summary>
-/// Gets the number of headers in the WebSocket
+/// Gets the number of headers in the WebSocket.
 /// </summary>
-/// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="numHeaders">the number of headers in the WebSocket</param>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="numHeaders">the number of headers in the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI 
 HCWebSocketGetNumHeaders(
@@ -515,13 +517,13 @@ HCWebSocketGetNumHeaders(
 
 /// <summary>
 /// Gets the headers at specific zero based index in the WebSocket.
-/// Use HCHttpCallGetNumHeaders() to know how many headers there are in the HTTP call.
 /// </summary>
-/// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="headerIndex">Specific zero based index of the header</param>
-/// <param name="headerName">UTF-8 encoded header name for the HTTP call</param>
-/// <param name="headerValue">UTF-8 encoded header value for the HTTP call</param>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerIndex">Specific zero based index of the header.</param>
+/// <param name="headerName">UTF-8 encoded header name for the HTTP call.</param>
+/// <param name="headerValue">UTF-8 encoded header value for the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>Use HCHttpCallGetNumHeaders() to know how many headers there are in the HTTP call.</remarks>
 STDAPI 
 HCWebSocketGetHeaderAtIndex(
     _In_ HCWebsocketHandle websocket,
