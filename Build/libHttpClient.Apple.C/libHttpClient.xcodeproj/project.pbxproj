@@ -1479,6 +1479,7 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				USE_HEADERMAP = NO;
 			};
 			name = Debug;
 		};
@@ -1505,6 +1506,7 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
@@ -1644,6 +1646,7 @@
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Debug;
 		};
@@ -1670,6 +1673,7 @@
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
