@@ -1629,6 +1629,7 @@
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"HC_LINK_STATIC=1",
@@ -1636,6 +1637,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -1656,6 +1658,7 @@
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"HC_LINK_STATIC=1",
@@ -1663,6 +1666,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",

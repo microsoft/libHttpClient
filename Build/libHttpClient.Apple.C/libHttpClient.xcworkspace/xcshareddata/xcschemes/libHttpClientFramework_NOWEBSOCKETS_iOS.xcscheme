@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "D9EF886C25A52685005C4BDF"
-               BuildableName = "HttpClient_NOWEBSOCKETS.framework"
+               BuildableName = "HttpClient.framework"
                BlueprintName = "libHttpClientFramework_NOWEBSOCKETS_iOS"
                ReferencedContainer = "container:libHttpClient.xcodeproj">
             </BuildableReference>
@@ -51,7 +51,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D9EF886C25A52685005C4BDF"
-            BuildableName = "HttpClient_NOWEBSOCKETS.framework"
+            BuildableName = "HttpClient.framework"
             BlueprintName = "libHttpClientFramework_NOWEBSOCKETS_iOS"
             ReferencedContainer = "container:libHttpClient.xcodeproj">
          </BuildableReference>
