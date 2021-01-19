@@ -314,11 +314,11 @@
 		D9EF876425A3E7F9005C4BDF /* SSLDummy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSLDummy.swift; sourceTree = "<group>"; };
 		D9EF87AD25A3F0F9005C4BDF /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9EF884125A522BC005C4BDF /* libHttpClient_NOWEBSOCKETS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient_NOWEBSOCKETS.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		D9EF888425A52685005C4BDF /* HttpClient_NOWEBSOCKETS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient_NOWEBSOCKETS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D9EF888425A52685005C4BDF /* NOWEBSOCKETS/HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NOWEBSOCKETS/HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9FF0A4A25A533FD0061B717 /* Info_NOWEBSOCKETS_iOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_NOWEBSOCKETS_iOS.plist; sourceTree = "<group>"; };
 		D9FF0A4B25A534030061B717 /* exports_NOWEBSOCKETS.exp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.exports; path = exports_NOWEBSOCKETS.exp; sourceTree = "<group>"; };
 		D9FF0A7725A5366A0061B717 /* libHttpClient_NOWEBSOCKETS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient_NOWEBSOCKETS.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		D9FF0AA225A536A20061B717 /* HttpClient_NOWEBSOCKETS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient_NOWEBSOCKETS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D9FF0AA225A536A20061B717 /* NOWEBSOCKETS/HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NOWEBSOCKETS/HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9FF0AAE25A536FA0061B717 /* Info_NOWEBSOCKETS_macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_NOWEBSOCKETS_macOS.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -471,9 +471,9 @@
 				67EE817E2362599C00A5F3DE /* libSSL.a */,
 				D9EF87AD25A3F0F9005C4BDF /* libSSL.a */,
 				D9EF884125A522BC005C4BDF /* libHttpClient_NOWEBSOCKETS.a */,
-				D9EF888425A52685005C4BDF /* HttpClient_NOWEBSOCKETS.framework */,
+				D9EF888425A52685005C4BDF /* NOWEBSOCKETS/HttpClient.framework */,
 				D9FF0A7725A5366A0061B717 /* libHttpClient_NOWEBSOCKETS.a */,
-				D9FF0AA225A536A20061B717 /* HttpClient_NOWEBSOCKETS.framework */,
+				D9FF0AA225A536A20061B717 /* NOWEBSOCKETS/HttpClient.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -914,7 +914,7 @@
 			);
 			name = libHttpClientFramework_NOWEBSOCKETS_iOS;
 			productName = HttpClient;
-			productReference = D9EF888425A52685005C4BDF /* HttpClient_NOWEBSOCKETS.framework */;
+			productReference = D9EF888425A52685005C4BDF /* NOWEBSOCKETS/HttpClient.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		D9FF0A5C25A5366A0061B717 /* libHttpClient_NOWEBSOCKETS_macOS */ = {
@@ -949,7 +949,7 @@
 			);
 			name = libHttpClientFramework_NOWEBSOCKETS_macOS;
 			productName = HttpClient;
-			productReference = D9FF0AA225A536A20061B717 /* HttpClient_NOWEBSOCKETS.framework */;
+			productReference = D9FF0AA225A536A20061B717 /* NOWEBSOCKETS/HttpClient.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -994,11 +994,11 @@
 				D9EF87A225A3F0F9005C4BDF /* SSL_macOS */,
 				58722D0D209AD61900B071F7 /* libHttpClient_iOS */,
 				7DB100A62119206B00AE22F5 /* libHttpClient_macOS */,
+				D9EF882325A522BC005C4BDF /* libHttpClient_NOWEBSOCKETS_iOS */,
+				D9FF0A5C25A5366A0061B717 /* libHttpClient_NOWEBSOCKETS_macOS */,
 				58BD256122123EF9008942EB /* libHttpClientFramework_iOS */,
 				2C872C64221C91BD0054F791 /* libHttpClientFramework_macOS */,
-				D9EF882325A522BC005C4BDF /* libHttpClient_NOWEBSOCKETS_iOS */,
 				D9EF886C25A52685005C4BDF /* libHttpClientFramework_NOWEBSOCKETS_iOS */,
-				D9FF0A5C25A5366A0061B717 /* libHttpClient_NOWEBSOCKETS_macOS */,
 				D9FF0A8A25A536A20061B717 /* libHttpClientFramework_NOWEBSOCKETS_macOS */,
 			);
 		};
@@ -1479,6 +1479,7 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				USE_HEADERMAP = NO;
 			};
 			name = Debug;
 		};
@@ -1505,6 +1506,7 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
@@ -1627,6 +1629,7 @@
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"HC_LINK_STATIC=1",
@@ -1634,6 +1637,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -1644,6 +1648,7 @@
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Debug;
 		};
@@ -1653,6 +1658,7 @@
 				CLANG_LINK_OBJC_RUNTIME = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"HC_LINK_STATIC=1",
@@ -1660,6 +1666,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
+					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -1670,6 +1677,7 @@
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
@@ -1751,6 +1759,7 @@
 				PRODUCT_NAME = HttpClient_NOWEBSOCKETS;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				USE_HEADERMAP = NO;
 			};
 			name = Debug;
 		};
@@ -1779,6 +1788,7 @@
 				PRODUCT_NAME = HttpClient_NOWEBSOCKETS;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
@@ -1806,13 +1816,14 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
-				PRODUCT_MODULE_NAME = HttpClient_NOWEBSOCKETS;
-				PRODUCT_NAME = HttpClient_NOWEBSOCKETS;
+				PRODUCT_MODULE_NAME = HttpClient;
+				PRODUCT_NAME = HttpClient;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+				WRAPPER_NAME = "NOWEBSOCKETS/$(PRODUCT_NAME).$(WRAPPER_EXTENSION)";
 			};
 			name = Debug;
 		};
@@ -1839,14 +1850,15 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
-				PRODUCT_MODULE_NAME = HttpClient_NOWEBSOCKETS;
-				PRODUCT_NAME = HttpClient_NOWEBSOCKETS;
+				PRODUCT_MODULE_NAME = HttpClient;
+				PRODUCT_NAME = HttpClient;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+				WRAPPER_NAME = "NOWEBSOCKETS/$(PRODUCT_NAME).$(WRAPPER_EXTENSION)";
 			};
 			name = Release;
 		};
@@ -1876,6 +1888,7 @@
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Debug;
 		};
@@ -1905,6 +1918,7 @@
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
@@ -1932,14 +1946,15 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
-				PRODUCT_MODULE_NAME = HttpClient_NOWEBSOCKETS;
-				PRODUCT_NAME = HttpClient_NOWEBSOCKETS;
+				PRODUCT_MODULE_NAME = HttpClient;
+				PRODUCT_NAME = HttpClient;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+				WRAPPER_NAME = "NOWEBSOCKETS/$(PRODUCT_NAME).$(WRAPPER_EXTENSION)";
 			};
 			name = Debug;
 		};
@@ -1966,8 +1981,8 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.HttpClient;
-				PRODUCT_MODULE_NAME = HttpClient_NOWEBSOCKETS;
-				PRODUCT_NAME = HttpClient_NOWEBSOCKETS;
+				PRODUCT_MODULE_NAME = HttpClient;
+				PRODUCT_NAME = HttpClient;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
@@ -1975,6 +1990,7 @@
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+				WRAPPER_NAME = "NOWEBSOCKETS/$(PRODUCT_NAME).$(WRAPPER_EXTENSION)";
 			};
 			name = Release;
 		};
