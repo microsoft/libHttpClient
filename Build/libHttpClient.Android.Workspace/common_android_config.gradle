@@ -5,7 +5,7 @@ if (!pluginManager.hasPlugin("com.android.base")) {
 android {
     compileSdkVersion 27
     defaultConfig.targetSdkVersion 21
-    ndkVersion "21.3.6528147"
+    ndkVersion "22.0.7026061"
 
     flavorDimensions "default"
 

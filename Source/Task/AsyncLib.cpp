@@ -16,9 +16,10 @@ bool s_AsyncLibEnablePumpingWait = false;
 
 enum class ProviderCleanupLocation
 {
-    Destructor,
-    AfterDoWork,
-    CleanedUp
+    Destructor,     // Cleanup provider in destructor
+    AfterDoWork,    // Cleanup provider after DoWork
+    InCancel,       // XAsyncCancel code is calling into provider
+    CleanedUp       // Provider clean up has been called
 };
 
 // Note that there are two XAsyncBlock structures in play.
@@ -381,6 +382,8 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
 static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSize);
 static void CleanupState(_Inout_ AsyncStateRef&& state);
 static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, _In_ ProviderCleanupLocation location);
+static bool TrySetProviderCleanup(_Inout_ AsyncStateRef& state, _In_ ProviderCleanupLocation location);
+static void RevertProviderCleanup(_Inout_ AsyncStateRef& state, _In_ ProviderCleanupLocation expected);
 
 static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal, _In_ size_t contextSize)
 {
@@ -481,6 +484,17 @@ static void CleanupProviderForLocation(_Inout_ AsyncStateRef& state, _In_ Provid
     {
         (void)state->provider(XAsyncOp::Cleanup, &state->providerData);
     }
+}
+
+static bool TrySetProviderCleanup(_Inout_ AsyncStateRef& state, _In_ ProviderCleanupLocation location)
+{
+    ProviderCleanupLocation expected = ProviderCleanupLocation::Destructor;
+    return state->providerCleanup.compare_exchange_strong(expected, location);
+}
+
+static void RevertProviderCleanup(_Inout_ AsyncStateRef& state, _In_ ProviderCleanupLocation expected)
+{
+    (void)state->providerCleanup.compare_exchange_strong(expected, ProviderCleanupLocation::Destructor);
 }
 
 static HRESULT SignalCompletion(_In_ AsyncStateRef const& state)
@@ -727,7 +741,21 @@ STDAPI_(void) XAsyncCancel(
 
     if (state != nullptr)
     {
-        (void)state->provider(XAsyncOp::Cancel, &state->providerData);
+        // In case of cancel, failure, or success with no payload we will
+        // agressively clean up the provider at the end of DoWork. This can race
+        // with a cancel call. To prevent this we mark the provider cleanup as
+        // "in cancel", which prevents switching it to the aggressive DoWork
+        // cleanup.  We switch out of "in cancel" when done.  In the worst case this
+        // will defer provider cleanup to the state destructor, which is the natural
+        // place for it anyway.  Anything else here is just an optimization to get the
+        // provider cleaned up sooner (the destructor location may be delayed until the
+        // completion callback fires, since it's hanging on to a state object ref).
+
+        if (TrySetProviderCleanup(state, ProviderCleanupLocation::InCancel))
+        {
+            (void)state->provider(XAsyncOp::Cancel, &state->providerData);
+            RevertProviderCleanup(state, ProviderCleanupLocation::InCancel);
+        }
     }
 }
 
@@ -1003,7 +1031,7 @@ STDAPI_(void) XAsyncComplete(
 
     if (doCleanup)
     {
-        state->providerCleanup = ProviderCleanupLocation::AfterDoWork;
+        (void)TrySetProviderCleanup(state, ProviderCleanupLocation::AfterDoWork);
         CleanupState(std::move(state));
     }
 }
