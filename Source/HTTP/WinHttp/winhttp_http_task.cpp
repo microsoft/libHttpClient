@@ -267,9 +267,6 @@ winhttp_http_task::winhttp_http_task(
     m_proxyType(proxyType),
     m_isWebSocket(isWebSocket)
 {
-#if HC_WINHTTP_WEBSOCKETS
-    m_hWebsocketWriteComplete = CreateEvent(nullptr, false, false, nullptr);
-#endif
 }
 
 winhttp_http_task::~winhttp_http_task()
@@ -292,12 +289,6 @@ winhttp_http_task::~winhttp_http_task()
     {
         WinHttpCloseHandle(m_hConnection);
     }
-#if HC_WINHTTP_WEBSOCKETS
-    if (m_hWebsocketWriteComplete != nullptr)
-    {
-        CloseHandle(m_hWebsocketWriteComplete);
-    }
-#endif
 }
 
 void winhttp_http_task::complete_task(_In_ HRESULT translatedHR)
@@ -865,7 +856,10 @@ void CALLBACK winhttp_http_task::completion_callback(
                 if (pRequestContext->m_isWebSocket)
                 {
 #if HC_WINHTTP_WEBSOCKETS
-                    SetEvent(pRequestContext->m_hWebsocketWriteComplete);
+                    if (pRequestContext->m_websocketSendCompleteCallback)
+                    {
+                        pRequestContext->m_websocketSendCompleteCallback(S_OK);
+                    }
 #endif
                 }
                 else
@@ -1463,7 +1457,7 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 
 
 #if HC_WINHTTP_WEBSOCKETS
-HRESULT winhttp_http_task::send_websocket_message(
+void winhttp_http_task::send_websocket_message(
     WINHTTP_WEB_SOCKET_BUFFER_TYPE eBufferType,
     _In_ const void* payloadPtr,
     _In_ size_t payloadLength)
@@ -1472,20 +1466,16 @@ HRESULT winhttp_http_task::send_websocket_message(
         eBufferType, 
         (PVOID)payloadPtr,
         static_cast<DWORD>(payloadLength));
+
+    // If WinHttpWebSocketSend fails synchronously, invoke the send complete callback immediately.
+    // Otherwise the callback will be invoked from the winHttp completion callback when we receive the WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE event.
     if (FAILED(HRESULT_FROM_WIN32(dwError)))
     {
-        return HRESULT_FROM_WIN32(dwError);
+        if (m_websocketSendCompleteCallback)
+        {
+            m_websocketSendCompleteCallback(HRESULT_FROM_WIN32(dwError));
+        }
     }
-
-    // In WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, it will set m_hWebsocketWriteComplete
-    DWORD dwResult = WaitForSingleObject(m_hWebsocketWriteComplete, 30000);
-    if (dwResult == WAIT_TIMEOUT)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] write complete timeout", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId());
-        return E_FAIL;
-    }
-
-    return S_OK;
 }
 
 HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
