@@ -27,6 +27,7 @@
 
 #include <WinSock2.h>
 #include <windows.h>
+#include <objbase.h>
 
 #else
 #define __STDC_LIMIT_MACROS
@@ -128,6 +129,7 @@ HC_DECLARE_TRACE_AREA(WEBSOCKET);
     catch (...) { ::xbox::httpclient::detail::UnknownExceptionToResult(file, line); return errCode; }
 
 #define RETURN_IF_PERFORM_CALLED(call) if (call->performCalled) return E_HC_PERFORM_ALREADY_CALLED;
+#define TO_ULL(x) static_cast<unsigned long long>(x)
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_BEGIN
 

@@ -72,6 +72,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAsWinRT>true</CompileAsWinRT>
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ShowIncludes>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -158,6 +160,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XAsyncProviderPriv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\referenced_ptr.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.cpp" />

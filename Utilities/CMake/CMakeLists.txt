@@ -19,6 +19,8 @@ else()
         set (PROJECT_NAME libHttpClient.Win32.C)
     elseif( BUILDANDROID )
         set (PROJECT_NAME libHttpClient.Android.C)
+    elseif( GDK )
+        set (PROJECT_NAME libHttpClient.GDK.C)	
     else()
         if( WINRT )
             set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -82,55 +84,9 @@ include_directories(
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 
-set(Public_Source_Files
-    ../../../include/httpClient/config.h
-    ../../../include/httpClient/httpClient.h
-    ../../../include/httpClient/httpProvider.h
-    ../../../include/httpClient/mock.h
-    ../../../include/xasync.h
-    ../../../include/xasyncProvider.h
-    ../../../include/xtaskQueue.h
-    ../../../include/httpClient/trace.h
-    ../../../include/httpClient/pal.h
-    ../../../include/httpClient/async.h
-    )
-
-set(Task_Source_Files
-    ../../../Source/Task/AsyncLib.cpp
-    ../../../Source/Task/AtomicVector.h
-    ../../../Source/Task/LocklessQueue.h
-    ../../../Source/Task/referenced_ptr.h
-    ../../../Source/Task/StaticArray.h
-    ../../../Source/Task/TaskQueue.cpp
-    ../../../Source/Task/TaskQueueImpl.h
-    ../../../Source/Task/TaskQueueP.h
-    ../../../Source/Task/ThreadPool.h
-    ../../../Source/Task/WaitTimer.h
-    ../../../Source/Task/XTaskQueuePriv.h
-    )
-
 set(Task_Windows_Source_Files
     ../../../Source/Task/ThreadPool_win32.cpp
     ../../../Source/Task/WaitTimer_win32.cpp
-    )
-
-set(Task_Android_Source_Files
-    ../../../Include/httpClient/async_jvm.h
-    ../../../Source/Task/ThreadPool_stl.cpp
-    ../../../Source/Task/WaitTimer_stl.cpp
-    )
-
-set(Global_Source_Files
-    ../../../Source/Global/mem.cpp
-    ../../../Source/Global/mem.h
-    ../../../Source/Global/global_publics.cpp
-    ../../../Source/Global/global.cpp
-    ../../../Source/Global/global.h
-    )
-
-set(WebSocket_Source_Files
-    ../../../Source/WebSocket/hcwebsocket.h
-    ../../../Source/WebSocket/hcwebsocket.cpp
     )
 
 set(WinRT_WebSocket_Source_Files
@@ -143,46 +99,13 @@ set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
     )
 
-set(Android_WebSocket_Source_Files
-    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
-    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
-    )
-
-set(Mock_Source_Files
-    ../../../Source/Mock/lhc_mock.cpp
-    ../../../Source/Mock/lhc_mock.h
-    ../../../Source/Mock/mock_publics.cpp
-    )
-
-set(Common_Source_Files
-    ../../../Source/Common/buildver.h
-    ../../../Source/Common/EntryList.h
-    ../../../Source/Common/pch.cpp
-    ../../../Source/Common/pch.h
-    ../../../Source/Common/pch_common.h
-    ../../../Source/Common/pal_internal.h
-    ../../../Source/Common/ResultMacros.h
-    ../../../Source/Common/uri.cpp
-    ../../../Source/Common/uri.h
-    ../../../Source/Common/utils.cpp
-    ../../../Source/Common/utils.h
+set(GDK_WebSocket_Source_Files
+    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
     )
 
 set(Common_Windows_Source_Files
     ../../../Source/Common/Win/utils_win.cpp
     ../../../Source/Common/Win/utils_win.h
-    )
-
-set(Common_Android_Source_Files
-    ../../../Source/Common/Android/utils_android.cpp
-    ../../../Source/Common/Android/utils_android.h
-    )
-
-set(HTTP_Source_Files
-    ../../../Source/HTTP/httpcall.cpp
-    ../../../Source/HTTP/httpcall.h
-    ../../../Source/HTTP/httpcall_request.cpp
-    ../../../Source/HTTP/httpcall_response.cpp
     )
 
 set(Unittest_HTTP_Source_Files
@@ -198,14 +121,6 @@ set(WinHttp_HTTP_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_http_task.h
     )
 
-set(Android_HTTP_Source_Files
-   ../../../Source/HTTP/Android/http_android.cpp
-   ../../../Source/HTTP/Android/android_http_request.cpp
-   ../../../Source/HTTP/Android/android_http_request.h
-   ../../../Source/HTTP/Android/android_platform_context.cpp
-   ../../../Source/HTTP/Android/android_platform_context.h
-   )
-
 set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_buffer.cpp
     ../../../Source/HTTP/XMLHttp/http_buffer.h
@@ -219,19 +134,9 @@ set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
 
-set(Logger_Source_Files
-    ../../../Source/Logger/trace.cpp
-    ../../../Source/Logger/trace_internal.h
-    ../../../Source/Logger/log_publics.cpp
-    )
-
 set(Windows_Logger_Source_Files
    ../../../Source/Logger/Win/win_logger.cpp
    )
-
-set(Android_Logger_Source_Files
-    ../../../Source/Logger/Android/android_logger.cpp
-    )
 
 set(UnitTests_Source_Files_Support
     ../../../Tests/UnitTests/Support/DefineTestMacros.h
@@ -263,12 +168,24 @@ set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 
+include(GetCommonHCSourceFiles.cmake)
+get_common_hc_source_files(
+    Public_Source_Files
+    Common_Source_Files
+    Global_Source_Files
+    WebSocket_Source_Files
+    Task_Source_Files
+    Mock_Source_Files
+    HTTP_Source_Files
+    Logger_Source_Files
+    "../../.."
+    )
+
 message(STATUS "Common source group")
 source_group("Header Files" FILES ${Public_Source_Files})
 source_group("C++ Source\\Common" FILES ${Common_Source_Files})
 source_group("C++ Source\\Global" FILES ${Global_Source_Files})
 source_group("C++ Source\\WebSocket" FILES ${WebSocket_Source_Files})
-source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 source_group("C++ Source\\Mock" FILES ${Mock_Source_Files})
 source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
 source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
@@ -278,7 +195,6 @@ set( SOURCE_FILES
     ${Common_Source_Files}
     ${Global_Source_Files}
     ${WebSocket_Source_Files}
-    ${Task_Source_Files}
     ${Mock_Source_Files}
     ${HTTP_Source_Files}
     ${Logger_Source_Files}
@@ -295,6 +211,7 @@ if( UNITTEST )
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${Task_Windows_Source_Files}
@@ -302,6 +219,7 @@ if( UNITTEST )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Unittest_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -312,6 +230,7 @@ if( UWP )
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -320,6 +239,7 @@ if( UWP )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -329,6 +249,7 @@ if( XDK )
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -337,6 +258,7 @@ if( XDK )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -346,6 +268,7 @@ if( BUILDWIN32 )
     source_group("C++ Source\\WebSocket\\Win" FILES ${Win32_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -354,15 +277,27 @@ if( BUILDWIN32 )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Win32_WebSocket_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
 if( BUILDANDROID )
+    include(GetAndroidHCSourceFiles.cmake)
+    get_android_hc_source_files(
+        Common_Android_Source_Files
+        Android_WebSocket_Source_Files
+        Task_Android_Source_Files
+        Android_HTTP_Source_Files
+        Android_Logger_Source_Files
+        "../../.."
+        )
+
     source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
     source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
     source_group("C++ Source\\Common\\Android" FILES ${Common_Android_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
 
     list(APPEND
         SOURCE_FILES
@@ -371,6 +306,23 @@ if( BUILDANDROID )
         ${Android_Logger_Source_Files}
         ${Android_WebSocket_Source_Files}
         ${Common_Android_Source_Files}
+        ${Task_Source_Files}
+        )
+endif()
+
+if( GDK )
+    message(STATUS "GDK source group")
+    source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
+    source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
+    source_group("C++ Source\\WebSocket\\Win" FILES ${GDK_WebSocket_Source_Files})
+    source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
+
+    list(APPEND
+        SOURCE_FILES
+        ${WinHttp_HTTP_Source_Files}
+        ${Common_Windows_Source_Files}
+        ${Windows_Logger_Source_Files}
+        ${GDK_WebSocket_Source_Files}
         )
 endif()
 
@@ -379,11 +331,13 @@ if( TAEF )
     source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
     source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
     source_group("C++ Source\\UnitTests\\Support" FILES ${Taef_UnitTests_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${Taef_UnitTests_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 
@@ -392,11 +346,13 @@ if( TE )
     source_group("C++ Source\\UnitTests\\Support" FILES ${UnitTests_Source_Files_Support})
     source_group("C++ Source\\UnitTests\\Tests" FILES ${UnitTests_Source_Files_Tests})
     source_group("C++ Source\\UnitTests\\Support" FILES ${TE_UnitTests_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${UnitTests_Source_Files_Support}
         ${UnitTests_Source_Files_Tests}
         ${TE_UnitTests_Source_Files}
+        ${Task_Source_Files}
         )
 endif()
 

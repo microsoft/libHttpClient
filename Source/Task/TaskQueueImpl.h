@@ -202,6 +202,12 @@ public:
 
     bool __stdcall IsEmpty();
 
+    HRESULT __stdcall SuspendTermination(
+        _In_ ITaskQueuePortContext* portContext);
+
+    void __stdcall ResumeTermination(
+        _In_ ITaskQueuePortContext* portContext);
+
 private:
 
     struct WaitRegistration;
@@ -246,6 +252,7 @@ private:
     std::unique_ptr<LocklessQueue<QueueEntry>> m_queueList;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
     std::unique_ptr<LocklessQueue<TerminationEntry*>> m_terminationList;
+    std::unique_ptr<LocklessQueue<TerminationEntry*>> m_pendingTerminationList;
     OS::WaitTimer m_timer;
     OS::ThreadPool m_threadPool;
     std::atomic<uint64_t> m_timerDue = { UINT64_MAX };
@@ -285,6 +292,7 @@ private:
     void SubmitPendingCallback();
 
     void SignalTerminations();
+    void ScheduleTermination(_In_ TerminationEntry* term);
 
     void SignalQueue();
 
@@ -339,6 +347,9 @@ public:
 
     void __stdcall ItemQueued() override;
 
+    bool __stdcall AddSuspend() override;
+    bool __stdcall RemoveSuspend() override;
+
     referenced_ptr<ITaskQueuePort> Port;
     referenced_ptr<ITaskQueue> Source;
 
@@ -348,6 +359,7 @@ private:
     XTaskQueuePort m_type = XTaskQueuePort::Work;
     SubmitCallback* m_submitCallback = nullptr;
     std::atomic<TaskQueuePortStatus> m_status = { TaskQueuePortStatus::Active };
+    std::atomic<uint32_t> m_suspendCount = { 0 };
 };
 
 class TaskQueueImpl : public Api<ApiId::TaskQueue, ITaskQueue>

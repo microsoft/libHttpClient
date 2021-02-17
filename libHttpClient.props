@@ -15,20 +15,20 @@
       UWP
       Win32
       XDK
-      GSDK
+      GDK
     -->
 
   <PropertyGroup Condition="'$(HCLibPlatformType)' == ''">
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Windows Store'">UWP</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'=='Durango'">XDK</HCLibPlatformType>
-    <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND ('$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64')">GSDK</HCLibPlatformType>
+    <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND ('$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64')">GDK</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango' AND '$(Platform)'!='Gaming.Desktop.x64' AND '$(Platform)'!='Gaming.Xbox.XboxOne.x64' AND '$(Platform)'!='Gaming.Xbox.Scarlett.x64'">Win32</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Android'">Android</HCLibPlatformType>
   </PropertyGroup>
 
   <PropertyGroup>
     <!-- Back compat reasons -->
-    <HCLibPlatformType Condition="'$(HCLibPlatformType)'=='GDK' OR '$(HCLibPlatformType)'=='GXDK'">GSDK</HCLibPlatformType>
+    <HCLibPlatformType Condition="'$(HCLibPlatformType)'=='GSDK' OR '$(HCLibPlatformType)'=='GXDK'">GDK</HCLibPlatformType>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -71,11 +71,14 @@
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' and $(HCLibToolset)==142">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==140">{1B0DFB7F-2CD5-48DE-80D4-5CC56C22AEEE}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==141">{30753B00-85F9-43E0-B0E0-A5A5F3E4B62A}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==142">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==142">{09B1A97C-FADC-4E06-B962-7C8AE6EA19A3}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==140">{D0A538D3-F4B6-4197-8E72-A02726B4DF50}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==141">{57C681F7-280F-45B8-9FA9-D556C24F2053}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==142">{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Android' and $(HCLibToolset)==141">{5e0ce391-1ac5-4930-921e-2577a4b5c530}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Android' and $(HCLibToolset)==142">{80FE2440-4F89-4A47-88C6-E86447BC2319}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and $(HCLibToolset)==141">{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and $(HCLibToolset)==142">{80D8061D-BBEF-414D-8F08-4D8B52C02E85}</Project>
     </ProjectReference>
   </ItemGroup>
 

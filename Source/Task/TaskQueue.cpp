@@ -271,6 +271,9 @@ HRESULT TaskQueuePortImpl::Initialize(
     m_terminationList.reset(new (std::nothrow) LocklessQueue<TerminationEntry*>(0));
     RETURN_IF_NULL_ALLOC(m_terminationList);
 
+    m_pendingTerminationList.reset(new (std::nothrow) LocklessQueue<TerminationEntry*>(*m_terminationList.get()));
+    RETURN_IF_NULL_ALLOC(m_pendingTerminationList);
+
     RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
     {
         TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
@@ -473,6 +476,7 @@ HRESULT __stdcall TaskQueuePortImpl::PrepareTerminate(
     _Out_ void** token)
 {
     RETURN_HR_IF(E_POINTER, token == nullptr);
+    RETURN_HR_IF(E_INVALIDARG, callback == nullptr);
 
     std::unique_ptr<TerminationEntry> term(new (std::nothrow) TerminationEntry);
     RETURN_IF_NULL_ALLOC(term);
@@ -509,45 +513,29 @@ void __stdcall TaskQueuePortImpl::Terminate(
     _In_ void* token)
 {
     TerminationEntry* term = static_cast<TerminationEntry*>(token);
-    
-    CancelPendingEntries(term->portContext, true);
+    referenced_ptr<ITaskQueuePortContext> cxt(term->portContext);
 
-    // Insert the termination callback into the queue.  Even if the
-    // main queue is empty, we still signal it and run through
-    // a cycle.  This ensures we flush the queue out with no 
-    // races and that the termination callback happens on the right
-    // thread.
+    // Prevent anything else from coming into the queue
+    cxt->SetStatus(TaskQueuePortStatus::Terminated);
 
-    if (term->callback != nullptr)
+    CancelPendingEntries(cxt.get(), true);
+
+    // Are there existing suspends?  AddSuspend returns
+    // true if this is the first suspend added.
+    if (cxt->AddSuspend())
     {
-        // This never fails because we preallocate the
-        // list node.
-        m_terminationList->push_back(term, term->node);
-        term->node = 0; // now owned by the list
+        ScheduleTermination(term);
+    }
+    else
+    {
+        m_pendingTerminationList->push_back(term, term->node);
+        term->node = 0;
     }
 
-    // We will not signal until we are marked as terminated. The queue could
-    // still be moving while we are running this terminate call.
-
-    term->portContext->SetStatus(TaskQueuePortStatus::Terminated);
-    SignalQueue();
-
-    // We must ensure we poke the queue threads in case there's
-    // nothing submitted
-    switch (m_dispatchMode)
-    {
-    case XTaskQueueDispatchMode::SerializedThreadPool:
-    case XTaskQueueDispatchMode::ThreadPool:
-        m_threadPool.Submit();
-        break;
-
-    case XTaskQueueDispatchMode::Immediate:
-        DrainOneItem();
-        break;
-
-    default:
-        break;
-    }
+    // Balance our add.  Note we must use ResumeTermination
+    // here so we schedule the termination if this is the
+    // last remove.
+    ResumeTermination(cxt.get());
 }
 
 HRESULT __stdcall TaskQueuePortImpl::Attach(
@@ -683,6 +671,47 @@ bool __stdcall TaskQueuePortImpl::IsEmpty()
     return empty;
 }
 
+HRESULT __stdcall TaskQueuePortImpl::SuspendTermination(
+    _In_ ITaskQueuePortContext* portContext
+    )
+{
+    // This is necessary to ensure there is no race.
+    portContext->AddSuspend();
+    HRESULT hr = VerifyNotTerminated(portContext);
+    
+    if (FAILED(hr))
+    {
+        portContext->RemoveSuspend();
+        RETURN_HR(hr);
+    }
+
+    return S_OK;
+}
+
+void __stdcall TaskQueuePortImpl::ResumeTermination(
+    _In_ ITaskQueuePortContext* portContext)
+{
+    if (portContext->RemoveSuspend())
+    {
+        // Removed the last external callback.  Look for
+        // parked terminations and reschedule them.
+
+        m_pendingTerminationList->remove_if([&](auto& entry, auto address)
+        {
+            if (entry->portContext == portContext)
+            {
+                // This entry is for the port that's resuming,
+                // we can schedule it.
+                entry->node = address;
+                ScheduleTermination(entry);
+                return true;
+            }
+
+            return false;
+        });
+    }
+}
+
 HRESULT TaskQueuePortImpl::VerifyNotTerminated(
     _In_ ITaskQueuePortContext* portContext)
 {
@@ -759,37 +788,23 @@ void TaskQueuePortImpl::CancelPendingEntries(
     
     m_timer.Cancel();
     m_timerDue = UINT64_MAX;
-    
-    QueueEntry queueEntry;
-    uint64_t queueEntryNode;
-    uint64_t initialPushedId = UINT64_MAX;
 
-    while(m_pendingList->pop_front(queueEntry, queueEntryNode))
+    m_pendingList->remove_if([&](auto& entry, auto address)
     {
-        if (queueEntry.id == initialPushedId)
+        if (entry.portContext == portContext)
         {
-            m_pendingList->push_back(queueEntry, queueEntryNode);
-            break;
+            if (!appendToQueue || !AppendEntry(entry, address))
+            {
+                entry.portContext->Release();
+                m_pendingList->free_node(address);
+            }
+
+            return true;
         }
 
-        if (queueEntry.portContext == portContext)
-        {
-            if (!appendToQueue || !AppendEntry(queueEntry, queueEntryNode))
-            {
-                queueEntry.portContext->Release();
-                m_pendingList->free_node(queueEntryNode);
-            }
-        }
-        else
-        {
-            if (initialPushedId == UINT64_MAX)
-            {
-                 initialPushedId = queueEntry.id;
-            }
-            m_pendingList->push_back(queueEntry, queueEntryNode);
-        }
-    }
-    
+        return false;
+    });
+
     SubmitPendingCallback();
     
 #ifdef _WIN32
@@ -847,40 +862,23 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
 
     dueEntryNode = 0;
 
-    // We pop items off the pending list till it is empty, looking for 
-    // our due time.  We can do this without a lock because we only call
-    // this once the timer has come due, so there will be nothing else competing
-    // and messing with this list.  We must not rely on a lock here because 
-    // we need to allow QueueItem to remain lock free.
-
-    LocklessQueue<QueueEntry> pendingList(*(m_pendingList.get()));
-    uint64_t node;
-    QueueEntry entry;
-
-    while (m_pendingList->pop_front(entry, node))
+    m_pendingList->remove_if([&](auto& entry, auto address)
     {
         if (!hasDueEntry && entry.enqueueTime == dueTime)
         {
             dueEntry = entry;
-            dueEntryNode = node;
+            dueEntryNode = address;
             hasDueEntry = true;
+            return true;
         }
         else if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
         {
             nextItem = entry;
             hasNextItem = true;
-            pendingList.push_back(entry, node);
         }
-        else
-        {
-            pendingList.push_back(entry, node);
-        }
-    }
 
-    while (pendingList.pop_front(entry, node))
-    {
-        m_pendingList->push_back(entry, node);
-    }
+        return false;
+    });
 
     if (hasNextItem)
     {
@@ -961,32 +959,60 @@ void TaskQueuePortImpl::SignalQueue()
 
 void TaskQueuePortImpl::SignalTerminations()
 {
-    uint64_t termNode;
-    TerminationEntry* term;
-    TerminationEntry* initialPushBackNode = nullptr;
-    
-    while(m_terminationList->pop_front(term, termNode))
+    m_terminationList->remove_if([this](auto& entry, auto address)
     {
-        if (term == initialPushBackNode)
+        if (entry->portContext->GetStatus() == TaskQueuePortStatus::Terminated)
         {
-            m_terminationList->push_back(term, termNode);
-            break;
+            entry->callback(entry->callbackContext);
+            m_terminationList->free_node(address);
+            delete entry;
+            return true;
         }
-        
-        if (term->portContext->GetStatus() == TaskQueuePortStatus::Terminated)
-        {
-            term->callback(term->callbackContext);
-            delete term;
-            m_terminationList->free_node(termNode);
-        }
-        else
-        {
-            if (initialPushBackNode == nullptr)
-            {
-                initialPushBackNode = term;
-            }
-            m_terminationList->push_back(term, termNode);
-        }
+
+        return false;
+    });
+}
+
+void TaskQueuePortImpl::ScheduleTermination(
+    _In_ TerminationEntry* term)
+{
+    // Insert the termination callback into the queue.  Even if the
+    // main queue is empty, we still signal it and run through
+    // a cycle.  This ensures we flush the queue out with no 
+    // races and that the termination callback happens on the right
+    // thread.
+
+    // This never fails because we preallocate the
+    // list node.
+    m_terminationList->push_back(term, term->node);
+    term->node = 0; // now owned by the list
+
+    // We will not signal until we are marked as terminated. The queue could
+    // still be moving while we are running this terminate call.
+
+    SignalQueue();
+
+    // We must ensure we poke the queue threads in case there's
+    // nothing submitted
+    switch (m_dispatchMode)
+    {
+    case XTaskQueueDispatchMode::SerializedThreadPool:
+    case XTaskQueueDispatchMode::ThreadPool:
+        m_threadPool.Submit();
+        break;
+
+    default:
+        break;
+    }
+
+    m_attachedContexts.Visit([](ITaskQueuePortContext* portContext)
+    {
+        portContext->ItemQueued();
+    });
+    
+    if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
+    {
+        DrainOneItem();
     }
 }
 
@@ -1160,6 +1186,34 @@ void __stdcall TaskQueuePortContextImpl::ItemQueued()
     m_submitCallback->Invoke(m_type);
 }
 
+bool __stdcall TaskQueuePortContextImpl::AddSuspend()
+{
+    return (m_suspendCount.fetch_add(1) == 0);
+}
+
+bool __stdcall TaskQueuePortContextImpl::RemoveSuspend()
+{
+    for(;;)
+    {
+        uint32_t current = m_suspendCount.load();
+
+        // These should always be balanced and there is no
+        // valid case where this should happen, even
+        // for multiple threads racing.
+
+        if (current == 0)
+        {
+            ASSERT(false);
+            return true;
+        }
+
+        if (m_suspendCount.compare_exchange_weak(current, current -1))
+        {
+            return current == 1;
+        }
+    }
+}
+
 //
 // TaskQueueImpl
 //
@@ -1180,6 +1234,9 @@ TaskQueueImpl::TaskQueueImpl() :
 
 TaskQueueImpl::~TaskQueueImpl()
 {
+    // Zero the header so we get an early warning of using
+    // a released object.
+    m_header = {};
 }
 
 HRESULT TaskQueueImpl::Initialize(
@@ -1407,8 +1464,11 @@ void TaskQueueImpl::OnTerminationCallback(_In_ void* context)
                 entry->callback(entry->context);
             }
 
-            entry->owner->m_termination.terminated = true;
-            entry->owner->m_termination.cv.notify_all();
+            {
+                std::unique_lock<std::mutex> lock(entry->owner->m_termination.lock);
+                entry->owner->m_termination.terminated = true;
+                entry->owner->m_termination.cv.notify_all();
+            }
 
             entry->owner->Release();
             delete entry;
@@ -1613,7 +1673,8 @@ STDAPI XTaskQueueSubmitDelayedCallback(
     referenced_ptr<ITaskQueuePortContext> portContext;
     RETURN_IF_FAILED(aq->GetPortContext(port, portContext.address_of()));
 
-    RETURN_HR(portContext->GetPort()->QueueItem(portContext.get(), delayMs, callbackContext, callback));
+    RETURN_IF_FAILED(portContext->GetPort()->QueueItem(portContext.get(), delayMs, callbackContext, callback));
+    return S_OK;
 }
 
 //
@@ -1691,7 +1752,8 @@ STDAPI XTaskQueueRegisterMonitor(
 {
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
-    RETURN_HR(aq->RegisterSubmitCallback(callbackContext, callback, token));
+    RETURN_IF_FAILED(aq->RegisterSubmitCallback(callbackContext, callback, token));
+    return S_OK;
 }
 
 //
@@ -1794,4 +1856,46 @@ STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
     {
         XTaskQueueCloseHandle(previous);
     }
+}
+
+//
+// Submits a callback that will be invoked asynchronously via some external
+// system.  This is used to prevent queue termination while other work
+// is happening.
+//
+STDAPI XTaskQueueSuspendTermination(
+    _In_ XTaskQueueHandle queue
+    ) noexcept
+{
+    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
+    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
+
+    referenced_ptr<ITaskQueuePortContext> portContext;
+    RETURN_IF_FAILED(aq->GetPortContext(XTaskQueuePort::Work, portContext.address_of()));
+
+    RETURN_IF_FAILED(portContext->GetPort()->SuspendTermination(portContext.get()));
+    return S_OK;
+}
+
+//
+// Tells the queue that a previously submitted external callback
+// has been dispatched.
+//
+STDAPI_(void) XTaskQueueResumeTermination(
+    _In_ XTaskQueueHandle queue
+    ) noexcept
+{
+    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
+    if (aq == nullptr)
+    {
+        return;
+    }
+    
+    referenced_ptr<ITaskQueuePortContext> portContext;
+    if (FAILED(aq->GetPortContext(XTaskQueuePort::Work, portContext.address_of())))
+    {
+        return;
+    }
+        
+    portContext->GetPort()->ResumeTermination(portContext.get());
 }

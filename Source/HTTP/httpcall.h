@@ -36,6 +36,9 @@ struct HC_CALL
 
     uint64_t id = 0;
     bool traceCall = true;
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+    bool sslValidation = true;
+#endif
     void* context = nullptr;
     std::atomic<int> refCount;
 
@@ -61,7 +64,7 @@ struct HttpPerformInfo
 
 struct PerformEnvDeleter
 {
-    void operator()(HC_PERFORM_ENV* performEnv) noexcept;
+    void operator()(typename std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::pointer p) noexcept;
 };
 
 using PerformEnv = std::unique_ptr<HC_PERFORM_ENV, PerformEnvDeleter>;

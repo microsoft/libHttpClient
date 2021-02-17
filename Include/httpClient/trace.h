@@ -109,54 +109,54 @@ extern "C"
 
 
 /// <summary>
-/// Diagnostic level used by tracing
+/// Diagnostic level used by tracing.
 /// </summary>
 enum class HCTraceLevel : uint32_t
 {
     /// <summary>
-    /// No tracing
+    /// No tracing.
     /// </summary>
     Off = HC_PRIVATE_TRACE_LEVEL_OFF,
 
     /// <summary>
-    /// Trace only errors
+    /// Trace only errors.
     /// </summary>
     Error = HC_PRIVATE_TRACE_LEVEL_ERROR,
 
     /// <summary>
-    /// Trace warnings and errors
+    /// Trace warnings and errors.
     /// </summary>
     Warning = HC_PRIVATE_TRACE_LEVEL_WARNING,
 
     /// <summary>
-    /// Trace important, warnings and errors
+    /// Trace important, warnings and errors.
     /// </summary>
     Important = HC_PRIVATE_TRACE_LEVEL_IMPORTANT,
 
     /// <summary>
-    /// Trace info, important, warnings and errors
+    /// Trace info, important, warnings and errors.
     /// </summary>
     Information = HC_PRIVATE_TRACE_LEVEL_INFORMATION,
 
     /// <summary>
-    /// Trace everything
+    /// Trace everything.
     /// </summary>
     Verbose = HC_PRIVATE_TRACE_LEVEL_VERBOSE,
 };
 
 /// <summary>
-/// Sets the trace level for the library.  Traces are sent the debug output
+/// Sets the trace level for the library.  Traces are sent the debug output.
 /// </summary>
-/// <param name="traceLevel">Trace level</param>
+/// <param name="traceLevel">Trace level.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCSettingsSetTraceLevel(
     _In_ HCTraceLevel traceLevel
     ) noexcept;
 
 /// <summary>
-/// Gets the trace level for the library
+/// Gets the trace level for the library.
 /// </summary>
-/// <param name="traceLevel">Trace level</param>
+/// <param name="traceLevel">Trace level.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCSettingsGetTraceLevel(
     _Out_ HCTraceLevel* traceLevel
@@ -175,9 +175,9 @@ typedef void (CALLBACK HCTraceCallback)(
     );
 
 /// <summary>
-/// Set client callback for tracing 
+/// Set client callback for tracing.
 /// </summary>
-/// <param name="callback">Trace callback</param>
+/// <param name="callback">Trace callback.</param>
 /// <returns></returns>
 STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
 
@@ -324,12 +324,12 @@ typedef struct HCTraceImplArea
 } HCTraceImplArea;
 
 /// <summary>
-/// Set the verbosity level of an trace area. This should be accessed through macros, such as 
-/// HC_TRACE_SET_VERBOSITY, rather than called directly.
+/// Set the verbosity level of an trace area. 
 /// </summary>
 /// <param name="area">The trace area.</param>
 /// <param name="verbosity">The verbosity level.</param>
-/// <returns></returns>
+/// <remarks></remarks>
+/// <returns>This should be accessed through macros, such as HC_TRACE_SET_VERBOSITY, rather than called directly.</returns>
 EXTERN_C inline
 void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     struct HCTraceImplArea* area,
@@ -340,11 +340,11 @@ void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
 }
 
 /// <summary>
-/// Get the trace verbosity level of an trace area. This should be accessed through macros, such as 
-/// HC_TRACE_GET_VERBOSITY, rather than called directly.
+/// Get the trace verbosity level of an trace area.
 /// </summary>
 /// <param name="area">The trace area.</param>
 /// <returns>The verbosity level of the area.</returns>
+/// <remarks>This should be accessed through macros, such as HC_TRACE_GET_VERBOSITY, rather than called directly.</remarks>
 EXTERN_C inline
 HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea* area) noexcept
 {
@@ -352,13 +352,13 @@ HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea*
 }
 
 /// <summary>
-/// Send a trace message. This should be accessed through macros, such as HC_TRACE_MESSAGE, 
-/// rather than called directly.
+/// Send a trace message.
 /// </summary>
 /// <param name="area">The trace area.</param>
 /// <param name="level">The trace level.</param>
 /// <param name="format">The message format and arguments.</param>
 /// <returns></returns>
+/// <remarks>This should be accessed through macros, such as HC_TRACE_MESSAGE, rather than called directly.</remarks>
 STDAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     HCTraceLevel level,

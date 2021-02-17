@@ -5,6 +5,7 @@ _HCMemSetFunctions
 _HCMemGetFunctions
 _HCInitialize
 _HCCleanup
+_HCCleanupAsync
 _HCGetLibVersion
 _HCAddCallRoutedHandler
 _HCRemoveCallRoutedHandler
@@ -34,7 +35,6 @@ _HCHttpCallResponseGetHeader
 _HCHttpCallResponseGetNumHeaders
 _HCHttpCallResponseGetHeaderAtIndex
 
-#if !HC_NOWEBSOCKETS
 _HCWebSocketCreate
 _HCWebSocketSetProxyUri
 _HCWebSocketSetHeader
@@ -47,7 +47,6 @@ _HCGetWebSocketSendMessageResult
 _HCWebSocketDisconnect
 _HCWebSocketDuplicateHandle
 _HCWebSocketCloseHandle
-#endif
 
 #
 # httpProvider.h
@@ -75,14 +74,12 @@ _HCHttpCallResponseSetPlatformNetworkErrorMessage
 _HCHttpCallResponseSetHeader
 _HCHttpCallResponseSetHeaderWithLength
 
-#if !HC_NOWEBSOCKETS
 _HCSetWebSocketFunctions
 _HCGetWebSocketFunctions
 _HCWebSocketGetProxyUri
 _HCWebSocketGetHeader
 _HCWebSocketGetNumHeaders
 _HCWebSocketGetHeaderAtIndex
-#endif
 
 #
 # mock.h
@@ -90,6 +87,7 @@ _HCWebSocketGetHeaderAtIndex
 _HCMockCallCreate
 _HCMockAddMock
 _HCMockClearMocks
+_HCMockRemoveMock
 _HCMockResponseSetResponseBodyBytes
 _HCMockResponseSetStatusCode
 _HCMockResponseSetNetworkErrorCode

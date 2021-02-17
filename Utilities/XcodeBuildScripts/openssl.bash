@@ -3,8 +3,13 @@ set | grep ARCH
 set -x
 
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
-OPENSSL_TMP="$OPENSSL_SRC/tmp"
-LIB_OUTPUT="${SCRIPT_INPUT_FILE_0}"
+OPENSSL_TMP="$OPENSSL_TMP_DIR"
+LIB_OUTPUT="$OPENSSL_LIB_OUTPUT"
+
+if [ "$OPENSSL_TMP" == "" ]; then
+echo "***** No tmp build directory specified - bailing out *****"
+exit 1
+fi
 
 if [ "$LIB_OUTPUT" == "" ]; then
 echo "***** No library output directory specified - bailing out *****"
@@ -80,8 +85,8 @@ export CC="${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}"
 ./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
 fi
 
-# installs openssl for this flavor
-make install
+# installs openssl (just the software components, no docs/manpages) for this flavor
+make install_sw
 
 echo "***** renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a *****"
 cp "$OPENSSL_TMP"/lib/libcrypto.a "$CONFIGURATION_TEMP_DIR"/$BUILDARCH-libcrypto.a

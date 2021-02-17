@@ -22,7 +22,7 @@ try
     if (call->responseString.empty())
     {
         call->responseString = http_internal_string(reinterpret_cast<char const*>(call->responseBodyBytes.data()), call->responseBodyBytes.size());
-        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseGetResponseString [ID %llu]: responseString=%.2048s", call->id, call->responseString.c_str()); }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseGetResponseString [ID %llu]: responseString=%.2048s", TO_ULL(call->id), call->responseString.c_str()); }
     }
     *responseString = call->responseString.c_str();
     return S_OK;
@@ -88,7 +88,7 @@ try
     call->responseBodyBytes.assign(bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%llu", call->id, bodySize); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%zu", TO_ULL(call->id), bodySize); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -109,7 +109,7 @@ try
     call->responseBodyBytes.insert(call->responseBodyBytes.end(), bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%llu (total=%llu)", call->id, bodySize, call->responseBodyBytes.size()); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%zu (total=%llu)", TO_ULL(call->id), bodySize, call->responseBodyBytes.size()); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -144,7 +144,7 @@ try
     }
 
     call->statusCode = statusCode;
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetStatusCode [ID %llu]: statusCode=%u", call->id, statusCode); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetStatusCode [ID %llu]: statusCode=%u", TO_ULL(call->id), statusCode); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -183,7 +183,7 @@ try
 
     call->networkErrorCode = networkErrorCode;
     call->platformNetworkErrorCode = platformNetworkErrorCode;
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorCode [ID %llu]: errorCode=%08X (%08X)", call->id, networkErrorCode, platformNetworkErrorCode); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorCode [ID %llu]: errorCode=%08X (%08X)", TO_ULL(call->id), networkErrorCode, platformNetworkErrorCode); }
     return S_OK;
 }
 CATCH_RETURN()
@@ -222,7 +222,7 @@ try
     {
         HC_TRACE_INFORMATION(HTTPCLIENT,
             "HCHttpCallResponseSetErrorMessage [ID %llu]: errorMessage=%s",
-            call->id,
+            TO_ULL(call->id),
             platformNetworkErrorMessage);
     }
     return S_OK;
@@ -350,13 +350,13 @@ try
         newHeaderValue.append(", ");
         newHeaderValue.append(headerValue, headerValue + valueSize);
 
-        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: Duplicated header %s=%s", call->id, name.c_str(), newHeaderValue.c_str()); }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: Duplicated header %s=%s", TO_ULL(call->id), name.c_str(), newHeaderValue.c_str()); }
     }
     else
     {
         http_internal_string value{ headerValue, headerValue + valueSize };
 
-        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %s=%s", call->id, name.c_str(), value.c_str()); }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseHeader [ID %llu]: %s=%s", TO_ULL(call->id), name.c_str(), value.c_str()); }
 
         call->responseHeaders[name] = std::move(value);
     }

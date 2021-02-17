@@ -1,0 +1,23 @@
+if (!project.ext."libhc_common_android_config_applied") {
+    throw new GradleException("Expected common configuration not applied")
+}
+
+apply plugin: "com.android.library"
+
+android {
+    externalNativeBuild {
+        cmake {
+            path "../../Utilities/Cmake/Android/openssl/libcrypto/CMakeLists.txt"
+        }
+    }
+
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                // externalNativeBuild normally skips static
+                // lib targets. This forces it to build.
+                targets "libcrypto.Android"
+            }
+        }
+    }
+}

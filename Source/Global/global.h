@@ -16,21 +16,22 @@ namespace log
 
 typedef struct http_retry_after_api_state
 {
-    http_retry_after_api_state() : statusCode(0)
-    {
-    }
+    http_retry_after_api_state() = default;
 
     http_retry_after_api_state(
         _In_ const chrono_clock_t::time_point& _retryAfterTime,
-        _In_ uint32_t _statusCode
-        ) :
+        _In_ uint32_t _statusCode,
+        _In_ bool _callPending
+    ) :
         retryAfterTime(_retryAfterTime),
-        statusCode(_statusCode)
+        statusCode(_statusCode),
+        callPending(_callPending)
     {
     }
 
-    chrono_clock_t::time_point retryAfterTime;
-    uint32_t statusCode;
+    chrono_clock_t::time_point retryAfterTime{};
+    uint32_t statusCode{ 0 };
+    bool callPending{ false };
 } http_retry_after_api_state;
 
 static const uint32_t DEFAULT_TIMEOUT_WINDOW_IN_SECONDS = 20;
@@ -51,7 +52,7 @@ public:
     std::recursive_mutex m_singletonLock;
 
     std::recursive_mutex m_retryAfterCacheLock;
-    std::unordered_map<uint32_t, http_retry_after_api_state> m_retryAfterCache;
+    http_internal_unordered_map<uint32_t, http_retry_after_api_state> m_retryAfterCache;
     void set_retry_state(_In_ uint32_t retryAfterCacheId, _In_ const http_retry_after_api_state& state);
     http_retry_after_api_state get_retry_state(_In_ uint32_t retryAfterCacheId);
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
@@ -75,7 +76,7 @@ public:
     uint32_t m_timeoutWindowInSeconds = DEFAULT_TIMEOUT_WINDOW_IN_SECONDS;
     uint32_t m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
 
-#if HC_PLATFORM == HC_PLATFORM_GSDK
+#if HC_PLATFORM == HC_PLATFORM_GDK
     bool m_networkInitialized{ true };
     HMODULE m_networkModule{ nullptr };
 #endif
@@ -91,7 +92,6 @@ public:
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
-private:
     http_singleton(
         HttpPerformInfo const& httpPerformInfo,
 #if !HC_NOWEBSOCKETS
@@ -100,6 +100,7 @@ private:
         PerformEnv&& performEnv
     );
 
+private:
     enum class singleton_access_mode
     {
         create,

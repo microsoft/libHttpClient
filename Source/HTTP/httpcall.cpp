@@ -14,7 +14,6 @@ const int MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS = 10000;
     const int MIN_HTTP_TIMEOUT_IN_MS = 5000;
 #endif
 const double MAX_DELAY_TIME_IN_SEC = 60.0;
-const int RETRY_AFTER_CAP_IN_SEC = 15;
 #define RETRY_AFTER_HEADER ("Retry-After")
 
 HC_CALL::~HC_CALL()
@@ -49,7 +48,7 @@ try
     call->retryIterationNumber = 0;
     call->id = ++httpSingleton->m_lastId;
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCreate [ID %llu]", TO_ULL(call->id));
 
     *callHandle = call;
     return S_OK;
@@ -66,7 +65,7 @@ try
         return nullptr;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallDuplicateHandle [ID %llu]", static_cast<HC_CALL*>(call)->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallDuplicateHandle [ID %llu]", TO_ULL(static_cast<HC_CALL*>(call)->id));
     ++call->refCount;
 
     return call;
@@ -84,7 +83,7 @@ try
         return E_INVALIDARG;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCloseHandle [ID %llu]", call->id);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallCloseHandle [ID %llu]", TO_ULL(call->id));
     int refCount = --call->refCount;
     if (refCount <= 0)
     {
@@ -102,7 +101,7 @@ HRESULT perform_http_call(
     _Inout_ XAsyncBlock* asyncBlock
     )
 {
-    HRESULT hr = XAsyncBegin(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
+    return XAsyncBegin(asyncBlock, call, reinterpret_cast<void*>(perform_http_call), __FUNCTION__,
         [](XAsyncOp opCode, const XAsyncProviderData* data)
     {
         auto httpSingleton = get_http_singleton();
@@ -111,11 +110,19 @@ HRESULT perform_http_call(
             return E_HC_NOT_INITIALISED;
         }
 
+        HCCallHandle call = static_cast<HCCallHandle>(data->context);
+
         switch (opCode)
         {
+            case XAsyncOp::Begin:
+            {
+                uint32_t delayInMilliseconds = static_cast<uint32_t>(call->delayBeforeRetry.count());
+                HC_TRACE_VERBOSE(HTTPCLIENT, "HttpCall [ID %llu] scheduling with delay %u", call->id, delayInMilliseconds);
+                return XAsyncSchedule(data->async, delayInMilliseconds);
+            }
+
             case XAsyncOp::DoWork:
             {
-                HCCallHandle call = static_cast<HCCallHandle>(data->context);
                 bool matchedMocks = false;
 
                 matchedMocks = Mock_Internal_HCHttpCallPerformAsync(call);
@@ -134,7 +141,7 @@ HRESULT perform_http_call(
                         }
                         catch (...)
                         {
-                            if (call->traceCall) { HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", static_cast<HC_CALL*>(call)->id); }
+                            if (call->traceCall) { HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: failed", TO_ULL(static_cast<HC_CALL*>(call)->id)); }
                         }
                     }
                 }
@@ -145,14 +152,6 @@ HRESULT perform_http_call(
             default: return S_OK;
         }
     });
-
-    if (SUCCEEDED(hr))
-    {
-        uint32_t delayInMilliseconds = static_cast<uint32_t>(call->delayBeforeRetry.count());
-        hr = XAsyncSchedule(asyncBlock, delayInMilliseconds);
-    }
-
-    return hr;
 }
 
 void clear_http_call_response(_In_ HCCallHandle call)
@@ -177,13 +176,6 @@ std::chrono::seconds GetRetryAfterHeaderTime(_In_ HC_CALL* call)
 
         if (!ss.fail())
         {
-            if (value > RETRY_AFTER_CAP_IN_SEC)
-            {
-                // Cap the Retry-After header so users won't be locked out of an endpoint 
-                // for a long time the limit is hit near the end of a period
-                value = RETRY_AFTER_CAP_IN_SEC;
-            }
-
             return std::chrono::seconds(value);
         }
     }
@@ -224,7 +216,7 @@ bool http_call_should_retry(
         HCHttpCallRequestGetTimeoutWindow(call, &timeoutWindowInSeconds);
         std::chrono::seconds timeoutWindow = std::chrono::seconds(timeoutWindowInSeconds);
         std::chrono::milliseconds remainingTimeBeforeTimeout = timeoutWindow - timeElapsedSinceFirstCall;
-        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", call->id, remainingTimeBeforeTimeout.count()); }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] remainingTimeBeforeTimeout %lld ms", TO_ULL(call->id), remainingTimeBeforeTimeout.count()); }
 
         // Based on the retry iteration, delay 2,4,8,16,etc seconds by default between retries
         // Jitter the response between the current and next delay based on system clock
@@ -243,28 +235,20 @@ bool http_call_should_retry(
         std::chrono::milliseconds waitTime = std::chrono::milliseconds(static_cast<int64_t>(secondsToWait * 1000.0));
         if (retryAfter.count() > 0)
         {
-            // Use either the waitTime or Retry-After header, whichever is bigger
-            call->delayBeforeRetry = std::chrono::milliseconds(std::max(waitTime.count(), retryAfter.count()));
+            // Jitter to spread the load of Retry-After out between the devices trying to retry
+            std::chrono::milliseconds retryAfterMin = retryAfter;
+            std::chrono::milliseconds retryAfterMax = std::chrono::milliseconds(static_cast<int64_t>(retryAfter.count() * 1.2));
+            auto retryAfterDelta = retryAfterMax.count() - retryAfterMin.count();
+            std::chrono::milliseconds retryAfterJittered = std::chrono::milliseconds(static_cast<int64_t>(retryAfterMin.count() + retryAfterDelta * lerpScaler)); // lerp between min & max wait
+
+            // Use either the waitTime or the jittered Retry-After header, whichever is bigger
+            call->delayBeforeRetry = std::chrono::milliseconds(std::max(waitTime.count(), retryAfterJittered.count()));
         }
         else
         {
             call->delayBeforeRetry = waitTime;
         }
-        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %lld ms", call->id, call->delayBeforeRetry.count()); }
-
-        // Remember result if there was an error and there was a Retry-After header
-        if (call->retryAfterCacheId != 0 &&
-            retryAfter.count() > 0 &&
-            httpStatus > 400)
-        {
-            auto retryAfterTime = retryAfter + responseReceivedTime;
-            http_retry_after_api_state state(retryAfterTime, httpStatus);
-            auto httpSingleton = get_http_singleton();
-            if (httpSingleton)
-            {
-                httpSingleton->set_retry_state(call->retryAfterCacheId, state);
-            }
-        }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] delayBeforeRetry %lld ms", TO_ULL(call->id), call->delayBeforeRetry.count()); }
 
         if (httpStatus == 500) // Internal Error
         {
@@ -272,35 +256,51 @@ bool http_call_should_retry(
             if (call->delayBeforeRetry.count() < MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS)
             {
                 call->delayBeforeRetry = std::chrono::milliseconds(MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS);
+                if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] 500: delayBeforeRetry %lld ms", TO_ULL(call->id), call->delayBeforeRetry.count()); }
             }
         }
+
+        bool shouldRetry{ true };
 
         if (remainingTimeBeforeTimeout.count() <= MIN_HTTP_TIMEOUT_IN_MS) 
         {
             // Need at least 5 seconds to bother making a call
-            return false;
+            shouldRetry = false;
         }
-
-        if (remainingTimeBeforeTimeout < call->delayBeforeRetry + std::chrono::milliseconds(MIN_HTTP_TIMEOUT_IN_MS))
+        else if (remainingTimeBeforeTimeout < call->delayBeforeRetry + std::chrono::milliseconds(MIN_HTTP_TIMEOUT_IN_MS))
         {
             // Don't bother retrying when out of time
-            return false;
+            shouldRetry = false;
         }
 
-        return true;
+        // Remember result if there was an error and there was a Retry-After header
+        if (call->retryAfterCacheId != 0 &&
+            retryAfter.count() > 0 &&
+            httpStatus > 400)
+        {
+            auto retryAfterTime = retryAfter + responseReceivedTime;
+            http_retry_after_api_state state{ retryAfterTime, httpStatus, shouldRetry };
+            auto httpSingleton = get_http_singleton();
+            if (httpSingleton)
+            {
+                httpSingleton->set_retry_state(call->retryAfterCacheId, state);
+            }
+        }
+
+        return shouldRetry;
     }
 
     return false;
 }
 
 bool should_fast_fail(
-    _In_ http_retry_after_api_state apiState,
     _In_ HC_CALL* call,
     _In_ const chrono_clock_t::time_point& currentTime,
-    _Out_ bool* clearState
-    )
+    _In_ std::shared_ptr<http_singleton> state
+)
 {
-    *clearState = false;
+    std::lock_guard<std::recursive_mutex> lock(state->m_retryAfterCacheLock);
+    http_retry_after_api_state apiState = state->get_retry_state(call->retryAfterCacheId);
 
     if (apiState.statusCode < 400)
     {
@@ -310,24 +310,27 @@ bool should_fast_fail(
     std::chrono::milliseconds remainingTimeBeforeRetryAfterInMS = std::chrono::duration_cast<std::chrono::milliseconds>(apiState.retryAfterTime - currentTime);
     if (remainingTimeBeforeRetryAfterInMS.count() <= 0)
     {
-        // Only clear the API cache when Retry-After time is up
-        *clearState = true;
+        // We are outside the Retry-After window for this endpoint. Clear retry state and make HTTP call
+        state->clear_retry_state(call->retryAfterCacheId);
         return false;
     }
 
     std::chrono::seconds timeoutWindowInSeconds = std::chrono::seconds(call->timeoutWindowInSeconds);
     chrono_clock_t::time_point timeoutTime = call->firstRequestStartTime + timeoutWindowInSeconds;
-
-    // If the Retry-After will happen first, just wait till Retry-After is done, and don't fast fail
-    if (apiState.retryAfterTime < timeoutTime)
+    if (!apiState.callPending && apiState.retryAfterTime < timeoutTime)
     {
+        // Don't have multiple calls waiting for the Retry-After window for a single endpoint.
+        // This causes a flood of calls to the endpoint as soon as the Retry-After windows elapses.
+        // If the Retry-After will happen first, just wait till Retry-After is done, and don't fast fail.
         call->delayBeforeRetry = remainingTimeBeforeRetryAfterInMS;
+        apiState.callPending = true;
+
+        state->set_retry_state(call->retryAfterCacheId, apiState);
         return false;
     }
-    else
-    {
-        return true;
-    }
+
+    call->statusCode = apiState.statusCode;
+    return true;
 }
 
 
@@ -395,24 +398,13 @@ void retry_http_call_until_done(
         call->firstRequestStartTime = requestStartTime;
     }
     call->retryIterationNumber++;
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d", call->id, call->retryIterationNumber); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Iteration %d", TO_ULL(call->id), call->retryIterationNumber); }
 
-    http_retry_after_api_state apiState = httpSingleton->get_retry_state(call->retryAfterCacheId);
-    if (apiState.statusCode >= 400)
+    if (should_fast_fail(call, requestStartTime, httpSingleton))
     {
-        bool clearState = false;
-        if (should_fast_fail(apiState, call, requestStartTime, &clearState))
-        {
-            HCHttpCallResponseSetStatusCode(call, apiState.statusCode);
-            if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", call->id, apiState.statusCode); }
-            XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
-            return;
-        }
-
-        if( clearState )
-        {
-            httpSingleton->clear_retry_state(call->retryAfterCacheId);
-        }
+        if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Fast fail %d", TO_ULL(call->id), call->statusCode); }
+        XAsyncComplete(retryContext->outerAsyncBlock, S_OK, 0);
+        return;
     }
 
     auto nestedBlock = http_allocate_unique<XAsyncBlock>();
@@ -453,7 +445,7 @@ void retry_http_call_until_done(
 
             if (SUCCEEDED(callStatus) && http_call_should_retry(call, responseReceivedTime))
             {
-                if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", call->id, call->delayBeforeRetry.count()); }
+                if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerformExecute [ID %llu] Retry after %lld ms", TO_ULL(call->id), call->delayBeforeRetry.count()); }
                 clear_http_call_response(call);
                 retry_http_call_until_done(std::move(retryContext));
             }
@@ -496,7 +488,7 @@ try
         return E_INVALIDARG;
     }
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] uri: %s", call->id, call->url.c_str()); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] uri: %s", TO_ULL(call->id), call->url.c_str()); }
     call->performCalled = true;
 
     auto retryContext = http_allocate_unique<retry_context>();
@@ -635,7 +627,7 @@ bool http_header_compare::operator()(http_internal_string const& l, http_interna
     return str_icmp(l, r) < 0;
 }
 
-void PerformEnvDeleter::operator()(HC_PERFORM_ENV* performEnv) noexcept
+void PerformEnvDeleter::operator()(typename std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::pointer p) noexcept
 {
-    Internal_CleanupHttpPlatform(performEnv);
+    Internal_CleanupHttpPlatform(p);
 }
