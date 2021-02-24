@@ -4,33 +4,11 @@ if (!pluginManager.hasPlugin("com.android.base")) {
 
 android {
     compileSdkVersion 27
-    defaultConfig.targetSdkVersion 21
     ndkVersion "22.0.7026061"
 
-    flavorDimensions "default"
-
-    // We support a lower minSdkVersion for non-64 bit architectures.
-    // This allows us to break out that minimum per-ABI.
-    productFlavors {
-        arm7 {
-            minSdkVersion 19
-            ndk.abiFilters "armeabi-v7a"
-        }
-
-        x86 {
-            minSdkVersion 19
-            ndk.abiFilters "x86"
-        }
-
-        arm64 {
-            minSdkVersion 21
-            ndk.abiFilters "arm64-v8a"
-        }
-
-        x86_64 {
-            minSdkVersion 21
-            ndk.abiFilters "x86_64"
-        }
+    defaultConfig {
+        targetSdkVersion 21
+        minSdkVersion 21
     }
 
     buildTypes {
