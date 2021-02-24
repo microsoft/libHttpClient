@@ -12,30 +12,10 @@ android {
     }
 
     buildTypes {
-        debug {
-            externalNativeBuild {
-                cmake {
-                    // This is provided by default, but making it
-                    // explicit here to avoid build magic.
-                    arguments "-DCMAKE_BUILD_TYPE=Debug"
-
-                    if (project.hasProperty("HC_NOWEBSOCKETS")) {
-                        arguments << "-DHC_NOWEBSOCKETS=1"
-                    }
-                }
-            }
-        }
-
-        release {
-            externalNativeBuild {
-                cmake {
-                    // This is actually not provided by default,
-                    // so we need to set it ourselves.
-                    arguments "-DCMAKE_BUILD_TYPE=Release"
-
-                    if (project.hasProperty("HC_NOWEBSOCKETS")) {
-                        arguments << "-DHC_NOWEBSOCKETS=1"
-                    }
+        externalNativeBuild {
+            cmake {
+                if (project.hasProperty("HC_NOWEBSOCKETS")) {
+                    arguments << "-DHC_NOWEBSOCKETS=1"
                 }
             }
         }
