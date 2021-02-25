@@ -1,10 +1,32 @@
-if (!project.ext."libhc_common_android_config_applied") {
-    throw new GradleException("Expected common configuration not applied")
-}
-
 apply plugin: "com.android.library"
 
 android {
+    compileSdkVersion 27
+    ndkVersion "22.0.7026061"
+
+    defaultConfig {
+        targetSdkVersion 21
+        minSdkVersion 21
+
+        externalNativeBuild {
+            cmake {
+                if (project.hasProperty("HC_NOWEBSOCKETS")) {
+                    arguments << "-DHC_NOWEBSOCKETS=1"
+                }
+
+                // externalNativeBuild normally skips static
+                // lib targets. This forces it to build.
+                targets "libHttpClient.Android"
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "../../Utilities/CMake/Android/libHttpClient/CMakeLists.txt"
+        }
+    }
+
     compileOptions {
         sourceCompatibility=JavaVersion.VERSION_1_7
         targetCompatibility=JavaVersion.VERSION_1_7
@@ -17,44 +39,11 @@ android {
         }
     }
 
-    externalNativeBuild {
-        cmake {
-            path "../../Utilities/CMake/Android/libHttpClient/CMakeLists.txt"
-        }
-    }
-
-    defaultConfig {
-        externalNativeBuild {
-            cmake {
-                // externalNativeBuild normally skips static
-                // lib targets. This forces it to build.
-                targets "libHttpClient.Android"
-            }
-        }
-    }
-
-    // To build static libs, we generate a dummy .so - but we don't actually want to package it.
-    packagingOptions {
-        exclude "**/*.so"
-    }
-
-    // We want to copy the built Java `.aar` binary to sit next to the built native `.a` binaries.
+    // We want to copy the built Java `.aar` binary to the libHttpClient `Binaries` dir.
     libraryVariants.all { variant ->
-        def variantFlavor = variant.getFlavorName()
-        def variantAbi = "unknown"
-        if (variantFlavor == "arm7") {
-            variantAbi = "armeabi-v7a"
-        } else if (variantFlavor == "arm64") {
-            variantAbi = "arm64-v8a"
-        } else if (variantFlavor == "x86") {
-            variantAbi = "x86"
-        } else if (variantFlavor == "x86_64") {
-            variantAbi = "x86_64"
-        }
-
-        variant.outputs.each { output ->
-            output.outputFileName = "../../../../../Binaries/Android/${variantAbi}/${variant.getBuildType().getName()}/libHttpClient.aar"
-        }
+         variant.outputs.each { output ->
+             output.outputFileName = "../../../../../Binaries/Android/java/${variant.getBuildType().getName()}/libHttpClient.aar"
+         }
     }
 }
 
