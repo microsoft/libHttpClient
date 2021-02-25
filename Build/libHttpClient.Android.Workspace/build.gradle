@@ -24,8 +24,3 @@ allprojects {
         }
     }
 }
-
-subprojects {
-    apply plugin: "com.android.library"
-    apply from: new File("common_android_config.gradle").getAbsolutePath()
-}

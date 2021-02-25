@@ -77,6 +77,8 @@
       <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==142">{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Android' and $(HCLibToolset)==141">{5e0ce391-1ac5-4930-921e-2577a4b5c530}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Android' and $(HCLibToolset)==142">{80FE2440-4F89-4A47-88C6-E86447BC2319}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and $(HCLibToolset)==141">{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and $(HCLibToolset)==142">{80D8061D-BBEF-414D-8F08-4D8B52C02E85}</Project>
     </ProjectReference>
   </ItemGroup>
 

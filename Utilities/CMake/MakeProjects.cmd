@@ -20,6 +20,8 @@ call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTAEF=T
 if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTE=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
+call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DGDK=TRUE
+if %ERRORLEVEL% NEQ 0 goto done
 
 %ROOT_FOLDER%\Utilities\CMake\ProjectFileProcessor\bin\Debug\ProjectFileProcessor.exe %ROOT_FOLDER%
 
@@ -42,6 +44,8 @@ copy %NEW_FOLDER%\libHttpClient.142.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.
 copy %NEW_FOLDER%\libHttpClient.142.Android.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.Android.C
 copy %NEW_FOLDER%\libHttpClient.UnitTest.142.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.142.TAEF
 copy %NEW_FOLDER%\libHttpClient.UnitTest.142.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.142.TE
+copy %NEW_FOLDER%\libHttpClient.141.GDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.GDK.C
+copy %NEW_FOLDER%\libHttpClient.142.GDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.GDK.C
 
 :skipCopy
 

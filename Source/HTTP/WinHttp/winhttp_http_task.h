@@ -190,9 +190,10 @@ public:
     HRESULT connect_and_send_async();
 
 #if HC_WINHTTP_WEBSOCKETS
-    HRESULT send_websocket_message(WINHTTP_WEB_SOCKET_BUFFER_TYPE eBufferType, _In_ const void* payloadPtr, _In_ size_t payloadLength);
+    void send_websocket_message(WINHTTP_WEB_SOCKET_BUFFER_TYPE eBufferType, _In_ const void* payloadPtr, _In_ size_t payloadLength);
     HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus);
     HRESULT on_websocket_disconnected(_In_ USHORT closeReason);
+    std::function<void(HRESULT)> m_websocketSendCompleteCallback;
     std::atomic<WinHttpWebsockState> m_socketState = WinHttpWebsockState::Created;
     HCWebsocketHandle m_websocketHandle = nullptr;
     HRESULT m_connectHr{ S_OK };
@@ -319,7 +320,6 @@ private:
     // websocket state
     HRESULT websocket_start_listening();
     HRESULT websocket_read_message();
-    HANDLE m_hWebsocketWriteComplete = nullptr;
     websocket_message_buffer m_websocketResponseBuffer;
 #endif
 

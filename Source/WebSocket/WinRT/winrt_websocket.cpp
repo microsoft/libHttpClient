@@ -266,8 +266,11 @@ try
                 {
                     // Cleaning up the websocket state
                     websocketTask->m_connectClosing = true;
-                    websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
-                    websocketTask->m_messageWebSocket = nullptr;
+                    if (websocketTask->m_messageWebSocket != nullptr)
+                    {
+                        websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
+                        websocketTask->m_messageWebSocket = nullptr;
+                    }
                 }
                 catch (...)
                 {
@@ -287,8 +290,11 @@ try
         {
             // Cleaning up the websocket state
             websocketTask->m_connectClosing = true;
-            websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
-            websocketTask->m_messageWebSocket = nullptr;
+            if (websocketTask->m_messageWebSocket != nullptr)
+            {
+                websocketTask->m_messageWebSocket->Close(static_cast<unsigned short>(HCWebSocketCloseStatus::Normal), "");
+                websocketTask->m_messageWebSocket = nullptr;
+            }
         }
         catch (...)
         {

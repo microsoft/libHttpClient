@@ -68,25 +68,25 @@ elif [[ "$BUILDARCH" = *"i386"* ]]; then
 ./Configure darwin-i386-cc shared no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
 elif [[ "$BUILDARCH" = *"arm64"* ]]; then
 
-export CROSS_TOP=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
+export CROSS_TOP="$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer"
 export CROSS_SDK=iPhoneOS.sdk
-export PATH="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH"
+export PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH"
 export BUILD_TOOLS="${DEVELOPER}"
 export CC="${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}"
 
 ./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
 else
-export CROSS_TOP=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
+export CROSS_TOP="$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer"
 export CROSS_SDK=iPhoneOS.sdk
-export PATH="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH"
+export PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH"
 export BUILD_TOOLS="${DEVELOPER}"
 export CC="${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}"
 
 ./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
 fi
 
-# installs openssl for this flavor
-make install
+# installs openssl (just the software components, no docs/manpages) for this flavor
+make install_sw
 
 echo "***** renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a *****"
 cp "$OPENSSL_TMP"/lib/libcrypto.a "$CONFIGURATION_TEMP_DIR"/$BUILDARCH-libcrypto.a

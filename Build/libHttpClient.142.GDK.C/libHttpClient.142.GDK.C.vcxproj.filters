@@ -22,8 +22,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
       <Filter>C++ Source\Global</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Unittest\http_unittest.cpp">
-      <Filter>C++ Source\HTTP\Unittest</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_task.cpp">
+      <Filter>C++ Source\HTTP\WinHttp</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
       <Filter>C++ Source\HTTP</Filter>
@@ -49,47 +49,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp">
       <Filter>C++ Source\Mock</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp">
-      <Filter>C++ Source\Task</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueue.cpp">
-      <Filter>C++ Source\Task</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp">
-      <Filter>C++ Source\Task\Win</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp">
-      <Filter>C++ Source\Task\Win</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Unittest\websocket_unittest.cpp">
-      <Filter>C++ Source\WebSocket\Unittest</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinHTTP\winhttp_websocket.cpp">
+      <Filter>C++ Source\WebSocket\Win</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.cpp">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\AsyncBlockTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueueTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +90,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h">
       <Filter>C++ Source\Global</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_task.h">
+      <Filter>C++ Source\HTTP\WinHttp</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h">
       <Filter>C++ Source\HTTP</Filter>
     </ClInclude>
@@ -135,53 +102,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h">
       <Filter>C++ Source\Mock</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessQueue.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\StaticArray.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueImpl.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueP.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XAsyncProviderPriv.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\referenced_ptr.h">
-      <Filter>C++ Source\Task</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
       <Filter>C++ Source\WebSocket</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestIncludes_TE.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\UnitTestIncludes.h">
-      <Filter>C++ Source\UnitTests\Support</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h">
-      <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
       <Filter>C++ Public Includes</Filter>
@@ -216,55 +138,40 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{A1D6BFE0-C752-37C4-84A8-DC1BAD7ACDBB}</UniqueIdentifier>
+      <UniqueIdentifier>{4B24093D-5F61-3E7B-B53A-155D833CE990}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{311C2E0C-757A-396B-B005-9C3E2AC974F6}</UniqueIdentifier>
+      <UniqueIdentifier>{5DB96368-8B66-3AD7-8E55-F250991593AE}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common\Win">
-      <UniqueIdentifier>{B9434CE8-713E-36C3-BCDA-769594459CD1}</UniqueIdentifier>
+      <UniqueIdentifier>{7FA52DF8-9864-3D90-8217-C02E81138559}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{748EFFF4-1C27-379F-90E2-0343E1267432}</UniqueIdentifier>
+      <UniqueIdentifier>{5DE2D652-C0DA-3F33-B684-A0C93FEA6009}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{EBBC7A73-32B3-304C-A088-0766E8E09094}</UniqueIdentifier>
+      <UniqueIdentifier>{B06E9020-4922-3461-9A26-D85D45D52710}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\HTTP\Unittest">
-      <UniqueIdentifier>{6D0EEE4B-8A61-37FC-BFB1-2B242FD06B77}</UniqueIdentifier>
+    <Filter Include="C++ Source\HTTP\WinHttp">
+      <UniqueIdentifier>{6CB3A0CF-6B86-31AF-AFFD-88577A6FD759}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{EE80538A-4E77-32F6-9CB6-FD60616A0C52}</UniqueIdentifier>
+      <UniqueIdentifier>{4BC6EB69-E166-3264-A585-E5996C2AF5B9}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger\Win">
-      <UniqueIdentifier>{7FBD5635-E218-3828-9907-011F9FEB0020}</UniqueIdentifier>
+      <UniqueIdentifier>{3D96EFFD-6054-3227-B362-297897876C05}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{C1D0A9B1-A7E8-307D-B0E3-6D0577F43340}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{424D80A0-2669-3072-B27A-D961C7D2D31B}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\Task\Win">
-      <UniqueIdentifier>{839B03FA-A816-3B0D-B78E-80E1B8A6B4E4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\UnitTests">
-      <UniqueIdentifier>{EC698838-C450-37D0-B39D-05B2997275C7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\UnitTests\Support">
-      <UniqueIdentifier>{07B17B8F-467C-3701-BBA0-ECEAD5ECCC2F}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\UnitTests\Tests">
-      <UniqueIdentifier>{622663E3-C17A-32F2-AFB2-825B97C95BF3}</UniqueIdentifier>
+      <UniqueIdentifier>{FA75CFAD-BC14-3A9D-A907-23E1F994DB66}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{3928859A-5E7E-3865-8877-2AD5FBB92278}</UniqueIdentifier>
+      <UniqueIdentifier>{D048DED3-BA76-342E-AC88-0640A35BF2F3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\WebSocket\Unittest">
-      <UniqueIdentifier>{1F0C99DD-47D3-3404-8982-9B4C0F5454CE}</UniqueIdentifier>
+    <Filter Include="C++ Source\WebSocket\Win">
+      <UniqueIdentifier>{32F0BE1E-07C2-3438-A72C-E0F17C94E14B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{DBC2122A-8939-3C43-8F28-44E5561A58D4}</UniqueIdentifier>
+      <UniqueIdentifier>{8D3620F6-F6C6-3211-B325-CE19BE6BA40A}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

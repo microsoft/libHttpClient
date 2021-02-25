@@ -12,10 +12,13 @@
 
 using namespace xbox::httpclient;
 
-
 struct winhttp_websocket_impl : public hc_websocket_impl, public std::enable_shared_from_this<winhttp_websocket_impl>
 {
 public:
+    winhttp_websocket_impl(uint64_t id) : m_id{ id }
+    {
+    }
+
     ~winhttp_websocket_impl()
     {
         HC_TRACE_VERBOSE(WEBSOCKET, "winhttp_websocket_impl dtor");
@@ -63,6 +66,14 @@ public:
 
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
         m_httpTask->m_websocketHandle = websocket;
+        m_httpTask->m_websocketSendCompleteCallback = [ weakThis = std::weak_ptr<winhttp_websocket_impl>{ shared_from_this() }](HRESULT hr)
+        {
+            if (auto sharedThis{ weakThis.lock() })
+            {
+                sharedThis->send_complete(hr);
+            }
+        };
+
         auto context = shared_ptr_cache::store<winhttp_http_task>(m_httpTask);
 
         hr = XAsyncBegin(asyncBlock, context, HCWebSocketConnectAsync, __FUNCTION__,
@@ -123,24 +134,13 @@ public:
             return E_INVALIDARG;
         }
 
-        websocket_outgoing_message message;
-        message.asyncBlock = asyncBlock;
-        message.payload = std::move(payload);
-        message.id = ++httpSingleton->m_lastId;
+        auto sendContext = http_allocate_shared<send_msg_context>();
+        sendContext->asyncBlock = asyncBlock;
+        sendContext->payload = std::move(payload);
+        sendContext->id = ++httpSingleton->m_lastId;
+        sendContext->pThis = shared_from_this();
 
-        {
-            // Only actually have to take the lock if touching the queue.
-            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
-            m_outgoingMessageQueue.push(message);
-        }
-
-        if (++m_numSends == 1) // No sends in progress
-        {
-            // Start sending the message
-            return send_msg();
-        }
-
-        return S_OK;
+        return enqueue_message(std::move(sendContext));
     }
 
     HRESULT send_websocket_binary_message_async(
@@ -159,143 +159,15 @@ public:
             return E_HC_NOT_INITIALISED;
         }
 
-        websocket_outgoing_message message;
-        message.asyncBlock = asyncBlock;
-        message.binaryPayload.resize(payloadSize);
-        memcpy(&message.binaryPayload[0], payloadBytes, payloadSize);
-        message.id = ++httpSingleton->m_lastId;
-
-        {
-            // Only actually have to take the lock if touching the queue.
-            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
-            m_outgoingMessageQueue.push(message);
-        }
-
-        if (++m_numSends == 1) // No sends in progress
-        {
-            // Start sending the message
-            return send_msg();
-        }
-
-        return S_OK;
-    }
-
-    struct websocket_outgoing_message
-    {
-        XAsyncBlock* asyncBlock = nullptr;
-        http_internal_string payload;
-        http_internal_vector<uint8_t> binaryPayload;
-        HRESULT hr = S_OK;
-        uint64_t id = 0;
-    };
-
-    struct send_msg_context
-    {
-        std::shared_ptr<winhttp_websocket_impl> pThis;
-        websocket_outgoing_message message;
-    };
-
-    HRESULT send_msg_do_work(websocket_outgoing_message* message)
-    {
-        HRESULT hr = S_OK;
-
-        try
-        {
-            std::lock_guard<std::recursive_mutex> lock(m_httpClientLock);
-
-            if(message->payload.length() > 0)
-                message->hr = m_httpTask->send_websocket_message(WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, reinterpret_cast<const void*>(message->payload.data()), message->payload.length());
-            else
-                message->hr = m_httpTask->send_websocket_message(WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, reinterpret_cast<const void*>(message->binaryPayload.data()), message->binaryPayload.size());
-            XAsyncComplete(message->asyncBlock, message->hr, sizeof(WebSocketCompletionResult));
-
-            if (--m_numSends > 0)
-            {
-                hr = send_msg();
-            }
-        }
-        catch (...)
-        {
-            hr = E_FAIL;
-            XAsyncComplete(message->asyncBlock, hr, sizeof(WebSocketCompletionResult));
-        }
-        return hr;
-    }
-
-    // Pull the next message from the queue and send it
-    HRESULT send_msg()
-    {
         auto sendContext = http_allocate_shared<send_msg_context>();
+        sendContext->asyncBlock = asyncBlock;
+        sendContext->binaryPayload.resize(payloadSize);
+        memcpy(&sendContext->binaryPayload[0], payloadBytes, payloadSize);
+        sendContext->id = ++httpSingleton->m_lastId;
         sendContext->pThis = shared_from_this();
-        {
-            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
-            ASSERT(!m_outgoingMessageQueue.empty());
-            sendContext->message = std::move(m_outgoingMessageQueue.front());
-            m_outgoingMessageQueue.pop();
-        }
-        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", TO_ULL(m_hcWebsocketHandle->id), sendContext->message.id);
-        auto rawSendContext = shared_ptr_cache::store(sendContext);
-        if (rawSendContext == nullptr)
-        {
-            XAsyncComplete(sendContext->message.asyncBlock, E_HC_NOT_INITIALISED, 0);
-            return E_HC_NOT_INITIALISED;
-        }
-
-        auto hr = XAsyncBegin(sendContext->message.asyncBlock, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
-            [](XAsyncOp op, const XAsyncProviderData* data)
-        {
-            auto httpSingleton = get_http_singleton();
-            if (nullptr == httpSingleton)
-            {
-                return E_HC_NOT_INITIALISED;
-            }
-
-            WebSocketCompletionResult* result;
-            switch (op)
-            {
-                case XAsyncOp::DoWork:
-                {
-                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context);
-                    if (sendMsgContext == nullptr)
-                    {
-                        return E_HC_NOT_INITIALISED;
-                    }
-                    HRESULT hr = sendMsgContext->pThis->send_msg_do_work(&sendMsgContext->message);
-                    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] send message[ID %llu] completed: hr=%08X", TO_ULL(sendMsgContext->pThis->m_hcWebsocketHandle->id), sendMsgContext->message.id, hr);
-                    return hr;
-                }
-
-                case XAsyncOp::GetResult:
-                {
-                    auto sendMsgContext = shared_ptr_cache::fetch<send_msg_context>(data->context);
-                    if (sendMsgContext == nullptr)
-                    {
-                        return E_HC_NOT_INITIALISED;
-                    }
-
-                    result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
-                    result->platformErrorCode = sendMsgContext->message.hr;
-                    result->errorCode = XAsyncGetStatus(data->async, false);
-                    return S_OK;
-                }
-
-                case XAsyncOp::Cleanup:
-                {
-                    shared_ptr_cache::remove(data->context);
-                    return S_OK;
-                }
-            }
-
-            return S_OK;
-        });
-
-        if (SUCCEEDED(hr))
-        {
-            hr = XAsyncSchedule(sendContext->message.asyncBlock, 0);
-        }
-        return hr;
+    
+        return enqueue_message(sendContext);
     }
-
 
     HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus)
     {
@@ -308,15 +180,127 @@ public:
         return hr;
     }
 
+private:
+    struct send_msg_context
+    {
+        XAsyncBlock* asyncBlock{};
+        http_internal_string payload;
+        http_internal_vector<uint8_t> binaryPayload;
+        HRESULT hr{ S_OK };
+        uint64_t id;
+        std::shared_ptr<winhttp_websocket_impl> pThis;
+    };
+
+    HRESULT enqueue_message(std::shared_ptr<send_msg_context> sendContext)
+    {
+        auto rawSendContext = shared_ptr_cache::store(sendContext);
+        if (rawSendContext == nullptr)
+        {
+            XAsyncComplete(sendContext->asyncBlock, E_HC_NOT_INITIALISED, 0);
+            return E_HC_NOT_INITIALISED;
+        }
+
+        return XAsyncBegin(sendContext->asyncBlock, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
+            [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
+            if (context == nullptr)
+            {
+                return E_HC_NOT_INITIALISED;
+            }
+
+            WebSocketCompletionResult* result;
+            switch (op)
+            {
+                case XAsyncOp::Begin:
+                try
+                {
+                    // By design, limit to a single WinHttp send at a time. If there isn't another send already in progress,
+                    // send the message now. winhttp_http_task::send_websocket_message is asynchronous; the winhttp_http_task::m_sendCompleteCallback
+                    // will be invoked when the send has completed.
+                    // If there is already a send in progress, return E_PENDING and wait for that to complete before sending this message.
+
+                    std::unique_lock<std::recursive_mutex> lock{ context->pThis->m_mutex };
+                    if (context->pThis->m_outgoingMessage == nullptr)
+                    {
+                        context->pThis->m_outgoingMessage = context;
+                        lock.unlock();
+
+                        context->pThis->send_message(context);
+                    }
+                    else
+                    {
+                        context->pThis->m_pendingMessages.push(context);
+                    }
+                    return E_PENDING;
+                }
+                catch (...)
+                {
+                    HC_TRACE_ERROR(WEBSOCKET, "[WinHttp][ID %llu] Caught exception sending message[ID %llu]", TO_ULL(context->pThis->m_id), TO_ULL(context->id));
+                    return E_FAIL;
+                }
+
+                case XAsyncOp::GetResult:
+                {
+                    result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                    result->platformErrorCode = context->hr;
+                    result->errorCode = SUCCEEDED(context->hr) ? S_OK : E_FAIL;
+                    return S_OK;
+                }
+
+                case XAsyncOp::Cleanup:
+                {
+                    shared_ptr_cache::remove(data->context);
+                    return S_OK;
+                }
+
+                default: return S_OK;
+            }
+        });
+    }
+
+    void send_complete(HRESULT result)
+    {
+        std::unique_lock<std::recursive_mutex> lock{ m_mutex };
+        ASSERT(m_outgoingMessage != nullptr);
+        m_outgoingMessage->hr = result;
+        XAsyncComplete(m_outgoingMessage->asyncBlock, result, sizeof(WebSocketCompletionResult));
+        m_outgoingMessage.reset();
+
+        // Send next message in queue
+        if (!m_pendingMessages.empty())
+        {
+            m_outgoingMessage = m_pendingMessages.front();
+            m_pendingMessages.pop();
+            lock.unlock();
+
+            send_message(m_outgoingMessage);
+        }
+    }
+
+    void send_message(std::shared_ptr<send_msg_context> context)
+    {
+        HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp][ID %llu] sending message[ID %llu]...", TO_ULL(m_id), TO_ULL(context->id));
+
+        if (context->payload.length() > 0)
+        {
+            m_httpTask->send_websocket_message(WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, reinterpret_cast<const void*>(context->payload.data()), context->payload.length());
+        }
+        else
+        {
+            m_httpTask->send_websocket_message(WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, reinterpret_cast<const void*>(context->binaryPayload.data()), context->binaryPayload.size());
+        }
+    }
+
     std::shared_ptr<xbox::httpclient::winhttp_http_task> m_httpTask;
     HCCallHandle m_call = nullptr;
 
     // Websocket state
-    std::recursive_mutex m_httpClientLock; // Guards access to HTTP socket
-    HCWebsocketHandle m_hcWebsocketHandle = nullptr;
-    std::recursive_mutex m_outgoingMessageQueueLock; // Guards access to m_outgoing_msg_queue
-    http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue; // Queue to order the sends
-    std::atomic<int> m_numSends = 0; // Number of sends in progress and queued up.
+    const uint64_t m_id;
+    http_internal_queue<std::shared_ptr<send_msg_context>> m_pendingMessages; // Queue to order the sends
+    std::shared_ptr<send_msg_context> m_outgoingMessage;
+
+    std::recursive_mutex m_mutex;
 };
 
 HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
@@ -338,7 +322,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     std::shared_ptr<winhttp_websocket_impl> impl{ nullptr };
     if (websocket->impl == nullptr)
     {
-        impl = http_allocate_shared<winhttp_websocket_impl>();
+        impl = http_allocate_shared<winhttp_websocket_impl>(websocket->id);
         websocket->impl = impl;
     }
     else
@@ -366,7 +350,6 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     {
         return E_UNEXPECTED;
     }
-    httpSocket->m_hcWebsocketHandle = websocket;
     return httpSocket->send_websocket_message_async(async, message);
 }
 
@@ -387,7 +370,6 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     {
         return E_UNEXPECTED;
     }
-    httpSocket->m_hcWebsocketHandle = websocket;
     return httpSocket->send_websocket_binary_message_async(asyncBlock, payloadBytes, payloadSize);
 }
 
@@ -407,7 +389,6 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     {
         return E_UNEXPECTED;
     }
-    httpSocket->m_hcWebsocketHandle = websocket;
     HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocket->id));
     return httpSocket->disconnect_websocket(closeStatus);
 }

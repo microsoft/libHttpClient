@@ -300,6 +300,22 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.142.UWP.Ship.C.vcxproj",
             });
 
+            //libHttpClient.141.GDK.C
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.GDK.C.vcxproj",
+                template = @"template-libHttpClient.141.GDK.C.vcxproj",
+                output = @"libHttpClient.141.GDK.C.vcxproj",
+            });
+
+            //libHttpClient.142.GDK.C
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.GDK.C.vcxproj",
+                template = @"template-libHttpClient.142.GDK.C.vcxproj",
+                output = @"libHttpClient.142.GDK.C.vcxproj",
+            });
+
             foreach (FileNode fn in fileNodes)
             {
                 var template_lines = new List<string>();
