@@ -75,8 +75,8 @@
     <GradleTemplate Include="gradle\wrapper\gradle-wrapper.properties.template" />
   </ItemGroup>
   <ItemGroup>
-    <JavaCompile Include="app\src\main\java\com\xbox\httpClient\HttpClientRequest.java" />
-    <JavaCompile Include="app\src\main\java\com\xbox\httpClient\HttpClientResponse.java" />
+    <JavaCompile Include="app\src\main\java\com\xbox\httpclient\HttpClientRequest.java" />
+    <JavaCompile Include="app\src\main\java\com\xbox\httpclient\HttpClientResponse.java" />
   </ItemGroup>
   <Import Project="$(AndroidTargetsPath)\Android.targets" />
   <ImportGroup Label="ExtensionTargets" />
