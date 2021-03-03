@@ -1,6 +1,8 @@
 package com.xbox.httpclient;
 
-import org.jetbrains.annotations.NotNull;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 import java.io.IOException;
 
@@ -67,12 +69,12 @@ public class HttpClientRequest {
     public void doRequestAsync(final long sourceCall) {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
-            public void onFailure(@NotNull final Call call, @NotNull IOException e) {
+            public void onFailure(final Call call, IOException e) {
                 OnRequestFailed(sourceCall, e.getClass().getCanonicalName());
             }
 
             @Override
-            public void onResponse(@NotNull Call call, @NotNull final Response response) {
+            public void onResponse(Call call, final Response response) {
                 OnRequestCompleted(sourceCall, new HttpClientResponse(response));
             }
         });
