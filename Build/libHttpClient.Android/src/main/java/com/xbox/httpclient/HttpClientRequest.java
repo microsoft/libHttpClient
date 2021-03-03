@@ -38,11 +38,6 @@ public class HttpClientRequest {
     }
 
     @SuppressWarnings("unused")
-    public static HttpClientRequest createClientRequest() {
-        return new HttpClientRequest();
-    }
-
-    @SuppressWarnings("unused")
     public void setHttpUrl(String url) {
         this.requestBuilder = this.requestBuilder.url(url);
     }
