@@ -1,8 +1,6 @@
 package com.xbox.httpclient;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -15,10 +13,9 @@ import okhttp3.Response;
 import okhttp3.RequestBody;
 
 public class HttpClientRequest {
-    private static OkHttpClient OK_CLIENT;
+    private static final OkHttpClient OK_CLIENT;
     private static final byte[] NO_BODY = new byte[0];
 
-    private Request okHttpRequest;
     private Request.Builder requestBuilder;
 
     static {
@@ -31,45 +28,51 @@ public class HttpClientRequest {
         requestBuilder = new Request.Builder();
     }
 
+    @SuppressWarnings("unused")
     public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    @SuppressWarnings("unused")
     public static HttpClientRequest createClientRequest() {
         return new HttpClientRequest();
     }
 
+    @SuppressWarnings("unused")
     public void setHttpUrl(String url) {
         this.requestBuilder = this.requestBuilder.url(url);
     }
 
+    @SuppressWarnings("unused")
     public void setHttpMethodAndBody(String method, String contentType, byte[] body) {
         if (body == null || body.length == 0) {
             if ("POST".equals(method) || "PUT".equals(method)) {
-                this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(null, NO_BODY));
+                this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(NO_BODY, null));
             } else {
                 this.requestBuilder = this.requestBuilder.method(method, null);
             }
         } else {
-            this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(MediaType.parse(contentType), body));
+            this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(body, MediaType.parse(contentType)));
         }
     }
 
+    @SuppressWarnings("unused")
     public void setHttpHeader(String name, String value) {
         this.requestBuilder = requestBuilder.addHeader(name, value);
     }
 
+    @SuppressWarnings("unused")
     public void doRequestAsync(final long sourceCall) {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
-            public void onFailure(final Call call, IOException e) {
+            public void onFailure(@NotNull final Call call, @NotNull IOException e) {
                 OnRequestFailed(sourceCall, e.getClass().getCanonicalName());
             }
 
             @Override
-            public void onResponse(Call call, final Response response) throws IOException {
+            public void onResponse(@NotNull Call call, @NotNull final Response response) {
                 OnRequestCompleted(sourceCall, new HttpClientResponse(response));
             }
         });
