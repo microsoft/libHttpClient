@@ -39,12 +39,12 @@ public class HttpClientRequest {
     public void setHttpMethodAndBody(String method, String contentType, byte[] body) {
         if (body == null || body.length == 0) {
             if ("POST".equals(method) || "PUT".equals(method)) {
-                this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(null, NO_BODY));
+                this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(NO_BODY, null));
             } else {
                 this.requestBuilder = this.requestBuilder.method(method, null);
             }
         } else {
-            this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(MediaType.parse(contentType), body));
+            this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(body, MediaType.parse(contentType)));
         }
     }
 
