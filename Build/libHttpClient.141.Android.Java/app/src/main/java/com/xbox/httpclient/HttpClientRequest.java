@@ -1,9 +1,5 @@
 package com.xbox.httpclient;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-
 import java.io.IOException;
 import java.net.UnknownHostException;
 
