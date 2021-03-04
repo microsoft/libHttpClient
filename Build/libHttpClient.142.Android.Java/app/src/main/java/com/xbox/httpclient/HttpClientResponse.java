@@ -1,4 +1,3 @@
-
 package com.xbox.httpclient;
 
 import android.util.Log;

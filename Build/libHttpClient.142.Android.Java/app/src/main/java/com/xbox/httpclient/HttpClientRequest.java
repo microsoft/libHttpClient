@@ -1,10 +1,7 @@
 package com.xbox.httpclient;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -29,12 +26,6 @@ public class HttpClientRequest {
 
     public HttpClientRequest() {
         requestBuilder = new Request.Builder();
-    }
-
-    public static boolean isNetworkAvailable(Context context) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     public static HttpClientRequest createClientRequest() {
@@ -65,7 +56,8 @@ public class HttpClientRequest {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(final Call call, IOException e) {
-                OnRequestFailed(sourceCall, e.getClass().getCanonicalName());
+                boolean isNoNetworkFailure = e instanceof UnknownHostException;
+                OnRequestFailed(sourceCall, e.getClass().getCanonicalName(), isNoNetworkFailure);
             }
 
             @Override
@@ -76,5 +68,5 @@ public class HttpClientRequest {
     }
 
     private native void OnRequestCompleted(long call, HttpClientResponse response);
-    private native void OnRequestFailed(long call, String errorMessage);
+    private native void OnRequestFailed(long call, String errorMessage, boolean isNoNetwork);
 }

@@ -28,14 +28,14 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
     }
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(JNIEnv* env, jobject instance, jlong call, jstring errorMessage)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(JNIEnv* env, jobject instance, jlong call, jstring errorMessage, jboolean isNoNetwork)
 {
     HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
     HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
     std::unique_ptr<HttpRequest> sourceRequest{ request };
 
-    HCHttpCallResponseSetNetworkErrorCode(sourceCall, E_FAIL, 0);
+    HCHttpCallResponseSetNetworkErrorCode(sourceCall, isNoNetwork ? E_HC_NO_NETWORK : E_FAIL, 0);
 
     const char* nativeErrorString = env->GetStringUTFChars(errorMessage, nullptr);
     HCHttpCallResponseSetPlatformNetworkErrorMessage(sourceCall, nativeErrorString);
@@ -65,7 +65,6 @@ void Internal_HCHttpCallPerformAsync(
         new HttpRequest(
             asyncBlock,
             env->GetJavaVm(),
-            env->GetApplicationContext(),
             env->GetHttpRequestClass(),
             env->GetHttpResponseClass()
         )
