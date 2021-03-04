@@ -12,10 +12,9 @@ import okhttp3.Response;
 import okhttp3.RequestBody;
 
 public class HttpClientRequest {
-    private static OkHttpClient OK_CLIENT;
+    private static final OkHttpClient OK_CLIENT;
     private static final byte[] NO_BODY = new byte[0];
 
-    private Request okHttpRequest;
     private Request.Builder requestBuilder;
 
     static {
@@ -28,14 +27,12 @@ public class HttpClientRequest {
         requestBuilder = new Request.Builder();
     }
 
-    public static HttpClientRequest createClientRequest() {
-        return new HttpClientRequest();
-    }
-
+    @SuppressWarnings("unused")
     public void setHttpUrl(String url) {
         this.requestBuilder = this.requestBuilder.url(url);
     }
 
+    @SuppressWarnings("unused")
     public void setHttpMethodAndBody(String method, String contentType, byte[] body) {
         if (body == null || body.length == 0) {
             if ("POST".equals(method) || "PUT".equals(method)) {
@@ -48,10 +45,12 @@ public class HttpClientRequest {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setHttpHeader(String name, String value) {
         this.requestBuilder = requestBuilder.addHeader(name, value);
     }
 
+    @SuppressWarnings("unused")
     public void doRequestAsync(final long sourceCall) {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
@@ -61,7 +60,7 @@ public class HttpClientRequest {
             }
 
             @Override
-            public void onResponse(Call call, final Response response) throws IOException {
+            public void onResponse(Call call, final Response response) {
                 OnRequestCompleted(sourceCall, new HttpClientResponse(response));
             }
         });
