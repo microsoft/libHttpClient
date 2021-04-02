@@ -3,7 +3,7 @@
     ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
     InitialTargets="HCBuildDebug"
 -->
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project InitialTargets="AndroidDeprecationWarn" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="$(MSBuildThisFileDirectory)platform_select.props" />
   <PropertyGroup>
@@ -25,6 +25,12 @@
     <HCLibPlatformType Condition="'$(ApplicationType)'=='' AND '$(Platform)'!='Durango' AND '$(Platform)'!='Gaming.Desktop.x64' AND '$(Platform)'!='Gaming.Xbox.XboxOne.x64' AND '$(Platform)'!='Gaming.Xbox.Scarlett.x64'">Win32</HCLibPlatformType>
     <HCLibPlatformType Condition="'$(ApplicationType)'=='Android'">Android</HCLibPlatformType>
   </PropertyGroup>
+
+  <Target Name="AndroidDeprecationWarn">
+    <Error
+      Condition="'$(HCLibPlatformType)' == 'Android'"
+      Text="ANNOUNCEMENT: The Visual Studio-based Android build is being removed. Please see https://github.com/microsoft/libHttpClient/issues for more details on this announcement. To use the VS build in the deprecation period, silence this error in libHttpClient.props." />
+  </Target>
 
   <PropertyGroup>
     <!-- Back compat reasons -->
