@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="AndroidDeprecationWarn">
+    <Error
+      Condition="'$(HCLibPlatformType)' == 'Android'"
+      Text="ANNOUNCEMENT: The Visual Studio-based Android build is being removed. Please see https://github.com/microsoft/libHttpClient/issues/<TODO @saweiss: ISSUE NUMBER> for more details on this announcement. To use the VS build in the deprecation period, silence this error in libHttpClient.props." />
+  </Target>
+</Project>
