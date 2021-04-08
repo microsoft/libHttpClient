@@ -87,7 +87,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(libHttpClientInclude)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);winhttp.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);winhttp.lib;crypt32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
