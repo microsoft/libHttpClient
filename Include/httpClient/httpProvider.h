@@ -135,6 +135,17 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
     ) noexcept;
 
 /// <summary>
+/// Get the function used by the HTTP call to read the request body
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="readFunction"></param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL</returns>
+STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
+    _In_ HCCallHandle call,
+    _Out_ HCHttpCallRequestBodyReadFunction* readFunction
+    ) noexcept;
+
+/// <summary>
 /// Get a request header for the HTTP call for a given header name.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
@@ -265,6 +276,21 @@ STDAPI HCHttpCallRequestGetTimeoutWindow(
     _Out_ uint32_t* timeoutWindowInSeconds
     ) noexcept;
 
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// HttpCallResponse Get APIs
+//
+
+/// <summary>
+/// Get the function used by the HTTP call to write the response body
+/// </summary>
+/// <param name="call">The handle of the HTTP call</param>
+/// <param name="writeFunction"></param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL</returns>
+STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction
+    ) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Set APIs
