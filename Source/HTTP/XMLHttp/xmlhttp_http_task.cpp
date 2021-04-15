@@ -25,7 +25,6 @@ xmlhttp_http_task::xmlhttp_http_task(
 xmlhttp_http_task::~xmlhttp_http_task()
 {
     m_hRequest = nullptr;
-    m_hRequestBodyStream = nullptr;
     if (SUCCEEDED(m_hrCoInit))
     {
         CoUninitialize();
@@ -41,10 +40,10 @@ void xmlhttp_http_task::perform_async(
     {
         const char* url = nullptr;
         const char* method = nullptr;
-        const BYTE* requestBody = nullptr;
-        uint32_t requestBodyBytes = 0;
+        HCHttpCallRequestBodyReadFunction requestBodyReadFunction = nullptr;
+        uint32_t requestBodySize = 0;
         HCHttpCallRequestGetUrl(call, &method, &url);
-        HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodyBytes);
+        HCHttpCallRequestGetRequestBodyReadFunction(call, &requestBodyReadFunction, &requestBodySize);
 
         uint32_t numHeaders = 0;
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);
@@ -131,12 +130,12 @@ void xmlhttp_http_task::perform_async(
             return;
         }
 
-        if (requestBodyBytes > 0 && requestBody != nullptr)
+        if (requestBodySize > 0 && requestBodyReadFunction != nullptr)
         {
             auto requestStream = Microsoft::WRL::Make<http_request_stream>();
             if (requestStream != nullptr)
             {
-                hr = requestStream->init(requestBody, requestBodyBytes);
+                hr = requestStream->init(call);
             }
             else
             {
@@ -151,7 +150,7 @@ void xmlhttp_http_task::perform_async(
                 return;
             }
 
-            hr = m_hRequest->Send(requestStream.Get(), requestBodyBytes);
+            hr = m_hRequest->Send(requestStream.Get(), requestBodySize);
         }
         else
         {
