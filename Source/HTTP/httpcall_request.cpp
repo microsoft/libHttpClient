@@ -6,6 +6,38 @@
 
 using namespace xbox::httpclient;
 
+HRESULT CALLBACK DefaultRequestBodyReadFunction(
+    _In_ HCCallHandle call,
+    _In_ size_t offset,
+    _In_ size_t bytesAvailable,
+    _Out_writes_bytes_to_opt_(bytesAvailable, *bytesWritten) uint8_t* destination,
+    _Out_opt_ size_t* bytesWritten
+    )
+{
+    if (call == nullptr || bytesAvailable == 0 || destination == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    uint8_t const* requestBody = nullptr;
+    uint32_t requestBodySize = 0;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
+    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0))
+    {
+        return E_FAIL;
+    }
+
+    size_t bytesToWrite = std::min(bytesAvailable, static_cast<size_t>(requestBodySize) - offset);
+    std::memcpy(destination, requestBody + offset, bytesToWrite);
+
+    if (bytesWritten != nullptr)
+    {
+        *bytesWritten = bytesToWrite;
+    }
+
+    return S_OK;
+}
+
 STDAPI 
 HCHttpCallRequestSetUrl(
     _In_ HCCallHandle call,
@@ -74,6 +106,7 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
+    call->requestBodySize = requestBodySize;
     call->requestBodyBytes.assign(requestBodyBytes, requestBodyBytes + requestBodySize);
     call->requestBodyString.clear();
 
@@ -100,6 +133,29 @@ HCHttpCallRequestSetRequestBodyString(
     );
 }
 
+STDAPI
+HCHttpCallRequestSetRequestBodyReadFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallRequestBodyReadFunction readFunction,
+    _In_ uint32_t bodySize
+) noexcept
+try
+{
+    if (call == nullptr || readFunction == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    call->requestBodyReadFunction = readFunction;
+    call->requestBodySize = bodySize;
+
+    call->requestBodyString.clear();
+    call->requestBodyBytes.clear();
+    call->requestBodyBytes.shrink_to_fit();
+
+    return S_OK;
+}
+CATCH_RETURN()
 
 STDAPI 
 HCHttpCallRequestGetRequestBodyBytes(
@@ -114,7 +170,7 @@ try
         return E_INVALIDARG;
     }
 
-    *requestBodySize = static_cast<uint32_t>(call->requestBodyBytes.size());
+    *requestBodySize = call->requestBodySize;
     if (*requestBodySize == 0)
     {
         *requestBodyBytes = nullptr;
@@ -145,6 +201,26 @@ try
         call->requestBodyString = http_internal_string(reinterpret_cast<char const*>(call->requestBodyBytes.data()), call->requestBodyBytes.size());
     }
     *requestBody = call->requestBodyString.c_str();
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallRequestGetRequestBodyReadFunction(
+    _In_ HCCallHandle call,
+    _Out_ HCHttpCallRequestBodyReadFunction* readFunction,
+    _Out_ uint32_t* requestBodySize
+    ) noexcept
+try
+{
+    if (call == nullptr || readFunction == nullptr || requestBodySize == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *readFunction = call->requestBodyReadFunction;
+    *requestBodySize = call->requestBodySize;
+
     return S_OK;
 }
 CATCH_RETURN()

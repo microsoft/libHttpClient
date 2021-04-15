@@ -11,6 +11,21 @@ struct http_header_compare
 
 using http_header_map = http_internal_map<http_internal_string, http_internal_string, http_header_compare>;
 
+HRESULT CALLBACK DefaultRequestBodyReadFunction(
+    _In_ HCCallHandle call,
+    _In_ size_t offset,
+    _In_ size_t bytesAvailable,
+    _Out_writes_bytes_to_opt_(bytesAvailable, *bytesWritten) uint8_t* destination,
+    _Out_opt_ size_t* bytesWritten
+    );
+
+HRESULT CALLBACK DefaultResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _In_reads_bytes_opt_(bytesAvailable) const uint8_t* source,
+    _In_ size_t bytesAvailable,
+    _Out_opt_ size_t* bytesRead
+    );
+
 struct HC_CALL
 {
     HC_CALL()
@@ -23,10 +38,13 @@ struct HC_CALL
     http_internal_string url;
     http_internal_vector<uint8_t> requestBodyBytes;
     http_internal_string requestBodyString;
+    uint32_t requestBodySize = 0;
+    HCHttpCallRequestBodyReadFunction requestBodyReadFunction = DefaultRequestBodyReadFunction;
     http_header_map requestHeaders;
 
     http_internal_string responseString;
     http_internal_vector<uint8_t> responseBodyBytes;
+    HCHttpCallResponseBodyWriteFunction responseBodyWriteFunction = DefaultResponseBodyWriteFunction;
     http_header_map responseHeaders;
     uint32_t statusCode = 0;
     HRESULT networkErrorCode = S_OK;

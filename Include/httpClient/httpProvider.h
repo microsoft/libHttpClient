@@ -142,7 +142,8 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL</returns>
 STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
     _In_ HCCallHandle call,
-    _Out_ HCHttpCallRequestBodyReadFunction* readFunction
+    _Out_ HCHttpCallRequestBodyReadFunction* readFunction,
+    _Out_ uint32_t* bodySize
     ) noexcept;
 
 /// <summary>
