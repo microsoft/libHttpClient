@@ -24,6 +24,7 @@ android {
     externalNativeBuild {
         cmake {
             path "../../Utilities/CMake/Android/libHttpClient/CMakeLists.txt"
+            buildStagingDirectory "${project.buildDir.getParentFile().getAbsolutePath()}/.cxx/${project.name}"
         }
     }
 
