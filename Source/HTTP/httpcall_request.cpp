@@ -10,11 +10,11 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ size_t offset,
     _In_ size_t bytesAvailable,
-    _Out_writes_bytes_to_opt_(bytesAvailable, *bytesWritten) uint8_t* destination,
-    _Out_opt_ size_t* bytesWritten
+    _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
+    _Out_ size_t* bytesWritten
     )
 {
-    if (call == nullptr || bytesAvailable == 0 || destination == nullptr)
+    if (call == nullptr || bytesAvailable == 0 || destination == nullptr || bytesWritten == nullptr)
     {
         return E_INVALIDARG;
     }
@@ -27,13 +27,10 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
         return E_FAIL;
     }
 
-    size_t bytesToWrite = std::min(bytesAvailable, static_cast<size_t>(requestBodySize) - offset);
+    const size_t bytesToWrite = std::min(bytesAvailable, static_cast<size_t>(requestBodySize) - offset);
     std::memcpy(destination, requestBody + offset, bytesToWrite);
 
-    if (bytesWritten != nullptr)
-    {
-        *bytesWritten = bytesToWrite;
-    }
+    *bytesWritten = bytesToWrite;
 
     return S_OK;
 }

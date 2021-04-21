@@ -13,7 +13,7 @@ public:
     bool initiate_request();
 
 private:
-    void completion_handler(NSData* data, NSURLResponse* response, NSError* error);
+    void completion_handler(NSURLResponse* response, NSError* error);
     
     HCCallHandle m_call; // non owning
     XAsyncBlock* m_asyncBlock; // non owning

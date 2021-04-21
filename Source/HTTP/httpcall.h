@@ -15,15 +15,15 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ size_t offset,
     _In_ size_t bytesAvailable,
-    _Out_writes_bytes_to_opt_(bytesAvailable, *bytesWritten) uint8_t* destination,
-    _Out_opt_ size_t* bytesWritten
+    _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
+    _Out_ size_t* bytesWritten
     );
 
 HRESULT CALLBACK DefaultResponseBodyWriteFunction(
     _In_ HCCallHandle call,
-    _In_reads_bytes_opt_(bytesAvailable) const uint8_t* source,
+    _In_reads_bytes_(bytesAvailable) const uint8_t* source,
     _In_ size_t bytesAvailable,
-    _Out_opt_ size_t* bytesRead
+    _Out_ size_t* bytesRead
     );
 
 struct HC_CALL

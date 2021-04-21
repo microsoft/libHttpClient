@@ -8,19 +8,18 @@ using namespace xbox::httpclient;
 
 HRESULT CALLBACK DefaultResponseBodyWriteFunction(
     _In_ HCCallHandle call,
-    _In_reads_bytes_opt_(bytesAvailable) const uint8_t* source,
+    _In_reads_bytes_(bytesAvailable) const uint8_t* source,
     _In_ size_t bytesAvailable,
-    _Out_opt_ size_t* bytesRead
+    _Out_ size_t* bytesRead
     )
 {
-    if (call == nullptr || source == nullptr || bytesAvailable == 0)
+    if (call == nullptr || source == nullptr || bytesAvailable == 0 || bytesRead == nullptr)
     {
         return E_INVALIDARG;
     }
 
     HRESULT hr = HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);
-
-    if (SUCCEEDED(hr) && bytesRead != nullptr)
+    if (SUCCEEDED(hr))
     {
         *bytesRead = bytesAvailable;
     }

@@ -3,6 +3,8 @@
 
 #include "pch.h"
 #include "http_apple.h"
+#include "request_body_stream.h"
+#include "session_delegate.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -23,10 +25,13 @@ http_task_apple::http_task_apple(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHan
     [configuration setTimeoutIntervalForRequest:(NSTimeInterval)timeoutInSeconds];
     [configuration setTimeoutIntervalForResource:(NSTimeInterval)timeoutInSeconds];
 
-    m_session = [NSURLSession sessionWithConfiguration:configuration];
+    SessionDelegate* delegate = [SessionDelegate sessionDelegateWithHCCallHandle:m_call andCompletionHandler:^(NSURLResponse *response, NSError *error) {
+        std::unique_ptr<http_task_apple> me{this};
+        me->completion_handler(response, error);
+    }];
+    m_session = [NSURLSession sessionWithConfiguration:configuration delegate:delegate delegateQueue:nil];
 }
-
-void http_task_apple::completion_handler(NSData* data, NSURLResponse* response, NSError* error)
+void http_task_apple::completion_handler(NSURLResponse* response, NSError* error)
 {
     if (error)
     {
@@ -60,7 +65,6 @@ void http_task_apple::completion_handler(NSData* data, NSURLResponse* response, 
         HCHttpCallResponseSetHeader(m_call, keyCString, valueCString);
     }
 
-    HCHttpCallResponseSetResponseBodyBytes(m_call, static_cast<const uint8_t*>([data bytes]), [data length]);
     XAsyncComplete(m_asyncBlock, S_OK, 0);
 }
 
@@ -104,36 +108,23 @@ bool http_task_apple::initiate_request()
         }
     }
 
-    uint8_t const* requestBody = nullptr;
+    HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     uint32_t requestBodySize = 0;
-    if (FAILED(HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodySize)))
+    if (FAILED(HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &requestBodySize))
+        || readFunction == nullptr)
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);
         XAsyncComplete(m_asyncBlock, E_FAIL, 0);
         return false;
     }
 
-    if (requestBodySize == 0)
+    if (requestBodySize > 0)
     {
-        m_sessionTask = [m_session dataTaskWithRequest:request completionHandler:
-                         ^(NSData* data, NSURLResponse* response, NSError* error)
-                         {
-                             std::unique_ptr<http_task_apple> me{this};
-                             me->completion_handler(data, response, error);
-                         }];
-    }
-    else
-    {
-        NSData* data = [NSData dataWithBytes:requestBody length:requestBodySize];
-
-        m_sessionTask = [m_session uploadTaskWithRequest:request fromData:data completionHandler:
-                         ^(NSData* data, NSURLResponse* response, NSError* error)
-                         {
-                             std::unique_ptr<http_task_apple> me{this};
-                             me->completion_handler(data, response, error);
-                         }];
+        [request setHTTPBodyStream:[RequestBodyStream requestBodyStreamWithHCCallHandle:m_call]];
+        [request addValue:[NSString stringWithFormat:@"%u", requestBodySize] forHTTPHeaderField:@"Content-Length"];
     }
 
+    m_sessionTask = [m_session dataTaskWithRequest:request];
     [m_sessionTask resume];
     return true;
 }
