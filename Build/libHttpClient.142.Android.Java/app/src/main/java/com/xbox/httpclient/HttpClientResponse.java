@@ -1,13 +1,51 @@
 package com.xbox.httpclient;
 
 import java.io.IOException;
+import java.io.OutputStream;
+
+import okio.Okio;
 import okhttp3.Response;
 
 class HttpClientResponse
 {
+    private final class NativeOutputStream extends OutputStream
+    {
+        final long callHandle;
+
+        public NativeOutputStream(long sourceCallHandle) {
+            callHandle = sourceCallHandle;
+        }
+
+        public void write(byte[] source) throws IOException {
+            write(source, 0, source.length);
+        }
+
+        public void write(byte[] source, int sourceOffset, int sourceLength) throws IOException {
+            if (source == null) {
+                throw new NullPointerException();
+            }
+
+            if (sourceOffset < 0 || sourceLength < 0 || (sourceOffset + sourceLength) > source.length) {
+                throw new IndexOutOfBoundsException();
+            }
+
+            nativeWrite(callHandle, source, sourceOffset, sourceLength);
+        }
+
+        public void write(int b) throws IOException {
+            byte[] singleByte = { (byte)b };
+            write(singleByte);
+        }
+
+        private native void nativeWrite(long callHandle, byte[] source, int sourceOffset, int sourceLength) throws IOException;
+
+    }
+
+    private final long callHandle;
     private final Response response;
 
-    public HttpClientResponse(Response sourceResponse) {
+    public HttpClientResponse(long sourceCallHandle, Response sourceResponse) {
+        this.callHandle = sourceCallHandle;
         this.response = sourceResponse;
     }
 
@@ -35,12 +73,12 @@ class HttpClientResponse
     }
 
     @SuppressWarnings("unused")
-    public byte[] getResponseBodyBytes() {
+    public void getResponseBodyBytes() {
         try {
-            byte[] responseBodyBytes = this.response.body().bytes();
-            return responseBodyBytes;
+            this.response.body().source().readAll(Okio.sink(new NativeOutputStream(callHandle)));
         } catch (IOException e) {
-            return null;
+        } finally {
+            this.response.close();
         }
     }
 

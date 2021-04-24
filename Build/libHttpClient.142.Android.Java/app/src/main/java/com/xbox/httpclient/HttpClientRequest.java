@@ -11,6 +11,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.RequestBody;
 
+import com.xbox.httpclient.HttpClientRequestBody;
+
 public class HttpClientRequest {
     private static final OkHttpClient OK_CLIENT;
     private static final byte[] NO_BODY = new byte[0];
@@ -33,16 +35,12 @@ public class HttpClientRequest {
     }
 
     @SuppressWarnings("unused")
-    public void setHttpMethodAndBody(String method, String contentType, byte[] body) {
-        if (body == null || body.length == 0) {
-            if ("POST".equals(method) || "PUT".equals(method)) {
-                this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(NO_BODY, null));
-            } else {
-                this.requestBuilder = this.requestBuilder.method(method, null);
-            }
-        } else {
-            this.requestBuilder = this.requestBuilder.method(method, RequestBody.create(body, MediaType.parse(contentType)));
+    public void setHttpMethodAndBody(String method, long call, String contentType, long contentLength) {
+        RequestBody requestBody = null;
+        if (contentLength > 0) {
+            requestBody = new HttpClientRequestBody(call, contentType, contentLength);
         }
+        this.requestBuilder.method(method, requestBody);
     }
 
     @SuppressWarnings("unused")
@@ -61,7 +59,7 @@ public class HttpClientRequest {
 
             @Override
             public void onResponse(Call call, final Response response) {
-                OnRequestCompleted(sourceCall, new HttpClientResponse(response));
+                OnRequestCompleted(sourceCall, new HttpClientResponse(sourceCall, response));
             }
         });
     }
