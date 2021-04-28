@@ -37,7 +37,12 @@ public class HttpClientRequest {
     @SuppressWarnings("unused")
     public void setHttpMethodAndBody(String method, long call, String contentType, long contentLength) {
         RequestBody requestBody = null;
-        if (contentLength > 0) {
+        if (contentLength == 0) {
+            if ("POST".equals(method) || "PUT".equals(method)) {
+                MediaType mediaType = (contentType != null ? MediaType.parse(contentType) : null);
+                requestBody = RequestBody.create(mediaType, NO_BODY);
+            }
+        } else {
             requestBody = new HttpClientRequestBody(call, contentType, contentLength);
         }
         this.requestBuilder.method(method, requestBody);
