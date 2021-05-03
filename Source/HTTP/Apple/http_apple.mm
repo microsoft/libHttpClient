@@ -31,6 +31,7 @@ http_task_apple::http_task_apple(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHan
     }];
     m_session = [NSURLSession sessionWithConfiguration:configuration delegate:delegate delegateQueue:nil];
 }
+
 void http_task_apple::completion_handler(NSURLResponse* response, NSError* error)
 {
     if (error)
