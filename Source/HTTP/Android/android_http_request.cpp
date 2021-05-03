@@ -136,11 +136,6 @@ HRESULT HttpRequest::SetMethodAndBody(HCCallHandle call, const char* method, con
         return E_FAIL;
     }
 
-    if (bodySize > std::numeric_limits<jlong>::max()) {
-        HC_TRACE_ERROR(HTTPCLIENT, "Could not safely cast bodySize to jlong");
-        return E_FAIL;
-    }
-
     jstring methodJstr = jniEnv->NewStringUTF(method);
     jstring contentTypeJstr = jniEnv->NewStringUTF(contentType);
 
