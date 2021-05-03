@@ -10,16 +10,18 @@ class HttpClientResponse
 {
     private final class NativeOutputStream extends OutputStream
     {
-        final long callHandle;
+        private final long callHandle;
 
         public NativeOutputStream(long sourceCallHandle) {
-            callHandle = sourceCallHandle;
+            this.callHandle = sourceCallHandle;
         }
 
+        @Override
         public void write(byte[] source) throws IOException {
             write(source, 0, source.length);
         }
 
+        @Override
         public void write(byte[] source, int sourceOffset, int sourceLength) throws IOException {
             if (source == null) {
                 throw new NullPointerException();
@@ -29,9 +31,10 @@ class HttpClientResponse
                 throw new IndexOutOfBoundsException();
             }
 
-            nativeWrite(callHandle, source, sourceOffset, sourceLength);
+            nativeWrite(this.callHandle, source, sourceOffset, sourceLength);
         }
 
+        @Override
         public void write(int b) throws IOException {
             byte[] singleByte = { (byte)b };
             write(singleByte);

@@ -40,7 +40,7 @@ public class HttpClientRequest {
         if (contentLength == 0) {
             if ("POST".equals(method) || "PUT".equals(method)) {
                 MediaType mediaType = (contentType != null ? MediaType.parse(contentType) : null);
-                requestBody = RequestBody.create(mediaType, NO_BODY);
+                requestBody = RequestBody.create(NO_BODY, mediaType);
             }
         } else {
             requestBody = new HttpClientRequestBody(call, contentType, contentLength);

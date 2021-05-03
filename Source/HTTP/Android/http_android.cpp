@@ -51,7 +51,7 @@ jint ThrowIOException(JNIEnv* env, char const* message) {
     return -1;
 }
 
-JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(JNIEnv* env, jobject /* instance */, jlong callHandle, jlong srcOffset, jobject dst, jlong dstOffset, jlong bytesAvailable)
+JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(JNIEnv* env, jobject /* instance */, jlong callHandle, jlong srcOffset, jbyteArray dst, jlong dstOffset, jlong bytesAvailable)
 {
     // convert call handle
     HCCallHandle call = reinterpret_cast<HCCallHandle>(callHandle);
@@ -74,11 +74,11 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     size_t bytesWritten = 0;
     {
         using ByteArray = std::unique_ptr<void, std::function<void(void*)>>;
-        ByteArray destination(env->GetPrimitiveArrayCritical((jbyteArray)dst, 0), [env, dst](void* carray) {
+        ByteArray destination(env->GetPrimitiveArrayCritical(dst, 0), [env, dst](void* carray) {
             if (carray)
             {
                 // exit critical section when this leaves scope
-                env->ReleasePrimitiveArrayCritical((jbyteArray)dst, carray, 0);
+                env->ReleasePrimitiveArrayCritical(dst, carray, 0);
             }
         });
 
@@ -110,7 +110,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     return static_cast<jint>(bytesWritten);
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(JNIEnv* env, jobject /* instance */, jlong callHandle, jobject src, jint sourceOffset, jint sourceLength)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(JNIEnv* env, jobject /* instance */, jlong callHandle, jbyteArray src, jint sourceOffset, jint sourceLength)
 {
     // convert handle
     HCCallHandle call = reinterpret_cast<HCCallHandle>(callHandle);
@@ -133,11 +133,11 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
     size_t bytesRead = 0;
     {
         using ByteArray = std::unique_ptr<void, std::function<void(void*)>>;
-        ByteArray source(env->GetPrimitiveArrayCritical((jbyteArray)src, 0), [env, src](void* carray) {
+        ByteArray source(env->GetPrimitiveArrayCritical(src, 0), [env, src](void* carray) {
             if (carray)
             {
                 // exit critical section when this leaves scope
-                env->ReleasePrimitiveArrayCritical((jbyteArray)src, carray, 0);
+                env->ReleasePrimitiveArrayCritical(src, carray, 0);
             }
         });
 

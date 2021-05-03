@@ -13,24 +13,27 @@ public final class HttpClientRequestBody extends RequestBody
 {
     private final class NativeInputStream extends InputStream
     {
-        final long callHandle;
-        long offset;
+        private final long callHandle;
+        private long offset;
 
         public NativeInputStream(long sourceCallHandle) {
-            callHandle = sourceCallHandle;
-            offset = 0;
+            this.callHandle = sourceCallHandle;
+            this.offset = 0;
         }
 
+        @Override
         public int read() throws IOException {
             byte[] destination = new byte[1];
             read(destination);
             return destination[0];
         }
 
+        @Override
         public int read(byte[] b) throws IOException {
             return read(b, 0, b.length);
         }
 
+        @Override
         public int read(byte[] destination, int destinationOffset, int length) throws IOException {
             if (destination == null) {
                 throw new NullPointerException();
@@ -44,18 +47,19 @@ public final class HttpClientRequestBody extends RequestBody
                 return 0;
             }
 
-            int bytesRead = nativeRead(callHandle, offset, destination, destinationOffset, length);
+            int bytesRead = nativeRead(this.callHandle, this.offset, destination, destinationOffset, length);
             if (bytesRead == 0) {
                 return -1;
             }
 
-            offset += bytesRead;
+            this.offset += bytesRead;
 
             return bytesRead;
         }
 
+        @Override
         public long skip(long n) throws IOException {
-            offset += n;
+            this.offset += n;
             return n;
         }
 
