@@ -46,6 +46,10 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
     call->responseBodyWriteFunction = writeFunction;
 
     return S_OK;

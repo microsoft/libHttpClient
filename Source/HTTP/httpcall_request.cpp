@@ -144,6 +144,10 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
     call->requestBodyReadFunction = readFunction;
     call->requestBodySize = bodySize;
 
