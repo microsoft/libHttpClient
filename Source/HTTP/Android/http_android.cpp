@@ -148,12 +148,14 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
             hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength, &bytesRead);
             if (FAILED(hr))
             {
+                source.reset();
                 ThrowIOException(env, "Write function failed");
                 return;
             }
         }
         catch (...)
         {
+            source.reset();
             ThrowIOException(env, "Write function threw an exception");
             return;
         }
