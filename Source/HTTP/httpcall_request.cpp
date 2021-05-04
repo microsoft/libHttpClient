@@ -22,7 +22,7 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     uint8_t const* requestBody = nullptr;
     uint32_t requestBodySize = 0;
     HRESULT hr = HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
-    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0) || offset > requestBodySize)
+    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0) || offset >= requestBodySize)
     {
         return E_FAIL;
     }
