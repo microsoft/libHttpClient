@@ -103,6 +103,12 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
+    HRESULT hr = HCHttpCallRequestSetRequestBodyReadFunction(call, DefaultRequestBodyReadFunction, requestBodySize);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
     call->requestBodySize = requestBodySize;
     call->requestBodyBytes.assign(requestBodyBytes, requestBodyBytes + requestBodySize);
     call->requestBodyString.clear();
