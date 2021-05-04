@@ -37,10 +37,9 @@ HRESULT STDMETHODCALLTYPE http_response_stream::Write(
         return STG_E_CANTSAVE;
     }
 
-    size_t bytesRead = 0;
     try
     {
-        hr = writeFunction(httpTask->call(), static_cast<const uint8_t*>(pv), cb, &bytesRead);
+        hr = writeFunction(httpTask->call(), static_cast<const uint8_t*>(pv), cb);
         if (FAILED(hr))
         {
             return STG_E_CANTSAVE;
@@ -54,7 +53,7 @@ HRESULT STDMETHODCALLTYPE http_response_stream::Write(
 
     if (pcbWritten)
     {
-        *pcbWritten = static_cast<ULONG>(bytesRead);
+        *pcbWritten = static_cast<ULONG>(cb);
     }
 
     return S_OK;

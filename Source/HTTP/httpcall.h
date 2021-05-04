@@ -22,8 +22,7 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
 HRESULT CALLBACK DefaultResponseBodyWriteFunction(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,
-    _In_ size_t bytesAvailable,
-    _Out_ size_t* bytesRead
+    _In_ size_t bytesAvailable
     ) noexcept;
 
 struct HC_CALL

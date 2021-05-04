@@ -264,7 +264,7 @@ private:
         _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
     );
 
-    static void flush_response_buffer(
+    static HRESULT flush_response_buffer(
         _In_ winhttp_http_task* pRequestContext
     );
 

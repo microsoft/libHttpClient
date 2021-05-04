@@ -43,19 +43,16 @@
 
     try
     {
-        __block size_t totalBytes = 0;
+        __block HRESULT hr = S_OK;
         [data enumerateByteRangesUsingBlock:^(const void* bytes, NSRange byteRange, BOOL* stop) {
-            size_t bytesRead = 0;
-            HRESULT hr = writeFunction(_call, static_cast<const uint8_t*>(bytes), static_cast<size_t>(byteRange.length), &bytesRead);
-            if (FAILED(hr) || bytesRead < byteRange.length)
+            hr = writeFunction(_call, static_cast<const uint8_t*>(bytes), static_cast<size_t>(byteRange.length));
+            if (FAILED(hr))
             {
                 *stop = YES;
             }
-            totalBytes += bytesRead;
         }];
 
-        // make sure we've consumed all the available data
-        if (totalBytes < [data length])
+        if (FAILED(hr))
         {
             [task cancel];
             return;

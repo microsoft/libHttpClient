@@ -541,15 +541,13 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="source">The source from which bytes may be read.</param>
-/// <param name="bytesAvailable">The maximum number of bytes that can be read from the source.</param>
-/// <param name="bytesRead>The number of bytes that were actually written to the source.</param>
+/// <param name="bytesAvailable">The number of bytes that can be read from the source.</param>
 /// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCHttpCallResponseBodyWriteFunction)(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,
-    _In_ size_t bytesAvailable,
-    _Out_ size_t* bytesRead
+    _In_ size_t bytesAvailable
     );
 
 /// <summary>

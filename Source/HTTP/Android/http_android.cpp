@@ -132,7 +132,6 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
     }
 
     // perform write
-    size_t bytesRead = 0;
     {
         using ByteArray = std::unique_ptr<void, std::function<void(void*)>>;
         ByteArray source(env->GetPrimitiveArrayCritical(src, 0), [env, src](void* carray) {
@@ -145,7 +144,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
         try
         {
-            hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength, &bytesRead);
+            hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength);
             if (FAILED(hr))
             {
                 source.reset();
