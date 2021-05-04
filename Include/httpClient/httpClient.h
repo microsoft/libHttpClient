@@ -335,7 +335,9 @@ STDAPI HCHttpCallRequestSetUrl(
     ) noexcept;
 
 /// <summary>
-/// Set the request body bytes of the HTTP call.
+/// Set the request body bytes of the HTTP call. This API operation is mutually exclusive with
+/// HCHttpCallRequestSetRequestBodyReadFunction and will result in any custom read callbacks that were
+/// previously set on this call handle to be ignored.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="requestBodyBytes">The request body bytes of the HTTP call.</param>
@@ -349,7 +351,9 @@ STDAPI HCHttpCallRequestSetRequestBodyBytes(
     ) noexcept;
 
 /// <summary>
-/// Set the request body string of the HTTP call.
+/// Set the request body string of the HTTP call. This API operation is mutually exclusive with
+/// HCHttpCallRequestSetRequestBodyReadFunction and will result in any custom read callbacks that were
+/// previously set on this call handle to be ignored.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="requestBodyString">The UTF-8 encoded request body string of the HTTP call.</param>
@@ -381,7 +385,7 @@ typedef HRESULT
 
 /// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
-/// performed. Note that if a custom read callback is used, any request body data set by
+/// performed. Note that if a custom read callback is used, any request body data previously set by
 /// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
 /// these API operations mutually exclusive.
 /// </summary>
