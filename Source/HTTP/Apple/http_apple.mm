@@ -110,7 +110,7 @@ bool http_task_apple::initiate_request()
     }
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
-    uint32_t requestBodySize = 0;
+    size_t requestBodySize = 0;
     if (FAILED(HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &requestBodySize))
         || readFunction == nullptr)
     {
@@ -122,7 +122,7 @@ bool http_task_apple::initiate_request()
     if (requestBodySize > 0)
     {
         [request setHTTPBodyStream:[RequestBodyStream requestBodyStreamWithHCCallHandle:m_call]];
-        [request addValue:[NSString stringWithFormat:@"%u", requestBodySize] forHTTPHeaderField:@"Content-Length"];
+        [request addValue:[NSString stringWithFormat:@"%zu", requestBodySize] forHTTPHeaderField:@"Content-Length"];
     }
 
     m_sessionTask = [m_session dataTaskWithRequest:request];

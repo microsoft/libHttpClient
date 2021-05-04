@@ -12,7 +12,7 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     _In_ size_t bytesAvailable,
     _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
     _Out_ size_t* bytesWritten
-    )
+    ) noexcept
 {
     if (call == nullptr || bytesAvailable == 0 || destination == nullptr || bytesWritten == nullptr)
     {
@@ -22,7 +22,7 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     uint8_t const* requestBody = nullptr;
     uint32_t requestBodySize = 0;
     HRESULT hr = HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
-    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0))
+    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0) || offset > requestBodySize)
     {
         return E_FAIL;
     }
@@ -134,7 +134,7 @@ STDAPI
 HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallRequestBodyReadFunction readFunction,
-    _In_ uint32_t bodySize
+    _In_ size_t bodySize
 ) noexcept
 try
 {
@@ -142,6 +142,7 @@ try
     {
         return E_INVALIDARG;
     }
+    RETURN_IF_PERFORM_CALLED(call);
 
     call->requestBodyReadFunction = readFunction;
     call->requestBodySize = bodySize;
@@ -167,7 +168,7 @@ try
         return E_INVALIDARG;
     }
 
-    *requestBodySize = call->requestBodySize;
+    *requestBodySize = static_cast<uint32_t>(call->requestBodySize);
     if (*requestBodySize == 0)
     {
         *requestBodyBytes = nullptr;
@@ -206,7 +207,7 @@ STDAPI
 HCHttpCallRequestGetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _Out_ HCHttpCallRequestBodyReadFunction* readFunction,
-    _Out_ uint32_t* requestBodySize
+    _Out_ size_t* requestBodySize
     ) noexcept
 try
 {

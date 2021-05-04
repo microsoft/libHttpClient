@@ -361,7 +361,8 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
     ) noexcept;
 
 /// <summary>
-/// The callback definition used by an HTTP call to read the request body.
+/// The callback definition used by an HTTP call to read the request body. This callback will be invoked
+/// on an unspecified background thread which is platform dependent.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="offset">The offset from the beginning of the request body.</param>
@@ -380,15 +381,18 @@ typedef HRESULT
 
 /// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
-/// performed.
+/// performed. Note that if a custom read callback is used, any request body data set by
+/// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
+/// these API operations mutually exclusive.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="readFunction">The request body read function this call should use.</param>
 /// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallRequestBodyReadFunction readFunction,
-    _In_ uint32_t bodySize
+    _In_ size_t bodySize
     ) noexcept;
 
 /// <summary>
@@ -532,7 +536,8 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 //
 
 /// <summary>
-/// The callback definition used by an HTTP call to write the response body.
+/// The callback definition used by an HTTP call to write the response body. This callback will be
+/// invoked on an unspecified background thread which is platform dependent.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="source">The source from which bytes may be read.</param>
@@ -554,6 +559,7 @@ typedef HRESULT
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="writeFunction">The response body write function this call should use.</param>
 /// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync</remarks>
 STDAPI HCHttpCallResponseSetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallResponseBodyWriteFunction writeFunction

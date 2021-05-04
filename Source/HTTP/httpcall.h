@@ -17,14 +17,14 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     _In_ size_t bytesAvailable,
     _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
     _Out_ size_t* bytesWritten
-    );
+    ) noexcept;
 
 HRESULT CALLBACK DefaultResponseBodyWriteFunction(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,
     _In_ size_t bytesAvailable,
     _Out_ size_t* bytesRead
-    );
+    ) noexcept;
 
 struct HC_CALL
 {
@@ -38,7 +38,7 @@ struct HC_CALL
     http_internal_string url;
     http_internal_vector<uint8_t> requestBodyBytes;
     http_internal_string requestBodyString;
-    uint32_t requestBodySize = 0;
+    size_t requestBodySize = 0;
     HCHttpCallRequestBodyReadFunction requestBodyReadFunction = DefaultRequestBodyReadFunction;
     http_header_map requestHeaders;
 

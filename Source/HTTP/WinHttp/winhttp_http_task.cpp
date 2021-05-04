@@ -340,20 +340,20 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
     uint64_t safeSize = std::min(pRequestContext->m_requestBodyRemainingToWrite, defaultChunkSize);
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
-    uint32_t bodySize = 0;
+    size_t bodySize = 0;
 
-    if ((HCHttpCallRequestGetRequestBodyReadFunction(pRequestContext->m_call, &readFunction, &bodySize) != S_OK) ||
+    if (FAILED(HCHttpCallRequestGetRequestBodyReadFunction(pRequestContext->m_call, &readFunction, &bodySize)) ||
         readFunction == nullptr)
     {
         pRequestContext->complete_task(E_FAIL, static_cast<uint32_t>(E_FAIL));
         return;
     }
 
-    pRequestContext->m_requestBuffer.resize(safeSize);
-
     size_t bytesWritten = 0;
     try
     {
+        pRequestContext->m_requestBuffer.resize(safeSize);
+
         HRESULT hr = readFunction(pRequestContext->m_call, pRequestContext->m_requestBodyOffset, safeSize, pRequestContext->m_requestBuffer.data(), &bytesWritten);
         if (FAILED(hr))
         {
@@ -1218,7 +1218,7 @@ HRESULT winhttp_http_task::send(
 #endif
 
     HCHttpCallRequestBodyReadFunction requestBody = nullptr;
-    uint32_t requestBodyBytes = 0;
+    size_t requestBodyBytes = 0;
     HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &requestBody, &requestBodyBytes);
     if (FAILED(hr))
     {

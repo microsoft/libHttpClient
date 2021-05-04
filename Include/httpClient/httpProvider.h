@@ -143,7 +143,7 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
 STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _Out_ HCHttpCallRequestBodyReadFunction* readFunction,
-    _Out_ uint32_t* bodySize
+    _Out_ size_t* bodySize
     ) noexcept;
 
 /// <summary>

@@ -62,7 +62,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
 
     // get read function
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
-    uint32_t bodySize = 0;
+    size_t bodySize = 0;
     HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &bodySize);
 
     if (FAILED(hr) || readFunction == nullptr)
@@ -92,11 +92,13 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
             hr = readFunction(call, srcOffset, bytesAvailable, static_cast<uint8_t*>(destination.get()) + dstOffset, &bytesWritten);
             if (FAILED(hr))
             {
+                destination.reset();
                 return ThrowIOException(env, "Read function failed");
             }
         }
         catch (...)
         {
+            destination.reset();
             return ThrowIOException(env, "Read function threw an exception");
         }
     }
@@ -212,7 +214,7 @@ void Internal_HCHttpCallPerformAsync(
     }
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
-    uint32_t requestBodySize = 0;
+    size_t requestBodySize = 0;
     HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &requestBodySize);
 
     const char* contentType = nullptr;

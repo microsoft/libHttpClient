@@ -53,7 +53,7 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
     )
 {
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
-    uint32_t bodySize = 0;
+    size_t bodySize = 0;
     HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &bodySize);
     if (FAILED(hr) || readFunction == nullptr)
     {

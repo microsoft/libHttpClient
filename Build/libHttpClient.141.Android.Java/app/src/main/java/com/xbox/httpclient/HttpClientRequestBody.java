@@ -66,26 +66,27 @@ public final class HttpClientRequestBody extends RequestBody
         private native int nativeRead(long callHandle, long srcOffset, byte[] dst, long dstOffset, long bytesAvailable) throws IOException;
     }
 
-    long callHandle;
-    MediaType contentType;
-    long contentLength;
+    private final long callHandle;
+    private final MediaType contentType;
+    private final long contentLength;
 
     public HttpClientRequestBody(long sourceCallHandle, String sourceContentType, long sourceContentLength) {
-        callHandle = sourceCallHandle;
-        if (contentType != null) {
-            contentType = MediaType.parse(sourceContentType);
-        }
-        contentLength = sourceContentLength;
+        this.callHandle = sourceCallHandle;
+        this.contentType = sourceContentType != null ? MediaType.parse(sourceContentType) : null;
+        this.contentLength = sourceContentLength;
     }
 
+    @Override
     public MediaType contentType() {
         return contentType;
     }
 
+    @Override
     public long contentLength() {
         return contentLength;
     }
 
+    @Override
     public void writeTo(BufferedSink sink) throws IOException {
         sink.writeAll(Okio.source(new NativeInputStream(callHandle)));
     }

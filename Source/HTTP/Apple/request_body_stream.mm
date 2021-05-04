@@ -44,7 +44,7 @@
 - (NSInteger)read:(uint8_t*)buffer maxLength:(NSUInteger)len
 {
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
-    uint32_t requestBodySize = 0;
+    size_t requestBodySize = 0;
     HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(_call, &readFunction, &requestBodySize);
     if (FAILED(hr) || readFunction == nullptr)
     {
