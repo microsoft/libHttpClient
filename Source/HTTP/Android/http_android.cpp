@@ -146,7 +146,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
         try
         {
-            hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength, writeFunction);
+            hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength, context);
             if (FAILED(hr))
             {
                 source.reset();
@@ -218,8 +218,8 @@ void Internal_HCHttpCallPerformAsync(
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t requestBodySize = 0;
-    void* context = nullptr;
-    HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &requestBodySize, &context);
+    void* readFunctionContext = nullptr;
+    HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &requestBodySize, &readFunctionContext);
 
     const char* contentType = nullptr;
     if (requestBodySize > 0)
