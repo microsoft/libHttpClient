@@ -268,11 +268,6 @@ void xmlhttp_http_task::set_exception(const std::exception_ptr& exceptionPtr)
     m_exceptionPtr = exceptionPtr;
 }
 
-http_buffer& xmlhttp_http_task::response_buffer()
-{
-    return m_responseBuffer;
-}
-
 HCCallHandle xmlhttp_http_task::call()
 {
     return m_call;

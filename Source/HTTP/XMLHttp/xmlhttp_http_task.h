@@ -8,7 +8,6 @@
 #else
 #include <ixmlhttprequest2.h>
 #endif
-#include "http_buffer.h"
 #include "utils.h"
 
 class xmlhttp_http_task : public xbox::httpclient::hc_task
@@ -35,14 +34,12 @@ public:
     const http_internal_vector<http_internal_string>& get_headers_values();
     bool has_error();
     void set_exception(const std::exception_ptr& exceptionPtr);
-    http_buffer& response_buffer();
     HCCallHandle call();
     XAsyncBlock* async_block();
 
 private:
     HCCallHandle m_call;
     XAsyncBlock* m_asyncBlock;
-    http_buffer m_responseBuffer;
     uint32_t m_statusCode;
     std::exception_ptr m_exceptionPtr;
     HRESULT m_hrCoInit;

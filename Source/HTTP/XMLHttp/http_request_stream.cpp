@@ -3,7 +3,6 @@
 #include "pch.h"
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
-#include "http_request_callback.h"
 #include "http_request_stream.h"
 
 http_request_stream::http_request_stream() :
