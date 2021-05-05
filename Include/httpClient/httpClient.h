@@ -385,7 +385,7 @@ typedef HRESULT
 
 /// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
-/// performed. Note that if a custom read callback is used, any request body data previously set by
+/// performed. If a custom read callback is used, any request body data previously set by
 /// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
 /// these API operations mutually exclusive.
 /// </summary>
@@ -556,7 +556,9 @@ typedef HRESULT
 
 /// <summary>
 /// Sets a custom callback function that will be used to write the response body when the HTTP call
-/// is performed.
+/// is performed. Using a custom write callback will cause subsequent calls to
+/// HCHttpCallResponseGetResponseBodyBytesSize, HCHttpCallResponseGetResponseBodyBytes,
+/// and HCHttpCallGetResponseBodyString to fail as these are mutually exclusive.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="writeFunction">The response body write function this call should use.</param>
@@ -572,7 +574,8 @@ STDAPI HCHttpCallResponseSetResponseBodyWriteFunction(
 // 
 
 /// <summary>
-/// Get the response body string of the HTTP call.
+/// Get the response body string of the HTTP call. This API operation will fail if a custom write
+/// callback was set on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="responseString">
@@ -587,7 +590,8 @@ STDAPI HCHttpCallResponseGetResponseString(
     ) noexcept;
 
 /// <summary>
-/// Get the response body buffer size of the HTTP call.
+/// Get the response body buffer size of the HTTP call. This API operation will fail if a custom write
+/// callback was set on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bufferSize">The response body buffer size of the HTTP call.</param>
@@ -599,7 +603,8 @@ STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
     ) noexcept;
 
 /// <summary>
-/// Get the response body buffer of the HTTP call.
+/// Get the response body buffer of the HTTP call. This API operation will fail if a custom write
+/// callback was set on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bufferSize">The response body buffer size being passed in.</param>

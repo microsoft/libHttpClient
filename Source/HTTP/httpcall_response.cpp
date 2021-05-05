@@ -68,6 +68,13 @@ try
         return E_INVALIDARG;
     }
 
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
+    }
+
     if (call->responseString.empty())
     {
         call->responseString = http_internal_string(reinterpret_cast<char const*>(call->responseBodyBytes.data()), call->responseBodyBytes.size());
@@ -89,6 +96,13 @@ try
         return E_INVALIDARG;
     }
 
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
+    }
+
     *bufferSize = call->responseBodyBytes.size();
     return S_OK;
 }
@@ -105,6 +119,13 @@ try
     if (call == nullptr || buffer == nullptr)
     {
         return E_INVALIDARG;
+    }
+
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
     }
 
 #if HC_PLATFORM_IS_MICROSOFT
@@ -134,6 +155,13 @@ try
         return E_INVALIDARG;
     }
 
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
+    }
+
     call->responseBodyBytes.assign(bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
@@ -153,6 +181,13 @@ try
     if (call == nullptr || bodyBytes == nullptr)
     {
         return E_INVALIDARG;
+    }
+
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
     }
 
     call->responseBodyBytes.insert(call->responseBodyBytes.end(), bodyBytes, bodyBytes + bodySize);

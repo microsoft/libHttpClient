@@ -298,7 +298,9 @@ STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
 // 
 
 /// <summary>
-/// Set the response body byte buffer of the HTTP call.
+/// Set the response body byte buffer of the HTTP call. If a custom write callback was previously set
+/// on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction, this operation will fail
+/// as these are mutually exclusive.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bodyBytes">The response body bytes of the HTTP call.</param>
@@ -311,7 +313,9 @@ STDAPI HCHttpCallResponseSetResponseBodyBytes(
     ) noexcept;
 
 /// <summary>
-/// Appends to the response body byte buffer of the HTTP call.
+/// Appends to the response body byte buffer of the HTTP call. If a custom write callback was previously set
+/// on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction, this operation will fail
+/// as these are mutually exclusive.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bodyBytes">The data to append.</param>
