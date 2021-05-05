@@ -15,6 +15,7 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ size_t offset,
     _In_ size_t bytesAvailable,
+    _In_opt_ void* context,
     _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
     _Out_ size_t* bytesWritten
     ) noexcept;
@@ -22,7 +23,8 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
 HRESULT CALLBACK DefaultResponseBodyWriteFunction(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,
-    _In_ size_t bytesAvailable
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* context
     ) noexcept;
 
 struct HC_CALL
@@ -39,11 +41,13 @@ struct HC_CALL
     http_internal_string requestBodyString;
     size_t requestBodySize = 0;
     HCHttpCallRequestBodyReadFunction requestBodyReadFunction = DefaultRequestBodyReadFunction;
+    void* requestBodyReadFunctionContext = nullptr;
     http_header_map requestHeaders;
 
     http_internal_string responseString;
     http_internal_vector<uint8_t> responseBodyBytes;
     HCHttpCallResponseBodyWriteFunction responseBodyWriteFunction = DefaultResponseBodyWriteFunction;
+    void* responseBodyWriteFunctionContext = nullptr;
     http_header_map responseHeaders;
     uint32_t statusCode = 0;
     HRESULT networkErrorCode = S_OK;

@@ -42,8 +42,9 @@ void xmlhttp_http_task::perform_async(
         const char* method = nullptr;
         HCHttpCallRequestBodyReadFunction requestBodyReadFunction = nullptr;
         size_t requestBodySize = 0;
+        void* context = nullptr;
         HCHttpCallRequestGetUrl(call, &method, &url);
-        HCHttpCallRequestGetRequestBodyReadFunction(call, &requestBodyReadFunction, &requestBodySize);
+        HCHttpCallRequestGetRequestBodyReadFunction(call, &requestBodyReadFunction, &requestBodySize, &context);
 
         uint32_t numHeaders = 0;
         HCHttpCallRequestGetNumHeaders(call, &numHeaders);

@@ -53,7 +53,8 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
 {
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t bodySize = 0;
-    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &bodySize);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &bodySize, &context);
     if (FAILED(hr) || readFunction == nullptr)
     {
         return STG_E_READFAULT;
@@ -62,7 +63,7 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
     size_t bytesWritten = 0;
     try
     {
-        hr = readFunction(m_call, m_startIndex, cb, static_cast<uint8_t*>(pv), &bytesWritten);
+        hr = readFunction(m_call, m_startIndex, cb, context, static_cast<uint8_t*>(pv), &bytesWritten);
         if (FAILED(hr))
         {
             return STG_E_READFAULT;

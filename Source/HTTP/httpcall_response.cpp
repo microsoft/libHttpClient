@@ -9,7 +9,8 @@ using namespace xbox::httpclient;
 HRESULT CALLBACK DefaultResponseBodyWriteFunction(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,
-    _In_ size_t bytesAvailable
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* /* context */
     ) noexcept
 {
     return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);
@@ -18,16 +19,18 @@ HRESULT CALLBACK DefaultResponseBodyWriteFunction(
 STDAPI
 HCHttpCallResponseGetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
-    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction
+    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction,
+    _Out_ void** context
 ) noexcept
 try
 {
-    if (call == nullptr || writeFunction == nullptr)
+    if (call == nullptr || writeFunction == nullptr || context == nullptr)
     {
         return E_INVALIDARG;
     }
 
     *writeFunction = call->responseBodyWriteFunction;
+    *context = call->responseBodyWriteFunctionContext;
 
     return S_OK;
 }
@@ -36,7 +39,8 @@ CATCH_RETURN()
 STDAPI
 HCHttpCallResponseSetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
-    _In_ HCHttpCallResponseBodyWriteFunction writeFunction
+    _In_ HCHttpCallResponseBodyWriteFunction writeFunction,
+    _In_opt_ void* context
     ) noexcept
 try
 {
@@ -51,6 +55,7 @@ try
         return E_HC_NOT_INITIALISED;
 
     call->responseBodyWriteFunction = writeFunction;
+    call->responseBodyWriteFunctionContext = context;
 
     return S_OK;
 }
@@ -69,7 +74,8 @@ try
     }
 
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
     if (writeFunction != DefaultResponseBodyWriteFunction)
     {
         return E_FAIL;
@@ -97,7 +103,8 @@ try
     }
 
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
     if (writeFunction != DefaultResponseBodyWriteFunction)
     {
         return E_FAIL;
@@ -122,7 +129,8 @@ try
     }
 
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
     if (writeFunction != DefaultResponseBodyWriteFunction)
     {
         return E_FAIL;
@@ -156,7 +164,8 @@ try
     }
 
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
     if (writeFunction != DefaultResponseBodyWriteFunction)
     {
         return E_FAIL;
@@ -184,7 +193,8 @@ try
     }
 
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
     if (writeFunction != DefaultResponseBodyWriteFunction)
     {
         return E_FAIL;

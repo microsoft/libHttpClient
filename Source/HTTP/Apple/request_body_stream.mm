@@ -45,7 +45,8 @@
 {
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t requestBodySize = 0;
-    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(_call, &readFunction, &requestBodySize);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(_call, &readFunction, &requestBodySize, &context);
     if (FAILED(hr) || readFunction == nullptr)
     {
         return 0;
@@ -54,7 +55,7 @@
     size_t bytesWritten = 0;
     try
     {
-        hr = readFunction(_call, _offset, static_cast<size_t>(len), buffer, &bytesWritten);
+        hr = readFunction(_call, _offset, static_cast<size_t>(len), context, buffer, &bytesWritten);
         if (FAILED(hr))
         {
             return 0;

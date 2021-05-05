@@ -10,6 +10,7 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ size_t offset,
     _In_ size_t bytesAvailable,
+    _In_opt_ void* /* context */,
     _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
     _Out_ size_t* bytesWritten
     ) noexcept
@@ -22,13 +23,16 @@ HRESULT CALLBACK DefaultRequestBodyReadFunction(
     uint8_t const* requestBody = nullptr;
     uint32_t requestBodySize = 0;
     HRESULT hr = HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
-    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0) || offset >= requestBodySize)
+    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0) || offset > requestBodySize)
     {
         return E_FAIL;
     }
 
     const size_t bytesToWrite = std::min(bytesAvailable, static_cast<size_t>(requestBodySize) - offset);
-    std::memcpy(destination, requestBody + offset, bytesToWrite);
+    if (bytesToWrite > 0)
+    {
+        std::memcpy(destination, requestBody + offset, bytesToWrite);
+    }
 
     *bytesWritten = bytesToWrite;
 
@@ -103,7 +107,7 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    HRESULT hr = HCHttpCallRequestSetRequestBodyReadFunction(call, DefaultRequestBodyReadFunction, requestBodySize);
+    HRESULT hr = HCHttpCallRequestSetRequestBodyReadFunction(call, DefaultRequestBodyReadFunction, requestBodySize, nullptr);
     if (FAILED(hr))
     {
         return hr;
@@ -140,7 +144,8 @@ STDAPI
 HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallRequestBodyReadFunction readFunction,
-    _In_ size_t bodySize
+    _In_ size_t bodySize,
+    _In_opt_ void* context
 ) noexcept
 try
 {
@@ -155,6 +160,7 @@ try
         return E_HC_NOT_INITIALISED;
 
     call->requestBodyReadFunction = readFunction;
+    call->requestBodyReadFunctionContext = context;
     call->requestBodySize = bodySize;
 
     call->requestBodyString.clear();
@@ -217,16 +223,18 @@ STDAPI
 HCHttpCallRequestGetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _Out_ HCHttpCallRequestBodyReadFunction* readFunction,
-    _Out_ size_t* requestBodySize
+    _Out_ size_t* requestBodySize,
+    _Out_ void** context
     ) noexcept
 try
 {
-    if (call == nullptr || readFunction == nullptr || requestBodySize == nullptr)
+    if (call == nullptr || readFunction == nullptr || requestBodySize == nullptr || context == nullptr)
     {
         return E_INVALIDARG;
     }
 
     *readFunction = call->requestBodyReadFunction;
+    *context = call->requestBodyReadFunctionContext;
     *requestBodySize = call->requestBodySize;
 
     return S_OK;

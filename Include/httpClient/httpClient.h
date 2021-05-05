@@ -371,6 +371,7 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="offset">The offset from the beginning of the request body.</param>
 /// <param name="bytesAvailable">The maximum number of bytes that can be written to the destination.</param>
+/// <param name="context">The context associated with this read function.</param>
 /// <param name="destination">The destination where data may be written to.</param>
 /// <param name="bytesWritten">The number of bytes that were actually written to destination.</param>
 /// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
@@ -379,6 +380,7 @@ typedef HRESULT
     _In_ HCCallHandle call,
     _In_ size_t offset,
     _In_ size_t bytesAvailable,
+    _In_opt_ void* context,
     _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
     _Out_ size_t* bytesWritten
     );
@@ -391,12 +393,15 @@ typedef HRESULT
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="readFunction">The request body read function this call should use.</param>
+/// <param name="bodySize">The size of the body.</param>
+/// <param name="context">The context associated with this read function.</param>
 /// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
 /// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallRequestBodyReadFunction readFunction,
-    _In_ size_t bodySize
+    _In_ size_t bodySize,
+    _In_opt_ void* context
     ) noexcept;
 
 /// <summary>
@@ -546,12 +551,14 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="source">The source from which bytes may be read.</param>
 /// <param name="bytesAvailable">The number of bytes that can be read from the source.</param>
+/// <param name="context">The context associated with this write function.</param>
 /// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCHttpCallResponseBodyWriteFunction)(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,
-    _In_ size_t bytesAvailable
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* context
     );
 
 /// <summary>
@@ -562,11 +569,13 @@ typedef HRESULT
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="writeFunction">The response body write function this call should use.</param>
+/// <param name="context">The context to associate with this write function.</param>
 /// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
-/// <remarks>This must be called prior to calling HCHttpCallPerformAsync</remarks>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallResponseSetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
-    _In_ HCHttpCallResponseBodyWriteFunction writeFunction
+    _In_ HCHttpCallResponseBodyWriteFunction writeFunction,
+    _In_opt_ void* context
     ) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////

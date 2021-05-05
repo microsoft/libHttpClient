@@ -63,7 +63,8 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     // get read function
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t bodySize = 0;
-    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &bodySize);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &bodySize, &context);
 
     if (FAILED(hr) || readFunction == nullptr)
     {
@@ -89,7 +90,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
 
         try
         {
-            hr = readFunction(call, srcOffset, bytesAvailable, static_cast<uint8_t*>(destination.get()) + dstOffset, &bytesWritten);
+            hr = readFunction(call, srcOffset, bytesAvailable, context, static_cast<uint8_t*>(destination.get()) + dstOffset, &bytesWritten);
             if (FAILED(hr))
             {
                 destination.reset();
@@ -124,7 +125,8 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
     // get write function
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
     if (FAILED(hr) || writeFunction == nullptr)
     {
         ThrowIOException(env, "Failed to get write function");
@@ -144,7 +146,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
         try
         {
-            hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength);
+            hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength, writeFunction);
             if (FAILED(hr))
             {
                 source.reset();
@@ -216,7 +218,8 @@ void Internal_HCHttpCallPerformAsync(
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t requestBodySize = 0;
-    HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &requestBodySize);
+    void* context = nullptr;
+    HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &requestBodySize, &context);
 
     const char* contentType = nullptr;
     if (requestBodySize > 0)

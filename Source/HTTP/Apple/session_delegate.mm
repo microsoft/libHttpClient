@@ -34,7 +34,8 @@
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveData:(NSData *)data
 {
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    if (HCHttpCallResponseGetResponseBodyWriteFunction(_call, &writeFunction) != S_OK ||
+    void* context = nullptr;
+    if (FAILED(HCHttpCallResponseGetResponseBodyWriteFunction(_call, &writeFunction, &context)) ||
         writeFunction == nullptr)
     {
         [task cancel];
@@ -45,7 +46,7 @@
     {
         __block HRESULT hr = S_OK;
         [data enumerateByteRangesUsingBlock:^(const void* bytes, NSRange byteRange, BOOL* stop) {
-            hr = writeFunction(_call, static_cast<const uint8_t*>(bytes), static_cast<size_t>(byteRange.length));
+            hr = writeFunction(_call, static_cast<const uint8_t*>(bytes), static_cast<size_t>(byteRange.length), context);
             if (FAILED(hr))
             {
                 *stop = YES;

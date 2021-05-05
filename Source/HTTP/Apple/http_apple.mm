@@ -111,7 +111,8 @@ bool http_task_apple::initiate_request()
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t requestBodySize = 0;
-    if (FAILED(HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &requestBodySize))
+    void* context = nullptr;
+    if (FAILED(HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &requestBodySize, &context))
         || readFunction == nullptr)
     {
         HCHttpCallResponseSetNetworkErrorCode(m_call, E_FAIL, 0);

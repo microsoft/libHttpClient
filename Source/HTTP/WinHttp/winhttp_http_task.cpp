@@ -341,8 +341,8 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t bodySize = 0;
-
-    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(pRequestContext->m_call, &readFunction, &bodySize);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(pRequestContext->m_call, &readFunction, &bodySize, &context);
     if (FAILED(hr))
     {
         pRequestContext->complete_task(hr);
@@ -359,7 +359,7 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
     {
         pRequestContext->m_requestBuffer.resize(safeSize);
 
-        hr = readFunction(pRequestContext->m_call, pRequestContext->m_requestBodyOffset, safeSize, pRequestContext->m_requestBuffer.data(), &bytesWritten);
+        hr = readFunction(pRequestContext->m_call, pRequestContext->m_requestBodyOffset, safeSize, context, pRequestContext->m_requestBuffer.data(), &bytesWritten);
         if (FAILED(hr))
         {
             pRequestContext->complete_task(hr);
@@ -769,7 +769,8 @@ HRESULT winhttp_http_task::flush_response_buffer(
 )
 {
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(pRequestContext->m_call, &writeFunction);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(pRequestContext->m_call, &writeFunction, &context);
     if (FAILED(hr))
     {
         return hr;
@@ -782,7 +783,7 @@ HRESULT winhttp_http_task::flush_response_buffer(
 
     try
     {
-        hr = writeFunction(pRequestContext->m_call, pRequestContext->m_responseBuffer.data(), pRequestContext->m_responseBuffer.size());
+        hr = writeFunction(pRequestContext->m_call, pRequestContext->m_responseBuffer.data(), pRequestContext->m_responseBuffer.size(), context);
         if (FAILED(hr))
         {
             return hr;
@@ -1187,7 +1188,8 @@ HRESULT winhttp_http_task::send(
 
     HCHttpCallRequestBodyReadFunction requestBody = nullptr;
     size_t requestBodyBytes = 0;
-    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &requestBody, &requestBodyBytes);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &requestBody, &requestBodyBytes, &context);
     if (FAILED(hr))
     {
         return hr;

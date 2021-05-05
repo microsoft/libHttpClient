@@ -30,7 +30,8 @@ HRESULT STDMETHODCALLTYPE http_response_stream::Write(
     }
 
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(httpTask->call(), &writeFunction);
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(httpTask->call(), &writeFunction, &context);
     if (FAILED(hr) || writeFunction == nullptr)
     {
         return STG_E_CANTSAVE;
@@ -38,7 +39,7 @@ HRESULT STDMETHODCALLTYPE http_response_stream::Write(
 
     try
     {
-        hr = writeFunction(httpTask->call(), static_cast<const uint8_t*>(pv), cb);
+        hr = writeFunction(httpTask->call(), static_cast<const uint8_t*>(pv), cb, context);
         if (FAILED(hr))
         {
             return STG_E_CANTSAVE;

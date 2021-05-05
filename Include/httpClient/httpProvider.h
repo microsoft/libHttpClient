@@ -137,13 +137,15 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
 /// <summary>
 /// Get the function used by the HTTP call to read the request body
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="readFunction"></param>
-/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL</returns>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="readFunction">The read function of this HTTP call.</param>
+/// <param name="context">The context associated with this read function.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
     _In_ HCCallHandle call,
     _Out_ HCHttpCallRequestBodyReadFunction* readFunction,
-    _Out_ size_t* bodySize
+    _Out_ size_t* bodySize,
+    _Out_ void** context
     ) noexcept;
 
 /// <summary>
@@ -283,14 +285,16 @@ STDAPI HCHttpCallRequestGetTimeoutWindow(
 //
 
 /// <summary>
-/// Get the function used by the HTTP call to write the response body
+/// Get the function used by the HTTP call to write the response body.
 /// </summary>
-/// <param name="call">The handle of the HTTP call</param>
-/// <param name="writeFunction"></param>
-/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL</returns>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="writeFunction">The write function of this HTTP call.</param>
+/// <param name="context">The context associated with this write function.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
-    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction
+    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction,
+    _Out_ void** context
     ) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
