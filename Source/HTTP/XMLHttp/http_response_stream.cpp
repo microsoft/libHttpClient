@@ -3,7 +3,6 @@
 #include "pch.h"
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
-#include "http_request_callback.h"
 #include "http_response_stream.h"
 
 http_response_stream::http_response_stream(
@@ -25,30 +24,39 @@ HRESULT STDMETHODCALLTYPE http_response_stream::Write(
         return STG_E_CANTSAVE;
     }
 
-    if (pcbWritten != nullptr)
-    {
-        *pcbWritten = 0;
-    }
-
     if (cb == 0)
     {
         return S_OK;
     }
 
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(httpTask->call(), &writeFunction, &context);
+    if (FAILED(hr) || writeFunction == nullptr)
+    {
+        return STG_E_CANTSAVE;
+    }
+
     try
     {
-        httpTask->response_buffer().append(pv, cb);
-        if (pcbWritten != nullptr)
+        hr = writeFunction(httpTask->call(), static_cast<const uint8_t*>(pv), cb, context);
+        if (FAILED(hr))
         {
-            *pcbWritten = (ULONG)cb;
+            return STG_E_CANTSAVE;
         }
-        return S_OK;
     }
     catch (...)
     {
         httpTask->set_exception(std::current_exception());
         return STG_E_CANTSAVE;
     }
+
+    if (pcbWritten)
+    {
+        *pcbWritten = static_cast<ULONG>(cb);
+    }
+
+    return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE http_response_stream::Read(

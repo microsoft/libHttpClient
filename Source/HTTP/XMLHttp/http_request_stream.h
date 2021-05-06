@@ -9,10 +9,10 @@ class http_request_stream : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::
 {
 public:
     http_request_stream();
+    ~http_request_stream();
 
     HRESULT init(
-        _In_reads_bytes_(requestBodyBytes) const BYTE* requestBody,
-        _In_ uint32_t requestBodyBytes
+        _In_ HCCallHandle call
         );
 
     virtual HRESULT STDMETHODCALLTYPE Write(
@@ -28,8 +28,7 @@ public:
         );
 
 private:
-    std::vector<BYTE> m_requestBody;
-    size_t m_remainingToRead;
+    HCCallHandle m_call;
     size_t m_startIndex;
 };
 

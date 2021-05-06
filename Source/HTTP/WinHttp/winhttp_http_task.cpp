@@ -339,10 +339,34 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
     const uint64_t defaultChunkSize = 64 * 1024;
     uint64_t safeSize = std::min(pRequestContext->m_requestBodyRemainingToWrite, defaultChunkSize);
 
-    const BYTE* requestBody = nullptr;
-    uint32_t requestBodyBytes = 0;
-    if ((HCHttpCallRequestGetRequestBodyBytes(pRequestContext->m_call, &requestBody, &requestBodyBytes) != S_OK) || 
-        requestBody == nullptr)
+    HCHttpCallRequestBodyReadFunction readFunction = nullptr;
+    size_t bodySize = 0;
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(pRequestContext->m_call, &readFunction, &bodySize, &context);
+    if (FAILED(hr))
+    {
+        pRequestContext->complete_task(hr);
+        return;
+    }
+
+    if (readFunction == nullptr) {
+        pRequestContext->complete_task(E_UNEXPECTED);
+        return;
+    }
+
+    size_t bytesWritten = 0;
+    try
+    {
+        pRequestContext->m_requestBuffer.resize(safeSize);
+
+        hr = readFunction(pRequestContext->m_call, pRequestContext->m_requestBodyOffset, safeSize, context, pRequestContext->m_requestBuffer.data(), &bytesWritten);
+        if (FAILED(hr))
+        {
+            pRequestContext->complete_task(hr);
+            return;
+        }
+    }
+    catch (...)
     {
         pRequestContext->complete_task(E_FAIL, static_cast<uint32_t>(E_FAIL));
         return;
@@ -350,8 +374,8 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
 
     if( !WinHttpWriteData(
         pRequestContext->m_hRequest,
-        &requestBody[pRequestContext->m_requestBodyOffset],
-        static_cast<DWORD>(safeSize),
+        pRequestContext->m_requestBuffer.data(),
+        static_cast<DWORD>(bytesWritten),
         nullptr))
     {
         DWORD dwError = GetLastError();
@@ -361,12 +385,12 @@ void winhttp_http_task::_multiple_segment_write_data(_In_ winhttp_http_task* pRe
     }
 
     // Stop writing chunks after this one if no more data.
-    pRequestContext->m_requestBodyRemainingToWrite -= safeSize;
+    pRequestContext->m_requestBodyRemainingToWrite -= bytesWritten;
     if (pRequestContext->m_requestBodyRemainingToWrite == 0)
     {
         pRequestContext->m_requestBodyType = msg_body_type::no_body;
     }
-    pRequestContext->m_requestBodyOffset += safeSize;
+    pRequestContext->m_requestBodyOffset += bytesWritten;
 }
 
 void winhttp_http_task::callback_status_write_complete(
@@ -682,16 +706,25 @@ void winhttp_http_task::callback_status_data_available(
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE newBytesAvailable=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), newBytesAvailable);
 
+    // Flush response buffer from previous call to WinHttpReadData
+    if (pRequestContext->m_responseBuffer.size())
+    {
+        HRESULT hr = flush_response_buffer(pRequestContext);
+        if (FAILED(hr)) {
+            pRequestContext->complete_task(hr);
+            return;
+        }
+    }
+
+    // Read new data into buffer
     if (newBytesAvailable > 0)
     {
-        size_t oldSize = pRequestContext->m_responseBuffer.size();
-        size_t newSize = oldSize + newBytesAvailable;
-        pRequestContext->m_responseBuffer.resize(newSize);
+        pRequestContext->m_responseBuffer.resize(newBytesAvailable);
 
         // Read in body all at once.
         if (!WinHttpReadData(
             hRequestHandle,
-            &pRequestContext->m_responseBuffer[oldSize],
+            pRequestContext->m_responseBuffer.data(),
             newBytesAvailable,
             nullptr))
         {
@@ -703,21 +736,10 @@ void winhttp_http_task::callback_status_data_available(
     }
     else
     {
-        // No more data available, complete the request.
-        {
-            if (pRequestContext->m_responseBuffer.size() > 0)
-            {
-                HCHttpCallResponseSetResponseBodyBytes(pRequestContext->m_call,
-                    pRequestContext->m_responseBuffer.data(),
-                    pRequestContext->m_responseBuffer.size()
-                );
-            }
-        }
-
+        // No more data available
         pRequestContext->complete_task(S_OK);
     }
 }
-
 
 void winhttp_http_task::callback_status_read_complete(
     _In_ HINTERNET /*hRequestHandle*/,
@@ -732,19 +754,48 @@ void winhttp_http_task::callback_status_read_complete(
     // If no bytes have been read, then this is the end of the response.
     if (bytesRead == 0)
     {
-        if (pRequestContext->m_responseBuffer.size() > 0)
-        {
-            HCHttpCallResponseSetResponseBodyBytes(pRequestContext->m_call,
-                pRequestContext->m_responseBuffer.data(),
-                pRequestContext->m_responseBuffer.size()
-            );
-        }
-        pRequestContext->complete_task(S_OK);
+        // Flush remaining buffered data
+        HRESULT hr = flush_response_buffer(pRequestContext);
+        pRequestContext->complete_task(hr);
     }
     else
     {
         read_next_response_chunk(pRequestContext, bytesRead);
     }
+}
+
+HRESULT winhttp_http_task::flush_response_buffer(
+    _In_ winhttp_http_task* pRequestContext
+)
+{
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(pRequestContext->m_call, &writeFunction, &context);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    if (writeFunction == nullptr)
+    {
+        return E_UNEXPECTED;
+    }
+
+    try
+    {
+        hr = writeFunction(pRequestContext->m_call, pRequestContext->m_responseBuffer.data(), pRequestContext->m_responseBuffer.size(), context);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+    }
+    catch (...)
+    {
+        return E_FAIL;
+    }
+
+    pRequestContext->m_responseBuffer.clear();
+    return S_OK;
 }
 
 void winhttp_http_task::callback_status_secure_failure(
@@ -1135,9 +1186,10 @@ HRESULT winhttp_http_task::send(
     }
 #endif
 
-    const BYTE* requestBody = nullptr;
-    uint32_t requestBodyBytes = 0;
-    HRESULT hr = HCHttpCallRequestGetRequestBodyBytes(m_call, &requestBody, &requestBodyBytes);
+    HCHttpCallRequestBodyReadFunction requestBody = nullptr;
+    size_t requestBodyBytes = 0;
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &requestBody, &requestBodyBytes, &context);
     if (FAILED(hr))
     {
         return hr;
