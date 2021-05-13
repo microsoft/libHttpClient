@@ -299,8 +299,8 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR)
 void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError)
 {
     win32_cs_autolock autoCriticalSection(&m_lock);
-	
-	// Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
+
+    // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
     if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
     {
         return;
