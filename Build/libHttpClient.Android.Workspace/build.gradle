@@ -27,6 +27,6 @@ allprojects {
 
 subprojects.each { prj ->
     // Put all the Gradle build files under the /Binaries directory
-    def binariesDir = new File("../../Binaries/Android/${prj.name}").getAbsolutePath()
+    def binariesDir = project.file("../../Binaries/Android/${prj.name}").getAbsolutePath()
     prj.buildDir = new File(binariesDir)
 }
