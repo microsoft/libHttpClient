@@ -298,6 +298,14 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR)
 
 void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError)
 {
+    win32_cs_autolock autoCriticalSection(&m_lock);
+	
+	// Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
+    if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
+    {
+        return;
+    }
+
     if (m_asyncBlock != nullptr)
     {
 #if HC_WINHTTP_WEBSOCKETS
@@ -400,12 +408,6 @@ void winhttp_http_task::callback_status_write_complete(
 {
     win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-    // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-    if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-    {
-        return;
-    }
-
     DWORD bytesWritten = *((DWORD *)statusInfo);
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesWritten);
 
@@ -505,12 +507,6 @@ void winhttp_http_task::callback_status_request_error(
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-            // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-            if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-            {
-                return;
-            }
-
             hr = pRequestContext->send(xbox::httpclient::Uri{ url }, method);
             if (FAILED(hr))
             {
@@ -523,12 +519,6 @@ void winhttp_http_task::callback_status_request_error(
     {
 #if HC_WINHTTP_WEBSOCKETS
         pRequestContext->m_lock.lock();
-
-        // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-        if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-        {
-            return;
-        }
 
         if (pRequestContext->m_isWebSocket)
         {
@@ -561,12 +551,6 @@ void winhttp_http_task::callback_status_sending_request(
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-            // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-            if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-            {
-                return;
-            }
-
             pRequestContext->complete_task(hr, hr);
 
             // Set the failure and complete the web request before calling WinHttpCloseHandle because the
@@ -585,12 +569,6 @@ void winhttp_http_task::callback_status_sendrequest_complete(
     _In_ void* /*statusInfo*/)
 {
     win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
-
-    // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-    if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-    {
-        return;
-    }
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId() );
 
@@ -746,12 +724,6 @@ void winhttp_http_task::callback_status_data_available(
 {
     win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-    // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-    if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-    {
-        return;
-    }
-
     // Status information contains pointer to DWORD containing number of bytes available.
     DWORD newBytesAvailable = *(PDWORD)statusInfo;
 
@@ -806,12 +778,6 @@ void winhttp_http_task::callback_status_read_complete(
     if (bytesRead == 0)
     {
         win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
-
-        // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-        if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-        {
-            return;
-        }
 
         // Flush remaining buffered data
         HRESULT hr = flush_response_buffer(pRequestContext);
@@ -1585,12 +1551,6 @@ HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
 
-        // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-        if (shared_ptr_cache::fetch<winhttp_http_task>(this) == nullptr)
-        {
-            return S_OK;
-        }
-
         m_socketState = WinHttpWebsockState::Closed;
 
         // Handlers will be setup again upon connect
@@ -1784,12 +1744,6 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     _In_ winhttp_http_task* pRequestContext)
 {
     win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
-
-    // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-    if (shared_ptr_cache::fetch<winhttp_http_task>(pRequestContext) == nullptr)
-    {
-        return;
-    }
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
 
