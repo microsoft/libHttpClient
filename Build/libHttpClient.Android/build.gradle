@@ -24,6 +24,7 @@ android {
     externalNativeBuild {
         cmake {
             path "../../Utilities/CMake/Android/libHttpClient/CMakeLists.txt"
+            buildStagingDirectory "${project.buildDir.getParentFile().getAbsolutePath()}/.cxx/${project.name}"
         }
     }
 
@@ -37,13 +38,6 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android.txt")
         }
-    }
-
-    // We want to copy the built Java `.aar` binary to the libHttpClient `Binaries` dir.
-    libraryVariants.all { variant ->
-         variant.outputs.each { output ->
-             output.outputFileName = "../../../../../Binaries/Android/java/${variant.getBuildType().getName()}/libHttpClient.aar"
-         }
     }
 }
 

@@ -6,6 +6,60 @@
 
 using namespace xbox::httpclient;
 
+HRESULT CALLBACK DefaultResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _In_reads_bytes_(bytesAvailable) const uint8_t* source,
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* /* context */
+    ) noexcept
+{
+    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);
+}
+
+STDAPI
+HCHttpCallResponseGetResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction,
+    _Out_ void** context
+) noexcept
+try
+{
+    if (call == nullptr || writeFunction == nullptr || context == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *writeFunction = call->responseBodyWriteFunction;
+    *context = call->responseBodyWriteFunctionContext;
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallResponseSetResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallResponseBodyWriteFunction writeFunction,
+    _In_opt_ void* context
+    ) noexcept
+try
+{
+    if (call == nullptr || writeFunction == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->responseBodyWriteFunction = writeFunction;
+    call->responseBodyWriteFunctionContext = context;
+
+    return S_OK;
+}
+CATCH_RETURN()
 
 STDAPI 
 HCHttpCallResponseGetResponseString(
@@ -17,6 +71,14 @@ try
     if (call == nullptr || responseString == nullptr)
     {
         return E_INVALIDARG;
+    }
+
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
     }
 
     if (call->responseString.empty())
@@ -40,6 +102,14 @@ try
         return E_INVALIDARG;
     }
 
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
+    }
+
     *bufferSize = call->responseBodyBytes.size();
     return S_OK;
 }
@@ -56,6 +126,14 @@ try
     if (call == nullptr || buffer == nullptr)
     {
         return E_INVALIDARG;
+    }
+
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
     }
 
 #if HC_PLATFORM_IS_MICROSOFT
@@ -85,6 +163,14 @@ try
         return E_INVALIDARG;
     }
 
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
+    }
+
     call->responseBodyBytes.assign(bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
@@ -104,6 +190,14 @@ try
     if (call == nullptr || bodyBytes == nullptr)
     {
         return E_INVALIDARG;
+    }
+
+    HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+    void* context = nullptr;
+    HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
+    if (writeFunction != DefaultResponseBodyWriteFunction)
+    {
+        return E_FAIL;
     }
 
     call->responseBodyBytes.insert(call->responseBodyBytes.end(), bodyBytes, bodyBytes + bodySize);

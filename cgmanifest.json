@@ -1,0 +1,45 @@
+{
+    "Registrations": [ 
+        {
+            "Component": { 
+                "Type": "maven", 
+                "maven": { 
+                    "GroupId": "com.squareup.okhttp3", 
+                    "ArtifactId": "okhttp", 
+                    "Version": "4.9.1" 
+                }
+            },
+            "DevelopmentDependency" : false
+        },
+        {
+            "Component": { 
+                "Type": "git", 
+                "git": { 
+                    "RepositoryUrl": "https://github.com/zaphoyd/websocketpp", 
+                    "CommitHash": "c6d7e295bf5a0ab9b5f896720cc1a0e0fdc397a7" 
+                }
+            },
+            "DevelopmentDependency" : false
+        },
+        {
+            "Component": { 
+                "Type": "git", 
+                "git": { 
+                    "RepositoryUrl": "https://github.com/chriskohlhoff/asio", 
+                    "CommitHash": "22afb86087a77037cd296d27134756c9b0d2cb75" 
+                }
+            },
+            "DevelopmentDependency" : false
+        },
+        {
+            "Component": { 
+                "Type": "git", 
+                "git": { 
+                    "RepositoryUrl": "https://github.com/openssl/openssl", 
+                    "CommitHash": "d1c28d791a7391a8dc101713cd8646df96491d03" 
+                }
+            },
+            "DevelopmentDependency" : false
+        }
+    ]
+}

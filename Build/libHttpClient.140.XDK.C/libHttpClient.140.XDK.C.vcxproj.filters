@@ -22,9 +22,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
       <Filter>C++ Source\Global</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_buffer.cpp">
-      <Filter>C++ Source\HTTP\XMLHttp</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.cpp">
       <Filter>C++ Source\HTTP\XMLHttp</Filter>
     </ClCompile>
@@ -113,9 +110,6 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h">
       <Filter>C++ Source\Global</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_buffer.h">
-      <Filter>C++ Source\HTTP\XMLHttp</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.h">
       <Filter>C++ Source\HTTP\XMLHttp</Filter>

@@ -91,6 +91,7 @@ libHttpClient.paths.props))\libHttpClient.paths.props" />
   </ItemGroup>
   <ItemGroup>
     <JavaCompile Include="app\src\main\java\com\xbox\httpclient\HttpClientRequest.java" />
+    <JavaCompile Include="app\src\main\java\com\xbox\httpclient\HttpClientRequestBody.java" />
     <JavaCompile Include="app\src\main\java\com\xbox\httpclient\HttpClientResponse.java" />
   </ItemGroup>
   <Import Project="$(AndroidTargetsPath)\Android.targets" />
