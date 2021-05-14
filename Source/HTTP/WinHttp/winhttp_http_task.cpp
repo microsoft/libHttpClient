@@ -298,6 +298,22 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR)
 
 void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError)
 {
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+
+        // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
+        if (shared_ptr_cache::fetch<winhttp_http_task>(this) == nullptr)
+        {
+            return;
+        }
+
+        if (m_hRequest != nullptr && !m_isWebSocket)
+        {
+            WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
+            shared_ptr_cache::remove(this);
+        }
+    }
+
     if (m_asyncBlock != nullptr)
     {
 #if HC_WINHTTP_WEBSOCKETS
@@ -314,12 +330,6 @@ void winhttp_http_task::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
             XAsyncComplete(m_asyncBlock, S_OK, 0);
         }
         m_asyncBlock = nullptr;
-    }
-
-    if (m_hRequest != nullptr && !m_isWebSocket)
-    {
-        WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
-        shared_ptr_cache::remove(this);
     }
 }
 
@@ -374,22 +384,25 @@ void winhttp_http_task::callback_status_write_complete(
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
-    DWORD bytesWritten = *((DWORD *)statusInfo);
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesWritten);
+    {
+        win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-    if (pRequestContext->m_requestBodyType == content_length_chunked)
-    {
-        _multiple_segment_write_data(pRequestContext);
-    }
-    else
-    {
-        if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
+        DWORD bytesWritten = *((DWORD *)statusInfo);
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesWritten);
+
+        if (pRequestContext->m_requestBodyType == content_length_chunked)
         {
-            DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
-            pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+            _multiple_segment_write_data(pRequestContext);
             return;
         }
+    }
+
+    if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
+        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+        return;
     }
 }
 
@@ -471,7 +484,11 @@ void winhttp_http_task::callback_status_request_error(
         HRESULT hr = HCHttpCallRequestGetUrl(pRequestContext->m_call, &method, &url);
         if (SUCCEEDED(hr))
         {
-            hr = pRequestContext->send(xbox::httpclient::Uri{ url }, method);
+            {
+                win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+
+                hr = pRequestContext->send(xbox::httpclient::Uri{ url }, method);
+            }
             if (FAILED(hr))
             {
                 HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task Failure to send HTTP request 0x%0.8x", hr);
@@ -484,7 +501,10 @@ void winhttp_http_task::callback_status_request_error(
 #if HC_WINHTTP_WEBSOCKETS
         if (pRequestContext->m_isWebSocket)
         {
-            pRequestContext->m_socketState = WinHttpWebsockState::Closed;
+            {
+                win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+                pRequestContext->m_socketState = WinHttpWebsockState::Closed;
+            }
 
             if (pRequestContext->m_asyncBlock == nullptr)
             {
@@ -508,6 +528,8 @@ void winhttp_http_task::callback_status_sending_request(
         HRESULT hr = XNetworkingVerifyServerCertificate(hRequestHandle, pRequestContext->m_securityInformation);
         if (FAILED(hr))
         {
+            win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+
             pRequestContext->complete_task(hr, hr);
 
             // Set the failure and complete the web request before calling WinHttpCloseHandle because the
@@ -525,21 +547,24 @@ void winhttp_http_task::callback_status_sendrequest_complete(
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* /*statusInfo*/)
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId() );
+    {
+        win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-    if (pRequestContext->m_requestBodyType == content_length_chunked)
-    {
-        _multiple_segment_write_data(pRequestContext);
-    }
-    else
-    {
-        if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
+
+        if (pRequestContext->m_requestBodyType == content_length_chunked)
         {
-            DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
-            pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+            _multiple_segment_write_data(pRequestContext);
             return;
         }
+    }
+
+    if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpReceiveResponse errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
+        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+        return;
     }
 }
 
@@ -677,6 +702,8 @@ void winhttp_http_task::callback_status_data_available(
     _In_ winhttp_http_task* pRequestContext,
     _In_ void* statusInfo)
 {
+    pRequestContext->m_lock.lock();
+
     // Status information contains pointer to DWORD containing number of bytes available.
     DWORD newBytesAvailable = *(PDWORD)statusInfo;
 
@@ -697,9 +724,11 @@ void winhttp_http_task::callback_status_data_available(
         {
             DWORD dwError = GetLastError();
             HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpReadData errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), GetLastError());
+            pRequestContext->m_lock.unlock();
             pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
             return;
         }
+        pRequestContext->m_lock.unlock();
     }
     else
     {
@@ -713,7 +742,7 @@ void winhttp_http_task::callback_status_data_available(
                 );
             }
         }
-
+        pRequestContext->m_lock.unlock();
         pRequestContext->complete_task(S_OK);
     }
 }
@@ -734,6 +763,7 @@ void winhttp_http_task::callback_status_read_complete(
     {
         if (pRequestContext->m_responseBuffer.size() > 0)
         {
+            win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
             HCHttpCallResponseSetResponseBodyBytes(pRequestContext->m_call,
                 pRequestContext->m_responseBuffer.data(),
                 pRequestContext->m_responseBuffer.size()
@@ -783,15 +813,6 @@ void CALLBACK winhttp_http_task::completion_callback(
         // The std::shared_ptr of requestContext will keep the object alive during this function 
         // even if its removed from shared_ptr_cache
         winhttp_http_task* pRequestContext = requestContext.get();
-
-        // Process 1 thread at a time since updating shared state
-        win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
-
-        // Exit early if error happened and it was removed from cache to avoid calling XAsyncComplete() multiple times
-        if (shared_ptr_cache::fetch<winhttp_http_task>(reinterpret_cast<void*>(context)) == nullptr)
-        {
-            return;
-        }
 
         switch (statusCode)
         {
@@ -1480,10 +1501,14 @@ void winhttp_http_task::send_websocket_message(
 
 HRESULT winhttp_http_task::on_websocket_disconnected(_In_ USHORT closeReason)
 {
-    m_socketState = WinHttpWebsockState::Closed;
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
 
-    // Handlers will be setup again upon connect
-    WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
+        m_socketState = WinHttpWebsockState::Closed;
+
+        // Handlers will be setup again upon connect
+        WinHttpSetStatusCallback(m_hRequest, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, NULL);
+    }
 
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
     void* functionContext = nullptr;
@@ -1545,19 +1570,24 @@ void winhttp_http_task::callback_websocket_status_read_complete(
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE || wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE)
     {
+        win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+
         pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
         pRequestContext->websocket_read_message();
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE)
     {
-        pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
-
         websocket_message_buffer responseBuffer;
-        pRequestContext->m_websocketResponseBuffer.TransferBuffer(&responseBuffer);
-
         HCWebSocketMessageFunction messageFunc = nullptr;
         void* functionContext = nullptr;
-        HCWebSocketGetEventFunctions(pRequestContext->m_websocketHandle, &messageFunc, nullptr, nullptr, &functionContext);
+
+        {
+            win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+
+            pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
+            pRequestContext->m_websocketResponseBuffer.TransferBuffer(&responseBuffer);
+            HCWebSocketGetEventFunctions(pRequestContext->m_websocketHandle, &messageFunc, nullptr, nullptr, &functionContext);
+        }
 
         if (messageFunc)
         {
@@ -1574,18 +1604,23 @@ void winhttp_http_task::callback_websocket_status_read_complete(
             }
         }
 
-        pRequestContext->websocket_start_listening();
+        {
+            win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+            pRequestContext->websocket_start_listening();
+        }
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE)
     {
-        pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
-
         websocket_message_buffer responseBuffer;
-        pRequestContext->m_websocketResponseBuffer.TransferBuffer(&responseBuffer);
-
         HCWebSocketBinaryMessageFunction messageFunc = nullptr;
         void* functionContext = nullptr;
-        HCWebSocketGetEventFunctions(pRequestContext->m_websocketHandle, nullptr, &messageFunc, nullptr, &functionContext);
+        {
+            win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+
+            pRequestContext->m_websocketResponseBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
+            pRequestContext->m_websocketResponseBuffer.TransferBuffer(&responseBuffer);
+            HCWebSocketGetEventFunctions(pRequestContext->m_websocketHandle, nullptr, &messageFunc, nullptr, &functionContext);
+        }
 
         if (messageFunc)
         {
@@ -1598,7 +1633,10 @@ void winhttp_http_task::callback_websocket_status_read_complete(
             }
         }
 
-        pRequestContext->websocket_start_listening();
+        {
+            win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+            pRequestContext->websocket_start_listening();
+        }
     }
 
 }
@@ -1658,6 +1696,8 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     _In_ HINTERNET hRequestHandle,
     _In_ winhttp_http_task* pRequestContext)
 {
+    pRequestContext->m_lock.lock();
+
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
 
     // Application should check what is the HTTP status code returned by the server and behave accordingly.
@@ -1667,7 +1707,9 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     {
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
+        pRequestContext->m_lock.unlock();
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+        return;
     }
 
     void* pThis = pRequestContext;
@@ -1675,14 +1717,16 @@ void winhttp_http_task::callback_websocket_status_headers_available(
     {
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
+        pRequestContext->m_lock.unlock();
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+        return;
     }
 
     pRequestContext->websocket_start_listening();
     pRequestContext->m_socketState = WinHttpWebsockState::Connected;
 
     WinHttpCloseHandle(hRequestHandle); // The old request handle is not needed anymore.  We're using pRequestContext->m_hRequest now
-
+    pRequestContext->m_lock.unlock();
     pRequestContext->complete_task(S_OK, S_OK);
 }
 
