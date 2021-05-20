@@ -58,6 +58,7 @@ void BasicAsciiLowercase(String& s)
 {
     std::transform(s.begin(), s.end(), s.begin(), [](char c) -> char
     {
+        assert((c & 0x7F) == c);
         if (c <= 'Z' && c >= 'A')
         {
             return c - ('Z' - 'z');
