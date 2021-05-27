@@ -9,6 +9,7 @@
 #include <httpClient/async.h>
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
+#include <httpClient/httpClient.h>
 
 extern "C"
 {
