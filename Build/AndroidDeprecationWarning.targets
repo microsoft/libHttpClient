@@ -3,6 +3,6 @@
   <Target Name="AndroidDeprecationWarn">
     <Error
       Condition="'$(HCLibPlatformType)' == 'Android' OR '$(AndroidAPILevel)' != ''"
-      Text="ANNOUNCEMENT: The Visual Studio-based Android build is being removed. Please see https://github.com/microsoft/libHttpClient/issues/ISSUE_NUMBER for more details on this announcement. To use the VS build in the deprecation period, silence this error in AndroidDeprecationWarning.targets." />
+      Text="ANNOUNCEMENT: The Visual Studio-based Android build is being removed. Please see https://github.com/microsoft/libHttpClient/issues/573 for more details on this announcement. To use the VS build in the deprecation period, silence this error in AndroidDeprecationWarning.targets." />
   </Target>
 </Project>
