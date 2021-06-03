@@ -3,7 +3,6 @@ apply plugin: 'java'
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
-       jcenter()
        mavenCentral()
         maven {
             url "https://maven.google.com"
@@ -17,10 +16,15 @@ buildscript {
 
 allprojects {
     repositories {
-        jcenter()
         mavenCentral()
         maven {
             url "https://maven.google.com"
         }
     }
+}
+
+subprojects.each { prj ->
+    // Put all the Gradle build files under the /Binaries directory
+    def binariesDir = project.file("../../Binaries/Android/${prj.name}").getAbsolutePath()
+    prj.buildDir = new File(binariesDir)
 }

@@ -335,7 +335,9 @@ STDAPI HCHttpCallRequestSetUrl(
     ) noexcept;
 
 /// <summary>
-/// Set the request body bytes of the HTTP call.
+/// Set the request body bytes of the HTTP call. This API operation is mutually exclusive with
+/// HCHttpCallRequestSetRequestBodyReadFunction and will result in any custom read callbacks that were
+/// previously set on this call handle to be ignored.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="requestBodyBytes">The request body bytes of the HTTP call.</param>
@@ -349,7 +351,9 @@ STDAPI HCHttpCallRequestSetRequestBodyBytes(
     ) noexcept;
 
 /// <summary>
-/// Set the request body string of the HTTP call.
+/// Set the request body string of the HTTP call. This API operation is mutually exclusive with
+/// HCHttpCallRequestSetRequestBodyReadFunction and will result in any custom read callbacks that were
+/// previously set on this call handle to be ignored.
 /// </summary> 
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="requestBodyString">The UTF-8 encoded request body string of the HTTP call.</param>
@@ -358,6 +362,46 @@ STDAPI HCHttpCallRequestSetRequestBodyBytes(
 STDAPI HCHttpCallRequestSetRequestBodyString(
     _In_ HCCallHandle call,
     _In_z_ const char* requestBodyString
+    ) noexcept;
+
+/// <summary>
+/// The callback definition used by an HTTP call to read the request body. This callback will be invoked
+/// on an unspecified background thread which is platform dependent.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="offset">The offset from the beginning of the request body.</param>
+/// <param name="bytesAvailable">The maximum number of bytes that can be written to the destination.</param>
+/// <param name="context">The context associated with this read function.</param>
+/// <param name="destination">The destination where data may be written to.</param>
+/// <param name="bytesWritten">The number of bytes that were actually written to destination.</param>
+/// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+typedef HRESULT
+(CALLBACK* HCHttpCallRequestBodyReadFunction)(
+    _In_ HCCallHandle call,
+    _In_ size_t offset,
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* context,
+    _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
+    _Out_ size_t* bytesWritten
+    );
+
+/// <summary>
+/// Sets a custom callback function that will be used to read the request body when the HTTP call is
+/// performed. If a custom read callback is used, any request body data previously set by
+/// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
+/// these API operations mutually exclusive.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="readFunction">The request body read function this call should use.</param>
+/// <param name="bodySize">The size of the body.</param>
+/// <param name="context">The context associated with this read function.</param>
+/// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallRequestBodyReadFunction readFunction,
+    _In_ size_t bodySize,
+    _In_opt_ void* context
     ) noexcept;
 
 /// <summary>
@@ -497,11 +541,50 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
+// HttpCallResponse Set APIs
+//
+
+/// <summary>
+/// The callback definition used by an HTTP call to write the response body. This callback will be
+/// invoked on an unspecified background thread which is platform dependent.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="source">The source from which bytes may be read.</param>
+/// <param name="bytesAvailable">The number of bytes that can be read from the source.</param>
+/// <param name="context">The context associated with this write function.</param>
+/// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+typedef HRESULT
+(CALLBACK* HCHttpCallResponseBodyWriteFunction)(
+    _In_ HCCallHandle call,
+    _In_reads_bytes_(bytesAvailable) const uint8_t* source,
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* context
+    );
+
+/// <summary>
+/// Sets a custom callback function that will be used to write the response body when the HTTP call
+/// is performed. Using a custom write callback will cause subsequent calls to
+/// HCHttpCallResponseGetResponseBodyBytesSize, HCHttpCallResponseGetResponseBodyBytes,
+/// and HCHttpCallGetResponseBodyString to fail as these are mutually exclusive.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="writeFunction">The response body write function this call should use.</param>
+/// <param name="context">The context to associate with this write function.</param>
+/// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallResponseSetResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallResponseBodyWriteFunction writeFunction,
+    _In_opt_ void* context
+    ) noexcept;
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Get APIs
 // 
 
 /// <summary>
-/// Get the response body string of the HTTP call.
+/// Get the response body string of the HTTP call. This API operation will fail if a custom write
+/// callback was set on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="responseString">
@@ -516,7 +599,8 @@ STDAPI HCHttpCallResponseGetResponseString(
     ) noexcept;
 
 /// <summary>
-/// Get the response body buffer size of the HTTP call.
+/// Get the response body buffer size of the HTTP call. This API operation will fail if a custom write
+/// callback was set on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bufferSize">The response body buffer size of the HTTP call.</param>
@@ -528,7 +612,8 @@ STDAPI HCHttpCallResponseGetResponseBodyBytesSize(
     ) noexcept;
 
 /// <summary>
-/// Get the response body buffer of the HTTP call.
+/// Get the response body buffer of the HTTP call. This API operation will fail if a custom write
+/// callback was set on this call handle using HCHttpCallResponseSetResponseBodyWriteFunction.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bufferSize">The response body buffer size being passed in.</param>

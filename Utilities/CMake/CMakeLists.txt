@@ -122,8 +122,6 @@ set(WinHttp_HTTP_Source_Files
     )
 
 set(XMLHttp_HTTP_Source_Files
-    ../../../Source/HTTP/XMLHttp/http_buffer.cpp
-    ../../../Source/HTTP/XMLHttp/http_buffer.h
     ../../../Source/HTTP/XMLHttp/http_request_callback.cpp
     ../../../Source/HTTP/XMLHttp/http_request_callback.h
     ../../../Source/HTTP/XMLHttp/http_response_stream.cpp

@@ -12,7 +12,7 @@ public:
 
     // Request Functions
     HRESULT SetUrl(const char* url);
-    HRESULT SetMethodAndBody(const char* method, const char* contentType, const uint8_t* body, uint32_t bodySize);
+    HRESULT SetMethodAndBody(HCCallHandle call, const char* method, const char* contentType, uint32_t bodySize);
     HRESULT AddHeader(const char* headerName, const char* headerValue);
     HRESULT ExecuteAsync(HCCallHandle call);
 

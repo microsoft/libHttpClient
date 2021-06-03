@@ -3,31 +3,34 @@
 #include "pch.h"
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
-#include "http_request_callback.h"
 #include "http_request_stream.h"
 
 http_request_stream::http_request_stream() :
-    m_remainingToRead(0),
+    m_call(nullptr),
     m_startIndex(0)
 {
 }
 
+http_request_stream::~http_request_stream()
+{
+    if (m_call != nullptr)
+    {
+        HCHttpCallCloseHandle(m_call);
+    }
+}
+
 HRESULT http_request_stream::init(
-    _In_reads_bytes_(requestBodyBytes) const BYTE* requestBody,
-    _In_ uint32_t requestBodyBytes
+    _In_ HCCallHandle call
     )
 {
-    try
+    if (call == nullptr)
     {
-        m_requestBody.assign(requestBody, requestBody + requestBodyBytes);
-        m_remainingToRead = requestBodyBytes;
-        m_startIndex = 0;
-        return S_OK;
+        return E_INVALIDARG;
     }
-    catch (...)
-    {
-        return E_OUTOFMEMORY;
-    }
+
+    m_call = HCHttpCallDuplicateHandle(call);
+    m_startIndex = 0;
+    return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE http_request_stream::Write(
@@ -48,26 +51,35 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
     _Out_ ULONG *pcbRead
     )
 {
+    HCHttpCallRequestBodyReadFunction readFunction = nullptr;
+    size_t bodySize = 0;
+    void* context = nullptr;
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(m_call, &readFunction, &bodySize, &context);
+    if (FAILED(hr) || readFunction == nullptr)
+    {
+        return STG_E_READFAULT;
+    }
+
+    size_t bytesWritten = 0;
     try
     {
-        size_t size_to_read = static_cast<size_t>(cb);
-        size_to_read = (size_to_read < 0) ? 0 : size_to_read;
-        size_to_read = (size_to_read > m_remainingToRead) ? m_remainingToRead : size_to_read;
-        errno_t err = memcpy_s(pv, cb, &m_requestBody.front() + m_startIndex, size_to_read);
-        if (err && size_to_read != 0)
+        hr = readFunction(m_call, m_startIndex, cb, context, static_cast<uint8_t*>(pv), &bytesWritten);
+        if (FAILED(hr))
         {
             return STG_E_READFAULT;
         }
-        *pcbRead = static_cast<ULONG>(size_to_read);
-        m_remainingToRead -= size_to_read;
-        m_startIndex += size_to_read;
-
-        return S_OK;
     }
     catch (...)
     {
         return STG_E_READFAULT;
     }
+
+    m_startIndex += bytesWritten;
+
+    if (pcbRead != nullptr)
+    {
+        *pcbRead = static_cast<DWORD>(bytesWritten);
+    }
+
+    return S_OK;
 }
-
-
