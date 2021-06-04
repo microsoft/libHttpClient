@@ -432,7 +432,7 @@ void HC_WEBSOCKET::MessageFunc(
 )
 {
     UNREFERENCED_PARAMETER(context);
-    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+    std::unique_lock<std::recursive_mutex> lock{ websocket->m_mutex };
     if (websocket->m_clientRefCount > 0)
     {
         try
@@ -441,6 +441,7 @@ void HC_WEBSOCKET::MessageFunc(
             {
                 auto httpSingleton = get_http_singleton();
                 notify_websocket_routed_handlers(httpSingleton, websocket, true, message, nullptr, 0);
+                lock.unlock();
                 websocket->m_clientMessageFunc(websocket, message, websocket->m_clientContext);
             }
         }
@@ -459,7 +460,7 @@ void HC_WEBSOCKET::BinaryMessageFunc(
 )
 {
     UNREFERENCED_PARAMETER(context);
-    std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+    std::unique_lock<std::recursive_mutex> lock{ websocket->m_mutex };
     if (websocket->m_clientRefCount > 0)
     {
         try
@@ -468,6 +469,7 @@ void HC_WEBSOCKET::BinaryMessageFunc(
             {
                 auto httpSingleton = get_http_singleton();
                 notify_websocket_routed_handlers(httpSingleton, websocket, true, nullptr, bytes, payloadSize);
+                lock.unlock();
                 websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
             }
         }
@@ -489,7 +491,7 @@ void HC_WEBSOCKET::CloseFunc(
     // We release the provider's reference if we handle the close.
     bool shouldDecRef { false };
     {
-        std::lock_guard<std::recursive_mutex> lock{ websocket->m_mutex };
+        std::unique_lock<std::recursive_mutex> lock{ websocket->m_mutex };
 
         auto state = websocket->m_state;
         websocket->m_state = State::Disconnected;
@@ -514,6 +516,7 @@ void HC_WEBSOCKET::CloseFunc(
                 {
                     if (websocket->m_clientCloseEventFunc)
                     {
+                        lock.unlock();
                         websocket->m_clientCloseEventFunc(websocket, status, websocket->m_clientContext);
                     }
                 }
