@@ -132,7 +132,7 @@ typedef struct HCInitArgs {
 /// <summary>
 /// Initializes the library instance.
 /// </summary>
-/// <param name="context">Client context for platform-specific initialization.  Pass in the JavaVM on Android, and nullptr on other platforms.</param>
+/// <param name="args">Client context for platform-specific initialization.  Pass in the JavaVM on Android, and nullptr on other platforms.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 /// <remarks>
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions().
@@ -154,7 +154,8 @@ STDAPI_(void) HCCleanup() noexcept;
 /// Reclaims all resources associated with the library.
 /// If you called HCMemSetFunctions(), call this before shutting down your app's memory manager.
 /// </summary>
-/// <returns></returns>
+/// <param name="async">Pointer to the XAsyncBlock for the asynchronous call.  </param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept;
 
 /// <summary>
@@ -475,7 +476,7 @@ STDAPI HCHttpCallRequestSetTimeout(
 /// The delay is also jittered between the current and next delay to spread out service load.
 /// The default for the HTTP timeout window is 20 seconds and can be changed using HCSettingsSetTimeoutWindow()<br />
 /// <br />
-/// If the service returns an an HTTP error with a "Retry-After" header, then all future calls to that API 
+/// If the service returns an HTTP error with a "Retry-After" header, then all future calls to that API 
 /// will immediately fail with the original error without contacting the service until the "Retry-After" 
 /// time has been reached.<br />
 ///  <br />
@@ -526,7 +527,7 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
 /// Enables or disables SSL server certificate validation for this specific HTTP call.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
-/// <param name="traceCall">Validate certificates.</param>
+/// <param name="sslValidation">Boolean indicating whether to enable or disable certificate validation for the HTTP call.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 /// <remarks>
 /// Only implemented for Win32.

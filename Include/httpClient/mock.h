@@ -100,6 +100,7 @@ typedef void (CALLBACK* HCMockMatchedCallback)(
 /// </summary>
 /// <param name="call">The matched mock.</param>
 /// <param name="callback">Callback to be invoked when the mock is matched.</param>
+/// <param name="context">Client context.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCMockSetMockMatchedCallback(
     _In_ HCMockCallHandle call,
