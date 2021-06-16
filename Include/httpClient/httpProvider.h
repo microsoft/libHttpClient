@@ -140,6 +140,7 @@ STDAPI HCHttpCallRequestGetRequestBodyString(
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="readFunction">The read function of this HTTP call.</param>
+/// <param name="bodySize">The size of the body.</param>
 /// <param name="context">The context associated with this read function.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
@@ -238,7 +239,7 @@ STDAPI HCHttpCallRequestGetTimeout(
 /// The delay is also jittered between the current and next delay to spread out service load.
 /// The default for the HTTP timeout window is 20 seconds and can be changed using HCSettingsSetTimeoutWindow()<br />
 /// <br />
-/// If the service returns an an HTTP error with a "Retry-After" header, then all future calls to that API 
+/// If the service returns an HTTP error with a "Retry-After" header, then all future calls to that API 
 /// will immediately fail with the original error without contacting the service until the "Retry-After" 
 /// time has been reached.<br />
 ///<br />
