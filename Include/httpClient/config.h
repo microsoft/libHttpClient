@@ -33,6 +33,14 @@
 
     #if defined(_GAMING_DESKTOP) || defined(_GAMING_XBOX) || defined(_GAMING_XBOX_XBOXONE) || defined(_GAMING_XBOX_SCARLETT)
         #define HC_PLATFORM HC_PLATFORM_GDK
+        
+        #if !defined(NTDDI_WIN10_VB)
+            #define APP_LOCAL_DEVICE_ID_SIZE 32
+            typedef struct APP_LOCAL_DEVICE_ID
+            {
+                BYTE value[APP_LOCAL_DEVICE_ID_SIZE];
+            } APP_LOCAL_DEVICE_ID;
+        #endif
     #elif !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         #define HC_PLATFORM HC_PLATFORM_WIN32
     #elif WINAPI_FAMILY == WINAPI_FAMILY_PC_APP && _WIN32_WINNT >= _WIN32_WINNT_WIN10
