@@ -651,8 +651,9 @@ try
                 HC_TRACE_WARNING(HTTPCLIENT, "HCHttpCallRequestSetSSLValidation [ID %llu]: On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of this setting", TO_ULL(call->id));
                 if (!httpSingleton->m_disableAssertsForSSLValidationInDevSandboxes)
                 {
-                    // Call HCHttpDisableAssertsForSSLValidationInDevSandboxes() to turn this off
-                    assert(false);
+                    HC_TRACE_ERROR(HTTPCLIENT, "On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of HCHttpCallRequestSetSSLValidation().");
+                    HC_TRACE_ERROR(HTTPCLIENT, "Call HCHttpDisableAssertsForSSLValidationInDevSandboxes() to turn this assert off");
+                    assert(false && "On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of HCHttpCallRequestSetSSLValidation().  See Output for more detail");
                 }
 
                 char sandbox[XSystemXboxLiveSandboxIdMaxBytes] = { 0 };
