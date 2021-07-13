@@ -1,10 +1,11 @@
 .gitconfig
 .git-credentials
 
-# Android Studio files
+# Android and Android Studio files
 **/*.iml
 **/.idea
 **/.cxx
+**/.gradle/*
 
 # Ignore OpenSSL and Boost build files for iOS
 
@@ -74,10 +75,6 @@ Output-Build.txt
 **/*.metaproj.tmp
 **/*.opendb
 **/*.coveragexml
-
-# VS Temp files for Android Projects
-**/.gradle/*
-**/app/build/*
 
 **/Durango/
 **/XboxOne.x64/
