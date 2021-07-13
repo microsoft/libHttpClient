@@ -17,10 +17,8 @@ else()
         endif()
     elseif( BUILDWIN32 )
         set (PROJECT_NAME libHttpClient.Win32.C)
-    elseif( BUILDANDROID )
-        set (PROJECT_NAME libHttpClient.Android.C)
     elseif( GDK )
-        set (PROJECT_NAME libHttpClient.GDK.C)	
+        set (PROJECT_NAME libHttpClient.GDK.C)
     else()
         if( WINRT )
             set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -275,35 +273,6 @@ if( BUILDWIN32 )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Win32_WebSocket_Source_Files}
-        ${Task_Source_Files}
-        )
-endif()
-
-if( BUILDANDROID )
-    include(GetAndroidHCSourceFiles.cmake)
-    get_android_hc_source_files(
-        Common_Android_Source_Files
-        Android_WebSocket_Source_Files
-        Task_Android_Source_Files
-        Android_HTTP_Source_Files
-        Android_Logger_Source_Files
-        "../../.."
-        )
-
-    source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
-    source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
-    source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
-    source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
-    source_group("C++ Source\\Common\\Android" FILES ${Common_Android_Source_Files})
-    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
-
-    list(APPEND
-        SOURCE_FILES
-        ${Task_Android_Source_Files}
-        ${Android_HTTP_Source_Files}
-        ${Android_Logger_Source_Files}
-        ${Android_WebSocket_Source_Files}
-        ${Common_Android_Source_Files}
         ${Task_Source_Files}
         )
 endif()

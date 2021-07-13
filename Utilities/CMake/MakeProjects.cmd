@@ -14,8 +14,6 @@ call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DXDK=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DBUILDWIN32=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
-call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DBUILDANDROID=TRUE
-if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTAEF=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTE=TRUE
