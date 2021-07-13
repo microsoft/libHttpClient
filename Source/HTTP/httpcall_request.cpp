@@ -3,6 +3,9 @@
 
 #include "pch.h"
 #include "httpcall.h"
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include "XSystem.h"
+#endif
 
 using namespace xbox::httpclient;
 
@@ -597,6 +600,28 @@ try
 }
 CATCH_RETURN()
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+STDAPI 
+HCHttpDisableAssertsForSSLValidationInDevSandboxes(
+    _In_ HCConfigSetting setting
+) noexcept
+try
+{
+    // On GDK console, SSL validation is enforced on retail sandboxes
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    if (setting == HCConfigSetting::SSLValidationEnforcedInRetailSandbox)
+    {
+        httpSingleton->m_disableAssertsForSSLValidationInDevSandboxes = true;
+    }
+
+    return S_OK;
+}
+CATCH_RETURN()
+#endif
+
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 STDAPI
 HCHttpCallRequestSetSSLValidation(
@@ -612,8 +637,36 @@ try
     else
     {
         RETURN_IF_PERFORM_CALLED(call);
-        call->sslValidation = sslValidation;
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        if (!sslValidation)
+        {
+            auto deviceType{ XSystemGetDeviceType() };
+            if (deviceType != XSystemDeviceType::Pc)
+            {
+                // On GDK console, SSL validation is enforced on RETAIL sandboxes
+                auto httpSingleton = get_http_singleton();
+                if (nullptr == httpSingleton)
+                    return E_HC_NOT_INITIALISED;
 
+                HC_TRACE_WARNING(HTTPCLIENT, "HCHttpCallRequestSetSSLValidation [ID %llu]: On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of this setting", TO_ULL(call->id));
+                if (!httpSingleton->m_disableAssertsForSSLValidationInDevSandboxes)
+                {
+                    HC_TRACE_ERROR(HTTPCLIENT, "On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of HCHttpCallRequestSetSSLValidation().");
+                    HC_TRACE_ERROR(HTTPCLIENT, "Call HCHttpDisableAssertsForSSLValidationInDevSandboxes() to turn this assert off");
+                    assert(false && "On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of HCHttpCallRequestSetSSLValidation().  See Output for more detail");
+                }
+
+                char sandbox[XSystemXboxLiveSandboxIdMaxBytes] = { 0 };
+                HRESULT hr = XSystemGetXboxLiveSandboxId(XSystemXboxLiveSandboxIdMaxBytes, sandbox, nullptr);
+                if (SUCCEEDED(hr) && 0 == _stricmp(sandbox, "RETAIL"))
+                {
+                    sslValidation = true; // regardless force to true on RETAIL to avoid failures
+                }
+            }
+        }
+#endif
+
+        call->sslValidation = sslValidation;
         if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetSSLValidation [ID %llu]: sslValidation=%s", TO_ULL(call->id), sslValidation ? "true" : "false"); }
     }
     return S_OK;
