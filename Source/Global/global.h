@@ -79,6 +79,7 @@ public:
 #if HC_PLATFORM == HC_PLATFORM_GDK
     bool m_networkInitialized{ true };
     HMODULE m_networkModule{ nullptr };
+    bool m_disableAssertsForSSLValidationInDevSandboxes{ false };
 #endif
 
 #if !HC_NOWEBSOCKETS
