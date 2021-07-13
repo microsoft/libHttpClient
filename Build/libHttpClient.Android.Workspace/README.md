@@ -19,8 +19,13 @@ below:
 - `libssl`: static lib (`.a`)
 - `libcrypto`: static lib (`.a`)
 
-Built native products (`.a`, `.so`) can be found at:
-`/Binaries/Android/.cxx/<project-name>/<flavor>/<architecture>/<project-name>.[a|so]`.
+Built static libs (`.a`) can be found at:
+`/Binaries/Android/.cxx/<project-name>/<flavor>/<architecture>/<project-name>.a`.
+The supported `<flavor>`s are `debug` and `release`, and supported
+`<architecture>`s are `x86`, `x86_64`, `armeabi-v7a`, and `arm64-v8a`.
+
+Built dynamic libs (`.so`) can be found at:
+`/Binaries/Android/<project-name>/intermediates/cmake/<flavor>/obj/<architecture>/<project-name>.so`.
 The supported `<flavor>`s are `debug` and `release`, and supported
 `<architecture>`s are `x86`, `x86_64`, `armeabi-v7a`, and `arm64-v8a`.
 
@@ -55,8 +60,7 @@ skipping `libssl` and `libcrypto` entirely, as well as passing the
 ```
 
 Android Studio can also be configured to pass this flag, or it can be
-configured in the project's `build.gradle`. See
-`Source/AndroidTestApp/XalAndroidTest` for an example.
+configured in the project's `build.gradle`.
 
 ### Clean
 
