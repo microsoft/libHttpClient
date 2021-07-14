@@ -29,6 +29,8 @@ void STDAPIVCALLTYPE PerformMessageCallback(
     _In_z_ PCSTR incomingBodyString
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(incomingBodyString);
     g_PerformMessageCallbackCalled = true;
 }
 
@@ -38,6 +40,8 @@ void STDAPIVCALLTYPE PerformCloseCallback(
     _In_ HCWebSocketCloseStatus closeStatus
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(closeStatus);
     g_PerformCloseCallbackCalled = true;
 }
 
@@ -61,6 +65,9 @@ void CALLBACK Internal_HCWebSocketMessage(
     _In_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(incomingBodyString);
+    UNREFERENCED_PARAMETER(context);
 }
 
 void CALLBACK Internal_HCWebSocketBinaryMessage(
@@ -70,6 +77,10 @@ void CALLBACK Internal_HCWebSocketBinaryMessage(
     _In_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(payloadBytes);
+    UNREFERENCED_PARAMETER(payloadSize);
+    UNREFERENCED_PARAMETER(context);
 }
 
 void CALLBACK Internal_HCWebSocketCloseEvent(
@@ -78,6 +89,9 @@ void CALLBACK Internal_HCWebSocketCloseEvent(
     _In_ void* context
 )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(closeStatus);
+    UNREFERENCED_PARAMETER(context);
 }
 
 
@@ -93,6 +107,13 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
+    UNREFERENCED_PARAMETER(uri);
+    UNREFERENCED_PARAMETER(subProtocol);
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(asyncBlock);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
     // TODO bug - inconsistent behavior for websocket providers: Connect calls XAsyncBegin before
     // invoke the client handler, Send does not.
     return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
@@ -119,6 +140,11 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(message);
+    UNREFERENCED_PARAMETER(asyncBlock);
+    UNREFERENCED_PARAMETER(context);
+
     return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
         {
@@ -144,6 +170,12 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendBinaryMessageAsync(
     _In_opt_ void* context
 )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(payloadBytes);
+    UNREFERENCED_PARAMETER(payloadSize);
+    UNREFERENCED_PARAMETER(asyncBlock);
+    UNREFERENCED_PARAMETER(context);
+
     return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
         {
@@ -168,6 +200,10 @@ HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(closeStatus);
+    UNREFERENCED_PARAMETER(context);
+
     g_HCWebSocketDisconnect_Called = true;
     return S_OK;
 }

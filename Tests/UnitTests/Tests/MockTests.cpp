@@ -20,6 +20,8 @@ public:
 
     HCMockCallHandle CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
+        UNREFERENCED_PARAMETER(makeSpecificUrl);
+        UNREFERENCED_PARAMETER(makeSpecificBody);
         HCMockCallHandle mockCall;
         VERIFY_ARE_EQUAL(S_OK, HCMockCallCreate(&mockCall));
         VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetNetworkErrorCode(mockCall, E_OUTOFMEMORY, 300));

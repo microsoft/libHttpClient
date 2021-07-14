@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
@@ -31,6 +31,7 @@ _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE MemAlloc(
     _In_ HCMemoryType memoryType
     )   
 {
+    UNREFERENCED_PARAMETER(memoryType);
     g_memAllocCalled = true;
     return new (std::nothrow) int8_t[size];
 }
@@ -40,6 +41,7 @@ void STDAPIVCALLTYPE MemFree(
     _In_ HCMemoryType memoryType
     )
 {
+    UNREFERENCED_PARAMETER(memoryType);
     g_memFreeCalled = true;
     delete[] pointer;
 }
@@ -54,6 +56,8 @@ static void CALLBACK PerformCallback(
     _In_opt_ HCPerformEnv /*env*/
     )
 {
+    UNREFERENCED_PARAMETER(call);
+    UNREFERENCED_PARAMETER(asyncBlock);
     g_PerformCallbackCalled = true;
     g_PerformCallbackContext = ctx;
     XAsyncComplete(asyncBlock, S_OK, 0);
@@ -340,7 +344,6 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetNetworkErrorCode(call, E_OUTOFMEMORY, 101));
         HRESULT errCode = S_OK;
-        uint32_t errorCode = 0;
         uint32_t platErrorCode = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &errCode, &platErrorCode));
         VERIFY_ARE_EQUAL(101, platErrorCode);
