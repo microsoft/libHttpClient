@@ -156,22 +156,6 @@ namespace ProjectFileProcessor
                 output = @"libHttpClient.140.Win32.C.vcxproj",
             });
 
-            //libHttpClient.142.Android.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Android.C.vcxproj",
-                template = @"template-libHttpClient.142.Android.C.vcxproj",
-                output = @"libHttpClient.142.Android.C.vcxproj",
-            });
-
-            //libHttpClient.141.Android.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Android.C.vcxproj",
-                template = @"template-libHttpClient.141.Android.C.vcxproj",
-                output = @"libHttpClient.141.Android.C.vcxproj",
-            });
-
             //libHttpClient.142.XDK.Cpp
             fileNodes.Add(new FileNode
             {

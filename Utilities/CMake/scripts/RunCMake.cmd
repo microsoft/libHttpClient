@@ -15,7 +15,6 @@ if NOT EXIST %CMAKE_EXE% set CMAKE_EXE="C:\Program Files (x86)\Microsoft Visual 
 
 copy ..\CMakeLists.txt .
 copy ..\GetCommonHCSourceFiles.cmake .
-copy ..\GetAndroidHCSourceFiles.cmake .
 %CMAKE_EXE% -G "Visual Studio 15 2017" %* CMakeLists.txt %CMAKE_FOLDER%\build
 if %ERRORLEVEL% NEQ 0 goto ignore
 call :subCopy
