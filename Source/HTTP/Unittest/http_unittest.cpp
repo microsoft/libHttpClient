@@ -37,6 +37,8 @@ Internal_SetGlobalProxy(
     _In_ HC_PERFORM_ENV* performEnv,
     _In_ const char* proxyUri) noexcept
 {
+    UNREFERENCED_PARAMETER(performEnv);
+    UNREFERENCED_PARAMETER(proxyUri);
     return E_NOTIMPL;
 }
 
