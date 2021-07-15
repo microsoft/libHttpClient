@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "../global/global.h"
 
+#pragma warning(disable:4389)
 
 static bool g_gotCall = false;
 

@@ -8,6 +8,8 @@
 #include "Utils.h"
 #include "../global/global.h"
 
+#pragma warning(disable:4389)
+
 using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
