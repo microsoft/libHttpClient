@@ -541,6 +541,35 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 ) noexcept;
 #endif
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+/// <summary>
+/// Defines the config settings value that is passed to the below API's.
+/// </summary>
+enum class HCConfigSetting : uint32_t
+{
+    /// <summary>
+    /// Only passed to the below API's to warn callers that this SSL validation 
+    /// is enforced RETAIL sandboxes regardless of this setting
+    /// </summary>
+    SSLValidationEnforcedInRetailSandbox = 1
+};
+
+/// <summary>
+/// Disables asserts for SSL validation in console dev sandboxes.
+/// </summary>
+/// <param name="setting">The config settings value to be passed down.</param>
+/// <returns>HRESULT return code for this API operation.</returns>
+/// <remarks>
+/// On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of this setting.
+/// The asserts will not fire in RETAIL sandbox, and this setting has no affect in RETAIL sandboxes.
+/// It is best practice to not call this API, but this can be used as a temporary way 
+/// to get unblocked while in early stages of game development.
+/// </remarks>
+STDAPI HCHttpDisableAssertsForSSLValidationInDevSandboxes(
+    _In_ HCConfigSetting setting
+) noexcept;
+#endif
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Set APIs
 //

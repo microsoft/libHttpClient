@@ -56,11 +56,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalOptions>/bigobj /Zm512 /GS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>
-       c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;
-       $(MSBuildThisFileDirectory)..\..\Source\Task;
-      %(AdditionalIncludeDirectories)
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;$(MSBuildThisFileDirectory)..\..\Source\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64'">C:\Program Files (x86)\Windows Kits\10\Testing\Development\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
