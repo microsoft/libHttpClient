@@ -7,12 +7,6 @@ parameters:
 steps:
   - template: checkout.yml
 
-    # The CI images these jobs run on occasionally update their Android NDKs
-    # without much warning, and the images used by Github (used for libHttpClient)
-    # and for ADO (here) may misalign.
-    #
-    # Running this step allows us to download the required NDK if it's not present.
-    
   - bash: ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;22.0.7026061"
     displayName: 'Install the required Android NDK'
 

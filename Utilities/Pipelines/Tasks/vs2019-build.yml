@@ -16,8 +16,6 @@ steps:
       extSync: true
       disableMsbuildVersion: true
 
-  # Run PoliCheck.
-  # Ref: https://www.1eswiki.com/index.php?title=PoliCheck_Build_Task
   - task: PoliCheck@1
     displayName: Run PoliCheck
 
@@ -29,9 +27,6 @@ steps:
   - task: NuGetAuthenticate@0
 
   # Install NuGet dependencies. The GUID below is the NuGetCommand for MSFT internal.
-  # Refs:
-  # - https://developercommunity.visualstudio.com/t/vsts-yaml-build-failure-the-task-name-nugetcommand/288534
-  # - https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/package/nuget
   - task: 333b11bd-d341-40d9-afcf-b32d5ce6f23b@2
     displayName: NuGet restore
     inputs:
@@ -45,8 +40,6 @@ steps:
       version: 3.1.411
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  # Build the Visual Studio 19 solution.
-  # Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/visual-studio-build
   - task: VSBuild@1
     displayName: Build ${{ parameters.platform }}+${{ parameters.configuration }} Solution
     inputs:
@@ -62,12 +55,10 @@ steps:
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: Component Detection
     
-  # PREfast. See https://www.1eswiki.com/wiki/SDL_Native_Rules_Build_Task 
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-prefast.SDLNativeRules@2
     displayName: 'Run the PREfast SDL Native Rules for MSBuild'
     condition: succeededOrFailed()
 
-  # Copies output from PREfast SDL Native Rules task to expected location for consumption by PkgESSecComp
   - task: CopyFiles@1
     displayName: 'Copy PREfast xml files to SDLNativeRulesDir'
     inputs:
@@ -76,7 +67,6 @@ steps:
         **\*.nativecodeanalysis.xml
       TargetFolder: '$(Agent.BuildDirectory)\_sdt\logs\SDLNativeRules'
 
-  # Security and compliance, failure here should fail the build
   - task: PkgESSecComp@10
     displayName: 'Security and Compliance tasks'
     inputs:
