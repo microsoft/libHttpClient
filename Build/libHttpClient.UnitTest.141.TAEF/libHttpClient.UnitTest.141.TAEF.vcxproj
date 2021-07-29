@@ -56,12 +56,12 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalOptions>/bigobj /Zm512 /GS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;$(MSBuildThisFileDirectory)..\..\Source\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WindowsSDKDir_10)Testing\Development\inc;$(MSBuildThisFileDirectory)..\..\Source\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64'">C:\Program Files (x86)\Windows Kits\10\Testing\Development\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32'">C:\Program Files (x86)\Windows Kits\10\Testing\Development\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalLibraryDirectories Condition="'$(Platform)'=='ARM64'">C:\Program Files (x86)\Windows Kits\10\Testing\Development\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64'">$(WindowsSDKDir_10)Testing\Development\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32'">$(WindowsSDKDir_10)Testing\Development\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='ARM64'">$(WindowsSDKDir_10)Testing\Development\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
@@ -189,7 +189,7 @@
   </ItemGroup>
   <PropertyGroup>
     <ProjectFolder>Microsoft.Xbox.System.UnitTest</ProjectFolder>
-    <LocalDebuggerCommand>C:\Program Files (x86)\Windows Kits\10\Testing\Runtimes\TAEF\x64\TE.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(WindowsSDKDir_10)Testing\Runtimes\TAEF\x64\TE.exe</LocalDebuggerCommand>
     <LocalDebuggerCommandArguments>$(TargetPath) /inproc</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>

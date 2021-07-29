@@ -1,0 +1,157 @@
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/azure-repos-git#opting-out-of-ci
+trigger:
+  branches:
+    include:
+    - main
+
+# Nightly trigger. Builds on the specified schedule.
+# Refs:
+# - https://docs.microsoft.com/en-us/azure/devops/pipelines/process/scheduled-triggers
+# - https://docs.microsoft.com/en-us/azure/devops/pipelines/process/scheduled-triggers#cron-syntax
+schedules:
+  # Schedule is specified in `cron` syntax. The below means: "8am UTC (midnight PST) every day".
+  - cron: "0 8 * * *"
+    displayName: Daily build
+    branches:
+      include:
+        - main
+    always: true
+
+# Name builds with the definition name, date, and build-count-for-that-day. For
+# example, "libHttpClient.CI_20210214.1".
+# Refs:
+# - https://docs.microsoft.com/en-us/azure/devops/pipelines/process/run-number
+# - https://docs.microsoft.com/en-us/azure/devops/pipelines/build/variables
+name: $(Build.DefinitionName)_$(date:yyMM).$(date:dd)$(rev:rrr)
+
+jobs:
+
+  ####################
+  # Visual Studio 2017
+  ####################
+
+  - job: Win32Vs17Build
+    displayName: libHttpClient Win32/UWP VS2017 Build
+    pool:
+      name: xbl-1es-vs2017
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        x86_Debug:
+          Platform: x86
+          Configuration: Debug
+        x64_Debug:
+          Platform: x64
+          Configuration: Debug
+        x86_Release:
+          Platform: x86
+          Configuration: Release
+        x64_Release:
+          Platform: x64
+          Configuration: Release
+    steps:
+      - template: Tasks/vs2017-build.yml
+        parameters:
+          platform: $(Platform)
+          configuration: $(Configuration)
+
+  ####################
+  # Visual Studio 2019
+  ####################
+
+  - job: Win32Vs19Build
+    displayName: libHttpClient Win32/UWP VS2019 Build
+    pool:
+      name: xbl-1es-vs2019
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        x86_Debug:
+          Platform: x86
+          Configuration: Debug
+        x64_Debug:
+          Platform: x64
+          Configuration: Debug
+        x86_Release:
+          Platform: x86
+          Configuration: Release
+        x64_Release:
+          Platform: x64
+          Configuration: Release
+    steps:
+      - template: Tasks/vs2019-build.yml
+        parameters:
+          platform: $(Platform)
+          configuration: $(Configuration)
+
+  ####################
+  # Android
+  ####################
+
+  - job: AndroidBuild
+    displayName: libHttpClient Android Build
+    pool:
+      vmImage: internal-macos-10.15
+    timeoutInMinutes: 180
+    steps:
+      - template: Tasks/android-build.yml
+    
+  ####################
+  # iOS
+  ####################
+
+  - job: iOSBuild
+    displayName: libHttpClient iOS Build
+    pool:
+      vmImage: internal-macos-10.15
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        Debug:
+          Configuration: Debug
+        Release:
+          Configuration: Release
+    steps:
+      - template: Tasks/ios-build.yml
+        parameters:
+          configuration: $(Configuration)
+    
+  ####################
+  # XDK
+  ####################
+
+  - job: XDKBuild
+    displayName: libHttpClient XDK Build    
+    pool:
+      name: xbl-1es-vs2017-xdk
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        Durango_Release:
+          Configuration: Release
+        Durango_Debug:
+          Configuration: Debug
+    steps:
+      - template: Tasks/xdk-build.yml
+        parameters:
+          configuration: $(Configuration)
+
+  #########################
+  # Send email on failure
+  #########################
+
+  - job: SendEmailOnFailure
+    displayName: Send email on build failure
+    condition: and(failed(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    dependsOn:
+      - Win32Vs17Build
+      - Win32Vs19Build
+      - AndroidBuild
+      - iOSBuild
+      - XDKBuild
+    pool:
+      name: xbl-1es-vs2019
+    steps:
+      - template: Tasks/send-build-failed-email.yml
+        parameters:
+          toAddress: $(TeamEmail)

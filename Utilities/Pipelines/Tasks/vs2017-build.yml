@@ -1,0 +1,91 @@
+parameters:
+  - name: platform
+    type: string
+  - name: configuration
+    type: string
+
+steps:
+  - template: checkout.yml
+
+  - task: PkgESSetupBuild@12
+    displayName: PkgES build setup
+    inputs:
+      useDfs: false
+      productName: libHttpClient
+      branchVersion: true
+      extSync: true
+      disableMsbuildVersion: true
+
+  - task: PoliCheck@1
+    displayName: Run PoliCheck
+
+  - task: NuGetToolInstaller@1
+    displayName: 'Use NuGet 5.8'
+    inputs:
+      versionSpec: 5.8
+
+  - task: NuGetAuthenticate@0
+
+  - task: 333b11bd-d341-40d9-afcf-b32d5ce6f23b@2
+    displayName: NuGet restore
+    inputs:
+      restoreSolution: '*.sln'
+    continueOnError: true
+
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk'
+    inputs:
+      packageType: sdk
+      version: 3.1.411
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+
+  # Build the Visual Studio 17 solution.
+  # Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/visual-studio-build
+  - task: VSBuild@1
+    displayName: Build ${{ parameters.platform }}+${{ parameters.configuration }} Solution
+    inputs:
+      solution: libHttpClient.vs2017.sln
+      vsVersion: 15.0
+      msbuildArchitecture: x64
+      platform: ${{ parameters.platform }}
+      configuration: ${{ parameters.configuration }}
+      createLogFile: true
+      logProjectEvents: true
+      logFileVerbosity: 'diagnostic'
+
+  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+    displayName: Component Detection
+    
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-prefast.SDLNativeRules@2
+    displayName: 'Run the PREfast SDL Native Rules for MSBuild'
+    condition: succeededOrFailed()
+
+  - task: CopyFiles@1
+    displayName: 'Copy PREfast xml files to SDLNativeRulesDir'
+    inputs:
+      SourceFolder: '$(Agent.BuildDirectory)'
+      Contents: |
+        **\*.nativecodeanalysis.xml
+      TargetFolder: '$(Agent.BuildDirectory)\_sdt\logs\SDLNativeRules'
+
+  - task: PkgESSecComp@10
+    displayName: 'Security and Compliance tasks'
+    inputs:
+      fileNewBugs: false
+      taskLogVerbosity: Diagnostic
+      scanAll: true
+      failOnStdErr: true
+      dropOverride: $(Build.ArtifactStagingDirectory)
+      secCompConfigFromTask: |
+        tools:
+          - toolName: CheckCFlags
+            enable: true
+          - toolName: CFGCheck
+            enable: false
+          - toolName: Policheck
+            enable: true
+          - toolName: XFGCheck
+            enable: true
+          - toolName: CredScan
+            enable: true
+      binVersion: 'PreProduction'

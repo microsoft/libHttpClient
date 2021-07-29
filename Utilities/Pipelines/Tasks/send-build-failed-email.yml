@@ -1,0 +1,19 @@
+# Send an email, via PackageES.
+
+parameters:
+  - name: toAddress
+    type: string
+
+steps:
+  - task: PkgESSendMail@10
+    displayName: Email ${{ parameters.toAddress }}
+    inputs:
+      isHtml: true
+      to: ${{ parameters.toAddress }}
+      subject: $(Build.DefinitionName):$(Build.BuildId) Build Failed
+      bodyType: string
+      body: >-
+        XSAPI pipeline $(Build.DefinitionName), ID $(Build.BuildId), failed.
+        <br>
+        <br>
+        See: https://microsoft.visualstudio.com/Xbox.Services/_build/index?buildId=$(Build.BuildId)

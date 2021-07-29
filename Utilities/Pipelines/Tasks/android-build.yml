@@ -1,0 +1,13 @@
+steps:
+  - template: checkout.yml
+
+  - bash: ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;22.0.7026061"
+    displayName: 'Install the required Android NDK'
+
+  - task: Gradle@2
+    displayName: 'Build libHttpClient.Android.Workspace'
+    inputs:
+      gradleWrapperFile: Build/libHttpClient.Android.Workspace/gradlew
+      workingDirectory: Build/libHttpClient.Android.Workspace
+      tasks: 'assemble'
+      publishJUnitResults: false
