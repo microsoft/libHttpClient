@@ -134,7 +134,6 @@ jobs:
     steps:
       - template: Tasks/xdk-build.yml
         parameters:
-          platform: $(Platform)
           configuration: $(Configuration)
 
   #########################
