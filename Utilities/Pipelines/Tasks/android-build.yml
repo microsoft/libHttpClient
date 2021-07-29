@@ -1,9 +1,3 @@
-parameters:
-  - name: platform
-    type: string
-  - name: configuration
-    type: string
-
 steps:
   - template: checkout.yml
 
@@ -15,11 +9,5 @@ steps:
     inputs:
       gradleWrapperFile: Build/libHttpClient.Android.Workspace/gradlew
       workingDirectory: Build/libHttpClient.Android.Workspace
-      tasks: 'assemble${{ parameters.configuration }}'
+      tasks: 'assemble'
       publishJUnitResults: false
-
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Android binaries'
-    inputs:
-      PathtoPublish: Binaries/Android
-      ArtifactName: 'android_binaries'

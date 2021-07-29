@@ -11,7 +11,7 @@ steps:
     displayName: PkgES build setup
     inputs:
       useDfs: false
-      productName: XboxLiveSDK
+      productName: libHttpClient
       branchVersion: true
       extSync: true
       disableMsbuildVersion: true

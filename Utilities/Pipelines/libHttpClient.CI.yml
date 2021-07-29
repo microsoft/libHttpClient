@@ -1,7 +1,8 @@
-# CI trigger. Fires on merges to specific branches.
-# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/azure-repos-git#ci-triggers
-# A pipeline with no CI trigger
-trigger: none
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/azure-repos-git#opting-out-of-ci
+trigger:
+  branches:
+    include:
+    - main
 
 # Nightly trigger. Builds on the specified schedule.
 # Refs:
@@ -92,19 +93,8 @@ jobs:
     pool:
       vmImage: internal-macos-10.15
     timeoutInMinutes: 180
-    strategy:
-      matrix:
-        x64_Release:
-          Platform: x64
-          Configuration: Release
-        x64_Debug:
-          Platform: x64
-          Configuration: Debug
     steps:
       - template: Tasks/android-build.yml
-        parameters:
-          platform: $(Platform)
-          configuration: $(Configuration)
     
   ####################
   # iOS
@@ -119,6 +109,8 @@ jobs:
       matrix:
         Debug:
           Configuration: Debug
+        Release:
+          Configuration: Release
     steps:
       - template: Tasks/ios-build.yml
         parameters:
@@ -136,10 +128,8 @@ jobs:
     strategy:
       matrix:
         Durango_Release:
-          Platform: Durango
           Configuration: Release
         Durango_Debug:
-          Platform: Durango
           Configuration: Debug
     steps:
       - template: Tasks/xdk-build.yml

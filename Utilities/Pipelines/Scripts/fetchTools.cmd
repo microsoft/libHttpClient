@@ -13,7 +13,6 @@ cd /D %BUILD_STAGINGDIRECTORY%
 call git clone https://anything:%patArg%@%toolsUrl%
 cd sdk.buildtools
 git reset --hard HEAD
-if "%buildToolsBranchArg%" NEQ "" call git checkout %buildToolsBranchArg%
 cd /D %BUILD_STAGINGDIRECTORY%
 dir "%BUILD_STAGINGDIRECTORY%\sdk.buildtools\buildMachine
 
