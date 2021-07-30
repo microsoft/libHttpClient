@@ -1,8 +1,16 @@
-# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/azure-repos-git#opting-out-of-ci
+# Build on merges to `main`
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/github#ci-triggers
 trigger:
   branches:
     include:
-    - main
+      - main
+
+# Build for opened PRs to `main`
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/github#pr-triggers
+pr:
+  branches:
+    include:
+      - main
 
 # Nightly trigger. Builds on the specified schedule.
 # Refs:
@@ -25,7 +33,6 @@ schedules:
 name: $(Build.DefinitionName)_$(date:yyMM).$(date:dd)$(rev:rrr)
 
 jobs:
-
   ####################
   # Visual Studio 2017
   ####################
@@ -91,11 +98,17 @@ jobs:
   - job: AndroidBuild
     displayName: libHttpClient Android Build
     pool:
-      vmImage: internal-macos-10.15
+      vmImage: windows-2019
     timeoutInMinutes: 180
+    strategy:
+      matrix:
+        Debug:
+          Configuration: Debug
+        Release:
+          Configuration: Release
     steps:
       - template: Tasks/android-build.yml
-    
+
   ####################
   # iOS
   ####################
@@ -115,13 +128,13 @@ jobs:
       - template: Tasks/ios-build.yml
         parameters:
           configuration: $(Configuration)
-    
+
   ####################
   # XDK
   ####################
 
   - job: XDKBuild
-    displayName: libHttpClient XDK Build    
+    displayName: libHttpClient XDK Build
     pool:
       name: xbl-1es-vs2017-xdk
     timeoutInMinutes: 180
