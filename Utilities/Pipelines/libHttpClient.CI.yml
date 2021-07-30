@@ -1,5 +1,13 @@
-# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/azure-repos-git#opting-out-of-ci
+# Build on merges to `main`
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/github#ci-triggers
 trigger:
+  branches:
+    include:
+      - main
+
+# Build for opened PRs to `main`
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/github#pr-triggers
+pr:
   branches:
     include:
       - main
