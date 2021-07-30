@@ -108,6 +108,8 @@ jobs:
           Configuration: Release
     steps:
       - template: Tasks/android-build.yml
+        parameters:
+          configuration: $(Configuration)
 
   ####################
   # iOS
