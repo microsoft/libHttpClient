@@ -71,6 +71,11 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
         return ThrowIOException(env, "Failed to get read function");
     }
 
+    if (srcOffset >= bodySize)
+    {
+        return 0;
+    }
+
     // perform read
     size_t bytesWritten = 0;
     {

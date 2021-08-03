@@ -52,6 +52,11 @@
         return 0;
     }
 
+    if (_offset >= requestBodySize)
+    {
+        return 0;
+    }
+
     size_t bytesWritten = 0;
     try
     {
