@@ -73,7 +73,8 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
 
     if (srcOffset >= bodySize)
     {
-        return 0;
+        // Signal to Java-land that we are done reading
+        return -1;
     }
 
     // perform read
