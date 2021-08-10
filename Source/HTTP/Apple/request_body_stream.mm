@@ -54,6 +54,7 @@
 
     if (_offset >= requestBodySize)
     {
+        // Tell the OS that we are done reading
         return 0;
     }
 

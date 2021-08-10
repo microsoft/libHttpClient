@@ -49,6 +49,7 @@ public final class HttpClientRequestBody extends RequestBody
 
             int bytesRead = nativeRead(this.callHandle, this.offset, destination, destinationOffset, length);
             if (bytesRead == -1) {
+                // Tell the OS that we are done reading
                 return -1;
             }
 
