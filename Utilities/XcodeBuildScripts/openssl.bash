@@ -7,6 +7,10 @@ log () {
     echo "***** $1 *****"
 }
 
+env
+
+exit 0
+
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
 OPENSSL_TMP="$OPENSSL_TMP_DIR"
 LIB_OUTPUT="$OPENSSL_LIB_OUTPUT"
@@ -23,12 +27,14 @@ fi
 
 BUILDARCHS="$ARCHS"
 
-# check whether libcrypto.a already exists for this architecture - we'll only build if it does not
+log "Requested architectures: $BUILDARCHS"
+
+# Check whether libcrypto.a already exists for this architecture - we'll only build if it does not
 if [ -f "$LIB_OUTPUT/lib/libcrypto.a" ]; then
 
     EXISTING_ARCHS="$(lipo -info $LIB_OUTPUT/lib/libcrypto.a)"
-    ARCH_MISSING=0
 
+    ARCH_MISSING=0
     for BUILDARCH in $BUILDARCHS; do
         if [[ $EXISTING_ARCHS != *"$BUILDARCH"* ]]; then
             ARCH_MISSING=1
@@ -36,31 +42,26 @@ if [ -f "$LIB_OUTPUT/lib/libcrypto.a" ]; then
     done
 
     if [ $ARCH_MISSING == 1 ]; then
-        log "Rebuilding previously-built library to support new architectures"
+        log "Rebuilding previously-built library, architectures missing"
     else
-        log "Using previously-built libary $LIB_OUTPUT/lib/libcrypto.a - skipping build"
+        log "Previously-built library present at $LIB_OUTPUT/lib/libcrypto.a - skipping build"
         exit 0
     fi
 
 else
-    log "No previously-built libary present at $LIB_OUTPUT/lib/libcrypto.a - performing build"
+    log "No previously-built library present at $LIB_OUTPUT/lib/libcrypto.a - performing build"
 fi
 
-# make dirs
+# Set up dirs
 mkdir -p "$OPENSSL_TMP"
 mkdir -p "$LIB_OUTPUT/lib"
 mkdir -p "$LIB_OUTPUT/include"
 
-# figure out the right set of build architectures for this run
-log "creating universal binary for architectures: $BUILDARCHS"
+pushd $OPENSSL_SRC
 
-if [ "$SDKROOT" != "" ]; then
-    ISYSROOT="-isysroot $SDKROOT"
-fi
-
-cd $OPENSSL_SRC
 for BUILDARCH in $BUILDARCHS; do
-    echo "***** BUILDING UNIVERSAL ARCH $BUILDARCH ******"
+    log "Clean building for $BUILDARCH"
+
     make clean
 
     if [[ "$BUILDARCH" = *"x86_64"* ]]; then
@@ -89,22 +90,26 @@ for BUILDARCH in $BUILDARCHS; do
     # installs openssl (just the software components, no docs/manpages) for this flavor
     make install_sw
 
-    log "renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a"
+    log "Renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a"
     cp "$OPENSSL_TMP"/lib/libcrypto.a "$CONFIGURATION_TEMP_DIR"/$BUILDARCH-libcrypto.a
     cp "$OPENSSL_TMP"/lib/libssl.a "$CONFIGURATION_TEMP_DIR"/$BUILDARCH-libssl.a
 done
 
-# combines each flavor's library into one universal library
+# Combine all the architectures into one universal library
 
-log "creating universallibraries in $LIB_OUTPUT"
+log "Creating universal libraries in $LIB_OUTPUT"
 lipo -create "$CONFIGURATION_TEMP_DIR/"*-libcrypto.a -output "$LIB_OUTPUT/lib/libcrypto.a"
 lipo -create "$CONFIGURATION_TEMP_DIR/"*-libssl.a -output "$LIB_OUTPUT/lib/libssl.a"
-cp -r "$OPENSSL_TMP/include/"* "$LIB_OUTPUT/include/"
 
-log "cleaning artifacts"
-rm -rf "$OPENSSL_TMP/"
-rm -rf "$CONFIGURATION_TEMP_DIR/"
+log "Copying headers to $LIB_OUTPUT"
+cp -r "$OPENSSL_TMP/include/*" "$LIB_OUTPUT/include/"
 
-log "executing ranlib on libraries in $TARGET_BUILD_DIR"
+log "Cleaning artifacts"
+rm -rf "$OPENSSL_TMP"
+rm -rf "$CONFIGURATION_TEMP_DIR"
+
+log "Executing ranlib on universal libraries in $LIB_OUTPUT"
 ranlib "$LIB_OUTPUT/lib/libcrypto.a"
 ranlib "$LIB_OUTPUT/lib/libssl.a"
+
+log "OpenSSL build complete!"
