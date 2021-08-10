@@ -1,9 +1,10 @@
 #!/bin/bash
+
 set | grep ARCH
 set -x
 
 log () {
-    log "$1"
+    echo "***** $1 *****"
 }
 
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
