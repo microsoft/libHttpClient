@@ -422,12 +422,9 @@ static bool verify_X509_cert_chain(const http_internal_vector<http_internal_stri
     {
         // Perform actual certificate verification. Check for trust via return
         // value, but swallow any error messages.
-        if (__builtin_available(ios 12.0, *))
+        if (__builtin_available(iOS 12.0, macOS 10.14, *))
         {
-            if (SecTrustEvaluateWithError(trust.get(), nil))
-            {
-                return true;
-            }
+            return SecTrustEvaluateWithError(trust.get(), nil);
         }
         else
         {

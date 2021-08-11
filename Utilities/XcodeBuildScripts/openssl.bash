@@ -124,7 +124,7 @@ lipo -create "$CONFIGURATION_TEMP_DIR/"*-libcrypto.a -output "$LIB_OUTPUT/lib/li
 lipo -create "$CONFIGURATION_TEMP_DIR/"*-libssl.a -output "$LIB_OUTPUT/lib/libssl.a"
 
 log "Copying headers to $LIB_OUTPUT"
-cp -r "$OPENSSL_TMP/include/*" "$LIB_OUTPUT/include/"
+cp -r "$OPENSSL_TMP/include/"* "$LIB_OUTPUT/include/"
 
 log "Cleaning artifacts"
 rm -rf "$OPENSSL_TMP"
