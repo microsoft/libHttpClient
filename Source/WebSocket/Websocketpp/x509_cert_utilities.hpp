@@ -421,10 +421,23 @@ static bool verify_X509_cert_chain(const http_internal_vector<http_internal_stri
     if(status == noErr)
     {
         // Perform actual certificate verification. Check for trust via return
-        // value, but swallow any errors (nil second argument).
-        bool trusted = SecTrustEvaluateWithError(trust.get(), nil);
-
-        return trusted;
+        // value, but swallow any error messages.
+        if (__builtin_available(ios 12.0, *))
+        {
+            if (SecTrustEvaluateWithError(trust.get(), nil))
+            {
+                return true;
+            }
+        }
+        else
+        {
+            SecTrustResultType trustResult;
+            status = SecTrustEvaluate(trust.get(), &trustResult);
+            if (status == noErr && (trustResult == kSecTrustResultUnspecified || trustResult == kSecTrustResultProceed))
+            {
+                return true;
+            }
+        }
     }
 
     return false;
