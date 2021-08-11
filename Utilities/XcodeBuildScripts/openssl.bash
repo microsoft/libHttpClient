@@ -7,32 +7,51 @@ log () {
     echo "***** $1 *****"
 }
 
-# Set up and validate input args
+env
 
-OPENSSL_SRC="$SRCROOT/../../External/openssl"
-OPENSSL_TMP="$OPENSSL_TMP_DIR"
-LIB_OUTPUT="$OPENSSL_LIB_OUTPUT"
+exit 0
 
-if [ "$TARGET_PLATFORM" != "macOS" ] && [ "$TARGET_PLATFORM" != "iOS" ]; then
-    log "Missing or invalid target platform: $TARGET_PLATFORM"
-    exit 1
-fi
-
-if [ "$OPENSSL_TMP" == "" ]; then
-    log "No tmp build directory specified - bailing out"
-    exit 1
-fi
-
-if [ "$LIB_OUTPUT" == "" ]; then
-    log "No library output directory specified - bailing out"
-    exit 1
-fi
+### Set up environment variables ###
 
 BUILD_ARCHS="$ARCHS"
 
-log "Requested architectures: $BUILD_ARCHS"
+DEVELOPER_DIR="$(xcode-select -p)"
+export CROSS_COMPILE="$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/"
 
-# Check whether libcrypto.a already exists for this architecture - we'll only build if it does not
+if [ "$PLATFORM_NAME" == "macosx" ]; then
+    PLAT="MacOSX"
+elif [ "$PLATFORM_NAME" == "iphoneos" ]; then
+    PLAT="iPhoneOS"
+elif [ "$PLATFORM_NAME" == "iphonesimulator" ]; then
+    PLAT="iPhoneSimulator"
+else
+    log "Unexpected or missing PLATFORM_NAME: $PLATFORM_NAME - bailing out"
+    exit 1
+fi
+
+export CROSS_TOP="$DEVELOPER_DIR/Platforms/$PLAT.platform/Developer"
+export CROSS_SDK="$PLAT.sdk"
+
+log "Preparing build for architectures $BUILD_ARCHS on platform $PLATFORM_NAME"
+
+### Set up build locations ###
+
+if [ "$OPENSSL_TMP_DIR" == "" ]; then
+    log "No tmp build directory provided - bailing out"
+    exit 1
+fi
+
+if [ "$OPENSSL_LIB_OUTPUT" == "" ]; then
+    log "No library output directory provided - bailing out"
+    exit 1
+fi
+
+OPENSSL_SRC="$SRCROOT/../../External/openssl"
+OPENSSL_TMP="$OPENSSL_TMP_DIR"
+LIB_OUTPUT="$OPENSSL_LIB_OUTPUT/$PLATFORM_NAME"
+
+### Check whether libcrypto.a already exists for this architecture/platform - we'll only build if it does not ###
+
 if [ -f "$LIB_OUTPUT/lib/libcrypto.a" ]; then
     EXISTING_ARCHS="$(lipo -info $LIB_OUTPUT/lib/libcrypto.a)"
 
@@ -54,43 +73,36 @@ else
     log "No previously-built library present at $LIB_OUTPUT/lib/libcrypto.a - performing build"
 fi
 
-# Set up build dirs
+### Set up build dirs ###
+
 mkdir -p "$OPENSSL_TMP"
 mkdir -p "$LIB_OUTPUT/lib"
 mkdir -p "$LIB_OUTPUT/include"
 
 pushd $OPENSSL_SRC
 
+### Configure and build for each architecture ###
+
 for BUILD_ARCH in $BUILD_ARCHS; do
-    log "Clean-building for $BUILD_ARCH, targeting $TARGET_PLATFORM"
+    log "Cleaning..."
 
     make clean
 
-    if [[ "$BUILD_ARCH" == *"x86_64"* ]]; then
-        # Configure for x86_64 macOS build
+    log "Configuring for architecture $BUILD_ARCH and platform $PLATFORM_NAME"
 
+    export CC="$DEVELOPER_DIR/usr/bin/gcc -arch $BUILD_ARCH"
+
+    if [ "$BUILD_ARCH" == "x86_64" ]; then
         ./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
-    elif [[ "$BUILD_ARCH" == "*i386*" ]]; then
-        # Configure for x86 macOS build
-
-        ./Configure darwin-i386-cc shared no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
-    elif [[ "$BUILD_ARCH" == *"arm64"* ]]; then
-        # Configure for arm64 iOS build
-
-        export CROSS_TOP="$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer"
-        export CROSS_SDK=iPhoneOS.sdk
-        export PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH"
-        export CC="/usr/bin/clang -arch ${BUILD_ARCH}"
-
-        ./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+    elif [ "$BUILD_ARCH" == "arm64" ]; then
+        if [ "$PLATFORM_NAME" == "macosx" ] || [ "$PLATFORM_NAME" == "iphonesimulator" ]; then
+            ./Configure darwin64-arm64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+        elif [ "$PLATFORM_NAME" == "iphoneos" ]; then
+            ./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+        fi
     else
-        # Configure for arm iOS build
-
-        export CROSS_TOP="$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer"
-        export CROSS_SDK=iPhoneOS.sdk
-        export CC="/usr/bin/clang -arch ${BUILD_ARCH}"
-
-        ./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+        log "Unexpected architecture: $BUILD_ARCH"
+        exit 1
     fi
 
     # Build OpenSSL (just the software components, no docs/manpages)
