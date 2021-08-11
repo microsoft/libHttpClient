@@ -44,7 +44,7 @@ fi
 
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
 OPENSSL_TMP="$OPENSSL_TMP_DIR"
-LIB_OUTPUT="$OPENSSL_LIB_OUTPUT/$PLATFORM_NAME"
+LIB_OUTPUT="$OPENSSL_LIB_OUTPUT"
 
 ### Check whether libcrypto.a already exists for this architecture/platform - we'll only build if it does not ###
 
@@ -86,7 +86,7 @@ for BUILD_ARCH in $BUILD_ARCHS; do
 
     log "Configuring for architecture $BUILD_ARCH and platform $PLATFORM_NAME"
 
-    export CC="$DEVELOPER_DIR/usr/bin/gcc -arch $BUILD_ARCH"
+    export CC="clang -arch $BUILD_ARCH"
 
     if [ "$BUILD_ARCH" == "x86_64" ]; then
         ./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
@@ -101,7 +101,7 @@ for BUILD_ARCH in $BUILD_ARCHS; do
         exit 1
     fi
 
-    # Build OpenSSL (just the software components, no docs/manpages)
+    # Only build the "software" components, not docs and manpages
     make install_sw
 
     log "Renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILD_ARCH-*.a"
@@ -109,7 +109,7 @@ for BUILD_ARCH in $BUILD_ARCHS; do
     cp "$OPENSSL_TMP"/lib/libssl.a "$CONFIGURATION_TEMP_DIR"/$BUILD_ARCH-libssl.a
 done
 
-# Combine all the architectures into one universal library
+### Combine all the architectures into one universal library ###
 
 log "Creating universal libraries in $LIB_OUTPUT"
 lipo -create "$CONFIGURATION_TEMP_DIR/"*-libcrypto.a -output "$LIB_OUTPUT/lib/libcrypto.a"
