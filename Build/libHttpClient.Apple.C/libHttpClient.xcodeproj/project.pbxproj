@@ -1497,7 +1497,7 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(BUILT_PRODUCTS_DIR)/openssl/include",
+					"$(SRCROOT)/../../External/openssl/include",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1524,7 +1524,7 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
-					"$(BUILT_PRODUCTS_DIR)/openssl/include",
+					"$(SRCROOT)/../../External/openssl/include",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
