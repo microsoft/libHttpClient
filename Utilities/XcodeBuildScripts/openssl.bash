@@ -7,10 +7,6 @@ log () {
     echo "***** $1 *****"
 }
 
-env
-
-exit 0
-
 ### Set up environment variables ###
 
 BUILD_ARCHS="$ARCHS"
