@@ -29,7 +29,7 @@ private:
     void FailAllRequests(HRESULT hr) noexcept;
 
     CURLM* m_curlMultiHandle{ nullptr };
-    XTaskQueueHandle m_queue;
+    XTaskQueueHandle m_queue{ nullptr };
     std::mutex m_mutex;
     http_internal_map<CURL*, HC_UNIQUE_PTR<XCurlEasyRequest>> m_easyRequests;
 };

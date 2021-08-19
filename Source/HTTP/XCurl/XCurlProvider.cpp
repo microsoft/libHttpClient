@@ -109,6 +109,9 @@ HRESULT HC_PERFORM_ENV::Perform(HCCallHandle hcCall, XAsyncBlock* async) noexcep
 
     HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::Perform: HCCallHandle=%p, workPort=%p", hcCall, workPort);
 
+    auto easyInitResult = XCurlEasyRequest::Initialize(hcCall, async);
+    RETURN_IF_FAILED(easyInitResult.hr);
+
     auto iter = m_curlMultis.find(workPort);
     if (iter == m_curlMultis.end())
     {
@@ -119,9 +122,6 @@ HRESULT HC_PERFORM_ENV::Perform(HCCallHandle hcCall, XAsyncBlock* async) noexcep
     }
 
     auto& multi{ iter->second };
-
-    auto easyInitResult = XCurlEasyRequest::Initialize(hcCall, async);
-    RETURN_IF_FAILED(easyInitResult.hr);
     RETURN_IF_FAILED(multi->AddRequest(easyInitResult.ExtractPayload()));
 
     return S_OK;

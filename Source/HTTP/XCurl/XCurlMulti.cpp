@@ -128,7 +128,6 @@ HRESULT XCurlMulti::Perform() noexcept
     if (runningRequests)
     {
         // Reschedule Perform if there are still running requests
-        // TODO should we delay next callback?
         RETURN_IF_FAILED(XTaskQueueSubmitCallback(m_queue, XTaskQueuePort::Work, this, XCurlMulti::TaskQueueCallback));
     }
 
