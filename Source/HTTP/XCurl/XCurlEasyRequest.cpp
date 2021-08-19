@@ -17,6 +17,7 @@ XCurlEasyRequest::XCurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XA
 XCurlEasyRequest::~XCurlEasyRequest()
 {
     curl_easy_cleanup(m_curlEasyHandle);
+    curl_slist_free_all(m_headers);
 }
 
 Result<HC_UNIQUE_PTR<XCurlEasyRequest>> XCurlEasyRequest::Initialize(HCCallHandle hcCall, XAsyncBlock* async)
