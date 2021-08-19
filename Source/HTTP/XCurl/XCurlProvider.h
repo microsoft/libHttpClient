@@ -26,6 +26,6 @@ public:
 private:
     HC_PERFORM_ENV() = default;
 
-    // Create a XCurlMulti per work port
-    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::http_client::XCurlMulti>> m_curlMultis;
+    // Create an XCurlMulti per work port
+    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::http_client::XCurlMulti>> m_curlMultis{};
 };

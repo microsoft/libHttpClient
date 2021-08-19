@@ -17,7 +17,7 @@ Result<HC_UNIQUE_PTR<XCurlMulti>> XCurlMulti::Initialize(XTaskQueuePortHandle wo
     multi->m_curlMultiHandle = curl_multi_init();
     if (!multi->m_curlMultiHandle)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "curl_multi_init failed");
+        HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Initialize: curl_multi_init failed");
         return E_FAIL;
     }
 
@@ -36,7 +36,7 @@ XCurlMulti::~XCurlMulti()
 
     if (!m_easyRequests.empty())
     {
-        HC_TRACE_WARNING(HTTPCLIENT, "Destroying XCurlMulti but there are pending requests. Failing all active requests.");
+        HC_TRACE_WARNING(HTTPCLIENT, "XCurlMulti::~XCurlMulti: Failing all active requests.");
         FailAllRequests(E_UNEXPECTED);
     }
 
@@ -48,10 +48,12 @@ XCurlMulti::~XCurlMulti()
 
 HRESULT XCurlMulti::AddRequest(HC_UNIQUE_PTR<XCurlEasyRequest>&& easyRequest)
 {
+    std::unique_lock<std::mutex> lock{ m_mutex };
+
     auto result = curl_multi_add_handle(m_curlMultiHandle, easyRequest->Handle());
     if (result != CURLM_OK)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "curl_multi_add_handle failed with CURLCode=%u", result);
+        HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::AddRequest: curl_multi_add_handle failed with CURLCode=%u", result);
         return HrFromCurlm(result);
     }
 
@@ -78,15 +80,13 @@ void CALLBACK XCurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool ca
 
 HRESULT XCurlMulti::Perform() noexcept
 {
-    //int numFds{ 0 };
-    //CURLMcode res = curl_multi_poll(m_curlMultiHandle, nullptr, 0, 1000, &numFds);
-    //RETURN_IF_FAILED(HrFromCurlm(res));
+    std::unique_lock<std::mutex> lock{ m_mutex };
 
     int runningRequests{ 0 };
     CURLMcode result = curl_multi_perform(m_curlMultiHandle, &runningRequests);
     if (result != CURLM_OK)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "curl_multi_perform failed with CURLCode=%u", result);
+        HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: curl_multi_perform failed with CURLCode=%u", result);
         return HrFromCurlm(result);
     }
 
@@ -106,7 +106,7 @@ HRESULT XCurlMulti::Perform() noexcept
                 result = curl_multi_remove_handle(m_curlMultiHandle, message->easy_handle);
                 if (result != CURLM_OK)
                 {
-                    HC_TRACE_ERROR(HTTPCLIENT, "curl_multi_remove_handle failed with CURLCode=%u", result);
+                    HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: curl_multi_remove_handle failed with CURLCode=%u", result);
                 }
 
                 requestIter->second->Complete(message->data.result);
@@ -117,7 +117,7 @@ HRESULT XCurlMulti::Perform() noexcept
             case CURLMSG_LAST:
             default:
             {
-                HC_TRACE_ERROR(HTTPCLIENT, "Unrecognized CURLMsg type!");
+                HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: Unrecognized CURLMsg!");
                 assert(false);
             }
             break;
@@ -137,12 +137,14 @@ HRESULT XCurlMulti::Perform() noexcept
 
 void XCurlMulti::FailAllRequests(HRESULT hr) noexcept
 {
+    std::unique_lock<std::mutex> lock{ m_mutex };
+
     for (auto& pair : m_easyRequests)
     {
         auto result = curl_multi_remove_handle(m_curlMultiHandle, pair.first);
         if (FAILED(HrFromCurlm(result)))
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "curl_multi_remove_handle failed with CURLCode=%u", result);
+            HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::FailAllRequests: curl_multi_remove_handle failed with CURLCode=%u", result);
         }
         pair.second->Fail(hr);
     }

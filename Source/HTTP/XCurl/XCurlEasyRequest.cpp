@@ -24,7 +24,7 @@ Result<HC_UNIQUE_PTR<XCurlEasyRequest>> XCurlEasyRequest::Initialize(HCCallHandl
     CURL* curlEasyHandle{ curl_easy_init() };
     if (!curlEasyHandle)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "curl_easy_init failed");
+        HC_TRACE_ERROR(HTTPCLIENT, "XCurlEasyRequest::Initialize:: curl_easy_init failed");
         return E_FAIL;
     }
 
@@ -132,7 +132,7 @@ void XCurlEasyRequest::Complete(CURLcode result)
 void XCurlEasyRequest::Fail(HRESULT hr)
 {
     HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "XCurlEasyRequest::Fail");
-    XAsyncComplete(m_asyncBlock, S_OK, 0);
+    XAsyncComplete(m_asyncBlock, hr, 0);
 }
 
 HRESULT XCurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
@@ -162,8 +162,7 @@ HRESULT XCurlEasyRequest::CopyNextBodySection(void* buffer, size_t maxSize, size
 
     uint8_t const* body = nullptr;
     uint32_t bodySize = 0;
-    HRESULT hr = HCHttpCallRequestGetRequestBodyBytes(m_hcCallHandle, &body, &bodySize);
-    if (FAILED(hr)) { return hr; }
+    RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyBytes(m_hcCallHandle, &body, &bodySize));
 
     size_t toCopy = 0;
 
@@ -207,7 +206,6 @@ size_t CALLBACK XCurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t
     HRESULT hr = request->CopyNextBodySection(buffer, bufferSize, copied);
     if (FAILED(hr))
     {
-        assert(false);
         return CURL_READFUNC_ABORT;
     }
 
