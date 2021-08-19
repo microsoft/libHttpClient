@@ -96,6 +96,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
@@ -216,55 +219,55 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{A1D6BFE0-C752-37C4-84A8-DC1BAD7ACDBB}</UniqueIdentifier>
+      <UniqueIdentifier>{44629CDB-7C74-39B3-A4A1-C621698AFC8B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{311C2E0C-757A-396B-B005-9C3E2AC974F6}</UniqueIdentifier>
+      <UniqueIdentifier>{F51DB99E-4990-360F-B309-824ABC84B990}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common\Win">
-      <UniqueIdentifier>{B9434CE8-713E-36C3-BCDA-769594459CD1}</UniqueIdentifier>
+      <UniqueIdentifier>{9415106D-D1B6-34D9-BAC5-24B6E1140B81}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{748EFFF4-1C27-379F-90E2-0343E1267432}</UniqueIdentifier>
+      <UniqueIdentifier>{E77AAB65-6A33-38D6-913A-1B2216AF3FF1}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{EBBC7A73-32B3-304C-A088-0766E8E09094}</UniqueIdentifier>
+      <UniqueIdentifier>{F8986AC8-C92A-3138-8BE0-0D4CAC5BAE74}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP\Unittest">
-      <UniqueIdentifier>{6D0EEE4B-8A61-37FC-BFB1-2B242FD06B77}</UniqueIdentifier>
+      <UniqueIdentifier>{FBA1A7DF-52C7-3B8E-AC66-92B56463F1A0}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{EE80538A-4E77-32F6-9CB6-FD60616A0C52}</UniqueIdentifier>
+      <UniqueIdentifier>{F41B4457-1D75-357B-B861-38C8DE60686C}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger\Win">
-      <UniqueIdentifier>{7FBD5635-E218-3828-9907-011F9FEB0020}</UniqueIdentifier>
+      <UniqueIdentifier>{6ED3F9E7-4FA4-3BE4-BC6D-190307ADAC66}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{C1D0A9B1-A7E8-307D-B0E3-6D0577F43340}</UniqueIdentifier>
+      <UniqueIdentifier>{1017B766-F2DA-3FE9-8945-40174AF51F06}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{424D80A0-2669-3072-B27A-D961C7D2D31B}</UniqueIdentifier>
+      <UniqueIdentifier>{032B5793-5F29-3B5F-B11F-159547955FC9}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task\Win">
-      <UniqueIdentifier>{839B03FA-A816-3B0D-B78E-80E1B8A6B4E4}</UniqueIdentifier>
+      <UniqueIdentifier>{100A0EF2-4931-3DF9-AAEE-B292A815CB9B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\UnitTests">
-      <UniqueIdentifier>{EC698838-C450-37D0-B39D-05B2997275C7}</UniqueIdentifier>
+      <UniqueIdentifier>{FDDCAF35-4B5C-337A-88CB-A2967B024D8A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\UnitTests\Support">
-      <UniqueIdentifier>{07B17B8F-467C-3701-BBA0-ECEAD5ECCC2F}</UniqueIdentifier>
+      <UniqueIdentifier>{46407FEF-B5B1-3908-87C8-A7D4990BAF59}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\UnitTests\Tests">
-      <UniqueIdentifier>{622663E3-C17A-32F2-AFB2-825B97C95BF3}</UniqueIdentifier>
+      <UniqueIdentifier>{183246C6-D9A7-311B-8FA5-D2C819202D9B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{3928859A-5E7E-3865-8877-2AD5FBB92278}</UniqueIdentifier>
+      <UniqueIdentifier>{E23CD122-42BD-3D79-840F-A604FA56C3A2}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket\Unittest">
-      <UniqueIdentifier>{1F0C99DD-47D3-3404-8982-9B4C0F5454CE}</UniqueIdentifier>
+      <UniqueIdentifier>{689F776C-60B1-3B59-8AA8-564508E49033}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{DBC2122A-8939-3C43-8F28-44E5561A58D4}</UniqueIdentifier>
+      <UniqueIdentifier>{FB41E393-D902-301F-91B2-8F1AE4F68E21}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

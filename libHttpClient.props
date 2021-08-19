@@ -87,6 +87,11 @@
 
   <Import Project="$(HCBuildRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)'=='true'"/>
 
+  <!--Bring in XCurl on GDK-->
+  <ImportGroup Condition="'$(HCLibPlatformType)' == 'GDK' AND '$(GameDKLatest)' != ''">
+    <Import Project="$(GameDKLatest)GRDK\ExtensionLibraries\Xbox.XCurl.API\DesignTime\CommonConfiguration\neutral\ExtensionLibrary.props"/>
+  </ImportGroup>
+
   <Target Name="HCBuildDebug">
     <PropertyGroup>
       <!-- Useful constants -->

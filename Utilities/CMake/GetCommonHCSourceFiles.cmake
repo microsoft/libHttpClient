@@ -33,6 +33,7 @@ function(GET_COMMON_HC_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/Common/pch.h"
         "${PATH_TO_ROOT}/Source/Common/pch_common.h"
         "${PATH_TO_ROOT}/Source/Common/pal_internal.h"
+        "${PATH_TO_ROOT}/Source/Common/Result.h"
         "${PATH_TO_ROOT}/Source/Common/ResultMacros.h"
         "${PATH_TO_ROOT}/Source/Common/uri.cpp"
         "${PATH_TO_ROOT}/Source/Common/uri.h"

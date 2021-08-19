@@ -130,6 +130,15 @@ set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
 
+set(XCurl_Source_Files
+    ../../../Source/HTTP/XCurl/XCurlEasyRequest.cpp
+    ../../../Source/HTTP/XCurl/XCurlEasyRequest.h
+    ../../../Source/HTTP/XCurl/XCurlMulti.cpp
+    ../../../Source/HTTP/XCurl/XCurlMulti.h
+    ../../../Source/HTTP/XCurl/XCurlProvider.cpp
+    ../../../Source/HTTP/XCurl/XCurlProvider.h
+    )
+
 set(Windows_Logger_Source_Files
    ../../../Source/Logger/Win/win_logger.cpp
    )
@@ -279,14 +288,14 @@ endif()
 
 if( GDK )
     message(STATUS "GDK source group")
-    source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
+    source_group("C++ Source\\HTTP\\XCurl" FILES ${XCurl_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\Win" FILES ${GDK_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
 
     list(APPEND
         SOURCE_FILES
-        ${WinHttp_HTTP_Source_Files}
+        ${XCurl_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${GDK_WebSocket_Source_Files}
