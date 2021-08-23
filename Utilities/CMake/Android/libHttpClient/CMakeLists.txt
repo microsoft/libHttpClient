@@ -63,7 +63,7 @@ set(ANDROID_SOURCE_FILES
     )
 
 set(ANDROID_INCLUDE_DIRS
-    "${PATH_TO_ROOT}/External/generatedHeaders/android"
+    "${PATH_TO_ROOT}/External/opensslGeneratedHeaders/android"
     )
 
 #########################

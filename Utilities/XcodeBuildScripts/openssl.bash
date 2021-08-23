@@ -1,109 +1,137 @@
 #!/bin/bash
+
 set | grep ARCH
 set -x
+
+log () {
+    echo "***** $1 *****"
+}
+
+### Set up environment variables ###
+
+BUILD_ARCHS="$ARCHS"
+
+if [ "$PLATFORM_NAME" == "macosx" ]; then
+    PLAT="MacOSX"
+elif [ "$PLATFORM_NAME" == "iphoneos" ]; then
+    PLAT="iPhoneOS"
+elif [ "$PLATFORM_NAME" == "iphonesimulator" ]; then
+    PLAT="iPhoneSimulator"
+else
+    log "Unexpected or missing PLATFORM_NAME: $PLATFORM_NAME - bailing out"
+    exit 1
+fi
+
+DEVELOPER_DIR="$(xcode-select -p)"
+export CROSS_TOP="$DEVELOPER_DIR/Platforms/$PLAT.platform/Developer"
+export CROSS_SDK="$PLAT.sdk"
+
+log "Preparing build for architectures $BUILD_ARCHS on platform $PLATFORM_NAME"
+
+### Set up build locations ###
+
+if [ "$OPENSSL_TMP_DIR" == "" ]; then
+    log "No tmp build directory provided - bailing out"
+    exit 1
+fi
+
+if [ "$OPENSSL_LIB_OUTPUT" == "" ]; then
+    log "No library output directory provided - bailing out"
+    exit 1
+fi
 
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
 OPENSSL_TMP="$OPENSSL_TMP_DIR"
 LIB_OUTPUT="$OPENSSL_LIB_OUTPUT"
 
-if [ "$OPENSSL_TMP" == "" ]; then
-echo "***** No tmp build directory specified - bailing out *****"
-exit 1
-fi
+### Check whether libcrypto.a already exists for this architecture/platform - we'll only build if it does not ###
 
-if [ "$LIB_OUTPUT" == "" ]; then
-echo "***** No library output directory specified - bailing out *****"
-exit 1
-fi
+if [ -f "$LIB_OUTPUT/lib/libcrypto.a" ]; then
+    EXISTING_ARCHS="$(lipo -info $LIB_OUTPUT/lib/libcrypto.a)"
 
-BUILDARCHS="$ARCHS"
+    ARCH_MISSING=0
+    for BUILD_ARCH in $BUILD_ARCHS; do
+        if [[ $EXISTING_ARCHS != *"$BUILD_ARCH"* ]]; then
+            ARCH_MISSING=1
+        fi
+    done
 
-# check whether libcrypto.a already exists for this architecture - we'll only build if it does not
-if [ -f  "$LIB_OUTPUT/lib/libcrypto.a" ]; then
-
-EXISTING_ARCHS="$(lipo -info $LIB_OUTPUT/lib/libcrypto.a)"
-ARCH_MISSING=0
-
-for BUILDARCH in $BUILDARCHS
-do
-if [[ $EXISTING_ARCHS != *"$BUILDARCH"* ]]; then
-ARCH_MISSING=1
-fi
-done
-
-if [ $ARCH_MISSING == 1 ]; then
-echo "***** Rebuilding previously-built library to support new architectures *****"
-else
-echo "***** Using previously-built libary $LIB_OUTPUT/lib/libcrypto.a - skipping build *****"
-exit 0;
-fi
+    if [ $ARCH_MISSING == 1 ]; then
+        log "Rebuilding previously-built library, architectures missing"
+    else
+        log "Previously-built library present at $LIB_OUTPUT/lib/libcrypto.a - skipping build"
+        exit 0
+    fi
 
 else
-
-echo "***** No previously-built libary present at $LIB_OUTPUT/lib/libcrypto.a - performing build *****"
-
+    log "No previously-built library present at $LIB_OUTPUT/lib/libcrypto.a - performing build"
 fi
 
-# make dirs
+### Set up build dirs ###
+
 mkdir -p "$OPENSSL_TMP"
 mkdir -p "$LIB_OUTPUT/lib"
 mkdir -p "$LIB_OUTPUT/include"
 
-# figure out the right set of build architectures for this run
-echo "***** creating universal binary for architectures: $BUILDARCHS *****"
+pushd $OPENSSL_SRC
 
-if [ "$SDKROOT" != "" ]; then
-ISYSROOT="-isysroot $SDKROOT"
-fi
+### Configure and build for each architecture ###
 
-cd $OPENSSL_SRC
-for BUILDARCH in $BUILDARCHS
-do
-echo "***** BUILDING UNIVERSAL ARCH $BUILDARCH ******"
-make clean
+for BUILD_ARCH in $BUILD_ARCHS; do
+    log "Cleaning..."
 
-if [[ "$BUILDARCH" = *"x86_64"* ]]; then
-./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
-elif [[ "$BUILDARCH" = *"i386"* ]]; then
-./Configure darwin-i386-cc shared no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
-elif [[ "$BUILDARCH" = *"arm64"* ]]; then
+    make clean
 
-export CROSS_TOP="$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer"
-export CROSS_SDK=iPhoneOS.sdk
-export PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH"
-export BUILD_TOOLS="${DEVELOPER}"
-export CC="${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}"
+    log "Configuring for architecture $BUILD_ARCH and platform $PLATFORM_NAME"
 
-./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
-else
-export CROSS_TOP="$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer"
-export CROSS_SDK=iPhoneOS.sdk
-export PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH"
-export BUILD_TOOLS="${DEVELOPER}"
-export CC="${BUILD_TOOLS}/usr/bin/gcc -arch ${BUILDARCH}"
+    export CC="clang -arch $BUILD_ARCH"
 
-./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
-fi
+    # Configure the OpenSSL build based on architecture. Note that the SDK to
+    # build against was chosen earlier in the script for Mac platforms where we
+    # might actually be targeting an iOS simulator.
+    #
+    # - x86_64, i386: Mac
+    # - arm64: Might be an M1 Mac or a physical iOS device
+    # - armv7: Very old phyiscal iOS device
 
-# installs openssl (just the software components, no docs/manpages) for this flavor
-make install_sw
+    if [ "$BUILD_ARCH" == "x86_64" ]; then
+        ./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+    elif [ "$BUILD_ARCH" == "arm64" ]; then
+        if [ "$PLATFORM_NAME" == "macosx" ] || [ "$PLATFORM_NAME" == "iphonesimulator" ]; then
+            ./Configure darwin64-arm64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+        elif [ "$PLATFORM_NAME" == "iphoneos" ]; then
+            ./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+        fi
+    elif [ "$BUILD_ARCH" == "armv7" ]; then
+        ./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+    else
+        log "Unexpected architecture: $BUILD_ARCH"
+        exit 1
+    fi
 
-echo "***** renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILDARCH-*.a *****"
-cp "$OPENSSL_TMP"/lib/libcrypto.a "$CONFIGURATION_TEMP_DIR"/$BUILDARCH-libcrypto.a
-cp "$OPENSSL_TMP"/lib/libssl.a "$CONFIGURATION_TEMP_DIR"/$BUILDARCH-libssl.a
+    # Only build the "software" components, not docs and manpages
+    make install_sw
+
+    log "Renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILD_ARCH-*.a"
+    cp "$OPENSSL_TMP"/lib/libcrypto.a "$CONFIGURATION_TEMP_DIR"/$BUILD_ARCH-libcrypto.a
+    cp "$OPENSSL_TMP"/lib/libssl.a "$CONFIGURATION_TEMP_DIR"/$BUILD_ARCH-libssl.a
 done
 
-# combines each flavor's library into one universal library
+### Combine all the architectures into one universal library ###
 
-echo "***** creating universallibraries in $LIB_OUTPUT *****"
+log "Creating universal libraries in $LIB_OUTPUT"
 lipo -create "$CONFIGURATION_TEMP_DIR/"*-libcrypto.a -output "$LIB_OUTPUT/lib/libcrypto.a"
 lipo -create "$CONFIGURATION_TEMP_DIR/"*-libssl.a -output "$LIB_OUTPUT/lib/libssl.a"
+
+log "Copying headers to $LIB_OUTPUT"
 cp -r "$OPENSSL_TMP/include/"* "$LIB_OUTPUT/include/"
 
-echo "***** cleaning artifacts *****"
-rm -rf "$OPENSSL_TMP/"
-rm -rf "$CONFIGURATION_TEMP_DIR/"
+log "Cleaning artifacts"
+rm -rf "$OPENSSL_TMP"
+rm -rf "$CONFIGURATION_TEMP_DIR"
 
-echo "***** executing ranlib on libraries in $TARGET_BUILD_DIR *****"
+log "Executing ranlib on universal libraries in $LIB_OUTPUT"
 ranlib "$LIB_OUTPUT/lib/libcrypto.a"
 ranlib "$LIB_OUTPUT/lib/libssl.a"
+
+log "OpenSSL build complete!"
