@@ -70,13 +70,24 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     uint32_t headerCount{ 0 };
     RETURN_IF_FAILED(HCHttpCallRequestGetNumHeaders(hcCall, &headerCount));
 
+    bool haveUserAgentHeader = false;
     for (auto i = 0u; i < headerCount; ++i)
     {
         char const* name{ nullptr };
         char const* value{ nullptr };
         RETURN_IF_FAILED(HCHttpCallRequestGetHeaderAtIndex(hcCall, i, &name, &value));
+        if (std::strcmp(name, "User-Agent") == 0)
+        {
+            haveUserAgentHeader = true;
+        }
         RETURN_IF_FAILED(easyRequest->AddHeader(name, value));
     }
+
+    if (!haveUserAgentHeader)
+    {
+        RETURN_IF_FAILED(easyRequest->AddHeader("User-Agent", "libHttpClient/1.0.0.0"));
+    }
+
     RETURN_IF_FAILED(easyRequest->SetOpt<curl_slist*>(CURLOPT_HTTPHEADER, easyRequest->m_headers));
 
     // timeout
@@ -111,29 +122,38 @@ void CurlEasyRequest::Complete(CURLcode result)
 {
     HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::Complete: CURLCode=%ul", result);
 
-    long httpStatus = 0;
-    auto getInfoRes = curl_easy_getinfo(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
-    if (getInfoRes != CURLE_OK)
-    {
-        result = getInfoRes;
-    }
-
     if (result != CURLE_OK)
     {
         HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::m_errorBuffer='%s'", m_errorBuffer);
 
-        HRESULT hr = HCHttpCallResponseSetNetworkErrorCode(m_hcCallHandle, E_FAIL, result);
+        long platformError = 0;
+        auto curle = curl_easy_getinfo(m_curlEasyHandle, CURLINFO_OS_ERRNO, &platformError);
+        if (curle != CURLE_OK)
+        {
+            return Fail(HrFromCurle(curle));
+        }
+
+        HRESULT hr = HCHttpCallResponseSetNetworkErrorCode(m_hcCallHandle, E_FAIL, static_cast<uint32_t>(platformError));
         assert(SUCCEEDED(hr));
 
         hr = HCHttpCallResponseSetPlatformNetworkErrorMessage(m_hcCallHandle, curl_easy_strerror(result));
         assert(SUCCEEDED(hr));
     }
+    else
+    {
+        long httpStatus = 0;
+        auto curle = curl_easy_getinfo(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
+        if (curle != CURLE_OK)
+        {
+            return Fail(HrFromCurle(curle));
+        }
 
-    HRESULT hr = HCHttpCallResponseSetStatusCode(m_hcCallHandle, httpStatus);
-    assert(SUCCEEDED(hr));
-    UNREFERENCED_PARAMETER(hr);
+        HRESULT hr = HCHttpCallResponseSetStatusCode(m_hcCallHandle, httpStatus);
+        assert(SUCCEEDED(hr));
+        UNREFERENCED_PARAMETER(hr);
+    }
 
-    // Always complete with XAsync success; http/network errors returned via HCCallHandle
+    // At this point, always complete with XAsync success - http/network errors returned via HCCallHandle
     XAsyncComplete(m_asyncBlock, S_OK, 0);
 }
 
@@ -280,7 +300,7 @@ size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t ni
     return bufferSize;
 }
 
-size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t /*size*/, size_t nmemb, void* context) noexcept
+size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept
 {
     HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%llu bytes)", nmemb);
 
@@ -288,7 +308,8 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t /*size*/, size_t 
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "'%.*s'", nmemb, buffer);
 
-    HRESULT hr = HCHttpCallResponseAppendResponseBodyBytes(request->m_hcCallHandle, reinterpret_cast<uint8_t*>(buffer), nmemb);
+    size_t bufferSize = size * nmemb;
+    HRESULT hr = HCHttpCallResponseAppendResponseBodyBytes(request->m_hcCallHandle, reinterpret_cast<uint8_t*>(buffer), bufferSize);
     assert(SUCCEEDED(hr));
 
     return nmemb;
@@ -314,7 +335,7 @@ int CurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype type, cha
         size -= 1;
     }
 
-    HC_TRACE_IMPORTANT(HTTPCLIENT, "CURL %10s - %.*s", event, size, data);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CURL %10s - %.*s", event, size, data);
 
     return CURLE_OK;
 }

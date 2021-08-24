@@ -9,6 +9,7 @@ namespace http_client
 
 // XCurl doesn't support curl_multi_timeout, so use a small, fixed delay between calls to curl_multi_perform
 #define PERFORM_DELAY_MS 50
+#define POLL_TIMEOUT_MS 10
 
 Result<HC_UNIQUE_PTR<CurlMulti>> CurlMulti::Initialize(XTaskQueuePortHandle workPort)
 {
@@ -62,6 +63,8 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest)
 
     m_easyRequests.emplace(easyRequest->Handle(), std::move(easyRequest));
 
+    // Release lock before scheduling Perform in case m_queue is an Immediate dispatch queue
+    lock.unlock();
     RETURN_IF_FAILED(XTaskQueueSubmitCallback(m_queue, XTaskQueuePort::Work, this, CurlMulti::TaskQueueCallback));
 
     return S_OK;
@@ -131,7 +134,15 @@ HRESULT CurlMulti::Perform() noexcept
     if (runningRequests)
     {
         // Reschedule Perform if there are still running requests
-        RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, PERFORM_DELAY_MS, this, CurlMulti::TaskQueueCallback));
+        int workAvailable{ 0 };
+        result = curl_multi_poll(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
+        if (result != CURLM_OK)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: curl_multi_poll failed with CURLCode=%u", result);
+            return HrFromCurlm(result);
+        }
+
+        RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, workAvailable ? 0 : PERFORM_DELAY_MS, this, CurlMulti::TaskQueueCallback));
     }
 
     return S_OK;

@@ -21,7 +21,7 @@ void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
 {
     // HC_PERFORM_ENV created with custom deleter - HC_PERFORM_ENV needs to be destroyed and cleaned up explicitly.
     http_stl_allocator<HC_PERFORM_ENV> a{};
-    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::destroy(a, std::addressof(*performEnv));
+    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::destroy(a, performEnv);
     std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::deallocate(a, performEnv, 1);
 }
 
@@ -60,25 +60,19 @@ namespace http_client
 
 HRESULT HrFromCurle(CURLcode c) noexcept
 {
-    if (c == CURLE_OK)
+    switch (c)
     {
-        return S_OK;
-    }
-    else
-    {
-        return E_FAIL;
+    case CURLcode::CURLE_OK: return S_OK;
+    default: return E_FAIL;
     }
 }
 
 HRESULT HrFromCurlm(CURLMcode c) noexcept
 {
-    if (c == CURLM_OK)
+    switch (c)
     {
-        return S_OK;
-    }
-    else
-    {
-        return E_FAIL;
+    case CURLMcode::CURLM_OK: return S_OK;
+    default: return E_FAIL;
     }
 }
 

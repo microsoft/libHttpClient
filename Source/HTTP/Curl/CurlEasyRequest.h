@@ -3,7 +3,7 @@
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XCurl.h>
 #else
-// This path is untested, but this http providered should work with other Curl implementations as well
+// This path is untested, but this http provider should work with other Curl implementations as well
 #include <curl.h>
 #endif
 #include "Result.h"
