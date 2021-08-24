@@ -9,7 +9,7 @@ namespace http_client
 
 // XCurl doesn't support curl_multi_timeout, so use a small, fixed delay between calls to curl_multi_perform
 #define PERFORM_DELAY_MS 50
-#define POLL_TIMEOUT_MS 10
+#define POLL_TIMEOUT_MS 0
 
 Result<HC_UNIQUE_PTR<CurlMulti>> CurlMulti::Initialize(XTaskQueuePortHandle workPort)
 {

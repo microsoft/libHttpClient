@@ -3,7 +3,8 @@
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XCurl.h>
 #else
-// This path is untested, but this http provider should work with other Curl implementations as well
+// This path is untested, but this http provider should work with other curl implementations as well.
+// The logic in CurlMulti::Perform is optimized for XCurl, but should work on any curl implementation.
 #include <curl.h>
 #endif
 #include "Result.h"
