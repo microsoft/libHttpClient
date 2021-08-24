@@ -1,36 +1,36 @@
 #include "pch.h"
-#include "XCurlEasyRequest.h"
-#include "XCurlProvider.h"
+#include "CurlEasyRequest.h"
+#include "CurlProvider.h"
 
 namespace xbox
 {
 namespace http_client
 {
 
-XCurlEasyRequest::XCurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsyncBlock* async)
+CurlEasyRequest::CurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsyncBlock* async)
     : m_curlEasyHandle{ curlEasyHandle },
     m_hcCallHandle{ hcCall },
     m_asyncBlock{ async }
 {
 }
 
-XCurlEasyRequest::~XCurlEasyRequest()
+CurlEasyRequest::~CurlEasyRequest()
 {
     curl_easy_cleanup(m_curlEasyHandle);
     curl_slist_free_all(m_headers);
 }
 
-Result<HC_UNIQUE_PTR<XCurlEasyRequest>> XCurlEasyRequest::Initialize(HCCallHandle hcCall, XAsyncBlock* async)
+Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle hcCall, XAsyncBlock* async)
 {
     CURL* curlEasyHandle{ curl_easy_init() };
     if (!curlEasyHandle)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "XCurlEasyRequest::Initialize:: curl_easy_init failed");
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::Initialize:: curl_easy_init failed");
         return E_FAIL;
     }
 
-    http_stl_allocator<XCurlEasyRequest> a{};
-    HC_UNIQUE_PTR<XCurlEasyRequest> easyRequest{ new (a.allocate(1)) XCurlEasyRequest{ curlEasyHandle, hcCall, async } };
+    http_stl_allocator<CurlEasyRequest> a{};
+    HC_UNIQUE_PTR<CurlEasyRequest> easyRequest{ new (a.allocate(1)) CurlEasyRequest{ curlEasyHandle, hcCall, async } };
 
     // body (first so we can override things curl "helpfully" sets for us)
     uint8_t const* body = nullptr;
@@ -41,23 +41,30 @@ Result<HC_UNIQUE_PTR<XCurlEasyRequest>> XCurlEasyRequest::Initialize(HCCallHandl
     {
         // we set both POSTFIELDSIZE and INFILESIZE because curl uses one or the
         // other depending on method
-        RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
-        RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, bodySize));
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, bodySize));
 
         // read callback
-        RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_READFUNCTION, &ReadCallback));
-        RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_READDATA, easyRequest.get()));
+        RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
+        RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
     }
 
     // url & method
     char const* url = nullptr;
     char const* method = nullptr;
     RETURN_IF_FAILED(HCHttpCallRequestGetUrl(hcCall, &method, &url));
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_URL, url));
+    RETURN_IF_FAILED(easyRequest->SetOpt<char const*>(CURLOPT_URL, url));
 
     CURLoption opt = CURLOPT_HTTPGET;
     RETURN_IF_FAILED(MethodStringToOpt(method, opt));
-    RETURN_IF_FAILED(easyRequest->SetOpt(opt, 1));
+    if (opt == CURLOPT_CUSTOMREQUEST)
+    {
+        RETURN_IF_FAILED(easyRequest->SetOpt<char const*>(opt, method));
+    }
+    else
+    {
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(opt, 1));
+    }
 
     // headers
     uint32_t headerCount{ 0 };
@@ -70,39 +77,39 @@ Result<HC_UNIQUE_PTR<XCurlEasyRequest>> XCurlEasyRequest::Initialize(HCCallHandl
         RETURN_IF_FAILED(HCHttpCallRequestGetHeaderAtIndex(hcCall, i, &name, &value));
         RETURN_IF_FAILED(easyRequest->AddHeader(name, value));
     }
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_HTTPHEADER, easyRequest->m_headers));
+    RETURN_IF_FAILED(easyRequest->SetOpt<curl_slist*>(CURLOPT_HTTPHEADER, easyRequest->m_headers));
 
     // timeout
     uint32_t timeoutSeconds{ 0 };
     RETURN_IF_FAILED(HCHttpCallRequestGetTimeout(hcCall, &timeoutSeconds));
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_TIMEOUT_MS, static_cast<long>(timeoutSeconds * 1000)));
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_TIMEOUT_MS, timeoutSeconds * 1000));
 
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_VERBOSE, 0)); // verbose logging (0 off, 1 on)
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_HEADER, 0)); // do not write headers to the write callback
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_ERRORBUFFER, easyRequest->m_errorBuffer));
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_VERBOSE, 0)); // verbose logging (0 off, 1 on)
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_HEADER, 0)); // do not write headers to the write callback
+    RETURN_IF_FAILED(easyRequest->SetOpt<char*>(CURLOPT_ERRORBUFFER, easyRequest->m_errorBuffer));
 
     // write data callback
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_WRITEFUNCTION, &WriteDataCallback));
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_WRITEDATA, easyRequest.get()));
+    RETURN_IF_FAILED(easyRequest->SetOpt<curl_write_callback>(CURLOPT_WRITEFUNCTION, &WriteDataCallback));
+    RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_WRITEDATA, easyRequest.get()));
 
     // write header callback
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_HEADERFUNCTION, &WriteHeaderCallback));
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_HEADERDATA, easyRequest.get()));
+    RETURN_IF_FAILED(easyRequest->SetOpt<curl_write_callback>(CURLOPT_HEADERFUNCTION, &WriteHeaderCallback));
+    RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_HEADERDATA, easyRequest.get()));
 
     // debug callback
-    RETURN_IF_FAILED(easyRequest->SetOpt(CURLOPT_DEBUGFUNCTION, &DebugCallback));
+    RETURN_IF_FAILED(easyRequest->SetOpt<curl_debug_callback>(CURLOPT_DEBUGFUNCTION, &DebugCallback));
 
-    return Result<HC_UNIQUE_PTR<XCurlEasyRequest>>{ std::move(easyRequest) };
+    return Result<HC_UNIQUE_PTR<CurlEasyRequest>>{ std::move(easyRequest) };
 }
 
-CURL* XCurlEasyRequest::Handle() const noexcept
+CURL* CurlEasyRequest::Handle() const noexcept
 {
     return m_curlEasyHandle;
 }
 
-void XCurlEasyRequest::Complete(CURLcode result)
+void CurlEasyRequest::Complete(CURLcode result)
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "XCurlEasyRequest::Complete: CURLCode=%ul", result);
+    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::Complete: CURLCode=%ul", result);
 
     long httpStatus = 0;
     auto getInfoRes = curl_easy_getinfo(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
@@ -113,7 +120,7 @@ void XCurlEasyRequest::Complete(CURLcode result)
 
     if (result != CURLE_OK)
     {
-        HC_TRACE_VERBOSE(HTTPCLIENT, "XCurlEasyRequest::m_errorBuffer='%s'", m_errorBuffer);
+        HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::m_errorBuffer='%s'", m_errorBuffer);
 
         HRESULT hr = HCHttpCallResponseSetNetworkErrorCode(m_hcCallHandle, E_FAIL, result);
         assert(SUCCEEDED(hr));
@@ -130,13 +137,13 @@ void XCurlEasyRequest::Complete(CURLcode result)
     XAsyncComplete(m_asyncBlock, S_OK, 0);
 }
 
-void XCurlEasyRequest::Fail(HRESULT hr)
+void CurlEasyRequest::Fail(HRESULT hr)
 {
-    HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "XCurlEasyRequest::Fail");
+    HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::Fail");
     XAsyncComplete(m_asyncBlock, hr, 0);
 }
 
-HRESULT XCurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
+HRESULT CurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
 {
     int required = std::snprintf(nullptr, 0, "%s: %s", name, value);
     assert(required > 0);
@@ -144,20 +151,17 @@ HRESULT XCurlEasyRequest::AddHeader(char const* name, char const* value) noexcep
     m_headersBuffer.emplace_back();
     auto& header = m_headersBuffer.back();
 
-    header.resize(static_cast<size_t>(required) + 1, '\0');
-    int written = std::snprintf(&header[0], header.size(), "%s: %s", name, value);
+    header.resize(static_cast<size_t>(required), '\0');
+    int written = std::snprintf(&header[0], header.size() + 1, "%s: %s", name, value);
     assert(written == required);
     (void)written;
 
-    header.resize(header.size() - 1); // drop null terminator
-
-    curl_slist*& list = m_headers;
-    list = curl_slist_append(list, header.c_str());
+    m_headers = curl_slist_append(m_headers, header.c_str());
 
     return S_OK;
 }
 
-HRESULT XCurlEasyRequest::CopyNextBodySection(void* buffer, size_t maxSize, size_t& bytesCopied) noexcept
+HRESULT CurlEasyRequest::CopyNextBodySection(void* buffer, size_t maxSize, size_t& bytesCopied) noexcept
 {
     assert(buffer);
 
@@ -196,11 +200,11 @@ HRESULT XCurlEasyRequest::CopyNextBodySection(void* buffer, size_t maxSize, size
     return S_OK;
 }
 
-size_t CALLBACK XCurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
+size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "XCurlEasyRequest::ReadCallback: reading body data (%llu items of size %llu)", nitems, size);
+    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::ReadCallback: reading body data (%llu items of size %llu)", nitems, size);
 
-    auto request = static_cast<XCurlEasyRequest*>(context);
+    auto request = static_cast<CurlEasyRequest*>(context);
 
     size_t bufferSize = size * nitems;
     size_t copied = 0;
@@ -213,11 +217,11 @@ size_t CALLBACK XCurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t
     return copied;
 }
 
-size_t CALLBACK XCurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
+size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "XCurlEasyRequest::WriteHeaderCallback: received header (%llu items of size %llu)", nitems, size);
+    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::WriteHeaderCallback: received header (%llu items of size %llu)", nitems, size);
 
-    auto request = static_cast<XCurlEasyRequest*>(context);
+    auto request = static_cast<CurlEasyRequest*>(context);
 
 #if HC_TRACE_INFORMATION_ENABLE
     if (size * nitems > 2)
@@ -276,11 +280,11 @@ size_t CALLBACK XCurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size,
     return bufferSize;
 }
 
-size_t CALLBACK XCurlEasyRequest::WriteDataCallback(char* buffer, size_t /*size*/, size_t nmemb, void* context) noexcept
+size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t /*size*/, size_t nmemb, void* context) noexcept
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "XCurlEasyRequest::WriteDataCallback: received data (%llu bytes)", nmemb);
+    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%llu bytes)", nmemb);
 
-    auto request = static_cast<XCurlEasyRequest*>(context);
+    auto request = static_cast<CurlEasyRequest*>(context);
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "'%.*s'", nmemb, buffer);
 
@@ -290,7 +294,7 @@ size_t CALLBACK XCurlEasyRequest::WriteDataCallback(char* buffer, size_t /*size*
     return nmemb;
 }
 
-int CALLBACK XCurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype type, char* data, size_t size, void* /*context*/) noexcept
+int CurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype type, char* data, size_t size, void* /*context*/) noexcept
 {
     char const* event = "<unknown>";
     switch (type)
@@ -315,7 +319,7 @@ int CALLBACK XCurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype
     return CURLE_OK;
 }
 
-HRESULT XCurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt) noexcept
+HRESULT CurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt) noexcept
 {
     if (strcmp(method, "GET") == 0)
     {
@@ -331,8 +335,7 @@ HRESULT XCurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt)
     }
     else
     {
-        assert(false);
-        return E_INVALIDARG;
+        opt = CURLOPT_CUSTOMREQUEST;
     }
 
     return S_OK;

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <XCurl.h>
-#include "XCurlEasyRequest.h"
+#include "CurlEasyRequest.h"
 #include "Result.h"
 
 namespace xbox
@@ -9,18 +8,20 @@ namespace xbox
 namespace http_client
 {
 
-class XCurlMulti
+class CurlMulti
 {
 public:
-    static Result<HC_UNIQUE_PTR<XCurlMulti>> Initialize(XTaskQueuePortHandle workPort);
-    XCurlMulti(const XCurlMulti&) = delete;
-    ~XCurlMulti();
+    static Result<HC_UNIQUE_PTR<CurlMulti>> Initialize(XTaskQueuePortHandle workPort);
+    CurlMulti(const CurlMulti&) = delete;
+    CurlMulti(CurlMulti&&) = delete;
+    CurlMulti& operator=(const CurlMulti&) = delete;
+    ~CurlMulti();
 
     // Wrapper around curl_multi_add_handle
-    HRESULT AddRequest(HC_UNIQUE_PTR<XCurlEasyRequest>&& easyRequest);
+    HRESULT AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest);
 
 private:
-    XCurlMulti() = default;
+    CurlMulti() = default;
 
     static void CALLBACK TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept;
     HRESULT Perform() noexcept;
@@ -31,7 +32,7 @@ private:
     CURLM* m_curlMultiHandle{ nullptr };
     XTaskQueueHandle m_queue{ nullptr };
     std::mutex m_mutex;
-    http_internal_map<CURL*, HC_UNIQUE_PTR<XCurlEasyRequest>> m_easyRequests;
+    http_internal_map<CURL*, HC_UNIQUE_PTR<CurlEasyRequest>> m_easyRequests;
 };
 
 } // http_client

@@ -18,7 +18,7 @@ public:
 
     HRESULT const hr;
 
-    // Get result payload. Asserts if there is no payload
+    // Get result payload. Asserts if result isn't successful.
     const T& Payload() const;
     T&& ExtractPayload();
 
@@ -66,12 +66,14 @@ Result<T>::Result(HRESULT hr_) :
 template<typename T>
 const T& Result<T>::Payload() const
 {
+    assert(SUCCEEDED(hr));
     return m_payload;
 }
 
 template<typename T>
 T&& Result<T>::ExtractPayload()
 {
+    assert(SUCCEEDED(hr));
     return std::move(m_payload);
 }
 

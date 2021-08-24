@@ -1,7 +1,6 @@
 #pragma once
 
-#include <XCurl.h>
-#include "XCurlMulti.h"
+#include "CurlMulti.h"
 #include "Result.h"
 
 namespace xbox
@@ -19,6 +18,9 @@ struct HC_PERFORM_ENV
 {
 public:
     static Result<PerformEnv> Initialize();
+    HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
+    HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
+    HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
     virtual ~HC_PERFORM_ENV();
 
     HRESULT Perform(HCCallHandle hcCall, XAsyncBlock* async) noexcept;
@@ -26,6 +28,6 @@ public:
 private:
     HC_PERFORM_ENV() = default;
 
-    // Create an XCurlMulti per work port
-    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::http_client::XCurlMulti>> m_curlMultis{};
+    // Create an CurlMulti per work port
+    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::http_client::CurlMulti>> m_curlMultis{};
 };

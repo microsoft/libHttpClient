@@ -1,18 +1,21 @@
 #include "pch.h"
-#include "XCurlMulti.h"
-#include "XCurlProvider.h"
+#include "CurlMulti.h"
+#include "CurlProvider.h"
 
 namespace xbox
 {
 namespace http_client
 {
 
-Result<HC_UNIQUE_PTR<XCurlMulti>> XCurlMulti::Initialize(XTaskQueuePortHandle workPort)
+// XCurl doesn't support curl_multi_timeout, so use a small, fixed delay between calls to curl_multi_perform
+#define PERFORM_DELAY_MS 50
+
+Result<HC_UNIQUE_PTR<CurlMulti>> CurlMulti::Initialize(XTaskQueuePortHandle workPort)
 {
     assert(workPort);
 
-    http_stl_allocator<XCurlMulti> a{};
-    HC_UNIQUE_PTR<XCurlMulti> multi{ new (a.allocate(1)) XCurlMulti };
+    http_stl_allocator<CurlMulti> a{};
+    HC_UNIQUE_PTR<CurlMulti> multi{ new (a.allocate(1)) CurlMulti };
 
     multi->m_curlMultiHandle = curl_multi_init();
     if (!multi->m_curlMultiHandle)
@@ -23,10 +26,10 @@ Result<HC_UNIQUE_PTR<XCurlMulti>> XCurlMulti::Initialize(XTaskQueuePortHandle wo
 
     RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &multi->m_queue));
 
-    return Result<HC_UNIQUE_PTR<XCurlMulti>>{ std::move(multi) };
+    return Result<HC_UNIQUE_PTR<CurlMulti>>{ std::move(multi) };
 }
 
-XCurlMulti::~XCurlMulti()
+CurlMulti::~CurlMulti()
 {
     if (m_queue)
     {
@@ -46,7 +49,7 @@ XCurlMulti::~XCurlMulti()
     }
 }
 
-HRESULT XCurlMulti::AddRequest(HC_UNIQUE_PTR<XCurlEasyRequest>&& easyRequest)
+HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest)
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
 
@@ -59,16 +62,16 @@ HRESULT XCurlMulti::AddRequest(HC_UNIQUE_PTR<XCurlEasyRequest>&& easyRequest)
 
     m_easyRequests.emplace(easyRequest->Handle(), std::move(easyRequest));
 
-    RETURN_IF_FAILED(XTaskQueueSubmitCallback(m_queue, XTaskQueuePort::Work, this, XCurlMulti::TaskQueueCallback));
+    RETURN_IF_FAILED(XTaskQueueSubmitCallback(m_queue, XTaskQueuePort::Work, this, CurlMulti::TaskQueueCallback));
 
     return S_OK;
 }
 
-void CALLBACK XCurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
+void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
 {
     if (!canceled)
     {
-        auto multi = static_cast<XCurlMulti*>(context);
+        auto multi = static_cast<CurlMulti*>(context);
         HRESULT hr = multi->Perform();
         if (FAILED(hr))
         {
@@ -78,7 +81,7 @@ void CALLBACK XCurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool ca
     }
 }
 
-HRESULT XCurlMulti::Perform() noexcept
+HRESULT CurlMulti::Perform() noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
 
@@ -128,13 +131,13 @@ HRESULT XCurlMulti::Perform() noexcept
     if (runningRequests)
     {
         // Reschedule Perform if there are still running requests
-        RETURN_IF_FAILED(XTaskQueueSubmitCallback(m_queue, XTaskQueuePort::Work, this, XCurlMulti::TaskQueueCallback));
+        RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, PERFORM_DELAY_MS, this, CurlMulti::TaskQueueCallback));
     }
 
     return S_OK;
 }
 
-void XCurlMulti::FailAllRequests(HRESULT hr) noexcept
+void CurlMulti::FailAllRequests(HRESULT hr) noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
 
