@@ -63,6 +63,7 @@ HRESULT HrFromCurle(CURLcode c) noexcept
     switch (c)
     {
     case CURLcode::CURLE_OK: return S_OK;
+    case CURLcode::CURLE_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG; // Indicates bad provider implementation
     default: return E_FAIL;
     }
 }
@@ -72,6 +73,7 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     switch (c)
     {
     case CURLMcode::CURLM_OK: return S_OK;
+    case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
     default: return E_FAIL;
     }
 }
