@@ -657,8 +657,8 @@ set(CRYPTO_SOURCE_FILES
 )
 
 set(CRYPTO_INCLUDE_DIRS
-    "${PATH_TO_EXTERNAL}/generatedHeaders/android"
-    "${PATH_TO_EXTERNAL}/generatedHeaders/android/internal"
+    "${PATH_TO_EXTERNAL}/opensslGeneratedHeaders/android"
+    "${PATH_TO_EXTERNAL}/opensslGeneratedHeaders/android/internal"
     "${PATH_TO_OPENSSL}"
     "${PATH_TO_OPENSSL}/include"
     "${PATH_TO_CRYPTO}/include"

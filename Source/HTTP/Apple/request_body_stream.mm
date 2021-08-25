@@ -52,6 +52,12 @@
         return 0;
     }
 
+    if (_offset >= requestBodySize)
+    {
+        // Tell the OS that we are done reading
+        return 0;
+    }
+
     size_t bytesWritten = 0;
     try
     {

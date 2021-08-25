@@ -15,7 +15,7 @@
     <libcryptoName>libcrypto.$(opensslToolset).$(HCLibPlatformType)</libcryptoName>
     <libsslName>libssl.$(opensslToolset).$(HCLibPlatformType)</libsslName>
     <opensslSourceRoot>$(HCBuildRoot)External\openssl\</opensslSourceRoot>
-    <opensslGeneratedHeaders>$(HCBuildRoot)External\generatedHeaders\$(HCLibPlatformType)\</opensslGeneratedHeaders>
+    <opensslGeneratedHeaders>$(HCBuildRoot)External\opensslGeneratedHeaders\$(HCLibPlatformType)\</opensslGeneratedHeaders>
   </PropertyGroup>
   <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile)) AND '$(HCSettingsImported)' != 'true'" />
   <PropertyGroup>
