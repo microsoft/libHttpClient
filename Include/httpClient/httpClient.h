@@ -677,7 +677,9 @@ STDAPI HCHttpCallResponseGetStatusCode(
 /// <param name="networkErrorCode">The network error code of the HTTP call. Possible values are S_OK, or E_FAIL.</param>
 /// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for tracing / debugging.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-/// <remarks>This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.</remarks>
+/// <remarks>This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed. On the GDK Platform, HTTP calls that fail
+/// due to the title being suspended will have platformNetworkErrorCode set to HRESULT_FROM_WIN32(PROCESS_SUSPEND_RESUME).
+/// </remarks>
 STDAPI HCHttpCallResponseGetNetworkErrorCode(
     _In_ HCCallHandle call,
     _Out_ HRESULT* networkErrorCode,
