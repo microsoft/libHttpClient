@@ -33,11 +33,21 @@ CATCH_RETURN()
 STDAPI_(void) HCCleanup() noexcept
 try
 {
-    XAsyncBlock async{};
-    HRESULT hr = HCCleanupAsync(&async);
+    XTaskQueueHandle queue = nullptr;
+    HRESULT hr = XTaskQueueCreate(
+        XTaskQueueDispatchMode::ThreadPool,
+        XTaskQueueDispatchMode::ThreadPool,
+        &queue);
     if (SUCCEEDED(hr))
     {
-        XAsyncGetStatus(&async, true);
+        XAsyncBlock async{};
+        async.queue = queue; // queue is required for this call
+        hr = HCCleanupAsync(&async); 
+        if (SUCCEEDED(hr))
+        {
+            XAsyncGetStatus(&async, true);
+        }
+        XTaskQueueCloseHandle(queue);
     }
 }
 CATCH_RETURN_WITH(;)

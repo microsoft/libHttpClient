@@ -420,12 +420,20 @@ static bool verify_X509_cert_chain(const http_internal_vector<http_internal_stri
     OSStatus status = SecTrustCreateWithCertificates(certsArray.get(), policy.get(), &trust.get());
     if(status == noErr)
     {
-        // Perform actual certificate verification.
-        SecTrustResultType trustResult;
-        status = SecTrustEvaluate(trust.get(), &trustResult);
-        if(status == noErr && (trustResult == kSecTrustResultUnspecified || trustResult == kSecTrustResultProceed))
+        // Perform actual certificate verification. Check for trust via return
+        // value, but swallow any error messages.
+        if (__builtin_available(iOS 12.0, macOS 10.14, *))
         {
-            return true;
+            return SecTrustEvaluateWithError(trust.get(), nil);
+        }
+        else
+        {
+            SecTrustResultType trustResult;
+            status = SecTrustEvaluate(trust.get(), &trustResult);
+            if (status == noErr && (trustResult == kSecTrustResultUnspecified || trustResult == kSecTrustResultProceed))
+            {
+                return true;
+            }
         }
     }
 

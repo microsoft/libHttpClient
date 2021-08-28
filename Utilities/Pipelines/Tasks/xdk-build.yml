@@ -1,0 +1,53 @@
+parameters:
+  - name: configuration
+    type: string
+
+steps:
+  - template: checkout.yml
+  
+  - task: PkgESSetupBuild@12
+    displayName: PkgES build setup
+    inputs:
+      useDfs: false
+      productName: libHttpClient
+      branchVersion: true
+      extSync: true
+      disableMsbuildVersion: true
+
+  - task: BatchScript@1
+    displayName: fetchTools.cmd
+    inputs:
+      filename: Utilities/Pipelines/Scripts/fetchTools.cmd
+      arguments: '"$(PAT)" "$(BuildTools)"'
+      modifyEnvironment: false
+
+  - task: BatchScript@1
+    displayName: vsvars.cmd
+    inputs:
+      filename: Utilities/Pipelines/Scripts/vsvars.cmd
+      modifyEnvironment: true
+
+  - task: BatchScript@1
+    displayName: DurangoVars
+    inputs:
+      filename: '"C:\Program Files (x86)\Microsoft Durango XDK\xdk\DurangoVars.cmd"'
+      arguments: VS2017
+      modifyEnvironment: true
+
+  - task: BatchScript@1
+    displayName: xdkvars.cmd
+    inputs:
+      filename: Utilities/Pipelines/Scripts/xdkvars.cmd
+      modifyEnvironment: true
+
+  - task: VSBuild@1
+    displayName: libHttpClient.vs2017.sln Durango
+    inputs:
+      solution: libHttpClient.vs2017.sln
+      vsVersion: 15.0
+      platform: Durango
+      configuration: ${{ parameters.configuration }}
+      maximumCpuCount: true
+      createLogFile: true
+      logProjectEvents: true
+      logFileVerbosity: 'diagnostic'

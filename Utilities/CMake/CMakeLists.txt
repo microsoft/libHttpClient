@@ -17,10 +17,8 @@ else()
         endif()
     elseif( BUILDWIN32 )
         set (PROJECT_NAME libHttpClient.Win32.C)
-    elseif( BUILDANDROID )
-        set (PROJECT_NAME libHttpClient.Android.C)
     elseif( GDK )
-        set (PROJECT_NAME libHttpClient.GDK.C)	
+        set (PROJECT_NAME libHttpClient.GDK.C)
     else()
         if( WINRT )
             set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -130,6 +128,15 @@ set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_request_stream.h
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
+    )
+
+set(Curl_Source_Files
+    ../../../Source/HTTP/Curl/CurlEasyRequest.cpp
+    ../../../Source/HTTP/Curl/CurlEasyRequest.h
+    ../../../Source/HTTP/Curl/CurlMulti.cpp
+    ../../../Source/HTTP/Curl/CurlMulti.h
+    ../../../Source/HTTP/Curl/CurlProvider.cpp
+    ../../../Source/HTTP/Curl/CurlProvider.h
     )
 
 set(Windows_Logger_Source_Files
@@ -279,45 +286,16 @@ if( BUILDWIN32 )
         )
 endif()
 
-if( BUILDANDROID )
-    include(GetAndroidHCSourceFiles.cmake)
-    get_android_hc_source_files(
-        Common_Android_Source_Files
-        Android_WebSocket_Source_Files
-        Task_Android_Source_Files
-        Android_HTTP_Source_Files
-        Android_Logger_Source_Files
-        "../../.."
-        )
-
-    source_group("C++ Source\\HTTP\\Android" FILES ${Android_HTTP_Source_Files})
-    source_group("C++ Source\\WebSocket\\Android" FILES ${Android_WebSocket_Source_Files})
-    source_group("C++ Source\\Logger\\Android" FILES ${Android_Logger_Source_Files})
-    source_group("C++ Source\\Task\\Android" FILES ${Task_Android_Source_Files})
-    source_group("C++ Source\\Common\\Android" FILES ${Common_Android_Source_Files})
-    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
-
-    list(APPEND
-        SOURCE_FILES
-        ${Task_Android_Source_Files}
-        ${Android_HTTP_Source_Files}
-        ${Android_Logger_Source_Files}
-        ${Android_WebSocket_Source_Files}
-        ${Common_Android_Source_Files}
-        ${Task_Source_Files}
-        )
-endif()
-
 if( GDK )
     message(STATUS "GDK source group")
-    source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
+    source_group("C++ Source\\HTTP\\Curl" FILES ${Curl_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\Win" FILES ${GDK_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
 
     list(APPEND
         SOURCE_FILES
-        ${WinHttp_HTTP_Source_Files}
+        ${Curl_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${GDK_WebSocket_Source_Files}

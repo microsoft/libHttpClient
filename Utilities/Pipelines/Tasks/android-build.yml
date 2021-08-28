@@ -1,0 +1,20 @@
+parameters:
+  - name: configuration
+    type: string
+
+steps:
+  - template: checkout.yml
+
+  - task: CmdLine@2
+    displayName: "Install the required Android NDK"
+    inputs:
+      targetType: inline
+      script: '%ANDROID_HOME%\tools\bin\sdkmanager --install "ndk;22.0.7026061"'
+
+  - task: Gradle@2
+    displayName: "Build libHttpClient.Android.Workspace"
+    inputs:
+      gradleWrapperFile: Build/libHttpClient.Android.Workspace/gradlew
+      workingDirectory: Build/libHttpClient.Android.Workspace
+      tasks: assemble${{ parameters.configuration }}
+      publishJUnitResults: false

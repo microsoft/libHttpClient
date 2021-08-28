@@ -1,0 +1,15 @@
+# Check out the repo. Cleans afterward to clear any dangling submodules.
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema#checkout
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema#script
+
+steps:
+  - checkout: self
+    clean: true
+    submodules: recursive
+
+  - script: |
+      git clean -ffdx
+      git reset --hard HEAD
+      git submodule foreach --recursive "git clean -ffdx"
+      git submodule foreach --recursive "git reset --hard HEAD"
+    displayName: Git clean after checkout

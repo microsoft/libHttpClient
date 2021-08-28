@@ -19,6 +19,12 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     _In_ HCPerformEnv env
     )
 {
+    UNREFERENCED_PARAMETER(uri);
+    UNREFERENCED_PARAMETER(subProtocol);
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(asyncBlock);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
     return S_OK;
 }
 
@@ -29,6 +35,10 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(message);
+    UNREFERENCED_PARAMETER(asyncBlock);
+    UNREFERENCED_PARAMETER(context);
     return S_OK;
 }
 
@@ -40,6 +50,11 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(payloadBytes);
+    UNREFERENCED_PARAMETER(payloadSize);
+    UNREFERENCED_PARAMETER(asyncBlock);
+    UNREFERENCED_PARAMETER(context);
     return S_OK;
 }
 
@@ -49,6 +64,9 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     _In_opt_ void* context
     )
 {
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(closeStatus);
+    UNREFERENCED_PARAMETER(context);
     return S_OK;
 }
 
