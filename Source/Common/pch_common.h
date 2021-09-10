@@ -52,6 +52,7 @@
 #include <codecvt>
 #include <iomanip>
 #include <functional>
+#include <list>
 
 #if HC_UWP_API
 #include <collection.h>
