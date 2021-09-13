@@ -39,8 +39,12 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <codecvt>
 #include <condition_variable>
 #include <cstdint>
+#include <functional>
+#include <iomanip>
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -49,9 +53,6 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#include <codecvt>
-#include <iomanip>
-#include <functional>
 
 #if HC_UWP_API
 #include <collection.h>
