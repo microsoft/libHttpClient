@@ -296,6 +296,7 @@ size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t ni
 
     HRESULT hr = HCHttpCallResponseSetHeaderWithLength(request->m_hcCallHandle, name, nameSize, value, valueSize);
     assert(SUCCEEDED(hr));
+    UNREFERENCED_PARAMETER(hr);
 
     return bufferSize;
 }
@@ -311,6 +312,7 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
     size_t bufferSize = size * nmemb;
     HRESULT hr = HCHttpCallResponseAppendResponseBodyBytes(request->m_hcCallHandle, reinterpret_cast<uint8_t*>(buffer), bufferSize);
     assert(SUCCEEDED(hr));
+    UNREFERENCED_PARAMETER(hr);
 
     return nmemb;
 }
