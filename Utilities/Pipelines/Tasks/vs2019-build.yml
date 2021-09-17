@@ -7,6 +7,11 @@ parameters:
 steps:
   - template: checkout.yml
 
+  - task: PkgESWACKTests@12
+    displayName: 'Package ES - WACK Tests'
+    inputs:
+      PackageFilePath: '$(Build.SourcesDirectory)'
+      
   - task: PkgESSetupBuild@12
     displayName: PkgES build setup
     inputs:
