@@ -130,29 +130,21 @@ HRESULT Mock_Internal_ReadRequestBodyIntoMemory(
     _Out_ http_internal_vector<uint8_t>* bodyBytes
     )
 {
-    HCHttpCallRequestBodyReadFunction readFunction;
-    size_t bodySize;
-    void* context;
-    RETURN_IF_FAILED(
-        HCHttpCallRequestGetRequestBodyReadFunction(originalCall, &readFunction, &bodySize, &context)
-    );
+    HCHttpCallRequestBodyReadFunction readFunction = nullptr;
+    size_t bodySize = 0;
+    void* context = nullptr;
+    RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyReadFunction(originalCall, &readFunction, &bodySize, &context));
 
     http_internal_vector<uint8_t> tempBodyBytes(bodySize);
 
     size_t offset = 0;
-    size_t bytesWritten;
     while (offset < bodySize)
     {
+        size_t bytesWritten = 0;
         RETURN_IF_FAILED(
-            readFunction(
-                originalCall,
-                offset,
-                bodySize - offset,
-                context,
-                tempBodyBytes.data() + offset,
-                &bytesWritten
-            )
+            readFunction(originalCall, offset, bodySize - offset, context, tempBodyBytes.data() + offset, &bytesWritten)
         );
+
         offset += bytesWritten;
     }
 
