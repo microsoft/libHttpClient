@@ -11,3 +11,4 @@ struct HC_MOCK_CALL : public HC_CALL
 };
 
 bool Mock_Internal_HCHttpCallPerformAsync(_In_ HCCallHandle originalCall);
+HRESULT Mock_Internal_ReadRequestBodyIntoMemory(_In_ HCCallHandle originalCall, _Out_ http_internal_vector<uint8_t>* bodyBytes);
