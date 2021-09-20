@@ -71,12 +71,19 @@ bool Mock_Internal_HCHttpCallPerformAsync(
 
     if (mock->matchedCallback)
     {
+        http_internal_vector<uint8_t> requestBodyBytes;
+        HRESULT res = Mock_Internal_ReadRequestBodyIntoMemory(originalCall, &requestBodyBytes);
+        if (FAILED(res))
+        {
+            return false;
+        }
+
         mock->matchedCallback(
             mock,
             originalCall->method.data(),
             originalCall->url.data(),
-            originalCall->requestBodyBytes.data(),
-            static_cast<uint32_t>(originalCall->requestBodyBytes.size()),
+            requestBodyBytes.data(),
+            static_cast<uint32_t>(requestBodyBytes.size()),
             mock->matchCallbackContext
         );
     }
@@ -107,4 +114,39 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     }
 
     return true;
+}
+
+HRESULT Mock_Internal_ReadRequestBodyIntoMemory(
+    _In_ HCCallHandle originalCall,
+    _Out_ http_internal_vector<uint8_t>* bodyBytes
+    )
+{
+    HCHttpCallRequestBodyReadFunction readFunction;
+    size_t bodySize;
+    void* context;
+    RETURN_IF_FAILED(
+        HCHttpCallRequestGetRequestBodyReadFunction(originalCall, &readFunction, &bodySize, &context)
+    );
+
+    http_internal_vector<uint8_t> tempBodyBytes(bodySize);
+
+    size_t offset = 0;
+    size_t bytesWritten;
+    while (offset < bodySize)
+    {
+        RETURN_IF_FAILED(
+            readFunction(
+                originalCall,
+                offset,
+                bodySize - offset,
+                context,
+                tempBodyBytes.data() + offset,
+                &bytesWritten
+            )
+        );
+        offset += bytesWritten;
+    }
+
+    *bodyBytes = std::move(tempBodyBytes);
+    return S_OK;
 }
