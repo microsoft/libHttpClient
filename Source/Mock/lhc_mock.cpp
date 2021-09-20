@@ -141,9 +141,14 @@ HRESULT Mock_Internal_ReadRequestBodyIntoMemory(
     while (offset < bodySize)
     {
         size_t bytesWritten = 0;
-        RETURN_IF_FAILED(
-            readFunction(originalCall, offset, bodySize - offset, context, tempBodyBytes.data() + offset, &bytesWritten)
-        );
+        RETURN_IF_FAILED(readFunction(
+            originalCall,
+            offset,
+            bodySize - offset,
+            context,
+            tempBodyBytes.data() + offset,
+            &bytesWritten
+        ));
 
         offset += bytesWritten;
     }
