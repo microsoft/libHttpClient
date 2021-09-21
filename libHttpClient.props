@@ -91,6 +91,11 @@
   <ImportGroup Condition="'$(HCLibPlatformType)' == 'GDK' AND '$(GameDKLatest)' != ''">
     <Import Project="$(GameDKLatest)GRDK\ExtensionLibraries\Xbox.XCurl.API\DesignTime\CommonConfiguration\neutral\ExtensionLibrary.props"/>
   </ImportGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(Console_SdkLibPath)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
 
   <Target Name="HCBuildDebug">
     <PropertyGroup>
