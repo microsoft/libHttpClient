@@ -10,26 +10,34 @@
 #include <XNetworking.h>
 #endif
 
-struct HC_PERFORM_ENV
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+struct WinHttpState
 {
 public:
-    HC_PERFORM_ENV();
-    virtual ~HC_PERFORM_ENV();
+    WinHttpState() = default;
+    WinHttpState(const WinHttpState&) = delete;
+    WinHttpState(WinHttpState&&) = delete;
+    WinHttpState& operator=(const WinHttpState&) = delete;
+    WinHttpState& operator=(WinHttpState&&) = delete;
+    virtual ~WinHttpState();
 
     static uint32_t GetDefaultHttpSecurityProtocolFlagsForWin7();
     HINTERNET GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
     HINTERNET CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
     XTaskQueueHandle GetImmediateQueue();
 
+    HRESULT SetGlobalProxy(_In_ const char* proxyUri);
+
     http_internal_map<uint32_t, HINTERNET> m_hSessions;
     xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::automatic_proxy;
     http_internal_string m_globalProxy;
     XTaskQueueHandle m_immediateQueue{ nullptr };
     std::mutex m_lock;
+
+private:
+
 };
-
-
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 enum msg_body_type
 {
@@ -182,7 +190,7 @@ public:
     winhttp_http_task(
         _Inout_ XAsyncBlock* asyncBlock,
         _In_ HCCallHandle call,
-        _In_ HCPerformEnv env,
+        _In_ std::shared_ptr<WinHttpState> winHttpState,
         _In_ proxy_type proxyType,
         _In_ bool isWebSocket);
     ~winhttp_http_task();
@@ -303,7 +311,7 @@ private:
     HCCallHandle m_call = nullptr;
     XAsyncBlock* m_asyncBlock = nullptr;
 
-    HCPerformEnv m_env = nullptr;
+    std::shared_ptr<WinHttpState> m_winHttpState = nullptr;
     HINTERNET m_hConnection = nullptr;
     HINTERNET m_hRequest = nullptr;
     msg_body_type m_requestBodyType = msg_body_type::no_body;
