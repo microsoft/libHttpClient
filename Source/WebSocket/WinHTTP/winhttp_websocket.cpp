@@ -10,6 +10,12 @@
 #include "../../global/global.h"
 #include "uri.h"
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include "../../HTTP/Curl/CurlProvider.h"
+#else
+#include "../../HTTP/WinHttp/winhttp_http_provider.h"
+#endif
+
 using namespace xbox::httpclient;
 
 struct winhttp_websocket_impl : public hc_websocket_impl, public std::enable_shared_from_this<winhttp_websocket_impl>
@@ -32,8 +38,8 @@ public:
     HRESULT connect_websocket(
         _In_ HCWebsocketHandle websocket,
         _In_ XAsyncBlock* asyncBlock,
-        _In_ HCPerformEnv env,
-        _In_ proxy_type proxyType)
+        _In_ std::shared_ptr<WinHttpState> winHttpState
+    )
     {
         HRESULT hr = HCHttpCallCreate(&m_call);
         if (FAILED(hr))
@@ -61,7 +67,7 @@ public:
         }
 
         m_httpTask = http_allocate_shared<winhttp_http_task>(
-            asyncBlock, m_call, env, proxyType, isWebsocket
+            asyncBlock, m_call, winHttpState, winHttpState->m_proxyType, isWebsocket
         );
 
         m_httpTask->m_socketState = WinHttpWebsockState::Connecting;
@@ -330,7 +336,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
         impl = std::dynamic_pointer_cast<winhttp_websocket_impl>(websocket->impl);
     }
 
-    return impl->connect_websocket(websocket, asyncBlock, env, env->m_proxyType);
+    return impl->connect_websocket(websocket, asyncBlock, env->winHttpState);
 }
 
 HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
