@@ -92,6 +92,7 @@ _HCMockCallCreate
 _HCMockAddMock
 _HCMockClearMocks
 _HCMockRemoveMock
+_HCMockSetMockMatchedCallback
 _HCMockResponseSetResponseBodyBytes
 _HCMockResponseSetStatusCode
 _HCMockResponseSetNetworkErrorCode
