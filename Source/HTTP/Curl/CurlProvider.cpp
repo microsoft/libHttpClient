@@ -81,6 +81,13 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
 } // http_client
 } // xbox
 
+HC_PERFORM_ENV::HC_PERFORM_ENV()
+#if HC_WINHTTP_WEBSOCKETS
+    : winHttpState{ http_allocate_shared<xbox::httpclient::WinHttpState>() }
+#endif
+{
+}
+
 Result<PerformEnv> HC_PERFORM_ENV::Initialize()
 {
     CURLcode initRes = curl_global_init(CURL_GLOBAL_ALL);

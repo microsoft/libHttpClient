@@ -76,7 +76,7 @@ HRESULT SetGlobalProxyForHSession(HINTERNET hSession, _In_ const char* proxyUri)
     return S_OK;
 }
 
-XTaskQueueHandle HC_PERFORM_ENV::GetImmediateQueue()
+XTaskQueueHandle WinHttpState::GetImmediateQueue()
 {
     std::lock_guard<std::mutex> lock(m_lock);
     if (m_immediateQueue == nullptr)
@@ -87,13 +87,13 @@ XTaskQueueHandle HC_PERFORM_ENV::GetImmediateQueue()
     return m_immediateQueue;
 }
 
-uint32_t HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7()
+uint32_t WinHttpState::GetDefaultHttpSecurityProtocolFlagsForWin7()
 {
     uint32_t enabledHttpSecurityProtocolFlags = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
     return enabledHttpSecurityProtocolFlags;
 }
 
-HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags)
+HINTERNET WinHttpState::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags)
 {
     xbox::httpclient::Uri proxyUri;
     DWORD accessType{ WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY };
@@ -130,7 +130,7 @@ HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uin
     if (hSession == nullptr)
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HC_PERFORM_ENV WinHttpOpen errorcode %d", dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpState WinHttpOpen errorcode %d", dwError);
         return nullptr;
     }
 
@@ -142,7 +142,7 @@ HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uin
     if (!result)
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HC_PERFORM_ENV WinHttpSetOption errorcode %d", dwError);
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpState WinHttpSetOption errorcode %d", dwError);
         return nullptr;
     }
 
@@ -154,7 +154,7 @@ HINTERNET HC_PERFORM_ENV::CreateHSessionForForHttpSecurityProtocolFlags(_In_ uin
     return hSession;
 }
 
-HINTERNET HC_PERFORM_ENV::GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags)
+HINTERNET WinHttpState::GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags)
 {
     std::lock_guard<std::mutex> lock(m_lock);
     auto iter = m_hSessions.find(enabledHttpSecurityProtocolFlags); 
@@ -169,11 +169,27 @@ HINTERNET HC_PERFORM_ENV::GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t e
     return hSession;
 }
 
-HC_PERFORM_ENV::HC_PERFORM_ENV()
+HRESULT WinHttpState::SetGlobalProxy(_In_ const char* proxyUri)
 {
+    std::lock_guard<std::mutex> lock(m_lock);
+    m_globalProxy = proxyUri;
+    for (auto& e : m_hSessions)
+    {
+        auto hSession = e.second;
+        if (hSession != nullptr)
+        {
+            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri);
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+        }
+    }
+
+    return S_OK;
 }
 
-HC_PERFORM_ENV::~HC_PERFORM_ENV()
+WinHttpState::~WinHttpState()
 {
     if (m_immediateQueue)
     {
@@ -257,13 +273,13 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 winhttp_http_task::winhttp_http_task(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_ HCCallHandle call,
-    _In_ HCPerformEnv env,
+    _In_ std::shared_ptr<WinHttpState> winHttpState,
     _In_ proxy_type proxyType,
     _In_ bool isWebSocket
     ) :
     m_call(call),
     m_asyncBlock(asyncBlock),
-    m_env(env),
+    m_winHttpState(std::move(winHttpState)),
     m_proxyType(proxyType),
     m_isWebSocket(isWebSocket)
 {
@@ -997,8 +1013,8 @@ void winhttp_http_task::set_autodiscover_proxy(
     autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
     autoproxy_options.fAutoLogonIfChallenged = TRUE;
 
-    uint32_t enabledHttpSecurityProtocolFlags = HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7();
-    HINTERNET session = m_env->GetSessionForHttpSecurityProtocolFlags(enabledHttpSecurityProtocolFlags);
+    uint32_t enabledHttpSecurityProtocolFlags = WinHttpState::GetDefaultHttpSecurityProtocolFlagsForWin7();
+    HINTERNET session = m_winHttpState->GetSessionForHttpSecurityProtocolFlags(enabledHttpSecurityProtocolFlags);
     auto result = WinHttpGetProxyForUrl(
         session,
         utf16_from_utf8(cUri.FullPath()).c_str(),
@@ -1058,7 +1074,7 @@ HRESULT winhttp_http_task::query_security_information(
 #if HC_PLATFORM == HC_PLATFORM_GDK
 
     XAsyncBlock asyncBlock{};
-    asyncBlock.queue = m_env->GetImmediateQueue();
+    asyncBlock.queue = m_winHttpState->GetImmediateQueue();
     HRESULT hr = XNetworkingQuerySecurityInformationForUrlUtf16Async(wUrlHost.c_str(), &asyncBlock);
     if (FAILED(hr))
     {
@@ -1114,7 +1130,7 @@ HRESULT winhttp_http_task::connect(
     http_internal_wstring wUri = utf16_from_utf8(cUri.FullPath());
 
 #if HC_PLATFORM != HC_PLATFORM_GDK
-    uint32_t enabledHttpSecurityProtocolFlags = HC_PERFORM_ENV::GetDefaultHttpSecurityProtocolFlagsForWin7();
+    uint32_t enabledHttpSecurityProtocolFlags = WinHttpState::GetDefaultHttpSecurityProtocolFlagsForWin7();
 #else
     hr = query_security_information(wUri);
     if (FAILED(hr))
@@ -1122,7 +1138,7 @@ HRESULT winhttp_http_task::connect(
     uint32_t enabledHttpSecurityProtocolFlags = m_securityInformation->enabledHttpSecurityProtocolFlags;
 #endif
 
-    HINTERNET hSession = m_env->GetSessionForHttpSecurityProtocolFlags(enabledHttpSecurityProtocolFlags);
+    HINTERNET hSession = m_winHttpState->GetSessionForHttpSecurityProtocolFlags(enabledHttpSecurityProtocolFlags);
     if (!hSession)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] no session", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId());
@@ -1388,152 +1404,6 @@ HRESULT winhttp_http_task::connect_and_send_async()
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
-
-#if HC_PLATFORM == HC_PLATFORM_GDK
-typedef DWORD(WINAPI *GetNetworkConnectivityHintProc)(NL_NETWORK_CONNECTIVITY_HINT*);
-typedef DWORD(WINAPI *NotifyNetworkConnectivityHintChangeProc)(PNETWORK_CONNECTIVITY_HINT_CHANGE_CALLBACK, PVOID, BOOLEAN, PHANDLE);
-
-VOID NETIOAPI_API_ NetworkConnectivityHintChangedCallback(
-    _In_ PVOID context,
-    _In_ NL_NETWORK_CONNECTIVITY_HINT connectivityHint
-    )
-{
-    UNREFERENCED_PARAMETER(context);
-
-    auto singleton = get_http_singleton();
-
-    if (singleton != nullptr)
-    {
-        singleton->m_networkInitialized = connectivityHint.ConnectivityLevel != NetworkConnectivityLevelHintUnknown;
-    }
-}
-#endif
-
-HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
-{
-    assert(args == nullptr);
-    UNREFERENCED_PARAMETER(args);
-
-    // Mem hooked unique ptr with non-standard dtor handler in PerformEnvDeleter
-    http_stl_allocator<HC_PERFORM_ENV> alloc;
-    auto p = std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::allocate(alloc, 1);
-    auto o = new(p) HC_PERFORM_ENV();
-    performEnv.reset(o);
-    if (!performEnv) { return E_OUTOFMEMORY; }
-
-    return S_OK;
-}
-
-void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
-{
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    auto singleton = get_http_singleton();
-    if (singleton != nullptr && singleton->m_networkModule != nullptr)
-    {
-        FreeLibrary(singleton->m_networkModule);
-        singleton->m_networkModule = nullptr;
-    }
-#endif
-
-    http_stl_allocator<HC_PERFORM_ENV> alloc;
-    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::destroy(alloc, std::addressof(*performEnv));
-    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::deallocate(alloc, performEnv, 1);
-}
-
-HRESULT
-Internal_SetGlobalProxy(
-    _In_ HC_PERFORM_ENV* performEnv,
-    _In_ const char* proxyUri) noexcept
-{
-    assert(performEnv != nullptr);
-    std::lock_guard<std::mutex> lock(performEnv->m_lock);
-    performEnv->m_globalProxy = proxyUri;
-    for (auto& e : performEnv->m_hSessions)
-    {
-        auto hSession = e.second;
-        if (hSession != nullptr)
-        {
-            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri);
-            if (FAILED(hr))
-            {
-                return hr;
-            }
-        }
-    }
-
-    return S_OK;
-}
-
-void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ HCCallHandle call,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-    ) noexcept
-{
-    assert(env != nullptr);
-    UNREFERENCED_PARAMETER(context);
-
-
-#if HC_PLATFORM == HC_PLATFORM_GDK 
-    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
-    {
-        auto singleton = get_http_singleton();
-        if (singleton != nullptr)
-        {
-            if (singleton->m_networkModule == nullptr)
-            {
-                singleton->m_networkModule = LoadLibrary(TEXT("iphlpapi.dll"));
-
-                if (singleton->m_networkModule != nullptr)
-                {
-                    GetNetworkConnectivityHintProc getNetworkConnectivityHint =
-                        (GetNetworkConnectivityHintProc)GetProcAddress(singleton->m_networkModule, "GetNetworkConnectivityHint");
-
-                    NotifyNetworkConnectivityHintChangeProc notifyNetworkConnectivityHintChange =
-                        (NotifyNetworkConnectivityHintChangeProc)GetProcAddress(singleton->m_networkModule, "NotifyNetworkConnectivityHintChange");
-
-                    if (getNetworkConnectivityHint != nullptr && notifyNetworkConnectivityHintChange != nullptr)
-                    {
-                        NL_NETWORK_CONNECTIVITY_HINT connectivityHint{};
-                        HRESULT hr = HRESULT_FROM_WIN32(getNetworkConnectivityHint(&connectivityHint));
-                        singleton->m_networkInitialized = SUCCEEDED(hr) && connectivityHint.ConnectivityLevel != NetworkConnectivityLevelHintUnknown;
-
-                        HANDLE networkConnectivityChangedHandle;
-                        std::weak_ptr<http_singleton> singletonWeakPtr = singleton;
-                        (void)HRESULT_FROM_WIN32(notifyNetworkConnectivityHintChange(
-                            NetworkConnectivityHintChangedCallback,
-                            nullptr,
-                            TRUE,
-                            &networkConnectivityChangedHandle));
-                    }
-                }
-            }
-
-            if (!singleton->m_networkInitialized)
-            {
-                XAsyncComplete(asyncBlock, E_HC_NETWORK_NOT_INITIALIZED, 0);
-                return;
-            }
-        }
-    }
-#endif
-
-    bool isWebsocket = false;
-    std::shared_ptr<xbox::httpclient::winhttp_http_task> httpTask = http_allocate_shared<winhttp_http_task>(
-        asyncBlock, call, env, env->m_proxyType, isWebsocket);
-    auto raw = shared_ptr_cache::store<winhttp_http_task>(httpTask);
-    if (raw == nullptr)
-    {
-        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
-        return;
-    }
-
-    HCHttpCallSetContext(call, httpTask.get());
-    httpTask->connect_and_send_async();
-}
-
-
 
 #if HC_WINHTTP_WEBSOCKETS
 void winhttp_http_task::send_websocket_message(
