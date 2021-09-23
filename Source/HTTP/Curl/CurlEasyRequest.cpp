@@ -33,16 +33,17 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     HC_UNIQUE_PTR<CurlEasyRequest> easyRequest{ new (a.allocate(1)) CurlEasyRequest{ curlEasyHandle, hcCall, async } };
 
     // body (first so we can override things curl "helpfully" sets for us)
-    uint8_t const* body = nullptr;
-    uint32_t bodySize = 0;
-    RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyBytes(hcCall, &body, &bodySize));
+    HCHttpCallRequestBodyReadFunction clientRequestBodyReadCallback{};
+    size_t bodySize{};
+    void* clientRequestBodyReadCallbackContext{};
+    RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyReadFunction(hcCall, &clientRequestBodyReadCallback, &bodySize, &clientRequestBodyReadCallbackContext));
 
     if (bodySize > 0)
     {
         // we set both POSTFIELDSIZE and INFILESIZE because curl uses one or the
         // other depending on method
-        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, bodySize));
-        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, bodySize));
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
 
         // read callback
         RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
@@ -181,60 +182,40 @@ HRESULT CurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
     return S_OK;
 }
 
-HRESULT CurlEasyRequest::CopyNextBodySection(void* buffer, size_t maxSize, size_t& bytesCopied) noexcept
-{
-    assert(buffer);
-
-    uint8_t const* body = nullptr;
-    uint32_t bodySize = 0;
-    RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyBytes(m_hcCallHandle, &body, &bodySize));
-
-    size_t toCopy = 0;
-
-    if (m_bodyCopied == bodySize)
-    {
-        bytesCopied = 0;
-        return S_OK;
-    }
-    else if (maxSize >= bodySize - m_bodyCopied)
-    {
-        // copy everything
-        toCopy = bodySize - m_bodyCopied;
-    }
-    else
-    {
-        // copy as much as we can
-        toCopy = maxSize;
-    }
-
-    void const* startCopyFrom = body + m_bodyCopied;
-    assert(startCopyFrom < body + bodySize);
-
-    m_bodyCopied += toCopy;
-    assert(m_bodyCopied <= bodySize);
-
-    assert(toCopy <= maxSize);
-    memcpy(buffer, startCopyFrom, toCopy);
-
-    bytesCopied = toCopy;
-    return S_OK;
-}
-
 size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
 {
     HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::ReadCallback: reading body data (%llu items of size %llu)", nitems, size);
 
     auto request = static_cast<CurlEasyRequest*>(context);
 
+    HCHttpCallRequestBodyReadFunction clientRequestBodyReadCallback{ nullptr };
+    size_t bodySize{};
+    void* clientRequestBodyReadCallbackContext{ nullptr };
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(request->m_hcCallHandle, &clientRequestBodyReadCallback, &bodySize, &clientRequestBodyReadCallbackContext);
+    if (FAILED(hr) || !clientRequestBodyReadCallback)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::ReadCallback: Unable to get client's RequestBodyRead callback");
+        return CURL_READFUNC_ABORT;
+    }
+    
+    size_t bytesWritten = 0;
     size_t bufferSize = size * nitems;
-    size_t copied = 0;
-    HRESULT hr = request->CopyNextBodySection(buffer, bufferSize, copied);
-    if (FAILED(hr))
+    try
+    {
+        hr = clientRequestBodyReadCallback(request->m_hcCallHandle, request->m_bodyCopied, bufferSize, clientRequestBodyReadCallbackContext, (uint8_t*)buffer, &bytesWritten);
+        if (FAILED(hr))
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReadCallback: client RequestBodyRead callback failed");
+            return CURL_READFUNC_ABORT;
+        }
+        request->m_bodyCopied += bytesWritten;
+    }
+    catch (...)
     {
         return CURL_READFUNC_ABORT;
     }
 
-    return copied;
+    return bytesWritten;
 }
 
 size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
@@ -309,12 +290,31 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "'%.*s'", nmemb, buffer);
 
-    size_t bufferSize = size * nmemb;
-    HRESULT hr = HCHttpCallResponseAppendResponseBodyBytes(request->m_hcCallHandle, reinterpret_cast<uint8_t*>(buffer), bufferSize);
-    assert(SUCCEEDED(hr));
-    UNREFERENCED_PARAMETER(hr);
+    HCHttpCallResponseBodyWriteFunction clientResponseBodyWriteCallback{ nullptr };
+    void* clientResponseBodyWriteCallbackContext{ nullptr };
+    HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(request->m_hcCallHandle, &clientResponseBodyWriteCallback, &clientResponseBodyWriteCallbackContext);
+    if (FAILED(hr) || !clientResponseBodyWriteCallback)
+    {
+        HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::WriteDataCallback: Unable to get client's ResponseBodyWrite callback");
+        return 0;
+    }
 
-    return nmemb;
+    size_t bufferSize = size * nmemb;
+    try
+    {
+        hr = clientResponseBodyWriteCallback(request->m_hcCallHandle, (uint8_t*)buffer, bufferSize, clientResponseBodyWriteCallbackContext);
+        if (FAILED(hr))
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::WriteDataCallback: client ResponseBodyWrite callback failed");
+            return 0;
+        }
+    }
+    catch (...)
+    {
+        return 0;
+    }
+
+    return bufferSize;
 }
 
 int CurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype type, char* data, size_t size, void* /*context*/) noexcept

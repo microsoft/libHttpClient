@@ -150,7 +150,19 @@ HCMockResponseSetResponseBodyBytes(
     _In_ uint32_t bodySize
     ) noexcept
 {
-    return HCHttpCallResponseSetResponseBodyBytes(call, bodyBytes, bodySize);
+    if (call == nullptr || bodyBytes == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    call->responseBodyBytes.assign(bodyBytes, bodyBytes + bodySize);
+    call->responseString.clear();
+
+    if (call->traceCall) 
+    { 
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetResponseBodyBytes [ID %llu]: bodySize=%zu", TO_ULL(call->id), bodySize);
+    }
+    return S_OK;
 }
 
 STDAPI 

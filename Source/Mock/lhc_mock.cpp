@@ -81,11 +81,8 @@ bool Mock_Internal_HCHttpCallPerformAsync(
         );
     }
 
-    size_t byteBuf;
-    HCHttpCallResponseGetResponseBodyBytesSize(mock, &byteBuf);
-    http_memory_buffer buffer(byteBuf);
-    HCHttpCallResponseGetResponseBodyBytes(mock, byteBuf, static_cast<uint8_t*>(buffer.get()), nullptr);
-    HCHttpCallResponseSetResponseBodyBytes(originalCall, static_cast<uint8_t*>(buffer.get()), byteBuf);
+    originalCall->responseString.clear();
+    originalCall->responseBodyWriteFunction(originalCall, mock->responseBodyBytes.data(), mock->responseBodyBytes.size(), originalCall->responseBodyWriteFunctionContext);
 
     uint32_t code;
     HCHttpCallResponseGetStatusCode(mock, &code);
