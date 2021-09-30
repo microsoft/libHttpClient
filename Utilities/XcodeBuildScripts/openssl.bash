@@ -92,7 +92,6 @@ for BUILD_ARCH in $BUILD_ARCHS; do
     #
     # - x86_64, i386: Mac
     # - arm64: Might be an M1 Mac or a physical iOS device
-    # - armv7: Very old phyiscal iOS device
 
     if [ "$BUILD_ARCH" == "x86_64" ]; then
         ./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
