@@ -1208,6 +1208,7 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     if (!m_call->sslValidation)
     {
         DWORD dwOption = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
@@ -1221,6 +1222,7 @@ HRESULT winhttp_http_task::send(
             HC_TRACE_WARNING(HTTPCLIENT, "winhttp_http_task [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", HCHttpCallGetId(m_call), GetCurrentThreadId(), dwError);
         }
     }
+#endif
 
 #if HC_PLATFORM != HC_PLATFORM_GDK
     if (m_proxyType == proxy_type::autodiscover_proxy)

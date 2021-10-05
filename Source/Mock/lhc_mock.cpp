@@ -98,7 +98,7 @@ bool Mock_Internal_HCHttpCallPerformAsync(
 
         // Write response to original call
         HCHttpCallResponseBodyWriteFunction writeFunction;
-        void* context;
+        void* context = nullptr;
         HCHttpCallResponseGetResponseBodyWriteFunction(originalCall, &writeFunction, &context);
         writeFunction(originalCall, static_cast<uint8_t*>(buffer.get()), byteBuf, context);
     }
@@ -114,8 +114,8 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     uint32_t numheaders;
     HCHttpCallResponseGetNumHeaders(mock, &numheaders);
 
-    const char* str1;
-    const char* str2;
+    const char* str1 = nullptr;
+    const char* str2 = nullptr;
     for (uint32_t i = 0; i < numheaders; i++)
     {
         HCHttpCallResponseGetHeaderAtIndex(mock, i, &str1, &str2);
