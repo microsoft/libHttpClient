@@ -1208,7 +1208,7 @@ HRESULT winhttp_http_task::send(
         return HRESULT_FROM_WIN32(dwError);
     }
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+#if HC_PLATFORM_IS_MICROSOFT && !HC_PLATFORM_UWP && !HC_PLAFTORM_XDK
     if (!m_call->sslValidation)
     {
         DWORD dwOption = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
