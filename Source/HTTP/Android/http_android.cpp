@@ -16,12 +16,12 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
     HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
     std::unique_ptr<HttpRequest> sourceRequest{ request };
 
-    if (response == nullptr) 
+    if (response == nullptr)
     {
         HCHttpCallResponseSetNetworkErrorCode(sourceCall, E_FAIL, 0);
         XAsyncComplete(sourceRequest->GetAsyncBlock(), E_FAIL, 0);
     }
-    else 
+    else
     {
         HRESULT result = sourceRequest->ProcessResponse(sourceCall, response);
         XAsyncComplete(sourceRequest->GetAsyncBlock(), result, 0);
@@ -141,18 +141,27 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
     // perform write
     {
-        using ByteArray = std::unique_ptr<void, std::function<void(void*)>>;
-        ByteArray source(env->GetPrimitiveArrayCritical(src, 0), [env, src](void* carray) {
-            if (carray)
+        struct ByteArrayDeleter
+        {
+            void operator(jbyte* ptr) noexcept
             {
-                // exit critical section when this leaves scope
-                env->ReleasePrimitiveArrayCritical(src, carray, 0);
+                if (ptr)
+                {
+                    // this is a read only operation, no need to copy back anything
+                    Env->ReleaseByteArrayElements(Src, ptr, JNI_ABORT);
+                }
             }
-        });
+
+            JNIEnv* Env;
+            jbyteArray Src;
+        }
+
+        using ByteArray = std::unique_ptr<void, ByteArrayDeleter>;
+        ByteArray source{ env->GetByteArrayElements(src, 0), { env, src } };
 
         try
         {
-            hr = writeFunction(call, ((const uint8_t*)source.get()) + sourceOffset, sourceLength, context);
+            hr = writeFunction(call, source.get() + sourceOffset, sourceLength, context);
             if (FAILED(hr))
             {
                 source.reset();
@@ -213,7 +222,7 @@ void Internal_HCHttpCallPerformAsync(
     uint32_t numHeaders = 0;
     HCHttpCallRequestGetNumHeaders(call, &numHeaders);
 
-    for (uint32_t i = 0; i < numHeaders; i++) 
+    for (uint32_t i = 0; i < numHeaders; i++)
     {
         const char* headerName = nullptr;
         const char* headerValue = nullptr;
@@ -243,7 +252,7 @@ void Internal_HCHttpCallPerformAsync(
         httpRequest.release();
     }
     else
-    { 
+    {
         XAsyncComplete(asyncBlock, E_FAIL, 0);
     }
 }
