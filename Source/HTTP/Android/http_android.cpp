@@ -122,7 +122,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(JNIEnv* env, jobject /* instance */, jlong callHandle, jbyteArray src, jint sourceOffset, jint sourceLength)
 {
     // convert handle
-    HCCallHandle call = reinterpret_cast<HCCallHandle>(callHandle);
+    auto call = reinterpret_cast<HCCallHandle>(callHandle);
     if (call == nullptr)
     {
         ThrowIOException(env, "Invalid call handle");
@@ -143,7 +143,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
     {
         struct ByteArrayDeleter
         {
-            void operator(jbyte* ptr) noexcept
+            void operator()(jbyte* ptr) const noexcept
             {
                 if (ptr)
                 {
@@ -154,14 +154,14 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
             JNIEnv* Env;
             jbyteArray Src;
-        }
+        };
 
-        using ByteArray = std::unique_ptr<void, ByteArrayDeleter>;
-        ByteArray source{ env->GetByteArrayElements(src, 0), { env, src } };
+        using ByteArray = std::unique_ptr<jbyte, ByteArrayDeleter>;
+        ByteArray source{ env->GetByteArrayElements(src, nullptr), { env, src } };
 
         try
         {
-            hr = writeFunction(call, source.get() + sourceOffset, sourceLength, context);
+            hr = writeFunction(call, reinterpret_cast<uint8_t*>(source.get()) + sourceOffset, sourceLength, context);
             if (FAILED(hr))
             {
                 source.reset();
