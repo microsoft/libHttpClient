@@ -55,7 +55,6 @@ WinHttpConnection::~WinHttpConnection()
     }
 #endif
 
-    assert(!m_hRequest);
     if (m_hRequest != nullptr)
     {
         WinHttpCloseHandle(m_hRequest);
