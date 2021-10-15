@@ -104,6 +104,7 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #include "utils.h"
 #include "../Global/global.h"
+#include "Result.h"
 
 #include "ResultMacros.h"
 #include "EntryList.h"

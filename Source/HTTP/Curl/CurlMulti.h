@@ -5,7 +5,7 @@
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 class CurlMulti
@@ -35,5 +35,5 @@ private:
     http_internal_map<CURL*, HC_UNIQUE_PTR<CurlEasyRequest>> m_easyRequests;
 };
 
-} // http_client
+} // httpclient
 } // xbox

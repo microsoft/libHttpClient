@@ -11,7 +11,7 @@
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 class CurlEasyRequest
@@ -75,5 +75,5 @@ HRESULT CurlEasyRequest::SetOpt(CURLoption option, typename OptType<T>::type v) 
     return HrFromCurle(result);
 }
 
-} // http_client
+} // httpclient
 } // xbox
