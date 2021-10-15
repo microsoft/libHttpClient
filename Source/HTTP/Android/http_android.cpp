@@ -9,7 +9,12 @@
 extern "C"
 {
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(JNIEnv* env, jobject instance, jlong call, jobject response)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
+    JNIEnv* env,
+    jobject instance,
+    jlong call,
+    jobject response
+)
 {
     HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
@@ -28,7 +33,14 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
     }
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(JNIEnv* env, jobject instance, jlong call, jstring errorMessage, jboolean isNoNetwork)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
+    JNIEnv* env,
+    jobject instance,
+    jlong call,
+    jstring errorMessage,
+    jstring stackTrace,
+    jboolean isNoNetwork
+)
 {
     HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
@@ -41,6 +53,34 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     HCHttpCallResponseSetPlatformNetworkErrorMessage(sourceCall, nativeErrorString);
     env->ReleaseStringUTFChars(errorMessage, nativeErrorString);
 
+    // Log the stack trace for debugging purposes. It may be very long, so we
+    // break it on newlines.
+    auto stringLength = static_cast<uint32_t>(env->GetStringLength(stackTrace));
+    const char* nativeStackTraceString = env->GetStringUTFChars(stackTrace, nullptr);
+
+    std::string_view stackTraceStringView{ nativeStackTraceString, stringLength };
+    bool firstLine = true;
+    while (!stackTraceStringView.empty())
+    {
+        size_t nextNewline = stackTraceStringView.find('\n');
+        std::string_view line = stackTraceStringView.substr(0, nextNewline);
+
+        char const* format = firstLine ? "Network request failed, stack trace: %.*s" : "  %.*s";
+        HC_TRACE_WARNING(HTTPCLIENT, format, line.size(), line.data());
+
+        firstLine = false;
+
+        if (nextNewline == std::string::npos)
+        {
+            break;
+        }
+        else
+        {
+            stackTraceStringView = stackTraceStringView.substr(nextNewline + 1);
+        }
+    }
+    env->ReleaseStringUTFChars(stackTrace, nativeStackTraceString);
+
     XAsyncComplete(sourceRequest->GetAsyncBlock(), S_OK, 0);
 }
 
@@ -51,7 +91,15 @@ jint ThrowIOException(JNIEnv* env, char const* message) {
     return -1;
 }
 
-JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(JNIEnv* env, jobject /* instance */, jlong callHandle, jlong srcOffset, jbyteArray dst, jlong dstOffset, jlong bytesAvailable)
+JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
+    JNIEnv* env,
+    jobject /* instance */,
+    jlong callHandle,
+    jlong srcOffset,
+    jbyteArray dst,
+    jlong dstOffset,
+    jlong bytesAvailable
+)
 {
     // convert call handle
     HCCallHandle call = reinterpret_cast<HCCallHandle>(callHandle);
@@ -119,7 +167,14 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     return static_cast<jint>(bytesWritten);
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(JNIEnv* env, jobject /* instance */, jlong callHandle, jbyteArray src, jint sourceOffset, jint sourceLength)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(
+    JNIEnv* env,
+    jobject /* instance */,
+    jlong callHandle,
+    jbyteArray src,
+    jint sourceOffset,
+    jint sourceLength
+)
 {
     // convert handle
     auto call = reinterpret_cast<HCCallHandle>(callHandle);
@@ -183,7 +238,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 void Internal_HCHttpCallPerformAsync(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
+    _In_opt_ void* /*context*/,
     _In_ HCPerformEnv env
 ) noexcept
 {
