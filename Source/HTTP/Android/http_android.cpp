@@ -6,6 +6,34 @@
 #include "android_http_request.h"
 #include "android_platform_context.h"
 
+// Helpers for converting jbyteArrays to be useful
+namespace
+{
+
+struct ByteArrayDeleter
+{
+    void operator()(jbyte* ptr) const noexcept
+    {
+        if (ptr)
+        {
+            // this is a read only operation, no need to copy back anything
+            Env->ReleaseByteArrayElements(Src, ptr, JNI_ABORT);
+        }
+    }
+
+    JNIEnv* Env;
+    jbyteArray Src;
+};
+
+using ByteArray = std::unique_ptr<jbyte, ByteArrayDeleter>;
+
+ByteArray GetBytesFromJByteArray(JNIEnv* env, jbyteArray array)
+{
+    return ByteArray{ env->GetByteArrayElements(array, nullptr), ByteArrayDeleter{ env, array } };
+}
+
+}
+
 extern "C"
 {
 
@@ -128,14 +156,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     // perform read
     size_t bytesWritten = 0;
     {
-        using ByteArray = std::unique_ptr<void, std::function<void(void*)>>;
-        ByteArray destination(env->GetPrimitiveArrayCritical(dst, 0), [env, dst](void* carray) {
-            if (carray)
-            {
-                // exit critical section when this leaves scope
-                env->ReleasePrimitiveArrayCritical(dst, carray, 0);
-            }
-        });
+        ByteArray destination = GetBytesFromJByteArray(env, dst);
 
         if (destination == nullptr)
         {
@@ -144,7 +165,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
 
         try
         {
-            hr = readFunction(call, srcOffset, bytesAvailable, context, static_cast<uint8_t*>(destination.get()) + dstOffset, &bytesWritten);
+            hr = readFunction(call, srcOffset, bytesAvailable, context, reinterpret_cast<uint8_t*>(destination.get()) + dstOffset, &bytesWritten);
             if (FAILED(hr))
             {
                 destination.reset();
@@ -196,23 +217,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
     // perform write
     {
-        struct ByteArrayDeleter
-        {
-            void operator()(jbyte* ptr) const noexcept
-            {
-                if (ptr)
-                {
-                    // this is a read only operation, no need to copy back anything
-                    Env->ReleaseByteArrayElements(Src, ptr, JNI_ABORT);
-                }
-            }
-
-            JNIEnv* Env;
-            jbyteArray Src;
-        };
-
-        using ByteArray = std::unique_ptr<jbyte, ByteArrayDeleter>;
-        ByteArray source{ env->GetByteArrayElements(src, nullptr), { env, src } };
+        ByteArray source = GetBytesFromJByteArray(env, src);
 
         try
         {
