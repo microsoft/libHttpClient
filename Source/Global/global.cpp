@@ -34,7 +34,7 @@ HRESULT http_singleton::singleton_access(
         // Create the singleton only for the first client calling create
         if (!s_useCount)
         {
-            HCTraceImplInit();
+            HCTraceInit();
 
             PerformEnv performEnv;
             RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
@@ -180,7 +180,7 @@ HRESULT http_singleton::cleanup_async(
             self.reset();
 
             // cleanup tracing now that we are done
-            HCTraceImplCleanup();
+            HCTraceCleanup();
 
             XAsyncComplete(data->async, S_OK, 0);
             return S_OK;

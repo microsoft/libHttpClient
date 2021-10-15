@@ -145,6 +145,16 @@ enum class HCTraceLevel : uint32_t
 };
 
 /// <summary>
+/// Initialize tracing for the library.
+/// </summary>
+void HCTraceInit() noexcept;
+
+/// <summary>
+/// Clean up tracing for the library.
+/// </summary>
+void HCTraceCleanup() noexcept;
+
+/// <summary>
 /// Sets the trace level for the library.  Traces are sent the debug output.
 /// </summary>
 /// <param name="traceLevel">Trace level.</param>
