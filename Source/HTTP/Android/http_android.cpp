@@ -38,8 +38,8 @@ extern "C"
 {
 
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
-    JNIEnv* /*env*/,
-    jobject /*instance*/,
+    JNIEnv* /* env */,
+    jobject /* instance */,
     jlong call,
     jobject response
 )
@@ -63,7 +63,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
     JNIEnv* env,
-    jobject /*instance*/,
+    jobject /* instance */,
     jlong call,
     jstring errorMessage,
     jstring stackTrace,
@@ -156,7 +156,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     // perform read
     size_t bytesWritten = 0;
     {
-        ByteArray destination = GetBytesFromJByteArray(env, dst, true);
+        ByteArray destination = GetBytesFromJByteArray(env, dst, true /* copyBack */);
 
         if (destination == nullptr)
         {
@@ -217,7 +217,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
     // perform write
     {
-        ByteArray source = GetBytesFromJByteArray(env, src, false);
+        ByteArray source = GetBytesFromJByteArray(env, src, false /* copyBack */);
 
         try
         {
@@ -243,7 +243,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 void Internal_HCHttpCallPerformAsync(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* /*context*/,
+    _In_opt_ void* /* context */,
     _In_ HCPerformEnv env
 ) noexcept
 {
