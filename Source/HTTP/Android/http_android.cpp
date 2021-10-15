@@ -16,20 +16,20 @@ struct ByteArrayDeleter
     {
         if (ptr)
         {
-            // this is a read only operation, no need to copy back anything
-            Env->ReleaseByteArrayElements(Src, ptr, JNI_ABORT);
+            Env->ReleaseByteArrayElements(Src, ptr, copyBack ? 0 : JNI_ABORT);
         }
     }
 
     JNIEnv* Env;
     jbyteArray Src;
+    bool copyBack;
 };
 
 using ByteArray = std::unique_ptr<jbyte, ByteArrayDeleter>;
 
-ByteArray GetBytesFromJByteArray(JNIEnv* env, jbyteArray array)
+ByteArray GetBytesFromJByteArray(JNIEnv* env, jbyteArray array, bool copyBack)
 {
-    return ByteArray{ env->GetByteArrayElements(array, nullptr), ByteArrayDeleter{ env, array } };
+    return ByteArray{ env->GetByteArrayElements(array, nullptr), ByteArrayDeleter{ env, array, copyBack } };
 }
 
 }
@@ -156,7 +156,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     // perform read
     size_t bytesWritten = 0;
     {
-        ByteArray destination = GetBytesFromJByteArray(env, dst);
+        ByteArray destination = GetBytesFromJByteArray(env, dst, true);
 
         if (destination == nullptr)
         {
@@ -217,7 +217,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
     // perform write
     {
-        ByteArray source = GetBytesFromJByteArray(env, src);
+        ByteArray source = GetBytesFromJByteArray(env, src, false);
 
         try
         {
