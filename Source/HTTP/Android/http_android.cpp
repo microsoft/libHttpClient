@@ -6,12 +6,45 @@
 #include "android_http_request.h"
 #include "android_platform_context.h"
 
+// Helpers for converting jbyteArrays to be useful
+namespace
+{
+
+struct ByteArrayDeleter
+{
+    void operator()(jbyte* ptr) const noexcept
+    {
+        if (ptr)
+        {
+            Env->ReleaseByteArrayElements(Src, ptr, copyBack ? 0 : JNI_ABORT);
+        }
+    }
+
+    JNIEnv* Env;
+    jbyteArray Src;
+    bool copyBack;
+};
+
+using ByteArray = std::unique_ptr<jbyte, ByteArrayDeleter>;
+
+ByteArray GetBytesFromJByteArray(JNIEnv* env, jbyteArray array, bool copyBack)
+{
+    return ByteArray{ env->GetByteArrayElements(array, nullptr), ByteArrayDeleter{ env, array, copyBack } };
+}
+
+}
+
 extern "C"
 {
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(JNIEnv* env, jobject instance, jlong call, jobject response)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
+    JNIEnv* /* env */,
+    jobject /* instance */,
+    jlong call,
+    jobject response
+)
 {
-    HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
+    auto sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
     HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
     std::unique_ptr<HttpRequest> sourceRequest{ request };
@@ -28,9 +61,16 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
     }
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(JNIEnv* env, jobject instance, jlong call, jstring errorMessage, jboolean isNoNetwork)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
+    JNIEnv* env,
+    jobject /* instance */,
+    jlong call,
+    jstring errorMessage,
+    jstring stackTrace,
+    jboolean isNoNetwork
+)
 {
-    HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
+    auto sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
     HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
     std::unique_ptr<HttpRequest> sourceRequest{ request };
@@ -40,6 +80,34 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     const char* nativeErrorString = env->GetStringUTFChars(errorMessage, nullptr);
     HCHttpCallResponseSetPlatformNetworkErrorMessage(sourceCall, nativeErrorString);
     env->ReleaseStringUTFChars(errorMessage, nativeErrorString);
+
+    // Log the stack trace for debugging purposes. It may be very long, so we
+    // break it on newlines.
+    auto stringLength = static_cast<uint32_t>(env->GetStringLength(stackTrace));
+    const char* nativeStackTraceString = env->GetStringUTFChars(stackTrace, nullptr);
+
+    std::string_view stackTraceStringView{ nativeStackTraceString, stringLength };
+    bool firstLine = true;
+    while (!stackTraceStringView.empty())
+    {
+        size_t nextNewline = stackTraceStringView.find('\n');
+        std::string_view line = stackTraceStringView.substr(0, nextNewline);
+
+        char const* format = firstLine ? "Network request failed, stack trace: %.*s" : "  %.*s";
+        HC_TRACE_WARNING(HTTPCLIENT, format, line.size(), line.data());
+
+        firstLine = false;
+
+        if (nextNewline == std::string::npos)
+        {
+            break;
+        }
+        else
+        {
+            stackTraceStringView = stackTraceStringView.substr(nextNewline + 1);
+        }
+    }
+    env->ReleaseStringUTFChars(stackTrace, nativeStackTraceString);
 
     XAsyncComplete(sourceRequest->GetAsyncBlock(), S_OK, 0);
 }
@@ -51,10 +119,18 @@ jint ThrowIOException(JNIEnv* env, char const* message) {
     return -1;
 }
 
-JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(JNIEnv* env, jobject /* instance */, jlong callHandle, jlong srcOffset, jbyteArray dst, jlong dstOffset, jlong bytesAvailable)
+JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
+    JNIEnv* env,
+    jobject /* instance */,
+    jlong callHandle,
+    jlong srcOffset,
+    jbyteArray dst,
+    jlong dstOffset,
+    jlong bytesAvailable
+)
 {
     // convert call handle
-    HCCallHandle call = reinterpret_cast<HCCallHandle>(callHandle);
+    auto call = reinterpret_cast<HCCallHandle>(callHandle);
     if (call == nullptr)
     {
         return ThrowIOException(env, "Invalid call handle");
@@ -80,14 +156,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     // perform read
     size_t bytesWritten = 0;
     {
-        using ByteArray = std::unique_ptr<void, std::function<void(void*)>>;
-        ByteArray destination(env->GetPrimitiveArrayCritical(dst, 0), [env, dst](void* carray) {
-            if (carray)
-            {
-                // exit critical section when this leaves scope
-                env->ReleasePrimitiveArrayCritical(dst, carray, 0);
-            }
-        });
+        ByteArray destination = GetBytesFromJByteArray(env, dst, true /* copyBack */);
 
         if (destination == nullptr)
         {
@@ -96,7 +165,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
 
         try
         {
-            hr = readFunction(call, srcOffset, bytesAvailable, context, static_cast<uint8_t*>(destination.get()) + dstOffset, &bytesWritten);
+            hr = readFunction(call, srcOffset, bytesAvailable, context, reinterpret_cast<uint8_t*>(destination.get()) + dstOffset, &bytesWritten);
             if (FAILED(hr))
             {
                 destination.reset();
@@ -119,7 +188,14 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     return static_cast<jint>(bytesWritten);
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(JNIEnv* env, jobject /* instance */, jlong callHandle, jbyteArray src, jint sourceOffset, jint sourceLength)
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(
+    JNIEnv* env,
+    jobject /* instance */,
+    jlong callHandle,
+    jbyteArray src,
+    jint sourceOffset,
+    jint sourceLength
+)
 {
     // convert handle
     auto call = reinterpret_cast<HCCallHandle>(callHandle);
@@ -141,23 +217,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 
     // perform write
     {
-        struct ByteArrayDeleter
-        {
-            void operator()(jbyte* ptr) const noexcept
-            {
-                if (ptr)
-                {
-                    // this is a read only operation, no need to copy back anything
-                    Env->ReleaseByteArrayElements(Src, ptr, JNI_ABORT);
-                }
-            }
-
-            JNIEnv* Env;
-            jbyteArray Src;
-        };
-
-        using ByteArray = std::unique_ptr<jbyte, ByteArrayDeleter>;
-        ByteArray source{ env->GetByteArrayElements(src, nullptr), { env, src } };
+        ByteArray source = GetBytesFromJByteArray(env, src, false /* copyBack */);
 
         try
         {
@@ -183,7 +243,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 void Internal_HCHttpCallPerformAsync(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
+    _In_opt_ void* /* context */,
     _In_ HCPerformEnv env
 ) noexcept
 {
