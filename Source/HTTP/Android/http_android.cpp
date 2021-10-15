@@ -10,13 +10,13 @@ extern "C"
 {
 
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
-    JNIEnv* env,
-    jobject instance,
+    JNIEnv* /*env*/,
+    jobject /*instance*/,
     jlong call,
     jobject response
 )
 {
-    HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
+    auto sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
     HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
     std::unique_ptr<HttpRequest> sourceRequest{ request };
@@ -35,14 +35,14 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
 
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
     JNIEnv* env,
-    jobject instance,
+    jobject /*instance*/,
     jlong call,
     jstring errorMessage,
     jstring stackTrace,
     jboolean isNoNetwork
 )
 {
-    HCCallHandle sourceCall = reinterpret_cast<HCCallHandle>(call);
+    auto sourceCall = reinterpret_cast<HCCallHandle>(call);
     HttpRequest* request = nullptr;
     HCHttpCallGetContext(sourceCall, reinterpret_cast<void**>(&request));
     std::unique_ptr<HttpRequest> sourceRequest{ request };
@@ -102,7 +102,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
 )
 {
     // convert call handle
-    HCCallHandle call = reinterpret_cast<HCCallHandle>(callHandle);
+    auto call = reinterpret_cast<HCCallHandle>(callHandle);
     if (call == nullptr)
     {
         return ThrowIOException(env, "Invalid call handle");
