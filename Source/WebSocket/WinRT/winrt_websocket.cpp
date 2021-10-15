@@ -478,6 +478,8 @@ try
         auto msg = sendMsgContext->nextMessage;
         HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] [%s]", TO_ULL(websocket->id), TO_ULL(msg->m_id), msg->m_message.c_str());
 
+        UNREFERENCED_LOCAL(websocket);
+
         if (!msg->m_message.empty())
         {
             websocketTask->m_messageWebSocket->Control->MessageType = SocketMessageType::Utf8;
