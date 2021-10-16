@@ -147,11 +147,20 @@ enum class HCTraceLevel : uint32_t
 /// <summary>
 /// Initialize tracing for the library.
 /// </summary>
+/// <remarks>
+/// This function is implicitly called during HCInitialize. Initialization is reference counted, and
+/// multiple calls to HCTraceInit and HCTraceCleanup will not interfere with each other as long as
+/// each call to HCTraceInit is paired with exactly one call to HCTraceCleanup.
+/// </remarks>
 void HCTraceInit() noexcept;
 
 /// <summary>
 /// Clean up tracing for the library.
 /// </summary>
+/// <remarks>
+/// This function is implicitly called during HCCleanup. See HCTraceInit for remarks on reference
+/// counting and multiple calls to these functions.
+/// </remarks>
 void HCTraceCleanup() noexcept;
 
 /// <summary>
