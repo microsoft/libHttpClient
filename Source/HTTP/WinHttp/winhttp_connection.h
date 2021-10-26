@@ -1,43 +1,15 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
-#include "pch.h"
+
 #include <winhttp.h>
 #include "utils.h"
 #include "uri.h"
-
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
-
-struct WinHttpState
-{
-public:
-    WinHttpState() = default;
-    WinHttpState(const WinHttpState&) = delete;
-    WinHttpState(WinHttpState&&) = delete;
-    WinHttpState& operator=(const WinHttpState&) = delete;
-    WinHttpState& operator=(WinHttpState&&) = delete;
-    virtual ~WinHttpState();
-
-    static uint32_t GetDefaultHttpSecurityProtocolFlagsForWin7();
-    HINTERNET GetSessionForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
-    HINTERNET CreateHSessionForForHttpSecurityProtocolFlags(_In_ uint32_t enabledHttpSecurityProtocolFlags);
-    XTaskQueueHandle GetImmediateQueue();
-
-    HRESULT SetGlobalProxy(_In_ const char* proxyUri);
-
-    http_internal_map<uint32_t, HINTERNET> m_hSessions;
-    xbox::httpclient::proxy_type m_proxyType = xbox::httpclient::proxy_type::automatic_proxy;
-    http_internal_string m_globalProxy;
-    XTaskQueueHandle m_immediateQueue{ nullptr };
-    std::mutex m_lock;
-
-private:
-
-};
 
 enum msg_body_type
 {
@@ -78,7 +50,6 @@ public:
 private:
     win32_cs* m_pCS;
 };
-
 
 #if HC_WINHTTP_WEBSOCKETS
 class websocket_message_buffer
@@ -172,135 +143,94 @@ private:
     uint32_t m_bufferByteCount = 0;
     uint32_t m_bufferByteCapacity = 0;
 };
-
-enum class WinHttpWebsockState
-{
-    Created,
-    Connecting,
-    Connected,
-    Closing,
-    Closed,
-    Destroyed
-};
 #endif
 
-class winhttp_http_task : public xbox::httpclient::hc_task
+struct XPlatSecurityInformation
+{
+    XPlatSecurityInformation() = default;
+    XPlatSecurityInformation(const XPlatSecurityInformation&) = delete;
+    XPlatSecurityInformation(XPlatSecurityInformation&&) = default;
+    XPlatSecurityInformation& operator=(const XPlatSecurityInformation&) = delete;
+    XPlatSecurityInformation& operator=(XPlatSecurityInformation&&) = default;
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    http_internal_vector<uint8_t> buffer;
+    XNetworkingSecurityInformation* securityInformation{ nullptr };
+#endif
+    uint32_t enabledHttpSecurityProtocolFlags;
+};
+
+enum class ConnectionState : uint32_t
+{
+    Initialized,
+    WinHttpRunning,
+    WebSocketConnected,
+    WebSocketClosing,
+    WinHttpClosing
+};
+
+using ConnectionClosedCallback = std::function<void()>;
+
+class WinHttpConnection : public std::enable_shared_from_this<WinHttpConnection>
 {
 public:
-    winhttp_http_task(
-        _Inout_ XAsyncBlock* asyncBlock,
-        _In_ HCCallHandle call,
-        _In_ std::shared_ptr<WinHttpState> winHttpState,
-        _In_ proxy_type proxyType,
-        _In_ bool isWebSocket);
-    ~winhttp_http_task();
-
-    HRESULT connect_and_send_async();
+    static Result<std::shared_ptr<WinHttpConnection>> Initialize(
+        HINTERNET hSession,
+        HCCallHandle call,
+        proxy_type proxyType,
+        XPlatSecurityInformation&& securityInformation
+    );
 
 #if HC_WINHTTP_WEBSOCKETS
-    void send_websocket_message(WINHTTP_WEB_SOCKET_BUFFER_TYPE eBufferType, _In_ const void* payloadPtr, _In_ size_t payloadLength);
-    HRESULT disconnect_websocket(_In_ HCWebSocketCloseStatus closeStatus);
-    HRESULT on_websocket_disconnected(_In_ USHORT closeReason);
-    std::function<void(HRESULT)> m_websocketSendCompleteCallback;
-    std::atomic<WinHttpWebsockState> m_socketState = WinHttpWebsockState::Created;
-    HCWebsocketHandle m_websocketHandle = nullptr;
-    HRESULT m_connectHr{ S_OK };
-    uint32_t m_connectPlatformError{ 0 };
+    static Result<std::shared_ptr<WinHttpConnection>> Initialize(
+        HINTERNET hSession,
+        HCWebsocketHandle webSocket,
+        proxy_type proxyType,
+        XPlatSecurityInformation&& securityInformation
+    );
 #endif
 
+    WinHttpConnection(const WinHttpConnection&) = delete;
+    WinHttpConnection(WinHttpConnection&&) = delete;
+    WinHttpConnection& operator=(const WinHttpConnection&) = delete;
+    WinHttpConnection& operator=(WinHttpConnection&&) = delete;
+    virtual ~WinHttpConnection();
+
+    // Client API entry points
+    HRESULT HttpCallPerformAsync(XAsyncBlock* async);
+#if HC_WINHTTP_WEBSOCKETS
+    HRESULT WebSocketConnectAsync(XAsyncBlock* async);
+
+    HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const char* message);
+    HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const uint8_t* payloadBytes, size_t payloadSize, WINHTTP_WEB_SOCKET_BUFFER_TYPE payloadType = WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE);
+    HRESULT WebSocketDisconnect(_In_ HCWebSocketCloseStatus closeStatus);
+#endif
+
+    // Called by WinHttpProvider to force close on PLM Suspend or shutdown
+    HRESULT Close(ConnectionClosedCallback callback);
+
 private:
+    WinHttpConnection(
+        HINTERNET hSession,
+        HCCallHandle call,
+        proxy_type proxyType,
+        XPlatSecurityInformation&& securityInformation
+    );
+
+    HRESULT Initialize();
+
     static HRESULT query_header_length(_In_ HCCallHandle call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
     static uint32_t parse_status_code(
         _In_ HCCallHandle call,
         _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext);
+        _In_ WinHttpConnection* pRequestContext);
 
-    static void read_next_response_chunk(_In_ winhttp_http_task* pRequestContext, DWORD bytesRead);
-    static void _multiple_segment_write_data(_In_ winhttp_http_task* pRequestContext);
+    static void read_next_response_chunk(_In_ WinHttpConnection* pRequestContext, DWORD bytesRead);
+    static void _multiple_segment_write_data(_In_ WinHttpConnection* pRequestContext);
 
     static void parse_headers_string(_In_ HCCallHandle call, _In_ wchar_t* headersStr);
 
-    static void callback_status_request_error(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static void callback_status_sending_request(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static void callback_status_sendrequest_complete(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static void callback_status_write_complete(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static void callback_status_headers_available(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static void callback_status_data_available(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static void callback_status_read_complete(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ DWORD statusInfoLength);
-
-    static void callback_status_secure_failure(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static void callback_websocket_status_headers_available(
-        _In_ HINTERNET hRequestHandle,
-        _In_ winhttp_http_task* pRequestContext);
-
-    static void callback_websocket_status_read_complete(
-        _In_ winhttp_http_task* pRequestContext,
-        _In_ void* statusInfo);
-
-    static char* winhttp_web_socket_buffer_type_to_string(
-        _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
-    );
-
-    static HRESULT flush_response_buffer(
-        _In_ winhttp_http_task* pRequestContext
-    );
-
-    HRESULT query_security_information(_In_ http_internal_wstring wUrlHost);
-
-    HRESULT send(_In_ const xbox::httpclient::Uri& cUri, _In_ const char* method);
-
-    HRESULT connect(_In_ const xbox::httpclient::Uri& cUri);
-
-    void complete_task(_In_ HRESULT translatedHR);
-
-    void complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError);
-
-    static void get_proxy_name(
-        _In_ proxy_type proxyType,
-        _Out_ DWORD* pAccessType,
-        _Out_ const wchar_t** pwProxyName
-        );
-
-#if HC_PLATFORM != HC_PLATFORM_GDK
-    void set_autodiscover_proxy(_In_ const xbox::httpclient::Uri& cUri);
-#endif
-
-    static void get_proxy_info(
-        _In_ WINHTTP_PROXY_INFO* pInfo,
-        _In_ bool* pProxyInfoRequired,
-        _In_ const xbox::httpclient::Uri& cUri);
-
+    // WinHttp event callbacks
     static void CALLBACK completion_callback(
         HINTERNET hRequestHandle,
         DWORD_PTR context,
@@ -308,32 +238,123 @@ private:
         _In_ void* statusInfo,
         DWORD statusInfoLength);
 
-    HCCallHandle m_call = nullptr;
-    XAsyncBlock* m_asyncBlock = nullptr;
+    static void callback_status_request_error(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
 
-    std::shared_ptr<WinHttpState> m_winHttpState = nullptr;
+    static void callback_status_sending_request(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
+
+    static void callback_status_sendrequest_complete(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
+
+    static void callback_status_write_complete(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
+
+    static void callback_status_headers_available(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
+
+    static void callback_status_data_available(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
+
+    static void callback_status_read_complete(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ DWORD statusInfoLength);
+
+    static void callback_status_secure_failure(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
+
+    static HRESULT flush_response_buffer(
+        _In_ WinHttpConnection* pRequestContext
+    );
+
+#if HC_WINHTTP_WEBSOCKETS
+    static void callback_websocket_status_write_complete(
+        _In_ WinHttpConnection* pRequestContext);
+
+    static void callback_websocket_status_headers_available(
+        _In_ HINTERNET hRequestHandle,
+        _In_ struct WinHttpCallbackContext* winHttpContext);
+
+    static void callback_websocket_status_read_complete(
+        _In_ WinHttpConnection* pRequestContext,
+        _In_ void* statusInfo);
+
+    static char* winhttp_web_socket_buffer_type_to_string(
+        _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
+    );
+#endif
+
+    void complete_task(_In_ HRESULT translatedHR);
+    void complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError);
+
+    HRESULT SendRequest();
+    HRESULT StartWinHttpClose();
+
+#if HC_PLATFORM != HC_PLATFORM_GDK
+    HRESULT set_autodiscover_proxy();
+#endif
+
+    // HttpCall state
+    ConnectionState m_state{ ConnectionState::Initialized };
+    HINTERNET m_hSession; // non-owning
     HINTERNET m_hConnection = nullptr;
     HINTERNET m_hRequest = nullptr;
+
+    HCCallHandle m_call; // non-owning
+    Uri m_uri;
+    XAsyncBlock* m_asyncBlock = nullptr; // non-owning
+    XPlatSecurityInformation const m_securityInformation{};
+    ConnectionClosedCallback m_connectionClosedCallback;
+
     msg_body_type m_requestBodyType = msg_body_type::no_body;
+    size_t m_requestBodySize = 0;
     size_t m_requestBodyRemainingToWrite = 0;
     size_t m_requestBodyOffset = 0;
     http_internal_vector<uint8_t> m_requestBuffer;
     http_internal_vector<uint8_t> m_responseBuffer;
     proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
-    bool m_isWebSocket = false;
-    bool m_isSecure = false;
 
 #if HC_WINHTTP_WEBSOCKETS
-    // websocket state
+    struct WebSocketSendContext
+    {
+        XAsyncBlock* async; // non-owning
+        WinHttpConnection* connection;
+        http_internal_vector<uint8_t> payload;
+        WINHTTP_WEB_SOCKET_BUFFER_TYPE payloadType;
+    };
+
+    // WinHttp WebSocket methods
+    void WebSocketSendMessage(const WebSocketSendContext& sendContext);
+    void WebSocketCompleteEntireSendQueueWithError(HRESULT error);
     HRESULT websocket_start_listening();
     HRESULT websocket_read_message();
-    websocket_message_buffer m_websocketResponseBuffer;
-#endif
+    void on_websocket_disconnected(_In_ USHORT closeReason);
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    http_internal_vector<uint8_t> m_securityInformationBuffer;
-    XNetworkingSecurityInformation* m_securityInformation{ nullptr }; // lifespan owned by m_securityInformationBuffer
+    static HRESULT CALLBACK WebSocketConnectProvider(XAsyncOp op, const XAsyncProviderData* data);
+    static HRESULT CALLBACK WebSocketSendProvider(XAsyncOp op, const XAsyncProviderData* data);
+
+    // WebSocket state
+    HCWebsocketHandle m_websocketHandle{ nullptr };
+    HCCallHandle m_websocketCall{ nullptr };
+    std::recursive_mutex m_websocketSendMutex; // controls access to m_websocketSendQueue
+    http_internal_queue<WebSocketSendContext*> m_websocketSendQueue{};
+    websocket_message_buffer m_websocketResponseBuffer;
 #endif
 };
 

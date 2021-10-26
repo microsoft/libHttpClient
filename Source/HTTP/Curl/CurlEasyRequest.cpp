@@ -4,7 +4,7 @@
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 CurlEasyRequest::CurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsyncBlock* async)
