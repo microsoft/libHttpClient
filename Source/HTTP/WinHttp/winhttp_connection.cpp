@@ -377,22 +377,6 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
 
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
-        m_state = ConnectionState::WebSocketClosing;
-    }
-
-    // Shutdown closes the send channel after sending a close frame. When we receive a close frame we are fully disconnected
-    DWORD dwError = WinHttpWebSocketShutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
-    return HRESULT_FROM_WIN32(dwError);
-}
-#endif // HC_WINHTTP_WEBSOCKETS
-
-HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
-{
-    bool doWebSocketClose = false;
-    bool doWinHttpClose = false;
-
-    {
-        win32_cs_autolock autoCriticalSection(&m_lock);
 
         if (m_connectionClosedCallback)
         {
@@ -1089,9 +1073,9 @@ void CALLBACK WinHttpConnection::completion_callback(
                 break;
             }
 
-            default:
+            case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
             {
-                HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection WinHttp callback statusCode=%ul", statusCode);
+                callback_status_secure_failure(hRequestHandle, pRequestContext, statusInfo);
                 break;
             }
 

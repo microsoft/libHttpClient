@@ -126,9 +126,9 @@ WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
 #elif HC_PLATFORM == HC_PLATFORM_GDK
     return WebSocketPerformInfo{
         WinHttpProvider::WebSocketConnectAsyncHandler,
-        WinHttpProvider::WebSocketSendAsyncHook,
+        WinHttpProvider::WebSocketSendAsyncHandler,
         WinHttpProvider::WebSocketSendBinaryAsyncHandler,
-        WinHttpProvider::WebSocketDisconnectHook,
+        WinHttpProvider::WebSocketDisconnectHandler,
         nullptr
     };
 #elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
