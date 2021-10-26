@@ -662,21 +662,7 @@ void WinHttpConnection::callback_status_request_error(
     }
     else
     {
-#if HC_WINHTTP_WEBSOCKETS
-        if (pRequestContext->m_websocketHandle)
-        {
-            {
-                win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
-                //pRequestContext->m_state = WinHttpWebsockState::Closed;
-            }
-
-            if (pRequestContext->m_asyncBlock == nullptr)
-            {
-                pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
-            }
-        }
-#endif
-        pRequestContext->complete_task(E_FAIL, errorCode);
+        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(errorCode));
     }
 }
 
@@ -1235,13 +1221,15 @@ HRESULT WinHttpConnection::StartWinHttpClose()
         m_state = ConnectionState::WinHttpClosing;
     }
 
-    DWORD dwError = WinHttpCloseHandle(m_hRequest);
-    if (FAILED(HRESULT_FROM_WIN32(dwError)))
+    BOOL closed = WinHttpCloseHandle(m_hRequest);
+    if (!closed)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpCloseHandle failed with errorCode=%ul", dwError);
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpCloseHandle failed with errorCode=%d", dwError);
+        return HRESULT_FROM_WIN32(dwError);
     }
 
-    return HRESULT_FROM_WIN32(dwError);
+    return S_OK;
 }
 
 #if HC_WINHTTP_WEBSOCKETS
@@ -1272,8 +1260,6 @@ void WinHttpConnection::WebSocketCompleteEntireSendQueueWithError(HRESULT error)
 
 void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
 {
-    StartWinHttpClose();
-
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
     void* functionContext = nullptr;
     HCWebSocketGetEventFunctions(m_websocketHandle, nullptr, nullptr, &disconnectFunc, &functionContext);
@@ -1286,6 +1272,8 @@ void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
     catch (...)
     {
     }
+
+    StartWinHttpClose();
 }
 
 char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(

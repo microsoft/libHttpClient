@@ -409,6 +409,8 @@ HRESULT WinHttpProvider::GetProxyName(
 
 void WinHttpProvider::Suspend()
 {
+    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Suspend");
+
     {
         std::lock_guard<std::mutex> lock{ m_lock };
 
@@ -436,6 +438,8 @@ void WinHttpProvider::Suspend()
 
 void WinHttpProvider::Resume()
 {
+    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Resume");
+
     std::unique_lock<std::mutex> lock{ m_lock };
 
     assert(m_isSuspended);
