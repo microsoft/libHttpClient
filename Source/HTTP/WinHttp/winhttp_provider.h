@@ -20,16 +20,55 @@ public:
     WinHttpProvider& operator=(WinHttpProvider&&) = delete;
     virtual ~WinHttpProvider();
 
-    // Client API entry points
-    HRESULT HttpCallPerform(HCCallHandle callHandle, XAsyncBlock* async) noexcept;
-#if HC_WINHTTP_WEBSOCKETS
-    HRESULT WebSocketConnect(const char* uri, const char* subprotocol, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept;
-#endif
+    // Http provider entry point
+    static void CALLBACK HttpCallPerformAsyncHandler(
+        HCCallHandle callHandle,
+        XAsyncBlock* async,
+        void* context,
+        HCPerformEnv env
+    ) noexcept;
+
+    static WinHttpWebSocketExports GetWinHttpWebSocketExports();
+
+    // WebSocket provider entry points
+    static HRESULT CALLBACK WebSocketConnectAsyncHandler(
+        const char* uri,
+        const char* subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async,
+        void* context,
+        HCPerformEnv env
+    ) noexcept;
+
+    static HRESULT CALLBACK WebSocketSendAsyncHandler(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async,
+        void* context
+    ) noexcept;
+
+    static HRESULT CALLBACK WebSocketSendBinaryAsyncHandler(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* asyncBlock,
+        void* context
+    ) noexcept;
+
+    static HRESULT CALLBACK WebSocketDisconnectHandler(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus,
+        void* context
+    ) noexcept;
+
     // Sets Global proxy for all HttpConnections
     HRESULT SetGlobalProxy(_In_ const char* proxyUri) noexcept;
 
 private:
     WinHttpProvider() = default;
+
+    HRESULT HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlock* async) noexcept;
+    HRESULT WebSocketConnectAsync(const char* uri, const char* subprotocol, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept;
 
     HRESULT CloseAllConnections();
 
@@ -67,19 +106,3 @@ private:
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
-
-#if HC_PLATFORM != HC_PLATFORM_GDK
-// Definition for HC_PERFORM_ENV on GDK in CurlProvider.h
-
-struct HC_PERFORM_ENV
-{
-public:
-    HC_PERFORM_ENV(std::shared_ptr<xbox::httpclient::WinHttpProvider> _winHttpProvider);
-    HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
-    HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
-    HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
-    virtual ~HC_PERFORM_ENV() = default;
-
-    std::shared_ptr<xbox::httpclient::WinHttpProvider> const winHttpProvider;
-};
-#endif

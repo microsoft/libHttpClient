@@ -3,6 +3,7 @@
 
 #pragma once
 #include "pch.h"
+#include "httpClient.h"
 
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 

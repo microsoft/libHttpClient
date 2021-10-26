@@ -89,13 +89,13 @@ set(Task_Windows_Source_Files
 
 set(WinRT_WebSocket_Source_Files
     ../../../Source/WebSocket/WinRT/winrt_websocket.cpp
+    ../../../Source/WebSocket/WinRT/winrt_websocket.h
     )
 
 set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.h
     ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
-    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
-    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.h
     )
 
 set(GDK_WebSocket_Source_Files
@@ -103,8 +103,6 @@ set(GDK_WebSocket_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_provider.h
     ../../../Source/HTTP/WinHttp/winhttp_connection.cpp
     ../../../Source/HTTP/WinHttp/winhttp_connection.h
-    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
-    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.h
     )
 
 set(Common_Windows_Source_Files

@@ -97,6 +97,7 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #define ASSERT(condition) assert(condition)
 
+#include "Result.h"
 #include <httpClient/httpClient.h>
 #include "../Global/mem.h"
 

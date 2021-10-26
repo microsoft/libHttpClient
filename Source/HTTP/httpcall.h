@@ -82,26 +82,3 @@ struct HttpPerformInfo
     HCCallPerformFunction handler = nullptr;
     void* context = nullptr; // non owning
 };
-
-struct PerformEnvDeleter
-{
-    void operator()(typename std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::pointer p) noexcept;
-};
-
-using PerformEnv = std::unique_ptr<HC_PERFORM_ENV, PerformEnvDeleter>;
-
-HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept;
-
-void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept;
-
-HRESULT Internal_SetGlobalProxy(
-    _In_ HC_PERFORM_ENV* performEnv,
-    _In_ const char* proxyUri
-) noexcept;
-
-void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ HCCallHandle call,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-) noexcept;

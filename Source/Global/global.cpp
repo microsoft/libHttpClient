@@ -36,15 +36,15 @@ HRESULT http_singleton::singleton_access(
         {
             HCTraceInit();
 
-            PerformEnv performEnv;
-            RETURN_IF_FAILED(Internal_InitializeHttpPlatform(createArgs, performEnv));
+            auto performEnvInitResult = HC_PERFORM_ENV::Initialize(createArgs);
+            RETURN_IF_FAILED(performEnvInitResult.hr);
 
             s_singleton = http_allocate_shared<http_singleton>(
                 GetUserHttpPerformHandler(),
 #if !HC_NOWEBSOCKETS
                 GetUserWebSocketPerformHandlers(),
 #endif
-                std::move(performEnv)
+                performEnvInitResult.ExtractPayload()
                 );
             s_singleton->m_self = s_singleton;
         }
@@ -257,7 +257,7 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
 {
 #if HC_PLATFORM == HC_PLATFORM_WIN32
-    return Internal_SetGlobalProxy(m_performEnv.get(), proxyUri);
+    return m_performEnv->winHttpProvider->SetGlobalProxy(proxyUri);
 #else
     UNREFERENCED_PARAMETER(proxyUri);
     return E_NOTIMPL;
@@ -266,20 +266,14 @@ HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
 
 HttpPerformInfo& GetUserHttpPerformHandler() noexcept
 {
-    static HttpPerformInfo handler(&Internal_HCHttpCallPerformAsync, nullptr);
+    static HttpPerformInfo handler{ HC_PERFORM_ENV::GetPlatformDefaultHttpHandlers() };
     return handler;
 }
 
 #if !HC_NOWEBSOCKETS
 WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept
 {
-    static WebSocketPerformInfo handlers(
-        Internal_HCWebSocketConnectAsync,
-        Internal_HCWebSocketSendMessageAsync,
-        Internal_HCWebSocketSendBinaryMessageAsync,
-        Internal_HCWebSocketDisconnect,
-        nullptr
-    );
+    static WebSocketPerformInfo handlers{ HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers() };
     return handlers;
 }
 #endif

@@ -131,23 +131,7 @@ bool http_task_apple::initiate_request()
     return true;
 }
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
-
-HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
-{
-    // No-op
-    assert(args == nullptr);
-    assert(performEnv == nullptr);
-    return S_OK;
-}
-
-void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
-{
-    assert(performEnv == nullptr);
-    UNREFERENCED_PARAMETER(performEnv);
-}
-
-void Internal_HCHttpCallPerformAsync(
+void AppleHttpCallPerformAsync(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
@@ -166,3 +150,5 @@ void Internal_HCHttpCallPerformAsync(
          httpTask.release();
     }
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_END

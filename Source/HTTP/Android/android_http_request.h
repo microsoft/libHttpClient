@@ -30,3 +30,10 @@ private:
     jclass m_httpRequestClass;
     jclass m_httpResponseClass;
 };
+
+void AndroidHttpCallPerformAsync(
+    _In_ HCCallHandle call,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ HCPerformEnv env
+) noexcept
