@@ -62,6 +62,8 @@
 #define UNREFERENCED_PARAMETER(args) (void)(args);
 #endif
 
+#define UNREFERENCED_LOCAL(args) (void)(args);
+
 #ifndef ASIO_STANDALONE
 #define ASIO_STANDALONE
 #endif

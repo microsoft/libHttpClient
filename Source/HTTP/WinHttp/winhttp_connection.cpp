@@ -534,6 +534,7 @@ void WinHttpConnection::callback_status_write_complete(
 
         DWORD bytesWritten = *((DWORD *)statusInfo);
         HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesWritten);
+        UNREFERENCED_LOCAL(bytesWritten);
 
         if (pRequestContext->m_requestBodyType == content_length_chunked)
         {

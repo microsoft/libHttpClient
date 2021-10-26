@@ -27,9 +27,6 @@ private:
 
 TraceState& GetTraceState() noexcept;
 
-void HCTraceImplInit() noexcept;
-void HCTraceImplCleanup() noexcept;
-
 struct ThreadIdInfo
 {
     HCTracePlatformThisThreadIdCallback* callback;
