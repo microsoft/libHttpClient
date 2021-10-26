@@ -133,10 +133,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_provider.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_provider.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_task.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_http_task.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />
@@ -165,6 +165,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinHTTP\winhttp_websocket.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinHTTP\winhttp_websocket.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
