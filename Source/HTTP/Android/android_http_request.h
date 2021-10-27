@@ -36,4 +36,4 @@ void AndroidHttpCallPerformAsync(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_ HCPerformEnv env
-) noexcept
+) noexcept;

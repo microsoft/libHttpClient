@@ -8,7 +8,7 @@
 #include "WinHttp/winhttp_provider.h"
 #endif
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "Http/Android/android_platform_context.h"
+#include "HTTP/Android/android_platform_context.h"
 #endif
 
 // Global context passed to HTTP/WebSocket hooks. Will be opaque to client providers, but contains needed context for default providers.

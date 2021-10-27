@@ -97,8 +97,8 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #define ASSERT(condition) assert(condition)
 
-#include "Result.h"
 #include <httpClient/httpClient.h>
+#include "Result.h"
 #include "../Global/mem.h"
 
 #if HC_PLATFORM_IS_MICROSOFT

@@ -261,9 +261,9 @@ void AndroidHttpCallPerformAsync(
     std::unique_ptr<HttpRequest> httpRequest{
         new HttpRequest(
             asyncBlock,
-            env->GetJavaVm(),
-            env->GetHttpRequestClass(),
-            env->GetHttpResponseClass()
+            env->androidPlatformContext->GetJavaVm(),
+            env->androidPlatformContext->GetHttpRequestClass(),
+            env->androidPlatformContext->GetHttpResponseClass()
         )
     };
 

@@ -6,7 +6,7 @@
 struct AndroidPlatformContext
 {
 public:
-    Result<std::shared_ptr<AndroidPlatformContext>> Initialize(HCInitArgs* args) noexcept;
+    static Result<std::shared_ptr<AndroidPlatformContext>> Initialize(HCInitArgs* args) noexcept;
     virtual ~AndroidPlatformContext();
 
     JavaVM* GetJavaVm() { return m_javaVm; }
