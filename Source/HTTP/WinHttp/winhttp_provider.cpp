@@ -547,6 +547,19 @@ void WinHttpProvider::Resume()
     NetworkConnectivityChangedCallback(this, nullptr);
 }
 
+// Test hooks
+void HCWinHttpSuspend()
+{
+    auto httpSingleton = get_http_singleton();
+    httpSingleton->m_performEnv->winHttpProvider->Suspend();
+}
+
+void HCWinHttpResume()
+{
+    auto httpSingleton = get_http_singleton();
+    httpSingleton->m_performEnv->winHttpProvider->Resume();
+}
+
 void WinHttpProvider::NetworkConnectivityChangedCallback(void* context, const XNetworkingConnectivityHint* /*hint*/)
 {
     assert(context);

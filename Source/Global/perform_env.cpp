@@ -103,7 +103,8 @@ WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
 #if HC_PLATFORM == HC_PLATFORM_WIN32
     // Use WinHttp WebSockets if available (Win 8+) and WebSocketpp otherwise
     auto webSocketExports = WinHttpProvider::GetWinHttpWebSocketExports();
-    if (webSocketExports.send)
+    if (webSocketExports.completeUpgrade && webSocketExports.send && webSocketExports.receive &&
+        webSocketExports.close && webSocketExports.queryCloseStatus && webSocketExports.shutdown)
     {
         return WebSocketPerformInfo{
             WinHttpProvider::WebSocketConnectAsyncHandler,

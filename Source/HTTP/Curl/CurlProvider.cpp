@@ -88,18 +88,5 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     return S_OK;
 }
 
-// For testing purposes only TODO move these?
-void HCWinHttpSuspend()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Suspend();
-}
-
-void HCWinHttpResume()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Resume();
-}
-
 } // httpclient
 } // xbox
