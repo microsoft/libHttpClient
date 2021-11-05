@@ -24,8 +24,10 @@
       </PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
         $(libHttpClientInclude)httpClient;
+        $(HCBuildRoot)Source;
         $(HCBuildRoot)Source\Common;
         $(HCBuildRoot)Source\Logger;
+        $(HCBuildRoot)Source\HTTP;
         $(HCBuildRoot)Source\WebSocket;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>

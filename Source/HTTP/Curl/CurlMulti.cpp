@@ -4,7 +4,7 @@
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 // XCurl doesn't support curl_multi_timeout, so use a small, fixed delay between calls to curl_multi_perform
@@ -164,5 +164,5 @@ void CurlMulti::FailAllRequests(HRESULT hr) noexcept
     m_easyRequests.clear();
 }
 
-} // http_client
+} // httpclient
 } // xbox
