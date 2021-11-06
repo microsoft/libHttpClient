@@ -57,7 +57,7 @@ struct HC_CALL
 
     uint64_t id = 0;
     bool traceCall = true;
-#if HC_PLATFORM_IS_MICROSOFT && !HC_PLATFORM_UWP && !HC_PLATFORM_XDK
+#if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
     bool sslValidation = true;
 #endif
     void* context = nullptr;
