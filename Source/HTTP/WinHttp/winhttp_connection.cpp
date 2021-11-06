@@ -202,7 +202,7 @@ HRESULT WinHttpConnection::Initialize()
             return HRESULT_FROM_WIN32(dwError);
         }
 
-#if HC_PLATFORM_IS_MICROSOFT && !HC_PLATFORM_UWP && !HC_PLAFTORM_XDK
+#if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
         if (!m_call->sslValidation)
         {
             DWORD dwOption = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_CN_INVALID;

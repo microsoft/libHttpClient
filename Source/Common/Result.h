@@ -43,7 +43,7 @@ public:
     Result& operator=(Result&&) = default;
     ~Result() = default;
 
-    HRESULT const hr;
+    HRESULT hr;
 };
 
 //------------------------------------------------------------------------------
