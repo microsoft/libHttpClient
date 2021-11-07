@@ -40,7 +40,7 @@ jobs:
   - job: Win32Vs17Build
     displayName: libHttpClient Win32/UWP VS2017 Build
     pool:
-      name: xbl-1es-vs2017
+      name: xbl-1es-vs2017-pool
     timeoutInMinutes: 180
     strategy:
       matrix:
@@ -69,7 +69,7 @@ jobs:
   - job: Win32Vs19Build
     displayName: libHttpClient Win32/UWP VS2019 Build
     pool:
-      name: xbl-1es-vs2019
+      name: xbl-1es-vs2019-pool
     timeoutInMinutes: 180
     strategy:
       matrix:
@@ -138,7 +138,7 @@ jobs:
   - job: XDKBuild
     displayName: libHttpClient XDK Build
     pool:
-      name: xbl-1es-vs2017-xdk
+      name: xbl-1es-vs2017-pool
     timeoutInMinutes: 180
     strategy:
       matrix:
@@ -165,7 +165,7 @@ jobs:
       - iOSBuild
       - XDKBuild
     pool:
-      name: xbl-1es-vs2019
+      name: xbl-1es-vs2019-pool
     steps:
       - template: Tasks/send-build-failed-email.yml
         parameters:

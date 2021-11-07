@@ -34,7 +34,7 @@
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/bigobj /Zm512 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalUsingDirectories>C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\store\references;C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\VC\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -43,7 +43,6 @@
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9DD2BA60-6505-493A-8C41-8085C44E9F1F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

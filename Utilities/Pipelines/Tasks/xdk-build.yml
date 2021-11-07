@@ -15,13 +15,6 @@ steps:
       disableMsbuildVersion: true
 
   - task: BatchScript@1
-    displayName: fetchTools.cmd
-    inputs:
-      filename: Utilities/Pipelines/Scripts/fetchTools.cmd
-      arguments: '"$(PAT)" "$(BuildTools)"'
-      modifyEnvironment: false
-
-  - task: BatchScript@1
     displayName: vsvars.cmd
     inputs:
       filename: Utilities/Pipelines/Scripts/vsvars.cmd
