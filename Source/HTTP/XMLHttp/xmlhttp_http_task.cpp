@@ -31,7 +31,7 @@ xmlhttp_http_task::~xmlhttp_http_task()
     }
 }
 
-static void CALLBACK PerformAsyncHandler(
+void CALLBACK xmlhttp_http_task::PerformAsyncHandler(
     HCCallHandle call,
     XAsyncBlock* asyncBlock,
     void* context,
