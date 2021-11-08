@@ -85,7 +85,10 @@
 		A2ACA1C02630C9C100D74874 /* session_delegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2ACA1BC2630C9C100D74874 /* session_delegate.mm */; };
 		A2ACA1C12630C9C100D74874 /* session_delegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2ACA1BC2630C9C100D74874 /* session_delegate.mm */; };
 		A2ACA1C22630C9C100D74874 /* session_delegate.h in Headers */ = {isa = PBXBuildFile; fileRef = A2ACA1BD2630C9C100D74874 /* session_delegate.h */; };
-		A5F9D6652734D19E007BBBBA /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
+		A5A985FE2739B3A400361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
+		A5A985FF2739B3A500361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
+		A5A986002739B3A500361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
+		A5A986012739B3A600361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
 		D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D335CABE24085A9A005958B3 /* LocklessQueue.h */; };
 		D3DAA85121C0E4090009C7F6 /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
 		D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
@@ -308,9 +311,9 @@
 		A2ACA1BC2630C9C100D74874 /* session_delegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = session_delegate.mm; sourceTree = "<group>"; };
 		A2ACA1BD2630C9C100D74874 /* session_delegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = session_delegate.h; sourceTree = "<group>"; };
 		A529DDBC20A4C88F00D50640 /* http_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_apple.h; sourceTree = "<group>"; };
+		A5A985FD27360CD100361934 /* Result.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Result.h; sourceTree = "<group>"; };
 		A5F9D6632734D19E007BBBBA /* perform_env.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = perform_env.cpp; sourceTree = "<group>"; };
 		A5F9D6642734D19E007BBBBA /* perform_env.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = perform_env.h; sourceTree = "<group>"; };
-		A5A985FD27360CD100361934 /* Result.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Result.h; sourceTree = "<group>"; };
 		D335CABE24085A9A005958B3 /* LocklessQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocklessQueue.h; sourceTree = "<group>"; };
 		D3C5B5502148481F004BE1FF /* WaitTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaitTimer.h; sourceTree = "<group>"; };
 		D3C5B552214848B6004BE1FF /* ios_WaitTimer_target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_WaitTimer_target.h; sourceTree = "<group>"; };
@@ -1131,6 +1134,7 @@
 				58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */,
 				58A7E9C5209ADEB100CC6774 /* lhc_mock.cpp in Sources */,
 				58A7E9D4209ADEB100CC6774 /* httpcall_response.cpp in Sources */,
+				A5A985FE2739B3A400361934 /* perform_env.cpp in Sources */,
 				9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				58A7E9D5209ADEB100CC6774 /* http_apple.mm in Sources */,
 				A2ACA1BE2630C9C100D74874 /* session_delegate.mm in Sources */,
@@ -1158,7 +1162,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				D9EF876525A3E7F9005C4BDF /* SSLDummy.swift in Sources */,
-				A5F9D6652734D19E007BBBBA /* perform_env.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1177,6 +1180,7 @@
 				7DB100C32119276B00AE22F5 /* httpcall_response.cpp in Sources */,
 				7DB100C42119276B00AE22F5 /* httpcall.cpp in Sources */,
 				2C872C5E221C8FB70054F791 /* TaskQueue.cpp in Sources */,
+				A5A985FF2739B3A500361934 /* perform_env.cpp in Sources */,
 				7DB100C52119276B00AE22F5 /* apple_logger.cpp in Sources */,
 				9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				A2ACA1BF2630C9C100D74874 /* session_delegate.mm in Sources */,
@@ -1215,6 +1219,7 @@
 				D9EF882F25A522BC005C4BDF /* trace.cpp in Sources */,
 				D9EF883025A522BC005C4BDF /* lhc_mock.cpp in Sources */,
 				D9EF883125A522BC005C4BDF /* httpcall_response.cpp in Sources */,
+				A5A986002739B3A500361934 /* perform_env.cpp in Sources */,
 				D9EF883225A522BC005C4BDF /* websocketpp_websocket.cpp in Sources */,
 				D9EF883325A522BC005C4BDF /* http_apple.mm in Sources */,
 				A2ACA1C02630C9C100D74874 /* session_delegate.mm in Sources */,
@@ -1252,6 +1257,7 @@
 				D9FF0A6625A5366A0061B717 /* trace.cpp in Sources */,
 				D9FF0A6725A5366A0061B717 /* lhc_mock.cpp in Sources */,
 				D9FF0A6825A5366A0061B717 /* httpcall_response.cpp in Sources */,
+				A5A986012739B3A600361934 /* perform_env.cpp in Sources */,
 				D9FF0A6925A5366A0061B717 /* websocketpp_websocket.cpp in Sources */,
 				D9FF0A6A25A5366A0061B717 /* http_apple.mm in Sources */,
 				A2ACA1C12630C9C100D74874 /* session_delegate.mm in Sources */,
