@@ -71,21 +71,37 @@ bool Mock_Internal_HCHttpCallPerformAsync(
 
     if (mock->matchedCallback)
     {
+        http_internal_vector<uint8_t> requestBodyBytes;
+        HRESULT res = Mock_Internal_ReadRequestBodyIntoMemory(originalCall, &requestBodyBytes);
+        if (FAILED(res))
+        {
+            return false;
+        }
+
         mock->matchedCallback(
             mock,
             originalCall->method.data(),
             originalCall->url.data(),
-            originalCall->requestBodyBytes.data(),
-            static_cast<uint32_t>(originalCall->requestBodyBytes.size()),
+            requestBodyBytes.data(),
+            static_cast<uint32_t>(requestBodyBytes.size()),
             mock->matchCallbackContext
         );
     }
 
+    // Read response from mock
     size_t byteBuf;
     HCHttpCallResponseGetResponseBodyBytesSize(mock, &byteBuf);
-    http_memory_buffer buffer(byteBuf);
-    HCHttpCallResponseGetResponseBodyBytes(mock, byteBuf, static_cast<uint8_t*>(buffer.get()), nullptr);
-    HCHttpCallResponseSetResponseBodyBytes(originalCall, static_cast<uint8_t*>(buffer.get()), byteBuf);
+    if (byteBuf > 0)
+    {
+        http_memory_buffer buffer(byteBuf);
+        HCHttpCallResponseGetResponseBodyBytes(mock, byteBuf, static_cast<uint8_t*>(buffer.get()), nullptr);
+
+        // Write response to original call
+        HCHttpCallResponseBodyWriteFunction writeFunction;
+        void* context = nullptr;
+        HCHttpCallResponseGetResponseBodyWriteFunction(originalCall, &writeFunction, &context);
+        writeFunction(originalCall, static_cast<uint8_t*>(buffer.get()), byteBuf, context);
+    }
 
     uint32_t code;
     HCHttpCallResponseGetStatusCode(mock, &code);
@@ -98,8 +114,8 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     uint32_t numheaders;
     HCHttpCallResponseGetNumHeaders(mock, &numheaders);
 
-    const char* str1;
-    const char* str2;
+    const char* str1 = nullptr;
+    const char* str2 = nullptr;
     for (uint32_t i = 0; i < numheaders; i++)
     {
         HCHttpCallResponseGetHeaderAtIndex(mock, i, &str1, &str2);
@@ -107,4 +123,36 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     }
 
     return true;
+}
+
+HRESULT Mock_Internal_ReadRequestBodyIntoMemory(
+    _In_ HCCallHandle originalCall,
+    _Out_ http_internal_vector<uint8_t>* bodyBytes
+    )
+{
+    HCHttpCallRequestBodyReadFunction readFunction = nullptr;
+    size_t bodySize = 0;
+    void* context = nullptr;
+    RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyReadFunction(originalCall, &readFunction, &bodySize, &context));
+
+    http_internal_vector<uint8_t> tempBodyBytes(bodySize);
+
+    size_t offset = 0;
+    while (offset < bodySize)
+    {
+        size_t bytesWritten = 0;
+        RETURN_IF_FAILED(readFunction(
+            originalCall,
+            offset,
+            bodySize - offset,
+            context,
+            tempBodyBytes.data() + offset,
+            &bytesWritten
+        ));
+
+        offset += bytesWritten;
+    }
+
+    *bodyBytes = std::move(tempBodyBytes);
+    return S_OK;
 }

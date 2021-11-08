@@ -95,10 +95,16 @@ set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
     ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
     ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
+    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.h
     )
 
 set(GDK_WebSocket_Source_Files
+    ../../../Source/HTTP/WinHttp/winhttp_provider.cpp
+    ../../../Source/HTTP/WinHttp/winhttp_provider.h
+    ../../../Source/HTTP/WinHttp/winhttp_connection.cpp
+    ../../../Source/HTTP/WinHttp/winhttp_connection.h
     ../../../Source/WebSocket/WinHTTP/winhttp_websocket.cpp
+    ../../../Source/WebSocket/WinHTTP/winhttp_websocket.h
     )
 
 set(Common_Windows_Source_Files
@@ -115,8 +121,10 @@ set(Unittest_WebSocket_Source_Files
     )
 
 set(WinHttp_HTTP_Source_Files
-    ../../../Source/HTTP/WinHttp/winhttp_http_task.cpp
-    ../../../Source/HTTP/WinHttp/winhttp_http_task.h
+    ../../../Source/HTTP/WinHttp/winhttp_provider.cpp
+    ../../../Source/HTTP/WinHttp/winhttp_provider.h
+    ../../../Source/HTTP/WinHttp/winhttp_connection.cpp
+    ../../../Source/HTTP/WinHttp/winhttp_connection.h
     )
 
 set(XMLHttp_HTTP_Source_Files

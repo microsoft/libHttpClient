@@ -250,12 +250,12 @@ TraceState& GetTraceState() noexcept
     return state;
 }
 
-void HCTraceImplInit() noexcept
+void HCTraceInit() noexcept
 {
     GetTraceState().Init();
 }
 
-void HCTraceImplCleanup() noexcept
+void HCTraceCleanup() noexcept
 {
     GetTraceState().Cleanup();
 }

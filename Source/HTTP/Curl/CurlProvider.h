@@ -3,15 +3,21 @@
 #include "CurlMulti.h"
 #include "Result.h"
 
+#if HC_WINHTTP_WEBSOCKETS
+// XCurl provider doesn't have Websocket support, and because HC_PERFORM_ENV is shared between both Http and WebSocket
+// providers, we need to include winhttp_+ needed for WinHttp WebSocket implementation here
+#include "../WinHttp/winhttp_provider.h"
+#endif
+
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 HRESULT HrFromCurle(CURLcode c) noexcept;
 HRESULT HrFromCurlm(CURLMcode c) noexcept;
 
-} // http_client
+} // httpclient
 } // xbox
 
 struct HC_PERFORM_ENV
@@ -29,5 +35,10 @@ private:
     HC_PERFORM_ENV() = default;
 
     // Create an CurlMulti per work port
-    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::http_client::CurlMulti>> m_curlMultis{};
+    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>> m_curlMultis{};
+
+#if HC_WINHTTP_WEBSOCKETS
+public:
+    std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
+#endif
 };

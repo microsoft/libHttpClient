@@ -92,18 +92,17 @@ for BUILD_ARCH in $BUILD_ARCHS; do
     #
     # - x86_64, i386: Mac
     # - arm64: Might be an M1 Mac or a physical iOS device
-    # - armv7: Very old phyiscal iOS device
 
     if [ "$BUILD_ARCH" == "x86_64" ]; then
         ./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+    elif [[ "$BUILDARCH" == "i386" ]]; then
+        ./Configure darwin-i386-cc shared no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
     elif [ "$BUILD_ARCH" == "arm64" ]; then
         if [ "$PLATFORM_NAME" == "macosx" ] || [ "$PLATFORM_NAME" == "iphonesimulator" ]; then
             ./Configure darwin64-arm64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
         elif [ "$PLATFORM_NAME" == "iphoneos" ]; then
             ./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
         fi
-    elif [ "$BUILD_ARCH" == "armv7" ]; then
-        ./Configure ios-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
     else
         log "Unexpected architecture: $BUILD_ARCH"
         exit 1

@@ -11,7 +11,7 @@
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 class CurlEasyRequest
@@ -41,7 +41,6 @@ private:
     HRESULT SetOpt(CURLoption option, typename OptType<T>::type) noexcept;
 
     HRESULT AddHeader(char const* name, char const* value) noexcept;
-    HRESULT CopyNextBodySection(void* buffer, size_t maxSize, size_t& bytesCopied) noexcept;
 
     // Curl callbacks
     static size_t ReadCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept;
@@ -76,5 +75,5 @@ HRESULT CurlEasyRequest::SetOpt(CURLoption option, typename OptType<T>::type v) 
     return HrFromCurle(result);
 }
 
-} // http_client
+} // httpclient
 } // xbox

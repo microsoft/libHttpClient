@@ -72,6 +72,7 @@ _HCMockCallCreate
 _HCMockAddMock
 _HCMockClearMocks
 _HCMockRemoveMock
+_HCMockSetMockMatchedCallback
 _HCMockResponseSetResponseBodyBytes
 _HCMockResponseSetStatusCode
 _HCMockResponseSetNetworkErrorCode
@@ -80,6 +81,8 @@ _HCMockResponseSetHeader
 #
 # trace.h
 #
+_HCTraceInit
+_HCTraceCleanup
 _HCSettingsSetTraceLevel
 _HCSettingsGetTraceLevel
 _HCTraceSetClientCallback

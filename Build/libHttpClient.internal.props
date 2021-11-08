@@ -14,10 +14,20 @@
         $(libHttpClientDefine);
         %(PreprocessorDefinitions)
       </PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)' == 'Debug'">
+        HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)' != 'Debug'">
+        HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
         $(libHttpClientInclude)httpClient;
+        $(HCBuildRoot)Source;
         $(HCBuildRoot)Source\Common;
         $(HCBuildRoot)Source\Logger;
+        $(HCBuildRoot)Source\HTTP;
         $(HCBuildRoot)Source\WebSocket;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>

@@ -126,6 +126,10 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlMulti.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />
@@ -138,6 +142,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinHTTP\winhttp_websocket.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinHTTP\winhttp_websocket.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />

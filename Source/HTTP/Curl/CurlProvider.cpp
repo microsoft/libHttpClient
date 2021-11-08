@@ -2,7 +2,7 @@
 #include "CurlProvider.h"
 #include "CurlEasyRequest.h"
 
-using namespace xbox::http_client;
+using namespace xbox::httpclient;
 
 HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
 {
@@ -55,7 +55,7 @@ void CALLBACK Internal_HCHttpCallPerformAsync(
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 HRESULT HrFromCurle(CURLcode c) noexcept
@@ -78,7 +78,7 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     }
 }
 
-} // http_client
+} // httpclient
 } // xbox
 
 Result<PerformEnv> HC_PERFORM_ENV::Initialize()
@@ -88,6 +88,10 @@ Result<PerformEnv> HC_PERFORM_ENV::Initialize()
 
     http_stl_allocator<HC_PERFORM_ENV> a{};
     PerformEnv env{ new (a.allocate(1)) HC_PERFORM_ENV{} };
+
+    auto winHttpInitResult = xbox::httpclient::WinHttpProvider::Initialize();
+    RETURN_IF_FAILED(winHttpInitResult.hr);
+    env->winHttpProvider = winHttpInitResult.ExtractPayload();
 
     return std::move(env);
 }
@@ -123,4 +127,17 @@ HRESULT HC_PERFORM_ENV::Perform(HCCallHandle hcCall, XAsyncBlock* async) noexcep
     RETURN_IF_FAILED(multi->AddRequest(easyInitResult.ExtractPayload()));
 
     return S_OK;
+}
+
+// For testing purposes only
+void HCWinHttpSuspend()
+{
+    auto httpSingleton = get_http_singleton();
+    httpSingleton->m_performEnv->winHttpProvider->Suspend();
+}
+
+void HCWinHttpResume()
+{
+    auto httpSingleton = get_http_singleton();
+    httpSingleton->m_performEnv->winHttpProvider->Resume();
 }

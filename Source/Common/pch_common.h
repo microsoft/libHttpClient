@@ -39,8 +39,12 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <codecvt>
 #include <condition_variable>
 #include <cstdint>
+#include <functional>
+#include <iomanip>
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -49,9 +53,6 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#include <codecvt>
-#include <iomanip>
-#include <functional>
 
 #if HC_UWP_API
 #include <collection.h>
@@ -60,6 +61,8 @@
 #ifndef _WIN32
 #define UNREFERENCED_PARAMETER(args) (void)(args);
 #endif
+
+#define UNREFERENCED_LOCAL(args) (void)(args);
 
 #ifndef ASIO_STANDALONE
 #define ASIO_STANDALONE
@@ -103,6 +106,7 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #include "utils.h"
 #include "../Global/global.h"
+#include "Result.h"
 
 #include "ResultMacros.h"
 #include "EntryList.h"
