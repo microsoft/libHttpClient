@@ -7,18 +7,6 @@ parameters:
 steps:
   - template: checkout.yml
 
-  - task: PkgESSetupBuild@12
-    displayName: PkgES build setup
-    inputs:
-      useDfs: false
-      productName: libHttpClient
-      branchVersion: true
-      extSync: true
-      disableMsbuildVersion: true
-
-  - task: PoliCheck@1
-    displayName: Run PoliCheck
-
   - task: NuGetToolInstaller@1
     displayName: 'Use NuGet 5.8'
     inputs:
@@ -52,39 +40,3 @@ steps:
       logProjectEvents: true
       logFileVerbosity: 'diagnostic'
 
-  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-    displayName: Component Detection
-    
-  - task: securedevelopmentteam.vss-secure-development-tools.build-task-prefast.SDLNativeRules@2
-    displayName: 'Run the PREfast SDL Native Rules for MSBuild'
-    condition: succeededOrFailed()
-
-  - task: CopyFiles@1
-    displayName: 'Copy PREfast xml files to SDLNativeRulesDir'
-    inputs:
-      SourceFolder: '$(Agent.BuildDirectory)'
-      Contents: |
-        **\*.nativecodeanalysis.xml
-      TargetFolder: '$(Agent.BuildDirectory)\_sdt\logs\SDLNativeRules'
-
-  - task: PkgESSecComp@10
-    displayName: 'Security and Compliance tasks'
-    inputs:
-      fileNewBugs: false
-      taskLogVerbosity: Diagnostic
-      scanAll: true
-      failOnStdErr: true
-      dropOverride: $(Build.ArtifactStagingDirectory)
-      secCompConfigFromTask: |
-        tools:
-          - toolName: CheckCFlags
-            enable: true
-          - toolName: CFGCheck
-            enable: false
-          - toolName: Policheck
-            enable: true
-          - toolName: XFGCheck
-            enable: true
-          - toolName: CredScan
-            enable: true
-      binVersion: 'PreProduction'
