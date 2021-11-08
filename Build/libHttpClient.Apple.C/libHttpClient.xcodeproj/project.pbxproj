@@ -310,6 +310,7 @@
 		A529DDBC20A4C88F00D50640 /* http_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_apple.h; sourceTree = "<group>"; };
 		A5F9D6632734D19E007BBBBA /* perform_env.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = perform_env.cpp; sourceTree = "<group>"; };
 		A5F9D6642734D19E007BBBBA /* perform_env.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = perform_env.h; sourceTree = "<group>"; };
+		A5A985FD27360CD100361934 /* Result.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Result.h; sourceTree = "<group>"; };
 		D335CABE24085A9A005958B3 /* LocklessQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocklessQueue.h; sourceTree = "<group>"; };
 		D3C5B5502148481F004BE1FF /* WaitTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaitTimer.h; sourceTree = "<group>"; };
 		D3C5B552214848B6004BE1FF /* ios_WaitTimer_target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_WaitTimer_target.h; sourceTree = "<group>"; };
@@ -545,6 +546,7 @@
 		58A7E985209ADEB100CC6774 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				A5A985FD27360CD100361934 /* Result.h */,
 				58A7E98D209ADEB100CC6774 /* buildver.h */,
 				58A7E990209ADEB100CC6774 /* EntryList.h */,
 				58A7E98E209ADEB100CC6774 /* pal_internal.h */,
