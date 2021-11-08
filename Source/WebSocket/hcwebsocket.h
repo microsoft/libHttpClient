@@ -2,8 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
+
 #include "pch.h"
-#include "httpClient.h"
+#include <httpClient/httpClient.h>
 
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
