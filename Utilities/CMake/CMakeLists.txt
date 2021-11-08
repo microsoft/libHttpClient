@@ -110,14 +110,6 @@ set(Common_Windows_Source_Files
     ../../../Source/Common/Win/utils_win.h
     )
 
-set(Unittest_HTTP_Source_Files
-    ../../../Source/HTTP/Unittest/http_unittest.cpp
-    )
-
-set(Unittest_WebSocket_Source_Files
-    ../../../Source/WebSocket/Unittest/websocket_unittest.cpp
-    )
-
 set(WinHttp_HTTP_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_provider.cpp
     ../../../Source/HTTP/WinHttp/winhttp_provider.h
@@ -217,7 +209,6 @@ endif()
 
 if( UNITTEST )
     message(STATUS "Unittest source group")
-    source_group("C++ Source\\HTTP\\Unittest" FILES ${Unittest_HTTP_Source_Files})
     source_group("C++ Source\\WebSocket\\Unittest" FILES ${Unittest_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
@@ -226,7 +217,6 @@ if( UNITTEST )
     list(APPEND
         SOURCE_FILES
         ${Task_Windows_Source_Files}
-        ${Unittest_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Unittest_WebSocket_Source_Files}
