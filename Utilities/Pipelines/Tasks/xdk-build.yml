@@ -4,15 +4,6 @@ parameters:
 
 steps:
   - template: checkout.yml
-  
-  - task: PkgESSetupBuild@12
-    displayName: PkgES build setup
-    inputs:
-      useDfs: false
-      productName: libHttpClient
-      branchVersion: true
-      extSync: true
-      disableMsbuildVersion: true
 
   - task: BatchScript@1
     displayName: vsvars.cmd
