@@ -31,6 +31,22 @@ xmlhttp_http_task::~xmlhttp_http_task()
     }
 }
 
+void CALLBACK xmlhttp_http_task::PerformAsyncHandler(
+    HCCallHandle call,
+    XAsyncBlock* asyncBlock,
+    void* context,
+    HCPerformEnv env
+) noexcept
+{
+    assert(context == nullptr);
+    assert(env == nullptr);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
+    auto httpTask = http_allocate_shared<xmlhttp_http_task>(asyncBlock, call);
+    httpTask->perform_async(asyncBlock, call);
+}
+
 void xmlhttp_http_task::perform_async(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_ HCCallHandle call
@@ -278,39 +294,3 @@ XAsyncBlock* xmlhttp_http_task::async_block()
 {
     return m_asyncBlock;
 }
-
-HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
-{
-    UNREFERENCED_PARAMETER(args);
-    UNREFERENCED_PARAMETER(performEnv);
-
-    // No-op
-    assert(args == nullptr);
-    assert(performEnv == nullptr);
-    return S_OK;
-}
-
-void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
-{
-    UNREFERENCED_PARAMETER(performEnv);
-
-    // No-op
-    assert(performEnv == nullptr);
-}
-
-void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ HCCallHandle call,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-) noexcept
-{
-    assert(context == nullptr);
-    assert(env == nullptr);
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(env);
-
-    auto httpTask = http_allocate_shared<xmlhttp_http_task>(asyncBlock, call);
-    httpTask->perform_async(asyncBlock, call);
-}
-

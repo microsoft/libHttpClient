@@ -2,57 +2,6 @@
 #include "CurlProvider.h"
 #include "CurlEasyRequest.h"
 
-using namespace xbox::httpclient;
-
-HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
-{
-    assert(args == nullptr);
-    UNREFERENCED_PARAMETER(args);
-
-    auto initResult = HC_PERFORM_ENV::Initialize();
-    RETURN_IF_FAILED(initResult.hr);
-
-    performEnv = initResult.ExtractPayload();
-
-    return S_OK;
-}
-
-void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
-{
-    // HC_PERFORM_ENV created with custom deleter - HC_PERFORM_ENV needs to be destroyed and cleaned up explicitly.
-    http_stl_allocator<HC_PERFORM_ENV> a{};
-    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::destroy(a, performEnv);
-    std::allocator_traits<http_stl_allocator<HC_PERFORM_ENV>>::deallocate(a, performEnv, 1);
-}
-
-HRESULT Internal_SetGlobalProxy(
-    _In_ HC_PERFORM_ENV* performEnv,
-    _In_ const char* proxyUri
-) noexcept
-{
-    UNREFERENCED_PARAMETER(performEnv);
-    UNREFERENCED_PARAMETER(proxyUri);
-    return E_NOTIMPL;
-}
-
-void CALLBACK Internal_HCHttpCallPerformAsync(
-    _In_ HCCallHandle call,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-) noexcept
-{
-    UNREFERENCED_PARAMETER(context);
-    assert(env);
-
-    HRESULT hr = env->Perform(call, asyncBlock);
-    if (FAILED(hr))
-    {
-        // Complete XAsyncBlock if we fail synchronously
-        XAsyncComplete(asyncBlock, hr, 0);
-    }
-}
-
 namespace xbox
 {
 namespace httpclient
@@ -78,25 +27,18 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     }
 }
 
-} // httpclient
-} // xbox
-
-Result<PerformEnv> HC_PERFORM_ENV::Initialize()
+Result<std::shared_ptr<CurlProvider>> CurlProvider::Initialize()
 {
     CURLcode initRes = curl_global_init(CURL_GLOBAL_ALL);
     RETURN_IF_FAILED(HrFromCurle(initRes));
 
-    http_stl_allocator<HC_PERFORM_ENV> a{};
-    PerformEnv env{ new (a.allocate(1)) HC_PERFORM_ENV{} };
+    http_stl_allocator<CurlProvider> a{};
+    auto provider = std::shared_ptr<CurlProvider>{ new (a.allocate(1)) CurlProvider };
 
-    auto winHttpInitResult = xbox::httpclient::WinHttpProvider::Initialize();
-    RETURN_IF_FAILED(winHttpInitResult.hr);
-    env->winHttpProvider = winHttpInitResult.ExtractPayload();
-
-    return std::move(env);
+    return std::move(provider);
 }
 
-HC_PERFORM_ENV::~HC_PERFORM_ENV()
+CurlProvider::~CurlProvider()
 {
     // make sure XCurlMultis are cleaned up before curl_global_cleanup
     m_curlMultis.clear();
@@ -104,7 +46,24 @@ HC_PERFORM_ENV::~HC_PERFORM_ENV()
     curl_global_cleanup();
 }
 
-HRESULT HC_PERFORM_ENV::Perform(HCCallHandle hcCall, XAsyncBlock* async) noexcept
+void CALLBACK CurlProvider::PerformAsyncHandler(
+    HCCallHandle callHandle,
+    XAsyncBlock* async,
+    void* /*context*/,
+    HCPerformEnv env
+) noexcept
+{
+    assert(env);
+
+    HRESULT hr = env->curlProvider->PerformAsync(callHandle, async);
+    if (FAILED(hr))
+    {
+        // Complete XAsyncBlock if we fail synchronously
+        XAsyncComplete(async, hr, 0);
+    }
+}
+
+HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept
 {
     XTaskQueuePortHandle workPort{ nullptr };
     RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
@@ -129,15 +88,5 @@ HRESULT HC_PERFORM_ENV::Perform(HCCallHandle hcCall, XAsyncBlock* async) noexcep
     return S_OK;
 }
 
-// For testing purposes only
-void HCWinHttpSuspend()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Suspend();
-}
-
-void HCWinHttpResume()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Resume();
-}
+} // httpclient
+} // xbox
