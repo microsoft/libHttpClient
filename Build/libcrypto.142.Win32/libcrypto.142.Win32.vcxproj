@@ -36,7 +36,8 @@
     <CharacterSet>Unicode</CharacterSet>
     <LinkIncremental>true</LinkIncremental>
     <HCLibPlatformType>Win32</HCLibPlatformType>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>8.1</WindowsTargetPlatformMinVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
