@@ -82,7 +82,9 @@ HRESULT CALLBACK WebSocketDisconnectDefault(
 
 HttpPerformInfo HC_PERFORM_ENV::GetPlatformDefaultHttpHandlers()
 {
-#if HC_PLATFORM == HC_PLATFORM_WIN32
+#if HC_UNITTEST_API
+    return HttpPerformInfo{ HttpPerformAsyncDefault, nullptr };
+#elif HC_PLATFORM == HC_PLATFORM_WIN32
     return HttpPerformInfo{ WinHttpProvider::HttpCallPerformAsyncHandler, nullptr };
 #elif HC_PLATFORM == HC_PLATFORM_GDK
     return HttpPerformInfo{ CurlProvider::PerformAsyncHandler, nullptr };
@@ -100,7 +102,15 @@ HttpPerformInfo HC_PERFORM_ENV::GetPlatformDefaultHttpHandlers()
 #if !HC_NOWEBSOCKETS
 WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
 {
-#if HC_PLATFORM == HC_PLATFORM_WIN32
+#if HC_UNITTEST_API
+    return WebSocketPerformInfo{
+        WebSocketConnectAsyncDefault,
+        WebSocketSendMessageAsyncDefault,
+        WebSocketSendBinaryMessageAsyncDefault,
+        WebSocketDisconnectDefault,
+        nullptr
+    };
+#elif HC_PLATFORM == HC_PLATFORM_WIN32
     // Use WinHttp WebSockets if available (Win 8+) and WebSocketpp otherwise
     auto webSocketExports = WinHttpProvider::GetWinHttpWebSocketExports();
     if (webSocketExports.completeUpgrade && webSocketExports.send && webSocketExports.receive &&
@@ -173,7 +183,7 @@ Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* arg
     http_stl_allocator<HC_PERFORM_ENV> a{};
     HC_UNIQUE_PTR<HC_PERFORM_ENV> performEnv{ nullptr };
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32
+#if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_UNITTEST_API
     RETURN_HR_IF(E_INVALIDARG, args);
 
     auto initWinHttpResult = WinHttpProvider::Initialize();

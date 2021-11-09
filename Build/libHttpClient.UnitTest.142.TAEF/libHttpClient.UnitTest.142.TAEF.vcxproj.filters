@@ -25,9 +25,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\perform_env.cpp">
       <Filter>C++ Source\Global</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Unittest\http_unittest.cpp">
-      <Filter>C++ Source\HTTP\Unittest</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
       <Filter>C++ Source\HTTP</Filter>
     </ClCompile>
@@ -63,9 +60,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp">
       <Filter>C++ Source\Task\Win</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Unittest\websocket_unittest.cpp">
-      <Filter>C++ Source\WebSocket\Unittest</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
       <Filter>C++ Source\WebSocket</Filter>
@@ -245,9 +239,6 @@
     <Filter Include="C++ Source\HTTP">
       <UniqueIdentifier>{700089CF-4F66-3D17-B7FA-B268FAD6A34B}</UniqueIdentifier>
     </Filter>
-    <Filter Include="C++ Source\HTTP\Unittest">
-      <UniqueIdentifier>{D7E7DDCA-9724-330B-96D6-E742D0B5366B}</UniqueIdentifier>
-    </Filter>
     <Filter Include="C++ Source\Logger">
       <UniqueIdentifier>{8C688525-3361-3AE5-BA2A-F901AB20582A}</UniqueIdentifier>
     </Filter>
@@ -274,9 +265,6 @@
     </Filter>
     <Filter Include="C++ Source\WebSocket">
       <UniqueIdentifier>{E74DBB55-725E-3EFB-B289-2DADE1AA0862}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C++ Source\WebSocket\Unittest">
-      <UniqueIdentifier>{FCFA459E-BF5D-3F1D-84A4-AD38875C913A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
       <UniqueIdentifier>{94B982DB-BB14-3C45-A028-075B57F07D40}</UniqueIdentifier>

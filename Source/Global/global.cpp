@@ -256,7 +256,7 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 
 HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
 {
-#if HC_PLATFORM == HC_PLATFORM_WIN32
+#if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_UNITTEST_API
     return m_performEnv->winHttpProvider->SetGlobalProxy(proxyUri);
 #else
     UNREFERENCED_PARAMETER(proxyUri);

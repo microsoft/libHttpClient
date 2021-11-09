@@ -2,8 +2,6 @@
 
 #include "hcwebsocket.h"
 
-NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
-
 HRESULT CALLBACK WinRTWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
@@ -33,5 +31,3 @@ HRESULT CALLBACK WinRTWebSocketDisconnect(
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_opt_ void* context
 );
-
-NAMESPACE_XBOX_HTTP_CLIENT_END
