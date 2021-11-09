@@ -34,7 +34,7 @@
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/bigobj /Zm512 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalUsingDirectories>C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\store\references;C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\vcpackages</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
