@@ -81,6 +81,7 @@ void CALLBACK WinHttpProvider::HttpCallPerformAsyncHandler(
     }
 }
 
+#if !HC_NOWEBSOCKETS
 WinHttpWebSocketExports GetWinHttpWebSocketExportsHelper()
 {
     WinHttpWebSocketExports exports;
@@ -162,6 +163,7 @@ HRESULT CALLBACK WinHttpProvider::WebSocketDisconnectHandler(
 
     return connection->WebSocketDisconnect(closeStatus);
 }
+#endif //!HC_NOWEBSOCKETS
 
 HRESULT WinHttpProvider::SetGlobalProxy(_In_ const char* proxyUri) noexcept
 {
@@ -204,6 +206,7 @@ HRESULT WinHttpProvider::HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlo
     return initConnectionResult.Payload()->HttpCallPerformAsync(async);
 }
 
+#if !HC_NOWEBSOCKETS
 HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*subprotocol*/, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept
 {
     // Get Security information for the call
@@ -227,6 +230,7 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*su
 
     return S_OK;
 }
+#endif
 
 HRESULT WinHttpProvider::CloseAllConnections()
 {

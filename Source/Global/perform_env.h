@@ -1,5 +1,8 @@
 #pragma once
 
+#include "httpcall.h"
+#include "hcwebsocket.h"
+
 #if HC_PLATFORM == HC_PLATFORM_WIN32 
 #include "WinHttp/winhttp_provider.h"
 #elif HC_PLATFORM == HC_PLATFORM_GDK

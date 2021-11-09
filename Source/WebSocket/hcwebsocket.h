@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "pch.h"
 #include <httpClient/httpClient.h>
 
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
@@ -14,6 +13,8 @@ struct hc_websocket_impl
     hc_websocket_impl() {}
     virtual ~hc_websocket_impl() {}
 };
+
+#if !HC_NOWEBSOCKETS
 
 typedef struct HC_WEBSOCKET : std::enable_shared_from_this<HC_WEBSOCKET>
 {
@@ -100,36 +101,6 @@ private:
 
 } HC_WEBSOCKET;
 
-HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
-    _In_z_ const char* uri,
-    _In_z_ const char* subProtocol,
-    _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-);
-
-HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
-    _In_ HCWebsocketHandle websocket,
-    _In_z_ const char* message,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context
-);
-
-HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
-    _In_ HCWebsocketHandle websocket,
-    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
-    _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context
-);
-
-HRESULT CALLBACK Internal_HCWebSocketDisconnect(
-    _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus,
-    _In_opt_ void* context
-);
-
 struct WebSocketPerformInfo
 {
     WebSocketPerformInfo(
@@ -152,3 +123,5 @@ struct WebSocketPerformInfo
     HCWebSocketDisconnectFunction disconnect = nullptr;
     void* context = nullptr;
 };
+
+#endif // !HC_NOWEBSOCKETS

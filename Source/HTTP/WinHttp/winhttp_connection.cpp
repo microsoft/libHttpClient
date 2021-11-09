@@ -3,13 +3,10 @@
 
 #include "pch.h"
 #include "httpcall.h"
+#include "hcwebsocket.h"
 #include "uri.h"
 #include "winhttp_connection.h"
 #include <schannel.h>
-
-#if !HC_NOWEBSOCKETS
-#include "hcwebsocket.h"
-#endif
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
@@ -85,6 +82,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     return connection;
 }
 
+#if !HC_NOWEBSOCKETS
 Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     HINTERNET hSession,
     HCWebsocketHandle webSocket,
@@ -113,6 +111,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
         return std::move(initResult);
     }
 }
+#endif
 
 http_internal_wstring flatten_http_headers(_In_ const http_header_map& headers)
 {
@@ -295,6 +294,7 @@ HRESULT WinHttpConnection::HttpCallPerformAsync(XAsyncBlock* async)
     return SendRequest();
 }
 
+#if !HC_NOWEBSOCKETS
 HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
 {
     RETURN_HR_IF(E_INVALIDARG, !async);
@@ -369,6 +369,7 @@ HRESULT WinHttpConnection::WebSocketDisconnect(_In_ HCWebSocketCloseStatus close
     DWORD dwError = m_winHttpWebSocketExports.shutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
     return HRESULT_FROM_WIN32(dwError);
 }
+#endif
 
 HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
 {
@@ -434,10 +435,12 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
         HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
 
         size_t resultSize{ 0 };
+#if !HC_NOWEBSOCKETS
         if (m_websocketHandle) 
         {
             resultSize = sizeof(WebSocketCompletionResult);
         }
+#endif
         XAsyncComplete(m_asyncBlock, S_OK, resultSize);
         m_asyncBlock = nullptr;
     }
@@ -548,6 +551,7 @@ void WinHttpConnection::callback_status_write_complete(
 
 void WinHttpConnection::callback_websocket_status_write_complete(WinHttpConnection* connection)
 {
+#if !HC_NOWEBSOCKETS
     WebSocketSendContext* nextSendContext{ nullptr };
     WebSocketSendContext* completedSendContext{ nullptr };
 
@@ -571,6 +575,10 @@ void WinHttpConnection::callback_websocket_status_write_complete(WinHttpConnecti
     {
         connection->WebSocketSendMessage(*nextSendContext);
     }
+#else
+    UNREFERENCED_PARAMETER(connection);
+    assert(false);
+#endif
 }
 
 void WinHttpConnection::callback_status_request_error(
@@ -1253,6 +1261,7 @@ void WinHttpConnection::WebSocketCompleteEntireSendQueueWithError(HRESULT error)
 
 void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
 {
+#if !HC_NOWEBSOCKETS
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
     void* functionContext = nullptr;
     HCWebSocketGetEventFunctions(m_websocketHandle, nullptr, nullptr, &disconnectFunc, &functionContext);
@@ -1267,6 +1276,10 @@ void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
     }
 
     StartWinHttpClose();
+#else
+    UNREFERENCED_PARAMETER(closeReason);
+    assert(false);
+#endif
 }
 
 char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(
@@ -1288,6 +1301,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
     _In_ WinHttpConnection* pRequestContext,
     _In_ void* statusInfo)
 {
+#if !HC_NOWEBSOCKETS
     WINHTTP_WEB_SOCKET_STATUS* wsStatus = static_cast<WINHTTP_WEB_SOCKET_STATUS*>(statusInfo);
     if (wsStatus == nullptr)
     {
@@ -1375,7 +1389,11 @@ void WinHttpConnection::callback_websocket_status_read_complete(
             pRequestContext->websocket_start_listening();
         }
     }
-
+#else
+    UNREFERENCED_PARAMETER(statusInfo);
+    UNREFERENCED_PARAMETER(pRequestContext);
+    assert(false);
+#endif
 }
 
 HRESULT WinHttpConnection::websocket_start_listening()
@@ -1475,6 +1493,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
     winHttpConnection->complete_task(S_OK, S_OK);
 }
 
+#if !HC_NOWEBSOCKETS
 HRESULT CALLBACK WinHttpConnection::WebSocketConnectProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
     auto winHttpConnection = static_cast<WinHttpConnection*>(data->context);
@@ -1531,5 +1550,6 @@ HRESULT CALLBACK WinHttpConnection::WebSocketSendProvider(XAsyncOp op, const XAs
     default: return S_OK;
     }
 }
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

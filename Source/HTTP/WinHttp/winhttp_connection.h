@@ -197,13 +197,14 @@ public:
         XPlatSecurityInformation&& securityInformation
     );
 
+#if !HC_NOWEBSOCKETS
     static Result<std::shared_ptr<WinHttpConnection>> Initialize(
         HINTERNET hSession,
         HCWebsocketHandle webSocket,
         proxy_type proxyType,
         XPlatSecurityInformation&& securityInformation
     );
-
+#endif
 
     WinHttpConnection(const WinHttpConnection&) = delete;
     WinHttpConnection(WinHttpConnection&&) = delete;
@@ -214,10 +215,12 @@ public:
     // Client API entry points
     HRESULT HttpCallPerformAsync(XAsyncBlock* async);
 
+#if !HC_NOWEBSOCKETS
     HRESULT WebSocketConnectAsync(XAsyncBlock* async);
     HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const char* message);
     HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const uint8_t* payloadBytes, size_t payloadSize, WINHTTP_WEB_SOCKET_BUFFER_TYPE payloadType = WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE);
     HRESULT WebSocketDisconnect(_In_ HCWebSocketCloseStatus closeStatus);
+#endif
 
     // Called by WinHttpProvider to force close on PLM Suspend or shutdown
     HRESULT Close(ConnectionClosedCallback callback);

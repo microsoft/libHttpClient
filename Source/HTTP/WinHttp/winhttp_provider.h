@@ -30,6 +30,7 @@ public:
 
     static WinHttpWebSocketExports GetWinHttpWebSocketExports();
 
+#if !HC_NOWEBSOCKETS
     // WebSocket provider entry points
     static HRESULT CALLBACK WebSocketConnectAsyncHandler(
         const char* uri,
@@ -60,6 +61,7 @@ public:
         HCWebSocketCloseStatus closeStatus,
         void* context
     ) noexcept;
+#endif
 
     // Sets Global proxy for all HttpConnections
     HRESULT SetGlobalProxy(_In_ const char* proxyUri) noexcept;
@@ -68,7 +70,9 @@ private:
     WinHttpProvider() = default;
 
     HRESULT HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlock* async) noexcept;
+#if !HC_NOWEBSOCKETS
     HRESULT WebSocketConnectAsync(const char* uri, const char* subprotocol, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept;
+#endif
 
     HRESULT CloseAllConnections();
 
