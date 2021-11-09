@@ -9,7 +9,7 @@ steps:
     displayName: "Install the required Android NDK"
     inputs:
       targetType: inline
-      script: '%ANDROID_HOME%\tools\bin\sdkmanager --install "ndk;22.0.7026061"'
+      script: '%ANDROID_HOME%\tools\bin\sdkmanager --install "ndk;22.1.7171670"'
 
   - task: Gradle@2
     displayName: "Build libHttpClient.Android.Workspace"
