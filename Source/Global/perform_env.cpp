@@ -10,7 +10,7 @@
 #include "HTTP/Android/android_http_request.h"
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #elif HC_PLATFORM_IS_APPLE
-#include "Source/HTTP/Apple/http_apple.h"
+#include "HTTP/Apple/http_apple.h"
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #endif
 
