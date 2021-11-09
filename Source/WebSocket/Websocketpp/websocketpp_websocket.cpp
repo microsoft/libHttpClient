@@ -3,9 +3,9 @@
 
 #include "pch.h"
 
-#if !HC_NOWEBSOCKETS && !HC_WINHTTP_WEBSOCKETS
+#if !HC_NOWEBSOCKETS
 
-#include "../hcwebsocket.h"
+#include "websocketpp_websocket.h"
 #include "uri.h"
 #include "x509_cert_utilities.hpp"
 
@@ -491,7 +491,7 @@ private:
                         auto httpSingleton = xbox::httpclient::get_http_singleton();
                         if (httpSingleton)
                         {
-                            HC_PERFORM_ENV* platformContext = reinterpret_cast<HC_PERFORM_ENV*>(httpSingleton->m_performEnv.get());
+                            auto platformContext = httpSingleton->m_performEnv->androidPlatformContext;
                             javaVm = platformContext->GetJavaVm();
                         }
                     }
@@ -866,7 +866,9 @@ private:
     http_internal_string m_subprotocol;
 };
 
-HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+HRESULT CALLBACK WebSocketppConnectAsync(
     _In_z_ const char* uri,
     _In_z_ const char* subProtocol,
     _In_ HCWebsocketHandle websocket,
@@ -888,7 +890,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     return wsppSocket->connect(async);
 }
 
-HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
+HRESULT CALLBACK WebSocketppSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* message,
     _Inout_ XAsyncBlock* async,
@@ -904,7 +906,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     return wsppSocket->send(async, message);
 }
 
-HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
+HRESULT CALLBACK WebSocketppSendBinaryMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
@@ -921,7 +923,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
     return wsppSocket->sendBinary(asyncBlock, payloadBytes, payloadSize);
 }
 
-HRESULT CALLBACK Internal_HCWebSocketDisconnect(
+HRESULT CALLBACK WebSocketppDisconnect(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_opt_ void* context
@@ -943,4 +945,6 @@ HRESULT CALLBACK Internal_HCWebSocketDisconnect(
     return wsppSocket->close(closeStatus);
 }
 
-#endif // !HC_NOWEBSOCKETS && !HC_WINHTTP_WEBSOCKETS
+NAMESPACE_XBOX_HTTP_CLIENT_END
+
+#endif // !HC_NOWEBSOCKETS

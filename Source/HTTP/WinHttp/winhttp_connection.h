@@ -51,7 +51,6 @@ private:
     win32_cs* m_pCS;
 };
 
-#if HC_WINHTTP_WEBSOCKETS
 class websocket_message_buffer
 {
 public:
@@ -143,7 +142,6 @@ private:
     uint32_t m_bufferByteCount = 0;
     uint32_t m_bufferByteCapacity = 0;
 };
-#endif
 
 struct XPlatSecurityInformation
 {
@@ -169,9 +167,27 @@ enum class ConnectionState : uint32_t
     WinHttpClosing
 };
 
+using WinHttpWebSocketCompleteUpgradeExport = HINTERNET(WINAPI *)(HINTERNET, DWORD_PTR);
+using WinHttpWebSocketSendExport = DWORD(WINAPI *)(HINTERNET, UINT, PVOID, DWORD);
+using WinHttpWebSocketReceiveExport = DWORD(WINAPI *)(HINTERNET, PVOID, DWORD, DWORD*, UINT*);
+using WinHttpWebSocketCloseExport = DWORD(WINAPI *)(HINTERNET, USHORT, PVOID, DWORD);
+using WinHttpWebSocketQueryCloseStatusExport = DWORD(WINAPI *)(HINTERNET, USHORT*, PVOID, DWORD, DWORD*);
+using WinHttpWebSocketShutdownExport = DWORD(WINAPI *)(HINTERNET, USHORT, PVOID, DWORD);
+
+struct WinHttpWebSocketExports
+{
+    HMODULE winHttpModule{ nullptr };
+    WinHttpWebSocketCompleteUpgradeExport completeUpgrade{ nullptr };
+    WinHttpWebSocketSendExport send{ nullptr };
+    WinHttpWebSocketReceiveExport receive{ nullptr };
+    WinHttpWebSocketCloseExport close{ nullptr };
+    WinHttpWebSocketQueryCloseStatusExport queryCloseStatus{ nullptr };
+    WinHttpWebSocketShutdownExport shutdown{ nullptr };
+};
+
 using ConnectionClosedCallback = std::function<void()>;
 
-class WinHttpConnection : public std::enable_shared_from_this<WinHttpConnection>
+class WinHttpConnection : public std::enable_shared_from_this<WinHttpConnection>, public hc_websocket_impl
 {
 public:
     static Result<std::shared_ptr<WinHttpConnection>> Initialize(
@@ -181,7 +197,7 @@ public:
         XPlatSecurityInformation&& securityInformation
     );
 
-#if HC_WINHTTP_WEBSOCKETS
+#if !HC_NOWEBSOCKETS
     static Result<std::shared_ptr<WinHttpConnection>> Initialize(
         HINTERNET hSession,
         HCWebsocketHandle webSocket,
@@ -198,9 +214,9 @@ public:
 
     // Client API entry points
     HRESULT HttpCallPerformAsync(XAsyncBlock* async);
-#if HC_WINHTTP_WEBSOCKETS
-    HRESULT WebSocketConnectAsync(XAsyncBlock* async);
 
+#if !HC_NOWEBSOCKETS
+    HRESULT WebSocketConnectAsync(XAsyncBlock* async);
     HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const char* message);
     HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const uint8_t* payloadBytes, size_t payloadSize, WINHTTP_WEB_SOCKET_BUFFER_TYPE payloadType = WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE);
     HRESULT WebSocketDisconnect(_In_ HCWebSocketCloseStatus closeStatus);
@@ -282,7 +298,6 @@ private:
         _In_ WinHttpConnection* pRequestContext
     );
 
-#if HC_WINHTTP_WEBSOCKETS
     static void callback_websocket_status_write_complete(
         _In_ WinHttpConnection* pRequestContext);
 
@@ -297,7 +312,6 @@ private:
     static char* winhttp_web_socket_buffer_type_to_string(
         _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
     );
-#endif
 
     void complete_task(_In_ HRESULT translatedHR);
     void complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError);
@@ -330,7 +344,6 @@ private:
     proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
 
-#if HC_WINHTTP_WEBSOCKETS
     struct WebSocketSendContext
     {
         XAsyncBlock* async; // non-owning
@@ -338,6 +351,8 @@ private:
         http_internal_vector<uint8_t> payload;
         WINHTTP_WEB_SOCKET_BUFFER_TYPE payloadType;
     };
+
+    WinHttpWebSocketExports m_winHttpWebSocketExports;
 
     // WinHttp WebSocket methods
     void WebSocketSendMessage(const WebSocketSendContext& sendContext);
@@ -355,7 +370,6 @@ private:
     std::recursive_mutex m_websocketSendMutex; // controls access to m_websocketSendQueue
     http_internal_queue<WebSocketSendContext*> m_websocketSendQueue{};
     websocket_message_buffer m_websocketResponseBuffer;
-#endif
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

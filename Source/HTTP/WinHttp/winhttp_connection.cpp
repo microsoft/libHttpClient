@@ -3,13 +3,10 @@
 
 #include "pch.h"
 #include "httpcall.h"
+#include "hcwebsocket.h"
 #include "uri.h"
 #include "winhttp_connection.h"
 #include <schannel.h>
-
-#if !HC_NOWEBSOCKETS
-#include "hcwebsocket.h"
-#endif
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
@@ -24,6 +21,10 @@ using namespace xbox::httpclient;
 #define WINHTTP_WEBSOCKET_RECVBUFFER_SIZE (1024 * 4)
 #define WINHTTP_WEBSOCKET_RECVBUFFER_MAXSIZE (1024 * 20)
 
+#ifndef WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET
+#define WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET 114
+#endif
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 WinHttpConnection::WinHttpConnection(
@@ -35,7 +36,8 @@ WinHttpConnection::WinHttpConnection(
     m_hSession{ hSession },
     m_call{ call },
     m_proxyType{ proxyType },
-    m_securityInformation{ std::move(securityInformation) }
+    m_securityInformation{ std::move(securityInformation) },
+    m_winHttpWebSocketExports{ WinHttpProvider::GetWinHttpWebSocketExports() }
 {
 }
 
@@ -43,17 +45,15 @@ WinHttpConnection::~WinHttpConnection()
 {
     HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection dtor");
 
-#if HC_WINHTTP_WEBSOCKETS
-    if (m_state == ConnectionState::WebSocketConnected && m_hRequest)
+    if (m_state == ConnectionState::WebSocketConnected && m_hRequest && m_winHttpWebSocketExports.close)
     {
         // Use WinHttpWebSocketClose rather than disconnect in this case to close both the send and receive channels
-        WinHttpWebSocketClose(m_hRequest, static_cast<USHORT>(HCWebSocketCloseStatus::GoingAway), nullptr, 0);
+        m_winHttpWebSocketExports.close(m_hRequest, static_cast<USHORT>(HCWebSocketCloseStatus::GoingAway), nullptr, 0);
     }
     if (m_websocketCall)
     {
         HCHttpCallCloseHandle(m_websocketCall);
     }
-#endif
 
     if (m_hRequest != nullptr)
     {
@@ -82,7 +82,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     return connection;
 }
 
-#if HC_WINHTTP_WEBSOCKETS
+#if !HC_NOWEBSOCKETS
 Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     HINTERNET hSession,
     HCWebsocketHandle webSocket,
@@ -294,7 +294,7 @@ HRESULT WinHttpConnection::HttpCallPerformAsync(XAsyncBlock* async)
     return SendRequest();
 }
 
-#if HC_WINHTTP_WEBSOCKETS
+#if !HC_NOWEBSOCKETS
 HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
 {
     RETURN_HR_IF(E_INVALIDARG, !async);
@@ -358,16 +358,18 @@ HRESULT WinHttpConnection::WebSocketSendMessageAsync(XAsyncBlock* async, const u
 
 HRESULT WinHttpConnection::WebSocketDisconnect(_In_ HCWebSocketCloseStatus closeStatus)
 {
+    assert(m_winHttpWebSocketExports.shutdown);
+
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
         m_state = ConnectionState::WebSocketClosing;
     }
 
     // Shutdown closes the send channel after sending a close frame. When we receive a close frame we are fully disconnected
-    DWORD dwError = WinHttpWebSocketShutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
+    DWORD dwError = m_winHttpWebSocketExports.shutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
     return HRESULT_FROM_WIN32(dwError);
 }
-#endif // HC_WINHTTP_WEBSOCKETS
+#endif
 
 HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
 {
@@ -408,12 +410,9 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
 
     if (doWebSocketClose)
     {
-#if HC_WINHTTP_WEBSOCKETS
-        DWORD result = WinHttpWebSocketClose(m_hRequest, static_cast<USHORT>(HCWebSocketCloseStatus::GoingAway), nullptr, 0);
+        assert(m_winHttpWebSocketExports.close);
+        DWORD result = m_winHttpWebSocketExports.close(m_hRequest, static_cast<USHORT>(HCWebSocketCloseStatus::GoingAway), nullptr, 0);
         return HRESULT_FROM_WIN32(result);
-#else
-        assert(false);
-#endif
     }
     else if (doWinHttpClose)
     {
@@ -436,7 +435,7 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
         HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
 
         size_t resultSize{ 0 };
-#if HC_WINHTTP_WEBSOCKETS
+#if !HC_NOWEBSOCKETS
         if (m_websocketHandle) 
         {
             resultSize = sizeof(WebSocketCompletionResult);
@@ -446,9 +445,7 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
         m_asyncBlock = nullptr;
     }
 
-#if HC_WINHTTP_WEBSOCKETS
     if (!m_websocketHandle)
-#endif
     {
         StartWinHttpClose();
     }
@@ -552,9 +549,9 @@ void WinHttpConnection::callback_status_write_complete(
     }
 }
 
-#if HC_WINHTTP_WEBSOCKETS
 void WinHttpConnection::callback_websocket_status_write_complete(WinHttpConnection* connection)
 {
+#if !HC_NOWEBSOCKETS
     WebSocketSendContext* nextSendContext{ nullptr };
     WebSocketSendContext* completedSendContext{ nullptr };
 
@@ -578,8 +575,11 @@ void WinHttpConnection::callback_websocket_status_write_complete(WinHttpConnecti
     {
         connection->WebSocketSendMessage(*nextSendContext);
     }
-}
+#else
+    UNREFERENCED_PARAMETER(connection);
+    assert(false);
 #endif
+}
 
 void WinHttpConnection::callback_status_request_error(
     _In_ HINTERNET hRequestHandle,
@@ -1023,13 +1023,11 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE:
             {
-#if HC_WINHTTP_WEBSOCKETS
                 if (pRequestContext->m_websocketHandle)
                 {
                     callback_websocket_status_headers_available(hRequestHandle, callbackContext);
                 }
                 else
-#endif
                 {
                     callback_status_headers_available(hRequestHandle, pRequestContext, statusInfo);
                 }
@@ -1044,13 +1042,11 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
             {
-#if HC_WINHTTP_WEBSOCKETS
                 if (pRequestContext->m_websocketHandle)
                 {
                     callback_websocket_status_read_complete(pRequestContext, statusInfo);
                 }
                 else
-#endif
                 {
                     callback_status_read_complete(hRequestHandle, pRequestContext, statusInfoLength);
                 }
@@ -1059,13 +1055,11 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:
             {
-#if HC_WINHTTP_WEBSOCKETS
                 if (pRequestContext->m_websocketHandle)
                 {
                     callback_websocket_status_write_complete(pRequestContext);
                 }
                 else
-#endif
                 {
                     callback_status_write_complete(hRequestHandle, pRequestContext, statusInfo);
                 }
@@ -1074,13 +1068,16 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE:
             {
-#if HC_WINHTTP_WEBSOCKETS
-                USHORT closeReason = 0;
-                DWORD dwReasonLengthConsumed = 0;
-                WinHttpWebSocketQueryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
+                if (pRequestContext->m_websocketHandle)
+                {
+                    assert(pRequestContext->m_winHttpWebSocketExports.queryCloseStatus);
 
-                pRequestContext->on_websocket_disconnected(closeReason);
-#endif
+                    USHORT closeReason = 0;
+                    DWORD dwReasonLengthConsumed = 0;
+                    pRequestContext->m_winHttpWebSocketExports.queryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
+
+                    pRequestContext->on_websocket_disconnected(closeReason);
+                }
                 break;
             }
 
@@ -1171,6 +1168,8 @@ HRESULT WinHttpConnection::set_autodiscover_proxy()
 
 HRESULT WinHttpConnection::SendRequest()
 {
+    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection [%d] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
+
     HC_UNIQUE_PTR<WinHttpCallbackContext> context = http_allocate_unique<WinHttpCallbackContext>(shared_from_this());
 
     if (WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
@@ -1233,10 +1232,11 @@ HRESULT WinHttpConnection::StartWinHttpClose()
     return S_OK;
 }
 
-#if HC_WINHTTP_WEBSOCKETS
 void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendContext)
 {
-    DWORD dwError = WinHttpWebSocketSend(m_hRequest,
+    assert(m_winHttpWebSocketExports.send);
+
+    DWORD dwError = m_winHttpWebSocketExports.send(m_hRequest,
         sendContext.payloadType, 
         (PVOID)sendContext.payload.data(),
         static_cast<DWORD>(sendContext.payload.size()));
@@ -1261,6 +1261,7 @@ void WinHttpConnection::WebSocketCompleteEntireSendQueueWithError(HRESULT error)
 
 void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
 {
+#if !HC_NOWEBSOCKETS
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
     void* functionContext = nullptr;
     HCWebSocketGetEventFunctions(m_websocketHandle, nullptr, nullptr, &disconnectFunc, &functionContext);
@@ -1275,6 +1276,10 @@ void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
     }
 
     StartWinHttpClose();
+#else
+    UNREFERENCED_PARAMETER(closeReason);
+    assert(false);
+#endif
 }
 
 char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(
@@ -1296,6 +1301,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
     _In_ WinHttpConnection* pRequestContext,
     _In_ void* statusInfo)
 {
+#if !HC_NOWEBSOCKETS
     WINHTTP_WEB_SOCKET_STATUS* wsStatus = static_cast<WINHTTP_WEB_SOCKET_STATUS*>(statusInfo);
     if (wsStatus == nullptr)
     {
@@ -1305,9 +1311,11 @@ void WinHttpConnection::callback_websocket_status_read_complete(
     HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp] callback_websocket_status_read_complete: buffer type %s", winhttp_web_socket_buffer_type_to_string(wsStatus->eBufferType));
     if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE)
     {
+        assert(pRequestContext->m_winHttpWebSocketExports.queryCloseStatus);
+
         USHORT closeReason = 0;
         DWORD dwReasonLengthConsumed = 0;
-        WinHttpWebSocketQueryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
+        pRequestContext->m_winHttpWebSocketExports.queryCloseStatus(pRequestContext->m_hRequest, &closeReason, nullptr, 0, &dwReasonLengthConsumed);
 
         pRequestContext->on_websocket_disconnected(closeReason);
     }
@@ -1381,7 +1389,11 @@ void WinHttpConnection::callback_websocket_status_read_complete(
             pRequestContext->websocket_start_listening();
         }
     }
-
+#else
+    UNREFERENCED_PARAMETER(statusInfo);
+    UNREFERENCED_PARAMETER(pRequestContext);
+    assert(false);
+#endif
 }
 
 HRESULT WinHttpConnection::websocket_start_listening()
@@ -1420,12 +1432,14 @@ HRESULT WinHttpConnection::websocket_read_message()
 
     if (SUCCEEDED(hr))
     {
+        assert(m_winHttpWebSocketExports.receive);
+
         uint8_t* bufferPtr = m_websocketResponseBuffer.GetNextWriteLocation();
         uint64_t bufferSize = m_websocketResponseBuffer.GetRemainingCapacity();
         DWORD dwError = ERROR_SUCCESS;
         DWORD bytesRead{ 0 }; // not used by required.  bytes read comes from FinishWriteData(wsStatus->dwBytesTransferred)
-        WINHTTP_WEB_SOCKET_BUFFER_TYPE bufType{};
-        dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
+        UINT bufType{};
+        dwError = m_winHttpWebSocketExports.receive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
         if (dwError)
         {
             HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
@@ -1445,9 +1459,11 @@ void WinHttpConnection::callback_websocket_status_headers_available(
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId());
 
+    assert(winHttpConnection->m_winHttpWebSocketExports.completeUpgrade);
+
     // Application should check what is the HTTP status code returned by the server and behave accordingly.
     // WinHttpWebSocketCompleteUpgrade will fail if the HTTP status code is different than 101.
-    winHttpConnection->m_hRequest = WinHttpWebSocketCompleteUpgrade(hRequestHandle, NULL);
+    winHttpConnection->m_hRequest = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, NULL);
     if (winHttpConnection->m_hRequest == NULL)
     {
         DWORD dwError = GetLastError();
@@ -1477,6 +1493,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
     winHttpConnection->complete_task(S_OK, S_OK);
 }
 
+#if !HC_NOWEBSOCKETS
 HRESULT CALLBACK WinHttpConnection::WebSocketConnectProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
     auto winHttpConnection = static_cast<WinHttpConnection*>(data->context);
@@ -1533,7 +1550,6 @@ HRESULT CALLBACK WinHttpConnection::WebSocketSendProvider(XAsyncOp op, const XAs
     default: return S_OK;
     }
 }
-
 #endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
