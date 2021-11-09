@@ -180,7 +180,9 @@ WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
 
 Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* args) noexcept
 {
+#if HC_PLATFORM != HC_PLATFORM_IOS
     http_stl_allocator<HC_PERFORM_ENV> a{};
+#endif
     HC_UNIQUE_PTR<HC_PERFORM_ENV> performEnv{ nullptr };
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_UNITTEST_API
