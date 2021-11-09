@@ -1515,6 +1515,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
+					"$(SRCROOT)/../../Source/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1544,6 +1545,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
+					"$(SRCROOT)/../../Source/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1686,6 +1688,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
+					"$(SRCROOT)/../../Source/**",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
@@ -1717,6 +1720,7 @@
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
+					"$(SRCROOT)/../../Source/**",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
@@ -1798,6 +1802,7 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple/**",
+					"$(SRCROOT)/../../Source/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1829,6 +1834,7 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple/**",
+					"$(SRCROOT)/../../Source/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1930,6 +1936,7 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
+					"$(SRCROOT)/../../Source/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1962,6 +1969,7 @@
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
+					"$(SRCROOT)/../../Source/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
