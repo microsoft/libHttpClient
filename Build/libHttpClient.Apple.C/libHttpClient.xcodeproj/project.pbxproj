@@ -1516,6 +1516,7 @@
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1546,6 +1547,7 @@
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1689,6 +1691,7 @@
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
@@ -1721,6 +1724,7 @@
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
@@ -1803,6 +1807,7 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple/**",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1835,6 +1840,7 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple/**",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1937,6 +1943,7 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1970,6 +1977,7 @@
 					"$(SRCROOT)/../../Source/Common",
 					"$(SRCROOT)/../../Source/HTTP/Apple",
 					"$(SRCROOT)/../../Source/**",
+					"$(SRCROOT)/../../Source/Global",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
