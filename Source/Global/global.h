@@ -6,6 +6,7 @@
 #if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
 #endif
+#include "perform_env.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
