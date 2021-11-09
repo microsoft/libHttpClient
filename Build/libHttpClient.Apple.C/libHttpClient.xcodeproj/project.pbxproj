@@ -89,6 +89,8 @@
 		A5A985FF2739B3A500361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
 		A5A986002739B3A500361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
 		A5A986012739B3A600361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
+		A5A986092739CD6C00361934 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
+		A5A9860A2739CD6C00361934 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D335CABE24085A9A005958B3 /* LocklessQueue.h */; };
 		D3DAA85121C0E4090009C7F6 /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
 		D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */; };
@@ -114,7 +116,6 @@
 		D9EF883125A522BC005C4BDF /* httpcall_response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E997209ADEB100CC6774 /* httpcall_response.cpp */; };
 		D9EF883225A522BC005C4BDF /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		D9EF883325A522BC005C4BDF /* http_apple.mm in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E999209ADEB100CC6774 /* http_apple.mm */; };
-		D9EF883425A522BC005C4BDF /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		D9EF883525A522BC005C4BDF /* httpcall_request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9A8209ADEB100CC6774 /* httpcall_request.cpp */; };
 		D9EF883625A522BC005C4BDF /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		D9EF883725A522BC005C4BDF /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
@@ -149,7 +150,6 @@
 		D9FF0A6825A5366A0061B717 /* httpcall_response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E997209ADEB100CC6774 /* httpcall_response.cpp */; };
 		D9FF0A6925A5366A0061B717 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		D9FF0A6A25A5366A0061B717 /* http_apple.mm in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E999209ADEB100CC6774 /* http_apple.mm */; };
-		D9FF0A6B25A5366A0061B717 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		D9FF0A6C25A5366A0061B717 /* httpcall_request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9A8209ADEB100CC6774 /* httpcall_request.cpp */; };
 		D9FF0A6D25A5366A0061B717 /* WaitTimer_stl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 588C7E7B218275CE001098B3 /* WaitTimer_stl.cpp */; };
 		D9FF0A6E25A5366A0061B717 /* TaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */; };
@@ -1223,10 +1223,10 @@
 				D9EF883225A522BC005C4BDF /* websocketpp_websocket.cpp in Sources */,
 				D9EF883325A522BC005C4BDF /* http_apple.mm in Sources */,
 				A2ACA1C02630C9C100D74874 /* session_delegate.mm in Sources */,
-				D9EF883425A522BC005C4BDF /* hcwebsocket.cpp in Sources */,
 				D9EF883525A522BC005C4BDF /* httpcall_request.cpp in Sources */,
 				D9EF883625A522BC005C4BDF /* WaitTimer_stl.cpp in Sources */,
 				D9EF883725A522BC005C4BDF /* TaskQueue.cpp in Sources */,
+				A5A986092739CD6C00361934 /* hcwebsocket.cpp in Sources */,
 				D9EF883825A522BC005C4BDF /* mock_publics.cpp in Sources */,
 				D9EF883925A522BC005C4BDF /* log_publics.cpp in Sources */,
 				A207D740262F3E35005C0A65 /* request_body_stream.mm in Sources */,
@@ -1261,10 +1261,10 @@
 				D9FF0A6925A5366A0061B717 /* websocketpp_websocket.cpp in Sources */,
 				D9FF0A6A25A5366A0061B717 /* http_apple.mm in Sources */,
 				A2ACA1C12630C9C100D74874 /* session_delegate.mm in Sources */,
-				D9FF0A6B25A5366A0061B717 /* hcwebsocket.cpp in Sources */,
 				D9FF0A6C25A5366A0061B717 /* httpcall_request.cpp in Sources */,
 				D9FF0A6D25A5366A0061B717 /* WaitTimer_stl.cpp in Sources */,
 				D9FF0A6E25A5366A0061B717 /* TaskQueue.cpp in Sources */,
+				A5A9860A2739CD6C00361934 /* hcwebsocket.cpp in Sources */,
 				D9FF0A6F25A5366A0061B717 /* mock_publics.cpp in Sources */,
 				D9FF0A7025A5366A0061B717 /* log_publics.cpp in Sources */,
 				A207D741262F3E35005C0A65 /* request_body_stream.mm in Sources */,
@@ -1514,6 +1514,7 @@
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
+					"$(SRCROOT)/../../Source/HTTP/Apple",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1542,6 +1543,7 @@
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
+					"$(SRCROOT)/../../Source/HTTP/Apple",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -1683,6 +1685,7 @@
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
+					"$(SRCROOT)/../../Source/HTTP/Apple",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
@@ -1713,6 +1716,7 @@
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
+					"$(SRCROOT)/../../Source/HTTP/Apple",
 				);
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
@@ -1793,6 +1797,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../Source/HTTP/Apple/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1823,6 +1828,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../Source/HTTP/Apple/**",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1923,6 +1929,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../Source/HTTP/Apple",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
@@ -1954,6 +1961,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../Source/HTTP/Apple",
 				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CPLUSPLUSFLAGS = (
