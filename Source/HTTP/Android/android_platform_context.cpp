@@ -41,15 +41,23 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
 
-    auto platformContext = std::shared_ptr<AndroidPlatformContext>(new (std::nothrow) AndroidPlatformContext(
-        javaVm,
-        args->applicationContext,
-        globalRequestClass,
-        globalResponseClass
-    ));
-    if (!platformContext) { return E_OUTOFMEMORY; }
+    try
+    {
+        http_stl_allocator<AndroidPlatformContext> a{};
+        auto platformContext = std::shared_ptr<AndroidPlatformContext>(
+                new (a.allocate(1)) AndroidPlatformContext(
+                        javaVm,
+                        args->applicationContext,
+                        globalRequestClass,
+                        globalResponseClass
+                ), http_alloc_deleter<AndroidPlatformContext>());
 
-    return std::move(platformContext);
+        return std::move(platformContext);
+    }
+    catch (std::bad_alloc)
+    {
+        return E_OUTOFMEMORY;
+    }
 }
 
 AndroidPlatformContext::AndroidPlatformContext(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass) :
