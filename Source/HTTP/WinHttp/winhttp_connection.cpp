@@ -345,6 +345,7 @@ HRESULT WinHttpConnection::WebSocketSendMessageAsync(XAsyncBlock* async, const u
     auto sendContext = http_allocate_unique<WebSocketSendContext>();
     sendContext->async = async;
     sendContext->connection = this;
+    sendContext->socket = m_websocketHandle; // Store socket handle because 'connection' may be invalid in WebSocketSendProvider GetResult
     sendContext->payload = http_internal_vector<uint8_t>(payloadBytes, payloadBytes + payloadSize);
     sendContext->payloadType = payloadType;
 
@@ -1538,6 +1539,7 @@ HRESULT CALLBACK WinHttpConnection::WebSocketSendProvider(XAsyncOp op, const XAs
     case XAsyncOp::GetResult:
     {
         auto result = static_cast<WebSocketCompletionResult*>(data->buffer);
+        result->websocket = context->socket;
         result->platformErrorCode = S_OK;
         result->errorCode = S_OK;
         return S_OK;
