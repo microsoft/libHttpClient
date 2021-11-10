@@ -347,7 +347,8 @@ private:
     struct WebSocketSendContext
     {
         XAsyncBlock* async; // non-owning
-        WinHttpConnection* connection;
+        WinHttpConnection* connection; // non-owning
+        HCWebsocketHandle socket; // non-owning
         http_internal_vector<uint8_t> payload;
         WINHTTP_WEB_SOCKET_BUFFER_TYPE payloadType;
     };

@@ -666,6 +666,7 @@ private:
                         return E_HC_NOT_INITIALISED;
                     }
                     result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                    result->websocket = context->pThis->m_hcWebsocketHandle;
                     result->platformErrorCode = context->message.error.value();
                     result->errorCode = XAsyncGetStatus(data->async, false);
                     return S_OK;
