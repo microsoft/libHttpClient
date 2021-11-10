@@ -33,7 +33,7 @@ Result<std::shared_ptr<CurlProvider>> CurlProvider::Initialize()
     RETURN_IF_FAILED(HrFromCurle(initRes));
 
     http_stl_allocator<CurlProvider> a{};
-    auto provider = std::shared_ptr<CurlProvider>{ new (a.allocate(1)) CurlProvider };
+    auto provider = std::shared_ptr<CurlProvider>{ new (a.allocate(1)) CurlProvider, http_alloc_deleter<CurlProvider>() };
 
     return std::move(provider);
 }
