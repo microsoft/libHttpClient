@@ -3,10 +3,11 @@
 #include "android_platform_context.h"
 #include <httpClient/httpClient.h>
 
-Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initialize(HCInitArgs* args) noexcept {
+Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initialize(HCInitArgs* args) noexcept
+{
     assert(args != nullptr);
-    JavaVM *javaVm = args->javaVM;
-    JNIEnv *jniEnv = nullptr;
+    JavaVM* javaVm = args->javaVM;
+    JNIEnv* jniEnv = nullptr;
 
     // Pass the jvm down to XTaskQueue
     XTaskQueueSetJvm(javaVm);
@@ -15,7 +16,7 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
     // a C++ background thread and attach to Java we do not have the full class-loader information.
     // This call should be made on JNI_OnLoad or another java thread and we will cache a global reference
     // to the classes we will use for making HTTP requests.
-    jint result = javaVm->GetEnv(reinterpret_cast<void **>(&jniEnv), JNI_VERSION_1_6);
+    jint result = javaVm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
 
     if (result != JNI_OK)
     {
@@ -44,7 +45,7 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
     {
         http_stl_allocator<AndroidPlatformContext> a{};
         auto platformContext = std::shared_ptr<AndroidPlatformContext>(
-                new(a.allocate(1)) AndroidPlatformContext(
+                new (a.allocate(1)) AndroidPlatformContext(
                         javaVm,
                         args->applicationContext,
                         globalRequestClass,
