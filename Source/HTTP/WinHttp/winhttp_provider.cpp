@@ -195,6 +195,14 @@ HRESULT WinHttpProvider::HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlo
     auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
     RETURN_IF_FAILED(getHSessionResult.hr);
 
+    std::unique_lock<std::mutex> lock{ m_lock };
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (!m_networkInitialized)
+    {
+        return E_HC_NETWORK_NOT_INITIALIZED;
+    }
+#endif
+
     // Initialize WinHttpConnection
     auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), callHandle, m_proxyType, getSecurityInfoResult.ExtractPayload());
     RETURN_IF_FAILED(initConnectionResult.hr);
@@ -216,6 +224,14 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*su
     // Get HSession for the call
     auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
     RETURN_IF_FAILED(getHSessionResult.hr);
+
+    std::unique_lock<std::mutex> lock{ m_lock };
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (!m_networkInitialized)
+    {
+        return E_HC_NETWORK_NOT_INITIALIZED;
+    }
+#endif
 
     // Initialize WinHttpConnection
     auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), websocketHandle, m_proxyType, getSecurityInfoResult.ExtractPayload());
@@ -298,8 +314,6 @@ Result<XPlatSecurityInformation> WinHttpProvider::GetSecurityInformation(const c
     asyncBlock.queue = m_immediateQueue;
     RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsync(url, &asyncBlock));
     RETURN_IF_FAILED(XAsyncGetStatus(&asyncBlock, true));
-
-    // TODO should there be a !m_isSuspended check at this point?
 
     size_t securityInformationBufferByteCount{ 0 };
     RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsyncResultSize(&asyncBlock, &securityInformationBufferByteCount));
