@@ -95,7 +95,7 @@ for BUILD_ARCH in $BUILD_ARCHS; do
 
     if [ "$BUILD_ARCH" == "x86_64" ]; then
         ./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
-    elif [[ "$BUILDARCH" == "i386" ]]; then
+    elif [ "$BUILD_ARCH" == "i386" ]; then
         ./Configure darwin-i386-cc shared no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
     elif [ "$BUILD_ARCH" == "arm64" ]; then
         if [ "$PLATFORM_NAME" == "macosx" ] || [ "$PLATFORM_NAME" == "iphonesimulator" ]; then
