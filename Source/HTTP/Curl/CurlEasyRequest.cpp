@@ -358,6 +358,10 @@ HRESULT CurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt) 
     {
         opt = CURLOPT_UPLOAD;
     }
+    else if (strcmp(method, "HEAD") == 0)
+    {
+        opt = CURLOPT_NOBODY;
+    }
     else
     {
         opt = CURLOPT_CUSTOMREQUEST;
