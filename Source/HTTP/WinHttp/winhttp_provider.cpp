@@ -81,7 +81,6 @@ void CALLBACK WinHttpProvider::HttpCallPerformAsyncHandler(
     }
 }
 
-#if !HC_NOWEBSOCKETS
 WinHttpWebSocketExports GetWinHttpWebSocketExportsHelper()
 {
     WinHttpWebSocketExports exports;
@@ -104,6 +103,7 @@ WinHttpWebSocketExports WinHttpProvider::GetWinHttpWebSocketExports()
     return s_exports;
 }
 
+#if !HC_NOWEBSOCKETS
 HRESULT CALLBACK WinHttpProvider::WebSocketConnectAsyncHandler(
     const char* uri,
     const char* subprotocol,
