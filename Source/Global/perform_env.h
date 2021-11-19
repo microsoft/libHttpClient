@@ -7,9 +7,7 @@
 #include "WinHttp/winhttp_provider.h"
 #elif HC_PLATFORM == HC_PLATFORM_GDK
 #include "Curl/CurlProvider.h"
-#if !HC_NOWEBSOCKETS
 #include "WinHttp/winhttp_provider.h"
-#endif
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "HTTP/Android/android_platform_context.h"
 #endif
@@ -37,9 +35,7 @@ public:
     std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
 #elif HC_PLATFORM == HC_PLATFORM_GDK
     std::shared_ptr<xbox::httpclient::CurlProvider> curlProvider;
-#if !HC_NOWEBSOCKETS
     std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
-#endif
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
     std::shared_ptr<AndroidPlatformContext> androidPlatformContext;
 #endif
