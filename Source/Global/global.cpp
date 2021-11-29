@@ -140,14 +140,12 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
 
             if (FAILED(cleanupResult))
             {
-                // Maybe we should just swallow this error and continue with cleanup?
-                XAsyncComplete(singletonCleanupAsyncBlock, cleanupResult, 0);
+                // Provider cleanup really should never fail. If it does, there isn't much we can do so log error and continue with cleanup
+                HC_TRACE_ERROR_HR(HTTPCLIENT, cleanupResult, "HC_PERFORM_ENV::CleanupAsync failed unexpectedly, continuing with cleanup");
             }
-            else
-            {
-                // PerformEnv cleanup complete, continue with singleton cleanup
-                XAsyncSchedule(singletonCleanupAsyncBlock, 0);
-            }
+            
+            // PerformEnv cleanup complete, continue with singleton cleanup
+            XAsyncSchedule(singletonCleanupAsyncBlock, 0);            
         };
 
         RETURN_IF_FAILED(HC_PERFORM_ENV::CleanupAsync(std::move(singleton->m_performEnv), performEnvCleanupAsyncBlock.get()));

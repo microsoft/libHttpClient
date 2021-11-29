@@ -31,12 +31,6 @@ Result<std::shared_ptr<WinHttpProvider>> WinHttpProvider::Initialize()
 
 WinHttpProvider::~WinHttpProvider()
 {
-    if (m_backgroundQueue)
-    {
-        XTaskQueueTerminate(m_backgroundQueue, true, nullptr, nullptr);
-        XTaskQueueCloseHandle(m_backgroundQueue);
-    }
-
     if (m_immediateQueue)
     {
         XTaskQueueCloseHandle(m_immediateQueue);
@@ -79,33 +73,11 @@ void CALLBACK WinHttpProvider::HttpCallPerformAsyncHandler(
 {
     assert(env && env->winHttpProvider);
 
-    if (!env->winHttpProvider->m_backgroundQueue)
-    {
-        XTaskQueuePortHandle portHandle;
-        XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &portHandle);
-        XTaskQueueCreateComposite(portHandle, portHandle, &env->winHttpProvider->m_backgroundQueue);
-    }
-
-    auto intermediateAsync = http_allocate_unique<XAsyncBlock>();
-    intermediateAsync->queue = env->winHttpProvider->m_backgroundQueue;
-    intermediateAsync->context = async;
-    intermediateAsync->callback = [](XAsyncBlock* intermediateAsync)
-    {
-        HC_UNIQUE_PTR<XAsyncBlock> reclaim{ intermediateAsync };
-        auto clientAsync = static_cast<XAsyncBlock*>(intermediateAsync->context);
-        // pass result through
-        XAsyncComplete(clientAsync, XAsyncGetStatus(intermediateAsync, false), 0);
-    };
-
-    HRESULT hr = env->winHttpProvider->HttpCallPerformAsync(callHandle, intermediateAsync.get());
+    HRESULT hr = env->winHttpProvider->HttpCallPerformAsync(callHandle, async);
     if (FAILED(hr))
     {
         // Complete XAsyncBlock if we fail synchronously
         XAsyncComplete(async, hr, 0);
-    }
-    else
-    {
-        intermediateAsync.release();
     }
 }
 

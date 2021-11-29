@@ -41,7 +41,6 @@ Result<HC_UNIQUE_PTR<CurlProvider>> CurlProvider::Initialize()
 CurlProvider::~CurlProvider()
 {
     // Either CleanupAsync was never called or CurlProvider shouldn't be destroyed until it completes.
-    // In either case, m_multiCleanupAsyncBlocks should always be empty here
     assert(!m_pendingMultiCleanups);
     
     if (m_multiCleanupQueue)
@@ -165,7 +164,7 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
     default:
     {
         return S_OK;
-    }        
+    }
     }
 }
 

@@ -107,7 +107,6 @@ private:
     XTaskQueueRegistrationToken m_networkConnectivityChangedToken{ 0 };
     PAPPSTATE_REGISTRATION m_appStateChangedToken{ nullptr };
 #endif
-    XTaskQueueHandle m_backgroundQueue{ nullptr };
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
