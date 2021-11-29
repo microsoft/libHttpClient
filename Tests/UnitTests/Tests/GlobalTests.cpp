@@ -7,6 +7,7 @@
 #include "DefineTestMacros.h"
 #include "Utils.h"
 #include "../Common/Win/utils_win.h"
+#include "PumpedTaskQueue.h"
 
 using namespace xbox::httpclient;
 static bool g_gotCall = false;
@@ -33,6 +34,16 @@ public:
         VERIFY_ARE_EQUAL_STR("test", utf8.c_str());
     }
 
+    DEFINE_TEST_CASE(TestAsyncCleanup)
+    {
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+
+        PumpedTaskQueue pumpedQueue;
+        XAsyncBlock cleanupAsyncBlock{ pumpedQueue.queue };
+        VERIFY_SUCCEEDED(HCCleanupAsync(&cleanupAsyncBlock));
+
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&cleanupAsyncBlock, true));
+    }
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

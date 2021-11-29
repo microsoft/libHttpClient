@@ -26,6 +26,8 @@ public:
     // Called during HCInitialize. HC_PERFORM_ENV will be passed to Http/WebSocket hooks and is needed by default providers
     static Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> Initialize(HCInitArgs* args) noexcept;
 
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept;
+
     HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
     HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
     HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
@@ -34,13 +36,15 @@ public:
 #if HC_PLATFORM == HC_PLATFORM_WIN32
     std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
 #elif HC_PLATFORM == HC_PLATFORM_GDK
-    std::shared_ptr<xbox::httpclient::CurlProvider> curlProvider;
+    HC_UNIQUE_PTR<xbox::httpclient::CurlProvider> curlProvider;
     std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
     std::shared_ptr<AndroidPlatformContext> androidPlatformContext;
 #endif
 private:
     HC_PERFORM_ENV() = default;
+
+    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
 };
 
 using PerformEnv = HC_UNIQUE_PTR<HC_PERFORM_ENV>;
