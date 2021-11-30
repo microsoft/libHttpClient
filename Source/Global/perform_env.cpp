@@ -221,3 +221,56 @@ Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* arg
 
     return std::move(performEnv);
 }
+
+HRESULT HC_PERFORM_ENV::CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept
+{
+    RETURN_IF_FAILED(XAsyncBegin(async, env.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
+    env.release();
+    return S_OK;
+}
+
+HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
+{
+    HC_PERFORM_ENV* env{ static_cast<HC_PERFORM_ENV*>(data->context) };
+
+    switch (op)
+    {
+    case XAsyncOp::Begin:
+    {
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        auto curlCleanupAsyncBlock = http_allocate_unique<XAsyncBlock>();
+        curlCleanupAsyncBlock->queue = data->async->queue;
+        curlCleanupAsyncBlock->context = data->async;
+        curlCleanupAsyncBlock->callback = [](XAsyncBlock* async)
+        {
+            HC_UNIQUE_PTR<XAsyncBlock> curlCleanupAsyncBlock{ async };
+            XAsyncBlock* envCleanupAsyncBlock = static_cast<XAsyncBlock*>(curlCleanupAsyncBlock->context);
+            
+            HRESULT cleanupResult = XAsyncGetStatus(curlCleanupAsyncBlock.get(), false);
+            curlCleanupAsyncBlock.reset();
+
+            // HC_PERFORM_ENV fully cleaned up at this point
+            XAsyncComplete(envCleanupAsyncBlock, cleanupResult, 0);
+        };
+
+        auto curlProvider = std::move(env->curlProvider);
+
+        HC_UNIQUE_PTR<HC_PERFORM_ENV> reclaim{ env };
+        reclaim.reset();
+
+        RETURN_IF_FAILED(CurlProvider::CleanupAsync(std::move(curlProvider), curlCleanupAsyncBlock.get()));
+        curlCleanupAsyncBlock.release();
+        return S_OK;
+#else
+        HC_UNIQUE_PTR<HC_PERFORM_ENV> reclaim{ env };
+        reclaim.reset();
+        XAsyncComplete(data->async, S_OK, 0);
+        return S_OK;
+#endif
+    }
+    default:
+    {
+        return S_OK;
+    }
+    }
+}
