@@ -56,8 +56,8 @@ private:
         std::unique_lock<std::mutex> l(workLock);
         while(!shutdown)
         {
-            cvWork.wait(l);
             XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+            cvWork.wait(l);
         }
     }
 
@@ -66,8 +66,8 @@ private:
         std::unique_lock<std::mutex> l(completionLock);
         while(!shutdown)
         {
-            cvCompletion.wait(l);
             XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
+            cvCompletion.wait(l);
         }
     }
 

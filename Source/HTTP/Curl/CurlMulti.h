@@ -20,6 +20,9 @@ public:
     // Wrapper around curl_multi_add_handle
     HRESULT AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest);
 
+    // Asyncronously cleanup and outstanding requests
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlMulti>&& multi, XAsyncBlock* async);
+
 private:
     CurlMulti() = default;
 
@@ -29,10 +32,13 @@ private:
     // Fail all active requests due to unexpected CURLM or platform error
     void FailAllRequests(HRESULT hr) noexcept;
 
+    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
+
     CURLM* m_curlMultiHandle{ nullptr };
     XTaskQueueHandle m_queue{ nullptr };
     std::mutex m_mutex;
     http_internal_map<CURL*, HC_UNIQUE_PTR<CurlEasyRequest>> m_easyRequests;
+    XAsyncBlock* m_cleanupAsyncBlock{ nullptr };
 };
 
 } // httpclient

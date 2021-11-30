@@ -114,83 +114,77 @@ HRESULT http_singleton::cleanup_async(
 ) noexcept
 {
     std::shared_ptr<http_singleton> singleton{};
-    HRESULT hr = singleton_access(singleton_access_mode::cleanup, nullptr, singleton);
+    singleton_access(singleton_access_mode::get, nullptr, singleton);
+    return XAsyncBegin(async, singleton.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider);
+}
 
-    // if the singleton is still in use, or already cleaned up, fail immediately
-    if (FAILED(hr))
+HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
+{
+    switch (op)
     {
-        intptr_t hrPtrSize = hr;
-        return XAsyncBegin(
-            async,
-            reinterpret_cast<void*>(hrPtrSize),
-            reinterpret_cast<void*>(cleanup_async),
-            __FUNCTION__,
-            [](XAsyncOp op, const XAsyncProviderData* data)
+    case XAsyncOp::Begin:
+    {
+        std::shared_ptr<http_singleton> singleton{};
+        RETURN_IF_FAILED(singleton_access(singleton_access_mode::cleanup, nullptr, singleton));
+
+        auto performEnvCleanupAsyncBlock = http_allocate_unique<XAsyncBlock>();
+        performEnvCleanupAsyncBlock->queue = data->async->queue;
+        performEnvCleanupAsyncBlock->context = data->async;
+        performEnvCleanupAsyncBlock->callback = [](XAsyncBlock* async)
         {
-            switch (op)
+            HC_UNIQUE_PTR<XAsyncBlock> performEnvCleanupAsyncBlock{ async };
+            XAsyncBlock* singletonCleanupAsyncBlock = static_cast<XAsyncBlock*>(performEnvCleanupAsyncBlock->context);
+
+            HRESULT cleanupResult = XAsyncGetStatus(performEnvCleanupAsyncBlock.get(), false);
+            performEnvCleanupAsyncBlock.reset();
+
+            if (FAILED(cleanupResult))
             {
-            case XAsyncOp::Begin:
-            {
-                intptr_t hrPtrSize = reinterpret_cast<intptr_t>(data->context);
-                return static_cast<HRESULT>(hrPtrSize);
+                // Provider cleanup really should never fail. If it does, there isn't much we can do so log error and continue with cleanup
+                HC_TRACE_ERROR_HR(HTTPCLIENT, cleanupResult, "HC_PERFORM_ENV::CleanupAsync failed unexpectedly, continuing with cleanup");
             }
-            case XAsyncOp::Cleanup:
-            {
-                return S_OK;
-            }
-            default:
-            {
-                assert(false);
-                return S_OK;
-            }
-            }
-        });
+            
+            // PerformEnv cleanup complete, continue with singleton cleanup
+            XAsyncSchedule(singletonCleanupAsyncBlock, 0);            
+        };
+
+        RETURN_IF_FAILED(HC_PERFORM_ENV::CleanupAsync(std::move(singleton->m_performEnv), performEnvCleanupAsyncBlock.get()));
+        performEnvCleanupAsyncBlock.release();
+
+        return S_OK;
     }
-
-    return XAsyncBegin(
-        async,
-        singleton.get(),
-        reinterpret_cast<void*>(cleanup_async),
-        __FUNCTION__,
-        [](XAsyncOp op, const XAsyncProviderData* data)
+    case XAsyncOp::DoWork:
     {
-        switch (op)
+        auto& self{ static_cast<http_singleton*>(data->context)->m_self };
+
+        // Wait for all other references to the singleton to go away
+        // Note that the use count check here is only valid because we never create
+        // a weak_ptr to the singleton. If we did that could cause the use count
+        // to increase even though we are the only strong reference
+        if (self.use_count() > 1)
         {
-        case XAsyncOp::Begin:
-        {
-            return XAsyncSchedule(data->async, 0);
+            RETURN_IF_FAILED(XAsyncSchedule(data->async, 10));
+            return E_PENDING;
         }
-        case XAsyncOp::DoWork:
-        {
-            auto& self{ static_cast<http_singleton*>(data->context)->m_self };
 
-            // Wait for all other references to the singleton to go away
-            // Note that the use count check here is only valid because we never create
-            // a weak_ptr to the singleton. If we did that could cause the use count
-            // to increase even though we are the only strong reference
-            if (self.use_count() > 1)
-            {
-                RETURN_IF_FAILED(XAsyncSchedule(data->async, 10));
-                return E_PENDING;
-            }
+        shared_ptr_cache::cleanup(self);
 
-            shared_ptr_cache::cleanup(self);
+        // self is the only reference at this point, the singleton will be destroyed on this thread.
+        self.reset();
 
-            // self is the only reference at this point, the singleton will be destroyed on this thread.
-            self.reset();
+        HC_TRACE_VERBOSE(HTTPCLIENT, "libHttpClient cleanup complete, returning to client");
 
-            // cleanup tracing now that we are done
-            HCTraceCleanup();
+        // cleanup tracing now that we are done
+        HCTraceCleanup();
 
-            XAsyncComplete(data->async, S_OK, 0);
-            return S_OK;
-        }
-        default:
-        {
-            return S_OK;
-        }
-        }
-    });
+        XAsyncComplete(data->async, S_OK, 0);
+        return S_OK;
+    }
+    default:
+    {
+        return S_OK;
+    }
+    }
 }
 
 http_singleton::http_singleton(

@@ -67,7 +67,7 @@ public:
 
     // HTTP state
     HttpPerformInfo const m_httpPerform;
-    PerformEnv const m_performEnv;
+    PerformEnv m_performEnv;
 
     HRESULT set_global_proxy(_In_ const char* proxyUri);
 
@@ -113,6 +113,8 @@ private:
         _In_opt_ HCInitArgs* createArgs,
         _Out_ std::shared_ptr<http_singleton>& singleton
     ) noexcept;
+
+    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
 
     // Self reference to prevent deletion on static shutdown.
     std::shared_ptr<http_singleton> m_self{ nullptr };
