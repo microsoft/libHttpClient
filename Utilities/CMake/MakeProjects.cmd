@@ -23,28 +23,6 @@ if %ERRORLEVEL% NEQ 0 goto done
 
 %ROOT_FOLDER%\Utilities\CMake\ProjectFileProcessor\bin\Debug\ProjectFileProcessor.exe %ROOT_FOLDER%
 
-if "%2" EQU "skipCopy" goto skipCopy
-rem copy %NEW_FOLDER%\libHttpClient.110.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.110.XDK.C
-rem copy %NEW_FOLDER%\libHttpClient.110.XDK.WinRT.vcxproj* %OLD_FOLDER%\libHttpClient.110.XDK.WinRT
-copy %NEW_FOLDER%\libHttpClient.140.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.140.UWP.C
-copy %NEW_FOLDER%\libHttpClient.140.UWP.WinRT.vcxproj* %OLD_FOLDER%\libHttpClient.140.UWP.WinRT
-copy %NEW_FOLDER%\libHttpClient.140.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.140.XDK.C
-copy %NEW_FOLDER%\libHttpClient.140.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.140.Win32.C
-copy %NEW_FOLDER%\libHttpClient.141.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.UWP.C
-copy %NEW_FOLDER%\libHttpClient.141.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.XDK.C
-copy %NEW_FOLDER%\libHttpClient.141.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.Win32.C
-copy %NEW_FOLDER%\libHttpClient.UnitTest.141.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.141.TAEF
-copy %NEW_FOLDER%\libHttpClient.UnitTest.141.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.141.TE
-copy %NEW_FOLDER%\libHttpClient.142.UWP.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.UWP.C
-copy %NEW_FOLDER%\libHttpClient.142.XDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.XDK.C
-copy %NEW_FOLDER%\libHttpClient.142.Win32.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.Win32.C
-copy %NEW_FOLDER%\libHttpClient.UnitTest.142.TAEF.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.142.TAEF
-copy %NEW_FOLDER%\libHttpClient.UnitTest.142.TE.vcxproj* %OLD_FOLDER%\libHttpClient.UnitTest.142.TE
-copy %NEW_FOLDER%\libHttpClient.141.GDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.141.GDK.C
-copy %NEW_FOLDER%\libHttpClient.142.GDK.C.vcxproj* %OLD_FOLDER%\libHttpClient.142.GDK.C
-
-:skipCopy
-
 goto done
 :help
 echo.

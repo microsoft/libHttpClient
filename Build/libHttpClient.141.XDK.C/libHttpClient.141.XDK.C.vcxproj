@@ -12,9 +12,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ApplicationEnvironment>title</ApplicationEnvironment>
-    <ProjectGuid>{57C681F7-280F-45B8-9FA9-D556C24F2053}</ProjectGuid>
+    <ProjectGuid>{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>libHttpClient.141.XDK.C</ProjectName>
     <RootNamespace>xbox.httpclient</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
