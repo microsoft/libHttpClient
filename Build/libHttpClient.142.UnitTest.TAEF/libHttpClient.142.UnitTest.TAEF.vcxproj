@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -18,161 +18,86 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>libHttpClient.UnitTest.142.TAEF</ProjectName>
+    <ProjectGuid>{E885BB30-F51E-4BAB-9300-4B303144BB49}</ProjectGuid>
+    <RootNamespace>libHttpClient.Test</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <LinkIncremental>false</LinkIncremental>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <HCLibPlatformType>Win32</HCLibPlatformType>
+    <HCLibImpl>true</HCLibImpl>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.internal.props))\libHttpClient.internal.props" />
+  </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalOptions>/bigobj /Zm512 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/bigobj /Zm512 /GS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>
+       c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;
+       $(MSBuildThisFileDirectory)..\..\Source\Task;
+      %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64'">C:\Program Files (x86)\Windows Kits\10\Testing\Development\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32'">C:\Program Files (x86)\Windows Kits\10\Testing\Development\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;UNITTEST_TE;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USING_TAEF;DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAsWinRT>true</CompileAsWinRT>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/bigobj /Zm512 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalUsingDirectories>C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\store\references;C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\VC\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>$(WindowsSdkDir_10)UnionMetadata;$(VCToolsInstallDir)lib\x86\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Msxml6.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Wex.Common.lib;Msxml6.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/DEBUGTYPE:CV,FIXUP %(AdditionalOptions)</AdditionalOptions>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
-  <PropertyGroup Label="Globals">
-    <ProjectGuid>{9DD2BA60-6505-493A-8C41-8085C44E9F1F}</ProjectGuid>
-    <Keyword>Win32Proj</Keyword>
-    <RootNamespace>libHttpClient.142.UnitTest</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
-    <ProjectName>libHttpClient.UnitTest.142.TE</ProjectName>
-    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
-    <HCLibPlatformType>Win32</HCLibPlatformType>
-    <HCLibImpl>true</HCLibImpl>
-  </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-    <WindowsAppContainer>false</WindowsAppContainer>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-    <WindowsAppContainer>false</WindowsAppContainer>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-    <WindowsAppContainer>false</WindowsAppContainer>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-    <WindowsAppContainer>false</WindowsAppContainer>
-  </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.internal.props))\libHttpClient.internal.props" />
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <LinkIncremental>true</LinkIncremental>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\Source;$(VCInstallDir)UnitTest\include;$(MSBuildThisFileDirectory)..\..\Source\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;_NO_PPLXIMP;XBOX_SYSTEM;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <UseFullPaths>true</UseFullPaths>
-      <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4592</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4592</DisableSpecificWarnings>
     </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\Source;$(VCInstallDir)UnitTest\include;$(MSBuildThisFileDirectory)..\..\Source\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <UseFullPaths>true</UseFullPaths>
-      <CompileAsWinRT>true</CompileAsWinRT>
-      <MinimalRebuild>false</MinimalRebuild>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\Source;$(VCInstallDir)UnitTest\include;$(MSBuildThisFileDirectory)..\..\Source\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <UseFullPaths>true</UseFullPaths>
-      <CompileAsWinRT>true</CompileAsWinRT>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4592</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4592</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;$(MSBuildThisFileDirectory)..\..\Source\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <UseFullPaths>true</UseFullPaths>
-      <CompileAsWinRT>true</CompileAsWinRT>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -228,9 +153,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TE\UnitTestIncludes_TE.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase_winrt.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestBase_winrt.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TAEF\UnitTestIncludes_TAEF.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\UnitTestIncludes.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\AsyncBlockTests.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h" />
@@ -253,5 +180,11 @@
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
+  <PropertyGroup>
+    <ProjectFolder>Microsoft.Xbox.System.UnitTest</ProjectFolder>
+    <LocalDebuggerCommand>C:\Program Files (x86)\Windows Kits\10\Testing\Runtimes\TAEF\x64\TE.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>$(TargetPath) /inproc</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

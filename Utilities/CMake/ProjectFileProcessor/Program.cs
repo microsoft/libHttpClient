@@ -87,7 +87,7 @@ namespace ProjectFileProcessor
         {
             public string cmake_vcxproj;
             public string template;
-            public string output;
+            public List<string> toolsets;
         }
 
         static void Main(string[] args)
@@ -108,269 +108,125 @@ namespace ProjectFileProcessor
 
             var fileNodes = new List<FileNode>();
 
-            //libHttpClient.142.UWP.Cpp
+            // UWP
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.UWP.C.vcxproj",
-                template = @"template-libHttpClient.142.UWP.C.vcxproj",
-                output = @"libHttpClient.142.UWP.C.vcxproj",
+                template = @"template-libHttpClient.UWP.C.vcxproj",
+                toolsets = new List<string>{ "140", "141", "142" }
             });
 
-            //libHttpClient.141.UWP.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.UWP.C.vcxproj",
-                template = @"template-libHttpClient.141.UWP.C.vcxproj",
-                output = @"libHttpClient.141.UWP.C.vcxproj",
-            });
-
-            //libHttpClient.140.UWP.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.UWP.C.vcxproj",
-                template = @"template-libHttpClient.140.UWP.C.vcxproj",
-                output = @"libHttpClient.140.UWP.C.vcxproj",
-            });
-
-            //libHttpClient.142.Win32.Cpp
+            // Win32
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.Win32.C.vcxproj",
-                template = @"template-libHttpClient.142.Win32.C.vcxproj",
-                output = @"libHttpClient.142.Win32.C.vcxproj",
+                template = @"template-libHttpClient.Win32.C.vcxproj",
+                toolsets = new List<string>{ "140", "141", "142", "143" }
             });
 
-            //libHttpClient.141.Win32.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Win32.C.vcxproj",
-                template = @"template-libHttpClient.141.Win32.C.vcxproj",
-                output = @"libHttpClient.141.Win32.C.vcxproj",
-            });
-
-            //libHttpClient.140.Win32.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Win32.C.vcxproj",
-                template = @"template-libHttpClient.140.Win32.C.vcxproj",
-                output = @"libHttpClient.140.Win32.C.vcxproj",
-            });
-
-            //libHttpClient.142.XDK.Cpp
+            // XDK
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.XDK.C.vcxproj",
-                template = @"template-libHttpClient.142.XDK.C.vcxproj",
-                output = @"libHttpClient.142.XDK.C.vcxproj",
+                template = @"template-libHttpClient.XDK.C.vcxproj",
+                toolsets = new List<string>{ "140", "141", "142" }
             });
 
-            //libHttpClient.141.XDK.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.XDK.C.vcxproj",
-                template = @"template-libHttpClient.141.XDK.C.vcxproj",
-                output = @"libHttpClient.141.XDK.C.vcxproj",
-            });
-
-            //libHttpClient.140.XDK.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.XDK.C.vcxproj",
-                template = @"template-libHttpClient.140.XDK.C.vcxproj",
-                output = @"libHttpClient.140.XDK.C.vcxproj",
-            });
-
-            //libHttpClient.110.XDK.WinRT
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.XDK.WinRT.vcxproj",
-                template = @"template-libHttpClient.110.XDK.WinRT.vcxproj",
-                output = @"libHttpClient.110.XDK.WinRT.vcxproj",
-            });
-
-            //libHttpClient.140.UWP.WinRT
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.UWP.WinRT.vcxproj",
-                template = @"template-libHttpClient.140.UWP.WinRT.vcxproj",
-                output = @"libHttpClient.140.UWP.WinRT.vcxproj",
-            });
-
-            //libHttpClient.110.XDK.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.XDK.C.vcxproj",
-                template = @"template-libHttpClient.110.XDK.C.vcxproj",
-                output = @"libHttpClient.110.XDK.C.vcxproj",
-            });
-
-            //libHttpClient.UnitTest.142.TAEF
+            // TAEF UnitTests
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.UnitTest.TAEF.vcxproj",
-                template = @"template-libHttpClient.UnitTest.142.TAEF.vcxproj",
-                output = @"libHttpClient.UnitTest.142.TAEF.vcxproj",
+                template = @"template-libHttpClient.UnitTest.TAEF.vcxproj",
+                toolsets = new List<string>{ "142" }
             });
 
-            //libHttpClient.UnitTest.141.TAEF
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.UnitTest.TAEF.vcxproj",
-                template = @"template-libHttpClient.UnitTest.141.TAEF.vcxproj",
-                output = @"libHttpClient.UnitTest.141.TAEF.vcxproj",
-            });
-
-            //libHttpClient.UnitTest.142.TE
+            // TE UnitTests
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.UnitTest.TE.vcxproj",
-                template = @"template-libHttpClient.UnitTest.142.TE.vcxproj",
-                output = @"libHttpClient.UnitTest.142.TE.vcxproj",
+                template = @"template-libHttpClient.UnitTest.TE.vcxproj",
+                toolsets = new List<string>{ "142" }
             });
 
-            //libHttpClient.UnitTest.141.TE
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.UnitTest.TE.vcxproj",
-                template = @"template-libHttpClient.UnitTest.141.TE.vcxproj",
-                output = @"libHttpClient.UnitTest.141.TE.vcxproj",
-            });
-
-            //libHttpClient.110.XDK.Ship.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
-                template = @"template-libHttpClient.110.XDK.C.vcxproj",
-                output = @"libHttpClient.110.XDK.Ship.C.vcxproj",
-            });
-
-            //libHttpClient.140.XDK.Ship.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
-                template = @"template-libHttpClient.140.XDK.C.vcxproj",
-                output = @"libHttpClient.140.XDK.Ship.C.vcxproj",
-            });
-
-            //libHttpClient.141.XDK.Ship.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
-                template = @"template-libHttpClient.141.XDK.C.vcxproj",
-                output = @"libHttpClient.141.XDK.Ship.C.vcxproj",
-            });
-
-            //libHttpClient.140.UWP.Ship.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
-                template = @"template-libHttpClient.140.UWP.C.vcxproj",
-                output = @"libHttpClient.140.UWP.Ship.C.vcxproj",
-            });
-
-            //libHttpClient.141.UWP.Ship.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
-                template = @"template-libHttpClient.141.UWP.C.vcxproj",
-                output = @"libHttpClient.141.UWP.Ship.C.vcxproj",
-            });
-
-            //libHttpClient.142.UWP.Ship.Cpp
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.Ship.vcxproj",
-                template = @"template-libHttpClient.142.UWP.C.vcxproj",
-                output = @"libHttpClient.142.UWP.Ship.C.vcxproj",
-            });
-
-            //libHttpClient.141.GDK.C
+            // GDK
             fileNodes.Add(new FileNode
             {
                 cmake_vcxproj = @"libHttpClient.GDK.C.vcxproj",
-                template = @"template-libHttpClient.141.GDK.C.vcxproj",
-                output = @"libHttpClient.141.GDK.C.vcxproj",
-            });
-
-            //libHttpClient.142.GDK.C
-            fileNodes.Add(new FileNode
-            {
-                cmake_vcxproj = @"libHttpClient.GDK.C.vcxproj",
-                template = @"template-libHttpClient.142.GDK.C.vcxproj",
-                output = @"libHttpClient.142.GDK.C.vcxproj",
+                template = @"template-libHttpClient.GDK.C.vcxproj",
+                toolsets = new List<string>{ "141", "142", "143" }
             });
 
             foreach (FileNode fn in fileNodes)
             {
-                var template_lines = new List<string>();
-                var output_lines = new List<string>();
-                var cmake_vcxproj_lines = new List<string>();
-                var cmake_vcxproj_filters_lines = new List<string>();
-                var cmake_vcxproj_filters_lines_filtered = new List<string>();
-                var cmake_vcxproj_files = new List<string>();
-
-                string cmake_vcxproj = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake\vcxprojs", fn.cmake_vcxproj));
-                string cmake_vcxproj_filters_name = fn.cmake_vcxproj + ".filters";
-                string cmake_vcxproj_filters = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake\vcxprojs", cmake_vcxproj_filters_name));
-                string template = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake", fn.template));
-                string output = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake\output", fn.output));
-                string outputFilterName = fn.output + ".filters";
-                string output_filters = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake\output", outputFilterName));
-
-                FileInfo fiInput = new FileInfo(cmake_vcxproj);
-                FileInfo fiInputFilters = new FileInfo(cmake_vcxproj_filters);
-                Console.WriteLine("inputVcxproj: " + cmake_vcxproj);
-                Console.WriteLine("template: " + template);
-                Console.WriteLine("output: " + output);
-
-                if (fiInput.Exists && fiInputFilters.Exists)
+                foreach (var toolset in fn.toolsets)
                 {
-                    ReadFile(cmake_vcxproj, ref cmake_vcxproj_lines);
-                    ReadFile(cmake_vcxproj_filters, ref cmake_vcxproj_filters_lines);
-                    ExtractFileSection(ref cmake_vcxproj_lines, ref cmake_vcxproj_files, rootFolder, false);
-                    ReadFile(template, ref template_lines);
-                    ReplaceFileSection(template_lines, cmake_vcxproj_files, ref output_lines);
-                    if(fn.cmake_vcxproj.Contains(".Ship."))
+                    var template_lines = new List<string>();
+                    var output_lines = new List<string>();
+                    var cmake_vcxproj_lines = new List<string>();
+                    var cmake_vcxproj_filters_lines = new List<string>();
+                    var cmake_vcxproj_filters_lines_filtered = new List<string>();
+                    var cmake_vcxproj_files = new List<string>();
+
+                    string cmake_vcxproj = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake\vcxprojs", fn.cmake_vcxproj));
+                    string cmake_vcxproj_filters_name = fn.cmake_vcxproj + ".filters";
+                    string cmake_vcxproj_filters = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake\vcxprojs", cmake_vcxproj_filters_name));
+                    string template = Path.Combine(rootFolder, Path.Combine(@"Utilities\CMake", fn.template));
+                    string output_vcxproj = fn.cmake_vcxproj.Replace("libHttpClient", "libHttpClient." + toolset);
+                    string output_directory = @"Build\" + output_vcxproj.Replace(".vcxproj", "");
+                    string output = Path.Combine(rootFolder, Path.Combine(output_directory, output_vcxproj));
+                    string outputFilterName = output_vcxproj + ".filters";
+                    string output_filters = Path.Combine(rootFolder, Path.Combine(output_directory, outputFilterName));
+
+                    FileInfo fiInput = new FileInfo(cmake_vcxproj);
+                    FileInfo fiInputFilters = new FileInfo(cmake_vcxproj_filters);
+                    Console.WriteLine("inputVcxproj: " + cmake_vcxproj);
+                    Console.WriteLine("template: " + template);
+                    Console.WriteLine("output: " + output);
+
+                    if (fiInput.Exists && fiInputFilters.Exists)
                     {
-                        ReplaceProjectName(ref output_lines, fn.output);
-                    }
-                    Console.WriteLine("Writing " + output);
-                    WriteFile(output_lines, output);
-                    cmake_vcxproj_filters_lines_filtered = ProcessFiltersFile(cmake_vcxproj_filters_lines, cmake_vcxproj_filters_lines_filtered, rootFolder, fn.output);
-                    Console.WriteLine("Writing " + output_filters);
-                    WriteFile(cmake_vcxproj_filters_lines_filtered, output_filters);
-                }
-                else
-                {
-                    Console.WriteLine("Skipping");
-                }
-
-                Console.WriteLine("");
-            }
-        }
-
-        private static void ReplaceProjectName(ref List<string> output_lines, string outputFileName)
-        {
-            for (int i = 0; i < output_lines.Count; i++)
-            {
-                if (output_lines[i].Contains("<ProjectName>"))
-                {
-                    string projectName = outputFileName.Replace(".vcxproj", "");
-                    output_lines[i] = "    <ProjectName>" + projectName + "</ProjectName>";
-                }
-
-                if (output_lines[i].Contains("<ProjectGuid>"))
-                {
-                    string projectGuid;
-                    if (outputFileName.Contains("XDK"))
-                    {
-                        projectGuid = "{20E87245-DA60-40E5-9938-ABB445E78467}";
+                        ReadFile(cmake_vcxproj, ref cmake_vcxproj_lines);
+                        ReadFile(cmake_vcxproj_filters, ref cmake_vcxproj_filters_lines);
+                        ExtractFileSection(ref cmake_vcxproj_lines, ref cmake_vcxproj_files, rootFolder, false);
+                        ReadFile(template, ref template_lines);
+                        ReplaceFileSection(template_lines, cmake_vcxproj_files, ref output_lines);
+                        ReplaceToolset(ref output_lines, toolset);
+                        Console.WriteLine("Writing " + output);
+                        WriteFile(output_lines, output);
+                        cmake_vcxproj_filters_lines_filtered = ProcessFiltersFile(cmake_vcxproj_filters_lines, cmake_vcxproj_filters_lines_filtered, rootFolder, output_vcxproj);
+                        Console.WriteLine("Writing " + output_filters);
+                        WriteFile(cmake_vcxproj_filters_lines_filtered, output_filters);
                     }
                     else
                     {
-                        projectGuid = "{47FF466B-C455-48C0-8D89-37E3FC0897F8}";
+                        Console.WriteLine("Skipping");
                     }
-                    output_lines[i] = "    <ProjectGuid>" + projectGuid + "</ProjectGuid>";
+
+                    Console.WriteLine("");
+                }
+            }
+        }
+
+        private static void ReplaceToolset(ref List<string> output_lines, string toolset)
+        {
+            // Map VS PlatformToolset to VS ToolsVersion
+            Dictionary<string, string> toolsetMap = new Dictionary<string, string>
+            {
+                { "140", "14.0" }, // VS 2015
+                { "141", "15.0" }, // VS 2017
+                { "142", "Current" }, // VS 2019
+                { "143", "Current" }  // VS 2022
+            };
+
+            for (int i = 0; i < output_lines.Count; i++)
+            {
+                if (output_lines[i].Contains("ToolsVersion="))
+                {
+                    output_lines[i] = output_lines[i].Replace("ToolsVersion=\"\"", "ToolsVersion=\"" + toolsetMap[toolset] + "\"");
+                }
+                else if (output_lines[i].Contains("<PlatformToolset>"))
+                {
+                    output_lines[i] = "    <PlatformToolset>v" + toolset + "</PlatformToolset>";
                 }
             }
         }
@@ -451,11 +307,6 @@ namespace ProjectFileProcessor
             foreach (string line in lines)
             {
                 string lineOutput = MakeFilePathRelative(line, rootFolder);
-
-                if(filePath.Contains(".110."))
-                {
-                    lineOutput = lineOutput.Replace("ToolsVersion=\"15.0\"", "ToolsVersion=\"4.0\"");
-                }
 
                 lineOutput = lineOutput.Replace("<Filter>Header Files</Filter>", "<Filter>C++ Public Includes</Filter>");
                 lineOutput = lineOutput.Replace("<Filter Include=\"Header Files\">", "<Filter Include=\"C++ Public Includes\">");
