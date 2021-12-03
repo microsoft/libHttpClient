@@ -15,9 +15,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.UWP.C", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A7CDB1FA-01AE-4507-B54A-BA54F2080A11}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.UnitTest.142.TE", "Build\libHttpClient.UnitTest.142.TE\libHttpClient.UnitTest.142.TE.vcxproj", "{9DD2BA60-6505-493A-8C41-8085C44E9F1F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.UnitTest.TE", "Build\libHttpClient.142.UnitTest.TE\libHttpClient.142.UnitTest.TE.vcxproj", "{9DD2BA60-6505-493A-8C41-8085C44E9F1F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.UnitTest.142.TAEF", "Build\libHttpClient.UnitTest.142.TAEF\libHttpClient.UnitTest.142.TAEF.vcxproj", "{E885BB30-F51E-4BAB-9300-4B303144BB49}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.UnitTest.TAEF", "Build\libHttpClient.142.UnitTest.TAEF\libHttpClient.142.UnitTest.TAEF.vcxproj", "{E885BB30-F51E-4BAB-9300-4B303144BB49}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{CADB9561-440F-4B5F-BC40-4D569EBF1903}"
 EndProject
