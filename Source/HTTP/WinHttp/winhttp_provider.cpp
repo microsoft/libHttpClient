@@ -242,8 +242,6 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*su
     m_connections.push_back(connection);
     RETURN_IF_FAILED(connection->WebSocketConnectAsync(async));
 
-    websocketHandle->impl = std::move(connection);
-
     return S_OK;
 }
 #endif
@@ -267,7 +265,7 @@ HRESULT WinHttpProvider::CloseAllConnections()
 
     } closeContext;
 
-    closeContext.connectionsClosedEvent = CreateEvent(nullptr, TRUE, TRUE, nullptr);
+    closeContext.connectionsClosedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
     if (closeContext.connectionsClosedEvent == nullptr)
     {
         return HRESULT_FROM_WIN32(GetLastError());
@@ -296,12 +294,14 @@ HRESULT WinHttpProvider::CloseAllConnections()
     }
 
     closeContext.openConnections = connections.size();
-    for (auto& connection : connections)
+    if (closeContext.openConnections > 0)
     {
-        connection->Close(connectionClosedCallback);
+        for (auto& connection : connections)
+        {
+            connection->Close(connectionClosedCallback);
+        }
+        WaitForSingleObject(closeContext.connectionsClosedEvent, INFINITE);
     }
-
-    WaitForSingleObject(closeContext.connectionsClosedEvent, INFINITE);
 
     return S_OK;
 }

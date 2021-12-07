@@ -150,6 +150,7 @@ struct XPlatSecurityInformation
     XPlatSecurityInformation(XPlatSecurityInformation&&) = default;
     XPlatSecurityInformation& operator=(const XPlatSecurityInformation&) = delete;
     XPlatSecurityInformation& operator=(XPlatSecurityInformation&&) = default;
+    ~XPlatSecurityInformation() = default;
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
     http_internal_vector<uint8_t> buffer;

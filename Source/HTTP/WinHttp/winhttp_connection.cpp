@@ -43,7 +43,7 @@ WinHttpConnection::WinHttpConnection(
 
 WinHttpConnection::~WinHttpConnection()
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection dtor");
+    HC_TRACE_VERBOSE(HTTPCLIENT, __FUNCTION__);
 
     if (m_state == ConnectionState::WebSocketConnected && m_hRequest && m_winHttpWebSocketExports.close)
     {
@@ -1090,16 +1090,23 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING:
             {
-                HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
-
-                pRequestContext->m_hRequest = nullptr;
-                if (pRequestContext->m_connectionClosedCallback)
+                // For WebSocket, we will also get a notification when the original request handle is closed. We have no action to take in that case
+                if (hRequestHandle == pRequestContext->m_hRequest)
                 {
-                    pRequestContext->m_connectionClosedCallback();
-                }
+                    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
 
-                // WinHttp Shutdown complete. WinHttp guarantees we will get no more callbacks for this request so we can safely cleanup context
-                HC_UNIQUE_PTR<WinHttpCallbackContext> reclaim{ callbackContext };
+                    // WinHttp Shutdown complete. WinHttp guarantees we will get no more callbacks for this request so we can safely cleanup context.
+                    // Ensure WinHttpCallbackContext is cleaned before invoking callback in case this is happening during HCCleanup
+                    HC_UNIQUE_PTR<WinHttpCallbackContext> reclaim{ callbackContext };
+                    pRequestContext->m_hRequest = nullptr;
+                    auto connectionClosedCallback = std::move(pRequestContext->m_connectionClosedCallback);
+                    reclaim.reset();
+
+                    if (connectionClosedCallback)
+                    {
+                        connectionClosedCallback();
+                    }
+                }
                 break;
             }
 
@@ -1179,7 +1186,7 @@ HRESULT WinHttpConnection::SendRequest()
 #if HC_PLATFORM == HC_PLATFORM_GDK
         WINHTTP_CALLBACK_FLAG_SEND_REQUEST |
 #endif
-        WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS,
+        WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS,
         0))
     {
         DWORD dwError = GetLastError();
@@ -1464,21 +1471,11 @@ void WinHttpConnection::callback_websocket_status_headers_available(
 
     // Application should check what is the HTTP status code returned by the server and behave accordingly.
     // WinHttpWebSocketCompleteUpgrade will fail if the HTTP status code is different than 101.
-    winHttpConnection->m_hRequest = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, NULL);
+    winHttpConnection->m_hRequest = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, (DWORD_PTR)(winHttpContext));
     if (winHttpConnection->m_hRequest == NULL)
     {
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
-        winHttpConnection->m_lock.unlock();
-        winHttpConnection->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
-        return;
-    }
-
-    // Associate WinHttpContext with new hRequest
-    if (!WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_CONTEXT_VALUE, &winHttpContext, sizeof(winHttpContext)))
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
         winHttpConnection->m_lock.unlock();
         winHttpConnection->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
         return;
