@@ -242,6 +242,8 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*su
     m_connections.push_back(connection);
     RETURN_IF_FAILED(connection->WebSocketConnectAsync(async));
 
+    websocketHandle->impl = std::move(connection);
+
     return S_OK;
 }
 #endif
