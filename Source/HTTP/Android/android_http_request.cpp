@@ -1,8 +1,15 @@
 #include "pch.h"
 
 #include "android_http_request.h"
+#include "http_android.h"
 #include <httpClient/httpClient.h>
 #include <vector>
+
+// The following symbols live in files that are not referenced by any other c
+// file and are only called by JNI callers. In order to force the compiler to
+// not ignore the file we make a token dummy reference to the file here.
+volatile auto dummyHCRequestOnRequestCompleted = &Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted;
+volatile auto dummyHCRequestOnRequestFailed = &Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed;
 
 HttpRequest::HttpRequest(XAsyncBlock* asyncBlock, JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass) :
     m_httpRequestInstance(nullptr), 
