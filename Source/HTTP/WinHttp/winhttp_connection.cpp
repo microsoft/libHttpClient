@@ -396,6 +396,11 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
             m_state = ConnectionState::WebSocketClosing;
             break;
         }
+        case ConnectionState::WebSocketClosing:
+        {
+            // Nothing to do. WinHttpClose will happen after websocket close completes
+            return S_OK;
+        }
         case ConnectionState::WinHttpClosing:
         {
             // Nothing to do 
