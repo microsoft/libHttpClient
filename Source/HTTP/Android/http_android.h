@@ -2,6 +2,10 @@
 
 #include <jni.h>
 
+// These JNI functions are being exposed by this header file so that they
+// can be referenced in another .cpp file. This is so the compiler is forced
+// to compile these functions and prevent them from being optimized out.
+
 extern "C"
 {
 
