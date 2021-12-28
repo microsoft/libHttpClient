@@ -5,6 +5,7 @@
 #include <httpClient/httpProvider.h>
 #include "android_http_request.h"
 #include "android_platform_context.h"
+#include "http_android.h"
 
 // Helpers for converting jbyteArrays to be useful
 namespace

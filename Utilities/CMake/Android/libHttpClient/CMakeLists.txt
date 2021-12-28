@@ -39,6 +39,7 @@ set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.cpp"
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.cpp"
+    "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/android_http_request.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/Android/android_http_request.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/android_platform_context.cpp"
