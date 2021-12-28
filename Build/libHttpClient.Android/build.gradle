@@ -1,11 +1,11 @@
 apply plugin: "com.android.library"
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     ndkVersion "22.1.7171670"
 
     defaultConfig {
-        targetSdkVersion 30
+        targetSdkVersion 31
         minSdkVersion 21
 
         externalNativeBuild {
@@ -29,8 +29,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility=JavaVersion.VERSION_1_7
-        targetCompatibility=JavaVersion.VERSION_1_7
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     buildTypes {
