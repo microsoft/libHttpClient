@@ -164,11 +164,11 @@ public:
     {
         return m_state;
     }
-    bool operator==(nullptr_t) const noexcept
+    bool operator==(std::nullptr_t) const noexcept
     {
         return m_state == nullptr;
     }
-    bool operator!=(nullptr_t) const noexcept
+    bool operator!=(std::nullptr_t) const noexcept
     {
         return m_state != nullptr;
     }

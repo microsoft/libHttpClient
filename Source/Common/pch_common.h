@@ -36,12 +36,15 @@
 #endif
 
 // STL includes
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <cmath>
 #include <codecvt>
 #include <condition_variable>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <iomanip>
 #include <list>
