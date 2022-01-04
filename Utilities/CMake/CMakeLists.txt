@@ -76,8 +76,8 @@ include_directories(
     $(ProjectDir)../../../Source/Common
     $(ProjectDir)../../../Source/HTTP
     $(ProjectDir)../../../Source/Logger
-    $(ProjectDir)../../../include
-    $(ProjectDir)../../../include/httpClient
+    $(ProjectDir)../../../Include
+    $(ProjectDir)../../../Include/httpClient
     )
 
 set(CMAKE_SUPPRESS_REGENERATION true)

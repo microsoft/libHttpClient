@@ -13,16 +13,16 @@ function(GET_COMMON_HC_SOURCE_FILES
          )
 
     set(${OUT_PUBLIC_SOURCE_FILES}
-        "${PATH_TO_ROOT}/include/httpClient/config.h"
-        "${PATH_TO_ROOT}/include/httpClient/httpClient.h"
-        "${PATH_TO_ROOT}/include/httpClient/httpProvider.h"
-        "${PATH_TO_ROOT}/include/httpClient/mock.h"
-        "${PATH_TO_ROOT}/include/xasync.h"
-        "${PATH_TO_ROOT}/include/xasyncProvider.h"
-        "${PATH_TO_ROOT}/include/xtaskQueue.h"
-        "${PATH_TO_ROOT}/include/httpClient/trace.h"
-        "${PATH_TO_ROOT}/include/httpClient/pal.h"
-        "${PATH_TO_ROOT}/include/httpClient/async.h"
+        "${PATH_TO_ROOT}/Include/httpClient/config.h"
+        "${PATH_TO_ROOT}/Include/httpClient/httpClient.h"
+        "${PATH_TO_ROOT}/Include/httpClient/httpProvider.h"
+        "${PATH_TO_ROOT}/Include/httpClient/mock.h"
+        "${PATH_TO_ROOT}/Include/XAsync.h"
+        "${PATH_TO_ROOT}/Include/XAsyncProvider.h"
+        "${PATH_TO_ROOT}/Include/XTaskQueue.h"
+        "${PATH_TO_ROOT}/Include/httpClient/trace.h"
+        "${PATH_TO_ROOT}/Include/httpClient/pal.h"
+        "${PATH_TO_ROOT}/Include/httpClient/async.h"
         PARENT_SCOPE
         )
 
