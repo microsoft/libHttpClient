@@ -195,7 +195,7 @@ int main()
     XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
     StartBackgroundThread();
 
-    std::string url = "wss://echo.websocket.org";
+    std::string url = "wss://localhost";
 
     HCWebsocketHandle websocket;
 

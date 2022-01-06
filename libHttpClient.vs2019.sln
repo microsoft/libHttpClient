@@ -41,6 +41,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GDK", "GDK", "{9C8A0D94-F59
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.GDK.C", "Build\libHttpClient.142.GDK.C\libHttpClient.142.GDK.C.vcxproj", "{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WebSocketEchoServer", "Samples\WebSocketEchoServer\WebSocketEchoServer.vcxproj", "{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
