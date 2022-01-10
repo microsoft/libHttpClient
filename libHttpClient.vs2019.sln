@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A7CDB1FA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.UnitTest.TE", "Build\libHttpClient.142.UnitTest.TE\libHttpClient.142.UnitTest.TE.vcxproj", "{9DD2BA60-6505-493A-8C41-8085C44E9F1F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.UnitTest.TAEF", "Build\libHttpClient.142.UnitTest.TAEF\libHttpClient.142.UnitTest.TAEF.vcxproj", "{E885BB30-F51E-4BAB-9300-4B303144BB49}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.UnitTest.142.TAEF", "Build\libHttpClient.142.UnitTest.TAEF\libHttpClient.142.UnitTest.TAEF.vcxproj", "{E885BB30-F51E-4BAB-9300-4B303144BB49}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{CADB9561-440F-4B5F-BC40-4D569EBF1903}"
 EndProject
@@ -39,7 +39,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.XDK.C", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GDK", "GDK", "{9C8A0D94-F592-46D7-9491-1E464C6A8166}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.GDK.C", "Build\libHttpClient.142.GDK.C\libHttpClient.142.GDK.C.vcxproj", "{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.GDK.C", "Build\libHttpClient.142.GDK.C\libHttpClient.142.GDK.C.vcxproj", "{80D8061D-BBEF-414D-8F08-4D8B52C02E85}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WebSocketEchoServer", "Samples\WebSocketEchoServer\WebSocketEchoServer.vcxproj", "{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}"
 EndProject
@@ -429,36 +429,68 @@ Global
 		{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Durango
 		{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}.Release|x64.ActiveCfg = Release|Durango
 		{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}.Release|x86.ActiveCfg = Release|Durango
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|Any CPU.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|ARM.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|Durango.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|Any CPU.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|Any CPU.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|ARM.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|ARM.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|ARM64.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|Durango.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|Durango.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|x64.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|x64.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|x86.ActiveCfg = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Profile|x86.Build.0 = Debug|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|Any CPU.ActiveCfg = Release|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|Durango.ActiveCfg = Release|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}.Release|x86.ActiveCfg = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|Any CPU.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|ARM.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|Durango.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|Any CPU.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|Any CPU.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|ARM.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|ARM.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|ARM64.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|Durango.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|Durango.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|x64.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|x86.ActiveCfg = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Profile|x86.Build.0 = Debug|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|Any CPU.ActiveCfg = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|Durango.ActiveCfg = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85}.Release|x86.ActiveCfg = Release|Gaming.Desktop.x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|ARM.ActiveCfg = Debug|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|Durango.ActiveCfg = Debug|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|x64.ActiveCfg = Debug|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|x64.Build.0 = Debug|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|x86.ActiveCfg = Debug|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Debug|x86.Build.0 = Debug|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|Any CPU.ActiveCfg = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|Any CPU.Build.0 = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|ARM.ActiveCfg = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|ARM.Build.0 = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|ARM64.ActiveCfg = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|ARM64.Build.0 = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|Durango.ActiveCfg = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|Durango.Build.0 = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|Gaming.Desktop.x64.ActiveCfg = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|Gaming.Desktop.x64.Build.0 = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|x64.ActiveCfg = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|x64.Build.0 = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|x86.ActiveCfg = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Profile|x86.Build.0 = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|Any CPU.ActiveCfg = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|ARM.ActiveCfg = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|ARM64.ActiveCfg = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|Durango.ActiveCfg = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|x64.ActiveCfg = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|x64.Build.0 = Release|x64
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|x86.ActiveCfg = Release|Win32
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -477,7 +509,8 @@ Global
 		{13457617-8476-4708-A601-AF998F6EDF21} = {0AA3F7FD-BB7C-4386-8435-F6BABE5EBED3}
 		{9A461116-4B40-40F0-8AE0-81DD294BB92E} = {CADB9561-440F-4B5F-BC40-4D569EBF1903}
 		{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD} = {888A3A17-4FE5-4768-B67E-B4B2B59CF895}
-		{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C} = {9C8A0D94-F592-46D7-9491-1E464C6A8166}
+		{80D8061D-BBEF-414D-8F08-4D8B52C02E85} = {9C8A0D94-F592-46D7-9491-1E464C6A8166}
+		{267629EF-20A2-4FFB-8DC8-A8534E98FCEB} = {CADB9561-440F-4B5F-BC40-4D569EBF1903}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {973E1528-6B80-4A7E-9534-56E9481AF63A}
