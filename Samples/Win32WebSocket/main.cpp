@@ -200,6 +200,7 @@ int main()
     HCWebsocketHandle websocket;
 
     HRESULT hr = HCWebSocketCreate(&websocket, message_received, binary_message_received, websocket_closed, nullptr);
+    HCWebSocketSetMaxReceiveBufferSize(websocket, 160000);
 
     for (int iConnectAttempt = 0; iConnectAttempt < 10; iConnectAttempt++)
     {
@@ -221,11 +222,16 @@ int main()
         hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
         WaitForSingleObject(g_eventHandle, INFINITE);
 
-        uint32_t numberOfMessagesToSend = 100;
+        uint32_t numberOfMessagesToSend = 1;
         for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
         {
-            char webMsg[100];
-            snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
+            char webMsg[150000];
+            for (uint32_t j = 0; j < sizeof(webMsg); ++j)
+            {
+                webMsg[j] = 'X';
+            }
+            webMsg[sizeof(webMsg) - 1] = '\0';
+            //snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
 
             asyncBlock = new XAsyncBlock{};
             asyncBlock->queue = g_queue;

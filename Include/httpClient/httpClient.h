@@ -989,6 +989,21 @@ STDAPI HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket
     ) noexcept;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+/// <summary>
+/// Configures how large the WebSocket receive buffer is allowed to grow before passing messages to clients. If a single message
+/// exceeds the maximum buffer size, the message will be broken down and passed to clients via multiple calls to the HCWebSocketMessageFunction.
+/// The default value is 20kb.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="bufferSizeInBytes">Maximum size (in bytes) for the WebSocket receive buffer.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCWebSocketSetMaxReceiveBufferSize(
+    _In_ HCWebsocketHandle websocket,
+    _In_ size_t bufferSizeInBytes
+) noexcept;
+#endif
+
 /// <summary>
 /// Increments the reference count on the call object.
 /// </summary>

@@ -9,6 +9,8 @@
 
 using namespace xbox::httpclient;
 
+#define WEBSOCKET_RECVBUFFER_MAXSIZE_DEFAULT (1024 * 20)
+
 HC_WEBSOCKET::HC_WEBSOCKET(
     _In_ uint64_t _id,
     _In_opt_ HCWebSocketMessageFunction messageFunc,
@@ -20,7 +22,8 @@ HC_WEBSOCKET::HC_WEBSOCKET(
     m_clientMessageFunc{ messageFunc },
     m_clientBinaryMessageFunc{ binaryMessageFunc },
     m_clientCloseEventFunc{ closeFunc },
-    m_clientContext{ functionContext }
+    m_clientContext{ functionContext },
+    m_maxReceiveBufferSize{ WEBSOCKET_RECVBUFFER_MAXSIZE_DEFAULT }
 {
 }
 
@@ -335,6 +338,11 @@ const http_internal_string& HC_WEBSOCKET::SubProtocol() const noexcept
     return m_subProtocol;
 }
 
+size_t HC_WEBSOCKET::MaxReceiveBufferSize() const noexcept
+{
+    return m_maxReceiveBufferSize;
+}
+
 HRESULT HC_WEBSOCKET::SetProxyUri(
     http_internal_string&& proxyUri
 ) noexcept
@@ -370,6 +378,12 @@ HRESULT HC_WEBSOCKET::SetHeader(
         return E_HC_CONNECT_ALREADY_CALLED;
     }
     m_connectHeaders[headerName] = headerValue;
+    return S_OK;
+}
+
+HRESULT HC_WEBSOCKET::SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept
+{
+    m_maxReceiveBufferSize = maxReceiveBufferSizeBytes;
     return S_OK;
 }
 
@@ -680,6 +694,17 @@ try
         return E_INVALIDARG;
     }
     return websocket->Disconnect();
+}
+CATCH_RETURN()
+
+STDAPI HCWebSocketSetMaxReceiveBufferSize(
+    _In_ HCWebsocketHandle websocket,
+    _In_ size_t bufferSizeInBytes
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !websocket);
+    return websocket->SetMaxReceiveBufferSize(bufferSizeInBytes);
 }
 CATCH_RETURN()
 

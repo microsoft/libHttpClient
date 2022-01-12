@@ -53,10 +53,12 @@ public:
     const bool ProxyDecryptsHttps() const noexcept;
     const http_internal_string& Uri() const noexcept;
     const http_internal_string& SubProtocol() const noexcept;
+    size_t MaxReceiveBufferSize() const noexcept;
 
     HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
     HRESULT SetProxyDecryptsHttps(bool allowProxyToDecryptHttps) noexcept;
     HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
+    HRESULT SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept;
 
     void AddClientRef();
     void DecClientRef();
@@ -88,6 +90,7 @@ private:
     http_internal_string m_proxyUri;
     http_internal_string m_uri;
     http_internal_string m_subProtocol;
+    size_t m_maxReceiveBufferSize;
 
     HCWebSocketMessageFunction const m_clientMessageFunc;
     HCWebSocketBinaryMessageFunction const m_clientBinaryMessageFunc;
