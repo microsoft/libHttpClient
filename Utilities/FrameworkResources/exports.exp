@@ -101,8 +101,6 @@ _HCMockResponseSetHeader
 #
 # trace.h
 #
-_HCTraceInit
-_HCTraceCleanup
 _HCSettingsSetTraceLevel
 _HCSettingsGetTraceLevel
 _HCTraceSetClientCallback
