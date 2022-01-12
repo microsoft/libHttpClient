@@ -15,7 +15,7 @@ JNIEnv* get_jvm_env()
     auto httpSingleton = xbox::httpclient::get_http_singleton();
     if (httpSingleton)
     {
-        HC_PERFORM_ENV* platformContext = httpSingleton->m_performEnv.get();
+        std::shared_ptr<AndroidPlatformContext> platformContext = httpSingleton->m_performEnv->androidPlatformContext;
         JavaVM* javaVm = platformContext->GetJavaVm();
 
         if (javaVm == nullptr)

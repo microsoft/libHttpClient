@@ -3,10 +3,9 @@
 #include "android_platform_context.h"
 #include <httpClient/httpClient.h>
 
-HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
+Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initialize(HCInitArgs* args) noexcept
 {
     assert(args != nullptr);
-    assert(!performEnv);
     JavaVM* javaVm = args->javaVM;
     JNIEnv* jniEnv = nullptr;
 
@@ -42,23 +41,26 @@ HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
 
-    performEnv.reset(new (std::nothrow) HC_PERFORM_ENV(
-        javaVm,
-        args->applicationContext,
-        globalRequestClass,
-        globalResponseClass
-    ));
-    if (!performEnv) { return E_OUTOFMEMORY; }
+    try
+    {
+        http_stl_allocator<AndroidPlatformContext> a{};
+        auto platformContext = std::shared_ptr<AndroidPlatformContext>(
+                new (a.allocate(1)) AndroidPlatformContext(
+                        javaVm,
+                        args->applicationContext,
+                        globalRequestClass,
+                        globalResponseClass
+                ), http_alloc_deleter<AndroidPlatformContext>());
 
-    return S_OK;
+        return std::move(platformContext);
+    }
+    catch (std::bad_alloc)
+    {
+        return E_OUTOFMEMORY;
+    }
 }
 
-void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
-{
-    delete performEnv;
-}
-
-HC_PERFORM_ENV::HC_PERFORM_ENV(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass) :
+AndroidPlatformContext::AndroidPlatformContext(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass) :
     m_javaVm{ javaVm },
     m_applicationContext{ applicationContext },
     m_httpRequestClass{ requestClass },
@@ -67,7 +69,7 @@ HC_PERFORM_ENV::HC_PERFORM_ENV(JavaVM* javaVm, jobject applicationContext, jclas
     assert(m_javaVm != nullptr);
 }
 
-HC_PERFORM_ENV::~HC_PERFORM_ENV()
+AndroidPlatformContext::~AndroidPlatformContext()
 {
     JNIEnv* jniEnv = nullptr;
     bool isThreadAttached = false;

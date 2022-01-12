@@ -4,7 +4,7 @@
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 // XCurl doesn't support curl_multi_timeout, so use a small, fixed delay between calls to curl_multi_perform
@@ -34,7 +34,6 @@ CurlMulti::~CurlMulti()
 {
     if (m_queue)
     {
-        XTaskQueueTerminate(m_queue, true, nullptr, nullptr);
         XTaskQueueCloseHandle(m_queue);
     }
 
@@ -70,17 +69,60 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest)
     return S_OK;
 }
 
+HRESULT CurlMulti::CleanupAsync(HC_UNIQUE_PTR<CurlMulti>&& multi, XAsyncBlock* async)
+{
+    assert(multi->m_cleanupAsyncBlock == nullptr);
+    multi->m_cleanupAsyncBlock = async;
+
+    RETURN_IF_FAILED(XAsyncBegin(async, multi.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
+    multi.release();
+
+    return S_OK;
+}
+
+HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
+{
+    switch (op)
+    {
+    case XAsyncOp::Begin:
+    {
+        CurlMulti* multi = static_cast<CurlMulti*>(data->context);
+        RETURN_IF_FAILED(XTaskQueueTerminate(multi->m_queue, false, multi, [](void* context)
+        {
+            HC_UNIQUE_PTR<CurlMulti> multi{ static_cast<CurlMulti*>(context) };
+
+            // Ensure CurlMulti is destroyed (and thus curl_multi_cleanup is called) before completing asyncBlock
+            XAsyncBlock* cleanupAsync = multi->m_cleanupAsyncBlock;
+            multi.reset();
+
+            XAsyncComplete(cleanupAsync, S_OK, 0);
+        }));
+
+        return S_OK;
+    }
+    default:
+    {
+        return S_OK;
+    }
+    }
+}
+
 void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
 {
+    auto multi = static_cast<CurlMulti*>(context);
+
     if (!canceled)
-    {
-        auto multi = static_cast<CurlMulti*>(context);
+    {        
         HRESULT hr = multi->Perform();
         if (FAILED(hr))
         {
             HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "XCurlMulti::Perform failed. Failing all active requests.");
             multi->FailAllRequests(hr);
         }
+    }
+    else
+    {
+        multi->FailAllRequests(E_ABORT);
     }
 }
 
@@ -164,5 +206,5 @@ void CurlMulti::FailAllRequests(HRESULT hr) noexcept
     m_easyRequests.clear();
 }
 
-} // http_client
+} // httpclient
 } // xbox

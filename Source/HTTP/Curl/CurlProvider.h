@@ -3,42 +3,49 @@
 #include "CurlMulti.h"
 #include "Result.h"
 
-#if HC_WINHTTP_WEBSOCKETS
-// XCurl provider doesn't have Websocket support, and because HC_PERFORM_ENV is shared between both Http and WebSocket
-// providers, we need to include WinHttpState needed for WinHttp WebSocket implementation here
-#include "../WinHttp/winhttp_http_task.h"
-#endif
-
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 HRESULT HrFromCurle(CURLcode c) noexcept;
 HRESULT HrFromCurlm(CURLMcode c) noexcept;
 
-} // http_client
-} // xbox
-
-struct HC_PERFORM_ENV
+struct CurlProvider
 {
 public:
-    static Result<PerformEnv> Initialize();
-    HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
-    HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
-    HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
-    virtual ~HC_PERFORM_ENV();
+    static Result<HC_UNIQUE_PTR<CurlProvider>> Initialize();
+    CurlProvider(const CurlProvider&) = delete;
+    CurlProvider(CurlProvider&&) = delete;
+    CurlProvider& operator=(const CurlProvider&) = delete;
+    virtual ~CurlProvider();
 
-    HRESULT Perform(HCCallHandle hcCall, XAsyncBlock* async) noexcept;
+    static void CALLBACK PerformAsyncHandler(
+        HCCallHandle callHandle,
+        XAsyncBlock* async,
+        void* context,
+        HCPerformEnv env
+    ) noexcept;
+
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlProvider>&& provider, XAsyncBlock* async) noexcept;
 
 private:
-    HC_PERFORM_ENV();
+    CurlProvider() = default;
+
+    HRESULT PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept;
+
+    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data) noexcept;
+    static void CALLBACK MultiCleanupComplete(_Inout_ struct XAsyncBlock* asyncBlock) noexcept;
 
     // Create an CurlMulti per work port
-    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::http_client::CurlMulti>> m_curlMultis{};
+    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>> m_curlMultis{};
 
-#if HC_WINHTTP_WEBSOCKETS
-public:
-    std::shared_ptr<xbox::httpclient::WinHttpState> const winHttpState;
-#endif
+    std::mutex m_mutex;
+    XAsyncBlock* m_cleanupAsyncBlock{ nullptr };
+    http_internal_vector<XAsyncBlock> m_multiCleanupAsyncBlocks;
+    XTaskQueueHandle m_multiCleanupQueue{ nullptr };
+    size_t m_pendingMultiCleanups{ 0 };
 };
+
+} // httpclient
+} // xbox

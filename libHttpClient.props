@@ -36,6 +36,7 @@
     <HCLibToolset Condition="'$(PlatformToolset)'=='v140'">140</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
+    <HCLibToolset Condition="'$(PlatformToolset)'=='v143'">143</HCLibToolset>
 
     <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
   </PropertyGroup>
@@ -62,17 +63,10 @@
 
   <ItemGroup>
     <ProjectReference Include="$(HCBuildRoot)Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(HCLibImpl)'!='true' and '$(ConfigurationType)'!='StaticLibrary'">
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and $(HCLibToolset)==140">{BD57C607-E104-4505-8A43-3D152F016F16}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and $(HCLibToolset)==141">{CF37BEB2-A66A-42BA-B348-1F07566F4865}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and $(HCLibToolset)==142">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==140">{1B0DFB7F-2CD5-48DE-80D4-5CC56C22AEEE}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==141">{30753B00-85F9-43E0-B0E0-A5A5F3E4B62A}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and $(HCLibToolset)==142">{09B1A97C-FADC-4E06-B962-7C8AE6EA19A3}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==140">{D0A538D3-F4B6-4197-8E72-A02726B4DF50}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==141">{57C681F7-280F-45B8-9FA9-D556C24F2053}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'XDK' and $(HCLibToolset)==142">{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and $(HCLibToolset)==141">{DA74F6C1-9B77-4135-9C23-AA348AB0DC9C}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and $(HCLibToolset)==142">{80D8061D-BBEF-414D-8F08-4D8B52C02E85}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32'">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'UWP'">{09B1A97C-FADC-4E06-B962-7C8AE6EA19A3}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'XDK'">{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK'">{80D8061D-BBEF-414D-8F08-4D8B52C02E85}</Project>
     </ProjectReference>
   </ItemGroup>
 
@@ -81,15 +75,15 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(libHttpClientInclude)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32'">%(AdditionalDependencies);winhttp.lib;crypt32.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32' OR '$(HCLibPlatformType)'=='GDK'">%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
   <Import Project="$(HCBuildRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)'=='true'"/>
 
   <!--Bring in XCurl on GDK-->
-  <ImportGroup Condition="'$(HCLibPlatformType)' == 'GDK' AND '$(GameDKLatest)' != ''">
-    <Import Project="$(GameDKLatest)GRDK\ExtensionLibraries\Xbox.XCurl.API\DesignTime\CommonConfiguration\neutral\ExtensionLibrary.props"/>
+  <ImportGroup Condition="'$(HCLibPlatformType)' == 'GDK' AND '$(GameDK)' != ''">
+    <Import Project="$(GameDK)\$(XdkEditionTarget)\GRDK\ExtensionLibraries\Xbox.XCurl.API\DesignTime\CommonConfiguration\neutral\ExtensionLibrary.props"/>
   </ImportGroup>
   <ItemDefinitionGroup>
     <Link>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AAF08544-8AAA-41A5-A86B-2AF4D8985258}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <LinkIncremental>true</LinkIncremental>
+    <HCLibPlatformType>Win32</HCLibPlatformType>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>8.1</WindowsTargetPlatformMinVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), openssl.props))\openssl.props" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.paths.props))\libHttpClient.paths.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <Optimization>Disabled</Optimization>
+    <PreprocessorDefinitions>_DEBUG;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <Optimization>MaxSpeed</Optimization>
+    <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
+        $(opensslSourceRoot);
+        $(opensslSourceRoot)ssl\record\;
+        $(opensslSourceRoot)ssl\statem\;
+        $(opensslGeneratedHeaders)internal\
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
+      <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164;4244;4267</DisableSpecificWarnings>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>
+        WIN32;
+        _WIN32_WINNT=0x601;
+        WIN32_LEAN_AND_MEAN;
+        _LIB;
+        DSO_WIN32;
+        ENGINESDIR="THIS_SHOULD_NOT_BE_USED";
+        L_ENDIAN;
+        OPENSSL_THREADS;
+        OPENSSL_NO_DYNAMIC_ENGINE;
+        OPENSSL_PIC;
+        OPENSSL_SYS_WIN32;
+        OPENSSLDIR="THIS_SHOULD_NOT_BE_USED";
+        UNICODE;
+        _CRT_SECURE_NO_DEPRECATE;
+        _UNICODE;
+        _WINSOCK_DEPRECATED_NO_WARNINGS;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="$(opensslSourceRoot)ssl\bio_ssl.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\d1_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\d1_msg.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\d1_srtp.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\methods.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\packet.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\pqueue.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\dtls1_bitmap.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_d1.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_s3.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_buffer.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record_tls13.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_cbc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_msg.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_asn1.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_cert.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_ciph.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_conf.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_err.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_init.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_mcnf.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_rsa.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_sess.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_stat.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_txt.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_utst.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_clnt.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_cust.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_srvr.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_clnt.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_dtls.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_srvr.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_trce.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\tls13_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\tls_srp.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

@@ -19,6 +19,13 @@ public:
         );
     ~xmlhttp_http_task();
 
+    static void CALLBACK PerformAsyncHandler(
+        HCCallHandle callHandle,
+        XAsyncBlock* async,
+        void* context,
+        HCPerformEnv env
+    ) noexcept;
+
     void perform_async(
         _Inout_ XAsyncBlock* asyncBlock,
         _In_ HCCallHandle call

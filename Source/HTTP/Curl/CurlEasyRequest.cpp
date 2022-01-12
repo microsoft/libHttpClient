@@ -4,7 +4,7 @@
 
 namespace xbox
 {
-namespace http_client
+namespace httpclient
 {
 
 CurlEasyRequest::CurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsyncBlock* async)
@@ -60,6 +60,8 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     RETURN_IF_FAILED(MethodStringToOpt(method, opt));
     if (opt == CURLOPT_CUSTOMREQUEST)
     {
+        // Set PUT and then override as custom request. If we don't do this we Curl defaults to "GET" behavior which doesn't allow request body
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_UPLOAD, 1));
         RETURN_IF_FAILED(easyRequest->SetOpt<char const*>(opt, method));
     }
     else
@@ -355,6 +357,10 @@ HRESULT CurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt) 
     else if (strcmp(method, "PUT") == 0)
     {
         opt = CURLOPT_UPLOAD;
+    }
+    else if (strcmp(method, "HEAD") == 0)
+    {
+        opt = CURLOPT_NOBODY;
     }
     else
     {

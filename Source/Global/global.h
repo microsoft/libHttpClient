@@ -6,6 +6,7 @@
 #if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
 #endif
+#include "perform_env.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -66,7 +67,7 @@ public:
 
     // HTTP state
     HttpPerformInfo const m_httpPerform;
-    PerformEnv const m_performEnv;
+    PerformEnv m_performEnv;
 
     HRESULT set_global_proxy(_In_ const char* proxyUri);
 
@@ -77,7 +78,6 @@ public:
     uint32_t m_retryDelayInSeconds = DEFAULT_RETRY_DELAY_IN_SECONDS;
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    bool m_networkInitialized{ true };
     bool m_disableAssertsForSSLValidationInDevSandboxes{ false };
 #endif
 
@@ -113,6 +113,8 @@ private:
         _In_opt_ HCInitArgs* createArgs,
         _Out_ std::shared_ptr<http_singleton>& singleton
     ) noexcept;
+
+    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
 
     // Self reference to prevent deletion on static shutdown.
     std::shared_ptr<http_singleton> m_self{ nullptr };

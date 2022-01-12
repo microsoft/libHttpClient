@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "../HCWebSocket.h"
+#include "winrt_websocket.h"
 
 using namespace xbox::httpclient;
 using namespace ::Windows::Foundation;
@@ -322,7 +322,7 @@ HRESULT WebsocketConnectGetResult(_In_ const XAsyncProviderData* data)
     return S_OK;
 }
 
-HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
+HRESULT CALLBACK WinRTWebSocketConnectAsync(
     _In_z_ PCSTR uri,
     _In_z_ PCSTR subProtocol,
     _In_ HCWebsocketHandle websocket,
@@ -359,7 +359,7 @@ HRESULT CALLBACK Internal_HCWebSocketConnectAsync(
     return hr;
 }
 
-HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
+HRESULT CALLBACK WinRTWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_z_ PCSTR message,
     _Inout_ XAsyncBlock* asyncBlock,
@@ -405,7 +405,7 @@ HRESULT CALLBACK Internal_HCWebSocketSendMessageAsync(
     return S_OK;
 }
 
-HRESULT CALLBACK Internal_HCWebSocketSendBinaryMessageAsync(
+HRESULT CALLBACK WinRTWebSocketSendBinaryMessageAsync(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
@@ -477,6 +477,8 @@ try
 
         auto msg = sendMsgContext->nextMessage;
         HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Message [ID %llu] [%s]", TO_ULL(websocket->id), TO_ULL(msg->m_id), msg->m_message.c_str());
+
+        UNREFERENCED_LOCAL(websocket);
 
         if (!msg->m_message.empty())
         {
@@ -625,7 +627,7 @@ void MessageWebSocketSendMessage(
     }
 }
 
-HRESULT CALLBACK Internal_HCWebSocketDisconnect(
+HRESULT CALLBACK WinRTWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_opt_ void* context

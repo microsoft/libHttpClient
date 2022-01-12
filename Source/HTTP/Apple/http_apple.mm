@@ -2,11 +2,28 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#import <Foundation/Foundation.h>
 #include "http_apple.h"
 #include "request_body_stream.h"
 #include "session_delegate.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+class http_task_apple
+{
+public:
+    http_task_apple(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call);
+    bool initiate_request();
+
+private:
+    void completion_handler(NSURLResponse* response, NSError* error);
+    
+    HCCallHandle m_call; // non owning
+    XAsyncBlock* m_asyncBlock; // non owning
+    
+    NSURLSession* m_session;
+    NSURLSessionTask* m_sessionTask;
+};
 
 http_task_apple::http_task_apple(_Inout_ XAsyncBlock* asyncBlock, _In_ HCCallHandle call) :
     m_call(call),
@@ -131,23 +148,7 @@ bool http_task_apple::initiate_request()
     return true;
 }
 
-NAMESPACE_XBOX_HTTP_CLIENT_END
-
-HRESULT Internal_InitializeHttpPlatform(HCInitArgs* args, PerformEnv& performEnv) noexcept
-{
-    // No-op
-    assert(args == nullptr);
-    assert(performEnv == nullptr);
-    return S_OK;
-}
-
-void Internal_CleanupHttpPlatform(HC_PERFORM_ENV* performEnv) noexcept
-{
-    assert(performEnv == nullptr);
-    UNREFERENCED_PARAMETER(performEnv);
-}
-
-void Internal_HCHttpCallPerformAsync(
+void AppleHttpCallPerformAsync(
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
@@ -166,3 +167,5 @@ void Internal_HCHttpCallPerformAsync(
          httpTask.release();
     }
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_END

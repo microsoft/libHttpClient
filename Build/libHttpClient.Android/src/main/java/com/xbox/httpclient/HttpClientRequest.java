@@ -1,6 +1,8 @@
 package com.xbox.httpclient;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.UnknownHostException;
 
 import okhttp3.Call;
@@ -10,8 +12,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.RequestBody;
-
-import com.xbox.httpclient.HttpClientRequestBody;
 
 public class HttpClientRequest {
     private static final OkHttpClient OK_CLIENT;
@@ -59,7 +59,12 @@ public class HttpClientRequest {
             @Override
             public void onFailure(final Call call, IOException e) {
                 boolean isNoNetworkFailure = e instanceof UnknownHostException;
-                OnRequestFailed(sourceCall, e.getClass().getCanonicalName(), isNoNetworkFailure);
+
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+
+                OnRequestFailed(sourceCall, e.getClass().getCanonicalName(), sw.toString(), isNoNetworkFailure);
             }
 
             @Override
@@ -70,5 +75,5 @@ public class HttpClientRequest {
     }
 
     private native void OnRequestCompleted(long call, HttpClientResponse response);
-    private native void OnRequestFailed(long call, String errorMessage, boolean isNoNetwork);
+    private native void OnRequestFailed(long call, String errorMessage, String stackTrace, boolean isNoNetwork);
 }

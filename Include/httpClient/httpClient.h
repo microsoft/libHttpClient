@@ -522,7 +522,7 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     ) noexcept;
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+#if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
 /// <summary>
 /// Enables or disables SSL server certificate validation for this specific HTTP call.
 /// </summary>
