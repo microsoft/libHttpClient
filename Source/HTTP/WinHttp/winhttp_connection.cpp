@@ -432,7 +432,7 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
     }
     else if (closeComplete)
     {
-        callback();
+        m_connectionClosedCallback();
     }
  
     return S_OK;
