@@ -519,7 +519,7 @@ void HC_WEBSOCKET::BinaryMessageFragmentFunc(
             lock.unlock();
 
             if (websocket->m_clientBinaryMessageFragmentFunc)
-            {           
+            {
                 websocket->m_clientBinaryMessageFragmentFunc(websocket, bytes, payloadSize, isLastFragment, websocket->m_clientContext);
             }
             else if (websocket->m_clientBinaryMessageFunc)

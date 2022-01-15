@@ -1337,7 +1337,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
 
-            // WinHttp doesn't report the chunk of a fragmented message as a fragment, but LHC will
+            // WinHttp doesn't report the final chunk of a fragmented message as a fragment, but LHC will
             pRequestContext->m_websocketReceivingMessageFragments = true;
             pRequestContext->m_websocketReceiveBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
             

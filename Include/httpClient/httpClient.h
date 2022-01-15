@@ -843,6 +843,7 @@ STDAPI HCWebSocketCreate(
     _In_opt_ void* functionContext
     ) noexcept;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
 /// Set the binary message fragment handler. The client functionContext passed to HCWebSocketCreate will also be passed to this handler.
 /// </summary>
@@ -858,6 +859,7 @@ STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc
 ) noexcept;
+#endif
 
 /// <summary>
 /// Set the proxy URI for the WebSocket.
@@ -917,6 +919,7 @@ STDAPI HCWebSocketGetEventFunctions(
     _Out_ void** functionContext
     ) noexcept;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
 /// Gets the WebSocket binary message fragment handler.
 /// </summary>
@@ -929,6 +932,7 @@ STDAPI HCWebSocketGetBinaryMessageFragmentEventFunction(
     _Out_ HCWebSocketBinaryMessageFragmentFunction* binaryMessageFragmentFunc,
     _Out_ void** functionContext
 ) noexcept;
+#endif
 
 /// <summary>
 /// Used by HCWebSocketConnectAsync() and HCWebSocketSendMessageAsync().
