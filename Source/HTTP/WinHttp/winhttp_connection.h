@@ -337,7 +337,7 @@ private:
     void WebSocketSendMessage(const WebSocketSendContext& sendContext);
     void WebSocketCompleteEntireSendQueueWithError(HRESULT error);
     HRESULT WebSocketReadAsync();
-    HRESULT WebSocketReadComplete(bool binaryMessage);
+    HRESULT WebSocketReadComplete(bool binaryMessage, bool isFragment, bool isFinalFragment);
     void on_websocket_disconnected(_In_ USHORT closeReason);
 
     static HRESULT CALLBACK WebSocketConnectProvider(XAsyncOp op, const XAsyncProviderData* data);
@@ -349,6 +349,7 @@ private:
     std::recursive_mutex m_websocketSendMutex; // controls access to m_websocketSendQueue
     http_internal_queue<WebSocketSendContext*> m_websocketSendQueue{};
     websocket_message_buffer m_websocketReceiveBuffer;
+    bool m_websocketReceivingMessageFragments{ false };
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

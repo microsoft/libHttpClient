@@ -174,6 +174,22 @@ void CALLBACK binary_message_received(
     SetEvent(g_eventHandle);
 }
 
+void CALLBACK binary_message_fragment_received(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ bool isFinalFragment,
+    _In_ void* functionContext
+)
+{
+    printf("Received websocket binary message fragment\r\n");
+    if (isFinalFragment)
+    {
+        g_numberMessagesReceieved++;
+    }
+    SetEvent(g_eventHandle);
+}
+
 void CALLBACK websocket_closed(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
@@ -200,7 +216,7 @@ int main()
     HCWebsocketHandle websocket;
 
     HRESULT hr = HCWebSocketCreate(&websocket, message_received, binary_message_received, websocket_closed, nullptr);
-    HCWebSocketSetMaxReceiveBufferSize(websocket, 160000);
+    HCWebSocketSetBinaryMessageFragmentEventFunction(websocket, binary_message_fragment_received);
 
     for (int iConnectAttempt = 0; iConnectAttempt < 10; iConnectAttempt++)
     {

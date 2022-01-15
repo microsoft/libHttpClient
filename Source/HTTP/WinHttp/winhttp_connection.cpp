@@ -1333,25 +1333,28 @@ void WinHttpConnection::callback_websocket_status_read_complete(
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE || wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE)
     {
-        bool readComplete{ false };
+        bool fragmentReadComplete{ false };
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+
+            // WinHttp doesn't report the chunk of a fragmented message as a fragment, but LHC will
+            pRequestContext->m_websocketReceivingMessageFragments = true;
             pRequestContext->m_websocketReceiveBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
             
-            // If the receive buffer is full & at max size, invoke client callbacks with partial message
-            readComplete = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->MaxReceiveBufferSize();
+            // If the receive buffer is full & at max size, invoke client fragment handler with partial message
+            fragmentReadComplete = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->MaxReceiveBufferSize();
         }
 
-        if (readComplete)
+        if (fragmentReadComplete)
         {
-            pRequestContext->WebSocketReadComplete(true);
+            pRequestContext->WebSocketReadComplete(true, true, false);
         }
 
         pRequestContext->WebSocketReadAsync();
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE || wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE)
     {
-        pRequestContext->WebSocketReadComplete(wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE);
+        pRequestContext->WebSocketReadComplete(wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, pRequestContext->m_websocketReceivingMessageFragments, true);
         pRequestContext->WebSocketReadAsync();
     }
 #else
@@ -1398,22 +1401,29 @@ HRESULT WinHttpConnection::WebSocketReadAsync()
     return S_OK;
 }
 
-HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage)
+HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool isFragment, bool isFinalFragment)
 {
     websocket_message_buffer messageBuffer;
     HCWebSocketMessageFunction messageFunc = nullptr;
     HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr;
+    HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc = nullptr;
     void* functionContext = nullptr;
 
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
         HCWebSocketGetEventFunctions(m_websocketHandle, &messageFunc, &binaryMessageFunc, nullptr, &functionContext);
+        HCWebSocketGetBinaryMessageFragmentEventFunction(m_websocketHandle, &binaryMessageFragmentFunc, &functionContext);
         m_websocketReceiveBuffer.TransferBuffer(&messageBuffer);
+        m_websocketReceivingMessageFragments = !isFinalFragment;
     }
 
     try
     {
-        if (binaryMessage && binaryMessageFunc)
+        if (isFragment && binaryMessageFragmentFunc)
+        {
+            binaryMessageFragmentFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), isFinalFragment, functionContext);
+        }
+        else if (binaryMessage && binaryMessageFunc)
         {
             binaryMessageFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), functionContext);
         }
