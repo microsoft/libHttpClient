@@ -174,6 +174,22 @@ void CALLBACK binary_message_received(
     SetEvent(g_eventHandle);
 }
 
+void CALLBACK binary_message_fragment_received(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ bool isFinalFragment,
+    _In_ void* functionContext
+)
+{
+    printf("Received websocket binary message fragment\r\n");
+    if (isFinalFragment)
+    {
+        g_numberMessagesReceieved++;
+    }
+    SetEvent(g_eventHandle);
+}
+
 void CALLBACK websocket_closed(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
@@ -195,11 +211,12 @@ int main()
     XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
     StartBackgroundThread();
 
-    std::string url = "wss://echo.websocket.org";
+    std::string url = "ws://localhost:9002";
 
     HCWebsocketHandle websocket;
 
     HRESULT hr = HCWebSocketCreate(&websocket, message_received, binary_message_received, websocket_closed, nullptr);
+    HCWebSocketSetBinaryMessageFragmentEventFunction(websocket, binary_message_fragment_received);
 
     for (int iConnectAttempt = 0; iConnectAttempt < 10; iConnectAttempt++)
     {
@@ -221,11 +238,16 @@ int main()
         hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
         WaitForSingleObject(g_eventHandle, INFINITE);
 
-        uint32_t numberOfMessagesToSend = 100;
+        uint32_t numberOfMessagesToSend = 1;
         for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
         {
-            char webMsg[100];
-            snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
+            char webMsg[150000];
+            for (uint32_t j = 0; j < sizeof(webMsg); ++j)
+            {
+                webMsg[j] = 'X';
+            }
+            webMsg[sizeof(webMsg) - 1] = '\0';
+            //snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
 
             asyncBlock = new XAsyncBlock{};
             asyncBlock->queue = g_queue;

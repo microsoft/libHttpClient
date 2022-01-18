@@ -774,14 +774,33 @@ typedef void
 /// A callback invoked every time a WebSocket receives an incoming binary message
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
-/// <param name="incomingBodyPayload"></param>
-/// <param name="incomingBodyPayloadSize"></param>
+/// <param name="incomingBodyPayload">Binary message payload.</param>
+/// <param name="incomingBodyPayloadSize">Size of the payload in bytes.</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
 typedef void
 (CALLBACK* HCWebSocketBinaryMessageFunction)(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
+    _In_ void* functionContext
+    );
+
+/// <summary>
+/// A callback invoked every time a WebSocket receives an incoming message that is larger than
+/// the WebSocket receive buffer (configurable using HCWebSocketSetMaxReceiveBufferSize). Large messages
+/// will be broken down and passed to clients in chunks.
+/// </summary>
+/// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
+/// <param name="incomingBodyPayload">Binary message payload.</param>
+/// <param name="incomingBodyPayloadSize">Size of the payload in bytes.</param>
+/// <param name="isLastFragment">True if this is the last fragment in a message, false otherwise.</param>
+/// <param name="functionContext">Client context to pass to callback function.</param>
+typedef void
+(CALLBACK* HCWebSocketBinaryMessageFragmentFunction)(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ bool isLastFragment,
     _In_ void* functionContext
     );
 
@@ -823,6 +842,24 @@ STDAPI HCWebSocketCreate(
     _In_opt_ HCWebSocketCloseEventFunction closeFunc,
     _In_opt_ void* functionContext
     ) noexcept;
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+/// <summary>
+/// Set the binary message fragment handler. The client functionContext passed to HCWebSocketCreate will also be passed to this handler.
+/// </summary>
+/// <param name="websocket">The handle of the websocket.</param>
+/// <param name="binaryMessageFragmentFunc">A pointer to the binary message fragment handling callback to use, or a null pointer to remove.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// If this handler is not set, messages larger than the configured buffer size may still be broken down and passed to the
+/// HCWebSocketBinaryMessageFunction, but there will be no indication that they are partial messages. If large WebSocket messages are expected,
+/// it is recommended to either set this handler OR set a receive buffer large enough to hold the entire message.
+/// </remarks>
+STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
+    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc
+) noexcept;
+#endif
 
 /// <summary>
 /// Set the proxy URI for the WebSocket.
@@ -882,6 +919,20 @@ STDAPI HCWebSocketGetEventFunctions(
     _Out_ void** functionContext
     ) noexcept;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+/// <summary>
+/// Gets the WebSocket binary message fragment handler.
+/// </summary>
+/// <param name="websocket">The handle of the websocket.</param>
+/// <param name="binaryMessageFragmentFunc">Returned binaryMessageFragmentFunc.</param>
+/// <param name="functionContext">Client context to pass to callback function.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_HC_NOT_INITIALISED, or E_FAIL.</returns>
+STDAPI HCWebSocketGetBinaryMessageFragmentEventFunction(
+    _In_ HCWebsocketHandle websocket,
+    _Out_ HCWebSocketBinaryMessageFragmentFunction* binaryMessageFragmentFunc,
+    _Out_ void** functionContext
+) noexcept;
+#endif
 
 /// <summary>
 /// Used by HCWebSocketConnectAsync() and HCWebSocketSendMessageAsync().
@@ -988,6 +1039,21 @@ STDAPI HCGetWebSocketSendMessageResult(
 STDAPI HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket
     ) noexcept;
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+/// <summary>
+/// Configures how large the WebSocket receive buffer is allowed to grow before passing messages to clients. If a single message
+/// exceeds the maximum buffer size, the message will be broken down and passed to clients via multiple calls to the HCWebSocketMessageFunction.
+/// The default value is 20kb.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="bufferSizeInBytes">Maximum size (in bytes) for the WebSocket receive buffer.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCWebSocketSetMaxReceiveBufferSize(
+    _In_ HCWebsocketHandle websocket,
+    _In_ size_t bufferSizeInBytes
+) noexcept;
+#endif
 
 /// <summary>
 /// Increments the reference count on the call object.
