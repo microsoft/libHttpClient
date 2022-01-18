@@ -92,7 +92,7 @@ private:
     http_internal_string m_proxyUri;
     http_internal_string m_uri;
     http_internal_string m_subProtocol;
-    size_t m_maxReceiveBufferSize;
+    size_t m_maxReceiveBufferSize{ 0 };
 
     HCWebSocketMessageFunction const m_clientMessageFunc{ nullptr };
     HCWebSocketBinaryMessageFunction const m_clientBinaryMessageFunc{ nullptr };
