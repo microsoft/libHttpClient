@@ -375,6 +375,7 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
 {
     bool doWebSocketClose = false;
     bool doWinHttpClose = false;
+    bool closeComplete = false;
 
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
@@ -405,6 +406,11 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
             // Nothing to do 
             return S_OK;
         }
+        case ConnectionState::Closed:
+        {
+            closeComplete = true;
+            break;
+        }
         default:
         {
             doWinHttpClose = true;
@@ -422,6 +428,10 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
     else if (doWinHttpClose)
     {
         return StartWinHttpClose();
+    }
+    else if (closeComplete)
+    {
+        m_connectionClosedCallback();
     }
  
     return S_OK;
@@ -1102,8 +1112,14 @@ void CALLBACK WinHttpConnection::completion_callback(
                     // WinHttp Shutdown complete. WinHttp guarantees we will get no more callbacks for this request so we can safely cleanup context.
                     // Ensure WinHttpCallbackContext is cleaned before invoking callback in case this is happening during HCCleanup
                     HC_UNIQUE_PTR<WinHttpCallbackContext> reclaim{ callbackContext };
-                    pRequestContext->m_hRequest = nullptr;
-                    auto connectionClosedCallback = std::move(pRequestContext->m_connectionClosedCallback);
+
+                    ConnectionClosedCallback connectionClosedCallback{};
+                    {
+                        win32_cs_autolock cs{ &pRequestContext->m_lock };
+                        pRequestContext->m_hRequest = nullptr;
+                        connectionClosedCallback = std::move(pRequestContext->m_connectionClosedCallback);
+                        pRequestContext->m_state = ConnectionState::Closed;
+                    }
                     reclaim.reset();
 
                     if (connectionClosedCallback)

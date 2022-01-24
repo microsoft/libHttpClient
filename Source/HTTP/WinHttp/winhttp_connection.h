@@ -142,7 +142,8 @@ enum class ConnectionState : uint32_t
     WinHttpRunning,
     WebSocketConnected,
     WebSocketClosing,
-    WinHttpClosing
+    WinHttpClosing,
+    Closed
 };
 
 using WinHttpWebSocketCompleteUpgradeExport = HINTERNET(WINAPI *)(HINTERNET, DWORD_PTR);
