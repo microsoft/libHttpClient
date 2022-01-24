@@ -73,6 +73,7 @@ fi
 mkdir -p "$OPENSSL_TMP"
 mkdir -p "$LIB_OUTPUT/lib"
 mkdir -p "$LIB_OUTPUT/include"
+mkdir -p "$LIB_STAGING"
 
 pushd $OPENSSL_SRC
 
