@@ -43,6 +43,7 @@ fi
 OPENSSL_SRC="$SRCROOT/../../External/openssl"
 OPENSSL_TMP="$OPENSSL_TMP_DIR"
 LIB_OUTPUT="$OPENSSL_LIB_OUTPUT"
+LIB_STAGING="$LIB_OUTPUT/staging"
 
 ### Check whether libcrypto.a already exists for this architecture/platform - we'll only build if it does not ###
 
@@ -111,23 +112,23 @@ for BUILD_ARCH in $BUILD_ARCHS; do
     # Only build the "software" components, not docs and manpages
     make install_sw
 
-    log "Renaming intermediate libraries to $CONFIGURATION_TEMP_DIR/$BUILD_ARCH-*.a"
-    cp "$OPENSSL_TMP"/lib/libcrypto.a "$CONFIGURATION_TEMP_DIR"/$BUILD_ARCH-libcrypto.a
-    cp "$OPENSSL_TMP"/lib/libssl.a "$CONFIGURATION_TEMP_DIR"/$BUILD_ARCH-libssl.a
+    log "Renaming intermediate libraries to $LIB_STAGING/$BUILD_ARCH-*.a"
+    cp "$OPENSSL_TMP"/lib/libcrypto.a "$LIB_STAGING"/$BUILD_ARCH-libcrypto.a
+    cp "$OPENSSL_TMP"/lib/libssl.a "$LIB_STAGING"/$BUILD_ARCH-libssl.a
 done
 
 ### Combine all the architectures into one universal library ###
 
 log "Creating universal libraries in $LIB_OUTPUT"
-lipo -create "$CONFIGURATION_TEMP_DIR/"*-libcrypto.a -output "$LIB_OUTPUT/lib/libcrypto.a"
-lipo -create "$CONFIGURATION_TEMP_DIR/"*-libssl.a -output "$LIB_OUTPUT/lib/libssl.a"
+lipo -create "$LIB_STAGING/"*-libcrypto.a -output "$LIB_OUTPUT/lib/libcrypto.a"
+lipo -create "$LIB_STAGING/"*-libssl.a -output "$LIB_OUTPUT/lib/libssl.a"
 
 log "Copying headers to $LIB_OUTPUT"
 cp -r "$OPENSSL_TMP/include/"* "$LIB_OUTPUT/include/"
 
 log "Cleaning artifacts"
 rm -rf "$OPENSSL_TMP"
-rm -rf "$CONFIGURATION_TEMP_DIR"
+rm -rf "$LIB_STAGING"
 
 log "Executing ranlib on universal libraries in $LIB_OUTPUT"
 ranlib "$LIB_OUTPUT/lib/libcrypto.a"
