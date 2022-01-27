@@ -40,10 +40,19 @@ HRESULT STDMETHODCALLTYPE http_response_stream::Write(
     try
     {
         hr = writeFunction(httpTask->call(), static_cast<const uint8_t*>(pv), cb, context);
-        if (FAILED(hr))
+        if (hr == E_OUTOFMEMORY)
+        {
+            return STG_E_MEDIUMFULL;
+        }
+        else if (FAILED(hr))
         {
             return STG_E_CANTSAVE;
         }
+    }
+    catch (std::bad_alloc /*e*/)
+    {
+        httpTask->set_exception(std::current_exception());
+        return STG_E_MEDIUMFULL;
     }
     catch (...)
     {
