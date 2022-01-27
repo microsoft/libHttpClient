@@ -2,10 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
 #include <httpClient/httpProvider.h>
-#include "../HTTP/httpcall.h"
-#if !HC_NOWEBSOCKETS
-#include "../WebSocket/hcwebsocket.h"
-#endif
 #include "perform_env.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN

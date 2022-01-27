@@ -8,6 +8,9 @@
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #endif
+#if !HC_NOWEBSOCKETS
+#include "WebSocket/hcwebsocket.h"
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -120,22 +123,6 @@ private:
     uint32_t m_bufferByteCapacity = 0;
 };
 
-struct XPlatSecurityInformation
-{
-    XPlatSecurityInformation() = default;
-    XPlatSecurityInformation(const XPlatSecurityInformation&) = delete;
-    XPlatSecurityInformation(XPlatSecurityInformation&&) = default;
-    XPlatSecurityInformation& operator=(const XPlatSecurityInformation&) = delete;
-    XPlatSecurityInformation& operator=(XPlatSecurityInformation&&) = default;
-    ~XPlatSecurityInformation() = default;
-
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    http_internal_vector<uint8_t> buffer;
-    XNetworkingSecurityInformation* securityInformation{ nullptr };
-#endif
-    uint32_t enabledHttpSecurityProtocolFlags;
-};
-
 enum class ConnectionState : uint32_t
 {
     Initialized,
@@ -144,24 +131,6 @@ enum class ConnectionState : uint32_t
     WebSocketClosing,
     WinHttpClosing,
     Closed
-};
-
-using WinHttpWebSocketCompleteUpgradeExport = HINTERNET(WINAPI *)(HINTERNET, DWORD_PTR);
-using WinHttpWebSocketSendExport = DWORD(WINAPI *)(HINTERNET, UINT, PVOID, DWORD);
-using WinHttpWebSocketReceiveExport = DWORD(WINAPI *)(HINTERNET, PVOID, DWORD, DWORD*, UINT*);
-using WinHttpWebSocketCloseExport = DWORD(WINAPI *)(HINTERNET, USHORT, PVOID, DWORD);
-using WinHttpWebSocketQueryCloseStatusExport = DWORD(WINAPI *)(HINTERNET, USHORT*, PVOID, DWORD, DWORD*);
-using WinHttpWebSocketShutdownExport = DWORD(WINAPI *)(HINTERNET, USHORT, PVOID, DWORD);
-
-struct WinHttpWebSocketExports
-{
-    HMODULE winHttpModule{ nullptr };
-    WinHttpWebSocketCompleteUpgradeExport completeUpgrade{ nullptr };
-    WinHttpWebSocketSendExport send{ nullptr };
-    WinHttpWebSocketReceiveExport receive{ nullptr };
-    WinHttpWebSocketCloseExport close{ nullptr };
-    WinHttpWebSocketQueryCloseStatusExport queryCloseStatus{ nullptr };
-    WinHttpWebSocketShutdownExport shutdown{ nullptr };
 };
 
 using ConnectionClosedCallback = std::function<void()>;

@@ -1,8 +1,5 @@
 #pragma once
 
-#include "httpcall.h"
-#include "../WebSocket/hcwebsocket.h"
-
 #if HC_PLATFORM == HC_PLATFORM_WIN32 
 #include "WinHttp/winhttp_provider.h"
 #elif HC_PLATFORM == HC_PLATFORM_GDK
@@ -11,6 +8,39 @@
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "HTTP/Android/android_platform_context.h"
 #endif
+
+struct HttpPerformInfo
+{
+    HttpPerformInfo() = default;
+    HttpPerformInfo(_In_ HCCallPerformFunction h, _In_opt_ void* ctx)
+        : handler(h), context(ctx)
+    { }
+    HCCallPerformFunction handler = nullptr;
+    void* context = nullptr; // non owning
+};
+
+struct WebSocketPerformInfo
+{
+    WebSocketPerformInfo(
+        _In_ HCWebSocketConnectFunction conn,
+        _In_ HCWebSocketSendMessageFunction st,
+        _In_ HCWebSocketSendBinaryMessageFunction sb,
+        _In_ HCWebSocketDisconnectFunction dc,
+        _In_opt_ void* ctx
+    ) :
+        connect{ conn },
+        sendText{ st },
+        sendBinary{ sb },
+        disconnect{ dc },
+        context{ ctx }
+    {}
+
+    HCWebSocketConnectFunction connect = nullptr;
+    HCWebSocketSendMessageFunction sendText = nullptr;
+    HCWebSocketSendBinaryMessageFunction sendBinary = nullptr;
+    HCWebSocketDisconnectFunction disconnect = nullptr;
+    void* context = nullptr;
+};
 
 // Global context passed to HTTP/WebSocket hooks. Will be opaque to client providers, but contains needed context for default providers.
 struct HC_PERFORM_ENV
@@ -27,6 +57,8 @@ public:
     static Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> Initialize(HCInitArgs* args) noexcept;
 
     static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept;
+
+    HRESULT HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async);
 
     HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
     HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
@@ -45,6 +77,17 @@ private:
     HC_PERFORM_ENV() = default;
 
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
+
+    static HRESULT CALLBACK HttpPerformAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
+    static void CALLBACK HttpPerformComplete(XAsyncBlock* async);
+
+    std::mutex m_mutex;
+
+    struct HttpPerformContext;
+    http_internal_map<HCCallHandle, std::shared_ptr<HttpPerformContext>> m_activeHttpRequests;
+
+    XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
+
 };
 
 using PerformEnv = HC_UNIQUE_PTR<HC_PERFORM_ENV>;

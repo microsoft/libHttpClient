@@ -313,7 +313,7 @@ HRESULT HC_WEBSOCKET::Disconnect()
     }
 }
 
-const http_header_map& HC_WEBSOCKET::Headers() const noexcept
+const HttpHeaders& HC_WEBSOCKET::Headers() const noexcept
 {
     return m_connectHeaders;
 }

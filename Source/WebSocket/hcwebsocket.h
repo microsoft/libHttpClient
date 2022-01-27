@@ -4,6 +4,8 @@
 #pragma once
 
 #include <httpClient/httpClient.h>
+#include "HTTP/httpcall.h"
+#include "Global/perform_env.h"
 
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
@@ -48,7 +50,7 @@ public:
     HRESULT Disconnect();
 
     const uint64_t id;
-    const http_header_map& Headers() const noexcept;
+    const xbox::httpclient::HttpHeaders& Headers() const noexcept;
     const http_internal_string& ProxyUri() const noexcept;
     const bool ProxyDecryptsHttps() const noexcept;
     const http_internal_string& Uri() const noexcept;
@@ -87,7 +89,7 @@ private:
         Connected
     } m_state{ State::Initial };
 
-    http_header_map m_connectHeaders;
+    xbox::httpclient::HttpHeaders m_connectHeaders;
     bool m_allowProxyToDecryptHttps{ false };
     http_internal_string m_proxyUri;
     http_internal_string m_uri;
@@ -106,28 +108,5 @@ private:
     std::shared_ptr<HC_WEBSOCKET> m_extraRefHolder;
 
 } HC_WEBSOCKET;
-
-struct WebSocketPerformInfo
-{
-    WebSocketPerformInfo(
-        _In_ HCWebSocketConnectFunction conn,
-        _In_ HCWebSocketSendMessageFunction st,
-        _In_ HCWebSocketSendBinaryMessageFunction sb,
-        _In_ HCWebSocketDisconnectFunction dc,
-        _In_opt_ void* ctx
-    ):
-        connect{ conn },
-        sendText{ st },
-        sendBinary{ sb },
-        disconnect{ dc },
-        context{ ctx }
-    {}
-
-    HCWebSocketConnectFunction connect = nullptr;
-    HCWebSocketSendMessageFunction sendText = nullptr;
-    HCWebSocketSendBinaryMessageFunction sendBinary = nullptr;
-    HCWebSocketDisconnectFunction disconnect = nullptr;
-    void* context = nullptr;
-};
 
 #endif // !HC_NOWEBSOCKETS

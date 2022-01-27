@@ -22,11 +22,11 @@ public:
             PumpedTaskQueue* pthis = (PumpedTaskQueue*)cxt;
             if (port == XTaskQueuePort::Work)
             {
-                pthis->cvWork.notify_all();
+                pthis->Signal(pthis->workData);
             }
             else
             {
-                pthis->cvCompletion.notify_all();
+                pthis->Signal(pthis->completionData);
             }
         }, &token));
 
@@ -36,9 +36,8 @@ public:
 
     ~PumpedTaskQueue()
     {
-        shutdown = true;
-        cvWork.notify_all();
-        cvCompletion.notify_all();
+        Shutdown(workData);
+        Shutdown(completionData);
 
         workThread->join();
         completionThread->join();
@@ -51,31 +50,67 @@ public:
 
 private:
 
+    struct NotifyData
+    {
+        std::mutex lock;
+        std::condition_variable cv;
+        bool notify = false;
+    };
+
+    bool WaitForNotify(NotifyData& notifyData)
+    {
+        std::unique_lock<std::mutex> l(notifyData.lock);
+
+        while (true)
+        {
+            if (shutdown)
+            {
+                return false;
+            }
+
+            if (notifyData.notify)
+            {
+                notifyData.notify = false;
+                return true;
+            }
+
+            notifyData.cv.wait(l);
+        }
+    }
+
+    void Signal(NotifyData& notifyData)
+    {
+        std::unique_lock<std::mutex> l(notifyData.lock);
+        notifyData.notify = true;
+        notifyData.cv.notify_all();
+    }
+
+    void Shutdown(NotifyData& notifyData)
+    {
+        std::unique_lock<std::mutex> l(notifyData.lock);
+        shutdown = true;
+        notifyData.cv.notify_all();
+    }
+
     void WorkThreadProc()
     {
-        std::unique_lock<std::mutex> l(workLock);
-        while(!shutdown)
+        while (WaitForNotify(workData))
         {
             XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
-            cvWork.wait(l);
         }
     }
 
     void CompletionThreadProc()
     {
-        std::unique_lock<std::mutex> l(completionLock);
-        while(!shutdown)
+        while (WaitForNotify(completionData))
         {
             XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
-            cvCompletion.wait(l);
         }
     }
 
     std::unique_ptr<std::thread> workThread;
     std::unique_ptr<std::thread> completionThread;
-    std::mutex workLock;
-    std::mutex completionLock;
+    NotifyData workData;
+    NotifyData completionData;
     bool shutdown = false;
-    std::condition_variable cvWork;
-    std::condition_variable cvCompletion;
 };

@@ -9,39 +9,6 @@
 
 using namespace xbox::httpclient;
 
-HRESULT CALLBACK DefaultRequestBodyReadFunction(
-    _In_ HCCallHandle call,
-    _In_ size_t offset,
-    _In_ size_t bytesAvailable,
-    _In_opt_ void* /* context */,
-    _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
-    _Out_ size_t* bytesWritten
-    ) noexcept
-{
-    if (call == nullptr || bytesAvailable == 0 || destination == nullptr || bytesWritten == nullptr)
-    {
-        return E_INVALIDARG;
-    }
-
-    uint8_t const* requestBody = nullptr;
-    uint32_t requestBodySize = 0;
-    HRESULT hr = HCHttpCallRequestGetRequestBodyBytes(call, &requestBody, &requestBodySize);
-    if (FAILED(hr) || (requestBody == nullptr && requestBodySize != 0) || offset > requestBodySize)
-    {
-        return E_FAIL;
-    }
-
-    const size_t bytesToWrite = std::min(bytesAvailable, static_cast<size_t>(requestBodySize) - offset);
-    if (bytesToWrite > 0)
-    {
-        std::memcpy(destination, requestBody + offset, bytesToWrite);
-    }
-
-    *bytesWritten = bytesToWrite;
-
-    return S_OK;
-}
-
 STDAPI 
 HCHttpCallRequestSetUrl(
     _In_ HCCallHandle call,
@@ -110,7 +77,7 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    HRESULT hr = HCHttpCallRequestSetRequestBodyReadFunction(call, DefaultRequestBodyReadFunction, requestBodySize, nullptr);
+    HRESULT hr = HCHttpCallRequestSetRequestBodyReadFunction(call, HC_CALL::ReadRequestBody, requestBodySize, nullptr);
     if (FAILED(hr))
     {
         return hr;

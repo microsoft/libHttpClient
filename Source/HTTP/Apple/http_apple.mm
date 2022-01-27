@@ -156,7 +156,6 @@ void AppleHttpCallPerformAsync(
 ) noexcept
 {
     assert(context == nullptr);
-    assert(env == nullptr);
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(env);
 
