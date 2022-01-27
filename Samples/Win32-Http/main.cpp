@@ -292,7 +292,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
 
     HCHttpCallPerformAsync(call, asyncBlock);
 
-    //WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
+    WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 }
 
 int main()
@@ -308,7 +308,7 @@ int main()
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "");
 
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    //DoHttpCall(url2, "", false, "SplashScreen.png");
+    DoHttpCall(url2, "", false, "SplashScreen.png");
 
     HCCleanup();
     ShutdownActiveThreads();

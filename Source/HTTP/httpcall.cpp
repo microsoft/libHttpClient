@@ -107,7 +107,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         else
         {
             // Schedule iteration 0
-            RETURN_IF_FAILED(XTaskQueueSubmitCallback(context->workQueue, XTaskQueuePort::Work, context, HC_CALL::PerformSingleRequest));
+            RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest));
         }
         return S_OK;
     }
