@@ -87,17 +87,7 @@ HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProvid
     case XAsyncOp::Begin:
     {
         CurlMulti* multi = static_cast<CurlMulti*>(data->context);
-        RETURN_IF_FAILED(XTaskQueueTerminate(multi->m_queue, false, multi, [](void* context)
-        {
-            HC_UNIQUE_PTR<CurlMulti> multi{ static_cast<CurlMulti*>(context) };
-
-            // Ensure CurlMulti is destroyed (and thus curl_multi_cleanup is called) before completing asyncBlock
-            XAsyncBlock* cleanupAsync = multi->m_cleanupAsyncBlock;
-            multi.reset();
-
-            XAsyncComplete(cleanupAsync, S_OK, 0);
-        }));
-
+        RETURN_IF_FAILED(XTaskQueueTerminate(multi->m_queue, false, multi, CurlMulti::TaskQueueTerminated));
         return S_OK;
     }
     default:
@@ -105,6 +95,17 @@ HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProvid
         return S_OK;
     }
     }
+}
+
+void CALLBACK CurlMulti::TaskQueueTerminated(void* context)
+{
+    HC_UNIQUE_PTR<CurlMulti> multi{ static_cast<CurlMulti*>(context) };
+
+    // Ensure CurlMulti is destroyed (and thus curl_multi_cleanup is called) before completing asyncBlock
+    XAsyncBlock* cleanupAsync = multi->m_cleanupAsyncBlock;
+    multi.reset();
+
+    XAsyncComplete(cleanupAsync, S_OK, 0);
 }
 
 void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
