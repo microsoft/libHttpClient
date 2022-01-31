@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <httpClient.h>
+#include <httpClient/httpClient.h>
 #include "Global/perform_env.h"
 
 namespace xbox
@@ -27,7 +27,7 @@ public:
     HC_CALL(const HC_CALL&) = delete;
     HC_CALL(HC_CALL&&) = delete;
     HC_CALL& operator=(const HC_CALL&) = delete;
-    ~HC_CALL();
+    virtual ~HC_CALL();
 
     // Create and initialize HttpCall based on global properties
     static Result<HC_UNIQUE_PTR<HC_CALL>> Initialize();

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <winhttp.h>
-//#include "winhttp_connection.h"
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>

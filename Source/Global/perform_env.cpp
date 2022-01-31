@@ -232,10 +232,10 @@ struct HC_PERFORM_ENV::HttpPerformContext
         XTaskQueueCloseHandle(internalAsyncBlock.queue);
     }
 
-    HC_PERFORM_ENV* env{};
-    HCCallHandle const callHandle{};
-    XAsyncBlock* const clientAsyncBlock{};
-    XAsyncBlock internalAsyncBlock{};
+    HC_PERFORM_ENV* const env;
+    HCCallHandle const callHandle;
+    XAsyncBlock* const clientAsyncBlock;
+    XAsyncBlock internalAsyncBlock;
 };
 
 HRESULT HC_PERFORM_ENV::HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async)
@@ -248,13 +248,6 @@ HRESULT HC_PERFORM_ENV::HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock*
     return XAsyncBegin(async, performContext.get(), nullptr, __FUNCTION__, HttpPerformAsyncShimProvider);
 }
 
-HRESULT HC_PERFORM_ENV::CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept
-{
-    RETURN_IF_FAILED(XAsyncBegin(async, env.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
-    env.release();
-    return S_OK;
-}
-
 HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
     HttpPerformContext* performContext{ static_cast<HttpPerformContext*>(data->context) };
@@ -265,6 +258,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
     case XAsyncOp::Begin:
     {
         XTaskQueuePortHandle workPort{};
+        assert(data->async->queue); // Queue should never be null here
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &performContext->internalAsyncBlock.queue));
 
@@ -286,6 +280,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
         {
             HRESULT hr = XAsyncSchedule(env->m_cleanupAsyncBlock, 0);
             assert(SUCCEEDED(hr)); // How to handle failure here?
+            UNREFERENCED_LOCAL(hr);
         }
         return S_OK;
     }
@@ -301,6 +296,13 @@ void CALLBACK HC_PERFORM_ENV::HttpPerformComplete(XAsyncBlock* async)
     HttpPerformContext* performContext{ static_cast<HttpPerformContext*>(async->context) };
     HRESULT hr = XAsyncGetStatus(async, false);
     XAsyncComplete(performContext->clientAsyncBlock, hr, 0);
+}
+
+HRESULT HC_PERFORM_ENV::CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept
+{
+    RETURN_IF_FAILED(XAsyncBegin(async, env.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
+    env.release();
+    return S_OK;
 }
 
 HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
@@ -333,6 +335,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
     }
     case XAsyncOp::DoWork:
     {
+        HC_UNIQUE_PTR<HC_PERFORM_ENV> reclaim{ env };
 #if HC_PLATFORM == HC_PLATFORM_GDK
         auto curlCleanupAsyncBlock = http_allocate_unique<XAsyncBlock>();
         curlCleanupAsyncBlock->queue = data->async->queue;
@@ -349,16 +352,13 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
             XAsyncComplete(envCleanupAsyncBlock, cleanupResult, 0);
         };
 
-        auto curlProvider = std::move(env->curlProvider);
-
-        HC_UNIQUE_PTR<HC_PERFORM_ENV> reclaim{ env };
+        auto curlProvider = std::move(env->curlProvider);       
         reclaim.reset();
 
         RETURN_IF_FAILED(CurlProvider::CleanupAsync(std::move(curlProvider), curlCleanupAsyncBlock.get()));
         curlCleanupAsyncBlock.release();
         return E_PENDING;
 #else
-        HC_UNIQUE_PTR<HC_PERFORM_ENV> reclaim{ env };
         reclaim.reset();
         XAsyncComplete(data->async, S_OK, 0);
         return S_OK;
