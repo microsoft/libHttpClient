@@ -19,6 +19,7 @@ struct HttpPerformInfo
     void* context = nullptr; // non owning
 };
 
+#if !HC_NOWEBSOCKETS
 struct WebSocketPerformInfo
 {
     WebSocketPerformInfo(
@@ -41,6 +42,7 @@ struct WebSocketPerformInfo
     HCWebSocketDisconnectFunction disconnect = nullptr;
     void* context = nullptr;
 };
+#endif
 
 // Global context passed to HTTP/WebSocket hooks. Will be opaque to client providers, but contains needed context for default providers.
 struct HC_PERFORM_ENV

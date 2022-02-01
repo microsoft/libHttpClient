@@ -5,11 +5,9 @@
 #include <winhttp.h>
 #include "utils.h"
 #include "uri.h"
+#include "hcwebsocket.h"
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
-#endif
-#if !HC_NOWEBSOCKETS
-#include "WebSocket/hcwebsocket.h"
 #endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
