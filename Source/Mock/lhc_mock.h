@@ -3,9 +3,12 @@
 
 #pragma once
 #include "pch.h"
+#include "httpcall.h"
 
 struct HC_MOCK_CALL : public HC_CALL
 {
+    HC_MOCK_CALL(uint64_t id) : HC_CALL{ id } {}
+
     HCMockMatchedCallback matchedCallback{ nullptr };
     void* matchCallbackContext{ nullptr };
 };

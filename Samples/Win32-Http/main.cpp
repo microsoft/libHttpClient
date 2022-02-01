@@ -310,8 +310,8 @@ int main()
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
     DoHttpCall(url2, "", false, "SplashScreen.png");
 
-    ShutdownActiveThreads();
     HCCleanup();
+    ShutdownActiveThreads();
     XTaskQueueCloseHandle(g_queue);
 
     return 0;

@@ -6,16 +6,6 @@
 
 using namespace xbox::httpclient;
 
-HRESULT CALLBACK DefaultResponseBodyWriteFunction(
-    _In_ HCCallHandle call,
-    _In_reads_bytes_(bytesAvailable) const uint8_t* source,
-    _In_ size_t bytesAvailable,
-    _In_opt_ void* /* context */
-    ) noexcept
-{
-    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);
-}
-
 STDAPI
 HCHttpCallResponseGetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
@@ -76,7 +66,7 @@ try
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
     void* context = nullptr;
     HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
-    if (writeFunction != DefaultResponseBodyWriteFunction)
+    if (writeFunction != HC_CALL::ResponseBodyWrite)
     {
         return E_FAIL;
     }
@@ -105,7 +95,7 @@ try
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
     void* context = nullptr;
     HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
-    if (writeFunction != DefaultResponseBodyWriteFunction)
+    if (writeFunction != HC_CALL::ResponseBodyWrite)
     {
         return E_FAIL;
     }
@@ -131,7 +121,7 @@ try
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
     void* context = nullptr;
     HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
-    if (writeFunction != DefaultResponseBodyWriteFunction)
+    if (writeFunction != HC_CALL::ResponseBodyWrite)
     {
         return E_FAIL;
     }
@@ -166,7 +156,7 @@ try
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
     void* context = nullptr;
     HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
-    if (writeFunction != DefaultResponseBodyWriteFunction)
+    if (writeFunction != HC_CALL::ResponseBodyWrite)
     {
         return E_FAIL;
     }
@@ -195,7 +185,7 @@ try
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
     void* context = nullptr;
     HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &context);
-    if (writeFunction != DefaultResponseBodyWriteFunction)
+    if (writeFunction != HC_CALL::ResponseBodyWrite)
     {
         return E_FAIL;
     }

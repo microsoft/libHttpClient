@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "../Common/Win/utils_win.h"
 #include "PumpedTaskQueue.h"
+#include "CallbackThunk.h"
 
 using namespace xbox::httpclient;
 static bool g_gotCall = false;
@@ -45,6 +46,97 @@ public:
         VERIFY_SUCCEEDED(HCCleanupAsync(&cleanupAsyncBlock));
 
         VERIFY_SUCCEEDED(XAsyncGetStatus(&cleanupAsyncBlock, true));
+    }
+
+    DEFINE_TEST_CASE(TestAsyncCleanupWithHttpCall)
+    {
+        HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
+        HCTraceSetTraceToDebugger(true);
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+        PumpedTaskQueue pumpedQueue;
+
+        constexpr char* mockUrl{ "www.bing.com" };
+
+        HCMockCallHandle mock{ nullptr };
+        VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
+        VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 500));
+        VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+
+        HCCallHandle call{ nullptr };
+        VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
+        VERIFY_SUCCEEDED(HCHttpCallRequestSetUrl(call, "GET", mockUrl));
+
+        bool httpCallComplete{ false };
+        bool cleanupComplete{ false };
+        HANDLE cleanupCompleteEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+        XAsyncThunk httpPerformThunk{ [&](XAsyncBlock* async)
+        {
+            httpCallComplete = true;
+            VERIFY_IS_TRUE(!cleanupComplete);
+            VERIFY_IS_TRUE(FAILED(XAsyncGetStatus(async, false)));
+        }, pumpedQueue.queue };
+
+        XAsyncThunk hcCleanupThunk{ [&](XAsyncBlock* async)
+        {
+            cleanupComplete = true;
+            VERIFY_IS_TRUE(httpCallComplete);
+            VERIFY_SUCCEEDED(XAsyncGetStatus(async, false));
+            SetEvent(cleanupCompleteEvent);
+        }, pumpedQueue.queue };
+
+        VERIFY_SUCCEEDED(HCHttpCallPerformAsync(call, &httpPerformThunk.asyncBlock));
+        VERIFY_SUCCEEDED(HCCleanupAsync(&hcCleanupThunk.asyncBlock));
+
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(cleanupCompleteEvent, INFINITE));
+        CloseHandle(cleanupCompleteEvent);
+    }
+
+    DEFINE_TEST_CASE(TestAsyncCleanupWithHttpCallPendingRetry)
+    {
+        HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
+        HCTraceSetTraceToDebugger(true);
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+        PumpedTaskQueue pumpedQueue;
+
+        constexpr char* mockUrl{ "www.bing.com" };
+
+        HCMockCallHandle mock{ nullptr };
+        VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
+        VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 500));
+        VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+
+        HCCallHandle call{ nullptr };
+        VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
+        VERIFY_SUCCEEDED(HCHttpCallRequestSetUrl(call, "GET", mockUrl));
+        VERIFY_SUCCEEDED(HCHttpCallRequestSetRetryDelay(call, 5));
+
+        bool httpCallComplete{ false };
+        bool cleanupComplete{ false };
+        HANDLE cleanupCompleteEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+        XAsyncThunk httpPerformThunk{ [&](XAsyncBlock* async)
+        {
+            httpCallComplete = true;
+            VERIFY_IS_TRUE(!cleanupComplete);
+            VERIFY_ARE_EQUAL(E_ABORT, XAsyncGetStatus(async, false));
+        }, pumpedQueue.queue };
+
+        XAsyncThunk hcCleanupThunk{ [&](XAsyncBlock* async)
+        {
+            cleanupComplete = true;
+            VERIFY_IS_TRUE(httpCallComplete);
+            VERIFY_SUCCEEDED(XAsyncGetStatus(async, false));
+            SetEvent(cleanupCompleteEvent);
+        }, pumpedQueue.queue };
+
+        VERIFY_SUCCEEDED(HCHttpCallPerformAsync(call, &httpPerformThunk.asyncBlock));
+        HCHttpCallCloseHandle(call); // Closing handle before perform async operation complete should not cause crash
+        Sleep(2000);
+        VERIFY_SUCCEEDED(HCCleanupAsync(&hcCleanupThunk.asyncBlock));
+
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(cleanupCompleteEvent, INFINITE));
+        CloseHandle(cleanupCompleteEvent);
     }
 };
 

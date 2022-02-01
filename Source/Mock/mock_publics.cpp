@@ -22,9 +22,8 @@ STDAPI HCMockCallCreate(
         return E_HC_NOT_INITIALISED;
     }
 
-    auto uniqueCall = http_allocate_unique<HC_MOCK_CALL>();
+    auto uniqueCall = http_allocate_unique<HC_MOCK_CALL>(++httpSingleton->m_lastId);
     HC_MOCK_CALL* call = uniqueCall.release(); // transfer ownership to raw ptr w/ ref count
-    call->id = ++httpSingleton->m_lastId;
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "HCMockCallCreate [ID %llu]", TO_ULL(call->id));
 

@@ -112,7 +112,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
 }
 #endif
 
-http_internal_wstring flatten_http_headers(_In_ const http_header_map& headers)
+http_internal_wstring flatten_http_headers(_In_ const HttpHeaders& headers)
 {
     http_internal_wstring flattened_headers;
 
