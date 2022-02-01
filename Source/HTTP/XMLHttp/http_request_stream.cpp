@@ -51,6 +51,11 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
     _Out_ ULONG *pcbRead
     )
 {
+    if (pv == nullptr || pcbRead == nullptr)
+    {
+        return STG_E_INVALIDPOINTER;
+    }
+
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
     size_t bodySize = 0;
     void* context = nullptr;
@@ -58,6 +63,13 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
     if (FAILED(hr) || readFunction == nullptr)
     {
         return STG_E_READFAULT;
+    }
+
+    if (m_startIndex == bodySize)
+    {
+        // Reached end of buffer
+        *pcbRead = 0;
+        return S_FALSE;
     }
 
     size_t bytesWritten = 0;
@@ -79,6 +91,11 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
     if (pcbRead != nullptr)
     {
         *pcbRead = static_cast<DWORD>(bytesWritten);
+        if (bytesWritten < cb)
+        {
+            // Reached end of buffer
+            return S_FALSE;
+        }
     }
 
     return S_OK;

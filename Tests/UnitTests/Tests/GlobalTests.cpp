@@ -37,7 +37,9 @@ public:
 
     DEFINE_TEST_CASE(TestAsyncCleanup)
     {
+        VERIFY_ARE_EQUAL(HCIsInitialized(), false);
         VERIFY_SUCCEEDED(HCInitialize(nullptr));
+        VERIFY_ARE_EQUAL(HCIsInitialized(), true);
 
         PumpedTaskQueue pumpedQueue;
         XAsyncBlock cleanupAsyncBlock{ pumpedQueue.queue };
