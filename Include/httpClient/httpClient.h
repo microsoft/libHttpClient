@@ -141,6 +141,12 @@ typedef struct HCInitArgs {
 STDAPI HCInitialize(_In_opt_ HCInitArgs* args) noexcept;
 
 /// <summary>
+/// Returns true if library has been initialized by HCInitialize
+/// </summary>
+/// <returns>Returns true if this library has been initialized, otherwise returns false.</returns>
+STDAPI_(bool) HCIsInitialized() noexcept;
+
+/// <summary>
 /// Immediately reclaims all resources associated with the library.
 /// If you called HCMemSetFunctions(), call this before shutting down your app's memory manager.
 /// </summary>

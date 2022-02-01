@@ -30,6 +30,13 @@ try
 }
 CATCH_RETURN()
 
+STDAPI_(bool) 
+HCIsInitialized() noexcept
+{
+    auto httpSingleton = get_http_singleton();
+    return (nullptr != httpSingleton);
+}
+
 STDAPI_(void) HCCleanup() noexcept
 try
 {
