@@ -112,7 +112,7 @@ public:
                 sslContext->set_verify_callback([sharedThis](bool preverified, asio::ssl::verify_context &verifyCtx)
                 {
                     // allow to use proxies that decrypt https for debugging
-                    if (sharedThis->m_hcWebsocketHandle->ProxyDecryptsHttps())
+                    if (sharedThis->m_hcWebsocketHandle->websocket->ProxyDecryptsHttps())
                     {
                         return true;
                     }
@@ -374,7 +374,7 @@ private:
         });
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
-        const auto& headers = m_hcWebsocketHandle->Headers();
+        const auto& headers = m_hcWebsocketHandle->websocket->Headers();
 
         auto user_agent_it = headers.find(websocketpp::user_agent);
         if (user_agent_it != headers.end())
@@ -389,7 +389,7 @@ private:
         m_con = con;
         if (ec.value() != 0)
         {
-            HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp get_connection failed", TO_ULL(m_hcWebsocketHandle->id));
+            HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp get_connection failed", TO_ULL(m_hcWebsocketHandle->websocket->id));
             return E_FAIL;
         }
 
@@ -409,18 +409,18 @@ private:
             con->add_subprotocol(m_subprotocol.data(), ec);
             if (ec.value())
             {
-                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: add_subprotocol failed", TO_ULL(m_hcWebsocketHandle->id));
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: add_subprotocol failed", TO_ULL(m_hcWebsocketHandle->websocket->id));
                 return E_FAIL;
             }
         }
 
         // Setup proxy options.
-        if (!m_hcWebsocketHandle->ProxyUri().empty())
+        if (!m_hcWebsocketHandle->websocket->ProxyUri().empty())
         {
-            con->set_proxy(m_hcWebsocketHandle->ProxyUri().data(), ec);
+            con->set_proxy(m_hcWebsocketHandle->websocket->ProxyUri().data(), ec);
             if (ec)
             {
-                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", TO_ULL(m_hcWebsocketHandle->id));
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", TO_ULL(m_hcWebsocketHandle->websocket->id));
                 return E_FAIL;
             }
         }
@@ -436,7 +436,7 @@ private:
                 con->set_proxy(proxyUri.FullPath().data(), ec);
                 if (ec)
                 {
-                    HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", TO_ULL(m_hcWebsocketHandle->id));
+                    HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", TO_ULL(m_hcWebsocketHandle->websocket->id));
                     return E_FAIL;
                 }
             }
@@ -480,7 +480,7 @@ private:
                 };
                 auto context = http_allocate_shared<client_context>(client);
 
-                m_websocketThread = std::thread([context, id{ m_hcWebsocketHandle->id }]()
+                m_websocketThread = std::thread([context, id{ m_hcWebsocketHandle->websocket->id }]()
                 {
                     HC_TRACE_INFORMATION(WEBSOCKET, "id=%u Wspp client work thread starting", id);
 
@@ -880,26 +880,26 @@ HRESULT CALLBACK WebSocketppConnectAsync(
 {
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(env);
-    auto wsppSocket{ std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl) };
+    auto wsppSocket{ std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->websocket->impl) };
 
     if (!wsppSocket)
     {
         wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket, uri, subProtocol);
-        websocket->impl = wsppSocket;
+        websocket->websocket->impl = wsppSocket;
     }
 
     return wsppSocket->connect(async);
 }
 
 HRESULT CALLBACK WebSocketppSendMessageAsync(
-    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebsocketHandle websocketHandle,
     _In_z_ const char* message,
     _Inout_ XAsyncBlock* async,
     _In_opt_ void* context
     )
 {
     UNREFERENCED_PARAMETER(context);
-    std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
+    std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocketHandle->websocket->impl);
     if (wsppSocket == nullptr)
     {
         return E_UNEXPECTED;
@@ -908,7 +908,7 @@ HRESULT CALLBACK WebSocketppSendMessageAsync(
 }
 
 HRESULT CALLBACK WebSocketppSendBinaryMessageAsync(
-    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebsocketHandle websocketHandle,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
     _Inout_ XAsyncBlock* asyncBlock,
@@ -916,7 +916,7 @@ HRESULT CALLBACK WebSocketppSendBinaryMessageAsync(
     )
 {
     UNREFERENCED_PARAMETER(context);
-    std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
+    std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocketHandle->websocket->impl);
     if (wsppSocket == nullptr)
     {
         return E_UNEXPECTED;
@@ -925,24 +925,24 @@ HRESULT CALLBACK WebSocketppSendBinaryMessageAsync(
 }
 
 HRESULT CALLBACK WebSocketppDisconnect(
-    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebsocketHandle websocketHandle,
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_opt_ void* context
     )
 {
     UNREFERENCED_PARAMETER(context);
-    if (websocket == nullptr)
+    if (websocketHandle == nullptr)
     {
         return E_INVALIDARG;
     }
 
-    std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->impl);
+    std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocketHandle->websocket->impl);
     if (wsppSocket == nullptr)
     {
         return E_UNEXPECTED;
     }
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocket->id));
+    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocketHandle->websocket->id));
     return wsppSocket->close(closeStatus);
 }
 

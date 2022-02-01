@@ -56,6 +56,7 @@ function(GET_COMMON_HC_SOURCE_FILES
     set(${OUT_WEBSOCKET_SOURCE_FILES}
         "${PATH_TO_ROOT}/Source/WebSocket/hcwebsocket.h"
         "${PATH_TO_ROOT}/Source/WebSocket/hcwebsocket.cpp"
+        "${PATH_TO_ROOT}/Source/WebSocket/websocket_publics.cpp"
         PARENT_SCOPE
         )
 

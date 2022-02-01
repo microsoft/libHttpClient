@@ -1,0 +1,112 @@
+// Copyright (c) Microsoft Corporation
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#pragma once
+
+#include <httpClient/httpClient.h>
+#include "HTTP/httpcall.h"
+#include "Global/perform_env.h"
+
+HC_DECLARE_TRACE_AREA(WEBSOCKET);
+
+// Base class for platform specific implementations
+struct hc_websocket_impl 
+{
+    hc_websocket_impl() {}
+    virtual ~hc_websocket_impl() {}
+};
+
+#if !HC_NOWEBSOCKETS
+
+typedef struct HC_WEBSOCKET : std::enable_shared_from_this<HC_WEBSOCKET>
+{
+public:
+    HC_WEBSOCKET(
+        _In_ uint64_t id,
+        _In_opt_ HCWebSocketMessageFunction messageFunc,
+        _In_opt_ HCWebSocketBinaryMessageFunction binaryMessageFunc,
+        _In_opt_ HCWebSocketCloseEventFunction closeFunc,
+        _In_opt_ void* functionContext
+    );
+    virtual ~HC_WEBSOCKET();
+
+    HRESULT Connect(
+        _In_z_ const char* uri,
+        _In_z_ const char* subProtocol,
+        _Inout_ XAsyncBlock* asyncBlock
+    ) noexcept;
+
+    HRESULT Send(
+        _In_z_ const char* message,
+        _Inout_ XAsyncBlock* asyncBlock
+    ) noexcept;
+
+    HRESULT SendBinary(
+        _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+        _In_ uint32_t payloadSize,
+        _Inout_ XAsyncBlock* asyncBlock
+    ) noexcept;
+
+    HRESULT Disconnect();
+
+    const uint64_t id;
+    const xbox::httpclient::HttpHeaders& Headers() const noexcept;
+    const http_internal_string& ProxyUri() const noexcept;
+    const bool ProxyDecryptsHttps() const noexcept;
+    const http_internal_string& Uri() const noexcept;
+    const http_internal_string& SubProtocol() const noexcept;
+    size_t MaxReceiveBufferSize() const noexcept;
+
+    HRESULT SetBinaryMessageFragmentFunc(HCWebSocketBinaryMessageFragmentFunction func) noexcept;
+    HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
+    HRESULT SetProxyDecryptsHttps(bool allowProxyToDecryptHttps) noexcept;
+    HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
+    HRESULT SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept;
+
+    void AddClientRef();
+    void DecClientRef();
+    void AddRef();
+    void DecRef();
+
+    static void CALLBACK MessageFunc(HC_WEBSOCKET* websocket, const char* message, void* context);
+    static void CALLBACK BinaryMessageFunc(HC_WEBSOCKET* websocket, const uint8_t* bytes, uint32_t payloadSize, void* context);
+    static void CALLBACK BinaryMessageFragmentFunc(HC_WEBSOCKET* websocket, const uint8_t* payloadBytes, uint32_t payloadSize, bool isLastFragment, void* functionContext);
+    static void CALLBACK CloseFunc(HC_WEBSOCKET* websocket, HCWebSocketCloseStatus status, void* context);
+
+    std::shared_ptr<hc_websocket_impl> impl;
+
+private:
+    XAsyncBlock m_connectAsyncBlock{};
+    WebSocketCompletionResult m_connectResult{};
+    XAsyncBlock* m_clientConnectAsyncBlock{ nullptr };
+
+    enum class State
+    {
+        Initial,
+        Disconnecting,
+        Disconnected,
+        Connecting,
+        Connected
+    } m_state{ State::Initial };
+
+    xbox::httpclient::HttpHeaders m_connectHeaders;
+    bool m_allowProxyToDecryptHttps{ false };
+    http_internal_string m_proxyUri;
+    http_internal_string m_uri;
+    http_internal_string m_subProtocol;
+    size_t m_maxReceiveBufferSize{ 0 };
+
+    HCWebSocketMessageFunction const m_clientMessageFunc{ nullptr };
+    HCWebSocketBinaryMessageFunction const m_clientBinaryMessageFunc{ nullptr };
+    HCWebSocketBinaryMessageFragmentFunction m_clientBinaryMessageFragmentFunc{ nullptr };
+    HCWebSocketCloseEventFunction const m_clientCloseEventFunc{ nullptr };
+    void* m_clientContext{ nullptr };
+
+    std::recursive_mutex m_mutex;
+    std::atomic<int> m_clientRefCount{ 0 };
+    std::atomic<int> m_totalRefCount{ 0 };
+    std::shared_ptr<HC_WEBSOCKET> m_extraRefHolder;
+
+} HC_WEBSOCKET;
+
+#endif // !HC_NOWEBSOCKETS

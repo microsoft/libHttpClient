@@ -110,6 +110,6 @@ private:
     uint32_t m_iterationNumber{ 0 };  
 
     HttpPerformInfo m_performInfo;
-    HC_PERFORM_ENV* m_performEnv; // non-owning
+    HC_PERFORM_ENV* m_performEnv{ nullptr }; // non-owning
 };
 

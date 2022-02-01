@@ -218,7 +218,7 @@ int main()
     HRESULT hr = HCWebSocketCreate(&websocket, message_received, binary_message_received, websocket_closed, nullptr);
     HCWebSocketSetBinaryMessageFragmentEventFunction(websocket, binary_message_fragment_received);
 
-    for (int iConnectAttempt = 0; iConnectAttempt < 10; iConnectAttempt++)
+    for (int iConnectAttempt = 0; iConnectAttempt < 1; iConnectAttempt++)
     {
         g_numberMessagesReceieved = 0;
 
@@ -236,62 +236,62 @@ int main()
 
         printf_s("Calling HCWebSocketConnect...\n");
         hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
-        WaitForSingleObject(g_eventHandle, INFINITE);
+        //WaitForSingleObject(g_eventHandle, INFINITE);
 
-        uint32_t numberOfMessagesToSend = 1;
-        for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
-        {
-            char webMsg[150000];
-            for (uint32_t j = 0; j < sizeof(webMsg); ++j)
-            {
-                webMsg[j] = 'X';
-            }
-            webMsg[sizeof(webMsg) - 1] = '\0';
-            //snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
+        //uint32_t numberOfMessagesToSend = 1;
+        //for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
+        //{
+        //    char webMsg[150000];
+        //    for (uint32_t j = 0; j < sizeof(webMsg); ++j)
+        //    {
+        //        webMsg[j] = 'X';
+        //    }
+        //    webMsg[sizeof(webMsg) - 1] = '\0';
+        //    //snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
 
-            asyncBlock = new XAsyncBlock{};
-            asyncBlock->queue = g_queue;
-            asyncBlock->callback = [](XAsyncBlock* asyncBlock)
-            {
-                WebSocketCompletionResult result = {};
-                HCGetWebSocketSendMessageResult(asyncBlock, &result);
+        //    asyncBlock = new XAsyncBlock{};
+        //    asyncBlock->queue = g_queue;
+        //    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+        //    {
+        //        WebSocketCompletionResult result = {};
+        //        HCGetWebSocketSendMessageResult(asyncBlock, &result);
 
-                printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-                SetEvent(g_eventHandle);
-                delete asyncBlock;
-            };
+        //        printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+        //        SetEvent(g_eventHandle);
+        //        delete asyncBlock;
+        //    };
 
-            printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", webMsg);
-            hr = HCWebSocketSendMessageAsync(websocket, webMsg, asyncBlock);
+        //    printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", webMsg);
+        //    hr = HCWebSocketSendMessageAsync(websocket, webMsg, asyncBlock);
 
-            asyncBlock = new XAsyncBlock{};
-            asyncBlock->queue = g_queue;
-            asyncBlock->callback = [](XAsyncBlock* asyncBlock)
-            {
-                WebSocketCompletionResult result = {};
-                HCGetWebSocketSendMessageResult(asyncBlock, &result);
+        //    asyncBlock = new XAsyncBlock{};
+        //    asyncBlock->queue = g_queue;
+        //    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+        //    {
+        //        WebSocketCompletionResult result = {};
+        //        HCGetWebSocketSendMessageResult(asyncBlock, &result);
 
-                printf_s("HCWebSocketSendBinaryMessageAsync complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-                SetEvent(g_eventHandle);
-                delete asyncBlock;
-            };
+        //        printf_s("HCWebSocketSendBinaryMessageAsync complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+        //        SetEvent(g_eventHandle);
+        //        delete asyncBlock;
+        //    };
 
-            hr = HCWebSocketSendBinaryMessageAsync(websocket, (uint8_t*)webMsg, 100, asyncBlock);
-        }
+        //    hr = HCWebSocketSendBinaryMessageAsync(websocket, (uint8_t*)webMsg, 100, asyncBlock);
+        //}
 
-        while (g_numberMessagesReceieved < numberOfMessagesToSend * 2)
-        {
-            WaitForSingleObject(g_eventHandle, INFINITE);
-        }
+        //while (g_numberMessagesReceieved < numberOfMessagesToSend * 2)
+        //{
+        //    WaitForSingleObject(g_eventHandle, INFINITE);
+        //}
 
-        printf_s("Calling HCWebSocketDisconnect...\n");
-        HCWebSocketDisconnect(websocket);
-        WaitForSingleObject(g_eventHandle, INFINITE);
+        //printf_s("Calling HCWebSocketDisconnect...\n");
+        //HCWebSocketDisconnect(websocket);
+        //WaitForSingleObject(g_eventHandle, INFINITE);
     }
 
     HCWebSocketCloseHandle(websocket);
-    CloseHandle(g_eventHandle);
     HCCleanup();
+    CloseHandle(g_eventHandle);
     return 0;
 }
 
