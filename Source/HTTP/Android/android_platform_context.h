@@ -1,7 +1,6 @@
 #pragma once
 
 #include "jni.h"
-#include "../httpcall.h"
 
 struct AndroidPlatformContext
 {
