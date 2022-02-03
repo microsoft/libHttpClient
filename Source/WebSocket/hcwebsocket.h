@@ -147,13 +147,17 @@ private:
     http_internal_string m_subProtocol;
     size_t m_maxReceiveBufferSize{ 0 };
 
-    struct EventCallbacks;
     struct ConnectContext;
     struct ProviderContext;
 
-    std::mutex m_mutex;
-    http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
-    uint32_t m_nextToken{ 1 };
+    struct EventCallbacks
+    {
+        HCWebSocketMessageFunction messageFunc{ nullptr };
+        HCWebSocketBinaryMessageFunction binaryMessageFunc{ nullptr };
+        HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc{ nullptr };
+        HCWebSocketCloseEventFunction closeFunc{ nullptr };
+        void* context{ nullptr };
+    };
 
     enum class State
     {
@@ -163,6 +167,10 @@ private:
         Disconnecting,
         Disconnected        
     } m_state{ State::Initial };
+
+    std::mutex m_mutex;
+    http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
+    uint32_t m_nextToken{ 1 };
 
     WebSocketPerformInfo const m_performInfo;
     HC_PERFORM_ENV* const m_performEnv; // non-owning

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "perform_env.h"
 #include "httpcall.h"
-#include "hcwebsocket.h"
+#include "WebSocket\hcwebsocket.h"
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
@@ -364,7 +364,7 @@ HRESULT HC_PERFORM_ENV::WebSocketConnectAsyncShim(
 )
 {
     auto context = http_allocate_unique<WebSocketConnectContext>(this, std::move(uri), std::move(subprotocol), clientWebSocketHandle, asyncBlock);
-    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, context.get(), HCWebSocketConnectAsync, nullptr, WebSocketConnectAsyncShimProvider));
+    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, context.get(), (void*)HCWebSocketConnectAsync, nullptr, WebSocketConnectAsyncShimProvider));
     context.release();
 
     return S_OK;

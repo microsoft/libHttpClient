@@ -78,15 +78,6 @@ Result<std::shared_ptr<WebSocket>> WebSocket::Initialize()
     return websocket;
 }
 
-struct WebSocket::EventCallbacks
-{
-    HCWebSocketMessageFunction messageFunc{ nullptr };
-    HCWebSocketBinaryMessageFunction binaryMessageFunc{ nullptr };
-    HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc{ nullptr };
-    HCWebSocketCloseEventFunction closeFunc{ nullptr };
-    void* context{ nullptr };
-};
-
 uint32_t WebSocket::RegisterEventCallbacks(
     _In_opt_ HCWebSocketMessageFunction messageFunc,
     _In_opt_ HCWebSocketBinaryMessageFunction binaryMessageFunc,
@@ -145,7 +136,7 @@ HRESULT WebSocket::ConnectAsync(
     m_subProtocol = std::move(subProtocol);
 
     auto context = http_allocate_unique<ConnectContext>(shared_from_this(), asyncBlock);
-    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, context.get(), HCWebSocketConnectAsync, nullptr, ConnectAsyncProvider));
+    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, context.get(), (void*)HCWebSocketConnectAsync, nullptr, ConnectAsyncProvider));
     context.release();
     return S_OK;
 }
