@@ -169,5 +169,5 @@ using http_internal_queue = std::queue<T, http_internal_dequeue<T>>;
 template<class T>
 using http_internal_list = std::list<T, http_stl_allocator<T>>;
 
-template<class T>
-using http_internal_set = std::set<T, http_stl_allocator<T>>;
+template<class T, class LESS = std::less<T>>
+using http_internal_set = std::set<T, LESS, http_stl_allocator<T>>;

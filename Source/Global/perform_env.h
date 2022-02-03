@@ -102,12 +102,12 @@ private:
     std::mutex m_mutex;
 
     struct HttpPerformContext;
-    http_internal_map<uint64_t, std::shared_ptr<HttpPerformContext>> m_activeHttpRequests;
+    http_internal_set<XAsyncBlock*> m_activeHttpRequests;
 
-    struct WebSocketContext;
-    http_internal_map<uint64_t, std::shared_ptr<WebSocketContext>> m_connectingWebSockets;
-    http_internal_map<uint64_t, std::shared_ptr<WebSocketContext>> m_connectedWebSockets;
-    http_internal_map<uint64_t, std::shared_ptr<WebSocketContext>> m_pendingGetConnectResultWebSockets;
+    struct WebSocketConnectContext;
+    struct ActiveWebSocketContext;
+    http_internal_set<XAsyncBlock*> m_connectingWebSockets;
+    http_internal_set<ActiveWebSocketContext*> m_connectedWebSockets;
 
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
 };

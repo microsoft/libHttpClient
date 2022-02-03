@@ -105,26 +105,34 @@ void WebSocket::UnregisterEventCallbacks(uint32_t registrationToken)
     m_eventCallbacks.erase(registrationToken);
 }
 
+struct WebSocket::ConnectContext
+{
+    ConnectContext(std::shared_ptr<WebSocket> websocket, XAsyncBlock* async) :
+        observer{ HC_WEBSOCKET_OBSERVER::Initialize(std::move(websocket)) },
+        clientAsyncBlock{ async },
+        internalAsyncBlock{ nullptr, this, WebSocket::ConnectComplete }
+    {
+    }
+
+    ~ConnectContext()
+    {
+        if (internalAsyncBlock.queue)
+        {
+            XTaskQueueCloseHandle(internalAsyncBlock.queue);
+        }
+    }
+
+    HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> observer{ nullptr };
+    XAsyncBlock* const clientAsyncBlock;
+    XAsyncBlock internalAsyncBlock;
+    WebSocketCompletionResult result{};
+};
+
 // Context for ConnectAsyncProvider and WebSocket Provider Event callbacks. Ensures WebSocket lifetime throughout the ConnectAsync operation
 // and if that connect operation succeeds, throughout the rest of the connection's lifetime.
 struct WebSocket::ProviderContext
 {
-    ProviderContext(std::shared_ptr<WebSocket> websocket, XAsyncBlock* connectAsyncBlock) :
-        clientConnectAsyncBlock{ connectAsyncBlock },
-        internalConnectAsyncBlock{ nullptr, this, WebSocket::ConnectComplete }
-    {
-        observer = HC_WEBSOCKET_OBSERVER::Initialize(std::move(websocket));
-    }
-
-    ~ProviderContext()
-    {
-        XTaskQueueCloseHandle(internalConnectAsyncBlock.queue);
-    }
-
     HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> observer{ nullptr };
-    XAsyncBlock* const clientConnectAsyncBlock; // client owned
-    XAsyncBlock internalConnectAsyncBlock;
-    WebSocketCompletionResult connectResult{};
 };
 
 HRESULT WebSocket::ConnectAsync(
@@ -133,35 +141,39 @@ HRESULT WebSocket::ConnectAsync(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    RETURN_HR_IF(E_UNEXPECTED, m_providerContext);
-
     m_uri = std::move(uri);
     m_subProtocol = std::move(subProtocol);
 
-    auto providerContext = http_allocate_unique<ProviderContext>(shared_from_this(), asyncBlock);
-    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, providerContext.get(), HCWebSocketConnectAsync, nullptr, ConnectAsyncProvider));
-    providerContext.release();
+    auto context = http_allocate_unique<ConnectContext>(shared_from_this(), asyncBlock);
+    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, context.get(), HCWebSocketConnectAsync, nullptr, ConnectAsyncProvider));
+    context.release();
     return S_OK;
 }
 
 HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data)
 {
-    ProviderContext* context{ static_cast<ProviderContext*>(data->context) };
+    ConnectContext* context{ static_cast<ConnectContext*>(data->context) };
     auto& ws{ context->observer->websocket };
 
     switch (op)
     {
     case XAsyncOp::Begin:
     {
+        std::unique_lock<std::mutex> lock{ ws->m_mutex };
+
         RETURN_HR_IF(E_UNEXPECTED, !ws->m_performInfo.connect);
+        RETURN_HR_IF(E_UNEXPECTED, ws->m_state != State::Initial);
 
         XTaskQueuePortHandle workPort{ nullptr };
         XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort);
-        XTaskQueueCreateComposite(workPort, workPort, &context->internalConnectAsyncBlock.queue);
+        XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue);
+
+        ws->m_state = State::Connecting;
+        lock.unlock();
 
         try
         {
-            return ws->m_performInfo.connect(ws->m_uri.data(), ws->m_subProtocol.data(), context->observer.get(), &context->internalConnectAsyncBlock, ws->m_performInfo.context, ws->m_performEnv);
+            return ws->m_performInfo.connect(ws->m_uri.data(), ws->m_subProtocol.data(), context->observer.get(), &context->internalAsyncBlock, ws->m_performInfo.context, ws->m_performEnv);
         }
         catch (...)
         {
@@ -172,16 +184,12 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
     case XAsyncOp::GetResult:
     {
         WebSocketCompletionResult* result{ reinterpret_cast<WebSocketCompletionResult*>(data->buffer) };
-        *result = context->connectResult;
+        *result = context->result;
         return S_OK;
     }
     case XAsyncOp::Cleanup:
     {
-        // Clean up the ProviderContext only if the connection attempt failed
-        if (!ws->m_providerContext)
-        {
-            HC_UNIQUE_PTR<ProviderContext> reclaim{ context };
-        }
+        HC_UNIQUE_PTR<ConnectContext> reclaim{ context };
         return S_OK;
     }
     default:
@@ -193,16 +201,27 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
 
 void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
 {
-    ProviderContext* context{ static_cast<ProviderContext*>(async->context) };
+    ConnectContext* context{ static_cast<ConnectContext*>(async->context) };
+    auto& ws{ context->observer->websocket };
 
-    HRESULT hr = HCGetWebSocketConnectResult(&context->internalConnectAsyncBlock, &context->connectResult);
-    if (SUCCEEDED(hr) && SUCCEEDED(context->connectResult.errorCode))
+    assert(ws->m_state == State::Connecting);
+
+    HRESULT hr = HCGetWebSocketConnectResult(&context->internalAsyncBlock, &context->result);
+    
+    std::unique_lock<std::mutex> lock{ ws->m_mutex };
+    if (SUCCEEDED(hr) && SUCCEEDED(context->result.errorCode))
     {
-        // Connect was sucessful. Store ProviderContext until the connection is closed. It will be reclaimed in WebSocket::CloseFunc
-        context->observer->websocket->m_providerContext = context;
+        // Connect was sucessful. Allocate ProviderContext to ensure WebSocket lifetime until it is reclaimed in WebSocket::CloseFunc       
+        ws->m_state = State::Connected;
+        ws->m_providerContext = new (http_stl_allocator<ProviderContext>{}.allocate(1)) ProviderContext{ std::move(context->observer) };
     }
+    else
+    {
+        ws->m_state = State::Disconnected;
+    }
+    lock.unlock();
 
-    XAsyncComplete(context->clientConnectAsyncBlock, hr, sizeof(WebSocketCompletionResult));
+    XAsyncComplete(context->clientAsyncBlock, hr, sizeof(WebSocketCompletionResult));
 }
 
 HRESULT WebSocket::SendAsync(
@@ -210,6 +229,7 @@ HRESULT WebSocket::SendAsync(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
+    RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
     RETURN_HR_IF(E_UNEXPECTED, !m_performInfo.sendText);
 
@@ -231,6 +251,7 @@ HRESULT WebSocket::SendBinaryAsync(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
+    RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
     RETURN_HR_IF(E_UNEXPECTED, !m_performInfo.sendBinary);
 
@@ -251,6 +272,13 @@ HRESULT WebSocket::Disconnect()
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
     RETURN_HR_IF(E_UNEXPECTED, !m_performInfo.disconnect);
 
+    std::unique_lock<std::mutex> lock{ m_mutex };
+    RETURN_HR_IF(S_OK, m_state == State::Disconnecting);
+    RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
+    
+    m_state = State::Disconnecting;
+    lock.unlock();
+
     try
     {
         return m_performInfo.disconnect(m_providerContext->observer.get(), HCWebSocketCloseStatus::Normal, m_performInfo.context);
@@ -260,6 +288,16 @@ HRESULT WebSocket::Disconnect()
         HC_TRACE_ERROR(WEBSOCKET, "Caught unhandled exception in HCWebSocketDisconnectFunction [ID %llu]", TO_ULL(id));
         return E_FAIL;
     }
+}
+
+const http_internal_string& WebSocket::Uri() const noexcept
+{
+    return m_uri;
+}
+
+const http_internal_string& WebSocket::SubProtocol() const noexcept
+{
+    return m_subProtocol;
 }
 
 const HttpHeaders& WebSocket::Headers() const noexcept
@@ -287,7 +325,7 @@ HRESULT WebSocket::SetHeader(
     http_internal_string&& headerValue
 ) noexcept
 {
-    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_providerContext);
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
     m_connectHeaders[headerName] = headerValue;
     return S_OK;
 }
@@ -296,7 +334,7 @@ HRESULT WebSocket::SetProxyUri(
     http_internal_string&& proxyUri
 ) noexcept
 {
-    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_providerContext);
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
     m_proxyUri = std::move(proxyUri);
     m_allowProxyToDecryptHttps = false;
     return S_OK;
@@ -428,13 +466,18 @@ void CALLBACK WebSocket::CloseFunc(
 
     auto& websocket{ handle->websocket };
 
+    std::unique_lock<std::mutex> lock{ websocket->m_mutex };
     if (!websocket->m_providerContext)
     {
         HC_TRACE_ERROR(WEBSOCKET, "Unexpected call to WebSocket::CloseFunc will be ignored!");
         return;
     }
+    
+    // We no longer expect callbacks from Provider at this point, so cleanup m_providerContext. If there are no other
+    // observers of websocket, it may be destroyed now
+    HC_UNIQUE_PTR<ProviderContext> reclaim{ websocket->m_providerContext };
+    websocket->m_state = State::Disconnected;
 
-    std::unique_lock<std::mutex> lock{ websocket->m_mutex };
     auto callbacks{ websocket->m_eventCallbacks };
     lock.unlock();
 
@@ -452,10 +495,6 @@ void CALLBACK WebSocket::CloseFunc(
             HC_TRACE_ERROR(WEBSOCKET, "Caught unhandled exception in HCWebSocketCloseEventFunction");
         }
     }
-
-    // We no longer expect callbacks from Provider at this point, so cleanup m_providerContext. If there are no other
-    // observers of websocket, it may be destroyed here
-    HC_UNIQUE_PTR<ProviderContext> reclaim{ websocket->m_providerContext };
 }
 
 void WebSocket::NotifyWebSocketRoutedHandlers(

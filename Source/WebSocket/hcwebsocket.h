@@ -25,6 +25,8 @@ struct hc_websocket_impl
 }
 }
 
+#if !HC_NOWEBSOCKETS
+
 // An observer of a WebSocket. Holds a shared reference to the WebSocket and receives callbacks on WebSocket events
 struct HC_WEBSOCKET_OBSERVER
 {
@@ -103,6 +105,8 @@ public:
     // Unique ID for logging
     uint64_t const id;
 
+    const http_internal_string& Uri() const noexcept;
+    const http_internal_string& SubProtocol() const noexcept;
     const xbox::httpclient::HttpHeaders& Headers() const noexcept;
     const http_internal_string& ProxyUri() const noexcept;
     const bool ProxyDecryptsHttps() const noexcept;
@@ -144,17 +148,29 @@ private:
     size_t m_maxReceiveBufferSize{ 0 };
 
     struct EventCallbacks;
+    struct ConnectContext;
     struct ProviderContext;
 
     std::mutex m_mutex;
     http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
     uint32_t m_nextToken{ 1 };
 
-    WebSocketPerformInfo const m_performInfo{};
-    HC_PERFORM_ENV* const m_performEnv{ nullptr }; // non-owning
+    enum class State
+    {
+        Initial,
+        Connecting,
+        Connected,
+        Disconnecting,
+        Disconnected        
+    } m_state{ State::Initial };
+
+    WebSocketPerformInfo const m_performInfo;
+    HC_PERFORM_ENV* const m_performEnv; // non-owning
 
     ProviderContext* m_providerContext{ nullptr };
 };
 
 } // namespace httpclient
 } // namespace xbox
+
+#endif // !HC_NOWEBSOCKETS
