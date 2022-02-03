@@ -85,6 +85,8 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
 Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     HINTERNET hSession,
     HCWebsocketHandle webSocket,
+    const char* uri,
+    const char* /*subprotocol*/,
     proxy_type proxyType,
     XPlatSecurityInformation&& securityInformation
 )
@@ -94,7 +96,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     // For WebSocket connections, create a dummy HCHttpCall so that the rest of the logic can be reused more easily
     HCCallHandle webSocketCall{};
     RETURN_IF_FAILED(HCHttpCallCreate(&webSocketCall));
-    RETURN_IF_FAILED(HCHttpCallRequestSetUrl(webSocketCall, "GET", webSocket->Uri().c_str()));
+    RETURN_IF_FAILED(HCHttpCallRequestSetUrl(webSocketCall, "GET", uri));
 
     auto initResult = WinHttpConnection::Initialize(hSession, webSocketCall, proxyType, std::move(securityInformation));
     if (FAILED(initResult.hr))
@@ -299,9 +301,10 @@ HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
     RETURN_HR_IF(E_INVALIDARG, !async);
 
     // Set WebSocket specific options and then call send
-    if (!m_websocketHandle->Headers().empty())
+    auto& headers{ m_websocketHandle->websocket->Headers() };
+    if (!headers.empty())
     {
-        http_internal_wstring flattenedHeaders = flatten_http_headers(m_websocketHandle->Headers());
+        http_internal_wstring flattenedHeaders = flatten_http_headers(headers);
         if (!WinHttpAddRequestHeaders(
             m_hRequest,
             flattenedHeaders.c_str(),
@@ -1358,7 +1361,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
             pRequestContext->m_websocketReceiveBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
             
             // If the receive buffer is full & at max size, invoke client fragment handler with partial message
-            fragmentReadComplete = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->MaxReceiveBufferSize();
+            fragmentReadComplete = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->websocket->MaxReceiveBufferSize();
         }
 
         if (fragmentReadComplete)
@@ -1393,9 +1396,9 @@ HRESULT WinHttpConnection::WebSocketReadAsync()
     {
         // Expand buffer
         size_t newSize = (size_t)m_websocketReceiveBuffer.GetBufferByteCount() * 2;
-        if (newSize > m_websocketHandle->MaxReceiveBufferSize())
+        if (newSize > m_websocketHandle->websocket->MaxReceiveBufferSize())
         {
-            newSize = m_websocketHandle->MaxReceiveBufferSize();
+            newSize = m_websocketHandle->websocket->MaxReceiveBufferSize();
         }
 
         RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)newSize));

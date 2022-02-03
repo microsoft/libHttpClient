@@ -48,6 +48,11 @@ struct WebSocketPerformInfo
 struct HC_PERFORM_ENV
 {
 public:
+    HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
+    HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
+    HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
+    virtual ~HC_PERFORM_ENV() = default;
+
     // Called during static initialization to get default hooks for the platform. These can be overridden by clients with
     // HCSetHttpCallPerformFunction and HCSetWebSocketFunctions
     static HttpPerformInfo GetPlatformDefaultHttpHandlers();
@@ -58,15 +63,18 @@ public:
     // Called during HCInitialize. HC_PERFORM_ENV will be passed to Http/WebSocket hooks and is needed by default providers
     static Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> Initialize(HCInitArgs* args) noexcept;
 
-    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept;
-
     HRESULT HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async);
 
-    HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
-    HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
-    HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
-    virtual ~HC_PERFORM_ENV() = default;
+    HRESULT WebSocketConnectAsyncShim(
+        _In_ http_internal_string&& uri,
+        _In_ http_internal_string&& subProtocol,
+        _In_ HCWebsocketHandle handle,
+        _Inout_ XAsyncBlock* asyncBlock
+    );
 
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept;
+
+    // Default Provider State
 #if HC_PLATFORM == HC_PLATFORM_WIN32
     std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
 #elif HC_PLATFORM == HC_PLATFORM_GDK
@@ -78,18 +86,30 @@ public:
 private:
     HC_PERFORM_ENV() = default;
 
-    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
-
     static HRESULT CALLBACK HttpPerformAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK HttpPerformComplete(XAsyncBlock* async);
+
+    static HRESULT CALLBACK WebSocketConnectAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
+    static void CALLBACK WebSocketConnectComplete(XAsyncBlock* async);
+    static void CALLBACK WebSocketClosed(HCWebsocketHandle websocket, HCWebSocketCloseStatus closeStatus, void* context);
+
+    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);  
+    static void CALLBACK ProviderCleanup(void* context, bool canceled);
+    static void CALLBACK ProviderCleanupComplete(XAsyncBlock* async);
+
+    bool CanScheduleProviderCleanup();
 
     std::mutex m_mutex;
 
     struct HttpPerformContext;
-    http_internal_map<HCCallHandle, std::shared_ptr<HttpPerformContext>> m_activeHttpRequests;
+    http_internal_set<XAsyncBlock*> m_activeHttpRequests;
+
+    struct WebSocketConnectContext;
+    struct ActiveWebSocketContext;
+    http_internal_set<XAsyncBlock*> m_connectingWebSockets;
+    http_internal_set<ActiveWebSocketContext*> m_connectedWebSockets;
 
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
-
 };
 
 using PerformEnv = HC_UNIQUE_PTR<HC_PERFORM_ENV>;

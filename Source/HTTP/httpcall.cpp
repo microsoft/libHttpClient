@@ -54,9 +54,18 @@ struct PerformContext
 
     ~PerformContext()
     {
-        HCHttpCallCloseHandle(call);
-        XTaskQueueCloseHandle(workQueue);
-        XTaskQueueCloseHandle(providerQueue);
+        if (call)
+        {
+            HCHttpCallCloseHandle(call);
+        }
+        if (workQueue)
+        {
+            XTaskQueueCloseHandle(workQueue);
+        }
+        if (providerQueue)
+        {
+            XTaskQueueCloseHandle(providerQueue);
+        }
     }
 
     HC_CALL* call{ nullptr };

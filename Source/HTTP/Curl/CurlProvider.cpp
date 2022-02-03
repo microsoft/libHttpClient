@@ -98,17 +98,8 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
 
 HRESULT CurlProvider::CleanupAsync(HC_UNIQUE_PTR<CurlProvider>&& provider, XAsyncBlock* async) noexcept
 {
-    // CleanupAsync should never be called more than once
-    assert(provider->m_cleanupAsyncBlock == nullptr);
-    provider->m_cleanupAsyncBlock = async;
-
-    XTaskQueuePortHandle workPort{ nullptr };
-    RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
-    RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &provider->m_multiCleanupQueue));
-
     RETURN_IF_FAILED(XAsyncBegin(async, provider.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
     provider.release();
-
     return S_OK;
 }
 
@@ -119,6 +110,14 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
     case XAsyncOp::Begin:
     {
         HC_UNIQUE_PTR<CurlProvider> provider{ static_cast<CurlProvider*>(data->context) };
+
+        // CleanupAsync should never be called more than once
+        assert(provider->m_cleanupAsyncBlock == nullptr);
+        provider->m_cleanupAsyncBlock = data->async;
+
+        XTaskQueuePortHandle workPort{ nullptr };
+        RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
+        RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &provider->m_multiCleanupQueue));
 
         XAsyncBlock multiCleanupAsyncBlock{ provider->m_multiCleanupQueue, provider.get(), CurlProvider::MultiCleanupComplete, 0 };
         provider->m_multiCleanupAsyncBlocks = http_internal_vector<XAsyncBlock>(provider->m_curlMultis.size(), multiCleanupAsyncBlock);

@@ -9,6 +9,9 @@
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #endif
+#if !HC_NOWEBSOCKETS
+#include "WebSocket/hcwebsocket.h"
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -147,6 +150,8 @@ public:
     static Result<std::shared_ptr<WinHttpConnection>> Initialize(
         HINTERNET hSession,
         HCWebsocketHandle webSocket,
+        const char* uri,
+        const char* subprotocol,
         proxy_type proxyType,
         XPlatSecurityInformation&& securityInformation
     );

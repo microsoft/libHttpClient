@@ -890,7 +890,7 @@ STDAPI HCWebSocketSetProxyUri(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCWebSocketSetProxyDecryptsHttps(
     _In_ HCWebsocketHandle websocket,
-    _In_z_ bool allowProxyToDecryptHttps
+    _In_ bool allowProxyToDecryptHttps
 ) noexcept; 
 #endif
 
