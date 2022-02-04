@@ -236,10 +236,10 @@ struct HC_PERFORM_ENV::HttpPerformContext : public std::enable_shared_from_this<
         }
     }
 
-    HC_PERFORM_ENV* env{};
-    HCCallHandle const callHandle{};
-    XAsyncBlock* const clientAsyncBlock{};
-    XAsyncBlock internalAsyncBlock{};
+    HC_PERFORM_ENV* const env;
+    HCCallHandle const callHandle;
+    XAsyncBlock* const clientAsyncBlock;
+    XAsyncBlock internalAsyncBlock;
 };
 
 HRESULT HC_PERFORM_ENV::HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async)
@@ -261,6 +261,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
     case XAsyncOp::Begin:
     {
         XTaskQueuePortHandle workPort{};
+        assert(data->async->queue); // Queue should never be null here
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &performContext->internalAsyncBlock.queue));
 
@@ -380,6 +381,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::WebSocketConnectAsyncShimProvider(XAsyncOp op, 
     case XAsyncOp::Begin:
     {
         XTaskQueuePortHandle workPort{};
+        assert(data->async->queue); // Queue should never be null here
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue));
 

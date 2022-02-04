@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "httpClient.h"
 #include "httpcall.h"
 
 using namespace xbox::httpclient;
