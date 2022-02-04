@@ -65,12 +65,14 @@ public:
 
     HRESULT HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async);
 
+#if !HC_NOWEBSOCKETS
     HRESULT WebSocketConnectAsyncShim(
         _In_ http_internal_string&& uri,
         _In_ http_internal_string&& subProtocol,
         _In_ HCWebsocketHandle handle,
         _Inout_ XAsyncBlock* asyncBlock
     );
+#endif
 
     static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept;
 
@@ -89,9 +91,11 @@ private:
     static HRESULT CALLBACK HttpPerformAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK HttpPerformComplete(XAsyncBlock* async);
 
+#if !HC_NOWEBSOCKETS
     static HRESULT CALLBACK WebSocketConnectAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK WebSocketConnectComplete(XAsyncBlock* async);
     static void CALLBACK WebSocketClosed(HCWebsocketHandle websocket, HCWebSocketCloseStatus closeStatus, void* context);
+#endif
 
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);  
     static void CALLBACK ProviderCleanup(void* context, bool canceled);
@@ -104,10 +108,12 @@ private:
     struct HttpPerformContext;
     http_internal_set<XAsyncBlock*> m_activeHttpRequests;
 
+#if !HC_NOWEBSOCKETS
     struct WebSocketConnectContext;
     struct ActiveWebSocketContext;
     http_internal_set<XAsyncBlock*> m_connectingWebSockets;
     http_internal_set<ActiveWebSocketContext*> m_connectedWebSockets;
+#endif
 
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
 };

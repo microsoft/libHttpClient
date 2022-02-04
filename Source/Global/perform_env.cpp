@@ -311,6 +311,7 @@ void CALLBACK HC_PERFORM_ENV::HttpPerformComplete(XAsyncBlock* async)
     XAsyncComplete(performContext->clientAsyncBlock, XAsyncGetStatus(async, false), 0);
 }
 
+#if !HC_NOWEBSOCKETS
 struct HC_PERFORM_ENV::WebSocketConnectContext
 {
     WebSocketConnectContext(
@@ -479,6 +480,7 @@ void CALLBACK HC_PERFORM_ENV::WebSocketClosed(HCWebsocketHandle /*websocket*/, H
         }
     }
 }
+#endif
 
 HRESULT HC_PERFORM_ENV::CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept
 {
@@ -503,6 +505,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
         {
             XAsyncCancel(activeRequest);
         }
+#if !HC_NOWEBSOCKETS
         for (auto& context : env->m_connectedWebSockets)
         {
             HRESULT hr = context->websocketObserver->websocket->Disconnect();
@@ -511,6 +514,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
             }
         }
+#endif
         lock.unlock();
 
         if (scheduleProviderCleanup)
@@ -589,6 +593,7 @@ bool HC_PERFORM_ENV::CanScheduleProviderCleanup()
         // Pending Http Requests
         return false;
     }
+#if !HC_NOWEBSOCKETS
     else if (!m_connectingWebSockets.empty())
     {
         // Pending WebSocket Connect operations
@@ -599,5 +604,6 @@ bool HC_PERFORM_ENV::CanScheduleProviderCleanup()
         // Pending WebSocket CloseFunc callbacks
         return false;
     }
+#endif
     return true;
 }
