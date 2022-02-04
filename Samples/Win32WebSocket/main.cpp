@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include <atomic>
+#include <assert.h>
 
 class win32_handle
 {
@@ -225,7 +226,9 @@ int main()
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         WebSocketCompletionResult result = {};
-        HCGetWebSocketConnectResult(asyncBlock, &result);
+        HRESULT hr = HCGetWebSocketConnectResult(asyncBlock, &result);
+        assert(SUCCEEDED(hr));
+        UNREFERENCED_PARAMETER(hr);
 
         printf_s("HCWebSocketConnect complete: %d, %d\n", result.errorCode, result.platformErrorCode);
         SetEvent(g_eventHandle);
@@ -252,7 +255,9 @@ int main()
         asyncBlock->callback = [](XAsyncBlock* asyncBlock)
         {
             WebSocketCompletionResult result = {};
-            HCGetWebSocketSendMessageResult(asyncBlock, &result);
+            HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
+            assert(SUCCEEDED(hr));
+            UNREFERENCED_PARAMETER(hr);
 
             printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
             SetEvent(g_eventHandle);
@@ -267,7 +272,9 @@ int main()
         asyncBlock->callback = [](XAsyncBlock* asyncBlock)
         {
             WebSocketCompletionResult result = {};
-            HCGetWebSocketSendMessageResult(asyncBlock, &result);
+            HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
+            assert(SUCCEEDED(hr));
+            UNREFERENCED_PARAMETER(hr);
 
             printf_s("HCWebSocketSendBinaryMessageAsync complete: %d, %d\n", result.errorCode, result.platformErrorCode);
             SetEvent(g_eventHandle);
