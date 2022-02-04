@@ -1,31 +1,29 @@
 ## Welcome!
 
-libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api) and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
+libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api), PlayFab SDKs, and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
 
 ## Goals
 
 - libHttpClient provides a **platform abstraction layer** for **HTTP** and **WebSocket**
-- Stock implementations that call **native platform HTTP / WebSocket APIs** on UWP, XDK ERA, iOS, Android 
+- Stock implementations that call **native platform HTTP / WebSocket APIs** on GDK, XDK ERA, Win32 Win7+, UWP, iOS, Android 
 - Caller can add support for **other platforms via callback** API
 - Sample showing off an [**HTTP implementation via Curl**](https://github.com/curl/curl) via this callback
-- Designed around the needs of **professional game developers** that use Xbox Live
-- Will be **used by** the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api)
-- Builds for **UWP, XDK ERA, Win32, iOS, and Android**
+- Designed around the needs of **professional game developers** that use Xbox Live and PlayFab
+- **used by** the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api) and PlayFab SDKs
+- Builds for **GDK, XDK ERA, UWP, Win32 Win7+, iOS, and Android**
 - Public API is a **flat C API**
 - **Asynchronous** API
 - Public API **supports simple P/Invoke** without needing to use the ["C#/.NET P/Invoke Interop SDK" or C++/CLI](https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK)
 - Public APIs to **manage async tasks** 
 - Async data can be returned to a specific game thread so the **game doesn't need to marshal the data between threads**
-- **No streams** support
 - **No dependencies** on PPL or Boost
 - **Does not throw exceptions** as a means of non-fatal error reporting
-- Caller controlled **memory allocation** via callback API (similar to XDK's XMemAlloc)
+- Caller controlled **memory allocation** via callback API (similar to GDK's XMemAlloc)
 - Built-in **logging** support to either debug output and/or callback
 - **Built in retry** support according to Xbox Live best practices (obey Retry-After header, jitter wait, etc) according to https://docs.microsoft.com/en-us/windows/uwp/xbox-live/using-xbox-live/best-practices/best-practices-for-calling-xbox-live#retry-logic-best-practices
 - **Xbox Live throttle** handling logic
 - Built-in API support to switch to **mock layer**
 - **Open source** project on GitHub
-- Binaries eventually on Nuget.org as **Nuget packages**, and maybe VcPkg
 - Unit tests via TAEF
 - End to end samples for UWP C++, XDK ERA, Win32, iOS, and Android
 
@@ -47,9 +45,9 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 
 ## Behavior control
 
-* On UWP, XDK ERA, iOS, and Android, HCHttpCallPerform() will call native platform APIs
+* On GDK, XDK ERA, UWP, iOS, and Android, HCHttpCallPerform() will call native platform APIs
 * Optionally call HCSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
-* See sample CustomHttpImplWithCurl how to use this callback plus [Curl](https://github.com/curl/curl) to make an HTTP implementation using Curl.
+* See sample CustomHttpImplWithCurl for an example of how to use this callback to make your own HTTP implementation.
 
 ## How to clone repo
 
@@ -81,7 +79,6 @@ We'd love to get your review score, whether good or bad, but even more than that
 *   [Xbox Live Samples](https://github.com/Microsoft/xbox-live-samples)
 *   [Xbox Live Resiliency Fiddler Plugin](https://github.com/Microsoft/xbox-live-resiliency-fiddler-plugin)
 *   [Xbox Live Trace Analyzer](https://github.com/Microsoft/xbox-live-trace-analyzer)
-*   [Xbox Live Powershell Cmdlets](https://github.com/Microsoft/xbox-live-powershell-module)
 *   [libHttpClient](https://github.com/Microsoft/libHttpClient)
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
