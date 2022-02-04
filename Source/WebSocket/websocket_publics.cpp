@@ -3,6 +3,8 @@
 
 using namespace xbox::httpclient;
 
+#if !HC_NOWEBSOCKETS
+
 STDAPI HCWebSocketCreate(
     _Out_ HCWebsocketHandle* handle,
     _In_opt_ HCWebSocketMessageFunction messageFunc,
@@ -394,3 +396,5 @@ try
     );
 }
 CATCH_RETURN()
+
+#endif //!HC_NOWEBSOCKETS
