@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "perform_env.h"
 #include "httpcall.h"
-#include "WebSocket\hcwebsocket.h"
+#include "../WebSocket/hcwebsocket.h"
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
