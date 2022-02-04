@@ -218,7 +218,7 @@ Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* arg
     return std::move(performEnv);
 }
 
-struct HC_PERFORM_ENV::HttpPerformContext : public std::enable_shared_from_this<HC_PERFORM_ENV::HttpPerformContext>
+struct HC_PERFORM_ENV::HttpPerformContext
 {
     HttpPerformContext(HC_PERFORM_ENV* _env, HCCallHandle _callHandle, XAsyncBlock* _clientAsyncBlock) :
         env{ _env },
@@ -581,8 +581,6 @@ void CALLBACK HC_PERFORM_ENV::ProviderCleanupComplete(XAsyncBlock* async)
 
 bool HC_PERFORM_ENV::CanScheduleProviderCleanup()
 {
-    // mutex should always be held when calling this method
-    assert(!m_mutex.try_lock());
     if (!m_cleanupAsyncBlock)
     {
         // HC_PERFORM_ENV::CleanupAsync has not yet been called
