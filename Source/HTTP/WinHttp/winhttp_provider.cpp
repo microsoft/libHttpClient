@@ -127,7 +127,7 @@ HRESULT CALLBACK WinHttpProvider::WebSocketSendAsyncHandler(
 {
     RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
 
-    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->impl);
+    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
     RETURN_HR_IF(E_UNEXPECTED, !connection);
 
     return connection->WebSocketSendMessageAsync(async, message);
@@ -143,7 +143,7 @@ HRESULT CALLBACK WinHttpProvider::WebSocketSendBinaryAsyncHandler(
 {
     RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
 
-    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->impl);
+    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
     RETURN_HR_IF(E_UNEXPECTED, !connection);
 
     return connection->WebSocketSendMessageAsync(asyncBlock, payloadBytes, payloadSize);
@@ -157,10 +157,10 @@ HRESULT CALLBACK WinHttpProvider::WebSocketDisconnectHandler(
 {
     RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
 
-    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->impl);
+    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
     RETURN_HR_IF(E_UNEXPECTED, !connection);
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocketHandle->id));
+    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocketHandle->websocket->id));
 
     return connection->WebSocketDisconnect(closeStatus);
 }
@@ -216,7 +216,7 @@ HRESULT WinHttpProvider::HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlo
 }
 
 #if !HC_NOWEBSOCKETS
-HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*subprotocol*/, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept
+HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* subprotocol, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept
 {
     // Get Security information for the call
     auto getSecurityInfoResult = GetSecurityInformation(uri);
@@ -235,7 +235,7 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*su
 #endif
 
     // Initialize WinHttpConnection
-    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), websocketHandle, m_proxyType, getSecurityInfoResult.ExtractPayload());
+    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), websocketHandle, uri, subprotocol, m_proxyType, getSecurityInfoResult.ExtractPayload());
     RETURN_IF_FAILED(initConnectionResult.hr);
 
     auto connection = initConnectionResult.ExtractPayload();
@@ -243,7 +243,7 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* /*su
     m_connections.push_back(connection);
     RETURN_IF_FAILED(connection->WebSocketConnectAsync(async));
 
-    websocketHandle->impl = std::move(connection);
+    websocketHandle->websocket->impl = std::move(connection);
 
     return S_OK;
 }

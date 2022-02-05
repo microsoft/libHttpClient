@@ -184,6 +184,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket_publics.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />

@@ -449,7 +449,7 @@ typedef struct _LIST_ENTRY {
 #define E_HC_INTERNAL_STILLINUSE        MAKE_E_HC(0x5008) // 0x89235008
 
 typedef uint32_t HCMemoryType;
-typedef struct HC_WEBSOCKET* HCWebsocketHandle;
+typedef struct HC_WEBSOCKET_OBSERVER* HCWebsocketHandle;
 typedef struct HC_CALL* HCCallHandle;
 typedef struct HC_MOCK_CALL* HCMockCallHandle;
 typedef struct HC_PERFORM_ENV* HCPerformEnv;
