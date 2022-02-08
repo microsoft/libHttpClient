@@ -38,16 +38,66 @@ HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> HC_WEBSOCKET_OBSERVER::Initialize(
     observer->m_binaryFragmentFunc = binaryFragmentFunc;
     observer->m_closeFunc = closeFunc;
     observer->m_callbackContext = callbackContext;
-    observer->m_handlerToken = observer->websocket->RegisterEventCallbacks(messageFunc, binaryMessageFunc, binaryFragmentFunc, closeFunc, callbackContext);
+    observer->m_handlerToken = observer->websocket->RegisterEventCallbacks(MessageFunc, BinaryMessageFunc, BinaryMessageFragmentFunc, CloseFunc, observer.get());
 
     return observer;
 }
 
 void HC_WEBSOCKET_OBSERVER::SetBinaryMessageFragmentEventFunction(HCWebSocketBinaryMessageFragmentFunction binaryFragmentFunc)
-{  
-    websocket->UnregisterEventCallbacks(m_handlerToken);
+{
     m_binaryFragmentFunc = binaryFragmentFunc;
-    m_handlerToken = websocket->RegisterEventCallbacks(m_messageFunc, m_binaryMessageFunc, m_binaryFragmentFunc, m_closeFunc, m_callbackContext);
+}
+
+void CALLBACK HC_WEBSOCKET_OBSERVER::MessageFunc(HCWebsocketHandle internalHandle, const char* message, void* context)
+{
+    HC_WEBSOCKET_OBSERVER* observer{ static_cast<HC_WEBSOCKET_OBSERVER*>(context) };
+
+    assert(internalHandle->websocket->id == observer->websocket->id);
+    UNREFERENCED_PARAMETER(internalHandle);
+
+    if (observer->m_messageFunc)
+    {
+        observer->m_messageFunc(observer, message, observer->m_callbackContext);
+    }
+}
+
+void CALLBACK HC_WEBSOCKET_OBSERVER::BinaryMessageFunc(HCWebsocketHandle internalHandle, const uint8_t* bytes, uint32_t payloadSize, void* context)
+{
+    HC_WEBSOCKET_OBSERVER* observer{ static_cast<HC_WEBSOCKET_OBSERVER*>(context) };
+
+    assert(internalHandle->websocket->id == observer->websocket->id);
+    UNREFERENCED_PARAMETER(internalHandle);
+
+    if (observer->m_binaryMessageFunc)
+    {
+        observer->m_binaryMessageFunc(observer, bytes, payloadSize, observer->m_callbackContext);
+    }
+}
+
+void CALLBACK HC_WEBSOCKET_OBSERVER::BinaryMessageFragmentFunc(HCWebsocketHandle internalHandle, const uint8_t* payloadBytes, uint32_t payloadSize, bool isLastFragment, void* context)
+{
+    HC_WEBSOCKET_OBSERVER* observer{ static_cast<HC_WEBSOCKET_OBSERVER*>(context) };
+
+    assert(internalHandle->websocket->id == observer->websocket->id);
+    UNREFERENCED_PARAMETER(internalHandle);
+
+    if (observer->m_binaryFragmentFunc)
+    {
+        observer->m_binaryFragmentFunc(observer, payloadBytes, payloadSize, isLastFragment, observer->m_callbackContext);
+    }
+}
+
+void CALLBACK HC_WEBSOCKET_OBSERVER::CloseFunc(HCWebsocketHandle internalHandle, HCWebSocketCloseStatus status, void* context)
+{
+    HC_WEBSOCKET_OBSERVER* observer{ static_cast<HC_WEBSOCKET_OBSERVER*>(context) };
+
+    assert(internalHandle->websocket->id == observer->websocket->id);
+    UNREFERENCED_PARAMETER(internalHandle);
+
+    if (observer->m_closeFunc)
+    {
+        observer->m_closeFunc(observer, status, observer->m_callbackContext);
+    }
 }
 
 namespace xbox
