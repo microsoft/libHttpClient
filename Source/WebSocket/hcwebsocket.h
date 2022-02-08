@@ -50,6 +50,11 @@ public:
 private:
     HC_WEBSOCKET_OBSERVER(std::shared_ptr<xbox::httpclient::WebSocket> WebSocket);
 
+    static void CALLBACK MessageFunc(HCWebsocketHandle handle, const char* message, void* context);
+    static void CALLBACK BinaryMessageFunc(HCWebsocketHandle handle, const uint8_t* bytes, uint32_t payloadSize, void* context);
+    static void CALLBACK BinaryMessageFragmentFunc(HCWebsocketHandle handle, const uint8_t* payloadBytes, uint32_t payloadSize, bool isLastFragment, void* functionContext);
+    static void CALLBACK CloseFunc(HCWebsocketHandle handle, HCWebSocketCloseStatus status, void* context);
+
     HCWebSocketMessageFunction m_messageFunc{ nullptr };
     HCWebSocketBinaryMessageFunction m_binaryMessageFunc{ nullptr };
     HCWebSocketBinaryMessageFragmentFunction m_binaryFragmentFunc{ nullptr };
