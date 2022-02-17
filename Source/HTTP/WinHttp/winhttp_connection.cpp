@@ -1497,6 +1497,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
     _In_ WinHttpCallbackContext* winHttpContext
 )
 {
+#if !HC_NOWEBSOCKETS
     auto winHttpConnection = winHttpContext->winHttpConnection;
     winHttpConnection->m_lock.lock();
 
@@ -1526,6 +1527,11 @@ void WinHttpConnection::callback_websocket_status_headers_available(
 
     // Begin listening for messages
     winHttpConnection->WebSocketReadAsync();
+#else
+    UNREFERENCED_PARAMETER(hRequestHandle);
+    UNREFERENCED_PARAMETER(winHttpContext);
+    assert(false);
+#endif
 }
 
 #if !HC_NOWEBSOCKETS
