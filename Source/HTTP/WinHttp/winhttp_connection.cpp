@@ -1265,6 +1265,7 @@ HRESULT WinHttpConnection::StartWinHttpClose()
 
 void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendContext)
 {
+#if !HC_NOWEBSOCKETS
     assert(m_winHttpWebSocketExports.send);
 
     DWORD dwError = m_winHttpWebSocketExports.send(m_hRequest,
@@ -1279,15 +1280,24 @@ void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendCon
     {
         WebSocketCompleteEntireSendQueueWithError(HRESULT_FROM_WIN32(dwError));
     }
+#else
+    UNREFERENCED_PARAMETER(sendContext);
+    assert(false);
+#endif
 }
 
 void WinHttpConnection::WebSocketCompleteEntireSendQueueWithError(HRESULT error)
 {
+#if !HC_NOWEBSOCKETS
     std::lock_guard<std::recursive_mutex> lock{ m_websocketSendMutex };
     for (; !m_websocketSendQueue.empty(); m_websocketSendQueue.pop())
     {
         XAsyncComplete(m_websocketSendQueue.front()->async, error, 0);
     }
+#else
+    UNREFERENCED_PARAMETER(error);
+    assert(false);
+#endif
 }
 
 void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
@@ -1317,6 +1327,7 @@ char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(
     _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
 )
 {
+#if !HC_NOWEBSOCKETS
     switch (bufferType)
     {
         case WINHTTP_WEB_SOCKET_BUFFER_TYPE::WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE: return "WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE";
@@ -1326,6 +1337,11 @@ char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(
         case WINHTTP_WEB_SOCKET_BUFFER_TYPE::WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE: return "WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE";
     }
     return "unknown";
+#else
+    UNREFERENCED_PARAMETER(bufferType);
+    assert(false);
+    return "";
+#endif
 }
 
 void WinHttpConnection::callback_websocket_status_read_complete(
@@ -1386,6 +1402,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
 
 HRESULT WinHttpConnection::WebSocketReadAsync()
 {
+#if !HC_NOWEBSOCKETS
     win32_cs_autolock autoCriticalSection(&m_lock);
 
     if (m_websocketReceiveBuffer.GetBuffer() == nullptr)
@@ -1419,10 +1436,15 @@ HRESULT WinHttpConnection::WebSocketReadAsync()
     }
 
     return S_OK;
+#else
+    assert(false);
+    return E_FAIL;
+#endif
 }
 
 HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool isFragment, bool isFinalFragment)
 {
+#if !HC_NOWEBSOCKETS
     websocket_message_buffer messageBuffer;
     HCWebSocketMessageFunction messageFunc = nullptr;
     HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr;
@@ -1461,6 +1483,13 @@ HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool isFrag
         HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] Caught unhandled exception from client message handler");
     }
     return S_OK;
+#else
+    UNREFERENCED_PARAMETER(binaryMessage);
+    UNREFERENCED_PARAMETER(isFragment);
+    UNREFERENCED_PARAMETER(isFinalFragment);
+    assert(false);
+    return E_FAIL;
+#endif
 }
 
 void WinHttpConnection::callback_websocket_status_headers_available(
@@ -1468,6 +1497,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
     _In_ WinHttpCallbackContext* winHttpContext
 )
 {
+#if !HC_NOWEBSOCKETS
     auto winHttpConnection = winHttpContext->winHttpConnection;
     winHttpConnection->m_lock.lock();
 
@@ -1497,6 +1527,11 @@ void WinHttpConnection::callback_websocket_status_headers_available(
 
     // Begin listening for messages
     winHttpConnection->WebSocketReadAsync();
+#else
+    UNREFERENCED_PARAMETER(hRequestHandle);
+    UNREFERENCED_PARAMETER(winHttpContext);
+    assert(false);
+#endif
 }
 
 #if !HC_NOWEBSOCKETS
