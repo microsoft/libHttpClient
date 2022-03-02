@@ -139,16 +139,11 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::CleanupAsync failed, continuing cleanup");
 
                 std::lock_guard<std::mutex> lock{ provider->m_mutex };
-                --provider->m_pendingMultiCleanups;
-            }
-        }
-
-        {
-            std::lock_guard<std::mutex> lock{ provider->m_mutex };
-            if (provider->m_pendingMultiCleanups == 0)
-            {
-                // If there are no pending pending multi cleanups, we can complete synchronously
-                cleanupComplete = true;
+                if (--provider->m_pendingMultiCleanups == 0)
+                {
+                    // If there are no pending pending multi cleanups, we can complete synchronously
+                    cleanupComplete = true;
+                }
             }
         }
 
