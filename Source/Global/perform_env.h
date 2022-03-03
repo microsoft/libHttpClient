@@ -74,7 +74,7 @@ public:
     );
 #endif
 
-    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept;
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV> env, XAsyncBlock* async) noexcept;
 
     // Default Provider State
 #if HC_PLATFORM == HC_PLATFORM_WIN32

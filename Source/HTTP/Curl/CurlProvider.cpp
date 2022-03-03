@@ -41,8 +41,8 @@ Result<HC_UNIQUE_PTR<CurlProvider>> CurlProvider::Initialize()
 CurlProvider::~CurlProvider()
 {
     // Either CleanupAsync was never called or CurlProvider shouldn't be destroyed until it completes.
-    assert(!m_pendingMultiCleanups);
-    
+    assert(!m_cleanupTasksRemaining);
+
     if (m_multiCleanupQueue)
     {
         XTaskQueueCloseHandle(m_multiCleanupQueue);
@@ -96,7 +96,7 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     return S_OK;
 }
 
-HRESULT CurlProvider::CleanupAsync(HC_UNIQUE_PTR<CurlProvider>&& provider, XAsyncBlock* async) noexcept
+HRESULT CurlProvider::CleanupAsync(HC_UNIQUE_PTR<CurlProvider> provider, XAsyncBlock* async) noexcept
 {
     RETURN_IF_FAILED(XAsyncBegin(async, provider.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
     provider.release();
@@ -124,7 +124,7 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
 
         {
             std::lock_guard<std::mutex> lock{ provider->m_mutex };
-            provider->m_pendingMultiCleanups = provider->m_curlMultis.size();
+            provider->m_cleanupTasksRemaining = 1 + provider->m_curlMultis.size();
         }
 
         size_t multiIndex{ 0 };
@@ -139,11 +139,17 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::CleanupAsync failed, continuing cleanup");
 
                 std::lock_guard<std::mutex> lock{ provider->m_mutex };
-                if (--provider->m_pendingMultiCleanups == 0)
-                {
-                    // If there are no pending pending multi cleanups, we can complete synchronously
-                    cleanupComplete = true;
-                }
+                --provider->m_cleanupTasksRemaining;
+            }
+        }
+
+
+        {
+            std::lock_guard<std::mutex> lock{ provider->m_mutex };
+            if (--provider->m_cleanupTasksRemaining == 0)
+            {
+                // If there are no pending pending multi cleanups, complete cleanup here
+                cleanupComplete = true;
             }
         }
 
@@ -172,7 +178,7 @@ void CALLBACK CurlProvider::MultiCleanupComplete(_Inout_ struct XAsyncBlock* asy
     CurlProvider* provider{ static_cast<CurlProvider*>(asyncBlock->context) };
 
     std::unique_lock<std::mutex> lock{ provider->m_mutex };
-    if (--provider->m_pendingMultiCleanups == 0)
+    if (--provider->m_cleanupTasksRemaining == 0)
     {
         // All CurlMultis have finished asyncCleanup. Destroy provider and complete provider's Cleanup XAsyncBlock
         XAsyncBlock* providerCleanupAsyncBlock{ provider->m_cleanupAsyncBlock };

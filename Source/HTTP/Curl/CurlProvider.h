@@ -27,7 +27,7 @@ public:
         HCPerformEnv env
     ) noexcept;
 
-    static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlProvider>&& provider, XAsyncBlock* async) noexcept;
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlProvider> provider, XAsyncBlock* async) noexcept;
 
 private:
     CurlProvider() = default;
@@ -44,7 +44,7 @@ private:
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr };
     http_internal_vector<XAsyncBlock> m_multiCleanupAsyncBlocks;
     XTaskQueueHandle m_multiCleanupQueue{ nullptr };
-    size_t m_pendingMultiCleanups{ 0 };
+    size_t m_cleanupTasksRemaining{ 0 };
 };
 
 } // httpclient
