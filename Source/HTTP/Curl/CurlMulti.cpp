@@ -49,7 +49,7 @@ CurlMulti::~CurlMulti()
     }
 }
 
-HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest)
+HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest)
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
 
@@ -69,7 +69,7 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest)
     return S_OK;
 }
 
-HRESULT CurlMulti::CleanupAsync(HC_UNIQUE_PTR<CurlMulti>&& multi, XAsyncBlock* async)
+HRESULT CurlMulti::CleanupAsync(HC_UNIQUE_PTR<CurlMulti> multi, XAsyncBlock* async)
 {
     assert(multi->m_cleanupAsyncBlock == nullptr);
     multi->m_cleanupAsyncBlock = async;
@@ -113,7 +113,7 @@ void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool can
     auto multi = static_cast<CurlMulti*>(context);
 
     if (!canceled)
-    {        
+    {
         HRESULT hr = multi->Perform();
         if (FAILED(hr))
         {
