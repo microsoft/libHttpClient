@@ -468,7 +468,7 @@ void CALLBACK HC_PERFORM_ENV::WebSocketClosed(HCWebsocketHandle /*websocket*/, H
 
     // Free context before scheduling ProviderCleanup to ensure it happens before returing to client
     HC_UNIQUE_PTR<ActiveWebSocketContext> reclaim{ context };
-    reclaim.reset();    
+    reclaim.reset();
 
     if (scheduleProviderCleanup)
     {
@@ -482,7 +482,7 @@ void CALLBACK HC_PERFORM_ENV::WebSocketClosed(HCWebsocketHandle /*websocket*/, H
 }
 #endif
 
-HRESULT HC_PERFORM_ENV::CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept
+HRESULT HC_PERFORM_ENV::CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV> env, XAsyncBlock* async) noexcept
 {
     RETURN_IF_FAILED(XAsyncBegin(async, env.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
     env.release();
