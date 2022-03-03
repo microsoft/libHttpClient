@@ -124,6 +124,9 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
 
         {
             std::lock_guard<std::mutex> lock{ provider->m_mutex };
+            // There is a race condition where the last CurlMulti::CleanupAsync task can complete before the cleanup loop is finished.
+            // Because the loop condition relies on the provider being alive, we add an additional cleanup task, ensuring the provider
+            // can never be destroyed until after the loop.
             provider->m_cleanupTasksRemaining = 1 + provider->m_curlMultis.size();
         }
 
