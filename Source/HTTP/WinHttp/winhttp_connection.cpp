@@ -1489,8 +1489,7 @@ HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool endOfM
     return S_OK;
 #else
     UNREFERENCED_PARAMETER(binaryMessage);
-    UNREFERENCED_PARAMETER(isFragment);
-    UNREFERENCED_PARAMETER(isFinalFragment);
+    UNREFERENCED_PARAMETER(endOfMessage);
     assert(false);
     return E_FAIL;
 #endif
