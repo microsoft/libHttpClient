@@ -107,6 +107,7 @@ namespace httpclient
 
 WebSocket::WebSocket(uint64_t _id, WebSocketPerformInfo performInfo, HC_PERFORM_ENV* performEnv) :
     id{ _id },
+    m_maxReceiveBufferSize{ WEBSOCKET_RECVBUFFER_MAXSIZE_DEFAULT },
     m_performInfo{ performInfo },
     m_performEnv{ performEnv }
 {
