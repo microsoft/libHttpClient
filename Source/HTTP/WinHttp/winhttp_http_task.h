@@ -291,9 +291,9 @@ private:
 #if HC_WINHTTP_WEBSOCKETS
     // websocket state
     HRESULT WebSocketReadAsync();
-    HRESULT WebSocketReadComplete(bool binaryMessage, bool isFragment, bool isFinalFragment);
+    HRESULT WebSocketReadComplete(bool binaryMessage, bool endOfMessage);
     websocket_message_buffer m_websocketReceiveBuffer;
-    bool m_websocketReceivingMessageFragments{ false };
+    bool m_websocketForwardingFragments{ false };
 #endif
 
 #if HC_PLATFORM == HC_PLATFORM_GDK

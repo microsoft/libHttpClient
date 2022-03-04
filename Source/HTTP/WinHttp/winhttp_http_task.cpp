@@ -1570,21 +1570,19 @@ void winhttp_http_task::callback_websocket_status_read_complete(
     }
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE || wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE)
     {
-        bool fragmentReadComplete{ false };
+        bool readBufferFull{ false };
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
-
-            // WinHttp doesn't report the final chunk of a fragmented message as a fragment, but LHC will
-            pRequestContext->m_websocketReceivingMessageFragments = true;
             pRequestContext->m_websocketReceiveBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
-            
+
             // If the receive buffer is full & at max size, invoke client fragment handler with partial message
-            fragmentReadComplete = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->MaxReceiveBufferSize();
+            readBufferFull = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->MaxReceiveBufferSize();
         }
 
-        if (fragmentReadComplete)
+        if (readBufferFull)
         {
-            pRequestContext->WebSocketReadComplete(true, true, false);
+            // Treat all message fragments as binary as they may not be null terminated
+            pRequestContext->WebSocketReadComplete(true, false);
         }
 
         pRequestContext->WebSocketReadAsync();
@@ -1592,13 +1590,13 @@ void winhttp_http_task::callback_websocket_status_read_complete(
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE || wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE)
     {
         pRequestContext->m_websocketReceiveBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
-        pRequestContext->WebSocketReadComplete(wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, pRequestContext->m_websocketReceivingMessageFragments, true);
+        pRequestContext->WebSocketReadComplete(wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, true);
         pRequestContext->WebSocketReadAsync();
     }
 
 }
 
-HRESULT WinHttpConnection::WebSocketReadAsync()
+HRESULT winhttp_http_task::WebSocketReadAsync()
 {
     win32_cs_autolock autoCriticalSection(&m_lock);
 
@@ -1619,14 +1617,12 @@ HRESULT WinHttpConnection::WebSocketReadAsync()
         RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)newSize));
     }
 
-    assert(m_winHttpWebSocketExports.receive);
-
     uint8_t* bufferPtr = m_websocketReceiveBuffer.GetNextWriteLocation();
     uint64_t bufferSize = m_websocketReceiveBuffer.GetRemainingCapacity();
     DWORD dwError = ERROR_SUCCESS;
     DWORD bytesRead{ 0 }; // not used but required.  bytes read comes from FinishWriteData(wsStatus->dwBytesTransferred)
-    UINT bufType{};
-    dwError = m_winHttpWebSocketExports.receive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
+    WINHTTP_WEB_SOCKET_BUFFER_TYPE bufType{};
+    dwError = WinHttpWebSocketReceive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
     if (dwError)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
@@ -1635,7 +1631,7 @@ HRESULT WinHttpConnection::WebSocketReadAsync()
     return S_OK;
 }
 
-HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool isFragment, bool isFinalFragment)
+HRESULT winhttp_http_task::WebSocketReadComplete(bool binaryMessage, bool endOfMessage)
 {
     websocket_message_buffer messageBuffer;
     HCWebSocketMessageFunction messageFunc = nullptr;
@@ -1643,19 +1639,25 @@ HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool isFrag
     HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc = nullptr;
     void* functionContext = nullptr;
 
+    bool isFragment{ false };
+
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
         HCWebSocketGetEventFunctions(m_websocketHandle, &messageFunc, &binaryMessageFunc, nullptr, &functionContext);
         HCWebSocketGetBinaryMessageFragmentEventFunction(m_websocketHandle, &binaryMessageFragmentFunc, &functionContext);
         m_websocketReceiveBuffer.TransferBuffer(&messageBuffer);
-        m_websocketReceivingMessageFragments = !isFinalFragment;
+
+        // WinHttp tells us when the end of a message is received. Invoke the fragment handler if our buffer is full but we haven't yet
+        // received the end of a message OR if we've previously passed along a partial message and this is a continuation.
+        isFragment = !endOfMessage || m_websocketForwardingFragments;
+        m_websocketForwardingFragments = !endOfMessage;
     }
 
     try
     {
         if (isFragment && binaryMessageFragmentFunc)
         {
-            binaryMessageFragmentFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), isFinalFragment, functionContext);
+            binaryMessageFragmentFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), endOfMessage, functionContext);
         }
         else if (binaryMessage && binaryMessageFunc)
         {
@@ -1707,12 +1709,14 @@ void winhttp_http_task::callback_websocket_status_headers_available(
         return;
     }
 
-    pRequestContext->websocket_start_listening();
     pRequestContext->m_socketState = WinHttpWebsockState::Connected;
 
     WinHttpCloseHandle(hRequestHandle); // The old request handle is not needed anymore.  We're using pRequestContext->m_hRequest now
     pRequestContext->m_lock.unlock();
     pRequestContext->complete_task(S_OK, S_OK);
+
+    // Begin listening for messages
+    pRequestContext->WebSocketReadAsync();
 }
 
 #endif
