@@ -18,10 +18,10 @@ public:
     ~CurlMulti();
 
     // Wrapper around curl_multi_add_handle
-    HRESULT AddRequest(HC_UNIQUE_PTR<CurlEasyRequest>&& easyRequest);
+    HRESULT AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest);
 
     // Asyncronously cleanup and outstanding requests
-    static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlMulti>&& multi, XAsyncBlock* async);
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlMulti> multi, XAsyncBlock* async);
 
 private:
     CurlMulti() = default;

@@ -26,7 +26,7 @@ public:
     // Called during HCInitialize. HC_PERFORM_ENV will be passed to Http/WebSocket hooks and is needed by default providers
     static Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> Initialize(HCInitArgs* args) noexcept;
 
-    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV>&& env, XAsyncBlock* async) noexcept;
+    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV> env, XAsyncBlock* async) noexcept;
 
     HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
     HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
