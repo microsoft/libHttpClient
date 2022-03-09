@@ -66,11 +66,9 @@ struct ITaskQueuePort: IApi
     virtual void __stdcall Detach(
         _In_ ITaskQueuePortContext* portContext) = 0;
 
-    virtual bool __stdcall DrainOneItem() = 0;
-
-    virtual bool __stdcall Wait(
+    virtual bool __stdcall Dispatch(
         _In_ ITaskQueuePortContext* portContext,
-        _In_ uint32_t timeout) = 0;
+        _In_ uint32_t timeoutInMs) = 0;
 
     virtual bool __stdcall IsEmpty() = 0;
 
@@ -79,14 +77,22 @@ struct ITaskQueuePort: IApi
 
     virtual void __stdcall ResumeTermination(
         _In_ ITaskQueuePortContext* portContext) = 0;
+
+    virtual void __stdcall SuspendPort() = 0;
+    virtual void __stdcall ResumePort() = 0;
+
 };
 
-// The status of a port on the queue.
+// The status of a port on the queue. This status is used in
+// comparisions, with later status values adopting the restrictions
+// of earier values.  For example, any status >= Canceled will
+// prevent new requests from being submitted to the port.
 enum class TaskQueuePortStatus
 {
-    Active,
-    Canceled,
-    Terminated
+    Active,         // Actively servicing requests
+    Canceled,       // Rejecting requests on the road to being terminated
+    Terminating,    // Termination actively in progress
+    Terminated      // Termination is complete.
 };
 
 // A task queue port context contains queue-specific data about a port.

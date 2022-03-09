@@ -2,12 +2,13 @@
 
 namespace OS
 {
-    struct ThreadPoolActionComplete
+    struct ThreadPoolActionStatus
     {
-        virtual void operator()() = 0;
+        virtual void Complete() = 0;
+        virtual void MayRunLong() = 0;
     };
 
-    using ThreadPoolCallback = void(_In_opt_ void*, _In_ ThreadPoolActionComplete & complete);
+    using ThreadPoolCallback = void(_In_opt_ void*, _In_ ThreadPoolActionStatus& status);
 
     class ThreadPoolImpl;
 

@@ -65,6 +65,11 @@ public:
         return _handle;
     }
 
+    operator bool() const
+    {
+        return _handle != nullptr;
+    }
+
     H Release()
     {
         H h = _handle;
@@ -526,7 +531,6 @@ public:
         while(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0));
     }
 
-
     DEFINE_TEST_CASE(VerifyImmediateDispatch)
     {
         AutoQueueHandle queue;
@@ -612,6 +616,96 @@ public:
             VERIFY_ARE_EQUAL(previous + 5, data.Work[i]);
             previous = data.Work[i];
         }
+    }
+
+    DEFINE_TEST_CASE(VerifyMultithreadManualDispatch)
+    {
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Immediate, &queue));
+
+        // We use a manual dispatch queue and spin up two threads to process it.  We are testing
+        // that XTaskQueueDispatch never returns with an INFINITE timeout unless the task queue is
+        // getting terminated.
+
+        auto threadCallback = [](PVOID param) -> DWORD
+        {
+            XTaskQueueHandle queue = static_cast<XTaskQueueHandle>(param);
+
+            while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, INFINITE))
+            {
+                LOG_COMMENT(L"Dispatched item on TID %d", GetCurrentThreadId());
+            }
+
+            LOG_COMMENT(L"Thread %d quitting", GetCurrentThreadId());
+            return 0;
+        };
+
+        DWORD tid;
+        AutoHandle thread1 = CreateThread(nullptr, 0, threadCallback, queue.Handle(), 0, &tid);
+        AutoHandle thread2 = CreateThread(nullptr, 0, threadCallback, queue.Handle(), 0, &tid);
+
+        VERIFY_IS_NOT_NULL(thread1.Handle());
+        VERIFY_IS_NOT_NULL(thread2.Handle());
+
+        HANDLE threadWaits[] = { thread1.Handle(), thread2.Handle() };
+
+        auto workCallback = [](void*, bool)
+        {
+            LOG_COMMENT(L"Worker callback on TID %d", GetCurrentThreadId());
+        };
+
+        LOG_COMMENT(L"Scenario : Verify calls do not abort threads");
+
+        const uint32_t count = 5;
+        for (uint32_t i = 1; i <= count; i++)
+        {
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Work, nullptr, workCallback));
+        }
+
+        VERIFY_IS_TRUE(WaitForMultipleObjects(2, threadWaits, FALSE, 750) == WAIT_TIMEOUT);
+
+#ifdef SUSPEND_API
+
+        LOG_COMMENT(L"Scenario : Verify global suspend / resume does not abort threads");
+
+        XTaskQueueGlobalSuspend();
+
+        for (uint32_t i = 1; i <= count; i++)
+        {
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Work, nullptr, workCallback));
+        }
+
+        XTaskQueueGlobalResume();
+
+        VERIFY_IS_TRUE(WaitForMultipleObjects(2, threadWaits, FALSE, 750) == WAIT_TIMEOUT);
+#endif
+
+        LOG_COMMENT(L"Scenario : Verify composite queue termination does not abort threads");
+
+        XTaskQueuePortHandle workPort;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Work, &workPort));
+
+        XTaskQueuePortHandle completionPort;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Completion, &completionPort));
+
+        AutoQueueHandle compositeQueue;
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(workPort, completionPort, &compositeQueue));
+
+        for (uint32_t i = 1; i <= count; i++)
+        {
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(compositeQueue, XTaskQueuePort::Work, nullptr, workCallback));
+        }
+
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(compositeQueue, true, nullptr, nullptr));
+
+        VERIFY_IS_TRUE(WaitForMultipleObjects(2, threadWaits, FALSE, 750) == WAIT_TIMEOUT);
+
+        LOG_COMMENT(L"Scenario : Verify queue termination aborts both threads");
+
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, true, nullptr, nullptr));
+
+        VERIFY_IS_TRUE(WaitForSingleObject(threadWaits[0], 750) == WAIT_OBJECT_0);
+        VERIFY_IS_TRUE(WaitForSingleObject(threadWaits[1], 750) == WAIT_OBJECT_0);
     }
 
     DEFINE_TEST_CASE(VerifyRegisterWithAutoReset)
@@ -1245,4 +1339,277 @@ public:
 
         VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(waitHandle, 2000));
     }
+
+#ifdef SUSPEND_API
+    DEFINE_TEST_CASE(VerifySuspendResume)
+    {
+        constexpr uint32_t queueCount = 10;
+
+        auto monitor = [](void* context, XTaskQueueHandle, XTaskQueuePort)
+        {
+            LOG_COMMENT(L"TaskQueue Monitor fired");
+            HANDLE waitHandle = static_cast<HANDLE>(context);
+            SetEvent(waitHandle);
+        };
+
+        auto task = [](void* context, bool)
+        {
+            LOG_COMMENT(L"TaskQueue Task fired");
+            HANDLE waitHandle = static_cast<HANDLE>(context);
+            SetEvent(waitHandle);
+        };
+
+        struct QueueItem
+        {
+            AutoQueueHandle queue;
+            AutoHandle monitorHandle;
+            AutoHandle taskHandle;
+        } items[queueCount];
+
+        for (uint32_t idx = 0; idx < queueCount; idx++)
+        {
+            VERIFY_SUCCEEDED(XTaskQueueCreate(
+                XTaskQueueDispatchMode::ThreadPool,
+                 XTaskQueueDispatchMode::ThreadPool,
+                 &items[idx].queue));
+
+            items[idx].monitorHandle = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+            VERIFY_IS_NOT_NULL(items[idx].monitorHandle);
+
+            items[idx].taskHandle = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+            VERIFY_IS_NOT_NULL(items[idx].taskHandle);
+
+            XTaskQueueRegistrationToken token;
+            VERIFY_SUCCEEDED(XTaskQueueRegisterMonitor(
+                items[idx].queue.Handle(),
+                items[idx].monitorHandle.Handle(),
+                monitor, &token));
+        }
+
+        // Global suspend all task queues
+        uint64_t ticks = GetTickCount64();
+        XTaskQueueGlobalSuspend();
+        LOG_COMMENT(L"Ticks to suspend: %I64u\n", GetTickCount64() - ticks);
+
+        for (uint32_t idx = 0; idx < queueCount; idx++)
+        {
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(
+                items[idx].queue.Handle(),
+                XTaskQueuePort::Work,
+                items[idx].taskHandle.Handle(),
+                task));
+        }
+
+        // While suspended we should see none of these get called.
+        HANDLE handles[queueCount * 2];
+        for (uint32_t idx = 0; idx < queueCount; idx++)
+        {
+            handles[idx] = items[idx].taskHandle;
+            handles[idx + queueCount] = items[idx].monitorHandle;
+        }
+
+        DWORD result = WaitForMultipleObjects(queueCount * 2, handles, FALSE, 1000);
+        VERIFY_ARE_EQUAL((DWORD)WAIT_TIMEOUT, result);
+
+        // Manual dispatching should act like nothing is in the queue
+        for (uint32_t idx = 0; idx < queueCount; idx++)
+        {
+            VERIFY_IS_FALSE(XTaskQueueDispatch(items[idx].queue.Handle(), XTaskQueuePort::Work, 250));
+        }
+
+        // Now release the suspend.  Both the monitor and the call should 
+        // run.
+        XTaskQueueGlobalResume();
+
+        result = WaitForMultipleObjects(queueCount * 2, handles, TRUE, 1000);
+        VERIFY_ARE_NOT_EQUAL((DWORD)WAIT_TIMEOUT, result);
+    }
+
+    DEFINE_TEST_CASE(VerifySuspendResumeWithManualQueue)
+    {
+        struct ThreadState
+        {
+            AutoQueueHandle queue;
+            std::condition_variable workActivity;
+            std::mutex workMutex;
+            bool terminate = false;
+            bool monitorSignaled = false;
+            AutoHandle thread;
+
+            ~ThreadState()
+            {
+                Terminate();
+            }
+
+            void Terminate()
+            {
+                if (thread)
+                {
+                    terminate = true;
+                    workActivity.notify_all();
+                    WaitForSingleObject(thread, INFINITE);
+                    // Handle close comes from AutoHandle
+                }
+            }
+        };
+
+        // Simple worker thread that waits to be
+        // signaled and then runs calls.
+
+        auto workThread = [](_In_ PVOID param) -> DWORD
+        {
+            ThreadState* state = static_cast<ThreadState*>(param);
+
+            std::unique_lock<std::mutex> lock(state->workMutex);
+
+            while (!state->terminate)
+            {
+                state->workActivity.wait(lock);
+                LOG_COMMENT(L".....Worker awake and dispatching one call");
+                XTaskQueueDispatch(state->queue, XTaskQueuePort::Work, 0);
+                state->monitorSignaled = false;
+            }
+
+            return 0;
+        };
+
+        // Task queue monitor callback that signals the work thread to wake
+        // when a call comes in.
+
+        auto monitor = [](void* context, XTaskQueueHandle, XTaskQueuePort)
+        {
+            LOG_COMMENT(L".....TaskQueue Monitor fired");
+            ThreadState* state = static_cast<ThreadState*>(context);
+            std::unique_lock<std::mutex> lock(state->workMutex);
+            state->monitorSignaled = true;
+            state->workActivity.notify_all();
+        };
+
+        // Actual task callback.  This just signals an event so the test
+        // knows the task was invoked.
+
+        auto task = [](void* context, bool)
+        {
+            LOG_COMMENT(L".....TaskQueue Task fired");
+            HANDLE handle = static_cast<HANDLE>(context);
+            SetEvent(handle);
+        };
+
+        ThreadState threadState;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::ThreadPool,
+            XTaskQueueDispatchMode::Manual,
+            &threadState.queue));
+
+        threadState.thread = CreateThread(
+            nullptr,
+            0,
+            workThread,
+            &threadState,
+            0,
+            nullptr);
+        WEX::Common::Throw::IfNull(threadState.thread);
+
+        XTaskQueueRegistrationToken token;
+        VERIFY_SUCCEEDED(XTaskQueueRegisterMonitor(
+            threadState.queue,
+            &threadState,
+            monitor,
+            &token));
+
+        // Returns true if the task event is signaled
+
+        auto checkSignaled = [](HANDLE taskEvent) -> bool
+        {
+            return WaitForSingleObject(taskEvent, 750) == WAIT_OBJECT_0;
+        };
+
+        // OK, now we are ready to do some calls. First try the non-suspended case
+        // to ensure the plumbing is setup right.
+
+        AutoHandle taskEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        WEX::Common::Throw::IfNull(taskEvent);
+
+        LOG_COMMENT(L"\nSCENARIO: Baseline call");
+        VERIFY_IS_FALSE(checkSignaled(taskEvent));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(
+            threadState.queue,
+            XTaskQueuePort::Work,
+            taskEvent.Handle(),
+            task));
+
+        VERIFY_IS_TRUE(checkSignaled(taskEvent));
+
+        // task event is auto reset; verify
+        VERIFY_IS_FALSE(checkSignaled(taskEvent));
+
+        // Suspended case:  suspend the queue and then submit a couple callbacks.
+        // The callbacks should not be invoked during suspension but
+        // should pick back up when resumed.
+
+        LOG_COMMENT(L"\nSCENARIO: Calls scheduled during suspend");
+
+        // Current bug where we may orphan a call if more than a couple are
+        // pending, so run several here.
+        AutoHandle taskEvents[5];
+
+        for (auto &e : taskEvents)
+        {
+            e = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            WEX::Common::Throw::IfNull(e);
+        }
+
+        XTaskQueueGlobalSuspend();
+
+        for (auto &e : taskEvents)
+        {
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(
+                threadState.queue,
+                XTaskQueuePort::Work,
+                e.Handle(),
+                task));
+        }
+
+        for (auto &e : taskEvents)
+        {
+            VERIFY_IS_FALSE(checkSignaled(e));
+        }
+
+        // The wake event shouldn't have been signaled
+        VERIFY_IS_FALSE(threadState.monitorSignaled);
+
+        LOG_COMMENT(L".....Resume queue....call should resume");
+        XTaskQueueGlobalResume();
+
+        // Resume may take a small amount of time to asynchronously
+        // start the task queues back up.
+
+        Sleep(800);
+
+        for (auto &e : taskEvents)
+        {
+            VERIFY_IS_TRUE(checkSignaled(e));
+        }
+
+        // Next suspended case. Verify that new calls can come
+        // in and be scheduled after a suspend / resume cycle.
+
+        LOG_COMMENT(L"\nSCENARIO: Schedule call after suspend");
+
+        for (auto &e : taskEvents)
+        {
+            VERIFY_IS_FALSE(checkSignaled(e));
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(
+                threadState.queue,
+                XTaskQueuePort::Work,
+                e.Handle(),
+                task));
+        }
+
+        for (auto &e : taskEvents)
+        {
+            VERIFY_IS_TRUE(checkSignaled(e));
+        }
+    }
+#endif
 };

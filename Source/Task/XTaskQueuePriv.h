@@ -1,10 +1,15 @@
 // Copyright(c) Microsoft Corporation. All rights reserved.
 //
-// These APIs should be reserved for driving unit test harnesses.
 
 #pragma once
 
 #include "XTaskQueue.h"
+
+//----------------------------------------------------------------//
+//
+// These APIs should be reserved for driving unit test harnesses.
+//
+//----------------------------------------------------------------//
 
 /// <summary>
 /// Returns TRUE if there is no outstanding work in this
@@ -34,3 +39,28 @@ STDAPI XTaskQueueSuspendTermination(
 STDAPI_(void) XTaskQueueResumeTermination(
     _In_ XTaskQueueHandle queue
     ) noexcept;
+
+//----------------------------------------------------------------//
+//
+// These APIs are internal to the runtime
+//
+//----------------------------------------------------------------//
+
+/// <summary>
+/// Suspends the activity of all task queues in the process. When
+/// a task queue is suspended:
+///
+/// 1. It will not signal when new items are added.
+/// 2. It will not return items from the dispatcher (it acts like it
+///    is empty).
+/// </summary>
+STDAPI_(void) XTaskQueueGlobalSuspend();
+
+/// <summary>
+/// Resumes the activity of all task queues in the process. When
+/// a task queue is resumed:
+///
+/// 1. Queues that are not empty will signal they have items.
+/// 2. The dispatcher will start returing items again.
+/// </summary>
+STDAPI_(void) XTaskQueueGlobalResume();
