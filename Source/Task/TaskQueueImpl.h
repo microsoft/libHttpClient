@@ -9,6 +9,10 @@
 #include "ThreadPool.h"
 #include "WaitTimer.h"
 
+#ifdef SUSPEND_API
+#include "SuspendState.h"
+#endif
+
 namespace ApiDiag
 {
     void GlobalAddRef();
@@ -36,7 +40,7 @@ public:
         uint32_t refs = --m_refs;
 
         // Note: rundown may addref/release as it
-        // progresses, so we guard agaisnt redundant
+        // progresses, so we guard against redundant
         // deletes with m_deleting.
 
         if (refs == 0 && m_deleting.test_and_set() == false)
@@ -75,14 +79,12 @@ protected:
         }
         return nullptr;
     }
-    
-    // Called when the object is "likely" about to be
-    // deleted.  There is no guarantee that an object
-    // will be deleted after this call.
+
+    // Called when the object is about to be deleted.
     virtual void RundownObject()
     {
     }
-    
+
 private:
     std::atomic<uint32_t> m_refs{ 0 };
     std::atomic_flag m_deleting;
@@ -193,12 +195,10 @@ public:
 
     void __stdcall Detach(
         _In_ ITaskQueuePortContext* portContext);
-    
-    bool __stdcall DrainOneItem();
 
-    bool __stdcall Wait(
+    bool __stdcall Dispatch(
         _In_ ITaskQueuePortContext* portContext,
-        _In_ uint32_t timeout);
+        _In_ uint32_t timeoutInMs);
 
     bool __stdcall IsEmpty();
 
@@ -207,6 +207,9 @@ public:
 
     void __stdcall ResumeTermination(
         _In_ ITaskQueuePortContext* portContext);
+
+    void __stdcall SuspendPort();
+    void __stdcall ResumePort();
 
 private:
 
@@ -257,29 +260,39 @@ private:
     OS::ThreadPool m_threadPool;
     std::atomic<uint64_t> m_timerDue = { UINT64_MAX };
     std::atomic<uint64_t> m_nextId = { 0 };
+    std::atomic<bool> m_suspended = { false };
 
 #ifdef _WIN32
     StaticArray<WaitRegistration*, PORT_WAIT_MAX> m_waits;
     StaticArray<HANDLE, PORT_EVENT_MAX> m_events;
     uint64_t m_nextWaitToken = 0;
 #else
+    bool m_signaled = false;
     std::condition_variable_any m_event;
 #endif
 
     HRESULT VerifyNotTerminated(_In_ ITaskQueuePortContext* portContext);
-    
+
     bool IsCallCanceled(_In_ const QueueEntry& entry);
 
     // Appends the given entry to the active queue.  The entry should already
     // be add-refd.
     bool AppendEntry(
         _In_ const QueueEntry& entry,
-        _In_opt_ uint64_t node = 0,
-        _In_ bool signal = true);
+        _In_opt_ uint64_t node = 0);
 
     void CancelPendingEntries(
         _In_ ITaskQueuePortContext* portContext,
         _In_ bool appendToQueue);
+
+    bool DrainOneItem();
+
+    bool DrainOneItem(
+        _In_ OS::ThreadPoolActionStatus& status);
+
+    bool Wait(
+        _In_ ITaskQueuePortContext* portContext,
+        _In_ uint32_t timeout);
 
     static void EraseQueue(
         _In_opt_ LocklessQueue<QueueEntry>* queue);
@@ -295,16 +308,16 @@ private:
     void ScheduleTermination(_In_ TerminationEntry* term);
 
     void SignalQueue();
+    void NotifyItemQueued();
 
-    void ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionComplete& complete);
+    void ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionStatus& status);
 
 #ifdef _WIN32
     HRESULT InitializeWaitRegistration(
         _In_ WaitRegistration* waitReg);
 
     bool AppendWaitRegistrationEntry(
-        _In_ WaitRegistration* waitReg,
-        _In_ bool signal = true);
+        _In_ WaitRegistration* waitReg);
 
     bool ReleaseWaitRegistration(
         _In_ WaitRegistration* waitReg);
@@ -328,7 +341,7 @@ public:
         _In_ ITaskQueue* queue,
         _In_ XTaskQueuePort type,
         _In_ SubmitCallback* submitCallback);
-    
+
     uint32_t __stdcall AddRef() override;
     uint32_t __stdcall Release() override;
     HRESULT __stdcall QueryApi(_In_ ApiId id, _Out_ void** ptr) override;
@@ -337,11 +350,11 @@ public:
     TaskQueuePortStatus __stdcall GetStatus() override;
     ITaskQueue* __stdcall GetQueue() override;
     ITaskQueuePort* __stdcall GetPort() override;
-    
+
     bool __stdcall TrySetStatus(
         _In_ TaskQueuePortStatus expectedStatus,
         _In_ TaskQueuePortStatus status) override;
-    
+
     void __stdcall SetStatus(
         _In_ TaskQueuePortStatus status) override;
 
@@ -354,7 +367,7 @@ public:
     referenced_ptr<ITaskQueue> Source;
 
 private:
-    
+
     ITaskQueue* m_queue = nullptr;
     XTaskQueuePort m_type = XTaskQueuePort::Work;
     SubmitCallback* m_submitCallback = nullptr;
@@ -363,6 +376,9 @@ private:
 };
 
 class TaskQueueImpl : public Api<ApiId::TaskQueue, ITaskQueue>
+#ifdef SUSPEND_API
+    , public ISuspendResumeCallback
+#endif
 {
 public:
 
@@ -374,7 +390,7 @@ public:
         _In_ XTaskQueueDispatchMode completionMode,
         _In_ bool allowTermination,
         _In_ bool allowClose);
-    
+
     HRESULT Initialize(
         _In_ XTaskQueuePortHandle workPort,
         _In_ XTaskQueuePortHandle completionPort);
@@ -384,7 +400,7 @@ public:
     HRESULT __stdcall GetPortContext(
         _In_ XTaskQueuePort port,
         _Out_ ITaskQueuePortContext** portContext) override;
-    
+
     HRESULT __stdcall RegisterWaitHandle(
         _In_ XTaskQueuePort port,
         _In_ HANDLE waitHandle,
@@ -399,7 +415,7 @@ public:
         _In_opt_ void* context,
         _In_ XTaskQueueMonitorCallback* callback,
         _Out_ XTaskQueueRegistrationToken* token) override;
-    
+
     void __stdcall UnregisterSubmitCallback(
         _In_ XTaskQueueRegistrationToken token) override;
 
@@ -409,13 +425,17 @@ public:
     HRESULT __stdcall Terminate(
         _In_ bool wait, 
         _In_opt_ void* callbackContext, 
-        _In_opt_ XTaskQueueTerminatedCallback* callback)override ;
+        _In_opt_ XTaskQueueTerminatedCallback* callback) override ;
 
 protected:
 
     void RundownObject() override;
 
 private:
+
+#ifdef SUSPEND_API
+    void OnSuspendResume(_In_ bool isSuspended) override;
+#endif
 
     static void CALLBACK OnTerminationCallback(_In_ void* context);
 
@@ -427,7 +447,7 @@ private:
         Work,
         Completion
     };
-    
+
     struct TerminationEntry
     {
         TaskQueueImpl* owner;
@@ -444,7 +464,7 @@ private:
         std::mutex lock;
         std::condition_variable cv;
     };
-    
+
     XTaskQueueObject m_header = { };
     SubmitCallback m_callbackSubmitted;
     QueueWaitRegistry m_waitRegistry;
@@ -452,6 +472,10 @@ private:
     TaskQueuePortContextImpl m_work;
     TaskQueuePortContextImpl m_completion;
     bool m_allowClose;
+
+#ifdef SUSPEND_API
+    SuspendResumeHandler m_suspendHandler;
+#endif
 };
 
 inline ITaskQueue* GetQueue(XTaskQueueHandle handle)
@@ -461,6 +485,8 @@ inline ITaskQueue* GetQueue(XTaskQueueHandle handle)
         ASSERT("Invalid XTaskQueueHandle");
         return nullptr;
     }
-    
-    return handle->m_queue;
+
+    ITaskQueue* queue = handle->m_queue;
+    ASSERT(queue->GetHandle()->m_signature == TASK_QUEUE_SIGNATURE);
+    return queue;
 }

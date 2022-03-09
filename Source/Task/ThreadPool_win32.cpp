@@ -63,8 +63,9 @@ namespace OS
         {
             ThreadPoolImpl* pthis = static_cast<ThreadPoolImpl*>(context);
 
-            // ActionComplete is an optional call
-            // the callback can make to indicate 
+            // ActionStatus offers a way for the call to
+            // provide the threadpool of its status. It
+            // can mark the call complete to indicate 
             // all portions of the call have finished
             // and it is safe to release the
             // thread pool, even if the callback has
@@ -75,37 +76,53 @@ namespace OS
             // member state is no longer accessed, but the
             // final release does need to wait on outstanding
             // calls.
+            //
+            // A call can also mark itself that it may run
+            // long, which is often the case for work callbacks
+            // in an async call.  This guides the thread pool
+            // to allow more threads to be created if needed.
 
-            ActionCompleteImpl ac(pthis, instance);
+            ActionStatusImpl status(pthis, instance);
             pthis->AddRef();
-            pthis->m_callback(pthis->m_context, ac);
+            pthis->m_callback(pthis->m_context, status);
 
-            if (!ac.Invoked)
+            if (!status.IsComplete)
             {
-                ac();
+                status.Complete();
             }
             pthis->Release(); // May delete this
         }
 
-        struct ActionCompleteImpl : ThreadPoolActionComplete
+        struct ActionStatusImpl : ThreadPoolActionStatus
         {
-            ActionCompleteImpl(ThreadPoolImpl* owner, PTP_CALLBACK_INSTANCE instance) :
+            ActionStatusImpl(ThreadPoolImpl* owner, PTP_CALLBACK_INSTANCE instance) :
                 m_owner(owner),
                 m_instance(instance)
             {
             }
 
-            bool Invoked = false;
+            bool IsComplete = false;
 
-            void operator()() override
+            void Complete() override
             {
-                Invoked = true;
+                IsComplete = true;
                 DisassociateCurrentThreadFromCallback(m_instance);
+            }
+
+            void MayRunLong() override
+            {
+                // Only allowed once per callback
+                if (!m_longRunning)
+                {
+                    m_longRunning = true;
+                    CallbackMayRunLong(m_instance);
+                }
             }
 
         private:
             ThreadPoolImpl* m_owner = nullptr;
             PTP_CALLBACK_INSTANCE m_instance = nullptr;
+            bool m_longRunning = false;
         };
 
         std::atomic<uint32_t> m_refs{ 1 };

@@ -29,6 +29,10 @@ namespace ProcessGlobals
     const XTaskQueueHandle g_invalidQueueHandle = (XTaskQueueHandle)(-1);
     std::atomic<XTaskQueueHandle> g_defaultProcessQueue = { g_invalidQueueHandle };
     std::atomic<XTaskQueueHandle> g_processQueue = { g_invalidQueueHandle };
+
+#ifdef SUSPEND_API
+    SuspendState g_suspendState;
+#endif
 }
 
 //
@@ -294,10 +298,10 @@ HRESULT TaskQueuePortImpl::Initialize(
 
     case XTaskQueueDispatchMode::ThreadPool:
     case XTaskQueueDispatchMode::SerializedThreadPool:
-        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context, OS::ThreadPoolActionComplete& complete)
+        RETURN_IF_FAILED(m_threadPool.Initialize(this, [](void* context, OS::ThreadPoolActionStatus& status)
         {
             TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
-            pthis->ProcessThreadPoolCallback(complete);
+            pthis->ProcessThreadPoolCallback(status);
         }));
         break;
           
@@ -394,18 +398,19 @@ HRESULT __stdcall TaskQueuePortImpl::RegisterWaitHandle(
     waitReg->refs = 1;
     waitReg->deleted = false;
 
-    std::lock_guard<std::mutex> lock(m_lock);
-    RETURN_HR_IF(E_OUTOFMEMORY, m_events.capacity() == 0);
-    RETURN_HR_IF(E_OUTOFMEMORY, m_waits.capacity() == 0);
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        RETURN_HR_IF(E_OUTOFMEMORY, m_events.capacity() == 0);
+        RETURN_HR_IF(E_OUTOFMEMORY, m_waits.capacity() == 0);
 
-    RETURN_IF_FAILED(InitializeWaitRegistration(waitReg.get()));
+        RETURN_IF_FAILED(InitializeWaitRegistration(waitReg.get()));
 
-    m_events.append(waitHandle);
-    m_waits.append(waitReg.get());
+        m_events.append(waitHandle);
+        m_waits.append(waitReg.get());
 
-    token->token = waitReg->token;
-
-    waitReg.release();
+        token->token = waitReg->token;
+        waitReg.release();
+    }
 
     // The queue may be waiting on our handle array, but
     // we've just changed the array so the wait needs to
@@ -516,7 +521,7 @@ void __stdcall TaskQueuePortImpl::Terminate(
     referenced_ptr<ITaskQueuePortContext> cxt(term->portContext);
 
     // Prevent anything else from coming into the queue
-    cxt->SetStatus(TaskQueuePortStatus::Terminated);
+    cxt->SetStatus(TaskQueuePortStatus::Terminating);
 
     CancelPendingEntries(cxt.get(), true);
 
@@ -554,8 +559,44 @@ void __stdcall TaskQueuePortImpl::Detach(
     });
 }
 
-bool __stdcall TaskQueuePortImpl::DrainOneItem()
+bool __stdcall TaskQueuePortImpl::Dispatch(
+    _In_ ITaskQueuePortContext* portContext,
+    _In_ uint32_t timeoutInMs)
 {
+    bool found = false;
+
+    while (!found)
+    {
+        found = DrainOneItem();
+
+        if (!found && !Wait(portContext, timeoutInMs))
+        {
+            break;
+        }
+    }
+
+    return found;
+}
+
+bool TaskQueuePortImpl::DrainOneItem()
+{
+    struct DummyActionStatus : OS::ThreadPoolActionStatus
+    {
+        void Complete() override {}
+        void MayRunLong() override {}
+    } dummy;
+
+    return DrainOneItem(dummy);
+}
+
+bool TaskQueuePortImpl::DrainOneItem(
+    _In_ OS::ThreadPoolActionStatus& status)
+{
+    if (m_suspended && m_dispatchMode != XTaskQueueDispatchMode::Immediate)
+    {
+        return false;
+    }
+
     m_processingCallback++;
     QueueEntry entry;
     bool popped = false;
@@ -563,6 +604,12 @@ bool __stdcall TaskQueuePortImpl::DrainOneItem()
     if (m_queueList->pop_front(entry))
     {
         popped = true;
+
+        if (entry.portContext->GetType() == XTaskQueuePort::Work)
+        {
+            status.MayRunLong();
+        }
+
         entry.callback(entry.callbackContext, IsCallCanceled(entry));
         m_processingCallback--;
 
@@ -591,74 +638,103 @@ bool __stdcall TaskQueuePortImpl::DrainOneItem()
 
     if (m_queueList->empty())
     {
-        SignalQueue();
         SignalTerminations();
+        SignalQueue();
     }
 
     return popped;
 }
 
-bool __stdcall TaskQueuePortImpl::Wait(
+// Waits up to timeout for something to arrive in the queue.
+// Returns true if the wait succeeded.  Returns false if it timed
+// out or the port is terminated.
+bool TaskQueuePortImpl::Wait(
     _In_ ITaskQueuePortContext* portContext,
     _In_ uint32_t timeout)
 {
 #ifdef _WIN32
-    while(true)
+    while (m_suspended || (m_queueList->empty() && m_terminationList->empty()))
     {
+        if (portContext->GetStatus() == TaskQueuePortStatus::Terminated)
+        {
+            return false;
+        }
+
         StaticArray<HANDLE, PORT_EVENT_MAX> events;
+        StaticArray<WaitRegistration*, PORT_WAIT_MAX> waits;
 
         {
             std::lock_guard<std::mutex> lock(m_lock);
             events = m_events;
+            waits = m_waits;
+
+            for (uint32_t idx = 0; idx < waits.count(); idx++)
+            {
+                waits[idx]->refs++;
+            }
         }
 
+        // We are using event 0 like a condition variable.  It's
+        // auto reset, so if nothing is in the queue we continue
+        // waiting.
+
         DWORD waitResult = WaitForMultipleObjects(events.count(), events.data(), FALSE, timeout);
+
+        // The below block handles events starting at index 1 for registered
+        // wait handles.
 
         if (waitResult > WAIT_OBJECT_0 && waitResult < WAIT_OBJECT_0 + events.count())
         {
             // One of our waiters was signaled.  Find it, and then process it.
-            std::lock_guard<std::mutex> lock(m_lock);
-            for (uint32_t idx = 0; idx < m_waits.count(); idx++)
+            for (uint32_t idx = 0; idx < waits.count(); idx++)
             {
-                if (m_waits[idx]->waitHandle == events[waitResult - WAIT_OBJECT_0])
+                if (waits[idx]->waitHandle == events[waitResult - WAIT_OBJECT_0])
                 {
-                    if (!AppendWaitRegistrationEntry(m_waits[idx]))
+                    if (!AppendWaitRegistrationEntry(waits[idx]))
                     {
                         // If we fail adding to the queue, re-initialize our wait
-                        LOG_IF_FAILED(InitializeWaitRegistration(m_waits[idx]));
+                        LOG_IF_FAILED(InitializeWaitRegistration(waits[idx]));
                     }
                     break;
                 }
             }
-        }
-        else if (waitResult == WAIT_OBJECT_0)
-        {
-            // We are using event 0 like a condition variable.  It's
-            // auto reset, so if nothing is in the queue we continue
-            // waiting.
-            if (portContext->GetStatus() == TaskQueuePortStatus::Terminated || !m_queueList->empty())
+
+            for (uint32_t idx = 0; idx < waits.count(); idx++)
             {
-                break;
+                ReleaseWaitRegistration(waits[idx]);
             }
         }
-        else
+        else if (waitResult == WAIT_TIMEOUT)
         {
-            break;
+            return false;
+        }
+        else if (waitResult == WAIT_FAILED)
+        {
+            FAIL_FAST_IF_FAILED(HRESULT_FROM_WIN32(GetLastError()));
         }
     }
 
 #else
-    while (m_queueList->empty() && portContext->GetStatus() != TaskQueuePortStatus::Terminated)
+    while (m_suspended || (m_queueList->empty() && m_terminationList->empty()))
     {
-        std::unique_lock<std::mutex> lock(m_lock);
-        if (m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+        if (portContext->GetStatus() == TaskQueuePortStatus::Terminated)
         {
-            break;
+            return false;
         }
+
+        std::unique_lock<std::mutex> lock(m_lock);
+
+        if (!m_signaled &&
+            m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+        {
+            return false;
+        }
+
+        m_signaled = false;
     }
 #endif
 
-    return !m_queueList->empty() || !m_terminationList->empty();
+    return true;
 }
 
 bool __stdcall TaskQueuePortImpl::IsEmpty()
@@ -712,6 +788,60 @@ void __stdcall TaskQueuePortImpl::ResumeTermination(
     }
 }
 
+void __stdcall TaskQueuePortImpl::SuspendPort()
+{
+    m_suspended = true;
+}
+
+void __stdcall TaskQueuePortImpl::ResumePort()
+{
+    // Before we resume the port iterate over both the
+    // pending list and the termination list and count
+    // how many notifies we need. Because of the lock
+    // free nature of the queue establishing a count
+    // takes some effort.
+
+    uint32_t notifyCount = 0;
+    uint64_t address;
+
+    QueueEntry queueEntry;
+    LocklessQueue<QueueEntry> retainEntries(*(m_pendingList.get()));
+
+    while (m_queueList->pop_front(queueEntry, address))
+    {
+        notifyCount++;
+        retainEntries.push_back(std::move(queueEntry), address);
+    }
+
+    while (retainEntries.pop_front(queueEntry, address))
+    {
+        m_queueList->push_back(std::move(queueEntry), address);
+    }
+
+    TerminationEntry* terminationEntry;
+    LocklessQueue<TerminationEntry*> retainTerminations(*(m_terminationList.get()));
+
+    while (m_terminationList->pop_front(terminationEntry, address))
+    {
+        notifyCount++;
+        retainTerminations.push_back(std::move(terminationEntry), address);
+    }
+
+    while (retainTerminations.pop_front(terminationEntry, address))
+    {
+        m_terminationList->push_back(std::move(terminationEntry), address);
+    }
+
+    m_suspended = false;
+
+    while (notifyCount)
+    {
+        SignalQueue();
+        NotifyItemQueued();
+        notifyCount--;
+    }
+}
+
 HRESULT TaskQueuePortImpl::VerifyNotTerminated(
     _In_ ITaskQueuePortContext* portContext)
 {
@@ -731,8 +861,7 @@ bool TaskQueuePortImpl::IsCallCanceled(_In_ const QueueEntry& entry)
 // be add-refd. This will return false on failure.
 bool TaskQueuePortImpl::AppendEntry(
     _In_ const QueueEntry& entry,
-    _In_opt_ uint64_t node,
-    _In_ bool signal)
+    _In_opt_ uint64_t node)
 {
     if (node != 0)
     {
@@ -743,37 +872,8 @@ bool TaskQueuePortImpl::AppendEntry(
         return false;
     }
 
-    if (signal)
-    {
-        SignalQueue();
-    }
-
-    switch (m_dispatchMode)
-    {
-    case XTaskQueueDispatchMode::Manual:
-        // nothing
-        break;
-
-    case XTaskQueueDispatchMode::SerializedThreadPool:
-    case XTaskQueueDispatchMode::ThreadPool:
-        m_threadPool.Submit();
-        break;
-
-    case XTaskQueueDispatchMode::Immediate:
-        // We will handle this after we invoke
-        // callback submitted.
-        break;
-    }
-
-    m_attachedContexts.Visit([](ITaskQueuePortContext* portContext)
-    {
-        portContext->ItemQueued();
-    });
-    
-    if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
-    {
-        DrainOneItem();
-    }
+    SignalQueue();
+    NotifyItemQueued();
 
     return true;
 }
@@ -811,27 +911,33 @@ void TaskQueuePortImpl::CancelPendingEntries(
     
     // Abort any registered waits and promote their entries too.
     // Wait registration is not lock free.
-    std::unique_lock<std::mutex> lock(m_lock);
-    
-    for (uint32_t index = m_waits.count(); index > 0; index--)
+
+    StaticArray<WaitRegistration*, PORT_WAIT_MAX> waits;
+
+    {
+        std::unique_lock<std::mutex> lock(m_lock);
+        waits = m_waits;
+        m_waits.clear();
+    }
+
+    for (uint32_t index = waits.count(); index > 0; index--)
     {
         uint32_t idx = index - 1;
-        if (m_waits[idx]->queueEntry.portContext == portContext)
+        if (waits[idx]->queueEntry.portContext == portContext)
         {
-            CloseThreadpoolWait(m_waits[idx]->threadpoolWait);
-            m_waits[idx]->queueEntry.waitRegistration = nullptr;
+            CloseThreadpoolWait(waits[idx]->threadpoolWait);
+            waits[idx]->queueEntry.waitRegistration = nullptr;
 
             if (appendToQueue)
             {
-                AppendWaitRegistrationEntry(m_waits[idx]);
+                AppendWaitRegistrationEntry(waits[idx]);
             }
             
-            delete m_waits[idx];
-            m_waits.removeAt(idx);
+            delete waits[idx];
+            waits.removeAt(idx);
         }
     }
-    lock.unlock();
-    
+
 #endif
 }
 
@@ -926,43 +1032,97 @@ void TaskQueuePortImpl::SubmitPendingCallback()
 }
 
 // Called from thread pool callback
-void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionComplete& complete)
+void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionStatus& status)
 {
-    referenced_ptr<ITaskQueuePort> ref(this);
     uint32_t wasProcessing = m_processingCallback++;
     if (m_dispatchMode == XTaskQueueDispatchMode::SerializedThreadPool)
     {
         if (wasProcessing == 0)
         {
-            while (DrainOneItem());
+            while (DrainOneItem(status));
         }
     }
     else
     {
-        DrainOneItem();
+        DrainOneItem(status);
     }
     m_processingCallback--;
 
-    // Important that this comes before our release (which is implicit
-    // in the raii referenced_ptr wrapper).
-    complete();
+    // Important that this comes before Release; otherwise
+    // cleanup may deadlock.
+    status.Complete();
+
+    // When we submitted a request to the thread pool we
+    // added a reference to ourself.  Balance it here. This
+    // may be the final release.
+    Release();
 }
 
 void TaskQueuePortImpl::SignalQueue()
 {
+    if (!m_suspended)
+    {
 #ifdef _WIN32
-    SetEvent(m_events[0]);
+        SetEvent(m_events[0]);
 #else
-    m_event.notify_all();
+        std::unique_lock<std::mutex> lock(m_lock);
+        m_signaled = true;
+        m_event.notify_all();
 #endif
+    }
+}
+
+void TaskQueuePortImpl::NotifyItemQueued()
+{
+    // If this is an immediate queue, ignore suspends as
+    // we need to dispatch synchronously as part of the call.
+
+    if (!m_suspended || m_dispatchMode == XTaskQueueDispatchMode::Immediate)
+    {
+        switch (m_dispatchMode)
+        {
+        case XTaskQueueDispatchMode::Manual:
+            // nothing
+            break;
+
+        case XTaskQueueDispatchMode::SerializedThreadPool:
+        case XTaskQueueDispatchMode::ThreadPool:
+            // Addref before submitting to the thread pool in case we
+            // are released while there there are outstanding threadpool
+            // items. The threadpool does not cancel outstanding callbacks
+            // on termination so we need to drain before releasing.
+            AddRef();
+            m_threadPool.Submit();
+            break;
+
+        case XTaskQueueDispatchMode::Immediate:
+            // We will handle this after we invoke
+            // callback submitted.
+            break;
+        }
+
+        m_attachedContexts.Visit([](ITaskQueuePortContext* portContext)
+        {
+            portContext->ItemQueued();
+        });
+
+        // If the queue is immediate, drain the newly queued item
+        // now.
+
+        if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
+        {
+            DrainOneItem();
+        }
+    }
 }
 
 void TaskQueuePortImpl::SignalTerminations()
 {
     m_terminationList->remove_if([this](auto& entry, auto address)
     {
-        if (entry->portContext->GetStatus() == TaskQueuePortStatus::Terminated)
+        if (entry->portContext->GetStatus() >= TaskQueuePortStatus::Terminating)
         {
+            entry->portContext->SetStatus(TaskQueuePortStatus::Terminated);
             entry->callback(entry->callbackContext);
             m_terminationList->free_node(address);
             delete entry;
@@ -987,33 +1147,12 @@ void TaskQueuePortImpl::ScheduleTermination(
     m_terminationList->push_back(term, term->node);
     term->node = 0; // now owned by the list
 
-    // We will not signal until we are marked as terminated. The queue could
-    // still be moving while we are running this terminate call.
+    // The port should have already been marked as terminated, so now
+    // we can signal it to wake up. This should drain pending calls and
+    // invoke the termination callback we just pushed.
 
     SignalQueue();
-
-    // We must ensure we poke the queue threads in case there's
-    // nothing submitted
-    switch (m_dispatchMode)
-    {
-    case XTaskQueueDispatchMode::SerializedThreadPool:
-    case XTaskQueueDispatchMode::ThreadPool:
-        m_threadPool.Submit();
-        break;
-
-    default:
-        break;
-    }
-
-    m_attachedContexts.Visit([](ITaskQueuePortContext* portContext)
-    {
-        portContext->ItemQueued();
-    });
-    
-    if (m_dispatchMode == XTaskQueueDispatchMode::Immediate)
-    {
-        DrainOneItem();
-    }
+    NotifyItemQueued();
 }
 
 #ifdef _WIN32
@@ -1055,8 +1194,7 @@ HRESULT TaskQueuePortImpl::InitializeWaitRegistration(
 // Returns false if it needed to append but failed. On failure this
 // correctly releases the queue entry.
 bool TaskQueuePortImpl::AppendWaitRegistrationEntry(
-    _In_ WaitRegistration* waitReg,
-    _In_ bool signal)
+    _In_ WaitRegistration* waitReg)
 {
     // Prepare the queue entry for insert
     QueueEntry entry = waitReg->queueEntry;
@@ -1067,7 +1205,7 @@ bool TaskQueuePortImpl::AppendWaitRegistrationEntry(
         entry.portContext->AddRef();
         waitReg->refs++;
 
-        success = AppendEntry(entry, 0, signal);
+        success = AppendEntry(entry, 0);
         if (!success)
         {
             entry.portContext->Release();
@@ -1273,6 +1411,10 @@ HRESULT TaskQueueImpl::Initialize(
         ApiDiag::g_globalApiRefs -= 3;
     }
 
+#ifdef SUSPEND_API
+    RETURN_IF_FAILED(m_suspendHandler.Initialize(ProcessGlobals::g_suspendState, this));
+#endif
+
     return S_OK;
 }
 
@@ -1293,6 +1435,10 @@ HRESULT TaskQueueImpl::Initialize(
     
     RETURN_IF_FAILED(m_work.Port->Attach(&m_work));
     RETURN_IF_FAILED(m_completion.Port->Attach(&m_completion));
+
+#ifdef SUSPEND_API
+    RETURN_IF_FAILED(m_suspendHandler.Initialize(ProcessGlobals::g_suspendState, this));
+#endif
 
     return S_OK;
 }
@@ -1444,9 +1590,40 @@ void TaskQueueImpl::RundownObject()
 {
     m_work.SetStatus(TaskQueuePortStatus::Terminated);
     m_completion.SetStatus(TaskQueuePortStatus::Terminated);
-    m_work.Port->Detach(&m_work);
-    m_completion.Port->Detach(&m_completion);
+
+#ifdef SUSPEND_API
+    m_suspendHandler.Shutdown();
+#endif
+
+    // We can be asked to rundown a partially created
+    // task queue, so check for nulls here.
+
+    if (m_work.Port != nullptr)
+    {
+        m_work.Port->Detach(&m_work);
+    }
+
+    if (m_completion.Port != nullptr)
+    {
+        m_completion.Port->Detach(&m_completion);
+    }
 }
+
+#ifdef SUSPEND_API
+void TaskQueueImpl::OnSuspendResume(_In_ bool isSuspended)
+{
+    if (isSuspended)
+    {
+        m_completion.GetPort()->SuspendPort();
+        m_work.GetPort()->SuspendPort();
+    }
+    else
+    {
+        m_work.GetPort()->ResumePort();
+        m_completion.GetPort()->ResumePort();
+    }
+}
+#endif
 
 void TaskQueueImpl::OnTerminationCallback(_In_ void* context)
 {
@@ -1479,6 +1656,26 @@ void TaskQueueImpl::OnTerminationCallback(_In_ void* context)
     }
 }
 
+static HRESULT CreateTaskQueueHandle(
+    _In_ ITaskQueue* impl,
+    _Out_ XTaskQueueHandle* queue)
+{
+    *queue = nullptr;
+
+    ASSERT(impl->CanClose());
+
+    std::unique_ptr<XTaskQueueObject> q(new (std::nothrow) XTaskQueueObject);
+    RETURN_IF_NULL_ALLOC(q);
+
+    q->m_signature = TASK_QUEUE_SIGNATURE;
+    q->m_queue = impl;
+    impl->AddRef();
+
+    *queue = q.release();
+
+    return S_OK;
+}
+
 ///////////////////
 // XTaskQueue.h APIs
 ///////////////////
@@ -1493,14 +1690,19 @@ STDAPI XTaskQueueCreate(
     _Out_ XTaskQueueHandle* queue
     ) noexcept
 {
+    *queue = nullptr;
+
     referenced_ptr<TaskQueueImpl> aq(new (std::nothrow) TaskQueueImpl);
     RETURN_IF_NULL_ALLOC(aq);
+
     RETURN_IF_FAILED(aq->Initialize(
         workDispatchMode, 
         completionDispatchMode, 
         true, /* can terminate */ 
         true /* can close */));
-    *queue = aq.release()->GetHandle();
+
+    RETURN_IF_FAILED(CreateTaskQueueHandle(aq.get(), queue));
+
     return S_OK;
 }
 
@@ -1545,10 +1747,14 @@ STDAPI XTaskQueueCreateComposite(
      _Out_ XTaskQueueHandle* queue
      ) noexcept
 {
+    *queue = nullptr;
+
     referenced_ptr<TaskQueueImpl> aq(new (std::nothrow) TaskQueueImpl);
     RETURN_IF_NULL_ALLOC(aq);
     RETURN_IF_FAILED(aq->Initialize(workPort, completionPort));
-    *queue = aq.release()->GetHandle();
+
+    RETURN_IF_FAILED(CreateTaskQueueHandle(aq.get(), queue));
+
     return S_OK;
 }
 
@@ -1569,21 +1775,14 @@ STDAPI_(bool) XTaskQueueDispatch(
     {
         return false;
     }
-    
+
     referenced_ptr<ITaskQueuePortContext> portContext;
     if (FAILED(aq->GetPortContext(port, portContext.address_of())))
     {
         return false;
     }
-        
-    bool found = portContext->GetPort()->DrainOneItem();
-    if (!found && timeoutInMs != 0)
-    {
-        found = portContext->GetPort()->Wait(portContext.get(), timeoutInMs);
-        if (found) portContext->GetPort()->DrainOneItem();
-    }
 
-    return found;
+    return portContext->GetPort()->Dispatch(portContext.get(), timeoutInMs);
 }
 
 //
@@ -1621,8 +1820,18 @@ STDAPI_(void) XTaskQueueCloseHandle(
     ) noexcept
 {
     ITaskQueue* aq = GetQueue(queue);
+
+    // The default handle is only returned for queues
+    // that cannot be closed.
+
+    ASSERT(aq != nullptr && aq->CanClose() != (queue == aq->GetHandle()));
+
     if (aq != nullptr && aq->CanClose())
     {
+        queue->m_signature = 0;
+        queue->m_queue = nullptr;
+        delete queue;
+
         aq->Release();
     }
 }
@@ -1723,17 +1932,22 @@ STDAPI XTaskQueueDuplicateHandle(
 {
     RETURN_HR_IF(E_POINTER, duplicatedHandle == nullptr);
 
+    *duplicatedHandle = nullptr;
+
     auto queue = GetQueue(queueHandle);
     RETURN_HR_IF(E_INVALIDARG, queue == nullptr);
 
-    // For queues that cannot be closed, don't add ref, since
-    // closing does nothing.
+    // For queues that cannot be closed we return the default
+    // handle provided by the queue.
+
     if (queue->CanClose())
     {
-        queue->AddRef();
+        RETURN_IF_FAILED(CreateTaskQueueHandle(queue, duplicatedHandle));
     }
-
-    *duplicatedHandle = queueHandle;
+    else
+    {
+        *duplicatedHandle = queueHandle;
+    }
 
     return S_OK;
 }
@@ -1780,6 +1994,8 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
     _Out_ XTaskQueueHandle* queue
     ) noexcept
 {
+    *queue = nullptr;
+
     XTaskQueueHandle processQueue = ProcessGlobals::g_processQueue;
     if (processQueue == ProcessGlobals::g_invalidQueueHandle)
     {
@@ -1817,22 +2033,17 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
         processQueue = nullptr;
     }
 
-    if (processQueue != nullptr)
+    if (processQueue != nullptr &&
+        processQueue->m_queue->CanClose())
     {
-        *queue = processQueue;
-
-        // The default process queue does not addref or release.
-        if (processQueue->m_queue->CanClose())
-        {
-            processQueue->m_queue->AddRef();
-        }
+        (void)CreateTaskQueueHandle(processQueue->m_queue, queue);
     }
     else
     {
-        *queue = nullptr;
+        *queue = processQueue;
     }
 
-    return processQueue != nullptr;
+    return (*queue) != nullptr;
 }
 
 //
@@ -1846,9 +2057,10 @@ STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
     ) noexcept
 {
     XTaskQueueHandle newQueue = nullptr;
+
     if (queue != nullptr)
     {
-        XTaskQueueDuplicateHandle(queue, &newQueue);
+        FAIL_FAST_IF_FAILED(XTaskQueueDuplicateHandle(queue, &newQueue));
     }
 
     XTaskQueueHandle previous = ProcessGlobals::g_processQueue.exchange(newQueue);
@@ -1899,3 +2111,33 @@ STDAPI_(void) XTaskQueueResumeTermination(
         
     portContext->GetPort()->ResumeTermination(portContext.get());
 }
+
+//
+// Suspends the activity of all task queues in the process. When
+// a task queue is suspended:
+//
+// 1. It will not signal when new items are added.
+// 2. It will not return items from the dispatcher (it acts like it
+//    is empty).
+//
+#ifdef SUSPEND_API
+STDAPI_(void) XTaskQueueGlobalSuspend()
+{
+    ProcessGlobals::g_suspendState.Suspend();
+    ProcessGlobals::g_suspendState.WaitForQueuesToSuspend();
+}
+#endif
+
+//
+// Resumes the activity of all task queues in the process. When
+// a task queue is resumed:
+//
+// 1. Queues that are not empty will signal they have items.
+// 2. The dispatcher will start returing items again.
+//
+#ifdef SUSPEND_API
+STDAPI_(void) XTaskQueueGlobalResume()
+{
+    ProcessGlobals::g_suspendState.Resume();
+}
+#endif

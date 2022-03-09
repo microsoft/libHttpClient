@@ -10,6 +10,27 @@
 #include "PumpedTaskQueue.h"
 #include "CallbackThunk.h"
 
+class XAsyncThunk
+{
+public:
+    XAsyncThunk(std::function<void(XAsyncBlock*)> func, XTaskQueueHandle queue = nullptr) :
+        asyncBlock{ queue, this, Callback },
+        _func(func)
+    {
+    }
+
+    XAsyncBlock asyncBlock;
+
+private:
+    static void CALLBACK Callback(XAsyncBlock* asyncBlock)
+    {
+        XAsyncThunk* pthis = static_cast<XAsyncThunk*>(asyncBlock->context);
+        pthis->_func(asyncBlock);
+    }
+
+    std::function<void(XAsyncBlock*)> _func;
+};
+
 using namespace xbox::httpclient;
 static bool g_gotCall = false;
 
