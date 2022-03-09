@@ -103,16 +103,16 @@ namespace OS
                                     m_activeCalls++;
                                 }
 
-                                ActionCompleteImpl ac(this);
+                                ActionStatusImpl status(this);
 
                                 lock.unlock();
                                 AddRef();
-                                m_callback(m_context, ac);
+                                m_callback(m_context, status);
                                 lock.lock();
 
-                                if (!ac.Invoked)
+                                if (!status.IsComplete)
                                 {
-                                    ac();
+                                    status.Complete();
                                 }
 
                                 if (m_terminate)
@@ -191,18 +191,18 @@ namespace OS
 
     private:
 
-        struct ActionCompleteImpl : ThreadPoolActionComplete
+        struct ActionStatusImpl : ThreadPoolActionStatus
         {
-            ActionCompleteImpl(ThreadPoolImpl* owner) :
+            ActionStatusImpl(ThreadPoolImpl* owner) :
                 m_owner(owner)
             {
             }
 
-            bool Invoked = false;
+            bool IsComplete = false;
 
-            void operator()() override
+            void Complete() override
             {
-                Invoked = true;
+                IsComplete = true;
 
                 {
                     std::unique_lock<std::mutex> lock(m_owner->m_activeLock);
@@ -211,6 +211,10 @@ namespace OS
 
                 // Release lock before notify_all to optimize immediate awakes
                 m_owner->m_active.notify_all();
+            }
+            
+            void MayRunLong() override
+            {
             }
 
         private:
