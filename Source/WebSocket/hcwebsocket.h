@@ -50,10 +50,13 @@ public:
     const bool ProxyDecryptsHttps() const noexcept;
     const http_internal_string& Uri() const noexcept;
     const http_internal_string& SubProtocol() const noexcept;
+    size_t MaxReceiveBufferSize() const noexcept;
 
+    HRESULT SetBinaryMessageFragmentFunc(HCWebSocketBinaryMessageFragmentFunction func) noexcept;
     HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
     HRESULT SetProxyDecryptsHttps(bool allowProxyToDecryptHttps) noexcept;
     HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
+    HRESULT SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept;
 
     void AddClientRef();
     void DecClientRef();
@@ -62,6 +65,7 @@ public:
 
     static void CALLBACK MessageFunc(HC_WEBSOCKET* websocket, const char* message, void* context);
     static void CALLBACK BinaryMessageFunc(HC_WEBSOCKET* websocket, const uint8_t* bytes, uint32_t payloadSize, void* context);
+    static void CALLBACK BinaryMessageFragmentFunc(HC_WEBSOCKET* websocket, const uint8_t* payloadBytes, uint32_t payloadSize, bool isLastFragment, void* functionContext);
     static void CALLBACK CloseFunc(HC_WEBSOCKET* websocket, HCWebSocketCloseStatus status, void* context);
 
     std::shared_ptr<hc_websocket_impl> impl;
@@ -85,11 +89,13 @@ private:
     http_internal_string m_proxyUri;
     http_internal_string m_uri;
     http_internal_string m_subProtocol;
+    size_t m_maxReceiveBufferSize{ 0 };
 
-    HCWebSocketMessageFunction const m_clientMessageFunc;
-    HCWebSocketBinaryMessageFunction const m_clientBinaryMessageFunc;
-    HCWebSocketCloseEventFunction const m_clientCloseEventFunc;
-    void* m_clientContext;
+    HCWebSocketMessageFunction const m_clientMessageFunc{ nullptr };
+    HCWebSocketBinaryMessageFunction const m_clientBinaryMessageFunc{ nullptr };
+    HCWebSocketBinaryMessageFragmentFunction m_clientBinaryMessageFragmentFunc{ nullptr };
+    HCWebSocketCloseEventFunction const m_clientCloseEventFunc{ nullptr };
+    void* m_clientContext{ nullptr };
 
     std::recursive_mutex m_mutex;
     std::atomic<int> m_clientRefCount{ 0 };

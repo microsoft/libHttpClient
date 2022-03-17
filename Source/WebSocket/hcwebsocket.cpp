@@ -9,6 +9,8 @@
 
 using namespace xbox::httpclient;
 
+#define WEBSOCKET_RECVBUFFER_MAXSIZE_DEFAULT (1024 * 20)
+
 HC_WEBSOCKET::HC_WEBSOCKET(
     _In_ uint64_t _id,
     _In_opt_ HCWebSocketMessageFunction messageFunc,
@@ -20,7 +22,8 @@ HC_WEBSOCKET::HC_WEBSOCKET(
     m_clientMessageFunc{ messageFunc },
     m_clientBinaryMessageFunc{ binaryMessageFunc },
     m_clientCloseEventFunc{ closeFunc },
-    m_clientContext{ functionContext }
+    m_clientContext{ functionContext },
+    m_maxReceiveBufferSize{ WEBSOCKET_RECVBUFFER_MAXSIZE_DEFAULT }
 {
 }
 
@@ -335,6 +338,18 @@ const http_internal_string& HC_WEBSOCKET::SubProtocol() const noexcept
     return m_subProtocol;
 }
 
+size_t HC_WEBSOCKET::MaxReceiveBufferSize() const noexcept
+{
+    return m_maxReceiveBufferSize;
+}
+
+HRESULT HC_WEBSOCKET::SetBinaryMessageFragmentFunc(HCWebSocketBinaryMessageFragmentFunction func) noexcept
+{
+    std::lock_guard<std::recursive_mutex> lock{ m_mutex };
+    m_clientBinaryMessageFragmentFunc = func;
+    return S_OK;
+}
+
 HRESULT HC_WEBSOCKET::SetProxyUri(
     http_internal_string&& proxyUri
 ) noexcept
@@ -370,6 +385,12 @@ HRESULT HC_WEBSOCKET::SetHeader(
         return E_HC_CONNECT_ALREADY_CALLED;
     }
     m_connectHeaders[headerName] = headerValue;
+    return S_OK;
+}
+
+HRESULT HC_WEBSOCKET::SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept
+{
+    m_maxReceiveBufferSize = maxReceiveBufferSizeBytes;
     return S_OK;
 }
 
@@ -480,6 +501,40 @@ void HC_WEBSOCKET::BinaryMessageFunc(
     }
 }
 
+void HC_WEBSOCKET::BinaryMessageFragmentFunc(
+    HC_WEBSOCKET* websocket,
+    const uint8_t* bytes,
+    uint32_t payloadSize,
+    bool isLastFragment,
+    void* /*context*/
+)
+{
+    std::unique_lock<std::recursive_mutex> lock{ websocket->m_mutex };
+    if (websocket->m_clientRefCount > 0)
+    {
+        try
+        {
+            auto httpSingleton = get_http_singleton();
+            notify_websocket_routed_handlers(httpSingleton, websocket, true, nullptr, bytes, payloadSize);
+            lock.unlock();
+
+            if (websocket->m_clientBinaryMessageFragmentFunc)
+            {
+                websocket->m_clientBinaryMessageFragmentFunc(websocket, bytes, payloadSize, isLastFragment, websocket->m_clientContext);
+            }
+            else if (websocket->m_clientBinaryMessageFunc)
+            {
+                HC_TRACE_INFORMATION(WEBSOCKET, "Received binary message fragment but no client handler has been set. Invoking HCWebSocketBinaryMessageFunction instead.");
+                websocket->m_clientBinaryMessageFunc(websocket, bytes, payloadSize, websocket->m_clientContext);
+            }
+        }
+        catch (...)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Caught exception in client HCWebSocketBinaryMessageFragmentFunction");
+        }
+    }
+}
+
 void HC_WEBSOCKET::CloseFunc(
     HC_WEBSOCKET* websocket,
     HCWebSocketCloseStatus status,
@@ -570,6 +625,17 @@ try
     socket->AddClientRef();
     *websocket = socket.get();
     return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
+    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !websocket);
+    return websocket->SetBinaryMessageFragmentFunc(binaryMessageFragmentFunc);
 }
 CATCH_RETURN()
 
@@ -680,6 +746,17 @@ try
         return E_INVALIDARG;
     }
     return websocket->Disconnect();
+}
+CATCH_RETURN()
+
+STDAPI HCWebSocketSetMaxReceiveBufferSize(
+    _In_ HCWebsocketHandle websocket,
+    _In_ size_t bufferSizeInBytes
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !websocket);
+    return websocket->SetMaxReceiveBufferSize(bufferSizeInBytes);
 }
 CATCH_RETURN()
 
@@ -916,6 +993,22 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+
+STDAPI HCWebSocketGetBinaryMessageFragmentEventFunction(
+    _In_ HCWebsocketHandle websocket,
+    _Out_ HCWebSocketBinaryMessageFragmentFunction* binaryMessageFragmentFunc,
+    _Out_ void** context
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !websocket || !binaryMessageFragmentFunc || !context);
+
+    *binaryMessageFragmentFunc = HC_WEBSOCKET::BinaryMessageFragmentFunc;
+    *context = nullptr;
+    return S_OK;
+}
+CATCH_RETURN()
+
 
 STDAPI
 HCGetWebSocketConnectResult(
