@@ -3,6 +3,8 @@
 
 #include "pch.h"
 #include <atomic>
+#include <assert.h>
+#include <vector>
 
 class win32_handle
 {
@@ -150,6 +152,7 @@ void ShutdownActiveThreads()
 
 HANDLE g_eventHandle;
 std::atomic<uint32_t> g_numberMessagesReceieved = 0;
+std::vector<char> g_receiveBuffer;
 
 void CALLBACK message_received(
     _In_ HCWebsocketHandle websocket,
@@ -169,9 +172,28 @@ void CALLBACK binary_message_received(
     _In_ void* functionContext
 )
 {
-    printf_s("Received websocket binary message: %s\n", (char*)payloadBytes);
+    printf_s("Received websocket binary message of size: %u\r\n", payloadSize);
     g_numberMessagesReceieved++;
     SetEvent(g_eventHandle);
+}
+
+void CALLBACK binary_message_fragment_received(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ bool isFinalFragment,
+    _In_ void* functionContext
+)
+{
+    printf("Received websocket binary message fragment size %u\r\n", payloadSize);
+    g_receiveBuffer.insert(g_receiveBuffer.end(), payloadBytes, payloadBytes + payloadSize);
+    if (isFinalFragment)
+    {
+        printf_s("Full message now received: %s\n", (char*)g_receiveBuffer.data());
+        g_numberMessagesReceieved++;
+        g_receiveBuffer.clear();
+        SetEvent(g_eventHandle);
+    }
 }
 
 void CALLBACK websocket_closed(
@@ -195,16 +217,16 @@ int main()
     XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
     StartBackgroundThread();
 
-    std::string url = "wss://echo.websocket.org";
+    std::string url = "ws://localhost:9002";
 
     HCWebsocketHandle websocket;
 
     HRESULT hr = HCWebSocketCreate(&websocket, message_received, binary_message_received, websocket_closed, nullptr);
+    HCWebSocketSetBinaryMessageFragmentEventFunction(websocket, binary_message_fragment_received);
+    HCWebSocketSetMaxReceiveBufferSize(websocket, 4096);
 
-    for (int iConnectAttempt = 0; iConnectAttempt < 10; iConnectAttempt++)
+    for (int iConnectAttempt = 0; iConnectAttempt < 1; iConnectAttempt++)
     {
-        g_numberMessagesReceieved = 0;
-
         XAsyncBlock* asyncBlock = new XAsyncBlock{};
         asyncBlock->queue = g_queue;
         asyncBlock->callback = [](XAsyncBlock* asyncBlock)
@@ -221,11 +243,17 @@ int main()
         hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
         WaitForSingleObject(g_eventHandle, INFINITE);
 
-        uint32_t numberOfMessagesToSend = 100;
+        uint32_t numberOfMessagesToSend = 1;
         for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
         {
-            char webMsg[100];
-            snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
+            // Message just larger than the receive buffer size
+            char webMsg[4100];
+            for (uint32_t j = 0; j < sizeof(webMsg); ++j)
+            {
+                webMsg[j] = 'X';
+            }
+            webMsg[sizeof(webMsg) - 1] = '\0';
+            //snprintf(webMsg, sizeof(webMsg), "Message #%d should be echoed!", i);
 
             asyncBlock = new XAsyncBlock{};
             asyncBlock->queue = g_queue;
