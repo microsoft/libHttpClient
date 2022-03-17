@@ -76,37 +76,19 @@ private:
 class websocket_message_buffer
 {
 public:
+    websocket_message_buffer() = default;
+    ~websocket_message_buffer()
+    {
+        if (m_buffer != nullptr)
+        {
+            http_memory::mem_free(m_buffer);
+        }
+    }
+
     inline uint8_t* GetBuffer() { return m_buffer; }
     inline uint8_t* GetNextWriteLocation() { return m_buffer + m_bufferByteCount; }
     inline uint32_t GetBufferByteCount() { return m_bufferByteCount; }
     inline uint32_t GetRemainingCapacity() { return m_bufferByteCapacity - m_bufferByteCount; }
-
-    HRESULT InitializeBuffer(_In_ uint32_t dataByteCount)
-    {
-        assert(m_buffer == nullptr);
-
-        HRESULT hr = S_OK;
-        if (dataByteCount > 0)
-        {
-            m_buffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount));
-            if (m_buffer != nullptr)
-            {
-                m_bufferByteCapacity = dataByteCount;
-            }
-            else
-            {
-                hr = E_OUTOFMEMORY;
-            }
-        }
-        else
-        {
-            m_buffer = nullptr;
-            m_bufferByteCount = 0;
-            m_bufferByteCapacity = 0;
-        }
-
-        return hr;
-    }
 
     void FinishWriteData(_In_ uint32_t dataByteCount)
     {
@@ -136,9 +118,12 @@ public:
             newBuffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount));
             if (newBuffer != nullptr)
             {
-                // Copy the contents of the old buffer
-                CopyMemory(newBuffer, m_buffer, m_bufferByteCount);
-                http_memory::mem_free(m_buffer);
+                if (m_buffer != nullptr)
+                {
+                    // Copy the contents of the old buffer
+                    CopyMemory(newBuffer, m_buffer, m_bufferByteCount);
+                    http_memory::mem_free(m_buffer);
+                }
                 m_buffer = newBuffer;
                 m_bufferByteCapacity = dataByteCount;
             }
@@ -149,14 +134,6 @@ public:
         }
 
         return hr;
-    }
-
-    ~websocket_message_buffer()
-    {
-        if (m_buffer != nullptr)
-        {
-            http_memory::mem_free(m_buffer);
-        }
     }
 
 private:
@@ -313,9 +290,10 @@ private:
 
 #if HC_WINHTTP_WEBSOCKETS
     // websocket state
-    HRESULT websocket_start_listening();
-    HRESULT websocket_read_message();
-    websocket_message_buffer m_websocketResponseBuffer;
+    HRESULT WebSocketReadAsync();
+    HRESULT WebSocketReadComplete(bool binaryMessage, bool endOfMessage);
+    websocket_message_buffer m_websocketReceiveBuffer;
+    bool m_websocketForwardingFragments{ false };
 #endif
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
