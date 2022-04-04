@@ -7,7 +7,6 @@
 #include "android_platform_context.h"
 #include "http_android.h"
 
-// Helpers for converting jbyteArrays to be useful
 namespace
 {
 
@@ -31,6 +30,38 @@ using ByteArray = std::unique_ptr<jbyte, ByteArrayDeleter>;
 ByteArray GetBytesFromJByteArray(JNIEnv* env, jbyteArray array, bool copyBack)
 {
     return ByteArray{ env->GetByteArrayElements(array, nullptr), ByteArrayDeleter{ env, array, copyBack } };
+}
+
+/// <summary>
+/// Logs the contents of the given jstring, line by line. The provided line format string should
+/// contain a single "%.*s" format arg.
+/// </summary>
+void LogByLine(JNIEnv* env, jstring javaString, char const* intro, char const* lineFormat)
+{
+    auto stringLength = static_cast<uint32_t>(env->GetStringLength(javaString));
+    const char* nativeString = env->GetStringUTFChars(javaString, nullptr);
+    std::string_view nativeStringView{ nativeString, stringLength };
+
+    HC_TRACE_WARNING(HTTPCLIENT, "%s", intro);
+
+    while (!nativeStringView.empty())
+    {
+        size_t nextNewline = nativeStringView.find('\n');
+        std::string_view line = nativeStringView.substr(0, nextNewline);
+
+        HC_TRACE_WARNING(HTTPCLIENT, lineFormat, line.size(), line.data());
+
+        if (nextNewline == std::string::npos)
+        {
+            break;
+        }
+        else
+        {
+            nativeStringView = nativeStringView.substr(nextNewline + 1);
+        }
+    }
+
+    env->ReleaseStringUTFChars(javaString, nativeString);
 }
 
 }
@@ -68,6 +99,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     jlong call,
     jstring errorMessage,
     jstring stackTrace,
+    jstring networkDetails,
     jboolean isNoNetwork
 )
 {
@@ -82,33 +114,18 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     HCHttpCallResponseSetPlatformNetworkErrorMessage(sourceCall, nativeErrorString);
     env->ReleaseStringUTFChars(errorMessage, nativeErrorString);
 
-    // Log the stack trace for debugging purposes. It may be very long, so we
-    // break it on newlines.
-    auto stringLength = static_cast<uint32_t>(env->GetStringLength(stackTrace));
-    const char* nativeStackTraceString = env->GetStringUTFChars(stackTrace, nullptr);
+    // Log the stack trace and network details for debugging purposes. They may
+    // be very long, so we log them by line.
 
-    std::string_view stackTraceStringView{ nativeStackTraceString, stringLength };
-    bool firstLine = true;
-    while (!stackTraceStringView.empty())
-    {
-        size_t nextNewline = stackTraceStringView.find('\n');
-        std::string_view line = stackTraceStringView.substr(0, nextNewline);
+    LogByLine(env, stackTrace,
+        "Network request failed, stack trace:", // intro
+        "  %.*s" // lineFormat
+    );
 
-        char const* format = firstLine ? "Network request failed, stack trace: %.*s" : "  %.*s";
-        HC_TRACE_WARNING(HTTPCLIENT, format, line.size(), line.data());
-
-        firstLine = false;
-
-        if (nextNewline == std::string::npos)
-        {
-            break;
-        }
-        else
-        {
-            stackTraceStringView = stackTraceStringView.substr(nextNewline + 1);
-        }
-    }
-    env->ReleaseStringUTFChars(stackTrace, nativeStackTraceString);
+    LogByLine(env, networkDetails,
+        "Network request failed, network details:", // intro
+        "  %.*s" // lineFormat
+    );
 
     XAsyncComplete(sourceRequest->GetAsyncBlock(), S_OK, 0);
 }

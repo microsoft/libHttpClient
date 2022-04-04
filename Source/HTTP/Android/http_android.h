@@ -22,6 +22,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
         jlong call,
         jstring errorMessage,
         jstring stackTrace,
+        jstring networkDetails,
         jboolean isNoNetwork
 );
 
