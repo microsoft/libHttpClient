@@ -30,7 +30,7 @@ public class HttpClientRequest {
     private static final OkHttpClient OK_CLIENT;
     private static final byte[] NO_BODY = new byte[0];
 
-    private Context appContext;
+    private final Context appContext;
     private Request.Builder requestBuilder;
 
     static {
@@ -148,6 +148,10 @@ public class HttpClientRequest {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             networkDetails.addSection("internetWasValidated", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            networkDetails.addSection("isNotSuspended", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED));
         }
 
         return networkDetails.toString();
