@@ -15,6 +15,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class NetworkObserver {
+    @NotNull private static String s_lastCapabilities = "";
+    @NotNull private static String s_lastLinkProperties = "";
+
     @SuppressWarnings("unused")
     public static void Initialize(Context appContext) {
         ConnectivityManager cm = (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -32,13 +35,33 @@ public class NetworkObserver {
             }
 
             @Override
+            public void onLost(Network network) {
+                LogMessage(network, "was lost");
+            }
+
+            @Override
+            public void onUnavailable() {
+                Log("No networks were available");
+            }
+
+            @Override
             public void onCapabilitiesChanged(Network network, NetworkCapabilities capabilities) {
-                LogMessage(network, "has capabilities: " + NetworkDetails.checkNetworkCapabilities(capabilities));
+                String newCapabilities = NetworkDetails.checkNetworkCapabilities(capabilities);
+
+                if (!newCapabilities.equals(s_lastCapabilities)) {
+                    s_lastCapabilities = newCapabilities;
+                    LogMessage(network, "has capabilities: " + s_lastCapabilities);
+                }
             }
 
             @Override
             public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-                LogMessage(network, "has link properties: " + NetworkDetails.checkLinkProperties(linkProperties));
+                String newLinkProperties = NetworkDetails.checkLinkProperties(linkProperties);
+
+                if (!newLinkProperties.equals(s_lastLinkProperties)) {
+                    s_lastLinkProperties = newLinkProperties;
+                    LogMessage(network, "has link properties: " + s_lastLinkProperties);
+                }
             }
 
             private void LogMessage(Network network, String message) {

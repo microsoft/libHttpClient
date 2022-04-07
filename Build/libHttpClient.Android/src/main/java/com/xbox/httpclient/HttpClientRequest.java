@@ -115,10 +115,12 @@ public class HttpClientRequest {
 
         Network[] allNetworks = cm.getAllNetworks();
 
-        for (Network network : allNetworks) {
-            builder
-                .append("\n  ")
-                .append(NetworkObserver.NetworkDetails.getNetworkDetails(network, cm));
+        for (int i = 0; i < allNetworks.length; i++) {
+            if (i > 0) {
+                builder.append("\n");
+            }
+
+            builder.append(NetworkObserver.NetworkDetails.getNetworkDetails(allNetworks[i], cm));
         }
 
         return builder.toString();

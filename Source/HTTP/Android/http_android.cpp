@@ -134,7 +134,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     );
 
     LogByLine(env, networkDetails,
-        "Network request failed, network details:", // intro
+        "Network request failed, all network details:", // intro
         "  %.*s" // lineFormat
     );
 
