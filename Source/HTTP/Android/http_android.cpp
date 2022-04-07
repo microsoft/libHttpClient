@@ -69,6 +69,17 @@ void LogByLine(JNIEnv* env, jstring javaString, char const* intro, char const* l
 extern "C"
 {
 
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_NetworkObserver_Log(
+    JNIEnv* env,
+    jclass /*clazz*/,
+    jstring message
+)
+{
+    const char* nativeMessage = env->GetStringUTFChars(message, nullptr);
+    HC_TRACE_IMPORTANT(HTTPCLIENT, "NetworkObserver: %s", nativeMessage);
+    env->ReleaseStringUTFChars(message, nativeMessage);
+}
+
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
     JNIEnv* /* env */,
     jobject /* instance */,

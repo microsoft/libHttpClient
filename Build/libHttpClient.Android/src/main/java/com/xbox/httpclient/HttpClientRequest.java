@@ -2,12 +2,8 @@ package com.xbox.httpclient;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.os.Build;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,8 +11,6 @@ import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -99,11 +93,11 @@ public class HttpClientRequest {
     }
 
     private String GetAllNetworksInfo() {
-        ConnectivityManager cm = (ConnectivityManager)appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return "API version too old - no network info!";
+            return "API version too old - unable to get network info!";
         }
+
+        ConnectivityManager cm = (ConnectivityManager)appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         StringBuilder builder = new StringBuilder();
 
@@ -122,53 +116,12 @@ public class HttpClientRequest {
         Network[] allNetworks = cm.getAllNetworks();
 
         for (Network network : allNetworks) {
-            String networkDetails = GetDetailsForNetwork(cm, network, network.equals(activeNetwork));
-
             builder
-                .append(networkDetails)
-                .append('\n');
+                .append("\n  ")
+                .append(NetworkObserver.NetworkDetails.getNetworkDetails(network, cm));
         }
 
         return builder.toString();
-    }
-
-    private String GetDetailsForNetwork(ConnectivityManager cm, Network network, boolean isActiveNetwork) {
-        NetworkDetails networkDetails = new NetworkDetails();
-
-        networkDetails.addSection("isActiveNetwork", isActiveNetwork);
-
-        LinkProperties linkProperties = cm.getLinkProperties(network);
-
-        if (linkProperties != null) {
-            networkDetails.addSection("hasProxy", linkProperties.getHttpProxy() != null);
-        } else {
-            networkDetails.addSection("hasLinkProperties", false);
-        }
-
-        NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(network);
-
-        if (networkCapabilities != null) {
-            networkDetails.addSection("isWifi", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI));
-            networkDetails.addSection("isBluetooth", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
-            networkDetails.addSection("isCellular", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR));
-            networkDetails.addSection("isVpn", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN));
-            networkDetails.addSection("isEthernet", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
-
-            networkDetails.addSection("shouldHaveInternet", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
-            networkDetails.addSection("isNotVpn", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN));
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                networkDetails.addSection("internetWasValidated", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                networkDetails.addSection("isNotSuspended", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED));
-            }
-        } else {
-            networkDetails.addSection("hasNetworkCapabilities", false);
-        }
-
-        return networkDetails.toString();
     }
 
     private native void OnRequestCompleted(long call, HttpClientResponse response);
@@ -179,29 +132,4 @@ public class HttpClientRequest {
         String networkDetails,
         boolean isNoNetwork
     );
-
-    private static class NetworkDetails {
-        private final List<String> sections = new ArrayList<>();
-
-        void addSection(String key, boolean value) {
-            sections.add(key + ": " + value);
-        }
-
-        @NotNull
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("Network details: ");
-
-            // String.join() is only available in API 26+ *rolls-eyes*
-            for (int i = 0; i < sections.size(); i++) {
-                if (i > 0) {
-                    builder.append(", ");
-                }
-
-                builder.append(sections.get(i));
-            }
-
-            return builder.toString();
-        }
-    }
 }

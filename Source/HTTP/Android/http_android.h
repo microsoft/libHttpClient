@@ -9,6 +9,12 @@
 extern "C"
 {
 
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_NetworkObserver_Log(
+    JNIEnv* env,
+    jclass clazz,
+    jstring message
+);
+
 JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
     JNIEnv * /* env */,
     jobject /* instance */,
