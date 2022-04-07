@@ -113,6 +113,12 @@ public class HttpClientRequest {
             .append('\n');
 
         Network activeNetwork = cm.getActiveNetwork();
+
+        builder
+            .append("Has active network: ")
+            .append(activeNetwork != null)
+            .append('\n');
+
         Network[] allNetworks = cm.getAllNetworks();
 
         for (Network network : allNetworks) {
@@ -133,25 +139,33 @@ public class HttpClientRequest {
 
         LinkProperties linkProperties = cm.getLinkProperties(network);
 
-        networkDetails.addSection("hasProxy", linkProperties.getHttpProxy() != null);
+        if (linkProperties != null) {
+            networkDetails.addSection("hasProxy", linkProperties.getHttpProxy() != null);
+        } else {
+            networkDetails.addSection("hasLinkProperties", false);
+        }
 
         NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(network);
 
-        networkDetails.addSection("isWifi", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI));
-        networkDetails.addSection("isBluetooth", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
-        networkDetails.addSection("isCellular", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR));
-        networkDetails.addSection("isVpn", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN));
-        networkDetails.addSection("isEthernet", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+        if (networkCapabilities != null) {
+            networkDetails.addSection("isWifi", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI));
+            networkDetails.addSection("isBluetooth", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
+            networkDetails.addSection("isCellular", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR));
+            networkDetails.addSection("isVpn", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN));
+            networkDetails.addSection("isEthernet", networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
 
-        networkDetails.addSection("shouldHaveInternet", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
-        networkDetails.addSection("isNotVpn", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN));
+            networkDetails.addSection("shouldHaveInternet", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
+            networkDetails.addSection("isNotVpn", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            networkDetails.addSection("internetWasValidated", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
-        }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                networkDetails.addSection("internetWasValidated", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
+            }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            networkDetails.addSection("isNotSuspended", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                networkDetails.addSection("isNotSuspended", networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED));
+            }
+        } else {
+            networkDetails.addSection("hasNetworkCapabilities", false);
         }
 
         return networkDetails.toString();
