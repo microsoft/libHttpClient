@@ -102,15 +102,13 @@ public class HttpClientRequest {
         StringBuilder builder = new StringBuilder();
 
         builder
-            .append("Default proxy: ")
+            .append("Has default proxy: ")
             .append(cm.getDefaultProxy() != null)
             .append('\n');
 
-        Network activeNetwork = cm.getActiveNetwork();
-
         builder
             .append("Has active network: ")
-            .append(activeNetwork != null)
+            .append(cm.getActiveNetwork() != null)
             .append('\n');
 
         Network[] allNetworks = cm.getAllNetworks();
