@@ -24,6 +24,26 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
         return E_FAIL;
     }
 
+    // Initialize the network observer
+
+    jclass localNetworkObserver = jniEnv->FindClass("com/xbox/httpclient/NetworkObserver");
+    if (localNetworkObserver == nullptr)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find NetworkObserver class");
+        return E_FAIL;
+    }
+
+    jmethodID networkObserverInitialize = jniEnv->GetStaticMethodID(localNetworkObserver, "Initialize", "(Landroid/content/Context;)V");
+    if (networkObserverInitialize == nullptr)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find NetworkObserver.Initialize method");
+        return E_FAIL;
+    }
+
+    jniEnv->CallStaticVoidMethod(localNetworkObserver, networkObserverInitialize, args->applicationContext);
+
+    // Get class references we need to hold onto
+
     jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
     if (localHttpRequest == nullptr)
     {

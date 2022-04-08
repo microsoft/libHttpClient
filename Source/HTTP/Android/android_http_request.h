@@ -4,7 +4,13 @@
 
 class HttpRequest {
 public:
-    HttpRequest(XAsyncBlock* asyncBlock, JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass);
+    HttpRequest(
+        XAsyncBlock* asyncBlock,
+        JavaVM* javaVm,
+        jobject applicationContext,
+        jclass httpRequestClass,
+        jclass httpResponseClass
+    );
     virtual ~HttpRequest();
 
     HRESULT Initialize();
@@ -27,6 +33,7 @@ private:
     XAsyncBlock* m_asyncBlock;
 
     JavaVM* m_javaVm;
+    jobject m_applicationContext;
     jclass m_httpRequestClass;
     jclass m_httpResponseClass;
 };
