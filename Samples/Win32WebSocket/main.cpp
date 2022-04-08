@@ -150,34 +150,55 @@ void ShutdownActiveThreads()
     }
 }
 
-HANDLE g_eventHandle;
-std::atomic<uint32_t> g_numberMessagesReceieved = 0;
-std::vector<char> g_receiveBuffer;
+struct WebSocketContext
+{
+    WebSocketContext()
+    {
+        closeEventHandle = CreateEvent(nullptr, false, false, nullptr);
+    }
 
-void CALLBACK message_received(
+    ~WebSocketContext()
+    {
+        if (handle)
+        {
+            HCWebSocketCloseHandle(handle);
+        }
+        CloseHandle(closeEventHandle);
+    }
+
+    HCWebsocketHandle handle{ nullptr };
+    std::vector<char> receiveBuffer;
+    std::atomic<uint32_t> messagesReceived;
+    HANDLE closeEventHandle;
+};
+
+void CALLBACK WebSocketMessageReceived(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* incomingBodyString,
     _In_opt_ void* functionContext
 )
 {
+    auto ctx = static_cast<WebSocketContext*>(functionContext);
+
     printf_s("Received websocket message: %s\n", incomingBodyString);
-    g_numberMessagesReceieved++;
-    SetEvent(g_eventHandle);
+    ++ctx->messagesReceived;
 }
 
-void CALLBACK binary_message_received(
+void CALLBACK WebSocketBinaryMessageReceived(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
     _In_ void* functionContext
 )
 {
+    auto ctx = static_cast<WebSocketContext*>(functionContext);
+
     printf_s("Received websocket binary message of size: %u\r\n", payloadSize);
-    g_numberMessagesReceieved++;
-    SetEvent(g_eventHandle);
+
+    ++ctx->messagesReceived;
 }
 
-void CALLBACK binary_message_fragment_received(
+void CALLBACK WebSocketBinaryMessageFragmentReceived(
     _In_ HCWebsocketHandle websocket,
     _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
     _In_ uint32_t payloadSize,
@@ -185,31 +206,32 @@ void CALLBACK binary_message_fragment_received(
     _In_ void* functionContext
 )
 {
-    printf("Received websocket binary message fragment size %u\r\n", payloadSize);
-    g_receiveBuffer.insert(g_receiveBuffer.end(), payloadBytes, payloadBytes + payloadSize);
+    auto ctx = static_cast<WebSocketContext*>(functionContext);
+
+    printf("Received websocket binary message fragment of size %u\r\n", payloadSize);
+    ctx->receiveBuffer.insert(ctx->receiveBuffer.end(), payloadBytes, payloadBytes + payloadSize);
     if (isFinalFragment)
     {
-        printf_s("Full message now received: %s\n", (char*)g_receiveBuffer.data());
-        g_numberMessagesReceieved++;
-        g_receiveBuffer.clear();
-        SetEvent(g_eventHandle);
+        printf_s("Full message now received: %s\n", ctx->receiveBuffer.data());
+        ++ctx->messagesReceived;
+        ctx->receiveBuffer.clear();
     }
 }
 
-void CALLBACK websocket_closed(
+void CALLBACK WebSocketClosed(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_opt_ void* functionContext
     )
 {
+    auto ctx = static_cast<WebSocketContext*>(functionContext);
+
     printf_s("Websocket closed!\n");
-    SetEvent(g_eventHandle);
+    SetEvent(ctx->closeEventHandle);
 }
 
 int main()
 {
-    g_eventHandle = CreateEvent(nullptr, false, false, nullptr);
-
     HCInitialize(nullptr);
     HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
 
@@ -219,13 +241,10 @@ int main()
 
     std::string url = "ws://localhost:9002";
 
-    HCWebsocketHandle websocket;
-
-    HRESULT hr = HCWebSocketCreate(&websocket, message_received, binary_message_received, websocket_closed, nullptr);
-    HCWebSocketSetBinaryMessageFragmentEventFunction(websocket, binary_message_fragment_received);
-    HCWebSocketSetMaxReceiveBufferSize(websocket, 4096);
-
-    g_numberMessagesReceieved = 0;
+    auto websocketContext = new WebSocketContext{};
+    HCWebSocketCreate(&websocketContext->handle, WebSocketMessageReceived, WebSocketBinaryMessageReceived, WebSocketClosed, websocketContext);
+    HCWebSocketSetBinaryMessageFragmentEventFunction(websocketContext->handle, WebSocketBinaryMessageFragmentReceived);
+    HCWebSocketSetMaxReceiveBufferSize(websocketContext->handle, 4096);
 
     XAsyncBlock* asyncBlock = new XAsyncBlock{};
     asyncBlock->queue = g_queue;
@@ -234,21 +253,27 @@ int main()
         WebSocketCompletionResult result = {};
         HRESULT hr = HCGetWebSocketConnectResult(asyncBlock, &result);
         assert(SUCCEEDED(hr));
-        UNREFERENCED_PARAMETER(hr);
 
-        printf_s("HCWebSocketConnect complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-        SetEvent(g_eventHandle);
+        if (SUCCEEDED(hr))
+        {
+            printf_s("HCWebSocketConnect complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+            if (FAILED(result.errorCode))
+            {
+                throw std::exception("Connect failed. Make sure a local echo server is running.");
+            }
+        }
+
         delete asyncBlock;
     };
 
     printf_s("Calling HCWebSocketConnect...\n");
-    hr = HCWebSocketConnectAsync(url.data(), "", websocket, asyncBlock);
-    WaitForSingleObject(g_eventHandle, INFINITE);
+    HCWebSocketConnectAsync(url.data(), "", websocketContext->handle, asyncBlock);
+    XAsyncGetStatus(asyncBlock, true);
 
-    uint32_t numberOfMessagesToSend = 1;
-    for (uint32_t i = 1; i <= numberOfMessagesToSend; i++)
+    uint32_t sendLoops = 2;
+    for (uint32_t i = 1; i <= sendLoops; i++)
     {
-        // Message just larger than the receive buffer size
+        // Test with message just larger than the configured receive buffer size
         char webMsg[4100];
         for (uint32_t j = 0; j < sizeof(webMsg); ++j)
         {
@@ -263,15 +288,16 @@ int main()
             WebSocketCompletionResult result = {};
             HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
             assert(SUCCEEDED(hr));
-            UNREFERENCED_PARAMETER(hr);
 
-            printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-            SetEvent(g_eventHandle);
+            if (SUCCEEDED(hr))
+            {
+                printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+            }
             delete asyncBlock;
         };
 
         printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", webMsg);
-        hr = HCWebSocketSendMessageAsync(websocket, webMsg, asyncBlock);
+        HCWebSocketSendMessageAsync(websocketContext->handle, webMsg, asyncBlock);
 
         asyncBlock = new XAsyncBlock{};
         asyncBlock->queue = g_queue;
@@ -280,28 +306,30 @@ int main()
             WebSocketCompletionResult result = {};
             HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
             assert(SUCCEEDED(hr));
-            UNREFERENCED_PARAMETER(hr);
 
-            printf_s("HCWebSocketSendBinaryMessageAsync complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-            SetEvent(g_eventHandle);
+            if (SUCCEEDED(hr))
+            {
+                printf_s("HCWebSocketSendBinaryMessageAsync complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+            }
+
             delete asyncBlock;
         };
 
-        hr = HCWebSocketSendBinaryMessageAsync(websocket, (uint8_t*)webMsg, 100, asyncBlock);
+        HCWebSocketSendBinaryMessageAsync(websocketContext->handle, (uint8_t*)webMsg, 100, asyncBlock);
     }
 
-    while (g_numberMessagesReceieved < numberOfMessagesToSend * 2)
+    while (websocketContext->messagesReceived < sendLoops * 2) // Two messages sent each loop iteration
     {
-        WaitForSingleObject(g_eventHandle, INFINITE);
+        Sleep(10);
     }
 
     printf_s("Calling HCWebSocketDisconnect...\n");
-    HCWebSocketDisconnect(websocket);
-    WaitForSingleObject(g_eventHandle, INFINITE);
+    HCWebSocketDisconnect(websocketContext->handle);
+    WaitForSingleObject(websocketContext->closeEventHandle, INFINITE);
+    delete websocketContext;
 
-    HCWebSocketCloseHandle(websocket);
     HCCleanup();
-    CloseHandle(g_eventHandle);
+
     return 0;
 }
 
