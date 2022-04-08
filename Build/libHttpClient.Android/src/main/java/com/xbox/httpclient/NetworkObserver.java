@@ -124,11 +124,8 @@ public class NetworkObserver {
         private static String join(Map<String, Boolean> sections) {
             StringBuilder builder = new StringBuilder();
 
-            boolean firstEntry = true;
             for (Map.Entry<String, Boolean> entry : sections.entrySet()) {
-                if (firstEntry) {
-                    firstEntry = false;
-                } else {
+                if (builder.length() > 0)  {
                     builder.append(", ");
                 }
 
