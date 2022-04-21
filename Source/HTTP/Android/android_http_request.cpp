@@ -11,10 +11,17 @@
 volatile auto dummyHCRequestOnRequestCompleted = &Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted;
 volatile auto dummyHCRequestOnRequestFailed = &Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed;
 
-HttpRequest::HttpRequest(XAsyncBlock* asyncBlock, JavaVM* javaVm, jclass httpRequestClass, jclass httpResponseClass) :
+HttpRequest::HttpRequest(
+    XAsyncBlock* asyncBlock,
+    JavaVM* javaVm,
+    jobject applicationContext,
+    jclass httpRequestClass,
+    jclass httpResponseClass
+) :
     m_httpRequestInstance(nullptr), 
     m_asyncBlock(asyncBlock),
     m_javaVm(javaVm),
+    m_applicationContext(applicationContext),
     m_httpRequestClass(httpRequestClass),
     m_httpResponseClass(httpResponseClass)
 {
@@ -40,14 +47,14 @@ HRESULT HttpRequest::Initialize()
 
     if (SUCCEEDED(result)) 
     {
-        jmethodID httpRequestCtor = jniEnv->GetMethodID(m_httpRequestClass, "<init>", "()V");
+        jmethodID httpRequestCtor = jniEnv->GetMethodID(m_httpRequestClass, "<init>", "(Landroid/content/Context;)V");
         if (httpRequestCtor == nullptr) 
         {
             HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest constructor");
             return E_FAIL;
         }
 
-        jobject requestInstance = jniEnv->NewObject(m_httpRequestClass, httpRequestCtor);
+        jobject requestInstance = jniEnv->NewObject(m_httpRequestClass, httpRequestCtor, m_applicationContext);
         m_httpRequestInstance = jniEnv->NewGlobalRef(requestInstance);
         jniEnv->DeleteLocalRef(requestInstance);
 
@@ -269,6 +276,7 @@ void AndroidHttpCallPerformAsync(
         new HttpRequest(
             asyncBlock,
             env->androidPlatformContext->GetJavaVm(),
+            env->androidPlatformContext->GetApplicationContext(),
             env->androidPlatformContext->GetHttpRequestClass(),
             env->androidPlatformContext->GetHttpResponseClass()
         )
