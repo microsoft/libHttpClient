@@ -14,10 +14,17 @@ public:
     jclass GetHttpResponseClass() { return m_httpResponseClass; }
 
 private:
-    AndroidPlatformContext(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass);
+    AndroidPlatformContext(
+        JavaVM* javaVm,
+        jobject applicationContext,
+        jclass networkObserverClass,
+        jclass requestClass,
+        jclass responseClass
+    );
 
     JavaVM * m_javaVm;
     jobject m_applicationContext;
+    jclass m_networkObserverClass;
     jclass m_httpRequestClass;
     jclass m_httpResponseClass;
 };
