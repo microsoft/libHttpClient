@@ -24,7 +24,7 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
         return E_FAIL;
     }
 
-    // Initialize the network observer
+    // Get class references we need to hold onto
 
     jclass localNetworkObserver = jniEnv->FindClass("com/xbox/httpclient/NetworkObserver");
     if (localNetworkObserver == nullptr)
@@ -32,17 +32,6 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find NetworkObserver class");
         return E_FAIL;
     }
-
-    jmethodID networkObserverInitialize = jniEnv->GetStaticMethodID(localNetworkObserver, "Initialize", "(Landroid/content/Context;)V");
-    if (networkObserverInitialize == nullptr)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "Could not find NetworkObserver.Initialize method");
-        return E_FAIL;
-    }
-
-    jniEnv->CallStaticVoidMethod(localNetworkObserver, networkObserverInitialize, args->applicationContext);
-
-    // Get class references we need to hold onto
 
     jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
     if (localHttpRequest == nullptr)
@@ -58,8 +47,22 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
         return E_FAIL;
     }
 
+    jclass globalNetworkObserver = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localNetworkObserver));
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
+
+    // Initialize the network observer
+
+    jmethodID networkObserverInitialize = jniEnv->GetStaticMethodID(globalNetworkObserver, "Initialize", "(Landroid/content/Context;)V");
+    if (networkObserverInitialize == nullptr)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find NetworkObserver.Initialize method");
+        return E_FAIL;
+    }
+
+    jniEnv->CallStaticVoidMethod(globalNetworkObserver, networkObserverInitialize, args->applicationContext);
+
+    // Initialize the context
 
     try
     {
@@ -68,6 +71,7 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
                 new (a.allocate(1)) AndroidPlatformContext(
                         javaVm,
                         args->applicationContext,
+                        globalNetworkObserver,
                         globalRequestClass,
                         globalResponseClass
                 ), http_alloc_deleter<AndroidPlatformContext>());
@@ -80,9 +84,16 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
     }
 }
 
-AndroidPlatformContext::AndroidPlatformContext(JavaVM* javaVm, jobject applicationContext, jclass requestClass, jclass responseClass) :
+AndroidPlatformContext::AndroidPlatformContext(
+    JavaVM* javaVm,
+    jobject applicationContext,
+    jclass networkObserverClass,
+    jclass requestClass,
+    jclass responseClass
+) :
     m_javaVm{ javaVm },
     m_applicationContext{ applicationContext },
+    m_networkObserverClass{ networkObserverClass },
     m_httpRequestClass{ requestClass },
     m_httpResponseClass{ responseClass }
 {
@@ -109,8 +120,16 @@ AndroidPlatformContext::~AndroidPlatformContext()
         }
     }
 
+    jmethodID networkObserverCleanup = jniEnv->GetStaticMethodID(m_networkObserverClass, "Cleanup", "(Landroid/content/Context;)V");
+    if (networkObserverCleanup == nullptr)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find NetworkObserver.Cleanup method");
+    }
+    jniEnv->CallStaticVoidMethod(m_networkObserverClass, networkObserverCleanup, m_applicationContext);
+
     if (jniEnv != nullptr)
     {
+        jniEnv->DeleteGlobalRef(m_networkObserverClass);
         jniEnv->DeleteGlobalRef(m_httpRequestClass);
         jniEnv->DeleteGlobalRef(m_httpResponseClass);
     }
