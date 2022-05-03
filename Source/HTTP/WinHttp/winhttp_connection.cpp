@@ -679,6 +679,17 @@ void WinHttpConnection::callback_status_request_error(
     }
     else
     {
+#if HC_WINHTTP_WEBSOCKETS
+        if (pRequestContext->m_websocketHandle && (pRequestContext->m_state == ConnectionState::WebSocketConnected || pRequestContext->m_state == ConnectionState::WebSocketClosing))
+        {
+            // Only trigger if we're already connected, never during a connection attempt
+            if (pRequestContext->m_asyncBlock == nullptr)
+            {
+                pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
+            }
+        }
+#endif
+
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(errorCode));
     }
 }
