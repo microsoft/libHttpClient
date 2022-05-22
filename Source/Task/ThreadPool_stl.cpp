@@ -57,10 +57,7 @@ namespace OS
                         std::unique_lock<std::mutex> lock(m_wakeLock);
                         while (true)
                         {
-                            if (m_calls == 0)
-                            {
-                                m_wake.wait(lock);
-                            }
+                            m_wake.wait(lock, [this]{ return m_calls != 0 || m_terminate; });
 
                             if (m_terminate)
                             {
