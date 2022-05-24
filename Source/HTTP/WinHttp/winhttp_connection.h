@@ -5,11 +5,11 @@
 #include <winhttp.h>
 #include "utils.h"
 #include "uri.h"
-#include "hcwebsocket.h"
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #endif
 #if !HC_NOWEBSOCKETS
+#include "hcwebsocket.h"
 #include "WebSocket/hcwebsocket.h"
 #endif
 
@@ -136,7 +136,10 @@ enum class ConnectionState : uint32_t
 
 using ConnectionClosedCallback = std::function<void()>;
 
-class WinHttpConnection : public std::enable_shared_from_this<WinHttpConnection>, public hc_websocket_impl
+class WinHttpConnection : public std::enable_shared_from_this<WinHttpConnection>
+#if !HC_NOWEBSOCKETS
+    , public hc_websocket_impl
+#endif
 {
 public:
     static Result<std::shared_ptr<WinHttpConnection>> Initialize(

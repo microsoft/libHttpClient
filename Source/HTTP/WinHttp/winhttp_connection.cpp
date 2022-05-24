@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "httpcall.h"
-#include "hcwebsocket.h"
 #include "uri.h"
 #include "winhttp_connection.h"
 #include <schannel.h>
@@ -406,7 +405,7 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
         }
         case ConnectionState::WinHttpClosing:
         {
-            // Nothing to do 
+            // Nothing to do
             return S_OK;
         }
         case ConnectionState::Closed:
@@ -436,7 +435,7 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
     {
         m_connectionClosedCallback();
     }
- 
+
     return S_OK;
 }
 
@@ -454,7 +453,7 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
 
         size_t resultSize{ 0 };
 #if !HC_NOWEBSOCKETS
-        if (m_websocketHandle) 
+        if (m_websocketHandle)
         {
             resultSize = sizeof(WebSocketCompletionResult);
         }
@@ -1280,7 +1279,7 @@ void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendCon
     assert(m_winHttpWebSocketExports.send);
 
     DWORD dwError = m_winHttpWebSocketExports.send(m_hRequest,
-        sendContext.payloadType, 
+        sendContext.payloadType,
         (PVOID)sendContext.payload.data(),
         static_cast<DWORD>(sendContext.payload.size()));
 
@@ -1320,7 +1319,7 @@ void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
 
     try
     {
-        HCWebSocketCloseStatus closeStatus = static_cast<HCWebSocketCloseStatus>(closeReason); 
+        HCWebSocketCloseStatus closeStatus = static_cast<HCWebSocketCloseStatus>(closeReason);
         disconnectFunc(m_websocketHandle, closeStatus, functionContext);
     }
     catch (...)

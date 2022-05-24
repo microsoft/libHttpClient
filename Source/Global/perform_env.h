@@ -1,6 +1,6 @@
 #pragma once
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 
+#if HC_PLATFORM == HC_PLATFORM_WIN32
 #include "WinHttp/winhttp_provider.h"
 #elif HC_PLATFORM == HC_PLATFORM_GDK
 #include "Curl/CurlProvider.h"
@@ -97,7 +97,7 @@ private:
     static void CALLBACK WebSocketClosed(HCWebsocketHandle websocket, HCWebSocketCloseStatus closeStatus, void* context);
 #endif
 
-    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);  
+    static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK ProviderCleanup(void* context, bool canceled);
     static void CALLBACK ProviderCleanupComplete(XAsyncBlock* async);
 
