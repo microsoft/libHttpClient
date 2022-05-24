@@ -70,7 +70,7 @@ try
         }
     }
 
-    std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);    
+    std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
     httpSingleton->m_mocks.push_back(static_cast<HCMockCallHandle>(HCHttpCallDuplicateHandle(call)));
     return S_OK;
 }

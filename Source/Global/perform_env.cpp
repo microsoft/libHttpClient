@@ -1,19 +1,30 @@
 #include "pch.h"
 #include "perform_env.h"
 #include "httpcall.h"
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32
+// nothing
+#elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
+#include "HTTP/XMLHttp/xmlhttp_http_task.h"
+#elif HC_PLATFORM == HC_PLATFORM_ANDROID
+#include "HTTP/Android/android_http_request.h"
+#elif HC_PLATFORM_IS_APPLE
+#include "HTTP/Apple/http_apple.h"
+#endif
+
+#if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
-#include "HTTP/XMLHttp/xmlhttp_http_task.h"
 #include "WebSocket/WinRT/winrt_websocket.h"
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "HTTP/Android/android_http_request.h"
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #elif HC_PLATFORM_IS_APPLE
-#include "HTTP/Apple/http_apple.h"
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
+#endif
+
 #endif
 
 using namespace xbox::httpclient;
@@ -190,7 +201,7 @@ Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* arg
 
     auto initWinHttpResult = WinHttpProvider::Initialize();
     RETURN_IF_FAILED(initWinHttpResult.hr);
- 
+
     performEnv->winHttpProvider = initWinHttpResult.ExtractPayload();
 
 #elif HC_PLATFORM == HC_PLATFORM_GDK
@@ -339,7 +350,7 @@ struct HC_PERFORM_ENV::WebSocketConnectContext
 
     HC_PERFORM_ENV* const env{};
     http_internal_string uri;
-    http_internal_string subprotocol;  
+    http_internal_string subprotocol;
     std::shared_ptr<WebSocket> websocket;
     XAsyncBlock* const clientAsyncBlock;
     XAsyncBlock internalAsyncBlock{};
@@ -429,8 +440,8 @@ void CALLBACK HC_PERFORM_ENV::WebSocketConnectComplete(XAsyncBlock* async)
         {
             disconnect = true;
         }
-    } 
-    
+    }
+
     bool scheduleProviderCleanup = env->CanScheduleProviderCleanup();
     lock.unlock();
 
