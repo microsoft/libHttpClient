@@ -430,6 +430,8 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
 
 static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSize)
 {
+    RETURN_HR_IF(E_INVALIDARG, asyncBlock == nullptr);
+
     // If the async block is already associated with another
     // call, fail.
 
