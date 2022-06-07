@@ -239,7 +239,7 @@ int main()
     XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
     StartBackgroundThread();
 
-    std::string url = "ws://localhost:9002";
+    std::string url = "ws://JOHLAFO-DEV1:9002";
 
     auto websocketContext = new WebSocketContext{};
     HCWebSocketCreate(&websocketContext->handle, WebSocketMessageReceived, WebSocketBinaryMessageReceived, WebSocketClosed, websocketContext);
@@ -324,6 +324,7 @@ int main()
     }
 
     printf_s("Calling HCWebSocketDisconnect...\n");
+    Sleep(5000);
     HCWebSocketDisconnect(websocketContext->handle);
     WaitForSingleObject(websocketContext->closeEventHandle, INFINITE);
     delete websocketContext;
