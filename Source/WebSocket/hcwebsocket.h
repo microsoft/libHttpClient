@@ -164,6 +164,7 @@ private:
         void* context{ nullptr };
     };
 
+    std::mutex m_stateMutex;
     enum class State
     {
         Initial,
@@ -173,7 +174,7 @@ private:
         Disconnected
     } m_state{ State::Initial };
 
-    std::mutex m_mutex;
+    std::recursive_mutex m_eventCallbacksMutex;
     http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
     uint32_t m_nextToken{ 1 };
 

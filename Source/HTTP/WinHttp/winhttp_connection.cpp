@@ -368,7 +368,7 @@ HRESULT WinHttpConnection::WebSocketDisconnect(_In_ HCWebSocketCloseStatus close
     }
 
     // Shutdown closes the send channel after sending a close frame. When we receive a close frame we are fully disconnected
-    DWORD dwError = m_winHttpWebSocketExports.close(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
+    DWORD dwError = m_winHttpWebSocketExports.shutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
     return HRESULT_FROM_WIN32(dwError);
 }
 #endif

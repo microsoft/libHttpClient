@@ -142,14 +142,14 @@ uint32_t WebSocket::RegisterEventCallbacks(
     _In_opt_ void* callbackContext
 )
 {
-    std::unique_lock<std::mutex> lock{ m_mutex };
+    std::unique_lock<std::recursive_mutex> lock{ m_eventCallbacksMutex };
     m_eventCallbacks[m_nextToken] = EventCallbacks{ messageFunc, binaryMessageFunc, binaryFragmentFunc, closeFunc, callbackContext };
     return m_nextToken++;
 }
 
 void WebSocket::UnregisterEventCallbacks(uint32_t registrationToken)
 {
-    std::unique_lock<std::mutex> lock{ m_mutex };
+    std::unique_lock<std::recursive_mutex> lock{ m_eventCallbacksMutex };
     m_eventCallbacks.erase(registrationToken);
 }
 
@@ -207,7 +207,7 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
     {
     case XAsyncOp::Begin:
     {
-        std::unique_lock<std::mutex> lock{ ws->m_mutex };
+        std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
 
         RETURN_HR_IF(E_UNEXPECTED, !ws->m_performInfo.connect);
         RETURN_HR_IF(E_UNEXPECTED, ws->m_state != State::Initial);
@@ -256,7 +256,7 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
 
     HRESULT hr = HCGetWebSocketConnectResult(&context->internalAsyncBlock, &context->result);
 
-    std::unique_lock<std::mutex> lock{ ws->m_mutex };
+    std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
     if (SUCCEEDED(hr) && SUCCEEDED(context->result.errorCode))
     {
         // Connect was sucessful. Allocate ProviderContext to ensure WebSocket lifetime until it is reclaimed in WebSocket::CloseFunc
@@ -320,7 +320,7 @@ HRESULT WebSocket::Disconnect()
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
     RETURN_HR_IF(E_UNEXPECTED, !m_performInfo.disconnect);
 
-    std::unique_lock<std::mutex> lock{ m_mutex };
+    std::unique_lock<std::mutex> lock{ m_stateMutex };
     RETURN_HR_IF(S_OK, m_state == State::Disconnecting);
     RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
     
@@ -416,9 +416,9 @@ void CALLBACK WebSocket::MessageFunc(
 
     NotifyWebSocketRoutedHandlers(handle, true, message, nullptr, 0);
 
-    std::unique_lock<std::mutex> lock{ websocket->m_mutex };
-    auto callbacks{ websocket->m_eventCallbacks };
-    lock.unlock();
+    std::unique_lock<std::recursive_mutex> lock{ websocket->m_eventCallbacksMutex };
+    // Copy callbacks in case callback unregisters itself 
+    auto callbacks{ websocket->m_eventCallbacks }; 
 
     for (auto& pair : callbacks)
     {
@@ -447,9 +447,8 @@ void CALLBACK WebSocket::BinaryMessageFunc(
 
     NotifyWebSocketRoutedHandlers(handle, true, nullptr, bytes, payloadSize);
 
-    std::unique_lock<std::mutex> lock{ websocket->m_mutex };
+    std::unique_lock<std::recursive_mutex> lock{ websocket->m_eventCallbacksMutex };
     auto callbacks{ websocket->m_eventCallbacks };
-    lock.unlock();
 
     for (auto& pair : callbacks)
     {
@@ -479,9 +478,8 @@ void CALLBACK WebSocket::BinaryMessageFragmentFunc(
 
     NotifyWebSocketRoutedHandlers(handle, true, nullptr, bytes, payloadSize);
 
-    std::unique_lock<std::mutex> lock{ websocket->m_mutex };
+    std::unique_lock<std::recursive_mutex> lock{ websocket->m_eventCallbacksMutex };
     auto callbacks{ websocket->m_eventCallbacks };
-    lock.unlock();
 
     for (auto& pair : callbacks)
     {
@@ -512,9 +510,9 @@ void CALLBACK WebSocket::CloseFunc(
 {
     HC_TRACE_VERBOSE(WEBSOCKET, __FUNCTION__);
 
-    auto& websocket{ handle->websocket };
+    auto websocket{ handle->websocket };
 
-    std::unique_lock<std::mutex> lock{ websocket->m_mutex };
+    std::unique_lock<std::mutex> stateLock{ websocket->m_stateMutex };
     if (!websocket->m_providerContext)
     {
         HC_TRACE_ERROR(WEBSOCKET, "Unexpected call to WebSocket::CloseFunc will be ignored!");
@@ -525,9 +523,10 @@ void CALLBACK WebSocket::CloseFunc(
     // observers of websocket, it may be destroyed now
     HC_UNIQUE_PTR<ProviderContext> reclaim{ websocket->m_providerContext };
     websocket->m_state = State::Disconnected;
-
+    stateLock.unlock();    
+    
+    std::unique_lock<std::recursive_mutex> callbackLock{ websocket->m_eventCallbacksMutex };
     auto callbacks{ websocket->m_eventCallbacks };
-    lock.unlock();
 
     for (auto& pair : callbacks)
     {
