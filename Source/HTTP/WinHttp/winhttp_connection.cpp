@@ -680,7 +680,6 @@ void WinHttpConnection::callback_status_request_error(
     }
     else
     {
-#if HC_WINHTTP_WEBSOCKETS
         if (pRequestContext->m_websocketHandle && (pRequestContext->m_state == ConnectionState::WebSocketConnected || pRequestContext->m_state == ConnectionState::WebSocketClosing))
         {
             // Only trigger if we're already connected, never during a connection attempt
@@ -689,7 +688,6 @@ void WinHttpConnection::callback_status_request_error(
                 pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
             }
         }
-#endif
 
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(errorCode));
     }
@@ -1528,6 +1526,14 @@ void WinHttpConnection::callback_websocket_status_headers_available(
         winHttpConnection->m_lock.unlock();
         winHttpConnection->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
         return;
+    }
+
+    constexpr DWORD closeTimeoutMs = 1000;
+    bool status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_CLOSE_TIMEOUT, (LPVOID)&closeTimeoutMs, sizeof(DWORD));
+    if (!status)
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
     }
 
     winHttpConnection->m_state = ConnectionState::WebSocketConnected;
