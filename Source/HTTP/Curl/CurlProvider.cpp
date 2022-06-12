@@ -81,13 +81,21 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     auto easyInitResult = CurlEasyRequest::Initialize(hcCall, async);
     RETURN_IF_FAILED(easyInitResult.hr);
 
-    auto iter = m_curlMultis.find(workPort);
-    if (iter == m_curlMultis.end())
-    {
-        auto multiInitResult = CurlMulti::Initialize(workPort);
-        RETURN_IF_FAILED(multiInitResult.hr);
+    http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>>::iterator iter;
 
-        iter = m_curlMultis.emplace(workPort, multiInitResult.ExtractPayload()).first;
+	{
+        // CurlProvider::PerformAsync can be called simultaneously from multiple threads so we need to lock
+        // to prevent unsafe access to m_curlMultis
+		std::lock_guard<std::mutex> lock{ m_mutex };
+
+		iter = m_curlMultis.find(workPort);
+		if (iter == m_curlMultis.end())
+		{
+			auto multiInitResult = CurlMulti::Initialize(workPort);
+			RETURN_IF_FAILED(multiInitResult.hr);
+
+			iter = m_curlMultis.emplace(workPort, multiInitResult.ExtractPayload()).first;
+		}
     }
 
     auto& multi{ iter->second };
@@ -133,28 +141,26 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         size_t multiIndex{ 0 };
         bool cleanupComplete{ false };
 
-        for (auto& pair : provider->m_curlMultis)
-        {
-            HRESULT hr = CurlMulti::CleanupAsync(std::move(pair.second), &provider->m_multiCleanupAsyncBlocks[multiIndex++]);
-            if (FAILED(hr))
-            {
-                // Continue cleanup if this fails, but we should expect 1 fewer MultiCleanupComplete callback
-                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::CleanupAsync failed, continuing cleanup");
+		{
+			std::lock_guard<std::mutex> lock{ provider->m_mutex };
+			for (auto& pair : provider->m_curlMultis)
+			{
+				HRESULT hr = CurlMulti::CleanupAsync(std::move(pair.second), &provider->m_multiCleanupAsyncBlocks[multiIndex++]);
+				if (FAILED(hr))
+				{
+					// Continue cleanup if this fails, but we should expect 1 fewer MultiCleanupComplete callback
+					HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::CleanupAsync failed, continuing cleanup");
 
-                std::lock_guard<std::mutex> lock{ provider->m_mutex };
-                --provider->m_cleanupTasksRemaining;
-            }
-        }
+					--provider->m_cleanupTasksRemaining;
+				}
+			}
 
-
-        {
-            std::lock_guard<std::mutex> lock{ provider->m_mutex };
-            if (--provider->m_cleanupTasksRemaining == 0)
-            {
-                // If there are no pending pending multi cleanups, complete cleanup here
-                cleanupComplete = true;
-            }
-        }
+			if (--provider->m_cleanupTasksRemaining == 0)
+			{
+				// If there are no pending pending multi cleanups, complete cleanup here
+				cleanupComplete = true;
+			}
+		}
 
         if (cleanupComplete)
         {
