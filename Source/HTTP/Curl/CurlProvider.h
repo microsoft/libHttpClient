@@ -34,8 +34,6 @@ private:
 
     HRESULT PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept;
 
-    void CheckCurlMultis();
-
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data) noexcept;
     static void CALLBACK MultiCleanupComplete(_Inout_ struct XAsyncBlock* asyncBlock) noexcept;
 
@@ -47,8 +45,6 @@ private:
     http_internal_vector<XAsyncBlock> m_multiCleanupAsyncBlocks;
     XTaskQueueHandle m_multiCleanupQueue{ nullptr };
     size_t m_cleanupTasksRemaining{ 0 };
-    volatile bool m_curlMultisLock{ false };
-    DWORD m_lockingThread{ 0 };
 };
 
 } // httpclient
