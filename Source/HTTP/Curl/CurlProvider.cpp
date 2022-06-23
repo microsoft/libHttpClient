@@ -83,19 +83,19 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
 
     http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>>::iterator iter;
 
-	{
+    {
         // CurlProvider::PerformAsync can be called simultaneously from multiple threads so we need to lock
         // to prevent unsafe access to m_curlMultis
-		std::lock_guard<std::mutex> lock{ m_mutex };
+        std::lock_guard<std::mutex> lock{ m_mutex };
 
-		iter = m_curlMultis.find(workPort);
-		if (iter == m_curlMultis.end())
-		{
-			auto multiInitResult = CurlMulti::Initialize(workPort);
-			RETURN_IF_FAILED(multiInitResult.hr);
+        iter = m_curlMultis.find(workPort);
+        if (iter == m_curlMultis.end())
+        {
+            auto multiInitResult = CurlMulti::Initialize(workPort);
+            RETURN_IF_FAILED(multiInitResult.hr);
 
-			iter = m_curlMultis.emplace(workPort, multiInitResult.ExtractPayload()).first;
-		}
+            iter = m_curlMultis.emplace(workPort, multiInitResult.ExtractPayload()).first;
+        }
     }
 
     auto& multi{ iter->second };
@@ -127,40 +127,46 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &provider->m_multiCleanupQueue));
 
-        XAsyncBlock multiCleanupAsyncBlock{ provider->m_multiCleanupQueue, provider.get(), CurlProvider::MultiCleanupComplete, 0 };
-        provider->m_multiCleanupAsyncBlocks = http_internal_vector<XAsyncBlock>(provider->m_curlMultis.size(), multiCleanupAsyncBlock);
-
+        http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>> localCurlMultis;
         {
             std::lock_guard<std::mutex> lock{ provider->m_mutex };
+            localCurlMultis = std::move(provider->m_curlMultis);
+            provider->m_curlMultis.clear();
+
             // There is a race condition where the last CurlMulti::CleanupAsync task can complete before the cleanup loop is finished.
             // Because the loop condition relies on the provider being alive, we add an additional cleanup task, ensuring the provider
             // can never be destroyed until after the loop.
-            provider->m_cleanupTasksRemaining = 1 + provider->m_curlMultis.size();
+            provider->m_cleanupTasksRemaining = 1 + localCurlMultis.size();
         }
+
+        XAsyncBlock multiCleanupAsyncBlock{ provider->m_multiCleanupQueue, provider.get(), CurlProvider::MultiCleanupComplete, 0 };
+        provider->m_multiCleanupAsyncBlocks = http_internal_vector<XAsyncBlock>(localCurlMultis.size(), multiCleanupAsyncBlock);
 
         size_t multiIndex{ 0 };
         bool cleanupComplete{ false };
 
-		{
-			std::lock_guard<std::mutex> lock{ provider->m_mutex };
-			for (auto& pair : provider->m_curlMultis)
-			{
-				HRESULT hr = CurlMulti::CleanupAsync(std::move(pair.second), &provider->m_multiCleanupAsyncBlocks[multiIndex++]);
-				if (FAILED(hr))
-				{
-					// Continue cleanup if this fails, but we should expect 1 fewer MultiCleanupComplete callback
-					HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::CleanupAsync failed, continuing cleanup");
+        for (auto& pair : localCurlMultis)
+        {
+            HRESULT hr = CurlMulti::CleanupAsync(std::move(pair.second), &provider->m_multiCleanupAsyncBlocks[multiIndex++]);
+            if (FAILED(hr))
+            {
+                // Continue cleanup if this fails, but we should expect 1 fewer MultiCleanupComplete callback
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::CleanupAsync failed, continuing cleanup");
 
-					--provider->m_cleanupTasksRemaining;
-				}
-			}
+                std::lock_guard<std::mutex> lock{ provider->m_mutex };
+                --provider->m_cleanupTasksRemaining;
+            }
+        }
 
-			if (--provider->m_cleanupTasksRemaining == 0)
-			{
-				// If there are no pending pending multi cleanups, complete cleanup here
-				cleanupComplete = true;
-			}
-		}
+
+        {
+            std::lock_guard<std::mutex> lock{ provider->m_mutex };
+            if (--provider->m_cleanupTasksRemaining == 0)
+            {
+                // If there are no pending pending multi cleanups, complete cleanup here
+                cleanupComplete = true;
+            }
+        }
 
         if (cleanupComplete)
         {
