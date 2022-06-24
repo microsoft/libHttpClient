@@ -2,6 +2,8 @@
 
 #include "jni.h"
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
 class HttpRequest {
 public:
     HttpRequest(
@@ -44,3 +46,5 @@ void AndroidHttpCallPerformAsync(
     _In_opt_ void* context,
     _In_ HCPerformEnv env
 ) noexcept;
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
