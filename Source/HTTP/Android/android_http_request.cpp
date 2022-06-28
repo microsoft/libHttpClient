@@ -5,6 +5,8 @@
 #include <httpClient/httpClient.h>
 #include <vector>
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
 // The following symbols live in files that are not referenced by any other C
 // file and are only called by JNI callers. In order to force the compiler to
 // not ignore the file we make a token dummy reference to the file here.
@@ -334,3 +336,5 @@ void AndroidHttpCallPerformAsync(
         XAsyncComplete(asyncBlock, E_FAIL, 0);
     }
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
