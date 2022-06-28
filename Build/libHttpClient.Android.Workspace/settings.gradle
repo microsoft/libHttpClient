@@ -5,7 +5,7 @@ include ":libHttpClient.Android"
 project(":libHttpClient.Android").projectDir = new File("../libHttpClient.Android")
 
 // Unless HC_NOWEBSOCKETS is passed, include libssl and libcrypto
-if (!startParameter.getProjectProperties().containsKey("HC_NOWEBSOCKETS")) {
+if (!hasProperty("HC_NOWEBSOCKETS")) {
     include ":libssl.Android", ":libcrypto.Android"
 
     project(":libssl.Android").projectDir = new File("../libssl.Android")
