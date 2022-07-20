@@ -1331,7 +1331,7 @@ void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
 #endif
 }
 
-char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(
+const char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(
     _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
 )
 {

@@ -479,7 +479,7 @@ bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &ce
     ZeroMemory(&params, sizeof(params));
     params.cbSize = sizeof(CERT_CHAIN_PARA);
     params.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
-    LPSTR usages [] =
+    PCSTR usages [] =
     {
         szOID_PKIX_KP_SERVER_AUTH,
 
@@ -488,7 +488,7 @@ bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &ce
         szOID_SGC_NETSCAPE
     };
     params.RequestedUsage.Usage.cUsageIdentifier = std::extent<decltype(usages)>::value;
-    params.RequestedUsage.Usage.rgpszUsageIdentifier = usages;
+    params.RequestedUsage.Usage.rgpszUsageIdentifier = const_cast<LPSTR*>(usages);
     PCCERT_CHAIN_CONTEXT chainContext;
     chain_context chain;
     if (!CertGetCertificateChain(
