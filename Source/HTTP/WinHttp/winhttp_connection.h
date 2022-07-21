@@ -9,7 +9,6 @@
 #include <XNetworking.h>
 #endif
 #if !HC_NOWEBSOCKETS
-#include "hcwebsocket.h"
 #include "WebSocket/hcwebsocket.h"
 #endif
 
