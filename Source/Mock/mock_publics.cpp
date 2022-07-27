@@ -142,6 +142,13 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCMockCallCloseHandle(
+    _In_ HCMockCallHandle callHandle
+    ) noexcept
+{
+    return HCHttpCallCloseHandle(reinterpret_cast<HCCallHandle>(callHandle));
+}
+
 STDAPI 
 HCMockResponseSetResponseBodyBytes(
     _In_ HCMockCallHandle call,

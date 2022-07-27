@@ -23,6 +23,8 @@ extern "C"
 /// First create a HTTP handle using HCMockCallCreate().
 /// Then call HCMockResponseSet*() to prepare the HC_MOCK_CALL_HANDLE.
 /// Then call HCMockAddMock() to add it to the system.
+/// Call HCMockRemoveMock() to remove the mock call from the system.
+/// Then call HCMockCallCloseHandle() to close the handle and clean up the mock call.
 /// </remarks>
 STDAPI HCMockCallCreate(
     _Out_ HCMockCallHandle* call
@@ -109,7 +111,7 @@ STDAPI HCMockSetMockMatchedCallback(
     );
 
 /// <summary>
-/// Removes and cleans up the mock.
+/// Removes the mock.
 /// </summary>
 /// <param name="call">The matched mock.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
@@ -118,10 +120,19 @@ STDAPI HCMockRemoveMock(
     );
 
 /// <summary>
-/// Removes and cleans up all mock calls added by HCMockAddMock.
+/// Removes all mock calls added by HCMockAddMock.
 /// </summary>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 STDAPI HCMockClearMocks() noexcept;
+
+/// <summary>
+/// Closes a mock HTTP call handle.
+/// </summary>
+/// <param name="call">The handle of the mock HTTP call.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCMockCallCloseHandle(
+    _In_ HCMockCallHandle call
+    ) noexcept;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
