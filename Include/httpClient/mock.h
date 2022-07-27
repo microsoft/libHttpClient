@@ -126,6 +126,16 @@ STDAPI HCMockRemoveMock(
 STDAPI HCMockClearMocks() noexcept;
 
 /// <summary>
+/// Duplicates a mock HTTP call handle.
+/// </summary>
+/// <param name="call">The handle of the mock HTTP call.</param>
+/// <returns>Returns the duplicated handle.</returns>
+/// <remarks>Call HCMockCallCloseHandle to close the new handle.</remarks>
+STDAPI_(HCMockCallHandle) HCMockCallDuplicateHandle(
+    _In_ HCMockCallHandle call
+    ) noexcept;
+
+/// <summary>
 /// Closes a mock HTTP call handle.
 /// </summary>
 /// <param name="call">The handle of the mock HTTP call.</param>
