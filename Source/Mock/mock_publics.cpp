@@ -146,7 +146,7 @@ STDAPI HCMockCallCloseHandle(
     _In_ HCMockCallHandle callHandle
     ) noexcept
 {
-    return HCHttpCallCloseHandle(reinterpret_cast<HCCallHandle>(callHandle));
+    return HCHttpCallCloseHandle(static_cast<HCCallHandle>(callHandle));
 }
 
 STDAPI 
