@@ -67,10 +67,10 @@ public class HttpClientRequest {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(final Call call, IOException e) {
-                boolean isNoNetworkFailure =
-                    e instanceof UnknownHostException ||
-                    e instanceof ConnectException ||
-                    e instanceof SocketTimeoutException;
+                // isNoNetworkFailure indicates to the native code when to assume the client is
+                // disconnected from the internet. In no network cases, retry logic will not be
+                // activated.
+                boolean isNoNetworkFailure = e instanceof UnknownHostException;
 
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
