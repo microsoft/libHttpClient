@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include <Android/log.h>
+#include <android/log.h>
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
 

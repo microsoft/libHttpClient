@@ -329,11 +329,12 @@ struct HC_PERFORM_ENV::WebSocketConnectContext
         HC_PERFORM_ENV* _env,
         http_internal_string&& _uri,
         http_internal_string&& _subprotocol,
-        HCWebsocketHandle websocketHandle,
+        HCWebsocketHandle _websocketHandle,
         XAsyncBlock* _clientAsyncBlock
     ) : env{ _env },
         uri{ std::move(_uri) },
         subprotocol{ std::move(_subprotocol) },
+        websocketHandle{ _websocketHandle },
         websocket{ websocketHandle->websocket },
         clientAsyncBlock{ _clientAsyncBlock },
         internalAsyncBlock{ nullptr, this, HC_PERFORM_ENV::WebSocketConnectComplete }
@@ -351,6 +352,7 @@ struct HC_PERFORM_ENV::WebSocketConnectContext
     HC_PERFORM_ENV* const env{};
     http_internal_string uri;
     http_internal_string subprotocol;
+    HCWebsocketHandle websocketHandle;
     std::shared_ptr<WebSocket> websocket;
     XAsyncBlock* const clientAsyncBlock;
     XAsyncBlock internalAsyncBlock{};
@@ -435,6 +437,9 @@ void CALLBACK HC_PERFORM_ENV::WebSocketConnectComplete(XAsyncBlock* async)
     HRESULT hr = HCGetWebSocketConnectResult(&context->internalAsyncBlock, &context->connectResult);
     if (SUCCEEDED(hr) && SUCCEEDED(context->connectResult.errorCode))
     {
+        // Pass the clients handle back to them in the result
+        context->connectResult.websocket = context->websocketHandle;
+
         env->m_connectedWebSockets.insert(new (http_stl_allocator<ActiveWebSocketContext>{}.allocate(1)) ActiveWebSocketContext{ env, context->websocket });
         if (env->m_cleanupAsyncBlock)
         {

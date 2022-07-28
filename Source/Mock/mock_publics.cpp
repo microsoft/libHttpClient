@@ -71,7 +71,7 @@ try
     }
 
     std::lock_guard<std::recursive_mutex> guard(httpSingleton->m_mocksLock);
-    httpSingleton->m_mocks.push_back(static_cast<HCMockCallHandle>(HCHttpCallDuplicateHandle(call)));
+    httpSingleton->m_mocks.push_back(HCMockCallDuplicateHandle(call));
     return S_OK;
 }
 CATCH_RETURN()
@@ -141,6 +141,20 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+
+STDAPI_(HCMockCallHandle) HCMockCallDuplicateHandle(
+    _In_ HCMockCallHandle callHandle
+) noexcept
+{
+    return static_cast<HCMockCallHandle>(HCHttpCallDuplicateHandle(callHandle));
+}
+
+STDAPI HCMockCallCloseHandle(
+    _In_ HCMockCallHandle callHandle
+    ) noexcept
+{
+    return HCHttpCallCloseHandle(static_cast<HCCallHandle>(callHandle));
+}
 
 STDAPI 
 HCMockResponseSetResponseBodyBytes(

@@ -71,13 +71,13 @@ if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
 endif()
 
 include_directories(
-    $(ProjectDir)
-    $(ProjectDir)../../../Source
-    $(ProjectDir)../../../Source/Common
-    $(ProjectDir)../../../Source/HTTP
-    $(ProjectDir)../../../Source/Logger
-    $(ProjectDir)../../../Include
-    $(ProjectDir)../../../Include/httpClient
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/Common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/HTTP
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/Logger
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Include/httpClient
     )
 
 set(CMAKE_SUPPRESS_REGENERATION true)

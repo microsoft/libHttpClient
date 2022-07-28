@@ -9,7 +9,6 @@
 #include <XNetworking.h>
 #endif
 #if !HC_NOWEBSOCKETS
-#include "hcwebsocket.h"
 #include "WebSocket/hcwebsocket.h"
 #endif
 
@@ -263,7 +262,7 @@ private:
         _In_ WinHttpConnection* pRequestContext,
         _In_ void* statusInfo);
 
-    static char* winhttp_web_socket_buffer_type_to_string(
+    static const char* winhttp_web_socket_buffer_type_to_string(
         _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
     );
 

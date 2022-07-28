@@ -126,6 +126,11 @@ try
         return E_FAIL;
     }
 
+    if (call->responseBodyBytes.size() > bufferSize)
+    {
+        return E_BOUNDS;
+    }
+
 #if HC_PLATFORM_IS_MICROSOFT
     memcpy_s(buffer, bufferSize, call->responseBodyBytes.data(), call->responseBodyBytes.size());
 #else

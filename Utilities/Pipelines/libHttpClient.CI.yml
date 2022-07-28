@@ -8,9 +8,8 @@ trigger:
 # Build for opened PRs to `main`
 # Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/github#pr-triggers
 pr:
-  branches:
-    include:
-      - main
+- main
+- releases/*
 
 # Nightly trigger. Builds on the specified schedule.
 # Refs:

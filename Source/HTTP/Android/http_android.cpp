@@ -66,6 +66,8 @@ void LogByLine(JNIEnv* env, jstring javaString, char const* intro, char const* l
 
 }
 
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
 extern "C"
 {
 
@@ -268,3 +270,5 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOu
 }
 
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
