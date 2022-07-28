@@ -67,10 +67,7 @@ public class HttpClientRequest {
         OK_CLIENT.newCall(this.requestBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(final Call call, IOException e) {
-                boolean isNoNetworkFailure =
-                    e instanceof UnknownHostException ||
-                    e instanceof ConnectException ||
-                    e instanceof SocketTimeoutException;
+                boolean isNoNetworkFailure = e instanceof UnknownHostException;
 
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
