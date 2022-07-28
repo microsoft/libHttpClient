@@ -90,6 +90,8 @@ _HCWebSocketGetHeaderAtIndex
 # mock.h
 #
 _HCMockCallCreate
+_HCMockCallDuplicateHandle
+_HCMockCallCloseHandle
 _HCMockAddMock
 _HCMockClearMocks
 _HCMockRemoveMock
