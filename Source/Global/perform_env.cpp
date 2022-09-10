@@ -20,7 +20,7 @@
 #elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
 #include "WebSocket/WinRT/winrt_websocket.h"
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "WebSocket/Websocketpp/websocketpp_websocket.h"
+#include "WebSocket/Android/okhttp_websocket.h"
 #elif HC_PLATFORM_IS_APPLE
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #endif
@@ -165,10 +165,10 @@ WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
     };
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
     return WebSocketPerformInfo{
-        WebSocketppConnectAsync,
-        WebSocketppSendMessageAsync,
-        WebSocketppSendBinaryMessageAsync,
-        WebSocketppDisconnect,
+        OkHttpWebSocketConnectAsync,
+        OkHttpWebSocketSendMessageAsync,
+        OkHttpWebSocketSendBinaryMessageAsync,
+        OkHttpWebSocketDisconnect,
         nullptr
     };
 #elif HC_PLATFORM_IS_APPLE
