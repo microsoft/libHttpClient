@@ -47,8 +47,7 @@ set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Logger/Android/android_logger.cpp"
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/x509_cert_utilities.hpp"
+    "${PATH_TO_ROOT}/Source/WebSocket/Android/okhttp_websocket.cpp"
     )
 
  set(COMMON_INCLUDE_DIRS

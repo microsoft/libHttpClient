@@ -47,9 +47,17 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
         return E_FAIL;
     }
 
+    jclass localWebSocket = jniEnv->FindClass("com/xbox/httpclient/HttpClientWebSocket");
+    if (localWebSocket == nullptr)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientWebSocket class");
+        return E_FAIL;
+    }
+
     jclass globalNetworkObserver = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localNetworkObserver));
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
+    jclass globalWebSocketClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localWebSocket));
 
     // Initialize the network observer
 
@@ -73,7 +81,8 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
                         args->applicationContext,
                         globalNetworkObserver,
                         globalRequestClass,
-                        globalResponseClass
+                        globalResponseClass,
+                        globalWebSocketClass
                 ), http_alloc_deleter<AndroidPlatformContext>());
 
         return std::move(platformContext);
@@ -89,13 +98,15 @@ AndroidPlatformContext::AndroidPlatformContext(
     jobject applicationContext,
     jclass networkObserverClass,
     jclass requestClass,
-    jclass responseClass
+    jclass responseClass,
+    jclass webSocketClass
 ) :
     m_javaVm{ javaVm },
     m_applicationContext{ applicationContext },
     m_networkObserverClass{ networkObserverClass },
     m_httpRequestClass{ requestClass },
-    m_httpResponseClass{ responseClass }
+    m_httpResponseClass{ responseClass },
+    m_webSocketClass{ webSocketClass }
 {
     assert(m_javaVm != nullptr);
 }

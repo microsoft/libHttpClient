@@ -12,6 +12,7 @@ public:
     jobject GetApplicationContext() { return m_applicationContext; }
     jclass GetHttpRequestClass() { return m_httpRequestClass; }
     jclass GetHttpResponseClass() { return m_httpResponseClass; }
+    jclass GetWebSocketClass() { return m_webSocketClass; }
 
 private:
     AndroidPlatformContext(
@@ -19,7 +20,8 @@ private:
         jobject applicationContext,
         jclass networkObserverClass,
         jclass requestClass,
-        jclass responseClass
+        jclass responseClass,
+        jclass webSocketClass
     );
 
     JavaVM * m_javaVm;
@@ -27,4 +29,5 @@ private:
     jclass m_networkObserverClass;
     jclass m_httpRequestClass;
     jclass m_httpResponseClass;
+    jclass m_webSocketClass;
 };
