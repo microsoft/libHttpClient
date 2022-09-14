@@ -23,7 +23,7 @@ HC_CALL::HC_CALL(uint64_t _id) : id{ _id }
 
 HC_CALL::~HC_CALL()
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, __FUNCTION__);
+    HC_TRACE_INFORMATION(HTTPCLIENT, __FUNCTION__);
 }
 
 Result<HC_UNIQUE_PTR<HC_CALL>> HC_CALL::Initialize()
@@ -124,7 +124,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
         if (call->traceCall)
         {
-            HC_TRACE_VERBOSE(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider Cancel [ID %llu]", TO_ULL(call->id));
+            HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider Cancel [ID %llu]", TO_ULL(call->id));
         }
 
         // Terminate the Perform workQueue and allow XAsync to handle synchronization. If PerformSingleRequest has been scheduled but is not yet
@@ -138,7 +138,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
         if (call->traceCall)
         {
-            HC_TRACE_VERBOSE(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider Cleanup [ID %llu]", TO_ULL(call->id));
+            HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider Cleanup [ID %llu]", TO_ULL(call->id));
         }
 
         // Cleanup PerformContext
@@ -165,7 +165,7 @@ void CALLBACK HC_CALL::PerformSingleRequest(void* c, bool canceled)
 
     if (call->traceCall)
     {
-        HC_TRACE_VERBOSE(HTTPCLIENT, "HC_CALL::PerformSingleRequest [ID %llu] Iteration %d", TO_ULL(call->id), call->m_iterationNumber);
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerformSingleRequest [ID %llu] Iteration %d", TO_ULL(call->id), call->m_iterationNumber);
     }
 
     call->m_iterationNumber++;
@@ -199,7 +199,7 @@ HRESULT HC_CALL::PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderDa
     {
         if (call->traceCall)
         {
-            HC_TRACE_VERBOSE(HTTPCLIENT, "HC_CALL::PerformSingleRequestAsyncProvider Begin [ID %llu]", TO_ULL(call->id));
+            HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerformSingleRequestAsyncProvider Begin [ID %llu]", TO_ULL(call->id));
         }
 
         auto httpSingleton = get_http_singleton();
@@ -253,7 +253,7 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     HRESULT hr = XAsyncGetStatus(async, false);
     if (call->traceCall)
     {
-        HC_TRACE_VERBOSE(HTTPCLIENT, "HC_CALL::PerformSingleRequestComplete [ID %llu] (hr=0x%08x)", TO_ULL(static_cast<HC_CALL*>(call)->id), hr);
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerformSingleRequestComplete [ID %llu] (hr=0x%08x)", TO_ULL(static_cast<HC_CALL*>(call)->id), hr);
     }
 
     if (SUCCEEDED(hr))

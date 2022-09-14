@@ -16,7 +16,7 @@ HC_WEBSOCKET_OBSERVER::HC_WEBSOCKET_OBSERVER(std::shared_ptr<xbox::httpclient::W
 
 HC_WEBSOCKET_OBSERVER::~HC_WEBSOCKET_OBSERVER()
 {
-    HC_TRACE_VERBOSE(WEBSOCKET, __FUNCTION__);
+    HC_TRACE_INFORMATION(WEBSOCKET, __FUNCTION__);
 
     websocket->UnregisterEventCallbacks(m_handlerToken);
 }
@@ -115,7 +115,7 @@ WebSocket::WebSocket(uint64_t _id, WebSocketPerformInfo performInfo, HC_PERFORM_
 
 WebSocket::~WebSocket()
 {
-    HC_TRACE_VERBOSE(WEBSOCKET, __FUNCTION__);
+    HC_TRACE_INFORMATION(WEBSOCKET, __FUNCTION__);
 }
 
 Result<std::shared_ptr<WebSocket>> WebSocket::Initialize()
@@ -508,7 +508,7 @@ void CALLBACK WebSocket::CloseFunc(
     void* /*context*/
 )
 {
-    HC_TRACE_VERBOSE(WEBSOCKET, __FUNCTION__);
+    HC_TRACE_INFORMATION(WEBSOCKET, __FUNCTION__);
 
     auto websocket{ handle->websocket };
 
