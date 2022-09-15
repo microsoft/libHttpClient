@@ -527,7 +527,7 @@ HRESULT WinHttpProvider::GetProxyName(
 
 void WinHttpProvider::Suspend()
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Suspend");
+    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpProvider::Suspend");
 
     {
         std::lock_guard<std::mutex> lock{ m_lock };
@@ -556,7 +556,7 @@ void WinHttpProvider::Suspend()
 
 void WinHttpProvider::Resume()
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Resume");
+    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpProvider::Resume");
 
     std::unique_lock<std::mutex> lock{ m_lock };
 
@@ -597,7 +597,7 @@ void WinHttpProvider::NetworkConnectivityChangedCallback(void* context, const XN
         HRESULT hr = XNetworkingGetConnectivityHint(&hint);
         if (SUCCEEDED(hr))
         {
-            HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkConnectivityChangedCallback, hint.networkInitialized=%d", hint.networkInitialized);
+            HC_TRACE_INFORMATION(HTTPCLIENT, "NetworkConnectivityChangedCallback, hint.networkInitialized=%d", hint.networkInitialized);
             provider->m_networkInitialized = hint.networkInitialized;
         }
         else

@@ -76,7 +76,7 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     XTaskQueuePortHandle workPort{ nullptr };
     RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
 
-    HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::Perform: HCCallHandle=%p, workPort=%p", hcCall, workPort);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "HC_PERFORM_ENV::Perform: HCCallHandle=%p, workPort=%p", hcCall, workPort);
 
     auto easyInitResult = CurlEasyRequest::Initialize(hcCall, async);
     RETURN_IF_FAILED(easyInitResult.hr);

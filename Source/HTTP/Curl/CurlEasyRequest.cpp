@@ -123,11 +123,11 @@ CURL* CurlEasyRequest::Handle() const noexcept
 
 void CurlEasyRequest::Complete(CURLcode result)
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::Complete: CURLCode=%ul", result);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::Complete: CURLCode=%ul", result);
 
     if (result != CURLE_OK)
     {
-        HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::m_errorBuffer='%s'", m_errorBuffer);
+        HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::m_errorBuffer='%s'", m_errorBuffer);
 
         long platformError = 0;
         auto curle = curl_easy_getinfo(m_curlEasyHandle, CURLINFO_OS_ERRNO, &platformError);
@@ -186,7 +186,7 @@ HRESULT CurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
 
 size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::ReadCallback: reading body data (%llu items of size %llu)", nitems, size);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::ReadCallback: reading body data (%llu items of size %llu)", nitems, size);
 
     auto request = static_cast<CurlEasyRequest*>(context);
 
@@ -222,7 +222,7 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
 
 size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::WriteHeaderCallback: received header (%llu items of size %llu)", nitems, size);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteHeaderCallback: received header (%llu items of size %llu)", nitems, size);
 
     auto request = static_cast<CurlEasyRequest*>(context);
 
@@ -286,7 +286,7 @@ size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t ni
 
 size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%llu bytes)", nmemb);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%llu bytes)", nmemb);
 
     auto request = static_cast<CurlEasyRequest*>(context);
 
