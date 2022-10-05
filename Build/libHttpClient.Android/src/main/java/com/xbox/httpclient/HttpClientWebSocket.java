@@ -73,7 +73,14 @@ public final class HttpClientWebSocket extends WebSocketListener {
 
     @Override
     public void onMessage(WebSocket webSocket, okio.ByteString bytes) {
-        onBinaryMessage(bytes.asByteBuffer());
+        // These needs to be a directly allocated ByteBuffer or
+        // native layer won't be able to access this.
+
+        ByteBuffer buffer = ByteBuffer.allocateDirect(bytes.size());
+        buffer.put(bytes.toByteArray());
+        buffer.position(0);
+
+        onBinaryMessage(buffer);
     }
 
     public native void onOpen();

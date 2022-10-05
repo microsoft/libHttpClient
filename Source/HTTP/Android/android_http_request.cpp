@@ -223,7 +223,7 @@ HRESULT HttpRequest::ProcessResponse(HCCallHandle call, jobject response)
     return ProcessResponseBody(call, response);
 }
 
-HRESULT HttpRequest::ProcessResponseBody(HCCallHandle call, jobject repsonse) 
+HRESULT HttpRequest::ProcessResponseBody(HCCallHandle call, jobject response)
 {
     JNIEnv* jniEnv = nullptr;
     HRESULT result = GetJniEnv(&jniEnv);
@@ -240,7 +240,7 @@ HRESULT HttpRequest::ProcessResponseBody(HCCallHandle call, jobject repsonse)
         return E_FAIL;
     }
 
-    jniEnv->CallVoidMethod(repsonse, httpResponseBodyMethod);
+    jniEnv->CallVoidMethod(response, httpResponseBodyMethod);
     return S_OK;
 }
 
