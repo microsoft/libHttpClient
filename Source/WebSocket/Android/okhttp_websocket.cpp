@@ -535,19 +535,35 @@ struct okhttp_websocket_impl : hc_websocket_impl, std::enable_shared_from_this<o
         });
     }
 
-    HRESULT SendBinaryMessageAsync(const uint8_t* data, uint32_t dataSize, XAsyncBlock* asyncBlock) const
+    HRESULT SendBinaryMessageAsync(const uint8_t* payload, uint32_t payloadSize, XAsyncBlock* asyncBlock) const
     {
         struct CallArguments
         {
             const std::shared_ptr<const okhttp_websocket_impl> sharedThis;
 
-            const uint8_t* const data;
-            const uint32_t dataSize;
+            const std::vector<uint8_t> payload;
+            const uint32_t payloadSize;
             WebSocketCompletionResult operationResult{ 0 };
         };
-        std::unique_ptr<CallArguments> context = std::make_unique<CallArguments>(CallArguments{ shared_from_this(), data, dataSize });
 
-        return XAsyncBegin(asyncBlock, context.release(), (const void*)HCWebSocketSendBinaryMessageAsync, __FUNCTION__, [](XAsyncOp op, const XAsyncProviderData* data)
+        std::unique_ptr<CallArguments> context = std::make_unique<CallArguments>(
+            CallArguments
+            {
+                shared_from_this(),
+                std::vector<uint8_t>(payload, payload + payloadSize),
+                payloadSize
+            });
+
+        // We use `HCWebSocketSendMessageAsync` instead of `HCWebSocketSendBinaryMessageAsync`
+        // as the XAsyncBlock identity due to the identity in `XAsyncGetResult`in
+        // `HCGetWebSocketSendMessageResult`, which is used for both binary and non-binary messages.
+        // Using the same identity in both will prevent Call/Result mismatches.
+        // This mirrors `WinHttpConnection::WebSocketSendMessageAsync`.
+        RETURN_IF_FAILED(XAsyncBegin(
+            asyncBlock, context.release(),
+            (const void*)HCWebSocketSendMessageAsync,
+            "HCWebSocketSendMessageAsync",
+            [](XAsyncOp op, const XAsyncProviderData* data)
         {
             CallArguments* context = static_cast<CallArguments*>(data->context);
             auto& sharedThis = context->sharedThis;
@@ -561,7 +577,11 @@ struct okhttp_websocket_impl : hc_websocket_impl, std::enable_shared_from_this<o
                     auto lock = sharedThis->Lock();
 
                     context->operationResult.websocket = sharedThis->GetHandle();
-                    context->operationResult.errorCode = sharedThis->SendBinaryMessage(sharedThis->m_socketState, context->data,context->dataSize);
+                    context->operationResult.errorCode = sharedThis->SendBinaryMessage(
+                        sharedThis->m_socketState,
+                        context->payload.data(),
+                        context->payloadSize
+                    );
                     XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
                     return S_OK;
                 }
@@ -579,12 +599,15 @@ struct okhttp_websocket_impl : hc_websocket_impl, std::enable_shared_from_this<o
                 case XAsyncOp::Cleanup:
                 {
                     // re-capture allocated memory, and free
-                    std::unique_ptr<CallArguments> contextPtr(context);
+                    std::unique_ptr<CallArguments> contextPtr{ context };
+                    return S_OK;
                 }
                 default:
                     return S_OK;
             }
-        });
+        }));
+
+        return S_OK;
     }
 
     HRESULT DisconnectAsync(HCWebSocketCloseStatus closeStatus) const
