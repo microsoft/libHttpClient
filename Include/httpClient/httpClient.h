@@ -446,7 +446,7 @@ STDAPI HCHttpCallRequestSetRetryAllowed(
 /// ID number of this REST endpoint used to cache the Retry-After header for fast fail.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.  Pass nullptr to set the default for future calls.</param>
-/// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail.  1-1000 are reserved for XSAPI.</param>
+/// <param name="retryAfterCacheId">ID number of this REST endpoint used to cache the Retry-After header for fast fail. Must be non-0. 1-1000 are reserved for XSAPI.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 /// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallRequestSetRetryCacheId(
@@ -484,7 +484,7 @@ STDAPI HCHttpCallRequestSetTimeout(
 /// <br />
 /// If the service returns an HTTP error with a "Retry-After" header, then all future calls to that API 
 /// will immediately fail with the original error without contacting the service until the "Retry-After" 
-/// time has been reached.<br />
+/// time has been reached if HCHttpCallRequestSetRetryCacheId() has been called prior to cache the Retry-After header for fast fail logic.<br />
 ///  <br />
 /// Idempotent service calls are retried when a network error occurs or the server responds with<br />
 /// one of these HTTP status codes:<br />
