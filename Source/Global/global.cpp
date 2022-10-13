@@ -172,7 +172,7 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
         // self is the only reference at this point, the singleton will be destroyed on this thread.
         self.reset();
 
-        HC_TRACE_VERBOSE(HTTPCLIENT, "libHttpClient cleanup complete, returning to client");
+        HC_TRACE_INFORMATION(HTTPCLIENT, "libHttpClient cleanup complete, returning to client");
 
         // cleanup tracing now that we are done
         HCTraceCleanup();

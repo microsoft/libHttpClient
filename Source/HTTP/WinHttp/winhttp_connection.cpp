@@ -41,7 +41,7 @@ WinHttpConnection::WinHttpConnection(
 
 WinHttpConnection::~WinHttpConnection()
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, __FUNCTION__);
+    HC_TRACE_INFORMATION(HTTPCLIENT, __FUNCTION__);
 
     if (m_state == ConnectionState::WebSocketConnected && m_hRequest && m_winHttpWebSocketExports.close)
     {
@@ -1005,7 +1005,7 @@ struct WinHttpCallbackContext
     }
     ~WinHttpCallbackContext()
     {
-        HC_TRACE_VERBOSE(HTTPCLIENT, "~WinHttpCallbackContext");
+        HC_TRACE_INFORMATION(HTTPCLIENT, "~WinHttpCallbackContext");
     }
     std::shared_ptr<WinHttpConnection> winHttpConnection;
 };
@@ -1118,7 +1118,7 @@ void CALLBACK WinHttpConnection::completion_callback(
                 // For WebSocket, we will also get a notification when the original request handle is closed. We have no action to take in that case
                 if (hRequestHandle == pRequestContext->m_hRequest)
                 {
-                    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
+                    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
 
                     // WinHttp Shutdown complete. WinHttp guarantees we will get no more callbacks for this request so we can safely cleanup context.
                     // Ensure WinHttpCallbackContext is cleaned before invoking callback in case this is happening during HCCleanup
@@ -1143,7 +1143,7 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             default:
             {
-                HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection WinHttp callback statusCode=%ul", statusCode);
+                HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection WinHttp callback statusCode=%ul", statusCode);
                 break;
             }
         }
@@ -1207,7 +1207,7 @@ HRESULT WinHttpConnection::set_autodiscover_proxy()
 
 HRESULT WinHttpConnection::SendRequest()
 {
-    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection [%d] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
+    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [%d] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
 
     HC_UNIQUE_PTR<WinHttpCallbackContext> context = http_allocate_unique<WinHttpCallbackContext>(shared_from_this());
 
@@ -1363,7 +1363,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
         return;
     }
 
-    HC_TRACE_VERBOSE(WEBSOCKET, "[WinHttp] callback_websocket_status_read_complete: buffer type %s", winhttp_web_socket_buffer_type_to_string(wsStatus->eBufferType));
+    HC_TRACE_INFORMATION(WEBSOCKET, "[WinHttp] callback_websocket_status_read_complete: buffer type %s", winhttp_web_socket_buffer_type_to_string(wsStatus->eBufferType));
     if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE)
     {
         assert(pRequestContext->m_winHttpWebSocketExports.queryCloseStatus);
