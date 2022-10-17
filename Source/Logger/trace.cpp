@@ -144,6 +144,19 @@ STDAPI_(void) HCTraceImplMessage(
     ...
     ) noexcept
 {
+    va_list varArgs{};
+    va_start(varArgs, format);
+    HCTraceImplMessage_v(area, level, format, varArgs);
+    va_end(varArgs);
+}
+
+STDAPI_(void) HCTraceImplMessage_v(
+    struct HCTraceImplArea const* area,
+    HCTraceLevel level,
+    _Printf_format_string_ char const* format,
+    va_list varArgs
+) noexcept
+{
     if (!area)
     {
         return;
@@ -175,10 +188,7 @@ STDAPI_(void) HCTraceImplMessage(
 
     char message[4096] = {};
 
-    va_list varArgs{};
-    va_start(varArgs, format);
     auto result = vstprintf_s(message, format, varArgs);
-    va_end(varArgs);
 
     if (result < 0)
     {
