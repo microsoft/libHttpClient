@@ -7,6 +7,7 @@
 #pragma once
 
 #include <httpClient/pal.h>
+#include <stdarg.h>
 
 #ifndef HC_TRACE_BUILD_LEVEL
 #define HC_TRACE_BUILD_LEVEL HC_PRIVATE_TRACE_LEVEL_VERBOSE
