@@ -112,6 +112,7 @@ _HCTraceSetClientCallback
 _HCTraceSetTraceToDebugger
 _HCTraceSetPlatformCallbacks
 _HCTraceImplMessage
+_HCTraceImplMessage_v
 _HCTraceImplScopeId
 
 #

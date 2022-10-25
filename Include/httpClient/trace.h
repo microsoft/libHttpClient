@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <stdarg.h>
 #include <httpClient/pal.h>
 
 #ifndef HC_TRACE_BUILD_LEVEL
