@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <stdarg.h>
 #include <httpClient/pal.h>
 
 #ifndef HC_TRACE_BUILD_LEVEL
@@ -383,6 +384,13 @@ STDAPI_(void) HCTraceImplMessage(
     HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
+) noexcept;
+
+STDAPI_(void) HCTraceImplMessage_v(
+    struct HCTraceImplArea const* area,
+    HCTraceLevel level,
+    _Printf_format_string_ char const* format,
+    va_list varArgs
 ) noexcept;
 
 STDAPI_(uint64_t) HCTraceImplScopeId() noexcept;

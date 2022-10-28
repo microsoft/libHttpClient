@@ -1,4 +1,7 @@
 #include "pch.h"
+
+#if !HC_NOWEBSOCKETS
+
 #include "jni.h"
 
 #include "HTTP/Android/android_platform_context.h"
@@ -1026,3 +1029,5 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv *env, jobjec
 }
 
 }
+
+#endif // !HC_NOWEBSOCKETS

@@ -19,6 +19,7 @@
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #pragma clang diagnostic ignored "-Wdocumentation"
 #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 #include <asio/ssl.hpp>
 #if defined(__clang__)
