@@ -425,8 +425,6 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
         }
     }
 
-    Sleep(100);
-
     if (doWebSocketClose)
     {
         assert(m_winHttpWebSocketExports.close);
