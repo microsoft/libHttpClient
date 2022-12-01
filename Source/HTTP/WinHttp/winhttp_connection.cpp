@@ -697,17 +697,17 @@ void WinHttpConnection::callback_status_request_error(
         // If the WebSocket was connected (or previously connected) the error is treated as a disconnection.
         // If it hasn't yet been invoked, the client's disconnect handler will be invoked with the error. If the WebSocket wasn't yet
         // connected, complete the connect operation with the error
-        bool doDisconnectFlow{ false };
+        bool disconnect{ false };
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
             if (pRequestContext->m_state == ConnectionState::WebSocketConnected || pRequestContext->m_state == ConnectionState::WebSocketClosing)
             {
                 HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::callback_status_request_error after WebSocket was connected, moving to disconnect flow.");
-                doDisconnectFlow = true;
+                disconnect = true;
             }
         }
 
-        if (doDisconnectFlow)
+        if (disconnect)
         {
             pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
         }
@@ -1313,33 +1313,18 @@ void WinHttpConnection::SendRequest()
 
 void WinHttpConnection::StartWinHttpClose()
 {
-    bool doWinHttpClose = false;
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
 
-        switch (m_state)
-        {
-        case ConnectionState::Initialized: // valid?
-        case ConnectionState::WinHttpRunning:
-        case ConnectionState::WebSocketConnected:
-        case ConnectionState::WebSocketClosing:
-        {
-            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, transitioning to ConnectionState::WinHttpClosing");
-            doWinHttpClose = true;
-            m_state = ConnectionState::WinHttpClosing;
-            break;
-        }
-        case ConnectionState::WinHttpClosing:
-        case ConnectionState::Closed:
+        if (m_state == ConnectionState::WinHttpClosing || m_state == ConnectionState::Closed)
         {
             HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose called while already closing, ignored");
-            break;
+            return;
         }
-        default:
+        else
         {
-            assert(false);
-            break;
-        }
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, transitioning to ConnectionState::WinHttpClosing");
+            m_state = ConnectionState::WinHttpClosing;
         }
     }
 
@@ -1393,6 +1378,17 @@ void WinHttpConnection::WebSocketCompleteEntireSendQueueWithError(HRESULT error)
 void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
 {
 #if !HC_NOWEBSOCKETS
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+        // If we've already notified of disconnect, don't do it again
+        if (m_disconnectHandlerInvoked)
+        {
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::on_websocket_disconnected unexpectedly called multiple times. Ignoring subsequent call.");
+            return;
+        }
+        m_disconnectHandlerInvoked = true;
+    }
+
     HCWebSocketCloseEventFunction disconnectFunc = nullptr;
     void* functionContext = nullptr;
     HCWebSocketGetEventFunctions(m_websocketHandle, nullptr, nullptr, &disconnectFunc, &functionContext);
@@ -1404,6 +1400,7 @@ void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
     }
     catch (...)
     {
+        HC_TRACE_WARNING(HTTPCLIENT, "WinHttpConnection: Caught unhandled exception in client disconnect handler.");
     }
 
     StartWinHttpClose();
