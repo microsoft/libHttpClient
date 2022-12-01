@@ -470,8 +470,9 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
     }
     else
     {
+        // This case can happen if WinHttp reports multiple errors for the same request. We will just complete the operation with the first
+        // reported error and ignore subsequent ones
         HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::complete_task unexpectedly called multiple times. Ignoring subsequent call.");
-        assert(false);
     }
 
     // If this is an HTTP request, we can always start WinHttp cleanup at this point.
@@ -1139,7 +1140,6 @@ void CALLBACK WinHttpConnection::completion_callback(
 
                     pRequestContext->on_websocket_disconnected(closeReason);
                 }
-                
                 break;
             }
 
