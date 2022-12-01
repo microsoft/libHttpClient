@@ -43,10 +43,14 @@ WinHttpConnection::~WinHttpConnection()
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, __FUNCTION__);
 
+    // We should only ever be destroyed in the Initialized state or Closed state
+    if (m_state != ConnectionState::Initialized && m_state != ConnectionState::Closed)
+    {
+        HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection destroyed in unexpected state (%lu)", m_state);
+    }
+
     if (m_state == ConnectionState::WebSocketConnected && m_hRequest && m_winHttpWebSocketExports.close)
     {
-        // How do we reach this situation?
-        assert(false);
         // Use WinHttpWebSocketClose rather than disconnect in this case to close both the send and receive channels
         m_winHttpWebSocketExports.close(m_hRequest, static_cast<USHORT>(HCWebSocketCloseStatus::GoingAway), nullptr, 0);
     }
