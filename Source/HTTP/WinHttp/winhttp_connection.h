@@ -269,8 +269,8 @@ private:
     void complete_task(_In_ HRESULT translatedHR);
     void complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError);
 
-    HRESULT SendRequest();
-    HRESULT StartWinHttpClose();
+    void SendRequest();
+    void StartWinHttpClose();
 
 #if HC_PLATFORM != HC_PLATFORM_GDK
     HRESULT set_autodiscover_proxy();
@@ -321,6 +321,7 @@ private:
     // WebSocket state
     HCWebsocketHandle m_websocketHandle{ nullptr };
     HCCallHandle m_websocketCall{ nullptr };
+    bool m_disconnectHandlerInvoked{ false };
     std::recursive_mutex m_websocketSendMutex; // controls access to m_websocketSendQueue
     http_internal_queue<WebSocketSendContext*> m_websocketSendQueue{};
     websocket_message_buffer m_websocketReceiveBuffer;

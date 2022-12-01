@@ -45,6 +45,8 @@ WinHttpConnection::~WinHttpConnection()
 
     if (m_state == ConnectionState::WebSocketConnected && m_hRequest && m_winHttpWebSocketExports.close)
     {
+        // How do we reach this situation?
+        assert(false);
         // Use WinHttpWebSocketClose rather than disconnect in this case to close both the send and receive channels
         m_winHttpWebSocketExports.close(m_hRequest, static_cast<USHORT>(HCWebSocketCloseStatus::GoingAway), nullptr, 0);
     }
@@ -291,7 +293,8 @@ HRESULT WinHttpConnection::HttpCallPerformAsync(XAsyncBlock* async)
 {
     RETURN_HR_IF(E_INVALIDARG, !async);
     m_asyncBlock = async;
-    return SendRequest();
+    SendRequest();
+    return S_OK;
 }
 
 #if !HC_NOWEBSOCKETS
@@ -395,6 +398,7 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
         case ConnectionState::WebSocketConnected:
         {
             doWebSocketClose = true;
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::Close: ConnectionState=WebSocketConnected, Closing WebSocket");
             m_state = ConnectionState::WebSocketClosing;
             break;
         }
@@ -421,6 +425,8 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
         }
     }
 
+    Sleep(100);
+
     if (doWebSocketClose)
     {
         assert(m_winHttpWebSocketExports.close);
@@ -429,7 +435,7 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
     }
     else if (doWinHttpClose)
     {
-        return StartWinHttpClose();
+        StartWinHttpClose();
     }
     else if (closeComplete)
     {
@@ -444,6 +450,9 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR)
     complete_task(translatedHR, translatedHR);
 }
 
+// complete_task is used to complete the XAsync operation associated with either the HttpCallPerformAsync call (for pure HTTP WinHttpConnections)
+// or the WebSocketConnectAsync call (for WebSocket WinHttpConnections). In either case, XAsyncComplete should be called
+// exactly once. We reset m_asyncBlock after completing it so it doesn't get completed again.
 void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError)
 {
     if (m_asyncBlock != nullptr)
@@ -461,8 +470,16 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
         XAsyncComplete(m_asyncBlock, S_OK, resultSize);
         m_asyncBlock = nullptr;
     }
+    else
+    {
+        HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::complete_task unexpectedly called multiple times. Ignoring subsequent call.");
+        assert(false);
+    }
 
-    if (!m_websocketHandle)
+    // If this is an HTTP request, we can always start WinHttp cleanup at this point.
+    // If this is a WebSocket connection, we can start cleanup only if the connect failed. If the connect succeeded,
+    // WinHttp cleanup won't happen until the WebSocket is disconnected.
+    if (!m_websocketHandle || FAILED(translatedHR))
     {
         StartWinHttpClose();
     }
@@ -669,26 +686,39 @@ void WinHttpConnection::callback_status_request_error(
         }
     }
 
+    // Reissue the send if we were able to address a Cert error. All other errors are considered fatal.
+    // Handle appropriately depending on if this is a WebSocket or Http request
     if (reissueSend)
     {
-        HRESULT hr = pRequestContext->SendRequest();
-        if (FAILED(hr))
+        pRequestContext->SendRequest();
+    }
+    else if (pRequestContext->m_websocketHandle)
+    {
+        // If the WebSocket was connected (or previously connected) the error is treated as a disconnection.
+        // If it hasn't yet been invoked, the client's disconnect handler will be invoked with the error. If the WebSocket wasn't yet
+        // connected, complete the connect operation with the error
+        bool doDisconnectFlow{ false };
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection Failure to send HTTP request 0x%0.8x", hr);
-            pRequestContext->complete_task(E_FAIL, hr);
+            win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
+            if (pRequestContext->m_state == ConnectionState::WebSocketConnected || pRequestContext->m_state == ConnectionState::WebSocketClosing)
+            {
+                HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::callback_status_request_error after WebSocket was connected, moving to disconnect flow.");
+                doDisconnectFlow = true;
+            }
+        }
+
+        if (doDisconnectFlow)
+        {
+            pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
+        }
+        else
+        {
+            pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(errorCode));
         }
     }
     else
     {
-        if (pRequestContext->m_websocketHandle && (pRequestContext->m_state == ConnectionState::WebSocketConnected || pRequestContext->m_state == ConnectionState::WebSocketClosing))
-        {
-            // Only trigger if we're already connected, never during a connection attempt
-            if (pRequestContext->m_asyncBlock == nullptr)
-            {
-                pRequestContext->on_websocket_disconnected(static_cast<USHORT>(errorCode));
-            }
-        }
-
+        // For Http requests, complete with error
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(errorCode));
     }
 }
@@ -1094,6 +1124,13 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE:
             {
+                // WinHttpWebSocketClose completion callback. Send and receive channells fully closed - no further messages can be sent or received.
+                // Fire WebSocket disconnected at this point.
+
+                HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
+
+                // WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE opcode only associated with WebSocket connection, m_websocketHandle should never be null
+                assert(pRequestContext->m_websocketHandle);
                 if (pRequestContext->m_websocketHandle)
                 {
                     assert(pRequestContext->m_winHttpWebSocketExports.queryCloseStatus);
@@ -1104,6 +1141,19 @@ void CALLBACK WinHttpConnection::completion_callback(
 
                     pRequestContext->on_websocket_disconnected(closeReason);
                 }
+                
+                break;
+            }
+
+            case WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE:
+            {
+                // WinHttpWebSocketShutdown completion callback. Send channel closed, still expecting to receieve close frame from peer
+                // and we will fire a disconnected even at that point.
+
+                // WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE opcode only associated with WebSocket connection, m_websocketHandle should never be null
+                assert(pRequestContext->m_websocketHandle);
+
+                HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
                 break;
             }
 
@@ -1115,10 +1165,12 @@ void CALLBACK WinHttpConnection::completion_callback(
 
             case WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING:
             {
+                HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
+
                 // For WebSocket, we will also get a notification when the original request handle is closed. We have no action to take in that case
                 if (hRequestHandle == pRequestContext->m_hRequest)
                 {
-                    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
+                    HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection reclaiming WinHttpCallbackContext and invoking connectionClosedCallback");
 
                     // WinHttp Shutdown complete. WinHttp guarantees we will get no more callbacks for this request so we can safely cleanup context.
                     // Ensure WinHttpCallbackContext is cleaned before invoking callback in case this is happening during HCCleanup
@@ -1205,7 +1257,7 @@ HRESULT WinHttpConnection::set_autodiscover_proxy()
 }
 #endif
 
-HRESULT WinHttpConnection::SendRequest()
+void WinHttpConnection::SendRequest()
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [%d] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
 
@@ -1222,8 +1274,14 @@ HRESULT WinHttpConnection::SendRequest()
     {
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetStatusCallback errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
-        return HRESULT_FROM_WIN32(dwError);
+
+        // Complete XAsync operation
+        complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+        return;
     }
+
+    // WinHttp callback successfully set. Error handling and cleanup path now go through completion_callback.
+    // It is now responsible for cleaning up context when its no longer required. HC_UNIQUE_PTR is release with WinHttpSendRequest call
 
     DWORD dwTotalLength = 0;
     switch (m_requestBodyType)
@@ -1240,24 +1298,49 @@ HRESULT WinHttpConnection::SendRequest()
         nullptr,
         0,
         dwTotalLength,
-        (DWORD_PTR)context.get()))
+        (DWORD_PTR)context.release()))
     {
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSendRequest errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
-        return HRESULT_FROM_WIN32(dwError);
+
+        // Complete XAsync operation if WinHttpSendRequest fails synchronously
+        complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+        return;
     }
 
-    // WinHttp callback context will be reclaimed during WinHttp shutdown
-    context.release();
-
-    return S_OK;
+    // Flow continues from this point via WinHttp calling completion_callback
 }
 
-HRESULT WinHttpConnection::StartWinHttpClose()
+void WinHttpConnection::StartWinHttpClose()
 {
+    bool doWinHttpClose = false;
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
-        m_state = ConnectionState::WinHttpClosing;
+
+        switch (m_state)
+        {
+        case ConnectionState::Initialized: // valid?
+        case ConnectionState::WinHttpRunning:
+        case ConnectionState::WebSocketConnected:
+        case ConnectionState::WebSocketClosing:
+        {
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, transitioning to ConnectionState::WinHttpClosing");
+            doWinHttpClose = true;
+            m_state = ConnectionState::WinHttpClosing;
+            break;
+        }
+        case ConnectionState::WinHttpClosing:
+        case ConnectionState::Closed:
+        {
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose called while already closing, ignored");
+            break;
+        }
+        default:
+        {
+            assert(false);
+            break;
+        }
+        }
     }
 
     BOOL closed = WinHttpCloseHandle(m_hRequest);
@@ -1265,10 +1348,9 @@ HRESULT WinHttpConnection::StartWinHttpClose()
     {
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "WinHttpCloseHandle failed with errorCode=%d", dwError);
-        return HRESULT_FROM_WIN32(dwError);
     }
 
-    return S_OK;
+    // Flow continues from this point via WinHttp calling completion_callback
 }
 
 void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendContext)
@@ -1562,7 +1644,8 @@ HRESULT CALLBACK WinHttpConnection::WebSocketConnectProvider(XAsyncOp op, const 
     {
     case XAsyncOp::Begin:
     {
-        return winHttpConnection->SendRequest();
+        winHttpConnection->SendRequest();
+        return S_OK;
     }
     case XAsyncOp::GetResult:
     {
