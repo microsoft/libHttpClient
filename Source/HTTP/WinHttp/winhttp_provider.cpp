@@ -302,7 +302,11 @@ HRESULT WinHttpProvider::CloseAllConnections()
     {
         for (auto& connection : connections)
         {
-            connection->Close(connectionClosedCallback);
+            HRESULT hr = connection->Close(connectionClosedCallback);
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpConnection::Close failed");
+            }
         }
         WaitForSingleObject(closeContext.connectionsClosedEvent, INFINITE);
     }
