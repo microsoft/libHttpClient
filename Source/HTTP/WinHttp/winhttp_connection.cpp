@@ -1128,7 +1128,7 @@ void CALLBACK WinHttpConnection::completion_callback(
             case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE:
             {
                 // WinHttpWebSocketClose completion callback. Send and receive channells fully closed - no further messages can be sent or received.
-                // Fire WebSocket disconnected at this point.
+                // Fire WebSocket disconnected event at this point.
 
                 HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
 
@@ -1150,7 +1150,7 @@ void CALLBACK WinHttpConnection::completion_callback(
             case WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE:
             {
                 // WinHttpWebSocketShutdown completion callback. Send channel closed, still expecting to receieve close frame from peer
-                // and we will fire a disconnected even at that point.
+                // and we will fire a disconnected event at that point.
 
                 // WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE opcode only associated with WebSocket connection, m_websocketHandle should never be null
                 assert(pRequestContext->m_websocketHandle);
