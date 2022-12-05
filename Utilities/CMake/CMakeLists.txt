@@ -76,9 +76,11 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/Common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/HTTP
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/Logger
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Include/httpClient
-    )
+    $<BUILD_INTERFACE:${PATH_TO_ROOT}/Include>
+    $<INSTALL_INTERFACE:Include>
+    $<BUILD_INTERFACE:${PATH_TO_ROOT}/Include/httpClient>
+    $<INSTALL_INTERFACE:Include/httpClient>
+)
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 
@@ -173,7 +175,6 @@ set(UnitTests_Source_Files_Tests
 
 include(GetCommonHCSourceFiles.cmake)
 get_common_hc_source_files(
-    Public_Source_Files
     Common_Source_Files
     Global_Source_Files
     WebSocket_Source_Files
@@ -194,7 +195,6 @@ source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
 source_group("C++ Source\\Logger" FILES ${Logger_Source_Files})
 
 set( SOURCE_FILES
-    ${Public_Source_Files}
     ${Common_Source_Files}
     ${Global_Source_Files}
     ${WebSocket_Source_Files}

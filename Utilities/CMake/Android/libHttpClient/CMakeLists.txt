@@ -12,7 +12,6 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
 include("../../GetCommonHCSourceFiles.cmake")
 get_common_hc_source_files(
-    PUBLIC_SOURCE_FILES
     HC_COMMON_SOURCE_FILES
     GLOBAL_SOURCE_FILES
     WEBSOCKET_SOURCE_FILES
@@ -35,7 +34,6 @@ set(COMMON_SOURCE_FILES
     )
 
 set(ANDROID_SOURCE_FILES
-    "${PATH_TO_ROOT}/Include/httpClient/async_jvm.h"
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.cpp"
     "${PATH_TO_ROOT}/Source/Common/Android/utils_android.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.cpp"
@@ -78,7 +76,10 @@ add_library(
 target_include_directories(
     "${PROJECT_NAME}"
     PUBLIC
-    "${PUBLIC_INCLUDE_DIRS}"
+    $<BUILD_INTERFACE:${PATH_TO_ROOT}/Include>
+    $<INSTALL_INTERFACE:Include>
+    $<BUILD_INTERFACE:${PATH_TO_ROOT}/Include/httpClient>
+    $<INSTALL_INTERFACE:Include/httpClient>
     PRIVATE
     "${COMMON_INCLUDE_DIRS}"
     "${ANDROID_INCLUDE_DIRS}"
