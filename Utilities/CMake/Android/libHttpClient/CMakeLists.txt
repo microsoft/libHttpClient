@@ -55,8 +55,6 @@ set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Common"
     "${PATH_TO_ROOT}/Source/HTTP"
     "${PATH_TO_ROOT}/Source/Logger"
-    "${PATH_TO_ROOT}/Include"
-    "${PATH_TO_ROOT}/Include/httpClient"
     "${PATH_TO_ROOT}/External/asio/asio/include"
     "${PATH_TO_ROOT}/External/openssl/include"
     "${PATH_TO_ROOT}/External/websocketpp"
@@ -79,6 +77,8 @@ add_library(
 
 target_include_directories(
     "${PROJECT_NAME}"
+    PUBLIC
+    "${PUBLIC_INCLUDE_DIRS}"
     PRIVATE
     "${COMMON_INCLUDE_DIRS}"
     "${ANDROID_INCLUDE_DIRS}"
