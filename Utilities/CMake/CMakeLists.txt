@@ -61,7 +61,10 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_compile_options(/Zm300 /bigobj)
+if(DEFINED MSVC_VERSION)
+    add_compile_options(/Zm300 /bigobj)
+endif()
+
 if (WINDOWS_STORE OR WINDOWS_PHONE)
     add_compile_options(/ZW)
 endif()
