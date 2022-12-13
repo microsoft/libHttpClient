@@ -19,6 +19,10 @@ else()
         set (PROJECT_NAME libHttpClient.Win32.C)
     elseif( GDK )
         set (PROJECT_NAME libHttpClient.GDK.C)
+    elseif(DEFINED LINUX)
+        set (PROJECT_NAME libHttpClient.Linux.C)
+    elseif( APPLE )
+        set (PROJECT_NAME libHttpClient.Apple.C)
     else()
         if( WINRT )
             set (PROJECT_NAME libHttpClient.UWP.WinRT)
@@ -27,7 +31,6 @@ else()
         endif()
     endif()
 endif()
-
 
 project (${PROJECT_NAME})
 
@@ -56,121 +59,146 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_compile_options(/Zm300 /bigobj)
-if (WINDOWS_STORE OR WINDOWS_PHONE)
-    add_compile_options(/ZW)
+if(DEFINED MSVC_VERSION)
+    add_compile_options(/Zm250 /bigobj)
+    if (WINDOWS_STORE OR WINDOWS_PHONE)
+        add_compile_options(/ZW)
+    endif()
 endif()
-
-add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
-
-set_source_files_properties(../../../Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
-
-if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
-    set_property(SOURCE ../../../Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
-    set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
-endif()
-
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/Common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/HTTP
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Source/Logger
-    $<BUILD_INTERFACE:${PATH_TO_ROOT}/Include>
-    $<INSTALL_INTERFACE:Include>
-    $<BUILD_INTERFACE:${PATH_TO_ROOT}/Include/httpClient>
-    $<INSTALL_INTERFACE:Include/httpClient>
-)
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(Task_Windows_Source_Files
-    ../../../Source/Task/ThreadPool_win32.cpp
-    ../../../Source/Task/WaitTimer_win32.cpp
+    ../../Source/Task/ThreadPool_win32.cpp
+    ../../Source/Task/WaitTimer_win32.cpp
+    )
+
+set(Task_STL_Source_Files
+    ../../Source/Task/ThreadPool_stl.cpp
+    ../../Source/Task/WaitTimer_stl.cpp
+    )
+
+set(Task_Apple_Source_Files
+    ../../Source/Task/ThreadPool_stl.cpp
+    ../../Source/Task/iOS/ios_WaitTimer.mm
+    ../../Source/Task/iOS/ios_WaitTimer_target.h
+    ../../Source/Task/iOS/ios_WaitTimer_target.mm
+    ../../Source/Task/iOS/ios_WaitTimerImpl.h
     )
 
 set(WinRT_WebSocket_Source_Files
-    ../../../Source/WebSocket/WinRT/winrt_websocket.cpp
-    ../../../Source/WebSocket/WinRT/winrt_websocket.h
+    ../../Source/WebSocket/WinRT/winrt_websocket.cpp
+    ../../Source/WebSocket/WinRT/winrt_websocket.h
     )
 
+set(Websocketpp_Source_Files
+        ../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+        ../../Source/WebSocket/Websocketpp/websocketpp_websocket.h
+        ../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
+        )
+
 set(Win32_WebSocket_Source_Files
-    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
-    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.h
-    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
+    ${Websocketpp_Source_Files}
     )
 
 set(GDK_WebSocket_Source_Files
-    ../../../Source/HTTP/WinHttp/winhttp_provider.cpp
-    ../../../Source/HTTP/WinHttp/winhttp_provider.h
-    ../../../Source/HTTP/WinHttp/winhttp_connection.cpp
-    ../../../Source/HTTP/WinHttp/winhttp_connection.h
+    ../../Source/HTTP/WinHttp/winhttp_provider.cpp
+    ../../Source/HTTP/WinHttp/winhttp_provider.h
+    ../../Source/HTTP/WinHttp/winhttp_connection.cpp
+    ../../Source/HTTP/WinHttp/winhttp_connection.h
     )
 
 set(Common_Windows_Source_Files
-    ../../../Source/Common/Win/utils_win.cpp
-    ../../../Source/Common/Win/utils_win.h
+    ../../Source/Common/Win/utils_win.cpp
+    ../../Source/Common/Win/utils_win.h
     )
 
 set(WinHttp_HTTP_Source_Files
-    ../../../Source/HTTP/WinHttp/winhttp_provider.cpp
-    ../../../Source/HTTP/WinHttp/winhttp_provider.h
-    ../../../Source/HTTP/WinHttp/winhttp_connection.cpp
-    ../../../Source/HTTP/WinHttp/winhttp_connection.h
+    ../../Source/HTTP/WinHttp/winhttp_provider.cpp
+    ../../Source/HTTP/WinHttp/winhttp_provider.h
+    ../../Source/HTTP/WinHttp/winhttp_connection.cpp
+    ../../Source/HTTP/WinHttp/winhttp_connection.h
     )
 
 set(XMLHttp_HTTP_Source_Files
-    ../../../Source/HTTP/XMLHttp/http_request_callback.cpp
-    ../../../Source/HTTP/XMLHttp/http_request_callback.h
-    ../../../Source/HTTP/XMLHttp/http_response_stream.cpp
-    ../../../Source/HTTP/XMLHttp/http_response_stream.h
-    ../../../Source/HTTP/XMLHttp/http_request_stream.cpp
-    ../../../Source/HTTP/XMLHttp/http_request_stream.h
-    ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
-    ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
+    ../../Source/HTTP/XMLHttp/http_request_callback.cpp
+    ../../Source/HTTP/XMLHttp/http_request_callback.h
+    ../../Source/HTTP/XMLHttp/http_response_stream.cpp
+    ../../Source/HTTP/XMLHttp/http_response_stream.h
+    ../../Source/HTTP/XMLHttp/http_request_stream.cpp
+    ../../Source/HTTP/XMLHttp/http_request_stream.h
+    ../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
+    ../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
     )
 
+set(Apple_HTTP_Source_Files
+        ../../Source/HTTP/Apple/http_apple.h
+        ../../Source/HTTP/Apple/http_apple.mm
+        ../../Source/HTTP/Apple/request_body_stream.h
+        ../../Source/HTTP/Apple/request_body_stream.mm
+        ../../Source/HTTP/Apple/session_delegate.h
+        ../../Source/HTTP/Apple/session_delegate.mm
+        )
+
+set(Android_Source_Files
+        ../../Include/httpClient/async_jvm.h
+        ../../Source/Common/Android/utils_android.cpp
+        ../../Source/Common/Android/utils_android.h
+        ../../Source/HTTP/Android/http_android.cpp
+        ../../Source/HTTP/Android/http_android.h
+        ../../Source/HTTP/Android/android_http_request.cpp
+        ../../Source/HTTP/Android/android_http_request.h
+        ../../Source/HTTP/Android/android_platform_context.cpp
+        ../../Source/HTTP/Android/android_platform_context.h
+        ../../Source/Logger/Android/android_logger.cpp
+        )
+
+
 set(Curl_Source_Files
-    ../../../Source/HTTP/Curl/CurlEasyRequest.cpp
-    ../../../Source/HTTP/Curl/CurlEasyRequest.h
-    ../../../Source/HTTP/Curl/CurlMulti.cpp
-    ../../../Source/HTTP/Curl/CurlMulti.h
-    ../../../Source/HTTP/Curl/CurlProvider.cpp
-    ../../../Source/HTTP/Curl/CurlProvider.h
+    ../../Source/HTTP/Curl/CurlEasyRequest.cpp
+    ../../Source/HTTP/Curl/CurlEasyRequest.h
+    ../../Source/HTTP/Curl/CurlMulti.cpp
+    ../../Source/HTTP/Curl/CurlMulti.h
+    ../../Source/HTTP/Curl/CurlProvider.cpp
+    ../../Source/HTTP/Curl/CurlProvider.h
     )
 
 set(Windows_Logger_Source_Files
-   ../../../Source/Logger/Win/win_logger.cpp
+   ../../Source/Logger/Win/win_logger.cpp
+   )
+
+set(Generic_Logger_Source_Files
+   ../../Source/Logger/Generic/generic_logger.cpp
    )
 
 set(UnitTests_Source_Files_Support
-    ../../../Tests/UnitTests/Support/DefineTestMacros.h
-    ../../../Tests/UnitTests/Support/UnitTestIncludes.h
+    ../../Tests/UnitTests/Support/DefineTestMacros.h
+    ../../Tests/UnitTests/Support/UnitTestIncludes.h
     )
 
 set(Taef_UnitTests_Source_Files
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
-    ../../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
+    ../../Tests/UnitTests/Support/TAEF/UnitTestBase.h
+    ../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.h
+    ../../Tests/UnitTests/Support/TAEF/UnitTestIncludes_TAEF.h
+    ../../Tests/UnitTests/Support/TAEF/UnitTestBase.cpp
+    ../../Tests/UnitTests/Support/TAEF/UnitTestBase_winrt.cpp
     )
 
 set(TE_UnitTests_Source_Files
-    ../../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
-    ../../../Tests/UnitTests/Support/TE/unittesthelpers.h
-    ../../../Tests/UnitTests/Support/TE/unittestincludes_te.h
+    ../../Tests/UnitTests/Support/TE/unittesthelpers.cpp
+    ../../Tests/UnitTests/Support/TE/unittesthelpers.h
+    ../../Tests/UnitTests/Support/TE/unittestincludes_te.h
     )
 
 set(UnitTests_Source_Files_Tests
-    ../../../Tests/UnitTests/Tests/AsyncBlockTests.cpp
-    ../../../Tests/UnitTests/Tests/CallbackThunk.h
-    ../../../Tests/UnitTests/Tests/GlobalTests.cpp
-    ../../../Tests/UnitTests/Tests/HttpTests.cpp
-    ../../../Tests/UnitTests/Tests/LocklessQueueTests.cpp
-    ../../../Tests/UnitTests/Tests/MockTests.cpp
-    ../../../Tests/UnitTests/Tests/TaskQueueTests.cpp
-    ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
+    ../../Tests/UnitTests/Tests/AsyncBlockTests.cpp
+    ../../Tests/UnitTests/Tests/CallbackThunk.h
+    ../../Tests/UnitTests/Tests/GlobalTests.cpp
+    ../../Tests/UnitTests/Tests/HttpTests.cpp
+    ../../Tests/UnitTests/Tests/LocklessQueueTests.cpp
+    ../../Tests/UnitTests/Tests/MockTests.cpp
+    ../../Tests/UnitTests/Tests/TaskQueueTests.cpp
+    ../../Tests/UnitTests/Tests/WebsocketTests.cpp
     )
 
 include(GetCommonHCSourceFiles.cmake)
@@ -182,11 +210,10 @@ get_common_hc_source_files(
     Mock_Source_Files
     HTTP_Source_Files
     Logger_Source_Files
-    "../../.."
+    "../.."
     )
 
 message(STATUS "Common source group")
-source_group("Header Files" FILES ${Public_Source_Files})
 source_group("C++ Source\\Common" FILES ${Common_Source_Files})
 source_group("C++ Source\\Global" FILES ${Global_Source_Files})
 source_group("C++ Source\\WebSocket" FILES ${WebSocket_Source_Files})
@@ -261,6 +288,7 @@ if( XDK )
         ${WinRT_WebSocket_Source_Files}
         ${Task_Source_Files}
         )
+    list(APPEND Additional_Libs ixmlhttprequest2)
 endif()
 
 if( BUILDWIN32 )
@@ -280,6 +308,11 @@ if( BUILDWIN32 )
         ${Win32_WebSocket_Source_Files}
         ${Task_Source_Files}
         )
+    add_compile_definitions(UNICODE WIN32 _WIN32)
+    find_package(websocketpp CONFIG REQUIRED)
+    find_package(asio CONFIG REQUIRED)
+    find_package(OpenSSL REQUIRED)
+    list(APPEND Additional_Libs websocketpp::websocketpp asio::asio OpenSSL::SSL winhttp crypt32)
 endif()
 
 if( GDK )
@@ -295,6 +328,43 @@ if( GDK )
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${GDK_WebSocket_Source_Files}
+        )
+    list(APPEND Additional_Libs winhttp crypt32)
+endif()
+
+if (DEFINED LINUX)
+    list(APPEND
+            SOURCE_FILES
+            ${Task_STL_Source_Files}
+            ${Curl_Source_Files}
+            ${Websocketpp_Source_Files}
+            ${Task_Source_Files}
+            ${Generic_Logger_Source_Files}
+            )
+    list(APPEND Additional_Libs CURL::libcurl)
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL Android)
+    list(APPEND
+            SOURCE_FILES
+            ${Task_STL_Source_Files}
+            ${Android_Source_Files}
+            ${Websocketpp_Source_Files}
+            ${Task_Source_Files}
+            )
+    find_package(websocketpp CONFIG REQUIRED)
+    find_package(asio CONFIG REQUIRED)
+    find_package(OpenSSL REQUIRED)
+    list(APPEND Additional_Libs websocketpp::websocketpp asio::asio OpenSSL::SSL)
+endif()
+
+if( APPLE )
+    list(APPEND
+        SOURCE_FILES
+        ${Apple_HTTP_Source_Files}
+        ${Task_Source_Files}
+        ${Task_Apple_Source_Files}
+        ${Generic_Logger_Source_Files}
         )
 endif()
 
@@ -328,11 +398,38 @@ if( TE )
         )
 endif()
 
-list( SORT SOURCE_FILES )
-add_library(${PROJECT_NAME} ${SOURCE_FILES})
+add_compile_definitions(
+        _VARIADIC_MAX=10
+        ENABLE_INTSAFE_SIGNED_FUNCTIONS
+)
 
-set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "/INCREMENTAL:NO")
-set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
+list( SORT SOURCE_FILES )
+add_library(${PROJECT_NAME} OBJECT ${SOURCE_FILES})
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
+
+target_include_directories(${PROJECT_NAME}
+        PRIVATE
+        ../..
+        ../../Source
+        ../../Source/Common
+        ../../Source/HTTP
+        ../../Source/Logger
+        ../../Include/httpClient
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Include>
+        $<INSTALL_INTERFACE:Include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Include/httpClient>
+        $<INSTALL_INTERFACE:Include/httpClient>
+)
+
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE ${Additional_Libs}
+        )
+
+if (APPLE)
+    target_link_libraries(${PROJECT_NAME} "-framework Foundation")
+    target_compile_options(${PROJECT_NAME} PRIVATE "-fobjc-arc")
+endif()
 
 message(STATUS "CMAKE_SYSTEM_VERSION='${CMAKE_SYSTEM_VERSION}'")
 message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")

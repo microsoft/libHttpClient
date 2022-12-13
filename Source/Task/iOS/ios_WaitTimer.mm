@@ -10,6 +10,8 @@
 #include "ios_WaitTimerImpl.h"
 
 using Deadline = std::chrono::high_resolution_clock::time_point;
+namespace OS
+{
 
 WaitTimerImpl::WaitTimerImpl()
 : m_context(nullptr),
@@ -37,7 +39,7 @@ HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback
 void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
 {
     Cancel();
-    
+
     auto duration = Deadline::duration(absoluteTime);
     auto timePoint = Deadline(duration) - std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(timePoint);
@@ -48,6 +50,15 @@ void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
                                                 userInfo:[NSValue valueWithPointer:this]
                                                 repeats:false];
 
+}
+
+void WaitTimer::Terminate() noexcept
+{
+    std::unique_ptr<WaitTimerImpl> timer(m_impl.exchange(nullptr));
+    if (timer != nullptr)
+    {
+        timer->Cancel();
+    }
 }
 
 void WaitTimerImpl::Cancel()
@@ -84,28 +95,30 @@ HRESULT WaitTimer::Initialize(void *context, WaitTimerCallback *callback) noexce
         ASSERT(false);
         return E_UNEXPECTED;
     }
-    
+
     std::unique_ptr<WaitTimerImpl> timer(new (std::nothrow) WaitTimerImpl);
     RETURN_IF_NULL_ALLOC(timer);
     RETURN_IF_FAILED(timer->Initialize(context, callback));
-    
+
     m_impl = timer.release();
-    
+
     return S_OK;
 }
 
 void WaitTimer::Start(uint64_t absoluteTime) noexcept
 {
-    m_impl->Start(absoluteTime);
+    m_impl.load()->Start(absoluteTime);
 }
 
 void WaitTimer::Cancel() noexcept
 {
-    m_impl->Cancel();
+    m_impl.load()->Cancel();
 }
 
 uint64_t WaitTimer::GetAbsoluteTime(uint32_t msFromNow) noexcept
 {
     auto deadline = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(msFromNow);
-    return deadline.time_since_epoch().count();    
+    return deadline.time_since_epoch().count();
+}
+
 }
