@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.6)
 
+option(LIBHTTPCLIENT_OBJECT_LIBRARY OFF)
+
 if( SHIP )
     set (PROJECT_NAME libHttpClient.Ship)
 elseif( UNITTEST )
@@ -58,6 +60,22 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore")
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+add_compile_options(/Zm300 /bigobj)
+if (WINDOWS_STORE OR WINDOWS_PHONE)
+    add_compile_options(/ZW)
+endif()
+
+add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
+
+if(DEFINED MSVC_VERSION)
+    set_source_files_properties(../../../Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+endif()
+
+if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
+    set_property(SOURCE ../../../Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
+endif()
+    set_property(SOURCE ${SOURCES} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
 
 if(DEFINED MSVC_VERSION)
     add_compile_options(/Zm250 /bigobj)
@@ -344,20 +362,6 @@ if (DEFINED LINUX)
     list(APPEND Additional_Libs CURL::libcurl)
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL Android)
-    list(APPEND
-            SOURCE_FILES
-            ${Task_STL_Source_Files}
-            ${Android_Source_Files}
-            ${Websocketpp_Source_Files}
-            ${Task_Source_Files}
-            )
-    find_package(websocketpp CONFIG REQUIRED)
-    find_package(asio CONFIG REQUIRED)
-    find_package(OpenSSL REQUIRED)
-    list(APPEND Additional_Libs websocketpp::websocketpp asio::asio OpenSSL::SSL)
-endif()
-
 if( APPLE )
     list(APPEND
         SOURCE_FILES
@@ -404,7 +408,14 @@ add_compile_definitions(
 )
 
 list( SORT SOURCE_FILES )
-add_library(${PROJECT_NAME} OBJECT ${SOURCE_FILES})
+
+if (${LIBHTTPCLIENT_OBJECT_LIBRARY})
+    add_library(${PROJECT_NAME} OBJECT ${SOURCE_FILES})
+else()
+    add_library(${PROJECT_NAME} ${SOURCE_FILES})
+endif()
+
+
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 
 target_include_directories(${PROJECT_NAME}
@@ -425,6 +436,11 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
         PRIVATE ${Additional_Libs}
         )
+
+if (DEFINED MSVC_VERSION)
+    set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "/INCREMENTAL:NO")
+    set(CMAKE_STATIC_LINKER_FLAGS "/INCREMENTAL:NO")
+endif()
 
 if (APPLE)
     target_link_libraries(${PROJECT_NAME} "-framework Foundation")
