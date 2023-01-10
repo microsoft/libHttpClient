@@ -1,13 +1,13 @@
 #pragma once
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-// When developing titles for Xbox consoles, you must use WinHTTP or xCurl. 
+// When developing titles for Xbox consoles, you must use WinHTTP or xCurl.
 // See https://docs.microsoft.com/en-us/gaming/gdk/_content/gc/networking/overviews/web-requests/http-networking for detail
 #include <XCurl.h>
 #else
 // This path is untested, but this http provider should work with other curl implementations as well.
 // The logic in CurlMulti::Perform is optimized for XCurl, but should work on any curl implementation.
-#include <curl.h>
+#include <curl/curl.h>
 #endif
 #include "Result.h"
 

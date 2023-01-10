@@ -5,6 +5,8 @@
 #elif HC_PLATFORM == HC_PLATFORM_GDK
 #include "Curl/CurlProvider.h"
 #include "WinHttp/winhttp_provider.h"
+#elif HC_PLATFORM == HC_PLATFORM_LINUX
+#include "Curl/CurlProvider.h"
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "HTTP/Android/android_platform_context.h"
 #endif
