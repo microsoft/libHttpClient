@@ -86,6 +86,8 @@ public:
     std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
     std::shared_ptr<AndroidPlatformContext> androidPlatformContext;
+#elif HC_PLATFORM == HC_PLATFORM_LINUX
+    HC_UNIQUE_PTR<xbox::httpclient::CurlProvider> curlProvider;
 #endif
 private:
     HC_PERFORM_ENV() = default;

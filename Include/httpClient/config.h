@@ -121,6 +121,10 @@
 (HC_PLATFORM == HC_PLATFORM_MAC || HC_PLATFORM == HC_PLATFORM_IOS)
 #endif
 
+#if !defined(HC_PLATFORM_IS_LINUX)
+#define HC_PLATFORM_IS_LINUX (HC_PLATFORM == HC_PLATFORM_LINUX)
+#endif
+
 // HC_PLATFORM_IS_EXTERNAL describes platforms where the implementation is outside of the libHttpClient repository
 #if !defined(HC_PLATFORM_IS_EXTERNAL)
 #define HC_PLATFORM_IS_EXTERNAL \

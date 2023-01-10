@@ -9,7 +9,12 @@
 // The logic in CurlMulti::Perform is optimized for XCurl, but should work on any curl implementation.
 #include <curl/curl.h>
 #endif
+
 #include "Result.h"
+#include <httpClient/trace.h>
+
+HRESULT HrFromCurle(CURLcode c) noexcept;
+HRESULT HrFromCurlm(CURLMcode c) noexcept;
 
 namespace xbox
 {

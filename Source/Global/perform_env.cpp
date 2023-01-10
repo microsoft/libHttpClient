@@ -21,6 +21,8 @@
 #include "WebSocket/WinRT/winrt_websocket.h"
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "WebSocket/Android/okhttp_websocket.h"
+#elif HC_PLATFORM_IS_LINUX
+#include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #elif HC_PLATFORM_IS_APPLE
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #endif
@@ -105,6 +107,8 @@ HttpPerformInfo HC_PERFORM_ENV::GetPlatformDefaultHttpHandlers()
     return HttpPerformInfo{ xmlhttp_http_task::PerformAsyncHandler, nullptr };
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
     return HttpPerformInfo{ AndroidHttpCallPerformAsync, nullptr };
+#elif HC_PLATFORM == HC_PLATFORM_LINUX
+    return HttpPerformInfo{ CurlProvider::PerformAsyncHandler, nullptr };
 #elif HC_PLATFORM_IS_APPLE
     return HttpPerformInfo{ AppleHttpCallPerformAsync, nullptr };
 #else
@@ -179,6 +183,14 @@ WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
         WebSocketppDisconnect,
         nullptr
     };
+#elif HC_PLATFORM_IS_LINUX
+    return WebSocketPerformInfo{
+        WebSocketppConnectAsync,
+        WebSocketppSendMessageAsync,
+        WebSocketppSendBinaryMessageAsync,
+        WebSocketppDisconnect,
+        nullptr
+    };
 #else
     return WebSocketPerformInfo{
         WebSocketConnectAsyncDefault,
@@ -216,7 +228,12 @@ Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* arg
     RETURN_IF_FAILED(initWinHttpResult.hr);
     performEnv->winHttpProvider = initWinHttpResult.ExtractPayload();
 #endif
+#elif HC_PLATFORM == HC_PLATFORM_LINUX
+    RETURN_HR_IF(E_INVALIDARG, args);
 
+    auto initCurlResult = CurlProvider::Initialize();
+    RETURN_IF_FAILED(initCurlResult.hr);
+    performEnv->curlProvider = initCurlResult.ExtractPayload();
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
     auto initAndroidResult = AndroidPlatformContext::Initialize(args);
     RETURN_IF_FAILED(initAndroidResult.hr);
