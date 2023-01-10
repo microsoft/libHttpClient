@@ -10,6 +10,7 @@
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
 #define HC_PLATFORM_MAC 22
+#define HC_PLATFORM_LINUX 23
 #define HC_PLATFORM_GENERIC 100
 #define HC_PLATFORM_NINTENDO_SWITCH 111
 #define HC_PLATFORM_SONY_PLAYSTATION_4 121
@@ -24,7 +25,7 @@
 #define HC_DATAMODEL_LP64 3 // int is 32 bit; long and pointer are 64 bits (64 bit Unix)
 // see http://www.unix.org/version2/whatsnew/lp64_wp.html for detailed descriptions
 
-#if defined(HC_PLATFORM) 
+#if defined(HC_PLATFORM)
 #if !defined(HC_DATAMODEL)
     #error When setting HC_PLATFORM, also please specify the datamodel manually by setting the HC_DATAMODEL macro in your compiler.
 #endif
@@ -34,7 +35,7 @@
 
     #if defined(_GAMING_DESKTOP) || defined(_GAMING_XBOX) || defined(_GAMING_XBOX_XBOXONE) || defined(_GAMING_XBOX_SCARLETT)
         #define HC_PLATFORM HC_PLATFORM_GDK
-        
+
         #if !defined(NTDDI_WIN10_VB)
             #define APP_LOCAL_DEVICE_ID_SIZE 32
             typedef struct APP_LOCAL_DEVICE_ID
@@ -59,6 +60,14 @@
     #endif
 #elif defined(__ANDROID__)
     #define HC_PLATFORM HC_PLATFORM_ANDROID
+
+    #if defined(__LP64__)
+        #define HC_DATAMODEL HC_DATAMODEL_LP64
+    #else
+        #define HC_DATAMODEL HC_DATAMODEL_ILP32
+    #endif
+#elif defined(__linux__)
+    #define HC_PLATFORM HC_PLATFORM_LINUX
 
     #if defined(__LP64__)
         #define HC_DATAMODEL HC_DATAMODEL_LP64
