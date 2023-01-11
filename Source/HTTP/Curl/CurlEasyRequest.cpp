@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CurlEasyRequest.h"
 #include "CurlProvider.h"
+#include <cstring>
 
 namespace xbox
 {
@@ -199,7 +200,7 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
         HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::ReadCallback: Unable to get client's RequestBodyRead callback");
         return CURL_READFUNC_ABORT;
     }
-    
+
     size_t bytesWritten = 0;
     size_t bufferSize = size * nitems;
     try
