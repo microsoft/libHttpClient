@@ -27,7 +27,7 @@
 #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
 
-#pragma warning(disable: 4244) 
+#pragma warning(disable: 4244)
 
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
@@ -139,12 +139,12 @@ public:
                 // See http://www.openssl.org/support/faq.html#PROG13
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
-#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE || HC_PLATFORM_IS_LINUX
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
                 ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
-#else 
+#else
                 ERR_remove_thread_state(nullptr);
 #endif // HC_ANDROID_API || HC_PLATFORM_IS_APPLE
 
@@ -341,7 +341,7 @@ private:
             {
                 ASSERT(messageFunc && binaryMessageFunc);
 
-                // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect 
+                // TODO: hook up HCWebSocketCloseEventFunction handler upon unexpected disconnect
                 // TODO: verify auto disconnect when closing client's websocket handle
 
                 if (msg->get_opcode() == websocketpp::frame::opcode::text)
@@ -486,7 +486,7 @@ private:
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
                     JavaVM* javaVm = nullptr;
-                    {   
+                    {
                         // Allow our singleton to go out of scope quickly once we're done with it
                         auto httpSingleton = xbox::httpclient::get_http_singleton();
                         if (httpSingleton)
@@ -521,7 +521,7 @@ private:
                     // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                     // at all and will be reported as leaks.
                     // See http://www.openssl.org/support/faq.html#PROG13
-#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE || HC_PLATFORM_IS_LINUX
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
                     ERR_remove_thread_state(nullptr);
@@ -657,7 +657,7 @@ private:
                     }
                     return context->pThis->send_msg_do_work(context->message);
                 }
-            
+
                 case XAsyncOp::GetResult:
                 {
                     auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);

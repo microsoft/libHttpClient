@@ -11,7 +11,7 @@
 #endif
 
 #include "Result.h"
-#include <httpClient/trace.h>
+#include "pch.h"
 
 HRESULT HrFromCurle(CURLcode c) noexcept;
 HRESULT HrFromCurlm(CURLMcode c) noexcept;
