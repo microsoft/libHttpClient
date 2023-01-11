@@ -11,15 +11,15 @@
 #endif
 
 #include "Result.h"
-#include "pch.h"
-
-HRESULT HrFromCurle(CURLcode c) noexcept;
-HRESULT HrFromCurlm(CURLMcode c) noexcept;
+#include <httpClient/trace.h>
 
 namespace xbox
 {
 namespace httpclient
 {
+
+HRESULT HrFromCurle(CURLcode c) noexcept;
+HRESULT HrFromCurlm(CURLMcode c) noexcept;
 
 class CurlEasyRequest
 {

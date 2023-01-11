@@ -5,8 +5,8 @@
 
 #include <httpClient/config.h>
 
-#pragma warning(disable: 4503) // C4503: decorated name length exceeded, name was truncated  
-#pragma warning(disable: 4242) 
+#pragma warning(disable: 4503) // C4503: decorated name length exceeded, name was truncated
+#pragma warning(disable: 4242)
 
 #ifdef _WIN32
 #define _SCL_SECURE_NO_WARNINGS
@@ -100,6 +100,11 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #define ASSERT(condition) assert(condition)
 
+#include <httpClient/trace.h>
+
+HC_DECLARE_TRACE_AREA(HTTPCLIENT);
+HC_DECLARE_TRACE_AREA(WEBSOCKET);
+
 #include <httpClient/httpClient.h>
 #include "Result.h"
 #include "../Global/mem.h"
@@ -114,9 +119,6 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #include "ResultMacros.h"
 #include "EntryList.h"
-
-HC_DECLARE_TRACE_AREA(HTTPCLIENT);
-HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
 // Define TRACE for AsyncLib
 #define ASYNC_LIB_TRACE(result, message)            \
