@@ -13,7 +13,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 Result<std::shared_ptr<WinHttpProvider>> WinHttpProvider::Initialize()
 {
     http_stl_allocator<WinHttpProvider> a{};
-    auto provider = std::shared_ptr<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider, http_alloc_deleter<WinHttpProvider>() };
+    auto provider = std::shared_ptr<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider, http_alloc_deleter<WinHttpProvider>(), a };
 
     RETURN_IF_FAILED(XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &provider->m_immediateQueue));
 

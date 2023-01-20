@@ -129,7 +129,7 @@ Result<std::shared_ptr<WebSocket>> WebSocket::Initialize()
         ++httpSingleton->m_lastId,
         httpSingleton->m_websocketPerform,
         httpSingleton->m_performEnv.get()
-    }, http_alloc_deleter<WebSocket>{} };
+    }, http_alloc_deleter<WebSocket>{}, a };
 
     return websocket;
 }

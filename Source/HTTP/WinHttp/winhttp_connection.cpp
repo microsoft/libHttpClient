@@ -74,7 +74,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     RETURN_HR_IF(E_INVALIDARG, !call);
 
     http_stl_allocator<WinHttpConnection> a{};
-    auto connection = std::shared_ptr<WinHttpConnection>{ new (a.allocate(1)) WinHttpConnection(hSession, call, proxyType, std::move(securityInformation)), http_alloc_deleter<WinHttpConnection>()  };
+    auto connection = std::shared_ptr<WinHttpConnection>{ new (a.allocate(1)) WinHttpConnection(hSession, call, proxyType, std::move(securityInformation)), http_alloc_deleter<WinHttpConnection>(), a };
     RETURN_IF_FAILED(connection->Initialize());
 
     return connection;
