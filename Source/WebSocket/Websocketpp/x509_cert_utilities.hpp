@@ -49,6 +49,10 @@
 #include <wincrypt.h>
 #endif
 
+#if HC_PLATFORM == HC_PLATFORM_LINUX
+#include <type_traits>
+#endif
+
 namespace xbox { namespace httpclient {
 
 static bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &certChain, const http_internal_string &hostName);
@@ -84,7 +88,7 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
 
         http_internal_string certData;
         certData.resize(len);
-        unsigned char * buffer = reinterpret_cast<unsigned char *>(&certData[0]);
+        unsigned char *buffer = reinterpret_cast<unsigned char*>(&certData[0]);
         len = i2d_X509(cert, &buffer);
         if (len < 0)
         {
@@ -94,8 +98,49 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
         certChain.push_back(std::move(certData));
     }
 
-    auto verify_result = verify_X509_cert_chain(certChain, hostName);
+    auto verify_result = false;
 
+#if HC_PLATFORM == HC_PLATFORM_LINUX
+    X509_STORE *store = X509_STORE_new();
+    X509_STORE_CTX_trusted_stack(storeContext, certStack);
+    SSL_CTX *sslContext = SSL_CTX_new(TLS_method());
+    store = SSL_CTX_get_cert_store(sslContext);
+
+    if (sslContext == NULL) {
+        return verify_result;
+    }
+
+    int ret = X509_STORE_set_default_paths(store);
+    if (ret != 1)
+    {
+        return verify_result;
+    }
+
+    ret = X509_STORE_load_locations(store, NULL, "/etc/ssl/certs");
+    if (ret != 1)
+    {
+        printf("\n FAILED TO LOAD CERTS \n");
+        return verify_result;
+    }
+
+    ret = X509_STORE_CTX_init(storeContext, store, sk_X509_value(certStack, 0), certStack);
+
+    if (ret != 1)
+    {
+        return verify_result;
+    }
+
+    ret = X509_verify_cert(storeContext);
+
+    if (ret != 1)
+    {
+        return verify_result;
+    }
+    
+    verify_result = true;
+#else
+    verify_result = verify_X509_cert_chain(certChain, hostName);
+#endif
     // The Windows Crypto APIs don't do host name checks, use Boost's implementation.
 #if HC_PLATFORM_IS_MICROSOFT
     if (verify_result)

@@ -7,7 +7,11 @@
 #else
 // This path is untested, but this http provider should work with other curl implementations as well.
 // The logic in CurlMulti::Perform is optimized for XCurl, but should work on any curl implementation.
-#include <curl.h>
+#include <curl/curl.h>
+//The extern structs are here for LibHC Linux. CurlEasyRequest, CurlProvider, and CurlMulti create a circular dependency.
+//The Clang compiler is not able to resolve the undefined g_trace from the circular dependency as opposed to the MSBuild Compiler.
+extern struct HCTraceImplArea g_traceHTTPCLIENT;
+extern struct HCTraceImplArea g_traceWEBSOCKET;
 #endif
 #include "Result.h"
 
@@ -15,6 +19,9 @@ namespace xbox
 {
 namespace httpclient
 {
+
+HRESULT HrFromCurle(CURLcode c) noexcept;
+HRESULT HrFromCurlm(CURLMcode c) noexcept;
 
 class CurlEasyRequest
 {

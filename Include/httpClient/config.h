@@ -10,6 +10,7 @@
 #define HC_PLATFORM_ANDROID 11
 #define HC_PLATFORM_IOS 21
 #define HC_PLATFORM_MAC 22
+#define HC_PLATFORM_LINUX 31
 #define HC_PLATFORM_GENERIC 100
 #define HC_PLATFORM_NINTENDO_SWITCH 111
 #define HC_PLATFORM_SONY_PLAYSTATION_4 121
@@ -54,6 +55,14 @@
 
     #if defined(_WIN64)
         #define HC_DATAMODEL HC_DATAMODEL_LLP64
+    #else
+        #define HC_DATAMODEL HC_DATAMODEL_ILP32
+    #endif
+#elif defined(__linux__) && !defined(__ANDROID__)
+    #define HC_PLATFORM HC_PLATFORM_LINUX
+
+    #if defined(__LP64__)
+        #define HC_DATAMODEL HC_DATAMODEL_LP64
     #else
         #define HC_DATAMODEL HC_DATAMODEL_ILP32
     #endif
