@@ -41,6 +41,8 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
 
     // we set both POSTFIELDSIZE and INFILESIZE because curl uses one or the
     // other depending on method
+    // We are allowing Setops to happen with a bodySize of zero to handle certain clients
+    // not being able to handle handshakes without a fixed body size.
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
 

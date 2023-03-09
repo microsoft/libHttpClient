@@ -119,7 +119,6 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
     ret = X509_STORE_load_locations(store, NULL, "/etc/ssl/certs");
     if (ret != 1)
     {
-        printf("\n FAILED TO LOAD CERTS \n");
         return verify_result;
     }
 

@@ -58,16 +58,12 @@
     #else
         #define HC_DATAMODEL HC_DATAMODEL_ILP32
     #endif
-#elif defined(__linux__) && !defined(__ANDROID__)
-    #define HC_PLATFORM HC_PLATFORM_LINUX
-
-    #if defined(__LP64__)
-        #define HC_DATAMODEL HC_DATAMODEL_LP64
+#elif defined(__linux__)
+    #if defined(__ANDROID)
+        #define HC_PLATFORM HC_PLATFORM_ANDROID
     #else
-        #define HC_DATAMODEL HC_DATAMODEL_ILP32
+        #define HC_PLATFORM HC_PLATFORM_LINUX
     #endif
-#elif defined(__ANDROID__)
-    #define HC_PLATFORM HC_PLATFORM_ANDROID
 
     #if defined(__LP64__)
         #define HC_DATAMODEL HC_DATAMODEL_LP64

@@ -104,6 +104,9 @@ typedef std::chrono::steady_clock chrono_clock_t;
 #include "Result.h"
 #include "../Global/mem.h"
 
+HC_DECLARE_TRACE_AREA(HTTPCLIENT);
+HC_DECLARE_TRACE_AREA(WEBSOCKET);
+
 #if HC_PLATFORM_IS_MICROSOFT
 #include "Win/utils_win.h"
 #endif
@@ -114,9 +117,6 @@ typedef std::chrono::steady_clock chrono_clock_t;
 
 #include "ResultMacros.h"
 #include "EntryList.h"
-
-HC_DECLARE_TRACE_AREA(HTTPCLIENT);
-HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
 // Define TRACE for AsyncLib
 #define ASYNC_LIB_TRACE(result, message)            \
