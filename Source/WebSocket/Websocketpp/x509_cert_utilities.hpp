@@ -57,7 +57,7 @@ namespace xbox { namespace httpclient {
 
 #if HC_PLATFORM == HC_PLATFORM_LINUX
     static bool verify_X509_cert_chain(asio::ssl::verify_context& verifyCtx, const http_internal_string& hostName);
-#elif
+#else
     static bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &certChain, const http_internal_string &hostName);
 #endif
 
