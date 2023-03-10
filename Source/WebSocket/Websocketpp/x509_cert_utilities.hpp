@@ -56,6 +56,7 @@
 namespace xbox { namespace httpclient {
 
 static bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &certChain, const http_internal_string &hostName);
+static bool verify_X509_cert_chain(asio::ssl::verify_context& verifyCtx, const http_internal_string& hostName);
 
 bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, const http_internal_string &hostName)
 {
@@ -101,42 +102,7 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
     auto verify_result = false;
 
 #if HC_PLATFORM == HC_PLATFORM_LINUX
-    X509_STORE *store = X509_STORE_new();
-    X509_STORE_CTX_trusted_stack(storeContext, certStack);
-    SSL_CTX *sslContext = SSL_CTX_new(TLS_method());
-    store = SSL_CTX_get_cert_store(sslContext);
-
-    if (sslContext == NULL) {
-        return verify_result;
-    }
-
-    int ret = X509_STORE_set_default_paths(store);
-    if (ret != 1)
-    {
-        return verify_result;
-    }
-
-    ret = X509_STORE_load_locations(store, NULL, "/etc/ssl/certs");
-    if (ret != 1)
-    {
-        return verify_result;
-    }
-
-    ret = X509_STORE_CTX_init(storeContext, store, sk_X509_value(certStack, 0), certStack);
-
-    if (ret != 1)
-    {
-        return verify_result;
-    }
-
-    ret = X509_verify_cert(storeContext);
-
-    if (ret != 1)
-    {
-        return verify_result;
-    }
-    
-    verify_result = true;
+    verify_result = verify_X509_cert_chain(verifyCtx, hostName);
 #else
     verify_result = verify_X509_cert_chain(certChain, hostName);
 #endif
@@ -560,7 +526,61 @@ bool verify_X509_cert_chain(const http_internal_vector<http_internal_string> &ce
 }
 #endif
 
+#if defined(__linux__)
+static bool verify_X509_cert_chain(asio::ssl::verify_context& verifyCtx, const http_internal_string& hostName)
+{
+    X509_STORE_CTX* storeContext = verifyCtx.native_handle();
+    int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
+    if (currentDepth != 0)
+    {
+        return true;
+    }
 
+    STACK_OF(X509)* certStack = X509_STORE_CTX_get_chain(storeContext);
+    const int numCerts = sk_X509_num(certStack);
+    if (numCerts < 0)
+    {
+        return false;
+    }
+
+    X509_STORE* store = X509_STORE_new();
+    X509_STORE_CTX_trusted_stack(storeContext, certStack);
+    SSL_CTX* sslContext = SSL_CTX_new(TLS_method());
+    store = SSL_CTX_get_cert_store(sslContext);
+
+    if (sslContext == NULL) {
+        return false;
+    }
+
+    int ret = X509_STORE_set_default_paths(store);
+    if (ret != 1)
+    {
+        return false;
+    }
+
+    ret = X509_STORE_load_locations(store, NULL, "/etc/ssl/certs");
+    if (ret != 1)
+    {
+        return false;
+    }
+
+    ret = X509_STORE_CTX_init(storeContext, store, sk_X509_value(certStack, 0), certStack);
+
+    if (ret != 1)
+    {
+        return false;
+    }
+
+    ret = X509_verify_cert(storeContext);
+
+    if (ret != 1)
+    {
+        return false;
+    }
+
+    return true;
+}
+#endif
 }}
 
 #endif
