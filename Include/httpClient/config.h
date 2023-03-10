@@ -59,7 +59,7 @@
         #define HC_DATAMODEL HC_DATAMODEL_ILP32
     #endif
 #elif defined(__linux__)
-    #if defined(__ANDROID)
+    #if defined(__ANDROID__)
         #define HC_PLATFORM HC_PLATFORM_ANDROID
     #else
         #define HC_PLATFORM HC_PLATFORM_LINUX

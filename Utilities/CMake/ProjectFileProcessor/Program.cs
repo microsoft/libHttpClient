@@ -156,6 +156,14 @@ namespace ProjectFileProcessor
                 toolsets = new List<string>{ "141", "142", "143" }
             });
 
+            // Linux
+            fileNodes.Add(new FileNode
+            {
+                cmake_vcxproj = @"libHttpClient.Linux.C.vcxproj",
+                template = @"template-libHttpClient.Linux.C.vcxproj",
+                toolsets = new List<string> {""}
+            });
+
             foreach (FileNode fn in fileNodes)
             {
                 foreach (var toolset in fn.toolsets)

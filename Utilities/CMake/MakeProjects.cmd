@@ -20,6 +20,9 @@ call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DUNITTEST=TRUE -DTE=TRU
 if %ERRORLEVEL% NEQ 0 goto done
 call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DGDK=TRUE
 if %ERRORLEVEL% NEQ 0 goto done
+call %ROOT_FOLDER%\Utilities\CMake\scripts\RunCMake.cmd -DLINUX=TRUE
+if %ERRORLEVEL% NEQ 0 goto done
+
 
 %ROOT_FOLDER%\Utilities\CMake\ProjectFileProcessor\bin\Debug\ProjectFileProcessor.exe %ROOT_FOLDER%
 
