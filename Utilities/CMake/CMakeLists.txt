@@ -17,6 +17,8 @@ else()
         endif()
     elseif( BUILDWIN32 )
         set (PROJECT_NAME libHttpClient.Win32.C)
+    elseif( LINUX )
+        set (PROJECT_NAME libHttpClient.linux.C)
     elseif( GDK )
         set (PROJECT_NAME libHttpClient.GDK.C)
     else()
@@ -98,6 +100,12 @@ set(Win32_WebSocket_Source_Files
     ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
     )
 
+set(Linux_WebSocket_Source_Files
+    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.cpp
+    ../../../Source/WebSocket/Websocketpp/websocketpp_websocket.h
+    ../../../Source/WebSocket/Websocketpp/x509_cert_utilities.hpp
+    )
+
 set(GDK_WebSocket_Source_Files
     ../../../Source/HTTP/WinHttp/winhttp_provider.cpp
     ../../../Source/HTTP/WinHttp/winhttp_provider.h
@@ -141,6 +149,10 @@ set(Windows_Logger_Source_Files
    ../../../Source/Logger/Win/win_logger.cpp
    )
 
+set(Linux_Logger_Source_Files
+   ../../../Source/Logger/Generic/generic_logger.cpp
+   )
+
 set(UnitTests_Source_Files_Support
     ../../../Tests/UnitTests/Support/DefineTestMacros.h
     ../../../Tests/UnitTests/Support/UnitTestIncludes.h
@@ -170,6 +182,11 @@ set(UnitTests_Source_Files_Tests
     ../../../Tests/UnitTests/Tests/TaskQueueTests.cpp
     ../../../Tests/UnitTests/Tests/WebsocketTests.cpp
     )
+
+set(STL_Source_Files
+    ../../../Source/Task/ThreadPool_stl.cpp
+    ../../../Source/Task/WaitTimer_stl.cpp
+)
 
 include(GetCommonHCSourceFiles.cmake)
 get_common_hc_source_files(
@@ -279,6 +296,24 @@ if( BUILDWIN32 )
         ${Windows_Logger_Source_Files}
         ${Win32_WebSocket_Source_Files}
         ${Task_Source_Files}
+        )
+endif()
+
+if( LINUX )
+    source_group("C++ Source\\HTTP\\Curl" FILES ${Curl_Source_Files})
+    source_group("C++ Source\\WebSocket\\Win" FILES ${Linux_WebSocket_Source_Files})
+    source_group("C++ Source\\Logger\\Win" FILES ${Linux_Logger_Source_Files})
+    source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    source_group("C++ Source\\Task" FILES ${Task_Source_Files})
+    source_group("C++ Source\\Task" FILES ${STL_Source_Files})
+
+    list(APPEND
+        SOURCE_FILES
+        ${Curl_Source_Files}
+        ${Linux_Logger_Source_Files}
+        ${Linux_WebSocket_Source_Files}
+        ${Task_Source_Files}
+        ${STL_Source_Files}
         )
 endif()
 

@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <cstring>
 #include "CurlEasyRequest.h"
 #include "CurlProvider.h"
 
@@ -38,17 +39,16 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     void* clientRequestBodyReadCallbackContext{};
     RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyReadFunction(hcCall, &clientRequestBodyReadCallback, &bodySize, &clientRequestBodyReadCallbackContext));
 
-    if (bodySize > 0)
-    {
-        // we set both POSTFIELDSIZE and INFILESIZE because curl uses one or the
-        // other depending on method
-        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
-        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
+    // we set both POSTFIELDSIZE and INFILESIZE because curl uses one or the
+    // other depending on method
+    // We are allowing Setops to happen with a bodySize of zero to handle certain clients
+    // not being able to handle handshakes without a fixed body size.
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
 
-        // read callback
-        RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
-        RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
-    }
+    // read callback
+    RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
+    RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
 
     // url & method
     char const* url = nullptr;

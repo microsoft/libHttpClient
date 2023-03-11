@@ -7,7 +7,7 @@
 #else
 // This path is untested, but this http provider should work with other curl implementations as well.
 // The logic in CurlMulti::Perform is optimized for XCurl, but should work on any curl implementation.
-#include <curl.h>
+#include <curl/curl.h>
 #endif
 #include "Result.h"
 
@@ -15,6 +15,9 @@ namespace xbox
 {
 namespace httpclient
 {
+
+HRESULT HrFromCurle(CURLcode c) noexcept;
+HRESULT HrFromCurlm(CURLMcode c) noexcept;
 
 class CurlEasyRequest
 {
