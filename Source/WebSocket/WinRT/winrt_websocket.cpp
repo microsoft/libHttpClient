@@ -455,7 +455,7 @@ struct SendMessageCallbackContext
 {
     std::shared_ptr<websocket_outgoing_message> nextMessage;
     std::shared_ptr<winrt_websocket_impl> websocketTask;
-    std::shared_ptr<HC_WEBSOCKET> websocketHandle;
+    std::shared_ptr<xbox::httpclient::WebSocket> websocket;
 };
 
 HRESULT WebsockSendMessageDoWork(
@@ -593,7 +593,7 @@ void MessageWebSocketSendMessage(
     std::shared_ptr<SendMessageCallbackContext> callbackContext = http_allocate_shared<SendMessageCallbackContext>();
     callbackContext->nextMessage = msg;
     callbackContext->websocketTask = websocketTask;
-    callbackContext->websocketHandle = websocketTask->m_websocketHandle->shared_from_this();
+    callbackContext->websocket = websocketTask->m_websocketHandle->websocket->shared_from_this();
     void* rawContext = shared_ptr_cache::store<SendMessageCallbackContext>(callbackContext);
     if (rawContext == nullptr)
     {
