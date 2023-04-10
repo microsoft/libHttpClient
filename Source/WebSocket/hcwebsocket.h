@@ -32,6 +32,8 @@ struct HC_WEBSOCKET_OBSERVER
 {
 public: 
     virtual ~HC_WEBSOCKET_OBSERVER();
+    int AddRef() noexcept;
+    int Release() noexcept;
 
     static HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> Initialize(
         _In_ std::shared_ptr<xbox::httpclient::WebSocket> WebSocket,
@@ -44,7 +46,6 @@ public:
 
     void SetBinaryMessageFragmentEventFunction(HCWebSocketBinaryMessageFragmentFunction binaryFragmentFunc);
 
-    std::atomic<int> refCount{ 1 };
     std::shared_ptr<xbox::httpclient::WebSocket> const websocket;
 
 private:
@@ -55,6 +56,7 @@ private:
     static void CALLBACK BinaryMessageFragmentFunc(HCWebsocketHandle handle, const uint8_t* payloadBytes, uint32_t payloadSize, bool isLastFragment, void* functionContext);
     static void CALLBACK CloseFunc(HCWebsocketHandle handle, HCWebSocketCloseStatus status, void* context);
 
+    std::atomic<int> m_refCount{ 1 };
     HCWebSocketMessageFunction m_messageFunc{ nullptr };
     HCWebSocketBinaryMessageFunction m_binaryMessageFunc{ nullptr };
     HCWebSocketBinaryMessageFragmentFunction m_binaryFragmentFunc{ nullptr };

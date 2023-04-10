@@ -21,6 +21,21 @@ HC_WEBSOCKET_OBSERVER::~HC_WEBSOCKET_OBSERVER()
     websocket->UnregisterEventCallbacks(m_handlerToken);
 }
 
+int HC_WEBSOCKET_OBSERVER::AddRef() noexcept
+{
+    return ++m_refCount;
+}
+
+int HC_WEBSOCKET_OBSERVER::Release() noexcept
+{
+    int count = --m_refCount;
+    if (count == 0)
+    {
+        HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> reclaim{ this };
+    }
+    return count;
+}
+
 HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> HC_WEBSOCKET_OBSERVER::Initialize(
     _In_ std::shared_ptr<xbox::httpclient::WebSocket> websocket,
     _In_opt_ HCWebSocketMessageFunction messageFunc,
