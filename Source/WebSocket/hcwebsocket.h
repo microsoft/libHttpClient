@@ -9,6 +9,8 @@
 
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
+struct HC_WEBSOCKET_OBSERVER;
+
 namespace xbox
 {
 namespace httpclient
@@ -22,6 +24,13 @@ struct hc_websocket_impl
     virtual ~hc_websocket_impl() {}
 };
 
+struct ObserverDeleter
+{
+    void operator()(HC_WEBSOCKET_OBSERVER* ptr) noexcept;
+};
+
+using ObserverPtr = std::unique_ptr<HC_WEBSOCKET_OBSERVER, ObserverDeleter>;
+
 }
 }
 
@@ -30,12 +39,11 @@ struct hc_websocket_impl
 // An observer of a WebSocket. Holds a shared reference to the WebSocket and receives callbacks on WebSocket events
 struct HC_WEBSOCKET_OBSERVER
 {
-public: 
-    virtual ~HC_WEBSOCKET_OBSERVER();
+public:
     int AddRef() noexcept;
     int Release() noexcept;
 
-    static HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> Initialize(
+    static xbox::httpclient::ObserverPtr Initialize(
         _In_ std::shared_ptr<xbox::httpclient::WebSocket> WebSocket,
         _In_opt_ HCWebSocketMessageFunction messageFunc = nullptr,
         _In_opt_ HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr,
@@ -50,6 +58,7 @@ public:
 
 private:
     HC_WEBSOCKET_OBSERVER(std::shared_ptr<xbox::httpclient::WebSocket> WebSocket);
+    virtual ~HC_WEBSOCKET_OBSERVER();
 
     static void CALLBACK MessageFunc(HCWebsocketHandle handle, const char* message, void* context);
     static void CALLBACK BinaryMessageFunc(HCWebsocketHandle handle, const uint8_t* bytes, uint32_t payloadSize, void* context);
@@ -69,6 +78,12 @@ namespace xbox
 {
 namespace httpclient
 {
+
+inline
+void ObserverDeleter::operator()(HC_WEBSOCKET_OBSERVER* ptr) noexcept
+{
+    ptr->Release();
+}
 
 class WebSocket : public std::enable_shared_from_this<WebSocket>
 {
