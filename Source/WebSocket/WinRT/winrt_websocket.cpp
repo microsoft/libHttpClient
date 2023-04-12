@@ -455,6 +455,21 @@ struct SendMessageCallbackContext
 {
     std::shared_ptr<websocket_outgoing_message> nextMessage;
     std::shared_ptr<winrt_websocket_impl> websocketTask;
+
+    SendMessageCallbackContext(
+        std::shared_ptr<websocket_outgoing_message> msg,
+        std::shared_ptr<winrt_websocket_impl> task
+    ) noexcept :
+        nextMessage{ std::move(msg) },
+        websocketTask{ std::move(task) }
+    {
+        websocketTask->m_websocketHandle->AddRef();
+    }
+
+    ~SendMessageCallbackContext() noexcept
+    {
+        websocketTask->m_websocketHandle->Release();
+    }
 };
 
 HRESULT WebsockSendMessageDoWork(
@@ -589,9 +604,9 @@ void MessageWebSocketSendMessage(
         return;
     }
 
-    std::shared_ptr<SendMessageCallbackContext> callbackContext = http_allocate_shared<SendMessageCallbackContext>();
-    callbackContext->nextMessage = msg;
-    callbackContext->websocketTask = websocketTask;
+    std::shared_ptr<SendMessageCallbackContext> callbackContext =
+        http_allocate_shared<SendMessageCallbackContext>(msg, websocketTask);
+
     void* rawContext = shared_ptr_cache::store<SendMessageCallbackContext>(callbackContext);
     if (rawContext == nullptr)
     {

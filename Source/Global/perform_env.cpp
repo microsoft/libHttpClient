@@ -383,7 +383,7 @@ struct HC_PERFORM_ENV::ActiveWebSocketContext
     }
 
     HC_PERFORM_ENV* const env{};
-    HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> websocketObserver;
+    xbox::httpclient::ObserverPtr websocketObserver;
 };
 
 HRESULT HC_PERFORM_ENV::WebSocketConnectAsyncShim(

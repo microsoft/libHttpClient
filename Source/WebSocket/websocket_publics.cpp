@@ -146,7 +146,7 @@ try
     }
 
     HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketDuplicateHandle [ID %llu]", TO_ULL(handle->websocket->id));
-    ++handle->refCount;
+    handle->AddRef();
 
     return handle;
 }
@@ -160,12 +160,7 @@ try
     RETURN_HR_IF(E_INVALIDARG, !handle);
 
     HC_TRACE_INFORMATION(WEBSOCKET, "HCWebSocketCloseHandle [ID %llu]", TO_ULL(handle->websocket->id));
-    int refCount = --handle->refCount;
-    if (refCount <= 0)
-    {
-        ASSERT(refCount == 0); // should only fire at 0
-        HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> reclaim{ handle };
-    }
+    handle->Release();
 
     return S_OK;
 }
