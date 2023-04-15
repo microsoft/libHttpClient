@@ -15,3 +15,8 @@ LibHttpClient for Linux uses cURL 7.81.0. When you run ```curl.bash``` it will c
 You will need a Linux machine, a Linux vurtual machine, or Windows Subsystem for Linux (WSL) to run the bash script.
 
 If the bash script fails to run and produces the error ```/bin/bash^M: bad interpreter``` use ```sed -i -e 's/\r$//' curl.bash``` then run the script again.
+
+## CMake
+This script will prompt you to make libssl, libcrypto, and LibHttpClient libraries in either Debug or Release mode. They will be placed in Binaries/{Configuration}/x64/{Library}
+
+If the bash script fails to run and produces the error ```/bin/bash^M: bad interpreter``` use ```sed -i -e 's/\r$//' CMake.bash``` then run the script again.

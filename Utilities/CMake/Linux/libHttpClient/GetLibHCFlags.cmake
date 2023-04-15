@@ -11,7 +11,7 @@ function(GET_LIBHC_FLAGS OUT_FLAGS OUT_FLAGS_DEBUG OUT_FLAGS_RELEASE)
         "-std=c++17"
         "-Wno-unknown-pragmas"
         "-Wno-pragma-once-outside-header"
-        "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_ANDROID"
+        "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_LINUX"
         PARENT_SCOPE
         )
 
