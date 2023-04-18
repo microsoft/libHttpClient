@@ -66,8 +66,6 @@ set(LINUX_SOURCE_FILES
 
 set(LINUX_INCLUDE_DIRS
     "${PATH_TO_ROOT}/External/opensslGeneratedHeaders/linux"
-    "${PATH_TO_ROOT}../openssl/install/linux/openssl/include"
-    "${PATH_TO_ROOT}../openssl/generatedHeaders/linux/include"
     )
 
 #########################
