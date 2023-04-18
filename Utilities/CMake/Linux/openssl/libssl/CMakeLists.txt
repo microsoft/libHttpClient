@@ -66,8 +66,8 @@ set(SSL_SOURCE_FILES
 set(SSL_INCLUDE_DIRS
     "${PATH_TO_EXTERNAL}/opensslGeneratedHeaders/linux"
     "${PATH_TO_EXTERNAL}/opensslGeneratedHeaders/linux/internal"
-    "${PATH_TO_OPENSSL}/include"
     "${PATH_TO_OPENSSL}"
+    "${PATH_TO_OPENSSL}/include"
     "${PATH_TO_SSL}/record"
     "${PATH_TO_SSL}/statem"
     )
