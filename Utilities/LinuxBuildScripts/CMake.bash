@@ -1,7 +1,7 @@
 #!/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-read -p "Enter R for Release " INPUTVAR
-if [ "$INPUTVAR" = "R" ]; then
+echo "Enter Argument Release for Release "
+if [ "$1" = "Release" ]; then
     echo "Release build Starting"
     CONFIGVAR="Release"
 else
