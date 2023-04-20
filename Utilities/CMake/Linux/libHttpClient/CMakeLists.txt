@@ -12,6 +12,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ### Set up paths for source and include ###
 ###########################################
 
+# Set final static libraries output folder
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Binaries/Debug/x64/libHttpClient.Linux.C)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Binaries/Release/x64/libHttpClient.Linux.C)
+
+# BINARY_DIR is a temp folder used by cmake itself.
+# Binary folder can be remove freely.
+# See more details: https://cmake.org/cmake/help/v3.4/command/add_subdirectory.html
+set(BINARY_DIR ${PATH_TO_ROOT}/Build/libHttpClient.Linux.C/build)
+
 include("../../GetCommonHCSourceFiles.cmake")
 get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
