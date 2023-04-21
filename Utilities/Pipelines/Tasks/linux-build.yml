@@ -12,6 +12,12 @@ steps:
     displayName: 'Install ninja'
 
   - script: |
+      chmod +x ./Utilities/LinuxBuildScripts/curl.bash
+      sudo sed -i -e 's/\r$//' ./Utilities/LinuxBuildScripts/curl.bash
+      sudo bash ./Utilities/LinuxBuildScripts/curl.bash
+    displayName: 'build curl'
+
+  - script: |
       cmake -S ./Utilities/CMake/Linux/openssl/libssl -B ./Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
       ninja -C ./Build/libssl.Linux/build
     displayName: 'build libssl'

@@ -1,13 +1,19 @@
 #!/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-echo "Enter Argument Release for Release "
-if [ "$1" = "Release" ]; then
-    echo "Release build Starting"
-    CONFIGVAR="Release"
-else
+
+if [ "$1" = "Debug" ]; then
     echo "Debug build Starting"
     CONFIGVAR="Debug"
+else
+    echo "Release build Starting"
+    CONFIGVAR="Release"
 fi
+
+if [ "$1" != "nocurl" ] && [ "$2" != "nocurl" ]; then
+    echo "building cURL"
+    ./curl.bash
+fi
+
 #make libssl
 cmake -S "$SCRIPT_DIR"/../CMake/Linux/openssl/libssl -B "$SCRIPT_DIR"/../../Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=$CONFIGVAR -G "Ninja"
 ninja -C "$SCRIPT_DIR"/../../Build/libssl.Linux/build

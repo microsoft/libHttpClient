@@ -91,26 +91,6 @@ jobs:
           configuration: $(Configuration)
 
   ####################
-  # Linux
-  ####################
-
-  - job: LinuxBuild
-    displayName: libHttpClient Linux Build
-    pool:
-      vmImage: ubuntu-20.04
-    timeoutInMinutes: 180
-    strategy:
-      matrix:
-        Debug:
-          Configuration: Debug
-        Release:
-          Configuration: Release
-    steps:
-      - template: Tasks/linux-build.yml
-        parameters:
-          configuration: $(Configuration)
-
-  ####################
   # Android
   ####################
 
@@ -147,6 +127,26 @@ jobs:
           Configuration: Release
     steps:
       - template: Tasks/ios-build.yml
+        parameters:
+          configuration: $(Configuration)
+
+  ####################
+  # Linux
+  ####################
+
+  - job: LinuxBuild
+    displayName: libHttpClient Linux Build
+    pool:
+      vmImage: ubuntu-20.04
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        Debug:
+          Configuration: Debug
+        Release:
+          Configuration: Release
+    steps:
+      - template: Tasks/linux-build.yml
         parameters:
           configuration: $(Configuration)
 
