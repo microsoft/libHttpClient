@@ -12,16 +12,16 @@ steps:
     displayName: 'Install ninja'
 
   - script: |
-      cmake -S Utilities/CMake/Linux/openssl/libssl -B Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
-      ninja -C Build/libssl.Linux/build
+      cmake -S ./Utilities/CMake/Linux/openssl/libssl -B ./Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
+      ninja -C ./Build/libssl.Linux/build
     displayName: 'build libssl'
 
   - script: |
-      cmake -S Utilities/CMake/Linux/openssl/libcrypto -B Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
-      ninja -C Build/libssl.Linux/build
+      cmake -S ./Utilities/CMake/Linux/openssl/libcrypto -B ./Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
+      ninja -C ./Build/libssl.Linux/build
     displayName: 'build libcrypto'
 
   - script: |
-      cmake -S Utilities/CMake/Linux/libHttpClient.Linux.C -B Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
-      ninja -C Build/libHttpClient.Linux.C/build
+      cmake -S ./Utilities/CMake/Linux/libHttpClient.Linux.C -B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
+      ninja -C ./Build/libHttpClient.Linux.C/build
     displayName: 'build libHttpClient'
