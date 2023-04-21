@@ -95,7 +95,7 @@ jobs:
   ####################
 
   - job: LinuxBuild
-    displayName: libHttpClient Android Build
+    displayName: libHttpClient Linux Build
     pool:
       vmImage: ubuntu-20.04
     timeoutInMinutes: 180

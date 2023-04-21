@@ -18,10 +18,10 @@ steps:
 
   - script: |
       cmake -S ./Utilities/CMake/Linux/openssl/libcrypto -B ./Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
-      ninja -C ./Build/libssl.Linux/build
+      ninja -C ./Build/libcrypto.Linux/build
     displayName: 'build libcrypto'
 
   - script: |
-      cmake -S ./Utilities/CMake/Linux/libHttpClient.Linux.C -B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
+      cmake -S ./Utilities/CMake/Linux/libHttpClient -B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
       ninja -C ./Build/libHttpClient.Linux.C/build
     displayName: 'build libHttpClient'
