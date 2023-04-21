@@ -1,0 +1,27 @@
+parameters:
+  - name: configuration
+    type: string
+
+steps:
+  - template: checkout.yml
+
+  - script: |
+      sudo wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip
+      sudo gunzip /usr/local/bin/ninja.gz
+      sudo chmod a+x /usr/local/bin/ninja
+    displayName: 'Install ninja'
+
+  - script: |
+      cmake -S Utilities/CMake/Linux/openssl/libssl -B Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
+      ninja -C Build/libssl.Linux/build
+    displayName: 'build libssl'
+
+  - script: |
+      cmake -S Utilities/CMake/Linux/openssl/libcrypto -B Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
+      ninja -C Build/libssl.Linux/build
+    displayName: 'build libcrypto'
+
+  - script: |
+      cmake -S Utilities/CMake/Linux/libHttpClient.Linux.C -B Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
+      ninja -C Build/libHttpClient.Linux.C/build
+    displayName: 'build libHttpClient'
