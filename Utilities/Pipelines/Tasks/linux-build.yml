@@ -12,22 +12,7 @@ steps:
     displayName: 'Install ninja'
 
   - script: |
-      chmod +x ./Utilities/LinuxBuildScripts/curl.bash
-      sudo sed -i -e 's/\r$//' ./Utilities/LinuxBuildScripts/curl.bash
-      sudo bash ./Utilities/LinuxBuildScripts/curl.bash
-    displayName: 'build curl'
-
-  - script: |
-      sudo cmake -S ./Utilities/CMake/Linux/openssl/libssl -B ./Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
-      sudo ninja -C ./Build/libssl.Linux/build
-    displayName: 'build libssl'
-
-  - script: |
-      sudo cmake -S ./Utilities/CMake/Linux/openssl/libcrypto -B ./Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
-      sudo ninja -C ./Build/libcrypto.Linux/build
-    displayName: 'build libcrypto'
-
-  - script: |
-      sudo cmake -S ./Utilities/CMake/Linux/libHttpClient -B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"
-      sudo ninja -C ./Build/libHttpClient.Linux.C/build
-    displayName: 'build libHttpClient'
+      chmod +x ./Utilities/LinuxBuildScripts/libHttpClient_Linux.bash
+      sudo sed -i -e 's/\r$//' ./Utilities/LinuxBuildScripts/libHttpClient_Linux.bash
+      sudo bash ./Utilities/LinuxBuildScripts/libHttpClient_Linux.bash -c ${{ parameters.configuration }}
+    displayName: 'build LibHC'
