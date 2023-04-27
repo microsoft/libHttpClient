@@ -1,6 +1,6 @@
 # Building libHttpClient for Linux
 
-These scripts will be used to build the static library dependencies for libHttpClient and link them against the build static library build for libHttpClient.
+These scripts will be used to build the static library dependencies for libHttpClient and link them against the static library build for libHttpClient.
 
 ## Dependencies 
 
