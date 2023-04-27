@@ -27,6 +27,6 @@ steps:
     displayName: 'CMake LibHttpClient'
     inputs:
       workingDirectory: './Utilities/CMake/Linux/libHttpClient'
-      cmakeArgs: '-B ./../../../../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
+      cmakeArgs: '-B ./../../../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
 
   - template: linux-build.yml
