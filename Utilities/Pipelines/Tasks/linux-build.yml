@@ -27,7 +27,7 @@ steps:
       workingDirectory: './Utilities/CMake/Linux/libHttpClient'
       cmakeArgs: '-B ./../../../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
 
-    - script: |
+  - script: |
       sudo ninja -C ./Build/libssl.Linux/build
     displayName: 'build libSSL'
 
