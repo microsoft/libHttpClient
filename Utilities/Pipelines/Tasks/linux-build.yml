@@ -11,8 +11,20 @@ steps:
       sudo chmod a+x /usr/local/bin/ninja
     displayName: 'Install ninja'
 
-  - script: |
-      chmod +x ./Utilities/LinuxBuildScripts/libHttpClient_Linux.bash
-      sudo sed -i -e 's/\r$//' ./Utilities/LinuxBuildScripts/libHttpClient_Linux.bash
-      sudo bash ./Utilities/LinuxBuildScripts/libHttpClient_Linux.bash -c ${{ parameters.configuration }}
-    displayName: 'build LibHC'
+  - task: CMake@1
+    displayName: 'build LibSSL'
+    inputs:
+      workingDirectory: './Build/libssl.Linux/build'
+      cmakeArgs: '-S ./Utilities/CMake/Linux/openssl/libssl -B ./Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
+
+  - task: CMake@1
+    displayName: 'build LibCrypto'
+    inputs:
+      workingDirectory: './Build/libcrypto.Linux/build'
+      cmakeArgs: '-S ./Utilities/CMake/Linux/openssl/libcrypto -B ./Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
+
+  - task: CMake@1
+    displayName: 'build LibHttpClient'
+    inputs:
+      workingDirectory: './Build/libHttpClient.Linux.C/build'
+      cmakeArgs: '-S ./Utilities/CMake/Linux/openssl/libHttpClient -B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
