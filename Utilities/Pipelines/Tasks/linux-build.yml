@@ -14,17 +14,17 @@ steps:
   - task: CMake@1
     displayName: 'build LibSSL'
     inputs:
-      workingDirectory: './Build/libssl.Linux/build'
-      cmakeArgs: '-S ./Utilities/CMake/Linux/openssl/libssl -B ./Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
+      workingDirectory: './Utilities/CMake/Linux/openssl/libssl'
+      cmakeArgs: '-B ./Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
 
   - task: CMake@1
     displayName: 'build LibCrypto'
     inputs:
-      workingDirectory: './Build/libcrypto.Linux/build'
-      cmakeArgs: '-S ./Utilities/CMake/Linux/openssl/libcrypto -B ./Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
+      workingDirectory: './Utilities/CMake/Linux/openssl/libcrypto'
+      cmakeArgs: '-B ./Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
 
   - task: CMake@1
     displayName: 'build LibHttpClient'
     inputs:
-      workingDirectory: './Build/libHttpClient.Linux.C/build'
-      cmakeArgs: '-S ./Utilities/CMake/Linux/openssl/libHttpClient -B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
+      workingDirectory: './Utilities/CMake/Linux/openssl/libHttpClient'
+      cmakeArgs: '-B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
