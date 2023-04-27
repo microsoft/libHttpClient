@@ -146,7 +146,7 @@ jobs:
         Release:
           Configuration: Release
     steps:
-      - template: Tasks/linux-CMake.yml
+      - template: Tasks/linux-build.yml
         parameters:
           configuration: $(Configuration)
 
