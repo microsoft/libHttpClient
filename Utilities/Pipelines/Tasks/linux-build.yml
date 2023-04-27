@@ -1,13 +1,13 @@
 steps:
 
   - script: |
-      sudo ninja ./Utilities/CMake/Linux/openssl/libssl
+      sudo ninja -C ./Utilities/CMake/Linux/openssl/libssl
     displayName: 'build libSSL'
   - script: |
-      sudo ninja ./Utilities/CMake/Linux/openssl/libcrypto
+      sudo ninja -C ./Utilities/CMake/Linux/openssl/libcrypto
     displayName: 'build LibCrypto'
   - script: |
-      sudo ninja ./Utilities/CMake/Linux/libHttpClient
+      sudo ninja -C ./Utilities/CMake/Linux/libHttpClient
     displayName: 'build LibHttpClient'
   - script: |
       chmod +x ./Utilities/LinuxBuildScripts/curl.bash
