@@ -1,7 +1,3 @@
-parameters:
-  - name: configuration
-    type: string
-
 steps:
 
   - script: |
