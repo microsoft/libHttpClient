@@ -26,5 +26,5 @@ steps:
   - task: CMake@1
     displayName: 'build LibHttpClient'
     inputs:
-      workingDirectory: './Utilities/CMake/Linux/openssl/libHttpClient'
+      workingDirectory: './Utilities/CMake/Linux/libHttpClient'
       cmakeArgs: '-B ./Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=${{ parameters.configuration }} -G "Ninja"'
