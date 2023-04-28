@@ -120,10 +120,3 @@ target_set_flags(
     "${FLAGS_DEBUG}"
     "${FLAGS_RELEASE}"
 )
-
-target_link_libraries(
-    "${PROJECT_NAME}"
-    "${LIBCURL}"
-    "${LIBCRYPTO}"
-    "${LIBSSL}"
-)
