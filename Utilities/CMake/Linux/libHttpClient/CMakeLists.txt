@@ -21,21 +21,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Binaries/Release/x64/
 # See more details: https://cmake.org/cmake/help/v3.4/command/add_subdirectory.html
 set(BINARY_DIR ${PATH_TO_ROOT}/Build/libHttpClient.Linux.C/build)
 
-# Set configuration macro 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CONFIGURATION "Debug" CACHE STRING "")
-else()
-    set(CONFIGURATION "Release" CACHE STRING "")
-endif()
-
-# Get required static Libs
-# libSSL Static Lib
-set(LIBCRYPTO ${REPO_ROOT}/external/libHttpClient/Binaries/${CONFIGURATION}/x64/libcrypto.Linux/libcrypto.Linux.a)
-# libcrypto Static Lib
-set(LIBSSL ${REPO_ROOT}/external/libHttpClient/Binaries/${CONFIGURATION}/x64/libssl.Linux/libssl.Linux.a)
-# libcurl Static Lib
-set(LIBCURL ${REPO_ROOT}/external/libHttpClient/Binaries/Release/x64/libcurl.Linux/libcurl.a)
-
 include("../../GetCommonHCSourceFiles.cmake")
 get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
