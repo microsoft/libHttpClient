@@ -17,8 +17,8 @@ set(PATH_TO_OPENSSL "${PATH_TO_EXTERNAL}/openssl")
 set(PATH_TO_SSL "${PATH_TO_OPENSSL}/ssl")
 
 # Set final static libraries output folder
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Binaries/Debug/x64/libssl.linux)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Binaries/Release/x64/libssl.linux)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Binaries/Debug/x64/libssl.Linux)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Binaries/Release/x64/libssl.Linux)
 
 # BINARY_DIR is a temp folder used by cmake itself.
 # Binary folder can be remove freely.

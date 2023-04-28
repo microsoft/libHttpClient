@@ -44,13 +44,13 @@ if [ "$BUILD_CURL" = true ]; then
     ./curl.bash
 fi
 
-#make libssl
-sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/openssl/libssl -B "$SCRIPT_DIR"/../../Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=$CONFIGURATION -G "Ninja"
-sudo ninja -C "$SCRIPT_DIR"/../../Build/libssl.Linux/build
-
 #make libcrypto
 sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/openssl/libcrypto -B "$SCRIPT_DIR"/../../Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=$CONFIGURATION -G "Ninja"
 sudo ninja -C "$SCRIPT_DIR"/../../Build/libcrypto.Linux/build
+
+#make libssl
+sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/openssl/libssl -B "$SCRIPT_DIR"/../../Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=$CONFIGURATION -G "Ninja"
+sudo ninja -C "$SCRIPT_DIR"/../../Build/libssl.Linux/build
 
 #make libHttpClient
 sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/libHttpClient -B "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=$CONFIGURATION -G "Ninja"
