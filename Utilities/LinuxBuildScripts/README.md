@@ -6,8 +6,6 @@ These scripts will be used to build the static library dependencies for libHttpC
 
 You will need a Linux machine, a Linux virtual machine, or Windows Subsystem for Linux (WSL) to run the build script.
 
-You will also need the [Ninja build system](https://ninja-build.org/) installed.
-
 ## libHttpClient_Linux.bash
 
 Running `libHttpClient_Linux` can generate a variety of build configurations and binaries for libHttpClient and its dependencies. These binaries will be placed at `Binaries/{Configuration}/x64/{Library}`. Example usage is below.
