@@ -20,8 +20,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -nc|--nocurl)
       BUILD_CURL=false
-      shift # past argument
-      shift # past value
+      shift
       ;;
     -*|--*)
       echo "Unknown option $1"
@@ -41,7 +40,8 @@ log "BUILD CURL     = ${SEARCHPATH}"
 
 if [ "$BUILD_CURL" = true ]; then
     log "Building cURL"
-    ./curl.bash
+    sed -i -e 's/\r$//' "$SCRIPT_DIR"/curl.bash
+    bash "$SCRIPT_DIR"/curl.bash
 fi
 
 #make libcrypto
