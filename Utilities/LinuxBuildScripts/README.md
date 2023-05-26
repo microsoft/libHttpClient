@@ -72,13 +72,13 @@ sed -i -e 's/\r$//' curl.bash
 
 ## openssl.bash
 
-libHttpClient for Linux uses openssl 1.1.1k. When `openssl.bash` is run, it generates `libssl.a` and `libcrypto.a` and places it in `Binaries/{Configuration}/x64/{Library}.Linux`.
+libHttpClient for Linux uses OpenSSL 1.1.1k. When `openssl.bash` is run, it generates `libssl.a` and `libcrypto.a` and places it in `Binaries/{Configuration}/x64/{Library}.Linux`.
 
-If you choose to use your own version of openssl, you can place your own copies in `Binaries/{Configuration}/x64/{Library}.Linux`.
+If you choose to use your own version of OpenSSL, you can place your own copies in `Binaries/{Configuration}/x64/{Library}.Linux`.
 
 **libHttpClient for Linux has only been tested against version 1.1.1k**
 
-You can build your own version of openssl from source here: https://www.openssl.org/source/.
+You can build your own version of OpenSSL from source here: https://www.openssl.org/source/.
 
 If the bash script fails to run and produces the error:
 ```
