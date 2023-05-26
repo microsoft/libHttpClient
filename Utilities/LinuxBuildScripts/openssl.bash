@@ -29,20 +29,27 @@ apt-get install libssl-dev
 apt-get install autoconf
 apt-get install automake
 apt-get install libtool
+
 pushd $OPENSSL_SRC
 make clean
 sed -i -e 's/\r$//' Configure
+
 if [ "$CONFIGURATION" = "Debug" ]; then
-    #make libcrypto and libssl
+    # make libcrypto and libssl
     ./Configure linux-x86_64-clang no-shared no-dso no-hw no-engine no-async -d
 else
-    #make libcrypto and libssl
+    # make libcrypto and libssl
     ./Configure linux-x86_64-clang no-shared no-dso no-hw no-engine no-async
 fi
-make -C "$SCRIPT_DIR"/../../External/openssl CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
+
+make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
+
+# copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux
 cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux
+
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
 cp -R "$PWD"/libssl.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
-make -C "$SCRIPT_DIR"/../../External/openssl clean
+
+make clean
 popd

@@ -28,19 +28,24 @@ apt-get install libssl-dev
 apt-get install autoconf
 apt-get install automake
 apt-get install libtool
+
 pushd "$SCRIPT_DIR"/../../External/curl
 autoreconf
-"$SCRIPT_DIR"/../../External/curl/configure
+./configure
+
 if [ "$CONFIGURATION" = "Debug" ]; then
-    #make libcrypto and libssl
-    "$SCRIPT_DIR"/../../External/curl/configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --enable-debug
+    # make libcrypto and libssl
+    ./configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --enable-debug
 else
-    #make libcrypto and libssl
-    "$SCRIPT_DIR"/../../External/curl/configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --disable-debug
+    # make libcrypto and libssl
+    ./configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --disable-debug
 fi
-make clean
+
 make
+
+# copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcurl.Linux
 cp -R "$PWD"/lib/.libs/* "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcurl.Linux
+
 make clean
 popd

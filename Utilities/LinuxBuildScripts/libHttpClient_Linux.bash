@@ -44,10 +44,10 @@ if [ "$BUILD_CURL" = true ]; then
     bash "$SCRIPT_DIR"/curl.bash -c "$CONFIGURATION"
 fi
 
-#make libcrypto and libssl
+# make libcrypto and libssl
 sed -i -e 's/\r$//' "$SCRIPT_DIR"/openssl.bash
 bash "$SCRIPT_DIR"/openssl.bash -c "$CONFIGURATION"
 
-#make libHttpClient
+# make libHttpClient
 sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/libHttpClient -B "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++  -DCMAKE_CXX_FLAGS="-fvisibility=hidden" -DCMAKE_C_FLAGS="-fvisibility=hidden"
 sudo make -C "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build
