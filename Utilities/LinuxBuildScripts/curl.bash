@@ -30,8 +30,7 @@ sudo apt-get install automake
 sudo apt-get install libtool
 
 pushd "$SCRIPT_DIR"/../../External/curl
-autoreconf
--./configure
+autoreconf -fi "$SCRIPT_DIR"/../../External/curl
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
