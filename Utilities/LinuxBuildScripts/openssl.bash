@@ -22,13 +22,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-hwclock --hctosys
-apt-get install clang
-apt-get install make
-apt-get install libssl-dev
-apt-get install autoconf
-apt-get install automake
-apt-get install libtool
+sudo hwclock --hctosys
+sudo apt-get install clang
+sudo apt-get install make
+sudo apt-get install libssl-dev
+sudo apt-get install autoconf
+sudo apt-get install automake
+sudo apt-get install libtool
 
 pushd $OPENSSL_SRC
 make clean
