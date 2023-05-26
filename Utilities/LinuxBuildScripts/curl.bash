@@ -34,10 +34,10 @@ autoreconf
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    ./configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --enable-debug
+    -./configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --enable-debug
 else
     # make libcrypto and libssl
-    ./configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --disable-debug
+    -./configure --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-shared --disable-debug
 fi
 
 make
