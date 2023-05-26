@@ -41,6 +41,16 @@
         }
       },
       "DevelopmentDependency": false
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "git": {
+          "RepositoryUrl": "https://github.com/curl/curl",
+          "CommitHash": "801bd5138ce31aa0d906fa4e2eabfc599d74e793"
+        }
+      },
+      "DevelopmentDependency": false
     }
   ]
 }

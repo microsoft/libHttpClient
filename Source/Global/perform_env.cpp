@@ -23,6 +23,8 @@
 #include "WebSocket/Android/okhttp_websocket.h"
 #elif HC_PLATFORM_IS_APPLE
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
+#elif  HC_PLATFORM == HC_PLATFORM_LINUX
+#include "WebSocket/Websocketpp/websocketpp_websocket.h"
 #endif
 
 #endif
@@ -99,7 +101,7 @@ HttpPerformInfo HC_PERFORM_ENV::GetPlatformDefaultHttpHandlers()
     return HttpPerformInfo{ HttpPerformAsyncDefault, nullptr };
 #elif HC_PLATFORM == HC_PLATFORM_WIN32
     return HttpPerformInfo{ WinHttpProvider::HttpCallPerformAsyncHandler, nullptr };
-#elif HC_PLATFORM == HC_PLATFORM_GDK
+#elif HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_LINUX
     return HttpPerformInfo{ CurlProvider::PerformAsyncHandler, nullptr };
 #elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
     return HttpPerformInfo{ xmlhttp_http_task::PerformAsyncHandler, nullptr };
@@ -147,6 +149,14 @@ WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
             nullptr
         };
     }
+#elif HC_PLATFORM == HC_PLATFORM_LINUX
+    return WebSocketPerformInfo{
+        WebSocketppConnectAsync,
+        WebSocketppSendMessageAsync,
+        WebSocketppSendBinaryMessageAsync,
+        WebSocketppDisconnect,
+        nullptr
+    };
 #elif HC_PLATFORM == HC_PLATFORM_GDK
     return WebSocketPerformInfo{
         WinHttpProvider::WebSocketConnectAsyncHandler,
@@ -216,7 +226,12 @@ Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* arg
     RETURN_IF_FAILED(initWinHttpResult.hr);
     performEnv->winHttpProvider = initWinHttpResult.ExtractPayload();
 #endif
+#elif HC_PLATFORM == HC_PLATFORM_LINUX
+    RETURN_HR_IF(E_INVALIDARG, args);
 
+    auto initCurlResult = CurlProvider::Initialize();
+    RETURN_IF_FAILED(initCurlResult.hr);
+    performEnv->curlProvider = initCurlResult.ExtractPayload();
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
     auto initAndroidResult = AndroidPlatformContext::Initialize(args);
     RETURN_IF_FAILED(initAndroidResult.hr);
@@ -368,7 +383,7 @@ struct HC_PERFORM_ENV::ActiveWebSocketContext
     }
 
     HC_PERFORM_ENV* const env{};
-    HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> websocketObserver;
+    xbox::httpclient::ObserverPtr websocketObserver;
 };
 
 HRESULT HC_PERFORM_ENV::WebSocketConnectAsyncShim(
@@ -551,7 +566,7 @@ void CALLBACK HC_PERFORM_ENV::ProviderCleanup(void* context, bool /*canceled*/)
     HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ static_cast<HC_PERFORM_ENV*>(context) };
     XAsyncBlock* cleanupAsyncBlock{ env->m_cleanupAsyncBlock };
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
+#if HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_LINUX
     HC_UNIQUE_PTR<XAsyncBlock> curlCleanupAsyncBlock{ new (http_stl_allocator<XAsyncBlock>{}.allocate(1)) XAsyncBlock
     {
         cleanupAsyncBlock->queue,
@@ -580,7 +595,7 @@ void CALLBACK HC_PERFORM_ENV::ProviderCleanup(void* context, bool /*canceled*/)
 
 void CALLBACK HC_PERFORM_ENV::ProviderCleanupComplete(XAsyncBlock* async)
 {
-#if HC_PLATFORM == HC_PLATFORM_GDK
+#if HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_LINUX
     HC_UNIQUE_PTR<XAsyncBlock> curlCleanupAsyncBlock{ async };
     XAsyncBlock* envCleanupAsyncBlock = static_cast<XAsyncBlock*>(curlCleanupAsyncBlock->context);
 

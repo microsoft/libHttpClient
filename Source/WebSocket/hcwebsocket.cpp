@@ -21,7 +21,22 @@ HC_WEBSOCKET_OBSERVER::~HC_WEBSOCKET_OBSERVER()
     websocket->UnregisterEventCallbacks(m_handlerToken);
 }
 
-HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> HC_WEBSOCKET_OBSERVER::Initialize(
+int HC_WEBSOCKET_OBSERVER::AddRef() noexcept
+{
+    return ++m_refCount;
+}
+
+int HC_WEBSOCKET_OBSERVER::Release() noexcept
+{
+    int count = --m_refCount;
+    if (count == 0)
+    {
+        xbox::httpclient::ObserverPtr reclaim{ this };
+    }
+    return count;
+}
+
+xbox::httpclient::ObserverPtr HC_WEBSOCKET_OBSERVER::Initialize(
     _In_ std::shared_ptr<xbox::httpclient::WebSocket> websocket,
     _In_opt_ HCWebSocketMessageFunction messageFunc,
     _In_opt_ HCWebSocketBinaryMessageFunction binaryMessageFunc,
@@ -31,7 +46,7 @@ HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> HC_WEBSOCKET_OBSERVER::Initialize(
 )
 {
     http_stl_allocator<HC_WEBSOCKET_OBSERVER> a{};
-    HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> observer{ new (a.allocate(1)) HC_WEBSOCKET_OBSERVER{ std::move(websocket) } };
+    xbox::httpclient::ObserverPtr observer{ new (a.allocate(1)) HC_WEBSOCKET_OBSERVER{ std::move(websocket) } };
 
     observer->m_messageFunc = messageFunc;
     observer->m_binaryMessageFunc = binaryMessageFunc;
@@ -129,7 +144,7 @@ Result<std::shared_ptr<WebSocket>> WebSocket::Initialize()
         ++httpSingleton->m_lastId,
         httpSingleton->m_websocketPerform,
         httpSingleton->m_performEnv.get()
-    }, http_alloc_deleter<WebSocket>{} };
+    }, http_alloc_deleter<WebSocket>{}, a };
 
     return websocket;
 }
@@ -171,7 +186,7 @@ struct WebSocket::ConnectContext
         }
     }
 
-    HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> observer{ nullptr };
+    xbox::httpclient::ObserverPtr observer;
     XAsyncBlock* const clientAsyncBlock;
     XAsyncBlock internalAsyncBlock;
     WebSocketCompletionResult result{};
@@ -180,7 +195,7 @@ struct WebSocket::ConnectContext
 // Context for Provider event callbacks. Ensure's lifetime as long as the WebSocket is connected (until CloseFunc is called)
 struct WebSocket::ProviderContext
 {
-    HC_UNIQUE_PTR<HC_WEBSOCKET_OBSERVER> observer{ nullptr };
+    xbox::httpclient::ObserverPtr observer;
 };
 
 HRESULT WebSocket::ConnectAsync(
@@ -261,7 +276,9 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     {
         // Connect was sucessful. Allocate ProviderContext to ensure WebSocket lifetime until it is reclaimed in WebSocket::CloseFunc
         ws->m_state = State::Connected;
-        ws->m_providerContext = new (http_stl_allocator<ProviderContext>{}.allocate(1)) ProviderContext{ std::move(context->observer) };
+        ws->m_providerContext = new (http_stl_allocator<ProviderContext>{}.allocate(1)) ProviderContext{
+            std::move(context->observer)
+        };
     }
     else
     {

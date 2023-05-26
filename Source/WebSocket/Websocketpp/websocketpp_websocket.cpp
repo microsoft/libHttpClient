@@ -139,14 +139,14 @@ public:
                 // See http://www.openssl.org/support/faq.html#PROG13
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
-#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE || HC_PLATFORM == HC_PLATFORM_LINUX
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
                 ERR_remove_thread_state(nullptr);
 #pragma clang diagnostic pop
 #else 
                 ERR_remove_thread_state(nullptr);
-#endif // HC_ANDROID_API || HC_PLATFORM_IS_APPLE
+#endif // HC_ANDROID_API || HC_PLATFORM_IS_APPLE || HC_PLATFORM_LINUX
 
                 return sslContext;
             });
@@ -521,7 +521,7 @@ private:
                     // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                     // at all and will be reported as leaks.
                     // See http://www.openssl.org/support/faq.html#PROG13
-#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE
+#if HC_PLATFORM == HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE || HC_PLATFORM == HC_PLATFORM_LINUX
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
                     ERR_remove_thread_state(nullptr);
@@ -531,7 +531,7 @@ private:
 #endif // HC_PLATFORM_ANDROID
 #else
                     ERR_remove_thread_state(nullptr);
-#endif // HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE
+#endif // HC_PLATFORM_ANDROID || HC_PLATFORM_IS_APPLE || HC_PLATFORM_LINUX
 
                     HC_TRACE_INFORMATION(WEBSOCKET, "id=%u Wspp client work thread end", id);
                 });

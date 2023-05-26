@@ -5,7 +5,7 @@
 #endif
 
 #pragma once
-#if HC_PLATFORM != HC_PLATFORM_ANDROID
+#if HC_PLATFORM != HC_PLATFORM_ANDROID && HC_PLATFORM != HC_PLATFORM_LINUX
 #pragma warning(disable: 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 #pragma warning(disable: 4702) // unreachable code
 #endif

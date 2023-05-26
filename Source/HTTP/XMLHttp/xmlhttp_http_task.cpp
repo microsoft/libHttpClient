@@ -39,7 +39,7 @@ void CALLBACK xmlhttp_http_task::PerformAsyncHandler(
 ) noexcept
 {
     assert(context == nullptr);
-    assert(env == nullptr);
+    assert(env != nullptr);
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(env);
 

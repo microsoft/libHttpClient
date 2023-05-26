@@ -1,0 +1,17 @@
+parameters:
+  - name: configuration
+    type: string
+
+steps:
+  - template: checkout.yml
+
+  - task: Bash@3
+    displayName: 'Build libcurl'
+    inputs:
+      filePath: './Utilities/LinuxBuildScripts/curl.bash'
+
+  - task: Bash@3
+    displayName: 'Build libHttpClient'
+    inputs:
+      filePath: './Utilities/LinuxBuildScripts/libHttpClient_Linux.bash'
+      arguments: '-c ${{ parameters.configuration }} -nc'
