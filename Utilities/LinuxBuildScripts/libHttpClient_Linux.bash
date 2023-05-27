@@ -20,8 +20,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -nc|--nocurl)
       BUILD_CURL=false
-      shift # past argument
-      shift # past value
+      shift
       ;;
     -*|--*)
       echo "Unknown option $1"
@@ -41,17 +40,14 @@ log "BUILD CURL     = ${SEARCHPATH}"
 
 if [ "$BUILD_CURL" = true ]; then
     log "Building cURL"
-    ./curl.bash
+    sed -i -e 's/\r$//' "$SCRIPT_DIR"/curl.bash
+    bash "$SCRIPT_DIR"/curl.bash -c "$CONFIGURATION"
 fi
 
-#make libcrypto
-sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/openssl/libcrypto -B "$SCRIPT_DIR"/../../Build/libcrypto.Linux/build -D CMAKE_BUILD_TYPE=$CONFIGURATION
-sudo make -C "$SCRIPT_DIR"/../../Build/libcrypto.Linux/build
+# make libcrypto and libssl
+sed -i -e 's/\r$//' "$SCRIPT_DIR"/openssl.bash
+bash "$SCRIPT_DIR"/openssl.bash -c "$CONFIGURATION"
 
-#make libssl
-sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/openssl/libssl -B "$SCRIPT_DIR"/../../Build/libssl.Linux/build -D CMAKE_BUILD_TYPE=$CONFIGURATION
-sudo make -C "$SCRIPT_DIR"/../../Build/libssl.Linux/build
-
-#make libHttpClient
-sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/libHttpClient -B "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=$CONFIGURATION
+# make libHttpClient
+sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/libHttpClient -B "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++  -DCMAKE_CXX_FLAGS="-fvisibility=hidden" -DCMAKE_C_FLAGS="-fvisibility=hidden"
 sudo make -C "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build

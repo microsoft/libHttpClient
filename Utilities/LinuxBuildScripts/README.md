@@ -14,13 +14,13 @@ Running `libHttpClient_Linux` can generate a variety of build configurations and
 ./libHttpClient_Linux.bash
 ```
 
-Running the build script with no arguments will generate a Release binary of `libcurl.a`, and Release binaries of `libssl.a`, `libcrypto.a`, and `libHttpClient.a`.
+Running the build script with no arguments will generate a Release binary of `libcurl.a`,`libssl.a`, `libcrypto.a`, and `libHttpClient.a`.
 
 ```
 ./libHttpClient_Linux.bash <-c|--config> <Debug|Release>
 ```
 
-Running the build script with the `-c|--config` argument will generate  Debug or Release binaries of `libssl.a`, `libcrypto.a`, and `libHttpClient.a`, and a Release binary of `libcurl.a`.
+Running the build script with the `-c|--config` argument will generate  Debug or Release binaries of `libssl.a`, `libcrypto.a`, `libcurl.a` and `libHttpClient.a`.
 
 ```
 ./libHttpClient_Linux.bash <-nc|--nocurl>
@@ -39,9 +39,21 @@ sed -i -e 's/\r$//' libHttpClient_Linux.bash
 
 ## curl.bash
 
-libHttpClient for Linux uses cURL 7.81.0. When `libHttpClient_Linux.bash` is run, it auto generates cURL and places it in `Binaries/Release/x64/libcurl.Linux`.
+libHttpClient for Linux uses cURL 7.81.0. When `curl.bash` is run, it auto generates cURL and places it in `Binaries/{Configuration}/x64/libcurl.Linux`.
 
-If you choose to use your own version of cURL, you can place your own copy of `libcurl.a` in `Binaries/Release/x64/libcurl.Linux`.
+```
+./curl.bash
+```
+
+Running the build script with no arguments will generate a Release binary of `libcurl.a`.
+
+```
+./curl.bash <-c|--config> <Debug|Release>
+```
+
+Running the build script with the `-c|--config` argument will generate  Debug or Release binaries of `libcurl.a`.
+
+If you choose to use your own version of cURL, you can place your own copy of `libcurl.a` in `Binaries/{Configuration}/x64/libcurl.Linux`.
 
 **libHttpClient for Linux has only been tested against version 7.81.0.**
 
@@ -56,4 +68,23 @@ If the bash script fails to run and produces the error:
 running the following command and re-running the script should fix it.
 ```
 sed -i -e 's/\r$//' curl.bash
+```
+
+## openssl.bash
+
+libHttpClient for Linux uses OpenSSL 1.1.1k. When `openssl.bash` is run, it generates `libssl.a` and `libcrypto.a` and places it in `Binaries/{Configuration}/x64/{Library}.Linux`.
+
+If you choose to use your own version of OpenSSL, you can place your own copies in `Binaries/{Configuration}/x64/{Library}.Linux`.
+
+**libHttpClient for Linux has only been tested against version 1.1.1k**
+
+You can build your own version of OpenSSL from source here: https://www.openssl.org/source/.
+
+If the bash script fails to run and produces the error:
+```
+/bin/bash^M: bad interpreter
+```
+running the following command and re-running the script should fix it.
+```
+sed -i -e 's/\r$//' openssl.bash
 ```
