@@ -9,6 +9,7 @@ steps:
     displayName: 'Build libcurl'
     inputs:
       filePath: './Utilities/LinuxBuildScripts/curl.bash'
+      arguments: '-c ${{ parameters.configuration }}'
 
   - task: Bash@3
     displayName: 'Build libHttpClient'
