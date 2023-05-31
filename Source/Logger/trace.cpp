@@ -73,8 +73,8 @@ void TraceMessageToDebugger(
     uint32_t     fractionMSec = static_cast<uint32_t>(timestamp % 1000);
     std::tm      fmtTime = {};
 
-#if HC_PLATFORM_IS_MICROSOFT
-    localtime_s(&fmtTime, &timeTInSec);
+#if HC_PLATFORM_IS_MICROSOFT || HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM_SONY_PLAYSTATION_5
+    localtime_s(&timeTInSec, &fmtTime);
 #else
     localtime_r(&timeTInSec, &fmtTime);
 #endif
