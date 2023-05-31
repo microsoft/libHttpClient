@@ -17,7 +17,7 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <TargetRuntime>Native</TargetRuntime>
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>false</GenerateManifest>
     <HCLibImpl>true</HCLibImpl>
@@ -45,7 +45,7 @@
   <PropertyGroup>
     <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
     <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
-    <ExecutablePath>$(Console_SdkRoot)bin;$(Console_SdkToolPath);$(ExecutablePath)</ExecutablePath>	
+    <ExecutablePath>$(Console_SdkRoot)bin;$(Console_SdkToolPath);$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -54,7 +54,7 @@
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>
-      <AdditionalOptions>/bigobj /Zm300 /Zc:strictStrings %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/bigobj /Zm300 %(AdditionalOptions)</AdditionalOptions>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ShowIncludes Condition="'$(Configuration)'=='Debug'">false</ShowIncludes>
@@ -97,6 +97,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsync.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsyncProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
@@ -143,19 +153,18 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\GDK\PlatformComponents_GDK.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IWebSocketProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformComponents.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket_publics.cpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsync.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsyncProvider.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
@@ -180,6 +189,6 @@
     <Message Importance="High" Text="    LibraryPath          	      = '$(LibraryPath)'" />
     <Message Importance="High" Text="    IncludePath                  = '$(IncludePath)'" />
     <Message Importance="High" Text="    ExecutablePath               = '$(ExecutablePath)'" />
-	<Message Importance="High" Text=" " />
+    <Message Importance="High" Text=" " />
   </Target>
 </Project>

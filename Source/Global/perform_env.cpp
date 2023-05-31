@@ -1,247 +1,53 @@
 #include "pch.h"
 #include "perform_env.h"
 #include "httpcall.h"
-
-#if HC_PLATFORM == HC_PLATFORM_WIN32
-// nothing
-#elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
-#include "HTTP/XMLHttp/xmlhttp_http_task.h"
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "HTTP/Android/android_http_request.h"
-#elif HC_PLATFORM_IS_APPLE
-#include "HTTP/Apple/http_apple.h"
-#endif
-
+#include "Platform/ExternalHttpProvider.h"
+#include "Platform/ExternalWebSocketProvider.h"
 #if !HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
-
-#if HC_PLATFORM == HC_PLATFORM_WIN32
-#include "WebSocket/Websocketpp/websocketpp_websocket.h"
-#elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
-#include "WebSocket/WinRT/winrt_websocket.h"
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "WebSocket/Android/okhttp_websocket.h"
-#elif HC_PLATFORM_IS_APPLE
-#include "WebSocket/Websocketpp/websocketpp_websocket.h"
-#elif  HC_PLATFORM == HC_PLATFORM_LINUX
-#include "WebSocket/Websocketpp/websocketpp_websocket.h"
-#endif
-
 #endif
 
 using namespace xbox::httpclient;
 
-// Fallback Http/WebSocket handlers if no implementation exists for a platform
-void CALLBACK HttpPerformAsyncDefault(
-    _In_ HCCallHandle /*call*/,
-    _Inout_ XAsyncBlock* /*asyncBlock*/,
-    _In_opt_ void* /*context*/,
-    _In_ HCPerformEnv /*env*/
+HC_PERFORM_ENV::HC_PERFORM_ENV(HC_UNIQUE_PTR<IHttpProvider> httpProvider, HC_UNIQUE_PTR<IWebSocketProvider> webSocketProvider) :
+    m_httpProvider{ std::move(httpProvider) },
+    m_webSocketProvider{ std::move(webSocketProvider) }
+{
+}
+
+Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(
+    HC_UNIQUE_PTR<IHttpProvider> httpProvider,
+    HC_UNIQUE_PTR<IWebSocketProvider> webSocketProvider
 ) noexcept
 {
-    // Register a custom Http handler
-    assert(false);
-}
-
-HRESULT CALLBACK WebSocketConnectAsyncDefault(
-    _In_z_ const char* /*uri*/,
-    _In_z_ const char* /*subProtocol*/,
-    _In_ HCWebsocketHandle /*websocket*/,
-    _Inout_ XAsyncBlock* /*asyncBlock*/,
-    _In_opt_ void* /*context*/,
-    _In_ HCPerformEnv /*env*/
-)
-{
-    // Register custom websocket handlers
-    assert(false);
-    return E_UNEXPECTED;
-}
-
-HRESULT CALLBACK WebSocketSendMessageAsyncDefault(
-    _In_ HCWebsocketHandle /*websocket*/,
-    _In_z_ const char* /*message*/,
-    _Inout_ XAsyncBlock* /*asyncBlock*/,
-    _In_opt_ void* /*context*/
-)
-{
-    // Register custom websocket handlers
-    assert(false);
-    return E_UNEXPECTED;
-}
-
-HRESULT CALLBACK WebSocketSendBinaryMessageAsyncDefault(
-    _In_ HCWebsocketHandle /*websocket*/,
-    _In_reads_bytes_(payloadSize) const uint8_t* /*payloadBytes*/,
-    _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* /*asyncBlock*/,
-    _In_opt_ void* /*context*/
-)
-{
-    UNREFERENCED_PARAMETER(payloadSize);
-
-    // Register custom websocket handlers
-    assert(false);
-    return E_UNEXPECTED;
-}
-
-HRESULT CALLBACK WebSocketDisconnectDefault(
-    _In_ HCWebsocketHandle /*websocket*/,
-    _In_ HCWebSocketCloseStatus /*closeStatus*/,
-    _In_opt_ void* /*context*/
-)
-{
-    // Register custom websocket handlers
-    assert(false);
-    return E_UNEXPECTED;
-}
-
-HttpPerformInfo HC_PERFORM_ENV::GetPlatformDefaultHttpHandlers()
-{
-#if HC_UNITTEST_API
-    return HttpPerformInfo{ HttpPerformAsyncDefault, nullptr };
-#elif HC_PLATFORM == HC_PLATFORM_WIN32
-    return HttpPerformInfo{ WinHttpProvider::HttpCallPerformAsyncHandler, nullptr };
-#elif HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_LINUX
-    return HttpPerformInfo{ CurlProvider::PerformAsyncHandler, nullptr };
-#elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
-    return HttpPerformInfo{ xmlhttp_http_task::PerformAsyncHandler, nullptr };
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
-    return HttpPerformInfo{ AndroidHttpCallPerformAsync, nullptr };
-#elif HC_PLATFORM_IS_APPLE
-    return HttpPerformInfo{ AppleHttpCallPerformAsync, nullptr };
-#else
-    return HttpPerformInfo{ HttpPerformAsyncDefault, nullptr };
-#endif
-}
-
-#if !HC_NOWEBSOCKETS
-WebSocketPerformInfo HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers()
-{
-#if HC_UNITTEST_API
-    return WebSocketPerformInfo{
-        WebSocketConnectAsyncDefault,
-        WebSocketSendMessageAsyncDefault,
-        WebSocketSendBinaryMessageAsyncDefault,
-        WebSocketDisconnectDefault,
-        nullptr
-    };
-#elif HC_PLATFORM == HC_PLATFORM_WIN32
-    // Use WinHttp WebSockets if available (Win 8+) and WebSocketpp otherwise
-    auto webSocketExports = WinHttpProvider::GetWinHttpWebSocketExports();
-    if (webSocketExports.completeUpgrade && webSocketExports.send && webSocketExports.receive &&
-        webSocketExports.close && webSocketExports.queryCloseStatus && webSocketExports.shutdown)
-    {
-        return WebSocketPerformInfo{
-            WinHttpProvider::WebSocketConnectAsyncHandler,
-            WinHttpProvider::WebSocketSendAsyncHandler,
-            WinHttpProvider::WebSocketSendBinaryAsyncHandler,
-            WinHttpProvider::WebSocketDisconnectHandler,
-            nullptr
-        };
-    }
-    else
-    {
-        return WebSocketPerformInfo{
-            WebSocketppConnectAsync,
-            WebSocketppSendMessageAsync,
-            WebSocketppSendBinaryMessageAsync,
-            WebSocketppDisconnect,
-            nullptr
-        };
-    }
-#elif HC_PLATFORM == HC_PLATFORM_LINUX
-    return WebSocketPerformInfo{
-        WebSocketppConnectAsync,
-        WebSocketppSendMessageAsync,
-        WebSocketppSendBinaryMessageAsync,
-        WebSocketppDisconnect,
-        nullptr
-    };
-#elif HC_PLATFORM == HC_PLATFORM_GDK
-    return WebSocketPerformInfo{
-        WinHttpProvider::WebSocketConnectAsyncHandler,
-        WinHttpProvider::WebSocketSendAsyncHandler,
-        WinHttpProvider::WebSocketSendBinaryAsyncHandler,
-        WinHttpProvider::WebSocketDisconnectHandler,
-        nullptr
-    };
-#elif HC_PLATFORM == HC_PLATFORM_UWP || HC_PLATFORM == HC_PLATFORM_XDK
-    return WebSocketPerformInfo{
-        WinRTWebSocketConnectAsync,
-        WinRTWebSocketSendMessageAsync,
-        WinRTWebSocketSendBinaryMessageAsync,
-        WinRTWebSocketDisconnect,
-        nullptr
-    };
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
-    return WebSocketPerformInfo{
-        OkHttpWebSocketConnectAsync,
-        OkHttpWebSocketSendMessageAsync,
-        OkHttpWebSocketSendBinaryMessageAsync,
-        OkHttpWebSocketDisconnect,
-        nullptr
-    };
-#elif HC_PLATFORM_IS_APPLE
-    return WebSocketPerformInfo{
-        WebSocketppConnectAsync,
-        WebSocketppSendMessageAsync,
-        WebSocketppSendBinaryMessageAsync,
-        WebSocketppDisconnect,
-        nullptr
-    };
-#else
-    return WebSocketPerformInfo{
-        WebSocketConnectAsyncDefault,
-        WebSocketSendMessageAsyncDefault,
-        WebSocketSendBinaryMessageAsyncDefault,
-        WebSocketDisconnectDefault,
-        nullptr
-    };
-#endif
-}
-#endif // !HC_NOWEBSOCKETS
-
-Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(HCInitArgs* args) noexcept
-{
     http_stl_allocator<HC_PERFORM_ENV> a{};
-    HC_UNIQUE_PTR<HC_PERFORM_ENV> performEnv{ new (a.allocate(1)) HC_PERFORM_ENV };
+    HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ new (a.allocate(1)) HC_PERFORM_ENV(std::move(httpProvider), std::move(webSocketProvider)) };
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_UNITTEST_API
-    RETURN_HR_IF(E_INVALIDARG, args);
+    return env;
+}
 
-    auto initWinHttpResult = WinHttpProvider::Initialize();
-    RETURN_IF_FAILED(initWinHttpResult.hr);
+IHttpProvider& HC_PERFORM_ENV::HttpProvider()
+{
+    // If the client configured an external provider use that. Otherwise use the m_httpProvider
+    ExternalHttpProvider& externalProvider = ExternalHttpProvider::Get();
+    if (externalProvider.HasCallback())
+    {
+        return externalProvider;
+    }
+    assert(m_httpProvider);
+    return *m_httpProvider;
+}
 
-    performEnv->winHttpProvider = initWinHttpResult.ExtractPayload();
-
-#elif HC_PLATFORM == HC_PLATFORM_GDK
-    RETURN_HR_IF(E_INVALIDARG, args);
-
-    auto initCurlResult = CurlProvider::Initialize();
-    RETURN_IF_FAILED(initCurlResult.hr);
-    performEnv->curlProvider = initCurlResult.ExtractPayload();
-
-#if !HC_NOWEBSOCKETS
-    auto initWinHttpResult = WinHttpProvider::Initialize();
-    RETURN_IF_FAILED(initWinHttpResult.hr);
-    performEnv->winHttpProvider = initWinHttpResult.ExtractPayload();
-#endif
-#elif HC_PLATFORM == HC_PLATFORM_LINUX
-    RETURN_HR_IF(E_INVALIDARG, args);
-
-    auto initCurlResult = CurlProvider::Initialize();
-    RETURN_IF_FAILED(initCurlResult.hr);
-    performEnv->curlProvider = initCurlResult.ExtractPayload();
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
-    auto initAndroidResult = AndroidPlatformContext::Initialize(args);
-    RETURN_IF_FAILED(initAndroidResult.hr);
-    performEnv->androidPlatformContext = initAndroidResult.ExtractPayload();
-
-#else
-    RETURN_HR_IF(E_INVALIDARG, args);
-#endif
-
-    return std::move(performEnv);
+IWebSocketProvider& HC_PERFORM_ENV::WebSocketProvider()
+{
+    // If the client configured an external provider use that. Otherwise use the m_webSocketProvider
+    ExternalWebSocketProvider& externalProvider = ExternalWebSocketProvider::Get();
+    if (externalProvider.HasCallbacks())
+    {
+        return externalProvider;
+    }
+    assert(m_webSocketProvider);
+    return *m_webSocketProvider;
 }
 
 struct HC_PERFORM_ENV::HttpPerformContext
@@ -306,7 +112,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
     {
         std::unique_lock<std::mutex> lock{ env->m_mutex };
         env->m_activeHttpRequests.erase(performContext->clientAsyncBlock);
-        bool scheduleProviderCleanup = env->CanScheduleProviderCleanup();
+        bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
         lock.unlock();
 
         // Free performContext before scheduling ProviderCleanup to ensure it happens before returing to client
@@ -315,7 +121,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
 
         if (scheduleProviderCleanup)
         {
-            HRESULT hr = XTaskQueueSubmitCallback(env->m_cleanupAsyncBlock->queue, XTaskQueuePort::Work, env, ProviderCleanup);
+            HRESULT hr = XTaskQueueSubmitCallback(data->async->queue, XTaskQueuePort::Work, env, ProviderCleanup);
             if (FAILED(hr))
             {
                 // This should only fail due to client terminating the queue in which case there isn't anything we can do anyhow
@@ -462,7 +268,7 @@ void CALLBACK HC_PERFORM_ENV::WebSocketConnectComplete(XAsyncBlock* async)
         }
     }
 
-    bool scheduleProviderCleanup = env->CanScheduleProviderCleanup();
+    bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
     lock.unlock();
 
     assert(!scheduleProviderCleanup || !disconnect);
@@ -494,7 +300,7 @@ void CALLBACK HC_PERFORM_ENV::WebSocketClosed(HCWebsocketHandle /*websocket*/, H
 
     std::unique_lock<std::mutex> lock{ env->m_mutex };
     env->m_connectedWebSockets.erase(context);
-    bool scheduleProviderCleanup = env->CanScheduleProviderCleanup();
+    bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
     lock.unlock();
 
     // Free context before scheduling ProviderCleanup to ensure it happens before returing to client
@@ -530,7 +336,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
     {
         std::unique_lock<std::mutex> lock{ env->m_mutex };
         env->m_cleanupAsyncBlock = data->async;
-        bool scheduleProviderCleanup = env->CanScheduleProviderCleanup();
+        bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
 
         for (auto& activeRequest : env->m_activeHttpRequests)
         {
@@ -566,51 +372,44 @@ void CALLBACK HC_PERFORM_ENV::ProviderCleanup(void* context, bool /*canceled*/)
     HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ static_cast<HC_PERFORM_ENV*>(context) };
     XAsyncBlock* cleanupAsyncBlock{ env->m_cleanupAsyncBlock };
 
-#if HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_LINUX
-    HC_UNIQUE_PTR<XAsyncBlock> curlCleanupAsyncBlock{ new (http_stl_allocator<XAsyncBlock>{}.allocate(1)) XAsyncBlock
+    HC_UNIQUE_PTR<XAsyncBlock> providerCleanupAsyncBlock{ new (http_stl_allocator<XAsyncBlock>{}.allocate(1)) XAsyncBlock
     {
         cleanupAsyncBlock->queue,
-        cleanupAsyncBlock,
+        env.get(),
         ProviderCleanupComplete
-    }};
+    } };
 
-    auto curlProvider = std::move(env->curlProvider);
-    env.reset();
-
-    HRESULT hr = CurlProvider::CleanupAsync(std::move(curlProvider), curlCleanupAsyncBlock.get());
+    HRESULT hr = env->m_httpProvider->CleanupAsync(providerCleanupAsyncBlock.get());
     if (FAILED(hr))
     {
+        env.reset();
+        providerCleanupAsyncBlock.reset();
+
         XAsyncComplete(cleanupAsyncBlock, hr, 0);
     }
     else
     {
-        curlCleanupAsyncBlock.release();
+        env.release();
+        providerCleanupAsyncBlock.release();
     }
-#else
-    // No additional provider cleanup needed
-    env.reset();
-    XAsyncComplete(cleanupAsyncBlock, S_OK, 0);
-#endif
 }
 
 void CALLBACK HC_PERFORM_ENV::ProviderCleanupComplete(XAsyncBlock* async)
 {
-#if HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_LINUX
-    HC_UNIQUE_PTR<XAsyncBlock> curlCleanupAsyncBlock{ async };
-    XAsyncBlock* envCleanupAsyncBlock = static_cast<XAsyncBlock*>(curlCleanupAsyncBlock->context);
+    HC_UNIQUE_PTR<XAsyncBlock> providerCleanupAsyncBlock{ async };
+    HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ static_cast<HC_PERFORM_ENV*>(providerCleanupAsyncBlock->context) };
+    XAsyncBlock* envCleanupAsyncBlock = env->m_cleanupAsyncBlock;
 
-    HRESULT cleanupResult = XAsyncGetStatus(curlCleanupAsyncBlock.get(), false);
-    curlCleanupAsyncBlock.reset();
+    HRESULT cleanupResult = XAsyncGetStatus(providerCleanupAsyncBlock.get(), false);
+    providerCleanupAsyncBlock.reset();
+    env.reset();
 
     // HC_PERFORM_ENV fully cleaned up at this point
     XAsyncComplete(envCleanupAsyncBlock, cleanupResult, 0);
-#else
-    UNREFERENCED_PARAMETER(async);
-    assert(false);
-#endif
 }
 
-bool HC_PERFORM_ENV::CanScheduleProviderCleanup()
+
+bool HC_PERFORM_ENV::ShouldScheduleProviderCleanup()
 {
     if (!m_cleanupAsyncBlock)
     {

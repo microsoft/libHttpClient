@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "hcwebsocket.h"
+#include "Platform/ExternalWebSocketProvider.h"
 
 using namespace xbox::httpclient;
 
@@ -175,28 +176,13 @@ STDAPI HCSetWebSocketFunctions(
 ) noexcept
 try
 {
-    if (websocketConnectFunc == nullptr ||
-        websocketSendMessageFunc == nullptr ||
-        websocketSendBinaryMessageFunc == nullptr ||
-        websocketDisconnectFunc == nullptr)
-    {
-        return E_INVALIDARG;
-    }
-
     auto httpSingleton = get_http_singleton();
     if (httpSingleton)
     {
         return E_HC_ALREADY_INITIALISED;
     }
 
-    auto& info = GetUserWebSocketPerformHandlers();
-
-    info.connect = websocketConnectFunc;
-    info.sendText = websocketSendMessageFunc;
-    info.sendBinary = websocketSendBinaryMessageFunc;
-    info.disconnect = websocketDisconnectFunc;
-    info.context = context;
-    return S_OK;
+    return ExternalWebSocketProvider::Get().SetCallbacks(websocketConnectFunc, websocketSendMessageFunc, websocketSendBinaryMessageFunc, websocketDisconnectFunc, context);
 }
 CATCH_RETURN()
 
@@ -209,23 +195,7 @@ STDAPI HCGetWebSocketFunctions(
 ) noexcept
 try
 {
-    if (websocketConnectFunc == nullptr ||
-        websocketSendMessageFunc == nullptr ||
-        websocketSendBinaryMessageFunc == nullptr ||
-        websocketDisconnectFunc == nullptr ||
-        context == nullptr)
-    {
-        return E_INVALIDARG;
-    }
-
-    auto const& info = GetUserWebSocketPerformHandlers();
-
-    *websocketConnectFunc = info.connect;
-    *websocketSendMessageFunc = info.sendText;
-    *websocketSendBinaryMessageFunc = info.sendBinary;
-    *websocketDisconnectFunc = info.disconnect;
-    *context = info.context;
-    return S_OK;
+    return ExternalWebSocketProvider::Get().GetCallbacks(websocketConnectFunc, websocketSendMessageFunc, websocketSendBinaryMessageFunc, websocketDisconnectFunc, context);
 }
 CATCH_RETURN()
 

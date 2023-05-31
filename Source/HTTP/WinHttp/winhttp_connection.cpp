@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#include <httpClient/httpProvider.h>
 #include "httpcall.h"
 #include "uri.h"
 #include "winhttp_connection.h"

@@ -36,16 +36,14 @@ HRESULT http_singleton::singleton_access(
         {
             HCTraceInit();
 
-            auto performEnvInitResult = HC_PERFORM_ENV::Initialize(createArgs);
+            PlatformComponents platform{};
+            RETURN_IF_FAILED(PlatformInitialize(platform, createArgs));
+
+            auto performEnvInitResult = HC_PERFORM_ENV::Initialize(std::move(platform.HttpProvider), std::move(platform.WebSocketProvider));
             RETURN_IF_FAILED(performEnvInitResult.hr);
 
-            s_singleton = http_allocate_shared<http_singleton>(
-                GetUserHttpPerformHandler(),
-#if !HC_NOWEBSOCKETS
-                GetUserWebSocketPerformHandlers(),
-#endif
-                performEnvInitResult.ExtractPayload()
-                );
+            s_singleton = http_allocate_shared<http_singleton>(performEnvInitResult.ExtractPayload());
+
             s_singleton->m_self = s_singleton;
         }
 
@@ -145,7 +143,7 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
             }
             
             // PerformEnv cleanup complete, continue with singleton cleanup
-            XAsyncSchedule(singletonCleanupAsyncBlock, 0);            
+            XAsyncSchedule(singletonCleanupAsyncBlock, 0);
         };
 
         RETURN_IF_FAILED(HC_PERFORM_ENV::CleanupAsync(std::move(singleton->m_performEnv), performEnvCleanupAsyncBlock.get()));
@@ -187,19 +185,10 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
     }
 }
 
-http_singleton::http_singleton(
-    HttpPerformInfo const& httpPerformInfo,
-#if !HC_NOWEBSOCKETS
-    WebSocketPerformInfo const& websocketPerformInfo,
-#endif
-    PerformEnv&& performEnv
-) :
-    m_httpPerform{ httpPerformInfo },
+http_singleton::http_singleton(PerformEnv&& performEnv) :
     m_performEnv{ std::move(performEnv) }
-#if !HC_NOWEBSOCKETS
-    , m_websocketPerform{ websocketPerformInfo }
-#endif
-{}
+{
+}
 
 http_singleton::~http_singleton()
 {
@@ -250,26 +239,9 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
 
 HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
 {
-#if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_UNITTEST_API
-    return m_performEnv->winHttpProvider->SetGlobalProxy(proxyUri);
-#else
+    // TODO this should probably be added to PAL interface somehow
     UNREFERENCED_PARAMETER(proxyUri);
     return E_NOTIMPL;
-#endif
 }
-
-HttpPerformInfo& GetUserHttpPerformHandler() noexcept
-{
-    static HttpPerformInfo handler{ HC_PERFORM_ENV::GetPlatformDefaultHttpHandlers() };
-    return handler;
-}
-
-#if !HC_NOWEBSOCKETS
-WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept
-{
-    static WebSocketPerformInfo handlers{ HC_PERFORM_ENV::GetPlatformDefaultWebSocketHandlers() };
-    return handlers;
-}
-#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

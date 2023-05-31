@@ -65,7 +65,7 @@ endif()
 
 add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
 
-set_source_files_properties(../../../Source/Common/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+set_source_files_properties(../../../Source/Common/pch.cpp PROPERTIES COMPILE_OPTIONS "/Ycpch.h")
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
     set_property(SOURCE ../../../Source/Common/pch.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
@@ -83,6 +83,14 @@ include_directories(
     )
 
 set(CMAKE_SUPPRESS_REGENERATION true)
+
+set(Platform_Win32_Source_Files
+    ../../../Source/Platform/Win32/PlatformComponents_Win32.cpp
+    )
+
+set(Platform_GDK_Source_Files
+    ../../../Source/Platform/GDK/PlatformComponents_GDK.cpp
+    )
 
 set(Task_Windows_Source_Files
     ../../../Source/Task/ThreadPool_win32.cpp
@@ -193,6 +201,7 @@ get_common_hc_source_files(
     Public_Source_Files
     Common_Source_Files
     Global_Source_Files
+    Platform_Source_Files
     WebSocket_Source_Files
     Task_Source_Files
     Mock_Source_Files
@@ -205,6 +214,7 @@ message(STATUS "Common source group")
 source_group("Header Files" FILES ${Public_Source_Files})
 source_group("C++ Source\\Common" FILES ${Common_Source_Files})
 source_group("C++ Source\\Global" FILES ${Global_Source_Files})
+source_group("C++ Source\\Platform" FILES ${Platform_Source_Files})
 source_group("C++ Source\\WebSocket" FILES ${WebSocket_Source_Files})
 source_group("C++ Source\\Mock" FILES ${Mock_Source_Files})
 source_group("C++ Source\\HTTP" FILES ${HTTP_Source_Files})
@@ -214,6 +224,7 @@ set( SOURCE_FILES
     ${Public_Source_Files}
     ${Common_Source_Files}
     ${Global_Source_Files}
+    ${Platform_Source_Files}
     ${WebSocket_Source_Files}
     ${Mock_Source_Files}
     ${HTTP_Source_Files}
@@ -227,13 +238,16 @@ endif()
 if( UNITTEST )
     message(STATUS "Unittest source group")
     source_group("C++ Source\\WebSocket\\Unittest" FILES ${Unittest_WebSocket_Source_Files})
+    source_group("C++ Source\\Platform\\Win32" FILES ${Platform_Win32_Source_Files})  
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
+    
     source_group("C++ Source\\Task" FILES ${Task_Source_Files})
     list(APPEND
         SOURCE_FILES
         ${Task_Windows_Source_Files}
+        ${Platform_Win32_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Unittest_WebSocket_Source_Files}
@@ -282,6 +296,7 @@ endif()
 
 if( BUILDWIN32 )
     source_group("C++ Source\\HTTP\\WinHttp" FILES ${WinHttp_HTTP_Source_Files})
+    source_group("C++ Source\\Platform\\Win32" FILES ${Platform_Win32_Source_Files})     
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\Win" FILES ${Win32_WebSocket_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
@@ -290,6 +305,7 @@ if( BUILDWIN32 )
 
     list(APPEND
         SOURCE_FILES
+        ${Platform_Win32_Source_Files}
         ${Task_Windows_Source_Files}
         ${WinHttp_HTTP_Source_Files}
         ${Common_Windows_Source_Files}
@@ -319,6 +335,7 @@ endif()
 
 if( GDK )
     message(STATUS "GDK source group")
+    source_group("C++ Source\\Platform\\GDK" FILES ${Platform_GDK_Source_Files})
     source_group("C++ Source\\HTTP\\Curl" FILES ${Curl_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\WebSocket\\Win" FILES ${GDK_WebSocket_Source_Files})
@@ -326,6 +343,7 @@ if( GDK )
 
     list(APPEND
         SOURCE_FILES
+        ${Platform_GDK_Source_Files}
         ${Curl_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}

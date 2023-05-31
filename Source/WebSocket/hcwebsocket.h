@@ -5,7 +5,7 @@
 
 #include <httpClient/httpClient.h>
 #include "HTTP/httpcall.h"
-#include "Global/perform_env.h"
+#include "Platform/IWebSocketProvider.h"
 
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
@@ -149,7 +149,7 @@ public:
     std::shared_ptr<hc_websocket_impl> impl;
 
 private:
-    WebSocket(uint64_t id, WebSocketPerformInfo performInfo, HC_PERFORM_ENV* performEnv);
+    WebSocket(uint64_t id, IWebSocketProvider& provider);
 
     static HRESULT CALLBACK ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
     static void CALLBACK ConnectComplete(XAsyncBlock* async);
@@ -195,10 +195,9 @@ private:
     http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
     uint32_t m_nextToken{ 1 };
 
-    WebSocketPerformInfo const m_performInfo;
-    HC_PERFORM_ENV* const m_performEnv; // non-owning
-
     ProviderContext* m_providerContext{ nullptr };
+
+    IWebSocketProvider& m_provider;
 };
 
 } // namespace httpclient

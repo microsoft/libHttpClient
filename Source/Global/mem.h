@@ -99,6 +99,12 @@ struct http_alloc_deleter
     http_alloc_deleter() {}
     http_alloc_deleter(const http_stl_allocator<T>& alloc) : m_alloc(alloc) { }
 
+    template<class T2, std::enable_if_t<std::is_convertible_v<T2*, T*>, int> = 0>
+    http_alloc_deleter(const http_alloc_deleter<T2>&) noexcept
+    {
+        http_stl_allocator<T> alloc(m_alloc);
+    }
+
     void operator()(typename std::allocator_traits<http_stl_allocator<T>>::pointer p) const
     {
         http_stl_allocator<T> alloc(m_alloc);

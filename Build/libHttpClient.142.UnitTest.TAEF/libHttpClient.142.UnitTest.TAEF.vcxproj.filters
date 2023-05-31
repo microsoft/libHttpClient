@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
       <Filter>C++ Source\Common\Win</Filter>
@@ -52,6 +52,18 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp">
       <Filter>C++ Source\Mock</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.cpp">
+      <Filter>C++ Source\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.cpp">
+      <Filter>C++ Source\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.cpp">
+      <Filter>C++ Source\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Win32\PlatformComponents_Win32.cpp">
+      <Filter>C++ Source\Platform\Win32</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp">
       <Filter>C++ Source\Task</Filter>
     </ClCompile>
@@ -99,6 +111,36 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsync.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsyncProvider.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
+      <Filter>C++ Public Includes</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
@@ -146,6 +188,21 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h">
       <Filter>C++ Source\Mock</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.h">
+      <Filter>C++ Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.h">
+      <Filter>C++ Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.h">
+      <Filter>C++ Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IWebSocketProvider.h">
+      <Filter>C++ Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformComponents.h">
+      <Filter>C++ Source\Platform</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h">
       <Filter>C++ Source\Task</Filter>
@@ -198,82 +255,58 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h">
       <Filter>C++ Source\UnitTests\Tests</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsync.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsyncProvider.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h">
-      <Filter>C++ Public Includes</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{4177292D-B573-3DCF-86A6-D0C737660580}</UniqueIdentifier>
+      <UniqueIdentifier>{2A56644C-F2ED-37C2-AF5E-068AA34B5927}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{80363832-EE37-3CCB-AFC2-94EE204749F4}</UniqueIdentifier>
+      <UniqueIdentifier>{2AA4C14E-3B67-3D87-9704-0E2C43362424}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common\Win">
-      <UniqueIdentifier>{7A353227-62BD-3820-B26A-0652A43155D6}</UniqueIdentifier>
+      <UniqueIdentifier>{5D3652C3-7075-3CC3-A045-305E2A5D4496}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{A3FEB3EC-3654-3BA8-B602-9EBDF198C8CA}</UniqueIdentifier>
+      <UniqueIdentifier>{F9959D05-5B81-3DB7-BC0F-C2589A4F45FB}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{700089CF-4F66-3D17-B7FA-B268FAD6A34B}</UniqueIdentifier>
+      <UniqueIdentifier>{6DB1C975-E1E5-35FD-9C01-3A97E1F6F7F8}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{8C688525-3361-3AE5-BA2A-F901AB20582A}</UniqueIdentifier>
+      <UniqueIdentifier>{E7442585-3036-38B2-AB21-CEC21DA4920C}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger\Win">
-      <UniqueIdentifier>{2BA3E00A-AB3A-3166-9D71-4FCFE0B0F9EB}</UniqueIdentifier>
+      <UniqueIdentifier>{C8736D4E-FB5F-3AC5-AC87-B081915FED05}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{11FE6784-3F98-3433-9FCE-9B8217B35BAA}</UniqueIdentifier>
+      <UniqueIdentifier>{E089B84B-DAA6-3E03-B924-8ED8686FD2D6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Platform">
+      <UniqueIdentifier>{33BB128F-D1CF-3CF1-A6AD-8C6807046313}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++ Source\Platform\Win32">
+      <UniqueIdentifier>{2F959B80-2FEF-36BC-A0DC-734E8451BA81}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{6865555F-CB98-39B3-8618-D0F9FAD833F5}</UniqueIdentifier>
+      <UniqueIdentifier>{FE614E34-87ED-310A-B985-4535A93C8356}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task\Win">
-      <UniqueIdentifier>{4611B853-BD0B-33B0-A005-1C169AA13314}</UniqueIdentifier>
+      <UniqueIdentifier>{FAA9D57C-A326-39EB-89A2-97DD079FE038}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\UnitTests">
-      <UniqueIdentifier>{DADBB366-1BB9-39EE-9715-4D6C1919D39C}</UniqueIdentifier>
+      <UniqueIdentifier>{1CC05FB2-50D0-31C9-A96B-01C43083695A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\UnitTests\Support">
-      <UniqueIdentifier>{CD2380C2-C326-3239-9264-55B179A030F8}</UniqueIdentifier>
+      <UniqueIdentifier>{E755AB26-29CA-3D1D-828D-EE6F8FCBE331}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\UnitTests\Tests">
-      <UniqueIdentifier>{CDBF0E3D-B3CD-3873-9407-E19E8567421B}</UniqueIdentifier>
+      <UniqueIdentifier>{BA3FF73C-6607-3584-B2DD-1B1908482C1B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{E74DBB55-725E-3EFB-B289-2DADE1AA0862}</UniqueIdentifier>
+      <UniqueIdentifier>{A56F2BBC-316C-3B18-AF11-9B6077644CA3}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{94B982DB-BB14-3C45-A028-075B57F07D40}</UniqueIdentifier>
+      <UniqueIdentifier>{CD9AEFD8-CE44-3B6E-9FAF-7B7D3EA8F8FA}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

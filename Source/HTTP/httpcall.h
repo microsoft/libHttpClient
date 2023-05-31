@@ -4,7 +4,7 @@
 #pragma once
 
 #include <httpClient/httpClient.h>
-#include "Global/perform_env.h"
+#include "Platform/IHttpProvider.h"
 
 namespace xbox
 {
@@ -92,7 +92,7 @@ public:
     ) noexcept;
 
 protected: // Protected for HC_MOCK_CALL 
-    HC_CALL(uint64_t id);
+    HC_CALL(uint64_t id, xbox::httpclient::IHttpProvider& provider);
 
 private:
     static HRESULT CALLBACK PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
@@ -109,7 +109,6 @@ private:
     chrono_clock_t::time_point m_performStartTime{};
     uint32_t m_iterationNumber{ 0 };  
 
-    HttpPerformInfo m_performInfo;
-    HC_PERFORM_ENV* m_performEnv{ nullptr }; // non-owning
+    xbox::httpclient::IHttpProvider& m_provider;
 };
 

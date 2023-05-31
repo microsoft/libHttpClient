@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
-#include <httpClient/httpProvider.h>
+
+#include "Platform/PlatformComponents.h"
 #include "perform_env.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
@@ -61,8 +62,7 @@ public:
     http_internal_unordered_map<int32_t, std::pair<HCWebSocketRoutedHandler, void*>> m_webSocketRoutedHandlers;
 #endif
 
-    // HTTP state
-    HttpPerformInfo const m_httpPerform;
+public:
     PerformEnv m_performEnv;
 
     HRESULT set_global_proxy(_In_ const char* proxyUri);
@@ -77,10 +77,6 @@ public:
     bool m_disableAssertsForSSLValidationInDevSandboxes{ false };
 #endif
 
-#if !HC_NOWEBSOCKETS
-    WebSocketPerformInfo const m_websocketPerform;
-#endif
-
     // Mock state
     std::recursive_mutex m_mocksLock;
     http_internal_vector<HC_MOCK_CALL*> m_mocks;
@@ -88,13 +84,7 @@ public:
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
-    http_singleton(
-        HttpPerformInfo const& httpPerformInfo,
-#if !HC_NOWEBSOCKETS
-        WebSocketPerformInfo const& websocketPerformInfo,
-#endif
-        PerformEnv&& performEnv
-    );
+    http_singleton(PerformEnv&& performEnv);
 
 private:
     enum class singleton_access_mode
@@ -181,10 +171,5 @@ private:
     shared_ptr_cache(const shared_ptr_cache&);
     shared_ptr_cache& operator=(const shared_ptr_cache&);
 };
-
-HttpPerformInfo& GetUserHttpPerformHandler() noexcept;
-#if !HC_NOWEBSOCKETS
-WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept;
-#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

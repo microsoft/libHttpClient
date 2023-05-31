@@ -76,6 +76,10 @@ namespace ProjectFileProcessor
                     }
                     else
                     {
+                        if (file.Contains("PrecompiledHeader"))
+                        {
+                            file = Regex.Replace(file, " Condition=\".*\"", "");
+                        }
                         filesInputVcxproj.Add(file);
                     }
                     //Console.WriteLine(l1);
@@ -94,7 +98,7 @@ namespace ProjectFileProcessor
         {
             string rootFolder = null;
             if (args.Length == 0)
-                rootFolder = @"C:\git\forks\xbox-live-api";
+                rootFolder = @"D:\s\Xbox.Bumblelion\external\libHttpClient";
             else
                 rootFolder = args[0];
 
@@ -217,6 +221,11 @@ namespace ProjectFileProcessor
 
         private static void ReplaceToolset(ref List<string> output_lines, string toolset)
         {
+            if (toolset.Length == 0)
+            {
+                return;
+            }
+
             // Map VS PlatformToolset to VS ToolsVersion
             Dictionary<string, string> toolsetMap = new Dictionary<string, string>
             {

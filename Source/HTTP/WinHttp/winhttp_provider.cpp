@@ -10,10 +10,10 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-Result<std::shared_ptr<WinHttpProvider>> WinHttpProvider::Initialize()
+Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
 {
     http_stl_allocator<WinHttpProvider> a{};
-    auto provider = std::shared_ptr<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider, http_alloc_deleter<WinHttpProvider>(), a };
+    auto provider = HC_UNIQUE_PTR<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider, a };
 
     RETURN_IF_FAILED(XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &provider->m_immediateQueue));
 
@@ -66,23 +66,6 @@ WinHttpProvider::~WinHttpProvider()
     m_hSessions.clear();
 }
 
-void CALLBACK WinHttpProvider::HttpCallPerformAsyncHandler(
-    HCCallHandle callHandle,
-    XAsyncBlock* async,
-    void* /*context*/,
-    HCPerformEnv env
-) noexcept
-{
-    assert(env && env->winHttpProvider);
-
-    HRESULT hr = env->winHttpProvider->HttpCallPerformAsync(callHandle, async);
-    if (FAILED(hr))
-    {
-        // Complete XAsyncBlock if we fail synchronously
-        XAsyncComplete(async, hr, 0);
-    }
-}
-
 WinHttpWebSocketExports GetWinHttpWebSocketExportsHelper()
 {
     WinHttpWebSocketExports exports;
@@ -105,25 +88,80 @@ WinHttpWebSocketExports WinHttpProvider::GetWinHttpWebSocketExports()
     return s_exports;
 }
 
-#if !HC_NOWEBSOCKETS
-HRESULT CALLBACK WinHttpProvider::WebSocketConnectAsyncHandler(
-    const char* uri,
-    const char* subprotocol,
-    HCWebsocketHandle websocketHandle,
-    XAsyncBlock* async,
-    void* /*context*/,
-    HCPerformEnv env
+HRESULT WinHttpProvider::PerformAsync(
+    HCCallHandle callHandle,
+    XAsyncBlock* async
 ) noexcept
 {
-    RETURN_HR_IF(E_UNEXPECTED, !env);
-    return env->winHttpProvider->WebSocketConnectAsync(uri, subprotocol, websocketHandle, async);
+    // Get Security information for the call
+    auto getSecurityInfoResult = GetSecurityInformation(callHandle->url.data());
+    RETURN_IF_FAILED(getSecurityInfoResult.hr);
+
+    // Get HSession for the call
+    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
+    RETURN_IF_FAILED(getHSessionResult.hr);
+
+    std::unique_lock<std::mutex> lock{ m_lock };
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (!m_networkInitialized)
+    {
+        return E_HC_NETWORK_NOT_INITIALIZED;
+    }
+#endif
+
+    // Initialize WinHttpConnection
+    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), callHandle, m_proxyType, getSecurityInfoResult.ExtractPayload());
+    RETURN_IF_FAILED(initConnectionResult.hr);
+
+    // Store weak reference to connection so we can close it if it is still active on shutdown
+    m_connections.push_back(initConnectionResult.Payload());
+
+    // WinHttpConnection manages its own lifetime from here
+    return initConnectionResult.Payload()->HttpCallPerformAsync(async);
 }
 
-HRESULT CALLBACK WinHttpProvider::WebSocketSendAsyncHandler(
+#if !HC_NOWEBSOCKETS
+HRESULT WinHttpProvider::ConnectAsync(
+    String const& uri,
+    String const& subprotocol,
+    HCWebsocketHandle websocketHandle,
+    XAsyncBlock* async
+) noexcept
+{
+    // Get Security information for the call
+    auto getSecurityInfoResult = GetSecurityInformation(uri.data());
+    RETURN_IF_FAILED(getSecurityInfoResult.hr);
+
+    // Get HSession for the call
+    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
+    RETURN_IF_FAILED(getHSessionResult.hr);
+
+    std::unique_lock<std::mutex> lock{ m_lock };
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (!m_networkInitialized)
+    {
+        return E_HC_NETWORK_NOT_INITIALIZED;
+    }
+#endif
+
+    // Initialize WinHttpConnection
+    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), websocketHandle, uri.data(), subprotocol.data(), m_proxyType, getSecurityInfoResult.ExtractPayload());
+    RETURN_IF_FAILED(initConnectionResult.hr);
+
+    auto connection = initConnectionResult.ExtractPayload();
+    // Store weak reference to connection so we can close it if it is still active on shutdown
+    m_connections.push_back(connection);
+    RETURN_IF_FAILED(connection->WebSocketConnectAsync(async));
+
+    websocketHandle->websocket->impl = std::move(connection);
+
+    return S_OK;
+}
+
+HRESULT WinHttpProvider::SendAsync(
     HCWebsocketHandle websocketHandle,
     const char* message,
-    XAsyncBlock* async,
-    void* /*context*/
+    XAsyncBlock* async
 ) noexcept
 {
     RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
@@ -134,12 +172,11 @@ HRESULT CALLBACK WinHttpProvider::WebSocketSendAsyncHandler(
     return connection->WebSocketSendMessageAsync(async, message);
 }
 
-HRESULT CALLBACK WinHttpProvider::WebSocketSendBinaryAsyncHandler(
+HRESULT WinHttpProvider::SendBinaryAsync(
     HCWebsocketHandle websocketHandle,
     const uint8_t* payloadBytes,
     uint32_t payloadSize,
-    XAsyncBlock* asyncBlock,
-    void* /*context*/
+    XAsyncBlock* asyncBlock
 ) noexcept
 {
     RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
@@ -150,10 +187,9 @@ HRESULT CALLBACK WinHttpProvider::WebSocketSendBinaryAsyncHandler(
     return connection->WebSocketSendMessageAsync(asyncBlock, payloadBytes, payloadSize);
 }
 
-HRESULT CALLBACK WinHttpProvider::WebSocketDisconnectHandler(
+HRESULT WinHttpProvider::Disconnect(
     HCWebsocketHandle websocketHandle,
-    HCWebSocketCloseStatus closeStatus,
-    void* /*context*/
+    HCWebSocketCloseStatus closeStatus
 ) noexcept
 {
     RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
@@ -186,69 +222,6 @@ HRESULT WinHttpProvider::SetGlobalProxy(_In_ const char* proxyUri) noexcept
 
     return S_OK;
 }
-
-HRESULT WinHttpProvider::HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlock* async) noexcept
-{
-    // Get Security information for the call
-    auto getSecurityInfoResult = GetSecurityInformation(callHandle->url.data());
-    RETURN_IF_FAILED(getSecurityInfoResult.hr);
-
-    // Get HSession for the call
-    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
-    RETURN_IF_FAILED(getHSessionResult.hr);
-
-    std::unique_lock<std::mutex> lock{ m_lock };
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    if (!m_networkInitialized)
-    {
-        return E_HC_NETWORK_NOT_INITIALIZED;
-    }
-#endif
-
-    // Initialize WinHttpConnection
-    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), callHandle, m_proxyType, getSecurityInfoResult.ExtractPayload());
-    RETURN_IF_FAILED(initConnectionResult.hr);
-
-    // Store weak reference to connection so we can close it if it is still active on shutdown
-    m_connections.push_back(initConnectionResult.Payload());
-
-    // WinHttpConnection manages its own lifetime from here
-    return initConnectionResult.Payload()->HttpCallPerformAsync(async);
-}
-
-#if !HC_NOWEBSOCKETS
-HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* subprotocol, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept
-{
-    // Get Security information for the call
-    auto getSecurityInfoResult = GetSecurityInformation(uri);
-    RETURN_IF_FAILED(getSecurityInfoResult.hr);
-
-    // Get HSession for the call
-    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
-    RETURN_IF_FAILED(getHSessionResult.hr);
-
-    std::unique_lock<std::mutex> lock{ m_lock };
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    if (!m_networkInitialized)
-    {
-        return E_HC_NETWORK_NOT_INITIALIZED;
-    }
-#endif
-
-    // Initialize WinHttpConnection
-    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), websocketHandle, uri, subprotocol, m_proxyType, getSecurityInfoResult.ExtractPayload());
-    RETURN_IF_FAILED(initConnectionResult.hr);
-
-    auto connection = initConnectionResult.ExtractPayload();
-    // Store weak reference to connection so we can close it if it is still active on shutdown
-    m_connections.push_back(connection);
-    RETURN_IF_FAILED(connection->WebSocketConnectAsync(async));
-
-    websocketHandle->websocket->impl = std::move(connection);
-
-    return S_OK;
-}
-#endif
 
 HRESULT WinHttpProvider::CloseAllConnections()
 {
@@ -571,19 +544,6 @@ void WinHttpProvider::Resume()
 
     // Force a query of network state since we've ignored notifications during suspend
     NetworkConnectivityChangedCallback(this, nullptr);
-}
-
-// Test hooks
-void HCWinHttpSuspend()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Suspend();
-}
-
-void HCWinHttpResume()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Resume();
 }
 
 void WinHttpProvider::NetworkConnectivityChangedCallback(void* context, const XNetworkingConnectivityHint* /*hint*/)

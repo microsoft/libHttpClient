@@ -31,7 +31,7 @@ typedef void
     _In_ HCCallHandle call,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ HCPerformEnv env
+    _In_opt_ HCPerformEnv env
     );
 
 /// <summary>
@@ -422,7 +422,7 @@ typedef HRESULT
     _In_ HCWebsocketHandle websocket,
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
-    _In_ HCPerformEnv env
+    _In_opt_ HCPerformEnv env
     );
 
 /// <summary>

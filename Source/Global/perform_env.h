@@ -1,52 +1,10 @@
 #pragma once
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32
-#include "WinHttp/winhttp_provider.h"
-#elif HC_PLATFORM == HC_PLATFORM_GDK
-#include "Curl/CurlProvider.h"
-#include "WinHttp/winhttp_provider.h"
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "HTTP/Android/android_platform_context.h"
-#elif  HC_PLATFORM == HC_PLATFORM_LINUX
-#include "Curl/CurlProvider.h"
-#endif
+#include "Platform/IHttpProvider.h"
+#include "Platform/IWebSocketProvider.h"
 
-struct HttpPerformInfo
-{
-    HttpPerformInfo() = default;
-    HttpPerformInfo(_In_ HCCallPerformFunction h, _In_opt_ void* ctx)
-        : handler(h), context(ctx)
-    { }
-    HCCallPerformFunction handler = nullptr;
-    void* context = nullptr; // non owning
-};
-
-#if !HC_NOWEBSOCKETS
-struct WebSocketPerformInfo
-{
-    WebSocketPerformInfo(
-        _In_ HCWebSocketConnectFunction conn,
-        _In_ HCWebSocketSendMessageFunction st,
-        _In_ HCWebSocketSendBinaryMessageFunction sb,
-        _In_ HCWebSocketDisconnectFunction dc,
-        _In_opt_ void* ctx
-    ) :
-        connect{ conn },
-        sendText{ st },
-        sendBinary{ sb },
-        disconnect{ dc },
-        context{ ctx }
-    {}
-
-    HCWebSocketConnectFunction connect = nullptr;
-    HCWebSocketSendMessageFunction sendText = nullptr;
-    HCWebSocketSendBinaryMessageFunction sendBinary = nullptr;
-    HCWebSocketDisconnectFunction disconnect = nullptr;
-    void* context = nullptr;
-};
-#endif
-
-// Global context passed to HTTP/WebSocket hooks. Will be opaque to client providers, but contains needed context for default providers.
+// Global manager of Network operations. Formerly passed as context to default WebSocket and Http providers.
+// Likely will rename and refactor in near future.
 struct HC_PERFORM_ENV
 {
 public:
@@ -55,15 +13,14 @@ public:
     HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
     virtual ~HC_PERFORM_ENV() = default;
 
-    // Called during static initialization to get default hooks for the platform. These can be overridden by clients with
-    // HCSetHttpCallPerformFunction and HCSetWebSocketFunctions
-    static HttpPerformInfo GetPlatformDefaultHttpHandlers();
-#if !HC_NOWEBSOCKETS
-    static WebSocketPerformInfo GetPlatformDefaultWebSocketHandlers();
-#endif
+    // Called during HCInitialize
+    static Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> Initialize(
+        HC_UNIQUE_PTR<xbox::httpclient::IHttpProvider> httpProvider,
+        HC_UNIQUE_PTR<xbox::httpclient::IWebSocketProvider> webSocketProvider
+    ) noexcept;
 
-    // Called during HCInitialize. HC_PERFORM_ENV will be passed to Http/WebSocket hooks and is needed by default providers
-    static Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> Initialize(HCInitArgs* args) noexcept;
+    xbox::httpclient::IHttpProvider& HttpProvider();
+    xbox::httpclient::IWebSocketProvider& WebSocketProvider();
 
     HRESULT HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async);
 
@@ -78,19 +35,8 @@ public:
 
     static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV> env, XAsyncBlock* async) noexcept;
 
-    // Default Provider State
-#if HC_PLATFORM == HC_PLATFORM_WIN32
-    std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
-#elif HC_PLATFORM == HC_PLATFORM_GDK
-    HC_UNIQUE_PTR<xbox::httpclient::CurlProvider> curlProvider;
-    std::shared_ptr<xbox::httpclient::WinHttpProvider> winHttpProvider;
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
-    std::shared_ptr<AndroidPlatformContext> androidPlatformContext;
-#elif HC_PLATFORM == HC_PLATFORM_LINUX
-    HC_UNIQUE_PTR<xbox::httpclient::CurlProvider> curlProvider;
-#endif
 private:
-    HC_PERFORM_ENV() = default;
+    HC_PERFORM_ENV(HC_UNIQUE_PTR<xbox::httpclient::IHttpProvider> httpProvider, HC_UNIQUE_PTR<xbox::httpclient::IWebSocketProvider> webSocketProvider);
 
     static HRESULT CALLBACK HttpPerformAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK HttpPerformComplete(XAsyncBlock* async);
@@ -104,10 +50,12 @@ private:
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK ProviderCleanup(void* context, bool canceled);
     static void CALLBACK ProviderCleanupComplete(XAsyncBlock* async);
-
-    bool CanScheduleProviderCleanup();
+    bool ShouldScheduleProviderCleanup();
 
     std::mutex m_mutex;
+
+    HC_UNIQUE_PTR<xbox::httpclient::IHttpProvider> const m_httpProvider;
+    HC_UNIQUE_PTR<xbox::httpclient::IWebSocketProvider> const m_webSocketProvider;
 
     struct HttpPerformContext;
     http_internal_set<XAsyncBlock*> m_activeHttpRequests;
