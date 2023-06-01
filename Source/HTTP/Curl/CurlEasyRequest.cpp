@@ -3,7 +3,6 @@
 #include <httpClient/httpProvider.h>
 #include "CurlEasyRequest.h"
 #include "CurlProvider.h"
-#include <nn/ssl.h>
 
 namespace xbox
 {
