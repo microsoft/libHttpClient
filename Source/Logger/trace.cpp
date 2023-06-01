@@ -75,7 +75,7 @@ void TraceMessageToDebugger(
 
 #if HC_PLATFORM_IS_MICROSOFT
     localtime_s(&fmtTime, &timeTInSec);
-#elif HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM_SONY_PLAYSTATION_5
+#elif HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5
     localtime_s(&timeTInSec, &fmtTime);
 #else
     localtime_r(&timeTInSec, &fmtTime);
