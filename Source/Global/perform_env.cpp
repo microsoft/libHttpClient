@@ -1,32 +1,35 @@
 #include "pch.h"
 #include "perform_env.h"
-#include "httpcall.h"
 #include "Platform/ExternalHttpProvider.h"
 #include "Platform/ExternalWebSocketProvider.h"
-#if !HC_NOWEBSOCKETS
-#include "../WebSocket/hcwebsocket.h"
-#endif
 
-using namespace xbox::httpclient;
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-HC_PERFORM_ENV::HC_PERFORM_ENV(HC_UNIQUE_PTR<IHttpProvider> httpProvider, HC_UNIQUE_PTR<IWebSocketProvider> webSocketProvider) :
+NetworkState::NetworkState(
+    UniquePtr<IHttpProvider> httpProvider,
+    UniquePtr<IWebSocketProvider> webSocketProvider
+) noexcept :
     m_httpProvider{ std::move(httpProvider) },
     m_webSocketProvider{ std::move(webSocketProvider) }
 {
 }
 
-Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> HC_PERFORM_ENV::Initialize(
-    HC_UNIQUE_PTR<IHttpProvider> httpProvider,
-    HC_UNIQUE_PTR<IWebSocketProvider> webSocketProvider
-) noexcept
+NetworkState::~NetworkState()
 {
-    http_stl_allocator<HC_PERFORM_ENV> a{};
-    HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ new (a.allocate(1)) HC_PERFORM_ENV(std::move(httpProvider), std::move(webSocketProvider)) };
-
-    return env;
 }
 
-IHttpProvider& HC_PERFORM_ENV::HttpProvider()
+Result<UniquePtr<NetworkState>> NetworkState::Initialize(
+    UniquePtr<IHttpProvider> httpProvider,
+    UniquePtr<IWebSocketProvider> webSocketProvider
+) noexcept
+{
+    http_stl_allocator<NetworkState> a{};
+    UniquePtr<NetworkState> state{ new (a.allocate(1)) NetworkState(std::move(httpProvider), std::move(webSocketProvider)) };
+
+    return state;
+}
+
+IHttpProvider& NetworkState::HttpProvider() noexcept
 {
     // If the client configured an external provider use that. Otherwise use the m_httpProvider
     ExternalHttpProvider& externalProvider = ExternalHttpProvider::Get();
@@ -38,7 +41,7 @@ IHttpProvider& HC_PERFORM_ENV::HttpProvider()
     return *m_httpProvider;
 }
 
-IWebSocketProvider& HC_PERFORM_ENV::WebSocketProvider()
+IWebSocketProvider& NetworkState::WebSocketProvider() noexcept
 {
     // If the client configured an external provider use that. Otherwise use the m_webSocketProvider
     ExternalWebSocketProvider& externalProvider = ExternalWebSocketProvider::Get();
@@ -50,13 +53,31 @@ IWebSocketProvider& HC_PERFORM_ENV::WebSocketProvider()
     return *m_webSocketProvider;
 }
 
-struct HC_PERFORM_ENV::HttpPerformContext
+Result<UniquePtr<HC_CALL>> NetworkState::HttpCallCreate() noexcept
 {
-    HttpPerformContext(HC_PERFORM_ENV* _env, HCCallHandle _callHandle, XAsyncBlock* _clientAsyncBlock) :
-        env{ _env },
+    auto httpSingleton = get_http_singleton();
+    RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
+
+    // If the client configured an external provider use that. Otherwise use the m_httpProvider
+    ExternalHttpProvider& externalProvider = ExternalHttpProvider::Get();
+    auto& provider = externalProvider.HasCallback() ? externalProvider : *m_httpProvider;
+
+    auto call = http_allocate_unique<HC_CALL>(++httpSingleton->m_lastId, provider);
+    call->retryAllowed = httpSingleton->m_retryAllowed;
+    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
+    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
+    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
+
+    return call;
+}
+
+struct NetworkState::HttpPerformContext
+{
+    HttpPerformContext(NetworkState& _state, HCCallHandle _callHandle, XAsyncBlock* _clientAsyncBlock) :
+        state{ _state },
         callHandle{ _callHandle },
         clientAsyncBlock{ _clientAsyncBlock },
-        internalAsyncBlock{ nullptr, this, HC_PERFORM_ENV::HttpPerformComplete }
+        internalAsyncBlock{ nullptr, this, NetworkState::HttpCallPerformComplete }
     {
     }
 
@@ -68,25 +89,25 @@ struct HC_PERFORM_ENV::HttpPerformContext
         }
     }
 
-    HC_PERFORM_ENV* const env;
+    NetworkState& state;
     HCCallHandle const callHandle;
     XAsyncBlock* const clientAsyncBlock;
     XAsyncBlock internalAsyncBlock;
 };
 
-HRESULT HC_PERFORM_ENV::HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async)
+HRESULT NetworkState::HttpCallPerformAsync(HCCallHandle call, XAsyncBlock* async) noexcept
 {
-    auto performContext = http_allocate_unique<HttpPerformContext>(this, call, async);
-    RETURN_IF_FAILED(XAsyncBegin(async, performContext.get(), nullptr, __FUNCTION__, HttpPerformAsyncShimProvider));
+    auto performContext = http_allocate_unique<HttpPerformContext>(*this, call, async);
+    RETURN_IF_FAILED(XAsyncBegin(async, performContext.get(), nullptr, __FUNCTION__, HttpCallPerformAsyncProvider));
     performContext.release();
 
     return S_OK;
 }
 
-HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data)
+HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
     HttpPerformContext* performContext{ static_cast<HttpPerformContext*>(data->context) };
-    HC_PERFORM_ENV* env{ performContext->env };
+    NetworkState& state{ performContext->state };
 
     switch (op)
     {
@@ -97,8 +118,8 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &performContext->internalAsyncBlock.queue));
 
-        std::unique_lock<std::mutex> lock{ env->m_mutex };
-        env->m_activeHttpRequests.insert(performContext->clientAsyncBlock);
+        std::unique_lock<std::mutex> lock{ state.m_mutex };
+        state.m_activeHttpRequests.insert(performContext->clientAsyncBlock);
         lock.unlock();
 
         return performContext->callHandle->PerformAsync(&performContext->internalAsyncBlock);
@@ -110,22 +131,22 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
     }
     case XAsyncOp::Cleanup:
     {
-        std::unique_lock<std::mutex> lock{ env->m_mutex };
-        env->m_activeHttpRequests.erase(performContext->clientAsyncBlock);
-        bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
+        std::unique_lock<std::mutex> lock{ state.m_mutex };
+        state.m_activeHttpRequests.erase(performContext->clientAsyncBlock);
+        bool scheduleCleanup = state.ScheduleCleanup();
         lock.unlock();
 
-        // Free performContext before scheduling ProviderCleanup to ensure it happens before returing to client
-        HC_UNIQUE_PTR<HttpPerformContext> reclaim{ performContext };
+        // Free performContext before scheduling cleanup to ensure it happens before returing to client
+        UniquePtr<HttpPerformContext> reclaim{ performContext };
         reclaim.reset();
 
-        if (scheduleProviderCleanup)
+        if (scheduleCleanup)
         {
-            HRESULT hr = XTaskQueueSubmitCallback(data->async->queue, XTaskQueuePort::Work, env, ProviderCleanup);
+            HRESULT hr = XAsyncSchedule(state.m_cleanupAsyncBlock, 0);
             if (FAILED(hr))
             {
                 // This should only fail due to client terminating the queue in which case there isn't anything we can do anyhow
-                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Unable to schedule ProviderCleanup");
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Unable to schedule NetworkState::CleanupAsyncProvider");
             }
         }
         return S_OK;
@@ -137,28 +158,39 @@ HRESULT CALLBACK HC_PERFORM_ENV::HttpPerformAsyncShimProvider(XAsyncOp op, const
     }
 }
 
-void CALLBACK HC_PERFORM_ENV::HttpPerformComplete(XAsyncBlock* async)
+void CALLBACK NetworkState::HttpCallPerformComplete(XAsyncBlock* async)
 {
     HttpPerformContext* performContext{ static_cast<HttpPerformContext*>(async->context) };
     XAsyncComplete(performContext->clientAsyncBlock, XAsyncGetStatus(async, false), 0);
 }
 
-#if !HC_NOWEBSOCKETS
-struct HC_PERFORM_ENV::WebSocketConnectContext
+Result<SharedPtr<WebSocket>> NetworkState::WebSocketCreate() noexcept
+{
+    auto httpSingleton = get_http_singleton();
+    RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
+
+    // If the client configured an external provider use that. Otherwise use the m_httpProvider
+    ExternalWebSocketProvider& externalProvider = ExternalWebSocketProvider::Get();
+    auto& provider = externalProvider.HasCallbacks() ? externalProvider : *m_webSocketProvider;
+
+    return http_allocate_shared<WebSocket>(++httpSingleton->m_lastId, provider);
+}
+
+struct NetworkState::WebSocketConnectContext
 {
     WebSocketConnectContext(
-        HC_PERFORM_ENV* _env,
+        NetworkState& _state,
         http_internal_string&& _uri,
         http_internal_string&& _subprotocol,
         HCWebsocketHandle _websocketHandle,
         XAsyncBlock* _clientAsyncBlock
-    ) : env{ _env },
+    ) : state{ _state },
         uri{ std::move(_uri) },
         subprotocol{ std::move(_subprotocol) },
         websocketHandle{ _websocketHandle },
         websocket{ websocketHandle->websocket },
         clientAsyncBlock{ _clientAsyncBlock },
-        internalAsyncBlock{ nullptr, this, HC_PERFORM_ENV::WebSocketConnectComplete }
+        internalAsyncBlock{ nullptr, this, NetworkState::WebSocketConnectComplete }
     {
     }
 
@@ -170,9 +202,9 @@ struct HC_PERFORM_ENV::WebSocketConnectContext
         }
     }
 
-    HC_PERFORM_ENV* const env{};
-    http_internal_string uri;
-    http_internal_string subprotocol;
+    NetworkState& state;
+    String uri;
+    String subprotocol;
     HCWebsocketHandle websocketHandle;
     std::shared_ptr<WebSocket> websocket;
     XAsyncBlock* const clientAsyncBlock;
@@ -180,36 +212,36 @@ struct HC_PERFORM_ENV::WebSocketConnectContext
     WebSocketCompletionResult connectResult{};
 };
 
-struct HC_PERFORM_ENV::ActiveWebSocketContext
+struct NetworkState::ActiveWebSocketContext
 {
-    ActiveWebSocketContext(HC_PERFORM_ENV* _env, std::shared_ptr<WebSocket> websocket) :
-        env{ _env },
-        websocketObserver{ HC_WEBSOCKET_OBSERVER::Initialize(std::move(websocket), nullptr, nullptr, nullptr, HC_PERFORM_ENV::WebSocketClosed, this) }
+    ActiveWebSocketContext(NetworkState& _state, std::shared_ptr<WebSocket> websocket) :
+        state{ _state },
+        websocketObserver{ HC_WEBSOCKET_OBSERVER::Initialize(std::move(websocket), nullptr, nullptr, nullptr, NetworkState::WebSocketClosed, this) }
     {
     }
 
-    HC_PERFORM_ENV* const env{};
+    NetworkState& state;
     xbox::httpclient::ObserverPtr websocketObserver;
 };
 
-HRESULT HC_PERFORM_ENV::WebSocketConnectAsyncShim(
-    _In_ http_internal_string&& uri,
-    _In_ http_internal_string&& subprotocol,
-    _In_ HCWebsocketHandle clientWebSocketHandle,
-    _Inout_ XAsyncBlock* asyncBlock
-)
+HRESULT NetworkState::WebSocketConnectAsync(
+    String&& uri,
+    String&& subprotocol,
+    HCWebsocketHandle clientWebSocketHandle,
+    XAsyncBlock* asyncBlock
+) noexcept
 {
-    auto context = http_allocate_unique<WebSocketConnectContext>(this, std::move(uri), std::move(subprotocol), clientWebSocketHandle, asyncBlock);
-    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, context.get(), (void*)HCWebSocketConnectAsync, nullptr, WebSocketConnectAsyncShimProvider));
+    auto context = http_allocate_unique<WebSocketConnectContext>(*this, std::move(uri), std::move(subprotocol), clientWebSocketHandle, asyncBlock);
+    RETURN_IF_FAILED(XAsyncBegin(asyncBlock, context.get(), (void*)HCWebSocketConnectAsync, nullptr, WebSocketConnectAsyncProvider));
     context.release();
 
     return S_OK;
 }
 
-HRESULT CALLBACK HC_PERFORM_ENV::WebSocketConnectAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data)
+HRESULT CALLBACK NetworkState::WebSocketConnectAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
     WebSocketConnectContext* context{ static_cast<WebSocketConnectContext*>(data->context) };
-    HC_PERFORM_ENV* env{ context->env };
+    NetworkState& state{ context->state };
 
     switch (op)
     {
@@ -220,8 +252,8 @@ HRESULT CALLBACK HC_PERFORM_ENV::WebSocketConnectAsyncShimProvider(XAsyncOp op, 
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue));
 
-        std::unique_lock<std::mutex> lock{ env->m_mutex };
-        env->m_connectingWebSockets.insert(context->clientAsyncBlock);
+        std::unique_lock<std::mutex> lock{ state.m_mutex };
+        state.m_connectingWebSockets.insert(context->clientAsyncBlock);
         lock.unlock();
 
         return context->websocket->ConnectAsync(std::move(context->uri), std::move(context->subprotocol), &context->internalAsyncBlock);
@@ -234,7 +266,7 @@ HRESULT CALLBACK HC_PERFORM_ENV::WebSocketConnectAsyncShimProvider(XAsyncOp op, 
     }
     case XAsyncOp::Cleanup:
     {
-        HC_UNIQUE_PTR<WebSocketConnectContext> reclaim{ context };
+        UniquePtr<WebSocketConnectContext> reclaim{ context };
         return S_OK;
     }
     default:
@@ -244,13 +276,13 @@ HRESULT CALLBACK HC_PERFORM_ENV::WebSocketConnectAsyncShimProvider(XAsyncOp op, 
     }
 }
 
-void CALLBACK HC_PERFORM_ENV::WebSocketConnectComplete(XAsyncBlock* async)
+void CALLBACK NetworkState::WebSocketConnectComplete(XAsyncBlock* async)
 {
     WebSocketConnectContext* context{ static_cast<WebSocketConnectContext*>(async->context) };
-    HC_PERFORM_ENV* env{ context->env };
+    NetworkState& state{ context->state };
 
-    std::unique_lock<std::mutex> lock{ env->m_mutex };
-    env->m_connectingWebSockets.erase(context->clientAsyncBlock);
+    std::unique_lock<std::mutex> lock{ state.m_mutex };
+    state.m_connectingWebSockets.erase(context->clientAsyncBlock);
 
     // If cleanup is pending and the connect succeeded, immediately disconnect
     bool disconnect{ false };
@@ -261,17 +293,17 @@ void CALLBACK HC_PERFORM_ENV::WebSocketConnectComplete(XAsyncBlock* async)
         // Pass the clients handle back to them in the result
         context->connectResult.websocket = context->websocketHandle;
 
-        env->m_connectedWebSockets.insert(new (http_stl_allocator<ActiveWebSocketContext>{}.allocate(1)) ActiveWebSocketContext{ env, context->websocket });
-        if (env->m_cleanupAsyncBlock)
+        state.m_connectedWebSockets.insert(new (http_stl_allocator<ActiveWebSocketContext>{}.allocate(1)) ActiveWebSocketContext{ state, context->websocket });
+        if (state.m_cleanupAsyncBlock)
         {
             disconnect = true;
         }
     }
 
-    bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
+    bool scheduleCleanup = state.ScheduleCleanup();
     lock.unlock();
 
-    assert(!scheduleProviderCleanup || !disconnect);
+    assert(!scheduleCleanup || !disconnect);
     if (disconnect)
     {
         hr = context->websocket->Disconnect();
@@ -280,70 +312,69 @@ void CALLBACK HC_PERFORM_ENV::WebSocketConnectComplete(XAsyncBlock* async)
             HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
         }
     }
-    else if (scheduleProviderCleanup)
+    else if (scheduleCleanup)
     {
-        hr = XTaskQueueSubmitCallback(env->m_cleanupAsyncBlock->queue, XTaskQueuePort::Work, env, ProviderCleanup);
+        hr = XAsyncSchedule(state.m_cleanupAsyncBlock, 0);
         if (FAILED(hr))
         {
             // This should only fail due to client terminating the queue in which case there isn't anything we can do anyhow
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Unable to schedule ProviderCleanup");
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Unable to schedule NetworkState::CleanupAsyncProvider");
         }
     }
 
     XAsyncComplete(context->clientAsyncBlock, hr, sizeof(WebSocketCompletionResult));
 }
 
-void CALLBACK HC_PERFORM_ENV::WebSocketClosed(HCWebsocketHandle /*websocket*/, HCWebSocketCloseStatus /*closeStatus*/, void* c)
+void CALLBACK NetworkState::WebSocketClosed(HCWebsocketHandle /*websocket*/, HCWebSocketCloseStatus /*closeStatus*/, void* c)
 {
     ActiveWebSocketContext* context{ static_cast<ActiveWebSocketContext*>(c) };
-    HC_PERFORM_ENV* env{ context->env };
+    NetworkState& state{ context->state };
 
-    std::unique_lock<std::mutex> lock{ env->m_mutex };
-    env->m_connectedWebSockets.erase(context);
-    bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
+    std::unique_lock<std::mutex> lock{ state.m_mutex };
+    state.m_connectedWebSockets.erase(context);
+    bool scheduleCleanup = state.ScheduleCleanup();
     lock.unlock();
 
     // Free context before scheduling ProviderCleanup to ensure it happens before returing to client
-    HC_UNIQUE_PTR<ActiveWebSocketContext> reclaim{ context };
+    UniquePtr<ActiveWebSocketContext> reclaim{ context };
     reclaim.reset();
 
-    if (scheduleProviderCleanup)
+    if (scheduleCleanup)
     {
-        HRESULT hr = XTaskQueueSubmitCallback(env->m_cleanupAsyncBlock->queue, XTaskQueuePort::Work, env, ProviderCleanup);
+        HRESULT hr = XAsyncSchedule(state.m_cleanupAsyncBlock, 0);
         if (FAILED(hr))
         {
             // This should only fail due to client terminating the queue in which case there isn't anything we can do anyhow
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Unable to schedule ProviderCleanup");
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Unable to schedule NetworkState::CleanupAsyncProvider");
         }
     }
 }
-#endif
 
-HRESULT HC_PERFORM_ENV::CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV> env, XAsyncBlock* async) noexcept
+HRESULT NetworkState::CleanupAsync(UniquePtr<NetworkState> state, XAsyncBlock* async) noexcept
 {
-    RETURN_IF_FAILED(XAsyncBegin(async, env.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
-    env.release();
+    RETURN_IF_FAILED(XAsyncBegin(async, state.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
+    state.release();
     return S_OK;
 }
 
-HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
+HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
-    HC_PERFORM_ENV* env{ static_cast<HC_PERFORM_ENV*>(data->context) };
+    assert(data->context);
+    NetworkState* state{ static_cast<NetworkState*>(data->context) };
 
     switch (op)
     {
     case XAsyncOp::Begin:
     {
-        std::unique_lock<std::mutex> lock{ env->m_mutex };
-        env->m_cleanupAsyncBlock = data->async;
-        bool scheduleProviderCleanup = env->ShouldScheduleProviderCleanup();
+        std::unique_lock<std::mutex> lock{ state->m_mutex };
+        state->m_cleanupAsyncBlock = data->async;
+        bool scheduleCleanup = state->ScheduleCleanup();
 
-        for (auto& activeRequest : env->m_activeHttpRequests)
+        for (auto& activeRequest : state->m_activeHttpRequests)
         {
             XAsyncCancel(activeRequest);
         }
-#if !HC_NOWEBSOCKETS
-        for (auto& context : env->m_connectedWebSockets)
+        for (auto& context : state->m_connectedWebSockets)
         {
             HRESULT hr = context->websocketObserver->websocket->Disconnect();
             if (FAILED(hr))
@@ -351,14 +382,40 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
             }
         }
-#endif
         lock.unlock();
 
-        if (scheduleProviderCleanup)
+        if (scheduleCleanup)
         {
-            return XTaskQueueSubmitCallback(data->async->queue, XTaskQueuePort::Work, env, ProviderCleanup);
+            return XAsyncSchedule(data->async, 0);
         }
         return S_OK;
+    }
+    case XAsyncOp::DoWork:
+    {
+        UniquePtr<XAsyncBlock> providerCleanupAsyncBlock{ new (http_stl_allocator<XAsyncBlock>{}.allocate(1)) XAsyncBlock
+        {
+            data->async->queue,
+            state,
+            HttpProviderCleanupComplete
+        } };
+
+        HRESULT hr = state->m_httpProvider->CleanupAsync(providerCleanupAsyncBlock.get());
+        if (FAILED(hr))
+        {
+            XAsyncBlock* cleanupAsyncBlock{ state->m_cleanupAsyncBlock };
+
+            UniquePtr<NetworkState> reclaim{ state };
+            reclaim.reset();
+            providerCleanupAsyncBlock.reset();
+
+            XAsyncComplete(cleanupAsyncBlock, hr, 0);
+            return S_OK;
+        }
+        else
+        {
+            providerCleanupAsyncBlock.release();
+        }
+        return E_PENDING;
     }
     default:
     {
@@ -367,49 +424,21 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
     }
 }
 
-void CALLBACK HC_PERFORM_ENV::ProviderCleanup(void* context, bool /*canceled*/)
+void CALLBACK NetworkState::HttpProviderCleanupComplete(XAsyncBlock* async)
 {
-    HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ static_cast<HC_PERFORM_ENV*>(context) };
-    XAsyncBlock* cleanupAsyncBlock{ env->m_cleanupAsyncBlock };
-
-    HC_UNIQUE_PTR<XAsyncBlock> providerCleanupAsyncBlock{ new (http_stl_allocator<XAsyncBlock>{}.allocate(1)) XAsyncBlock
-    {
-        cleanupAsyncBlock->queue,
-        env.get(),
-        ProviderCleanupComplete
-    } };
-
-    HRESULT hr = env->m_httpProvider->CleanupAsync(providerCleanupAsyncBlock.get());
-    if (FAILED(hr))
-    {
-        env.reset();
-        providerCleanupAsyncBlock.reset();
-
-        XAsyncComplete(cleanupAsyncBlock, hr, 0);
-    }
-    else
-    {
-        env.release();
-        providerCleanupAsyncBlock.release();
-    }
-}
-
-void CALLBACK HC_PERFORM_ENV::ProviderCleanupComplete(XAsyncBlock* async)
-{
-    HC_UNIQUE_PTR<XAsyncBlock> providerCleanupAsyncBlock{ async };
-    HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ static_cast<HC_PERFORM_ENV*>(providerCleanupAsyncBlock->context) };
-    XAsyncBlock* envCleanupAsyncBlock = env->m_cleanupAsyncBlock;
+    UniquePtr<XAsyncBlock> providerCleanupAsyncBlock{ async };
+    UniquePtr<NetworkState> state{ static_cast<NetworkState*>(providerCleanupAsyncBlock->context) };
+    XAsyncBlock* stateCleanupAsyncBlock = state->m_cleanupAsyncBlock;
 
     HRESULT cleanupResult = XAsyncGetStatus(providerCleanupAsyncBlock.get(), false);
     providerCleanupAsyncBlock.reset();
-    env.reset();
+    state.reset();
 
-    // HC_PERFORM_ENV fully cleaned up at this point
-    XAsyncComplete(envCleanupAsyncBlock, cleanupResult, 0);
+    // NetworkState fully cleaned up at this point
+    XAsyncComplete(stateCleanupAsyncBlock, cleanupResult, 0);
 }
 
-
-bool HC_PERFORM_ENV::ShouldScheduleProviderCleanup()
+bool NetworkState::ScheduleCleanup()
 {
     if (!m_cleanupAsyncBlock)
     {
@@ -421,7 +450,6 @@ bool HC_PERFORM_ENV::ShouldScheduleProviderCleanup()
         // Pending Http Requests
         return false;
     }
-#if !HC_NOWEBSOCKETS
     else if (!m_connectingWebSockets.empty())
     {
         // Pending WebSocket Connect operations
@@ -432,6 +460,7 @@ bool HC_PERFORM_ENV::ShouldScheduleProviderCleanup()
         // Pending WebSocket CloseFunc callbacks
         return false;
     }
-#endif
     return true;
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_END

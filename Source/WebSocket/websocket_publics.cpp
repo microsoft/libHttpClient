@@ -17,7 +17,13 @@ try
 {
     RETURN_HR_IF(E_INVALIDARG, !handle);
 
-    auto createWebSocketResult = WebSocket::Initialize();
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    auto createWebSocketResult = httpSingleton->m_networkState->WebSocketCreate();
     RETURN_IF_FAILED(createWebSocketResult.hr);
 
     *handle = HC_WEBSOCKET_OBSERVER::Initialize(createWebSocketResult.ExtractPayload(), messageFunc, binaryMessageFunc, nullptr, closeFunc, functionContext).release();
@@ -86,7 +92,7 @@ try
     auto httpSingleton = get_http_singleton();
     RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
 
-    return httpSingleton->m_performEnv->WebSocketConnectAsyncShim(uri, subProtocol, handle, asyncBlock);
+    return httpSingleton->m_networkState->WebSocketConnectAsync(uri, subProtocol, handle, asyncBlock);
 }
 CATCH_RETURN()
 

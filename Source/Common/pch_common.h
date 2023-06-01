@@ -103,6 +103,7 @@ typedef std::chrono::steady_clock chrono_clock_t;
 #include <httpClient/httpClient.h>
 #include "Result.h"
 #include "../Global/mem.h"
+#include "Types.h"
 
 HC_DECLARE_TRACE_AREA(HTTPCLIENT);
 HC_DECLARE_TRACE_AREA(WEBSOCKET);

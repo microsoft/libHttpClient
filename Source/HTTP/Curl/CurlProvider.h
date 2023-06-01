@@ -28,7 +28,7 @@ public:
 
     HRESULT CleanupAsync(XAsyncBlock* async) noexcept override;
 
-private:
+protected:
     CurlProvider() = default;
 
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data) noexcept;

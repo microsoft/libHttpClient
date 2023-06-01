@@ -63,7 +63,7 @@ public:
 #endif
 
 public:
-    PerformEnv m_performEnv;
+    UniquePtr<NetworkState> m_networkState;
 
     HRESULT set_global_proxy(_In_ const char* proxyUri);
 
@@ -84,7 +84,7 @@ public:
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
-    http_singleton(PerformEnv&& performEnv);
+    http_singleton(UniquePtr<NetworkState> networkManager);
 
 private:
     enum class singleton_access_mode

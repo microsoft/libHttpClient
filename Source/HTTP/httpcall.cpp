@@ -29,22 +29,6 @@ HC_CALL::~HC_CALL()
     HC_TRACE_INFORMATION(HTTPCLIENT, __FUNCTION__);
 }
 
-Result<HC_UNIQUE_PTR<HC_CALL>> HC_CALL::Initialize()
-{
-    auto httpSingleton = get_http_singleton();
-    RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
-
-    http_stl_allocator<HC_CALL> a{};
-    HC_UNIQUE_PTR<HC_CALL> call{ new (a.allocate(1)) HC_CALL{ ++httpSingleton->m_lastId, httpSingleton->m_performEnv->HttpProvider() }, http_alloc_deleter<HC_CALL>{}};
-
-    call->retryAllowed = httpSingleton->m_retryAllowed;
-    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
-    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
-    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
-
-    return call;
-}
-
 // Context for PerformAsyncProvider. Ensures HC_CALL lifetime until perform completes
 struct PerformContext
 {

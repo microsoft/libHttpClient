@@ -113,7 +113,7 @@ void CALLBACK HttpProviderPerformAsyncProxy(
     }
     else
     {
-        httpSingleton->m_performEnv->HttpProvider().PerformAsync(call, asyncBlock);
+        httpSingleton->m_networkManager->HttpProvider().PerformAsync(call, asyncBlock);
     }
 }
 

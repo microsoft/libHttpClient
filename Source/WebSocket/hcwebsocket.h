@@ -88,12 +88,11 @@ void ObserverDeleter::operator()(HC_WEBSOCKET_OBSERVER* ptr) noexcept
 class WebSocket : public std::enable_shared_from_this<WebSocket>
 {
 public:
+    WebSocket(uint64_t id, IWebSocketProvider& provider);
     WebSocket(const WebSocket&) = delete;
     WebSocket(WebSocket&&) = delete;
     WebSocket& operator=(const WebSocket&) = delete;
     virtual ~WebSocket();
-
-    static Result<std::shared_ptr<WebSocket>> Initialize();
 
     uint32_t RegisterEventCallbacks(
         _In_opt_ HCWebSocketMessageFunction messageFunc,
@@ -149,8 +148,6 @@ public:
     std::shared_ptr<hc_websocket_impl> impl;
 
 private:
-    WebSocket(uint64_t id, IWebSocketProvider& provider);
-
     static HRESULT CALLBACK ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
     static void CALLBACK ConnectComplete(XAsyncBlock* async);
 

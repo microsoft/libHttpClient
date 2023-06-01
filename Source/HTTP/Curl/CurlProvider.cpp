@@ -22,7 +22,9 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     switch (c)
     {
     case CURLMcode::CURLM_OK: return S_OK;
+#if HC_PLATFORM == HC_PLATFORM_GDK || LIBCURL_VERSION_NUM >= 0x074201
     case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
+#endif
     default: return E_FAIL;
     }
 }
@@ -59,7 +61,7 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     XTaskQueuePortHandle workPort{ nullptr };
     RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HC_PERFORM_ENV::Perform: HCCallHandle=%p, workPort=%p", hcCall, workPort);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlProvider::PerformAsync: HCCallHandle=%p, workPort=%p", hcCall, workPort);
 
     auto easyInitResult = CurlEasyRequest::Initialize(hcCall, async);
     RETURN_IF_FAILED(easyInitResult.hr);
@@ -120,7 +122,7 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
             provider->m_cleanupTasksRemaining = 1 + localCurlMultis.size();
         }
 
-        XAsyncBlock multiCleanupAsyncBlock{ provider->m_multiCleanupQueue, provider, CurlProvider::MultiCleanupComplete, 0 };
+        XAsyncBlock multiCleanupAsyncBlock{ provider->m_multiCleanupQueue, provider, CurlProvider::MultiCleanupComplete, { 0 } };
         provider->m_multiCleanupAsyncBlocks = http_internal_vector<XAsyncBlock>(localCurlMultis.size(), multiCleanupAsyncBlock);
 
         size_t multiIndex{ 0 };
