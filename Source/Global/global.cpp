@@ -12,9 +12,6 @@
 #include "../WebSocket/hcwebsocket.h"
 #endif
 
-#include "Platform/ExternalHttpProvider.h"
-#include "Platform/ExternalWebSocketProvider.h"
-
 using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
