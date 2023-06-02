@@ -132,21 +132,6 @@ WebSocket::~WebSocket()
     HC_TRACE_INFORMATION(WEBSOCKET, __FUNCTION__);
 }
 
-Result<std::shared_ptr<WebSocket>> WebSocket::Initialize()
-{
-    auto httpSingleton = get_http_singleton();
-    RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
-
-    http_stl_allocator<WebSocket> a{};
-    std::shared_ptr<WebSocket> websocket{ new (a.allocate(1)) WebSocket
-    {
-        ++httpSingleton->m_lastId,
-        httpSingleton->m_performEnv->WebSocketProvider()
-    }, http_alloc_deleter<WebSocket>{}, a };
-
-    return websocket;
-}
-
 uint32_t WebSocket::RegisterEventCallbacks(
     _In_opt_ HCWebSocketMessageFunction messageFunc,
     _In_opt_ HCWebSocketBinaryMessageFunction binaryMessageFunc,

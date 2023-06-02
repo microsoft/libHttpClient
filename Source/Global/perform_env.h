@@ -1,73 +1,87 @@
 #pragma once
 
+#include "httpcall.h"
+#include "../WebSocket/hcwebsocket.h"
 #include "Platform/IHttpProvider.h"
 #include "Platform/IWebSocketProvider.h"
 
-// Global manager of Network operations. Formerly passed as context to default WebSocket and Http providers.
-// Likely will rename and refactor in near future.
-struct HC_PERFORM_ENV
-{
-public:
-    HC_PERFORM_ENV(const HC_PERFORM_ENV&) = delete;
-    HC_PERFORM_ENV(HC_PERFORM_ENV&&) = delete;
-    HC_PERFORM_ENV& operator=(const HC_PERFORM_ENV&) = delete;
-    virtual ~HC_PERFORM_ENV() = default;
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-    // Called during HCInitialize
-    static Result<HC_UNIQUE_PTR<HC_PERFORM_ENV>> Initialize(
-        HC_UNIQUE_PTR<xbox::httpclient::IHttpProvider> httpProvider,
-        HC_UNIQUE_PTR<xbox::httpclient::IWebSocketProvider> webSocketProvider
+// Global state related to network operations.
+// 
+// Responsible for tracking ongoing network operations and awaiting them during cleanup. It also owns the IHttpProvider
+// and IWebSocketProvider that will be used to perform HttpCalls and WebSockets operations.
+
+class NetworkState
+{
+public: // Lifecycle management
+    static Result<UniquePtr<NetworkState>> Initialize(
+        UniquePtr<IHttpProvider> httpProvider,
+        UniquePtr<IWebSocketProvider> webSocketProvider
     ) noexcept;
 
-    xbox::httpclient::IHttpProvider& HttpProvider();
-    xbox::httpclient::IWebSocketProvider& WebSocketProvider();
+    static HRESULT CleanupAsync(
+        UniquePtr<NetworkState> networkManager,
+        XAsyncBlock* async
+    ) noexcept;
 
-    HRESULT HttpCallPerformAsyncShim(HCCallHandle call, XAsyncBlock* async);
+public: // Providers
+    IHttpProvider& HttpProvider() noexcept;
+    IWebSocketProvider& WebSocketProvider() noexcept;
 
-#if !HC_NOWEBSOCKETS
-    HRESULT WebSocketConnectAsyncShim(
-        _In_ http_internal_string&& uri,
-        _In_ http_internal_string&& subProtocol,
-        _In_ HCWebsocketHandle handle,
-        _Inout_ XAsyncBlock* asyncBlock
-    );
-#endif
+public: // Http
+    Result<UniquePtr<HC_CALL>> HttpCallCreate() noexcept;
 
-    static HRESULT CleanupAsync(HC_UNIQUE_PTR<HC_PERFORM_ENV> env, XAsyncBlock* async) noexcept;
+    HRESULT HttpCallPerformAsync(
+        HCCallHandle httpCall,
+        XAsyncBlock* async
+    ) noexcept;
+
+public: // WebSocket
+    Result<SharedPtr<WebSocket>> WebSocketCreate() noexcept;
+
+    HRESULT WebSocketConnectAsync(
+        String&& uri,
+        String&& subProtocol,
+        HCWebsocketHandle handle,
+        XAsyncBlock* asyncBlock
+    ) noexcept;
+
+    NetworkState(NetworkState const&) = delete;
+    NetworkState& operator=(NetworkState const&) = delete;
+    ~NetworkState();
 
 private:
-    HC_PERFORM_ENV(HC_UNIQUE_PTR<xbox::httpclient::IHttpProvider> httpProvider, HC_UNIQUE_PTR<xbox::httpclient::IWebSocketProvider> webSocketProvider);
+    NetworkState(
+        UniquePtr<IHttpProvider> httpProvider,
+        UniquePtr<IWebSocketProvider> webSocketProvider
+    ) noexcept;
 
-    static HRESULT CALLBACK HttpPerformAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
-    static void CALLBACK HttpPerformComplete(XAsyncBlock* async);
+    static HRESULT CALLBACK HttpCallPerformAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
+    static void CALLBACK HttpCallPerformComplete(XAsyncBlock* async);
 
-#if !HC_NOWEBSOCKETS
-    static HRESULT CALLBACK WebSocketConnectAsyncShimProvider(XAsyncOp op, const XAsyncProviderData* data);
+    static HRESULT CALLBACK WebSocketConnectAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK WebSocketConnectComplete(XAsyncBlock* async);
     static void CALLBACK WebSocketClosed(HCWebsocketHandle websocket, HCWebSocketCloseStatus closeStatus, void* context);
-#endif
 
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
-    static void CALLBACK ProviderCleanup(void* context, bool canceled);
-    static void CALLBACK ProviderCleanupComplete(XAsyncBlock* async);
-    bool ShouldScheduleProviderCleanup();
+    static void CALLBACK HttpProviderCleanupComplete(XAsyncBlock* async);
+    bool ScheduleCleanup();
 
     std::mutex m_mutex;
 
-    HC_UNIQUE_PTR<xbox::httpclient::IHttpProvider> const m_httpProvider;
-    HC_UNIQUE_PTR<xbox::httpclient::IWebSocketProvider> const m_webSocketProvider;
+    UniquePtr<IHttpProvider> m_httpProvider;
+    UniquePtr<IWebSocketProvider> m_webSocketProvider;
 
+    // XAsync context objects
     struct HttpPerformContext;
-    http_internal_set<XAsyncBlock*> m_activeHttpRequests;
-
-#if !HC_NOWEBSOCKETS
     struct WebSocketConnectContext;
     struct ActiveWebSocketContext;
-    http_internal_set<XAsyncBlock*> m_connectingWebSockets;
-    http_internal_set<ActiveWebSocketContext*> m_connectedWebSockets;
-#endif
 
+    Set<XAsyncBlock*> m_activeHttpRequests;
+    Set<XAsyncBlock*> m_connectingWebSockets;
+    Set<ActiveWebSocketContext*> m_connectedWebSockets;
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
 };
 
-using PerformEnv = HC_UNIQUE_PTR<HC_PERFORM_ENV>;
+NAMESPACE_XBOX_HTTP_CLIENT_END

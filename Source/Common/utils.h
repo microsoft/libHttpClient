@@ -7,11 +7,6 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-using String = http_internal_string;
-
-template<class K, class V, class LESS = std::less<K>>
-using Map = std::map<K, V, LESS, http_stl_allocator<std::pair<K const, V>>>;
-
 void trim_whitespace(_In_ http_internal_wstring& str);
 void BasicAsciiLowercase(String& s);
 

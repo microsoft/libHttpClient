@@ -39,7 +39,7 @@ HRESULT http_singleton::singleton_access(
             PlatformComponents platform{};
             RETURN_IF_FAILED(PlatformInitialize(platform, createArgs));
 
-            auto performEnvInitResult = HC_PERFORM_ENV::Initialize(std::move(platform.HttpProvider), std::move(platform.WebSocketProvider));
+            auto performEnvInitResult = NetworkState::Initialize(std::move(platform.HttpProvider), std::move(platform.WebSocketProvider));
             RETURN_IF_FAILED(performEnvInitResult.hr);
 
             s_singleton = http_allocate_shared<http_singleton>(performEnvInitResult.ExtractPayload());
@@ -146,7 +146,7 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
             XAsyncSchedule(singletonCleanupAsyncBlock, 0);
         };
 
-        RETURN_IF_FAILED(HC_PERFORM_ENV::CleanupAsync(std::move(singleton->m_performEnv), performEnvCleanupAsyncBlock.get()));
+        RETURN_IF_FAILED(NetworkState::CleanupAsync(std::move(singleton->m_networkState), performEnvCleanupAsyncBlock.get()));
         performEnvCleanupAsyncBlock.release();
 
         return S_OK;
@@ -185,8 +185,8 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
     }
 }
 
-http_singleton::http_singleton(PerformEnv&& performEnv) :
-    m_performEnv{ std::move(performEnv) }
+http_singleton::http_singleton(UniquePtr<NetworkState> networkState) :
+    m_networkState{ std::move(networkState) }
 {
 }
 

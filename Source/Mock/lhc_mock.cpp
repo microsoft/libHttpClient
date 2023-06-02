@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include <httpClient/httpProvider.h>
+#include "Platform/ExternalHttpProvider.h"
 #include "lhc_mock.h"
 #include "../HTTP/httpcall.h"
 
@@ -35,7 +36,7 @@ bool DoesMockCallMatch(_In_ const HC_CALL* mockCall, _In_ const HC_CALL* origina
     return false;
 }
 
-HC_MOCK_CALL::HC_MOCK_CALL(uint64_t id) : HC_CALL(id, get_http_singleton()->m_performEnv->HttpProvider())
+HC_MOCK_CALL::HC_MOCK_CALL(uint64_t id) : HC_CALL(id, ExternalHttpProvider::Get())
 {
 }
 

@@ -10,8 +10,8 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 // Additionally, each platform must implement its own version of PlatformInitialize.
 struct PlatformComponents
 {
-    HC_UNIQUE_PTR<IHttpProvider> HttpProvider;
-    HC_UNIQUE_PTR<IWebSocketProvider> WebSocketProvider;
+    UniquePtr<IHttpProvider> HttpProvider;
+    UniquePtr<IWebSocketProvider> WebSocketProvider;
 };
 
 HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs);
