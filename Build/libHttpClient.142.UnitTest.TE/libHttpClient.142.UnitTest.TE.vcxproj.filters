@@ -58,11 +58,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.cpp">
       <Filter>C++ Source\Platform</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Generic\PlatformComponents_Generic.cpp">
+      <Filter>C++ Source\Platform\Win32</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.cpp">
       <Filter>C++ Source\Platform</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Win32\PlatformComponents_Win32.cpp">
-      <Filter>C++ Source\Platform\Win32</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp">
       <Filter>C++ Source\Task</Filter>
