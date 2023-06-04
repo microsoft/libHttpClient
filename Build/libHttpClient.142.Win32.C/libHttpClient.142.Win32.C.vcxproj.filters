@@ -132,6 +132,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h">
       <Filter>C++ Source\Common</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h">
+      <Filter>C++ Source\Common</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
       <Filter>C++ Source\Common\Win</Filter>
     </ClInclude>
@@ -234,52 +237,52 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="C++ Source">
-      <UniqueIdentifier>{2A56644C-F2ED-37C2-AF5E-068AA34B5927}</UniqueIdentifier>
+      <UniqueIdentifier>{E1752E2A-42A6-32D9-8D99-E681A8B8D0EF}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common">
-      <UniqueIdentifier>{2AA4C14E-3B67-3D87-9704-0E2C43362424}</UniqueIdentifier>
+      <UniqueIdentifier>{873068A4-4E96-37B6-9DFA-1978DF055660}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Common\Win">
-      <UniqueIdentifier>{5D3652C3-7075-3CC3-A045-305E2A5D4496}</UniqueIdentifier>
+      <UniqueIdentifier>{F08CD984-26AE-33D3-9718-E30BC475955D}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Global">
-      <UniqueIdentifier>{F9959D05-5B81-3DB7-BC0F-C2589A4F45FB}</UniqueIdentifier>
+      <UniqueIdentifier>{0C7818DF-0301-308F-A453-019AD15AACCD}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP">
-      <UniqueIdentifier>{6DB1C975-E1E5-35FD-9C01-3A97E1F6F7F8}</UniqueIdentifier>
+      <UniqueIdentifier>{29317134-68D3-392F-8E97-1DF0180ED209}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\HTTP\WinHttp">
-      <UniqueIdentifier>{A32F29D4-7CE7-343A-999B-951B5FEAD9C8}</UniqueIdentifier>
+      <UniqueIdentifier>{E89B32B6-B4A3-35DF-A572-F4D4F5BBEB5B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger">
-      <UniqueIdentifier>{E7442585-3036-38B2-AB21-CEC21DA4920C}</UniqueIdentifier>
+      <UniqueIdentifier>{CE53DB1E-517C-38D5-8972-46B753330D22}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Logger\Win">
-      <UniqueIdentifier>{C8736D4E-FB5F-3AC5-AC87-B081915FED05}</UniqueIdentifier>
+      <UniqueIdentifier>{894EDC88-B7CC-3CC4-8FEE-112851D08829}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Mock">
-      <UniqueIdentifier>{E089B84B-DAA6-3E03-B924-8ED8686FD2D6}</UniqueIdentifier>
+      <UniqueIdentifier>{0AA678C9-74AC-3A86-8835-309CF6E61255}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Platform">
-      <UniqueIdentifier>{33BB128F-D1CF-3CF1-A6AD-8C6807046313}</UniqueIdentifier>
+      <UniqueIdentifier>{ED42CA70-1DD0-3DDD-805F-4A08086E5D8B}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Platform\Win32">
-      <UniqueIdentifier>{2F959B80-2FEF-36BC-A0DC-734E8451BA81}</UniqueIdentifier>
+      <UniqueIdentifier>{CDFC16CE-248A-3435-B936-A26A093140FD}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task">
-      <UniqueIdentifier>{FE614E34-87ED-310A-B985-4535A93C8356}</UniqueIdentifier>
+      <UniqueIdentifier>{62592A35-4225-3A76-91FC-0684C61AC1D0}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\Task\Win">
-      <UniqueIdentifier>{FAA9D57C-A326-39EB-89A2-97DD079FE038}</UniqueIdentifier>
+      <UniqueIdentifier>{8FC6242D-C70A-3562-89F8-93086CB0B62F}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket">
-      <UniqueIdentifier>{A56F2BBC-316C-3B18-AF11-9B6077644CA3}</UniqueIdentifier>
+      <UniqueIdentifier>{1A06B935-C97D-3EB2-B67A-8D6A30019E4A}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Source\WebSocket\Win">
-      <UniqueIdentifier>{CFB3E8A1-319F-3D63-AC89-00D98DBE1853}</UniqueIdentifier>
+      <UniqueIdentifier>{DAED7710-3804-320E-A1E2-A3625286D995}</UniqueIdentifier>
     </Filter>
     <Filter Include="C++ Public Includes">
-      <UniqueIdentifier>{CD9AEFD8-CE44-3B6E-9FAF-7B7D3EA8F8FA}</UniqueIdentifier>
+      <UniqueIdentifier>{4FE1D15A-FFC4-39FD-9354-E7C06220686C}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
