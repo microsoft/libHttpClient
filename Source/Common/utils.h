@@ -173,7 +173,7 @@ public:
 
 static inline int str_icmp(const http_internal_string& left, const http_internal_string& right)
 {
-#if HC_PLATFORM_IS_MICROSOFT
+#if _WIN32
     return _stricmp(left.c_str(), right.c_str());
 #else
     return strcasecmp(left.c_str(), right.c_str());
