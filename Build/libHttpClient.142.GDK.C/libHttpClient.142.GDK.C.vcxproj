@@ -17,7 +17,7 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <TargetRuntime>Native</TargetRuntime>
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>false</GenerateManifest>
     <HCLibImpl>true</HCLibImpl>
@@ -45,7 +45,7 @@
   <PropertyGroup>
     <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
     <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
-    <ExecutablePath>$(Console_SdkRoot)bin;$(Console_SdkToolPath);$(ExecutablePath)</ExecutablePath>
+    <ExecutablePath>$(Console_SdkRoot)bin;$(Console_SdkToolPath);$(ExecutablePath)</ExecutablePath>	
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -110,6 +110,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
@@ -189,6 +190,6 @@
     <Message Importance="High" Text="    LibraryPath          	      = '$(LibraryPath)'" />
     <Message Importance="High" Text="    IncludePath                  = '$(IncludePath)'" />
     <Message Importance="High" Text="    ExecutablePath               = '$(ExecutablePath)'" />
-    <Message Importance="High" Text=" " />
+	<Message Importance="High" Text=" " />
   </Target>
 </Project>

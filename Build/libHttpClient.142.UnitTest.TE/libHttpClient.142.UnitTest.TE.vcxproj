@@ -188,6 +188,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
@@ -225,11 +226,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Generic\PlatformComponents_Generic.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IWebSocketProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformComponents.h" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Win32\PlatformComponents_Win32.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessQueue.h" />

@@ -135,6 +135,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
@@ -164,6 +165,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_response_stream.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_provider.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_provider.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_publics.cpp" />
@@ -184,6 +187,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IWebSocketProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformComponents.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\UWP\PlatformComponents_UWP.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessQueue.h" />

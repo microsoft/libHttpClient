@@ -92,6 +92,14 @@ set(Platform_GDK_Source_Files
     ../../../Source/Platform/GDK/PlatformComponents_GDK.cpp
     )
 
+set(Platform_UWP_Source_Files
+    ../../../Source/Platform/UWP/PlatformComponents_UWP.cpp
+    )
+
+set(Platform_Generic_Source_Files
+    ../../../Source/Platform/Generic/PlatformComponents_Generic.cpp
+    )
+
 set(Task_Windows_Source_Files
     ../../../Source/Task/ThreadPool_win32.cpp
     ../../../Source/Task/WaitTimer_win32.cpp
@@ -142,6 +150,8 @@ set(XMLHttp_HTTP_Source_Files
     ../../../Source/HTTP/XMLHttp/http_request_stream.h
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.cpp
     ../../../Source/HTTP/XMLHttp/xmlhttp_http_task.h
+    ../../../Source/HTTP/XMLHttp/xmlhttp_provider.cpp
+    ../../../Source/HTTP/XMLHttp/xmlhttp_provider.h
     )
 
 set(Curl_Source_Files
@@ -238,7 +248,7 @@ endif()
 if( UNITTEST )
     message(STATUS "Unittest source group")
     source_group("C++ Source\\WebSocket\\Unittest" FILES ${Unittest_WebSocket_Source_Files})
-    source_group("C++ Source\\Platform\\Win32" FILES ${Platform_Win32_Source_Files})  
+    source_group("C++ Source\\Platform\\Win32" FILES ${Platform_Generic_Source_Files})  
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
     source_group("C++ Source\\Task\\Win" FILES ${Task_Windows_Source_Files})
@@ -247,7 +257,7 @@ if( UNITTEST )
     list(APPEND
         SOURCE_FILES
         ${Task_Windows_Source_Files}
-        ${Platform_Win32_Source_Files}
+        ${Platform_Generic_Source_Files}
         ${Common_Windows_Source_Files}
         ${Windows_Logger_Source_Files}
         ${Unittest_WebSocket_Source_Files}
@@ -258,6 +268,7 @@ endif()
 if( UWP )
     message(STATUS "UWP source group")
     source_group("C++ Source\\HTTP\\XMLHttp" FILES ${XMLHttp_HTTP_Source_Files})
+    source_group("C++ Source\\Platform\\UWP" FILES ${Platform_UWP_Source_Files})
     source_group("C++ Source\\WebSocket\\WinRT" FILES ${WinRT_WebSocket_Source_Files})
     source_group("C++ Source\\Common\\Win" FILES ${Common_Windows_Source_Files})
     source_group("C++ Source\\Logger\\Win" FILES ${Windows_Logger_Source_Files})
@@ -272,6 +283,7 @@ if( UWP )
         ${Windows_Logger_Source_Files}
         ${WinRT_WebSocket_Source_Files}
         ${Task_Source_Files}
+        ${Platform_UWP_Source_Files}
         )
 endif()
 

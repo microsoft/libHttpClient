@@ -4,6 +4,7 @@
 #if !HC_XDK_API
 #include <Shlwapi.h>
 #endif
+#include <httpClient/httpProvider.h>
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
 #include "utils.h"
@@ -29,22 +30,6 @@ xmlhttp_http_task::~xmlhttp_http_task()
     {
         CoUninitialize();
     }
-}
-
-void CALLBACK xmlhttp_http_task::PerformAsyncHandler(
-    HCCallHandle call,
-    XAsyncBlock* asyncBlock,
-    void* context,
-    HCPerformEnv env
-) noexcept
-{
-    assert(context == nullptr);
-    assert(env != nullptr);
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(env);
-
-    auto httpTask = http_allocate_shared<xmlhttp_http_task>(asyncBlock, call);
-    httpTask->perform_async(asyncBlock, call);
 }
 
 void xmlhttp_http_task::perform_async(
