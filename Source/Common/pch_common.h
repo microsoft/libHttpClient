@@ -9,7 +9,9 @@
 #pragma warning(disable: 4242) 
 
 #ifdef _WIN32
+#ifndef _SCL_SECURE_NO_WARNINGS
 #define _SCL_SECURE_NO_WARNINGS
+#endif
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 // If you wish to build your application for a previous Windows platform, include WinSDKVer.h and
