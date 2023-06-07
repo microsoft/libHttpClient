@@ -28,10 +28,14 @@
 
   <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary'">
     <ProjectReference Include="$(HCBuildRoot)\$(libsslName)\$(libsslName).vcxproj">
-      <Project>{AAF08544-8AAA-41A5-A86B-2AF4D8985258}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '141'">{A5EB6BDD-DD81-4B7B-83A0-A8AE0068FC3F}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '142'">{23104CDA-C598-4D41-B7FF-70405B2871EC}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '143'">{AAF08544-8AAA-41A5-A86B-2AF4D8985258}</Project>
     </ProjectReference>
     <ProjectReference Include="$(HCBuildRoot)\$(libcryptoName)\$(libcryptoName).vcxproj">
-      <Project>{16AA2EBE-6D49-41B7-A13F-887C12E78715}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '141'">{EEE4D040-3907-43BD-9CA9-C89F1DB19FCD}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '142'">{9C459B54-E085-42F3-A671-7F55C2994048}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '143'">{16AA2EBE-6D49-41B7-A13F-887C12E78715}</Project>
     </ProjectReference>
   </ItemGroup>
 
