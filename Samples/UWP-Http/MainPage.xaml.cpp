@@ -256,11 +256,11 @@ void HttpTestApp::MainPage::UpdateXamlUI(
 }
 
 void CALLBACK TraceCallback(
-    _In_z_ const char* areaName,
-    _In_ HCTraceLevel level,
-    _In_ uint64_t threadId,
-    _In_ uint64_t timestamp,
-    _In_z_ const char* message
+    _In_z_ const char* /*areaName*/,
+    _In_ HCTraceLevel /*level*/,
+    _In_ uint64_t /*threadId*/,
+    _In_ uint64_t /*timestamp*/,
+    _In_z_ const char* /*message*/
 )
 {
     // Hook up to your own tracing.  For example:

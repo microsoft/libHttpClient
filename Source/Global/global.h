@@ -40,7 +40,7 @@ typedef struct http_singleton
 {
 public:
     static std::shared_ptr<http_singleton> get() noexcept;
-    static HRESULT create(_In_ HCInitArgs* args) noexcept;
+    static HRESULT create(_In_opt_ HCInitArgs* args) noexcept;
     static HRESULT cleanup_async(_In_ XAsyncBlock* async) noexcept;
 
     http_singleton(const http_singleton&) = delete;
