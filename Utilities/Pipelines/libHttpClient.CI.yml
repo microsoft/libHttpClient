@@ -158,11 +158,10 @@ jobs:
     displayName: Send email on build failure
     condition: and(failed(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     dependsOn:
-      - Win32Vs17Build
       - Win32Vs19Build
+      - Win32Vs22Build
       - AndroidBuild
       - iOSBuild
-      - XDKBuild
     pool:
       name: xbl-1es-vs2019-pool
     steps:

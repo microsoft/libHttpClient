@@ -35,7 +35,6 @@
     <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Win32'">true</useWsppWebsockets>
 
     <HCLibToolset>$(PlatformToolsetVersion)</HCLibToolset>
-    <HCLibToolset Condition="'$(PlatformToolset)'=='v140'">140</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v143'">143</HCLibToolset>
@@ -110,7 +109,7 @@
     <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
     <Message Importance="High" Text="    XES_OUTDIR                   = '$(XES_OUTDIR)'" />
     <Message Importance="High" Text=" " />
-    <Message Importance="High" Text="    HCRoot                  = '$(HCRoot)'" />
+    <Message Importance="High" Text="    HCRoot                       = '$(HCRoot)'" />
     <Message Importance="High" Text="    HCLibToolset                 = '$(HCLibToolset)'" />
     <Message Importance="High" Text="    HCProjectName                = '$(HCProjectName)'" />
     <Message Importance="High" Text="    libHttpClientInclude         = '$(libHttpClientInclude)'" />
@@ -118,9 +117,9 @@
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="    IntDir                       = '$(IntDir)'" />
     <Message Importance="High" Text="    OutDir                       = '$(OutDir)'" />
-    <Message Importance="High" Text="    LibPath                    = '$(LibPath)'" />
-    <Message Importance="High" Text="    IntermediateOutputPath     = '$(IntermediateOutputPath)'" />
-    <Message Importance="High" Text="    OutputPath                 = '$(OutputPath)'" />
+    <Message Importance="High" Text="    LibPath                      = '$(LibPath)'" />
+    <Message Importance="High" Text="    IntermediateOutputPath       = '$(IntermediateOutputPath)'" />
+    <Message Importance="High" Text="    OutputPath                   = '$(OutputPath)'" />
     <Message Importance="High" Text=" " />
     <Message Importance="High" Text="  ClCompile$(N)    Identity = '%(ClCompile.Identity)'$(N)    AdditionalIncludeDirectories = '%(ClCompile.AdditionalIncludeDirectories)'$(N)" />
     <Message Importance="High" Text="  Link$(N)    Identity = '%(Link.Identity)'$(N)    AdditionalDependencies = '%(Link.AdditionalDependencies)'$(N)" />

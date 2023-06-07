@@ -10,7 +10,6 @@
 
   <PropertyGroup Label="PlatformType">
     <opensslToolset>$(PlatformToolsetVersion)</opensslToolset>
-    <opensslToolset Condition="'$(PlatformToolset)' == 'v140'">140</opensslToolset>
     <opensslToolset Condition="'$(PlatformToolset)' == 'v141'">141</opensslToolset>
     <opensslToolset Condition="'$(PlatformToolset)' == 'v142'">142</opensslToolset>
     <opensslToolset Condition="'$(PlatformToolset)' == 'v143'">143</opensslToolset>
