@@ -3,12 +3,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{66365E18-7B53-44BF-A348-6735058E359E}</ProjectGuid>
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-    <GenerateManifest>false</GenerateManifest>
-    <HCLibImpl>true</HCLibImpl>
-    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
-    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.GDK.props))" />
   <Import Project="$(HCRoot)\libHttpClient.props" />

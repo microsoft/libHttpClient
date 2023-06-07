@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28922.388
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33627.172
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Win32", "Win32", "{0AA3F7FD-BB7C-4386-8435-F6BABE5EBED3}"
 EndProject
@@ -55,7 +55,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.142.GDK.C", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Props", "Props", "{D6E41401-0494-4B9D-9E5E-3C3E2DA928B0}"
 	ProjectSection(SolutionItems) = preProject
-		Build\libHttpClient.common.props = Build\libHttpClient.common.props
 		Build\libHttpClient.gdk.bwoi.props = Build\libHttpClient.gdk.bwoi.props
 		Build\libHttpClient.GDK.props = Build\libHttpClient.GDK.props
 		Build\libHttpClient.paths.props = Build\libHttpClient.paths.props
@@ -67,27 +66,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Props", "Props", "{D6E41401
 	EndProjectSection
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Build\libssl.Win32\libssl.Win32.vcxitems*{097e9d46-215e-43ae-b8df-339edf537eb6}*SharedItemsImports = 9
-		Build\libssl.Win32\libssl.Win32.vcxitems*{23104cda-c598-4d41-b7ff-70405b2871ec}*SharedItemsImports = 4
-		Build\libHttpClient.UWP\libHttpClient.UWP.vcxitems*{47564f2b-9ed7-4527-997a-5d76c36998d1}*SharedItemsImports = 9
-		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{53c69cf3-b0b8-4a64-b178-0e9370737f70}*SharedItemsImports = 4
-		Build\libHttpClient.UWP\libHttpClient.UWP.vcxitems*{53c69cf3-b0b8-4a64-b178-0e9370737f70}*SharedItemsImports = 4
-		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{66365e18-7b53-44bf-a348-6735058e359e}*SharedItemsImports = 4
-		Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems*{66365e18-7b53-44bf-a348-6735058e359e}*SharedItemsImports = 4
-		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{673e9758-fafe-4f91-8fc1-addda12c5de5}*SharedItemsImports = 9
-		Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems*{8ca3b500-0d89-4db1-ba8b-98aeb468ca13}*SharedItemsImports = 9
-		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{8ef7009a-36cf-4d82-9fb7-6d69154893cf}*SharedItemsImports = 9
-		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{961f48ea-33a9-47f1-9c96-715d6094d79b}*SharedItemsImports = 4
-		Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems*{961f48ea-33a9-47f1-9c96-715d6094d79b}*SharedItemsImports = 4
-		Build\libcrypto.Win32\libcrypto.Win32.vcxitems*{9c459b54-e085-42f3-a671-7f55c2994048}*SharedItemsImports = 4
-		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
-		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
-		Build\libcrypto.Win32\libcrypto.Win32.vcxitems*{d01bf0fd-d450-41dc-bfa4-62468528b91e}*SharedItemsImports = 9
-		Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems*{d980f91b-92bf-4cc4-89fd-1cd99dba870f}*SharedItemsImports = 9
-		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
-		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
 		Debug|ARM64 = Debug|ARM64
@@ -355,5 +333,26 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {973E1528-6B80-4A7E-9534-56E9481AF63A}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Build\libssl.Win32\libssl.Win32.vcxitems*{097e9d46-215e-43ae-b8df-339edf537eb6}*SharedItemsImports = 9
+		Build\libssl.Win32\libssl.Win32.vcxitems*{23104cda-c598-4d41-b7ff-70405b2871ec}*SharedItemsImports = 4
+		Build\libHttpClient.UWP\libHttpClient.UWP.vcxitems*{47564f2b-9ed7-4527-997a-5d76c36998d1}*SharedItemsImports = 9
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{53c69cf3-b0b8-4a64-b178-0e9370737f70}*SharedItemsImports = 4
+		Build\libHttpClient.UWP\libHttpClient.UWP.vcxitems*{53c69cf3-b0b8-4a64-b178-0e9370737f70}*SharedItemsImports = 4
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{66365e18-7b53-44bf-a348-6735058e359e}*SharedItemsImports = 4
+		Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems*{66365e18-7b53-44bf-a348-6735058e359e}*SharedItemsImports = 4
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{673e9758-fafe-4f91-8fc1-addda12c5de5}*SharedItemsImports = 9
+		Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems*{8ca3b500-0d89-4db1-ba8b-98aeb468ca13}*SharedItemsImports = 9
+		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{8ef7009a-36cf-4d82-9fb7-6d69154893cf}*SharedItemsImports = 9
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{961f48ea-33a9-47f1-9c96-715d6094d79b}*SharedItemsImports = 4
+		Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems*{961f48ea-33a9-47f1-9c96-715d6094d79b}*SharedItemsImports = 4
+		Build\libcrypto.Win32\libcrypto.Win32.vcxitems*{9c459b54-e085-42f3-a671-7f55c2994048}*SharedItemsImports = 4
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
+		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
+		Build\libcrypto.Win32\libcrypto.Win32.vcxitems*{d01bf0fd-d450-41dc-bfa4-62468528b91e}*SharedItemsImports = 9
+		Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems*{d980f91b-92bf-4cc4-89fd-1cd99dba870f}*SharedItemsImports = 9
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
+		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

@@ -69,9 +69,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h">
       <Filter>Source\Task</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h">
-      <Filter>C++ Source\Common</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
       <Filter>Source\Common</Filter>
     </ClInclude>
@@ -171,6 +168,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp">

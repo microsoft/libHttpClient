@@ -7,7 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.Common", "Bui
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Props", "Props", "{B8C5CF8E-B32C-4D78-A6B3-E95FB66280CC}"
 	ProjectSection(SolutionItems) = preProject
-		Build\libHttpClient.common.props = Build\libHttpClient.common.props
 		Build\libHttpClient.gdk.bwoi.props = Build\libHttpClient.gdk.bwoi.props
 		Build\libHttpClient.GDK.props = Build\libHttpClient.GDK.props
 		Build\libHttpClient.paths.props = Build\libHttpClient.paths.props
