@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--Project
-    ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-    InitialTargets="HCBuildDebug"
--->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Condition="'$(LibHttpClientImported)' == 'true'" Project="Error attempting to import LibHttpClient twice. Condition all imports on ('ProjectName'Imported) != true." />
+  <PropertyGroup>
+    <LibHttpClientImported>true</LibHttpClientImported>
+  </PropertyGroup>
 
   <Import Condition="'$(HCPlatform)' == ''" Project="$(MSBuildThisFileDirectory)platform_select.props" />
   <PropertyGroup>
@@ -33,6 +34,7 @@
     <useWsppWebsockets>false</useWsppWebsockets>
     <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Win32'">true</useWsppWebsockets>
 
+    <HCLibToolset>$(PlatformToolsetVersion)</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v140'">140</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
@@ -42,8 +44,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <HCBuildRoot Condition="'$(HCBuildRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCBuildRoot>
-    <libHttpClientInclude>$(HCBuildRoot)Include\</libHttpClientInclude>
+    <HCRoot Condition="'$(HCRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCRoot>
+    <libHttpClientInclude>$(HCRoot)\Include\</libHttpClientInclude>
   </PropertyGroup>
 
   <!--PropertyGroup>
@@ -54,7 +56,7 @@
 
   <!--Import hc_settings file after defining props so that they can be overriden-->
   <PropertyGroup>
-    <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(HCBuildRoot)..\, hc_settings.props))\hc_settings.props</HCSettingsFile>
+    <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(HCRoot), hc_settings.props))\hc_settings.props</HCSettingsFile>
   </PropertyGroup>
   <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile)) AND '$(HCSettingsImported)' != 'true'" />
   <PropertyGroup>
@@ -62,11 +64,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(HCBuildRoot)Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(HCLibImpl)'!='true' and '$(ConfigurationType)'!='StaticLibrary'">
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32'">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP'">{09B1A97C-FADC-4E06-B962-7C8AE6EA19A3}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'XDK'">{9E0EB8C2-40CD-448F-9B98-DAF9830EF9AD}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'GDK'">{80D8061D-BBEF-414D-8F08-4D8B52C02E85}</Project>
+    <ProjectReference Include="$(HCRoot)\Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(ConfigurationType)'!='StaticLibrary'">
+      <Project>{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
     </ProjectReference>
   </ItemGroup>
 
@@ -79,7 +78,7 @@
     </Link>
   </ItemDefinitionGroup>
 
-  <Import Project="$(HCBuildRoot)Build\openssl.props" Condition="'$(useWsppWebsockets)'=='true'"/>
+  <Import Condition="'$(OpenSslImported)' != 'true' and '$(useWsppWebsockets)' == 'true'" Project="$(HCBuildRoot)\openssl.import.props" />
 
   <!--Bring in XCurl on GDK-->
   <ImportGroup Condition="'$(HCLibPlatformType)' == 'GDK' AND '$(GameDK)' != ''">
@@ -109,7 +108,7 @@
     <Message Importance="High" Text="    XES_INTERMEDIATESDIRECTORY   = '$(XES_INTERMEDIATESDIRECTORY)'" />
     <Message Importance="High" Text="    XES_OUTDIR                   = '$(XES_OUTDIR)'" />
     <Message Importance="High" Text=" " />
-    <Message Importance="High" Text="    HCBuildRoot                  = '$(HCBuildRoot)'" />
+    <Message Importance="High" Text="    HCRoot                  = '$(HCRoot)'" />
     <Message Importance="High" Text="    HCLibToolset                 = '$(HCLibToolset)'" />
     <Message Importance="High" Text="    HCProjectName                = '$(HCProjectName)'" />
     <Message Importance="High" Text="    libHttpClientInclude         = '$(libHttpClientInclude)'" />

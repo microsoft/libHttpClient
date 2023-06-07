@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2E55AA9F-A132-477C-B4FF-B4CD551E4322}</ProjectGuid>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.UWP.props))" />
+  <Import Project="$(HCRoot)\libHttpClient.props" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.UWP\libHttpClient.UWP.vcxitems" Label="Shared" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

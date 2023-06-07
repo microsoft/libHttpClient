@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hcwebsocket.h"
+#include "WebSocket/hcwebsocket.h"
 #include "Platform/IWebSocketProvider.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN

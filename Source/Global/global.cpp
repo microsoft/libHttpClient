@@ -100,7 +100,7 @@ std::shared_ptr<http_singleton> http_singleton::get() noexcept
 }
 
 HRESULT http_singleton::create(
-    _In_ HCInitArgs* args
+    _In_opt_ HCInitArgs* args
 ) noexcept
 {
     std::shared_ptr<http_singleton> singleton{};

@@ -33,35 +33,6 @@ name: $(Build.DefinitionName)_$(date:yyMM).$(date:dd)$(rev:rrr)
 
 jobs:
   ####################
-  # Visual Studio 2017
-  ####################
-
-  - job: Win32Vs17Build
-    displayName: libHttpClient Win32/UWP VS2017 Build
-    pool:
-      name: xbl-1es-vs2017-pool
-    timeoutInMinutes: 180
-    strategy:
-      matrix:
-        x86_Debug:
-          Platform: x86
-          Configuration: Debug
-        x64_Debug:
-          Platform: x64
-          Configuration: Debug
-        x86_Release:
-          Platform: x86
-          Configuration: Release
-        x64_Release:
-          Platform: x64
-          Configuration: Release
-    steps:
-      - template: Tasks/vs2017-build.yml
-        parameters:
-          platform: $(Platform)
-          configuration: $(Configuration)
-
-  ####################
   # Visual Studio 2019
   ####################
 
@@ -86,6 +57,35 @@ jobs:
           Configuration: Release
     steps:
       - template: Tasks/vs2019-build.yml
+        parameters:
+          platform: $(Platform)
+          configuration: $(Configuration)
+
+  ####################
+  # Visual Studio 2022
+  ####################
+
+  - job: Win32Vs22Build
+    displayName: libHttpClient Win32/UWP VS2022 Build
+    pool:
+      name: xbl-1es-vs2022-pool
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        x86_Debug:
+          Platform: x86
+          Configuration: Debug
+        x64_Debug:
+          Platform: x64
+          Configuration: Debug
+        x86_Release:
+          Platform: x86
+          Configuration: Release
+        x64_Release:
+          Platform: x64
+          Configuration: Release
+    steps:
+      - template: Tasks/vs2022-build.yml
         parameters:
           platform: $(Platform)
           configuration: $(Configuration)
@@ -147,26 +147,6 @@ jobs:
           Configuration: Release
     steps:
       - template: Tasks/linux-build.yml
-        parameters:
-          configuration: $(Configuration)
-
-  ####################
-  # XDK
-  ####################
-
-  - job: XDKBuild
-    displayName: libHttpClient XDK Build
-    pool:
-      name: xbl-1es-vs2017-pool
-    timeoutInMinutes: 180
-    strategy:
-      matrix:
-        Durango_Release:
-          Configuration: Release
-        Durango_Debug:
-          Configuration: Debug
-    steps:
-      - template: Tasks/xdk-build.yml
         parameters:
           configuration: $(Configuration)
 

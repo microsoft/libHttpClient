@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{c3c4cef7-9147-425b-8eb1-9235e6eb4d8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common">
+      <UniqueIdentifier>{c69ad1a1-10d6-464a-a983-f4236f3c7ab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP">
+      <UniqueIdentifier>{c5002ea4-2868-461f-9a9c-500cf43c4311}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Logger">
+      <UniqueIdentifier>{8f1848ed-45c6-40e2-89f0-4483484d2394}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform">
+      <UniqueIdentifier>{3e2fbfe0-6faf-484d-8602-3e8a6d05b9f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\WebSocket">
+      <UniqueIdentifier>{e0ad6583-1913-45c4-b677-4ad1ee6953f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common\Win">
+      <UniqueIdentifier>{cebce833-dc13-4078-9dc3-23dec64d44e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Logger\Win">
+      <UniqueIdentifier>{3267016d-e204-483e-818e-c76fd766b283}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP\Curl">
+      <UniqueIdentifier>{184db77a-e1d6-458b-ae23-8e7cb1ac3238}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\WebSocket\WinHttp">
+      <UniqueIdentifier>{70210c99-2f90-422b-b92b-53521fc41574}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform\GDK">
+      <UniqueIdentifier>{99788148-70cc-4879-a70c-894483d425b6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

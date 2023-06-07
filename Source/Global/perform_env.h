@@ -1,7 +1,7 @@
 #pragma once
 
-#include "httpcall.h"
-#include "../WebSocket/hcwebsocket.h"
+#include "HTTP/httpcall.h"
+#include "WebSocket/hcwebsocket.h"
 #include "Platform/IHttpProvider.h"
 #include "Platform/IWebSocketProvider.h"
 
