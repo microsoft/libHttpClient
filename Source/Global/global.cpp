@@ -237,11 +237,4 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
     m_retryAfterCache.erase(retryAfterCacheId);
 }
 
-HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
-{
-    // TODO this should probably be added to PAL interface somehow
-    UNREFERENCED_PARAMETER(proxyUri);
-    return E_NOTIMPL;
-}
-
 NAMESPACE_XBOX_HTTP_CLIENT_END

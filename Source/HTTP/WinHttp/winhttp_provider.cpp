@@ -120,6 +120,26 @@ HRESULT WinHttpProvider::PerformAsync(
     return initConnectionResult.Payload()->HttpCallPerformAsync(async);
 }
 
+HRESULT WinHttpProvider::SetGlobalProxy(_In_ String const& proxyUri) noexcept
+{
+    std::lock_guard<std::mutex> lock(m_lock);
+    m_globalProxy = proxyUri;
+    for (auto& e : m_hSessions)
+    {
+        auto hSession = e.second;
+        if (hSession != nullptr)
+        {
+            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri.data());
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+        }
+    }
+
+    return S_OK;
+}
+
 #if !HC_NOWEBSOCKETS
 HRESULT WinHttpProvider::ConnectAsync(
     String const& uri,
@@ -202,26 +222,6 @@ HRESULT WinHttpProvider::Disconnect(
     return connection->WebSocketDisconnect(closeStatus);
 }
 #endif //!HC_NOWEBSOCKETS
-
-HRESULT WinHttpProvider::SetGlobalProxy(_In_ const char* proxyUri) noexcept
-{
-    std::lock_guard<std::mutex> lock(m_lock);
-    m_globalProxy = proxyUri;
-    for (auto& e : m_hSessions)
-    {
-        auto hSession = e.second;
-        if (hSession != nullptr)
-        {
-            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri);
-            if (FAILED(hr))
-            {
-                return hr;
-            }
-        }
-    }
-
-    return S_OK;
-}
 
 HRESULT WinHttpProvider::CloseAllConnections()
 {

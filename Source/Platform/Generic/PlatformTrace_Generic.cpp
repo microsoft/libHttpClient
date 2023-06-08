@@ -1,8 +1,9 @@
 #include "pch.h"
+#include "Logger/trace_internal.h"
 
-#include "../trace_internal.h"
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-uint64_t Internal_ThisThreadId() noexcept
+uint64_t GetThreadId() noexcept
 {
     auto tidi = GetThreadIdInfo();
     if (tidi.callback)
@@ -15,7 +16,7 @@ uint64_t Internal_ThisThreadId() noexcept
     }
 }
 
-void Internal_HCTraceMessage(char const* area, HCTraceLevel level, char const* message) noexcept
+void TraceToDebugger(char const* area, HCTraceLevel level, char const* message) noexcept
 {
     auto wtdi = GetWriteToDebuggerInfo();
     if (wtdi.callback)
@@ -24,3 +25,4 @@ void Internal_HCTraceMessage(char const* area, HCTraceLevel level, char const* m
     }
 }
 
+NAMESPACE_XBOX_HTTP_CLIENT_END

@@ -16,17 +16,11 @@
     <Filter Include="Source\Task">
       <UniqueIdentifier>{85167832-8f3f-45df-9596-c25f08c21135}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Logger">
-      <UniqueIdentifier>{e29866fa-e9f4-4941-b9ce-f50d2f254e82}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Common">
       <UniqueIdentifier>{c3a86480-303d-4f38-911a-21cd53d2d958}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Common\Win">
       <UniqueIdentifier>{5da9c27d-e660-4b6f-8506-4678a02eae13}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Logger\Win">
-      <UniqueIdentifier>{364381c3-a605-4a74-863a-b083faa87a88}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Platform\Win32">
       <UniqueIdentifier>{0d143168-df3f-463b-8003-7bb7c4472fbc}</UniqueIdentifier>
@@ -36,6 +30,9 @@
     </Filter>
     <Filter Include="Source\HTTP\WinHttp">
       <UniqueIdentifier>{428d0297-5b5f-4fd8-9cca-832b7a81072c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform\Windows">
+      <UniqueIdentifier>{a33dcb7f-3435-401d-8b9c-4c30fd992feb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -48,9 +45,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.cpp">
       <Filter>Source\HTTP\WinHttp</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\Win\win_logger.cpp">
-      <Filter>Source\Logger\Win</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Win32\PlatformComponents_Win32.cpp">
       <Filter>Source\Platform\Win32</Filter>
     </ClCompile>
@@ -62,6 +56,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
       <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp">
+      <Filter>Source\Platform\Windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

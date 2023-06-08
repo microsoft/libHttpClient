@@ -77,7 +77,7 @@ try
         return E_HC_NOT_INITIALISED;
     }
 
-    return httpSingleton->set_global_proxy(proxyUri);
+    return httpSingleton->m_networkState->HttpProvider().SetGlobalProxy(proxyUri);
 }
 CATCH_RETURN()
 

@@ -12,6 +12,7 @@
 
 #include "trace_internal.h"
 #include "utils.h"
+#include "Platform/PlatformTrace.h"
 
 namespace
 {
@@ -109,7 +110,7 @@ void TraceMessageToDebugger(
         return;
     }
 
-    Internal_HCTraceMessage(areaName, level, outputBuffer);
+    xbox::httpclient::TraceToDebugger(areaName, level, outputBuffer);
 }
 
 void TraceMessageToClient(
@@ -186,7 +187,7 @@ STDAPI_(void) HCTraceImplMessage_v(
     }
 
     auto timestamp = GetTraceState().GetTimestamp();
-    auto threadId = Internal_ThisThreadId();
+    auto threadId = xbox::httpclient::GetThreadId();
 
     char message[4096] = {};
 
