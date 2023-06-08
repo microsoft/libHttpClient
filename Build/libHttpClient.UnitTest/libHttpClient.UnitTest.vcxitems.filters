@@ -25,11 +25,11 @@
     <Filter Include="Source\Common\Win">
       <UniqueIdentifier>{f0650a04-5d54-4b73-b2a6-a01ebafe7f88}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Logger">
-      <UniqueIdentifier>{082676f4-b7ab-48ab-95d0-e6e621a69876}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Task">
       <UniqueIdentifier>{6653c41d-7a63-42c9-8f33-467736af6ce0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform\Windows">
+      <UniqueIdentifier>{416913d6-9e6c-4c99-a24c-3ba3cdf4cf17}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -89,8 +89,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp">
       <Filter>Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\Win\win_logger.cpp">
-      <Filter>Source\Logger</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp">
+      <Filter>Source\Platform\Windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

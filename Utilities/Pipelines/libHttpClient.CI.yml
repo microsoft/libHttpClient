@@ -65,30 +65,30 @@ jobs:
   # Visual Studio 2022
   ####################
 
-  # - job: Win32Vs22Build
-  #   displayName: libHttpClient Win32/UWP VS2022 Build
-  #   pool:
-  #     name: VS2022-pool
-  #   timeoutInMinutes: 180
-  #   strategy:
-  #     matrix:
-  #       x86_Debug:
-  #         Platform: x86
-  #         Configuration: Debug
-  #       x64_Debug:
-  #         Platform: x64
-  #         Configuration: Debug
-  #       x86_Release:
-  #         Platform: x86
-  #         Configuration: Release
-  #       x64_Release:
-  #         Platform: x64
-  #         Configuration: Release
-  #   steps:
-  #     - template: Tasks/vs2022-build.yml
-  #       parameters:
-  #         platform: $(Platform)
-  #         configuration: $(Configuration)
+  - job: Win32Vs22Build
+    displayName: libHttpClient Win32/UWP VS2022 Build
+    pool:
+      name: VS2022-pool
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        x86_Debug:
+          Platform: x86
+          Configuration: Debug
+        x64_Debug:
+          Platform: x64
+          Configuration: Debug
+        x86_Release:
+          Platform: x86
+          Configuration: Release
+        x64_Release:
+          Platform: x64
+          Configuration: Release
+    steps:
+      - template: Tasks/vs2022-build.yml
+        parameters:
+          platform: $(Platform)
+          configuration: $(Configuration)
 
   ####################
   # Android

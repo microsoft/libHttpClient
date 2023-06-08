@@ -3,6 +3,11 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+HRESULT IHttpProvider::SetGlobalProxy(String const& /*proxyUri*/) noexcept
+{
+    return E_NOTIMPL;
+}
+
 HRESULT IHttpProvider::CleanupAsync(XAsyncBlock* async) noexcept
 {
     return XAsyncBegin(async, nullptr, nullptr, XASYNC_IDENTITY(IHttpProvider::CleanupAsync), [](XAsyncOp op, XAsyncProviderData const* data)

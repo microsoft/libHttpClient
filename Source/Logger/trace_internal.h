@@ -41,10 +41,3 @@ struct WriteToDebuggerInfo
 
 ThreadIdInfo& GetThreadIdInfo() noexcept;
 WriteToDebuggerInfo& GetWriteToDebuggerInfo() noexcept;
-
-//------------------------------------------------------------------------------
-// Platform specific functionality
-//------------------------------------------------------------------------------
-uint64_t Internal_ThisThreadId() noexcept;
-void Internal_HCTraceMessage(char const* area, HCTraceLevel level, char const* message) noexcept;
-

@@ -66,6 +66,10 @@ public: // IHttpProvider
         XAsyncBlock* async
     ) noexcept override;
 
+    HRESULT SetGlobalProxy(
+        _In_ String const& proxyUri
+    ) noexcept;
+
 #if !HC_NOWEBSOCKETS
 public: // IWebSocketProvider
     HRESULT ConnectAsync(
@@ -93,10 +97,6 @@ public: // IWebSocketProvider
         HCWebSocketCloseStatus closeStatus
     ) noexcept override;
 #endif
-
-public:
-    // Sets Global proxy for all HttpConnections
-    HRESULT SetGlobalProxy(_In_ const char* proxyUri) noexcept;
 
 private:
     WinHttpProvider() = default;

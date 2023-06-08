@@ -168,6 +168,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h">
       <Filter>Source\Common</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformTrace.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp">
