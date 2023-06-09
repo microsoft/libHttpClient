@@ -33,10 +33,10 @@ pushd "$SCRIPT_DIR"/../../External/curl
 autoreconf -fi "$SCRIPT_DIR"/../../External/curl
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    CPPFLAGS=""$SCRIPT_DIR"/../../External/openssl/include" LDFLAGS=-Wl,"$SCRIPT_DIR"/../../"$CONFIGURATION"/x64/libssl.Linux ./configure --disable-shared --disable-dependency-tracking -with-ssl --enable-symbol-hiding --enable-debug
+    CPPFLAGS=""$SCRIPT_DIR"/../../External/openssl/include" LDFLAGS=-Wl,"$SCRIPT_DIR"/../../External/openssl/include ./configure --disable-shared --disable-dependency-tracking -with-ssl --enable-symbol-hiding --enable-debug
 else
     # make libcrypto and libssl
-    CPPFLAGS=""$SCRIPT_DIR"/../../External/openssl/include" LDFLAGS=-Wl,"$SCRIPT_DIR"/../../"$CONFIGURATION"/x64/libssl.Linux ./configure --disable-shared --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-debug
+    CPPFLAGS=""$SCRIPT_DIR"/../../External/openssl/include" LDFLAGS=-Wl,"$SCRIPT_DIR"/../../External/openssl/include ./configure --disable-shared --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-debug
 fi
 
 make
