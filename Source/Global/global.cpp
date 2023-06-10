@@ -12,6 +12,9 @@
 #include "../WebSocket/hcwebsocket.h"
 #endif
 
+HC_DEFINE_TRACE_AREA(HTTPCLIENT, HCTraceLevel::Information);
+HC_DEFINE_TRACE_AREA(WEBSOCKET, HCTraceLevel::Information);
+
 using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
