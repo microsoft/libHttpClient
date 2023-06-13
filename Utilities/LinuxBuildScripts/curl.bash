@@ -30,6 +30,7 @@ sudo apt-get install libtool
 
 pushd "$SCRIPT_DIR"/../../External/curl
 autoreconf -fi "$SCRIPT_DIR"/../../External/curl
+
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
     ./configure --disable-shared --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --enable-debug
