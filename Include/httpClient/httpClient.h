@@ -121,8 +121,7 @@ typedef struct HCInitArgs {
     /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
-#elif HC_PLATFORM != HC_PLATFORM_NINTENDO_SWITCH && HC_PLATFORM != HC_PLATFORM_SONY_PLAYSTATION_4 \
-      && HC_PLATFORM != HC_PLATFORM_SONY_PLAYSTATION_5
+#elif HC_PLATFORM != HC_PLATFORM_NINTENDO_SWITCH
 /// <summary>
 /// Dummy init args used by non-Android devices.
 /// </summary>
