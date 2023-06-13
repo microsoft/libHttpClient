@@ -25,7 +25,6 @@ done
 sudo hwclock --hctosys
 sudo apt-get install clang
 sudo apt-get install make
-sudo apt-get install libssl-dev
 sudo apt-get install autoconf
 sudo apt-get install automake
 sudo apt-get install libtool
@@ -36,14 +35,14 @@ sed -i -e 's/\r$//' Configure
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    ./Configure linux-x86_64-clang no-shared no-dso no-hw no-engine no-async -d
+    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-engine no-async -d
 else
     # make libcrypto and libssl
-    ./Configure linux-x86_64-clang no-shared no-dso no-hw no-engine no-async
+    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-engine no-async
 fi
 
 make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
-
+make install
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux
 cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux

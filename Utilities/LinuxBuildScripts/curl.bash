@@ -24,7 +24,6 @@ done
 sudo hwclock --hctosys
 sudo apt-get install clang
 sudo apt-get install make
-sudo apt-get install libssl-dev
 sudo apt-get install autoconf
 sudo apt-get install automake
 sudo apt-get install libtool
@@ -33,10 +32,10 @@ pushd "$SCRIPT_DIR"/../../External/curl
 autoreconf -fi "$SCRIPT_DIR"/../../External/curl
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    CPPFLAGS=""$SCRIPT_DIR"/../../External/openssl/include" LDFLAGS=-Wl,"$SCRIPT_DIR"/../../External/openssl/include ./configure --disable-shared --disable-dependency-tracking -with-ssl --enable-symbol-hiding --enable-debug
+    ./configure --disable-shared --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --enable-debug
 else
     # make libcrypto and libssl
-    CPPFLAGS=""$SCRIPT_DIR"/../../External/openssl/include" LDFLAGS=-Wl,"$SCRIPT_DIR"/../../External/openssl/include ./configure --disable-shared --disable-dependency-tracking -with-ssl --enable-symbol-hiding --disable-debug
+    ./configure --disable-shared --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --disable-debug
 fi
 
 make
