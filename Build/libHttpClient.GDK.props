@@ -31,6 +31,7 @@
 
   <PropertyGroup Label="Configuration">
     <WholeProgramOptimization>false</WholeProgramOptimization>
+    <SpectreMitigation>Spectre</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -43,6 +44,11 @@
 
   <!-- Include the main MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <PropertyGroup>
+    <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
+  </PropertyGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
@@ -57,11 +63,12 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(XboxExtensionsDependencies);</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
+      <AdditionalDependencies>$(Console_Libs);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/CETCOMPAT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Lib>
       <AdditionalOptions>/ignore:4099 /ignore:4264</AdditionalOptions>
