@@ -1,37 +1,46 @@
 #pragma once
 
-#include "../hcwebsocket.h"
+#include "Platform/IWebSocketProvider.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-HRESULT CALLBACK OkHttpWebSocketConnectAsync(
-        _In_z_ const char* uri,
-        _In_z_ const char* subProtocol,
-        _In_ HCWebsocketHandle websocket,
-        _Inout_ XAsyncBlock* async,
-        _In_opt_ void* context,
-        _In_ HCPerformEnv env
-);
+class PlatformComponents_Android;
 
-HRESULT CALLBACK OkHttpWebSocketSendMessageAsync(
-        _In_ HCWebsocketHandle websocket,
-        _In_z_ const char* message,
-        _Inout_ XAsyncBlock* async,
-        _In_opt_ void* context
-);
+class AndroidWebSocketProvider : public IWebSocketProvider
+{
+public:
+    AndroidWebSocketProvider(SharedPtr<PlatformComponents_Android> platformComponents);
+    AndroidWebSocketProvider(AndroidWebSocketProvider const&) = delete;
+    AndroidWebSocketProvider& operator=(AndroidWebSocketProvider const&) = delete;
+    virtual ~AndroidWebSocketProvider() = default;
 
-HRESULT CALLBACK OkHttpWebSocketSendBinaryMessageAsync(
-        _In_ HCWebsocketHandle websocket,
-        _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
-        _In_ uint32_t payloadSize,
-        _Inout_ XAsyncBlock* asyncBlock,
-        _In_opt_ void* context
-);
+    HRESULT ConnectAsync(
+        String const& uri,
+        String const& subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async
+    ) noexcept override;
 
-HRESULT CALLBACK OkHttpWebSocketDisconnect(
-        _In_ HCWebsocketHandle websocket,
-        _In_ HCWebSocketCloseStatus closeStatus,
-        _In_opt_ void* context
-);
+    HRESULT SendAsync(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async
+    ) noexcept override;
+
+    HRESULT SendBinaryAsync(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* async
+    ) noexcept override;
+
+    HRESULT Disconnect(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus
+    ) noexcept override;
+
+private:
+    SharedPtr<PlatformComponents_Android> m_platformComponents;
+};
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
