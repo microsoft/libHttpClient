@@ -10,6 +10,7 @@ POSITIONAL_ARGS=()
 # Default configurations
 CONFIGURATION="Release"
 BUILD_CURL=true
+BUILD_SSL=true
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -20,6 +21,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -nc|--nocurl)
       BUILD_CURL=false
+      shift
+      ;;
+    -ns|--nossl)
+      BUILD_SSL=false
       shift
       ;;
     -*|--*)
@@ -39,8 +44,11 @@ log "CONFIGURATION  = ${CONFIGURATION}"
 log "BUILD CURL     = ${SEARCHPATH}"
 
 # make libcrypto and libssl
-sed -i -e 's/\r$//' "$SCRIPT_DIR"/openssl.bash
-bash "$SCRIPT_DIR"/openssl.bash -c "$CONFIGURATION"
+if [ "$BUILD_SSL" = true ]; then
+    log "Building SSL"
+    sed -i -e 's/\r$//' "$SCRIPT_DIR"/openssl.bash
+    bash "$SCRIPT_DIR"/openssl.bash -c "$CONFIGURATION"
+fi
 
 if [ "$BUILD_CURL" = true ]; then
     log "Building cURL"

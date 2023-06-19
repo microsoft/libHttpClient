@@ -28,6 +28,12 @@ Running the build script with the `-c|--config` argument will generate  Debug or
 
 Running the build script with the `-nc|--nocurl` will **not** generate a binary of `libcurl.a`. Use this flag if you wish to bring your own version of cURL.
 
+```
+./libHttpClient_Linux.bash <-ns|--nossl>
+```
+
+Running the build script with the `-ns|--nossl` will **not** generate a binary of `libssl.a` and `libcrypto.a`. Use this flag if you wish to bring your own version of cURL.
+
 If the bash script fails to run and produces the error:
 ```
 /bin/bash^M: bad interpreter
@@ -51,7 +57,7 @@ Running the build script with no arguments will generate a Release binary of `li
 ./curl.bash <-c|--config> <Debug|Release>
 ```
 
-Running the build script with the `-c|--config` argument will generate  Debug or Release binaries of `libcurl.a`.
+Running the build script with the `-c|--config` argument will generate Debug or Release binaries of `libcurl.a`.
 
 If you choose to use your own version of cURL, you can place your own copy of `libcurl.a` in `Binaries/{Configuration}/x64/libcurl.Linux`.
 
@@ -73,6 +79,14 @@ sed -i -e 's/\r$//' curl.bash
 ## openssl.bash
 
 libHttpClient for Linux uses OpenSSL 1.1.1k. When `openssl.bash` is run, it generates `libssl.a` and `libcrypto.a` and places it in `Binaries/{Configuration}/x64/{Library}.Linux`.
+
+Running the build script with no arguments will generate a Release binary of `libssl.a` and `libcrypto.a`.
+
+```
+./openssl.bash <-c|--config> <Debug|Release>
+```
+
+Running the build script with the `-c|--config` argument will generate Debug or Release binaries of `libssl.a` and `libcrypto.a`.
 
 If you choose to use your own version of OpenSSL, you can place your own copies in `Binaries/{Configuration}/x64/{Library}.Linux`.
 
