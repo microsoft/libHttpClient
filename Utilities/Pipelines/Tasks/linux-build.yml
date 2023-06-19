@@ -8,7 +8,7 @@ steps:
   - task: Bash@3
     displayName: 'Build and install OpenSSL'
     inputs:
-      filePath: './Utilities/LinuxBuildScripts/openssl.bash''
+      filePath: './Utilities/LinuxBuildScripts/openssl.bash'
       arguments: '-c ${{ parameters.configuration }}'
 
   - task: Bash@3
