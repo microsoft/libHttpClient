@@ -31,7 +31,13 @@ int HC_WEBSOCKET_OBSERVER::Release() noexcept
     int count = --m_refCount;
     if (count == 0)
     {
-        xbox::httpclient::ObserverPtr reclaim{ this };
+        this->~HC_WEBSOCKET_OBSERVER();
+        http_stl_allocator<HC_WEBSOCKET_OBSERVER> alloc;
+        std::allocator_traits<http_stl_allocator<HC_WEBSOCKET_OBSERVER>>::deallocate(alloc, this, 1);
+    }
+    else if (count < 0)
+    {
+        assert(false);
     }
     return count;
 }
