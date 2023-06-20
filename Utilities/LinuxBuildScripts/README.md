@@ -32,7 +32,7 @@ Running the build script with the `-nc|--nocurl` will **not** generate a binary 
 ./libHttpClient_Linux.bash <-ns|--nossl>
 ```
 
-Running the build script with the `-ns|--nossl` will **not** generate a binary of `libssl.a` and `libcrypto.a`. Use this flag if you wish to bring your own version of cURL.
+Running the build script with the `-ns|--nossl` will **not** generate a binary of `libssl.a` and `libcrypto.a`. Use this flag if you wish to bring your own version of OpenSSL.
 
 If the bash script fails to run and produces the error:
 ```
