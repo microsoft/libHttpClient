@@ -49,8 +49,8 @@ set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Platform/Android/PlatformTrace_Android.cpp"
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Android/okhttp_websocket.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Android/okhttp_websocket.h"
+    "${PATH_TO_ROOT}/Source/WebSocket/Android/AndroidWebSocketProvider.cpp"
+    "${PATH_TO_ROOT}/Source/WebSocket/Android/AndroidWebSocketProvider.h"
     )
 
  set(COMMON_INCLUDE_DIRS

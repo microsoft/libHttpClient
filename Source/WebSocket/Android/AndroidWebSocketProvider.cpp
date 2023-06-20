@@ -3,9 +3,7 @@
 #if !HC_NOWEBSOCKETS
 
 #include "jni.h"
-#include "../hcwebsocket.h"
-#include "okhttp_websocket.h"
-
+#include "AndroidWebSocketProvider.h"
 #include "httpClient.h"
 #include "httpProvider.h"
 #include "Platform/Android/PlatformComponents_Android.h"

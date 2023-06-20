@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Platform/Android/PlatformComponents_Android.h"
 #include "HTTP/Android/AndroidHttpProvider.h"
-#include "WebSocket/Android/okhttp_websocket.h"
+#include "WebSocket/Android/AndroidWebSocketProvider.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
