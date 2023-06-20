@@ -31,7 +31,7 @@ HRESULT AndroidHttpProvider::PerformAsync(
 
     if (!SUCCEEDED(result))
     {
-        HCHttpCallResponseSetNetworkErrorCode(call, result, 0);
+        HCHttpCallResponseSetNetworkErrorCode(call, result, result);
         XAsyncComplete(asyncBlock, result, 0);
         return S_OK;
     }
