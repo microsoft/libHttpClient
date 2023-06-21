@@ -64,6 +64,7 @@ function(GET_COMMON_HC_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/Platform/IHttpProvider.h"
         "${PATH_TO_ROOT}/Source/Platform/IWebSocketProvider.h"
         "${PATH_TO_ROOT}/Source/Platform/PlatformComponents.h"
+        "${PATH_TO_ROOT}/Source/Platform/PlatformTrace.h"
         PARENT_SCOPE
         )
 

@@ -4,7 +4,6 @@
 #include <httpClient/httpClient.h>
 #include <httpClient/httpProvider.h>
 #include "android_http_request.h"
-#include "android_platform_context.h"
 #include "http_android.h"
 
 namespace
