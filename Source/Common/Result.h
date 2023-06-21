@@ -1,6 +1,6 @@
 #pragma once
 
-#include "StdOptional.h"
+#include <optional>
 #include "Types.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
@@ -32,7 +32,7 @@ public:
     T&& ExtractPayload();
 
 private:
-    StdExtra::optional<T> m_payload{};
+    std::optional<T> m_payload{};
 };
 
 // Result specialization without a payload

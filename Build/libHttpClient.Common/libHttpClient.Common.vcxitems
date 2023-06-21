@@ -32,7 +32,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\StdOptional.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Types.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
