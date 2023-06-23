@@ -36,7 +36,6 @@ function(GET_COMMON_HC_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/Common/pal_internal.h"
         "${PATH_TO_ROOT}/Source/Common/Result.h"
         "${PATH_TO_ROOT}/Source/Common/ResultMacros.h"
-        "${PATH_TO_ROOT}/Source/Common/StdOptional.h"
         "${PATH_TO_ROOT}/Source/Common/uri.cpp"
         "${PATH_TO_ROOT}/Source/Common/uri.h"
         "${PATH_TO_ROOT}/Source/Common/utils.cpp"
@@ -64,6 +63,7 @@ function(GET_COMMON_HC_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/Platform/IHttpProvider.h"
         "${PATH_TO_ROOT}/Source/Platform/IWebSocketProvider.h"
         "${PATH_TO_ROOT}/Source/Platform/PlatformComponents.h"
+        "${PATH_TO_ROOT}/Source/Platform/PlatformTrace.h"
         PARENT_SCOPE
         )
 

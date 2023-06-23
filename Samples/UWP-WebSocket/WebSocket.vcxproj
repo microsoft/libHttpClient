@@ -4,8 +4,13 @@
     <ProjectGuid>{99542110-3CCD-4525-B607-DB8F6E76AEAC}</ProjectGuid>
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\libHttpClient.UWP.props" /> 
-  <Import Project="$(HCRoot)\libHttpClient.props"/>
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\libHttpClient.UWP.props" />
+  <Import Project="$(HCRoot)\libHttpClient.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">

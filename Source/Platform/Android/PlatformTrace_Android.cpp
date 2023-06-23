@@ -4,12 +4,14 @@
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
 
-uint64_t Internal_ThisThreadId() noexcept
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+uint64_t GetThreadId() noexcept
 {
     return pthread_self();
 }
 
-void Internal_HCTraceMessage(const char* areaName, HCTraceLevel traceLevel, const char* message)
+void TraceToDebugger(const char* areaName, HCTraceLevel traceLevel, const char* message)
 {
     int32_t androidLogPriority = ANDROID_LOG_UNKNOWN;
 
@@ -36,3 +38,5 @@ void Internal_HCTraceMessage(const char* areaName, HCTraceLevel traceLevel, cons
 
     __android_log_print(androidLogPriority, areaName, "%s", message);
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_END

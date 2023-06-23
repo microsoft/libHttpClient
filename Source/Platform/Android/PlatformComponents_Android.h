@@ -2,11 +2,13 @@
 
 #include "jni.h"
 
-struct AndroidPlatformContext
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+class PlatformComponents_Android
 {
 public:
-    static Result<std::shared_ptr<AndroidPlatformContext>> Initialize(HCInitArgs* args) noexcept;
-    virtual ~AndroidPlatformContext();
+    static Result<std::shared_ptr<PlatformComponents_Android>> Initialize(HCInitArgs* args) noexcept;
+    virtual ~PlatformComponents_Android();
 
     JavaVM* GetJavaVm() { return m_javaVm; }
     jobject GetApplicationContext() { return m_applicationContext; }
@@ -15,7 +17,7 @@ public:
     jclass GetWebSocketClass() { return m_webSocketClass; }
 
 private:
-    AndroidPlatformContext(
+    PlatformComponents_Android(
         JavaVM* javaVm,
         jobject applicationContext,
         jclass networkObserverClass,
@@ -31,3 +33,5 @@ private:
     jclass m_httpResponseClass;
     jclass m_webSocketClass;
 };
+
+NAMESPACE_XBOX_HTTP_CLIENT_END

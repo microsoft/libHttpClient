@@ -3,13 +3,10 @@
 #if !HC_NOWEBSOCKETS
 
 #include "jni.h"
-
-#include "HTTP/Android/android_platform_context.h"
-#include "../hcwebsocket.h"
-#include "okhttp_websocket.h"
-
+#include "AndroidWebSocketProvider.h"
 #include "httpClient.h"
 #include "httpProvider.h"
+#include "Platform/Android/PlatformComponents_Android.h"
 
 extern "C"
 {
@@ -839,16 +836,19 @@ private:
     const HttpClientWebSocket m_javaWebSocket;
 };
 
-HRESULT CALLBACK OkHttpWebSocketConnectAsync(
-        _In_z_ const char* uri,
-        _In_z_ const char* subProtocol,
-        _In_ HCWebsocketHandle websocket,
-        _Inout_ XAsyncBlock* asyncBlock,
-        _In_opt_ void* context,
-        _In_ HCPerformEnv env
-)
+AndroidWebSocketProvider::AndroidWebSocketProvider(SharedPtr<PlatformComponents_Android> platformComponents) :
+        m_platformComponents{ std::move(platformComponents) }
 {
-    if (!uri || !subProtocol || !websocket || !asyncBlock)
+}
+
+HRESULT AndroidWebSocketProvider::ConnectAsync(
+        String const& uri,
+        String const& subProtocol,
+        HCWebsocketHandle websocket,
+        XAsyncBlock* asyncBlock
+) noexcept
+{
+    if (!websocket || !asyncBlock)
     {
         return E_INVALIDARG;
     }
@@ -857,20 +857,19 @@ HRESULT CALLBACK OkHttpWebSocketConnectAsync(
     if (!impl)
     {
         websocket->websocket->impl = (impl = std::make_shared<okhttp_websocket_impl>(
-                env->androidPlatformContext->GetJavaVm(),
-                env->androidPlatformContext->GetWebSocketClass(),
+                m_platformComponents->GetJavaVm(),
+                m_platformComponents->GetWebSocketClass(),
                 websocket));
     }
 
-    return impl->ConnectAsync(uri, subProtocol, asyncBlock);
+    return impl->ConnectAsync(uri.data(), subProtocol.data(), asyncBlock);
 }
 
-HRESULT CALLBACK OkHttpWebSocketSendMessageAsync(
-        _In_ HCWebsocketHandle websocket,
-        _In_z_ const char* message,
-        _Inout_ XAsyncBlock* asyncBlock,
-        _In_opt_ void* context
-)
+HRESULT AndroidWebSocketProvider::SendAsync(
+        HCWebsocketHandle websocket,
+        const char* message,
+        XAsyncBlock* asyncBlock
+) noexcept
 {
     if (!websocket || !message || !asyncBlock)
     {
@@ -886,13 +885,12 @@ HRESULT CALLBACK OkHttpWebSocketSendMessageAsync(
     return impl->SendMessageAsync(message, asyncBlock);
 }
 
-HRESULT CALLBACK OkHttpWebSocketSendBinaryMessageAsync(
-        _In_ HCWebsocketHandle websocket,
-        _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
-        _In_ uint32_t payloadSize,
-        _Inout_ XAsyncBlock* asyncBlock,
-        _In_opt_ void* context
-)
+HRESULT AndroidWebSocketProvider::SendBinaryAsync(
+        HCWebsocketHandle websocket,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* asyncBlock
+) noexcept
 {
     if (!websocket || !payloadBytes || !asyncBlock)
     {
@@ -908,11 +906,10 @@ HRESULT CALLBACK OkHttpWebSocketSendBinaryMessageAsync(
     return impl->SendBinaryMessageAsync(payloadBytes, payloadSize, asyncBlock);
 }
 
-HRESULT CALLBACK OkHttpWebSocketDisconnect(
-        _In_ HCWebsocketHandle websocket,
-        _In_ HCWebSocketCloseStatus closeStatus,
-        _In_opt_ void* context
-)
+HRESULT AndroidWebSocketProvider::Disconnect(
+        HCWebsocketHandle websocket,
+        HCWebSocketCloseStatus closeStatus
+) noexcept
 {
     if (!websocket)
     {

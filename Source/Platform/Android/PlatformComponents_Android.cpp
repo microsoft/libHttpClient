@@ -1,9 +1,11 @@
 #include "pch.h"
+#include "Platform/Android/PlatformComponents_Android.h"
+#include "HTTP/Android/AndroidHttpProvider.h"
+#include "WebSocket/Android/AndroidWebSocketProvider.h"
 
-#include "android_platform_context.h"
-#include <httpClient/httpClient.h>
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initialize(HCInitArgs* args) noexcept
+Result<std::shared_ptr<PlatformComponents_Android>> PlatformComponents_Android::Initialize(HCInitArgs* args) noexcept
 {
     assert(args != nullptr);
     JavaVM* javaVm = args->javaVM;
@@ -74,18 +76,18 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
 
     try
     {
-        http_stl_allocator<AndroidPlatformContext> a{};
-        auto platformContext = std::shared_ptr<AndroidPlatformContext>(
-                new (a.allocate(1)) AndroidPlatformContext(
+        http_stl_allocator<PlatformComponents_Android> a{};
+        auto platformComponents = std::shared_ptr<PlatformComponents_Android>(
+                new (a.allocate(1)) PlatformComponents_Android(
                         javaVm,
                         args->applicationContext,
                         globalNetworkObserver,
                         globalRequestClass,
                         globalResponseClass,
                         globalWebSocketClass
-                ), http_alloc_deleter<AndroidPlatformContext>());
+                ), http_alloc_deleter<PlatformComponents_Android>());
 
-        return std::move(platformContext);
+        return std::move(platformComponents);
     }
     catch (std::bad_alloc)
     {
@@ -93,7 +95,7 @@ Result<std::shared_ptr<AndroidPlatformContext>> AndroidPlatformContext::Initiali
     }
 }
 
-AndroidPlatformContext::AndroidPlatformContext(
+PlatformComponents_Android::PlatformComponents_Android(
     JavaVM* javaVm,
     jobject applicationContext,
     jclass networkObserverClass,
@@ -111,7 +113,7 @@ AndroidPlatformContext::AndroidPlatformContext(
     assert(m_javaVm != nullptr);
 }
 
-AndroidPlatformContext::~AndroidPlatformContext()
+PlatformComponents_Android::~PlatformComponents_Android()
 {
     JNIEnv* jniEnv = nullptr;
     bool isThreadAttached = false;
@@ -150,3 +152,16 @@ AndroidPlatformContext::~AndroidPlatformContext()
         m_javaVm->DetachCurrentThread();
     }
 }
+
+HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* args)
+{
+    auto initAndroidResult = PlatformComponents_Android::Initialize(args);
+    RETURN_IF_FAILED(initAndroidResult.hr);
+
+    components.HttpProvider = http_allocate_unique<AndroidHttpProvider>(initAndroidResult.Payload());
+    components.WebSocketProvider = http_allocate_unique<AndroidWebSocketProvider>(initAndroidResult.Payload());
+
+    return S_OK;
+}
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
