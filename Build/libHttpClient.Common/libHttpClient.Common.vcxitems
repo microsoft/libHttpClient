@@ -22,9 +22,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsync.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XAsyncProvider.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\XTaskQueue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h" />
@@ -47,16 +44,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IWebSocketProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformComponents.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformTrace.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AtomicVector.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\LocklessQueue.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\referenced_ptr.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\StaticArray.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueImpl.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueueP.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XAsyncProviderPriv.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
   </ItemGroup>
   <ItemGroup>
@@ -80,8 +67,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\AsyncLib.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\TaskQueue.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket_publics.cpp" />
   </ItemGroup>
