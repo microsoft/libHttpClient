@@ -57,7 +57,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(HCRoot)\Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(ConfigurationType)'!='StaticLibrary'">
+    <ProjectReference Include="$(HCRoot)\Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(ConfigurationType)'!='StaticLibrary' And ('$(HCLibPlatformType)' == 'Win32' Or '$(HCLibPlatformType)' == 'GDK'Or '$(HCLibPlatformType)' == 'UWP')">
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '141'">{BEDE280F-17F7-4A09-9F5D-2E02FBB1C490}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '142'">{961F48EA-33A9-47F1-9C96-715D6094D79B}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '143'">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
