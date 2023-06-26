@@ -56,6 +56,19 @@
     <HCSettingsImported>true</HCSettingsImported>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <useWsppWebsockets>false</useWsppWebsockets>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>
+        HC_NOWEBSOCKETS;
+        HC_WINHTTP_WEBSOCKETS=0;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(HCRoot)\Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(ConfigurationType)'!='StaticLibrary'">
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '141'">{BEDE280F-17F7-4A09-9F5D-2E02FBB1C490}</Project>

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "ExternalWebSocketProvider.h"
 
+#if !HC_NOWEBSOCKETS
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 ExternalWebSocketProvider& ExternalWebSocketProvider::Get() noexcept
@@ -98,3 +100,5 @@ HRESULT ExternalWebSocketProvider::Disconnect(
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
+
+#endif // !HC_NOWEBSOCKETS
