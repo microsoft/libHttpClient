@@ -10,7 +10,9 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     RETURN_HR_IF(E_INVALIDARG, initArgs);
 
     components.HttpProvider = http_allocate_unique<XmlHttpProvider>();
+#if !HC_NOWEBSOCKETS
     components.WebSocketProvider = http_allocate_unique<WinRTWebSocketProvider>();
+#endif
 
     return S_OK;
 }

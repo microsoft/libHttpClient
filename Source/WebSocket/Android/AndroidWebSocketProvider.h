@@ -4,6 +4,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+#if !HC_NOWEBSOCKETS
 class PlatformComponents_Android;
 
 class AndroidWebSocketProvider : public IWebSocketProvider
@@ -42,5 +43,6 @@ public:
 private:
     SharedPtr<PlatformComponents_Android> m_platformComponents;
 };
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

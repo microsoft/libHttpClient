@@ -159,8 +159,10 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* args)
     RETURN_IF_FAILED(initAndroidResult.hr);
 
     components.HttpProvider = http_allocate_unique<AndroidHttpProvider>(initAndroidResult.Payload());
+#if !HC_NOWEBSOCKETS
     components.WebSocketProvider = http_allocate_unique<AndroidWebSocketProvider>(initAndroidResult.Payload());
-
+#endif
+    
     return S_OK;
 }
 

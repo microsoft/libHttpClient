@@ -39,7 +39,12 @@ HRESULT http_singleton::singleton_access(
             PlatformComponents platform{};
             RETURN_IF_FAILED(PlatformInitialize(platform, createArgs));
 
-            auto performEnvInitResult = NetworkState::Initialize(std::move(platform.HttpProvider), std::move(platform.WebSocketProvider));
+            auto performEnvInitResult = NetworkState::Initialize(
+                std::move(platform.HttpProvider)
+#if !HC_NOWEBSOCKETS
+                , std::move(platform.WebSocketProvider)
+#endif
+            );
             RETURN_IF_FAILED(performEnvInitResult.hr);
 
             s_singleton = http_allocate_shared<http_singleton>(performEnvInitResult.ExtractPayload());

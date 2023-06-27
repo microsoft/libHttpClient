@@ -14,12 +14,15 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     auto initXCurlResult = CurlProvider::Initialize();
     RETURN_IF_FAILED(initXCurlResult.hr);
 
+    components.HttpProvider = initXCurlResult.ExtractPayload();
+
+#if !HC_NOWEBSOCKETS
     // WinHttp will be used for WebSockets
     auto initWinHttpResult = WinHttpProvider::Initialize();
     RETURN_IF_FAILED(initWinHttpResult.hr);
-
-    components.HttpProvider = initXCurlResult.ExtractPayload();
+ 
     components.WebSocketProvider = initWinHttpResult.ExtractPayload();
+#endif
 
     return S_OK;
 }

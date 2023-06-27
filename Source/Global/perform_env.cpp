@@ -5,16 +5,10 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-NetworkState::NetworkState(
-    UniquePtr<IHttpProvider> httpProvider,
-    UniquePtr<IWebSocketProvider> webSocketProvider
-) noexcept :
+#if !HC_NOWEBSOCKETS
+NetworkState::NetworkState(UniquePtr<IHttpProvider> httpProvider, UniquePtr<IWebSocketProvider> webSocketProvider) noexcept :
     m_httpProvider{ std::move(httpProvider) },
     m_webSocketProvider{ std::move(webSocketProvider) }
-{
-}
-
-NetworkState::~NetworkState()
 {
 }
 
@@ -29,10 +23,27 @@ Result<UniquePtr<NetworkState>> NetworkState::Initialize(
     return state;
 }
 
-IHttpProvider& NetworkState::HttpProvider() noexcept
+#else
+NetworkState::NetworkState(UniquePtr<IHttpProvider> httpProvider) noexcept :
+    m_httpProvider{ std::move(httpProvider) }
+{
+}
+
+Result<UniquePtr<NetworkState>> NetworkState::Initialize(
+    UniquePtr<IHttpProvider> httpProvider
+) noexcept
+{
+    http_stl_allocator<NetworkState> a{};
+    UniquePtr<NetworkState> state{ new (a.allocate(1)) NetworkState(std::move(httpProvider)) };
+
+    return state;
+}
+#endif
+
+IHttpProvider & NetworkState::HttpProvider() noexcept
 {
     // If the client configured an external provider use that. Otherwise use the m_httpProvider
-    ExternalHttpProvider& externalProvider = ExternalHttpProvider::Get();
+    ExternalHttpProvider & externalProvider = ExternalHttpProvider::Get();
     if (externalProvider.HasCallback())
     {
         return externalProvider;
@@ -41,28 +52,12 @@ IHttpProvider& NetworkState::HttpProvider() noexcept
     return *m_httpProvider;
 }
 
-IWebSocketProvider& NetworkState::WebSocketProvider() noexcept
-{
-    // If the client configured an external provider use that. Otherwise use the m_webSocketProvider
-    ExternalWebSocketProvider& externalProvider = ExternalWebSocketProvider::Get();
-    if (externalProvider.HasCallbacks())
-    {
-        return externalProvider;
-    }
-    assert(m_webSocketProvider);
-    return *m_webSocketProvider;
-}
-
 Result<UniquePtr<HC_CALL>> NetworkState::HttpCallCreate() noexcept
 {
     auto httpSingleton = get_http_singleton();
     RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
 
-    // If the client configured an external provider use that. Otherwise use the m_httpProvider
-    ExternalHttpProvider& externalProvider = ExternalHttpProvider::Get();
-    auto& provider = externalProvider.HasCallback() ? externalProvider : *m_httpProvider;
-
-    auto call = http_allocate_unique<HC_CALL>(++httpSingleton->m_lastId, provider);
+    auto call = http_allocate_unique<HC_CALL>(++httpSingleton->m_lastId, HttpProvider());
     call->retryAllowed = httpSingleton->m_retryAllowed;
     call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
     call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
@@ -164,16 +159,25 @@ void CALLBACK NetworkState::HttpCallPerformComplete(XAsyncBlock* async)
     XAsyncComplete(performContext->clientAsyncBlock, XAsyncGetStatus(async, false), 0);
 }
 
+#if !HC_NOWEBSOCKETS
+IWebSocketProvider& NetworkState::WebSocketProvider() noexcept
+{
+    // If the client configured an external provider use that. Otherwise use the m_webSocketProvider
+    ExternalWebSocketProvider& externalProvider = ExternalWebSocketProvider::Get();
+    if (externalProvider.HasCallbacks())
+    {
+        return externalProvider;
+    }
+    assert(m_webSocketProvider);
+    return *m_webSocketProvider;
+}
+
 Result<SharedPtr<WebSocket>> NetworkState::WebSocketCreate() noexcept
 {
     auto httpSingleton = get_http_singleton();
     RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
 
-    // If the client configured an external provider use that. Otherwise use the m_httpProvider
-    ExternalWebSocketProvider& externalProvider = ExternalWebSocketProvider::Get();
-    auto& provider = externalProvider.HasCallbacks() ? externalProvider : *m_webSocketProvider;
-
-    return http_allocate_shared<WebSocket>(++httpSingleton->m_lastId, provider);
+    return http_allocate_shared<WebSocket>(++httpSingleton->m_lastId, WebSocketProvider());
 }
 
 struct NetworkState::WebSocketConnectContext
@@ -349,6 +353,7 @@ void CALLBACK NetworkState::WebSocketClosed(HCWebsocketHandle /*websocket*/, HCW
         }
     }
 }
+#endif // !HC_NOWEBSOCKETS
 
 HRESULT NetworkState::CleanupAsync(UniquePtr<NetworkState> state, XAsyncBlock* async) noexcept
 {
@@ -374,6 +379,7 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         {
             XAsyncCancel(activeRequest);
         }
+#if !HC_NOWEBSOCKETS
         for (auto& context : state->m_connectedWebSockets)
         {
             HRESULT hr = context->websocketObserver->websocket->Disconnect();
@@ -382,6 +388,7 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
             }
         }
+#endif
         lock.unlock();
 
         if (scheduleCleanup)
@@ -450,6 +457,7 @@ bool NetworkState::ScheduleCleanup()
         // Pending Http Requests
         return false;
     }
+#if !HC_NOWEBSOCKETS
     else if (!m_connectingWebSockets.empty())
     {
         // Pending WebSocket Connect operations
@@ -460,6 +468,7 @@ bool NetworkState::ScheduleCleanup()
         // Pending WebSocket CloseFunc callbacks
         return false;
     }
+#endif
     return true;
 }
 
