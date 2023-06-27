@@ -177,10 +177,6 @@ Result<SharedPtr<WebSocket>> NetworkState::WebSocketCreate() noexcept
     auto httpSingleton = get_http_singleton();
     RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
 
-    // If the client configured an external provider use that. Otherwise use the m_httpProvider
-    ExternalWebSocketProvider& externalProvider = ExternalWebSocketProvider::Get();
-    auto& provider = externalProvider.HasCallbacks() ? externalProvider : *m_webSocketProvider;
-
     return http_allocate_shared<WebSocket>(++httpSingleton->m_lastId, WebSocketProvider());
 }
 
