@@ -15,7 +15,6 @@ public:
     IWebSocketProvider& operator=(IWebSocketProvider const&) = delete;
     virtual ~IWebSocketProvider() = default;
 
-
     virtual HRESULT ConnectAsync(
         String const& uri,
         String const& subprotocol,
