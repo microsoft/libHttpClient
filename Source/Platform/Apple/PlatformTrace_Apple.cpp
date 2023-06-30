@@ -1,6 +1,7 @@
 #include "pch.h"
-
 #include <httpClient/trace.h>
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 uint64_t GetThreadId() noexcept
 {
@@ -11,3 +12,5 @@ void TraceToDebugger(const char* areaName, HCTraceLevel traceLevel, const char* 
 {
     printf("%s", message);
 }
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
