@@ -1892,6 +1892,7 @@
 		D9EF883F25A522BC005C4BDF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1925,6 +1926,7 @@
 		D9EF884025A522BC005C4BDF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -2028,6 +2030,7 @@
 		D9FF0A7525A5366A0061B717 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -2062,6 +2065,7 @@
 		D9FF0A7625A5366A0061B717 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
