@@ -532,6 +532,9 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
         env->m_cleanupAsyncBlock = data->async;
         bool scheduleProviderCleanup = env->CanScheduleProviderCleanup();
 
+#if !HC_NOWEBSOCKETS
+        HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", env->m_activeHttpRequests.size(), env->m_connectingWebSockets.size(), env->m_connectedWebSockets.size());
+#endif
         for (auto& activeRequest : env->m_activeHttpRequests)
         {
             XAsyncCancel(activeRequest);
@@ -563,6 +566,8 @@ HRESULT CALLBACK HC_PERFORM_ENV::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
 
 void CALLBACK HC_PERFORM_ENV::ProviderCleanup(void* context, bool /*canceled*/)
 {
+    HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::ProviderCleanup");
+
     HC_UNIQUE_PTR<HC_PERFORM_ENV> env{ static_cast<HC_PERFORM_ENV*>(context) };
     XAsyncBlock* cleanupAsyncBlock{ env->m_cleanupAsyncBlock };
 
@@ -617,7 +622,11 @@ bool HC_PERFORM_ENV::CanScheduleProviderCleanup()
         // HC_PERFORM_ENV::CleanupAsync has not yet been called
         return false;
     }
-    else if (!m_activeHttpRequests.empty())
+
+#if !HC_NOWEBSOCKETS
+    HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::Cleaning up, HTTP=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", m_activeHttpRequests.size(), m_connectingWebSockets.size(), m_connectedWebSockets.size());
+#endif
+    if (!m_activeHttpRequests.empty())
     {
         // Pending Http Requests
         return false;
