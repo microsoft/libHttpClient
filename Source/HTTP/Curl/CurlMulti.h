@@ -20,7 +20,7 @@ public:
     // Wrapper around curl_multi_add_handle
     HRESULT AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest);
 
-    // Asyncronously cleanup and outstanding requests
+    // Asyncronously cleanup any outstanding requests
     static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlMulti> multi, XAsyncBlock* async);
 
 private:
@@ -33,7 +33,6 @@ private:
     void FailAllRequests(HRESULT hr) noexcept;
 
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
-    static void CALLBACK TaskQueueTerminated(void* context);
 
     CURLM* m_curlMultiHandle{ nullptr };
     XTaskQueueHandle m_queue{ nullptr };

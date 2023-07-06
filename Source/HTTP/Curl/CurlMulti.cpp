@@ -71,23 +71,45 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest)
 
 HRESULT CurlMulti::CleanupAsync(HC_UNIQUE_PTR<CurlMulti> multi, XAsyncBlock* async)
 {
-    assert(multi->m_cleanupAsyncBlock == nullptr);
-    multi->m_cleanupAsyncBlock = async;
-
     RETURN_IF_FAILED(XAsyncBegin(async, multi.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
     multi.release();
-
     return S_OK;
 }
 
 HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
+    CurlMulti* multi = static_cast<CurlMulti*>(data->context);
+
     switch (op)
     {
     case XAsyncOp::Begin:
     {
-        CurlMulti* multi = static_cast<CurlMulti*>(data->context);
-        RETURN_IF_FAILED(XTaskQueueTerminate(multi->m_queue, false, multi, CurlMulti::TaskQueueTerminated));
+        std::unique_lock<std::mutex> lock{ multi->m_mutex };
+
+        assert(multi->m_cleanupAsyncBlock == nullptr);
+        multi->m_cleanupAsyncBlock = data->async;
+
+        if (multi->m_easyRequests.empty())
+        {
+            // No outstanding HTTP requests schedule cleanup immediately
+            RETURN_IF_FAILED(XAsyncSchedule(data->async, 0));
+        }
+        else
+        {
+            // Terminate the XTaskQueue. Cleanup will be completed after completing remaining HTTP requests
+            RETURN_IF_FAILED(XTaskQueueTerminate(multi->m_queue, false, nullptr, nullptr));
+        }
+        return S_OK;
+    }
+    case XAsyncOp::DoWork:
+    {
+        assert(multi->m_easyRequests.empty());
+        HC_UNIQUE_PTR<CurlMulti> reclaim{ static_cast<CurlMulti*>(multi) };
+
+        // Ensure CurlMulti is destroyed (and thus curl_multi_cleanup is called) before completing asyncBlock
+        reclaim.reset();
+
+        XAsyncComplete(data->async, S_OK, 0);
         return S_OK;
     }
     default:
@@ -95,17 +117,6 @@ HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProvid
         return S_OK;
     }
     }
-}
-
-void CALLBACK CurlMulti::TaskQueueTerminated(void* context)
-{
-    HC_UNIQUE_PTR<CurlMulti> multi{ static_cast<CurlMulti*>(context) };
-
-    // Ensure CurlMulti is destroyed (and thus curl_multi_cleanup is called) before completing asyncBlock
-    XAsyncBlock* cleanupAsync = multi->m_cleanupAsyncBlock;
-    multi.reset();
-
-    XAsyncComplete(cleanupAsync, S_OK, 0);
 }
 
 void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
@@ -187,6 +198,16 @@ HRESULT CurlMulti::Perform() noexcept
 
         RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, workAvailable ? 0 : PERFORM_DELAY_MS, this, CurlMulti::TaskQueueCallback));
     }
+    else if (m_cleanupAsyncBlock)
+    {
+        // CleanupAsync was called and no remaining requests, schedule cleanup now
+        HRESULT hr = XAsyncSchedule(m_cleanupAsyncBlock, 0);
+        if (FAILED(hr))
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, "CurlMulti: Failed to schedule CleanupAsyncProvider!", hr);
+            assert(false);
+        }
+    }
 
     return S_OK;
 }
@@ -195,16 +216,30 @@ void CurlMulti::FailAllRequests(HRESULT hr) noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
 
-    for (auto& pair : m_easyRequests)
+    if (!m_easyRequests.empty())
     {
-        auto result = curl_multi_remove_handle(m_curlMultiHandle, pair.first);
-        if (FAILED(HrFromCurlm(result)))
+        for (auto& pair : m_easyRequests)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::FailAllRequests: curl_multi_remove_handle failed with CURLCode=%u", result);
+            auto result = curl_multi_remove_handle(m_curlMultiHandle, pair.first);
+            if (FAILED(HrFromCurlm(result)))
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::FailAllRequests: curl_multi_remove_handle failed with CURLCode=%u", result);
+            }
+            pair.second->Fail(hr);
         }
-        pair.second->Fail(hr);
+        m_easyRequests.clear();
+
+        if (m_cleanupAsyncBlock)
+        {
+            // CleanupAsync was called and no remaining requests, schedule cleanup now
+            hr = XAsyncSchedule(m_cleanupAsyncBlock, 0);
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR_HR(HTTPCLIENT, "CurlMulti: Failed to schedule CleanupAsyncProvider!", hr);
+                assert(false);
+            }
+        }
     }
-    m_easyRequests.clear();
 }
 
 } // httpclient

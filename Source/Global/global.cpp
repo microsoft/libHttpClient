@@ -132,6 +132,8 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
         performEnvCleanupAsyncBlock->context = data->async;
         performEnvCleanupAsyncBlock->callback = [](XAsyncBlock* async)
         {
+            HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::CleanupAsync Complete");
+
             HC_UNIQUE_PTR<XAsyncBlock> performEnvCleanupAsyncBlock{ async };
             XAsyncBlock* singletonCleanupAsyncBlock = static_cast<XAsyncBlock*>(performEnvCleanupAsyncBlock->context);
 

@@ -277,6 +277,8 @@ HRESULT WinHttpProvider::CloseAllConnections()
 
     auto connectionClosedCallback = [&closeContext]()
     {
+        HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Connection Closed, %llu remaining", closeContext.openConnections - 1);
+
         if (--closeContext.openConnections == 0)
         {
             SetEvent(closeContext.connectionsClosedEvent);
@@ -286,6 +288,7 @@ HRESULT WinHttpProvider::CloseAllConnections()
     http_internal_list<std::shared_ptr<WinHttpConnection>> connections;
     {
         std::lock_guard<std::mutex> lock{ m_lock };
+
         for (auto& weakConnection : m_connections)
         {
             auto connection{ weakConnection.lock() };
