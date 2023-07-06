@@ -99,7 +99,7 @@ public:
 #endif
 
     // Sets Global proxy for all HttpConnections
-    HRESULT SetGlobalProxy(_In_ const char* proxyUri) noexcept;
+    HRESULT SetGlobalProxy(_In_z_ const char* proxyUri) noexcept;
 
 private:
     WinHttpProvider() = default;

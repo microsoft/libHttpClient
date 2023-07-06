@@ -93,7 +93,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
         call->performCalled = true;
         call->m_performStartTime = chrono_clock_t::now();
-        
+
         // Initialize work queues
         XTaskQueuePortHandle workPort{ nullptr };
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
@@ -106,8 +106,8 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         RETURN_IF_FAILED(shouldFailFast.hr);
         if (shouldFailFast.Payload())
         {
-            if (call->traceCall) 
-            { 
+            if (call->traceCall)
+            {
                 HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider [ID %llu] Fast fail %d", TO_ULL(call->id), call->statusCode);
             }
             XAsyncComplete(data->async, S_OK, 0);
@@ -219,8 +219,8 @@ HRESULT HC_CALL::PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderDa
         }
         catch (...)
         {
-            if (call->traceCall) 
-            { 
+            if (call->traceCall)
+            {
                 HC_TRACE_ERROR(HTTPCLIENT, "Caught unhandled exception in HCCallPerformFunction [ID %llu]", TO_ULL(static_cast<HC_CALL*>(call)->id));
             }
             return E_FAIL;
@@ -266,7 +266,7 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
             {
                 HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerformSingleRequestComplete [ID %llu] Retry after %lld ms", TO_ULL(call->id), TO_ULL(performDelay));
             }
-            
+
             // Schedule retry
             hr = XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest);
             if (SUCCEEDED(hr))
@@ -274,7 +274,7 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
                 call->ResetResponseProperties();
                 return;
             }
-        }    
+        }
     }
 
     // Complete perform if we aren't retrying or if there were any XAsync failures
@@ -290,7 +290,7 @@ HRESULT CALLBACK HC_CALL::ReadRequestBody(
     _Out_ size_t* bytesWritten
 ) noexcept
 {
-    RETURN_HR_IF(E_INVALIDARG, !call || !bytesAvailable || !destination || !bytesWritten); 
+    RETURN_HR_IF(E_INVALIDARG, !call || !bytesAvailable || !destination || !bytesWritten);
 
     uint8_t const* requestBody = nullptr;
     uint32_t requestBodySize = 0;
@@ -321,7 +321,7 @@ HRESULT CALLBACK HC_CALL::ResponseBodyWrite(
     return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);
 }
 
-Result<bool> HC_CALL::ShouldFailFast(_Out_opt_ uint32_t& performDelay)
+Result<bool> HC_CALL::ShouldFailFast(uint32_t& performDelay)
 {
     std::shared_ptr<http_singleton> state = get_http_singleton();
     RETURN_HR_IF(E_HC_NOT_INITIALISED, !state);
@@ -352,14 +352,14 @@ Result<bool> HC_CALL::ShouldFailFast(_Out_opt_ uint32_t& performDelay)
         // Don't have multiple calls waiting for the Retry-After window for a single endpoint.
         // This causes a flood of calls to the endpoint as soon as the Retry-After windows elapses. If there is already a call
         // pending to this endpoint, fail fast with the cached error code.
-        // 
+        //
         // Otherwise, if the Retry-After will elapse before this call's timeout, delay the call until Retry-After window but don't fail fast
         performDelay = static_cast<uint32_t>(remainingTimeBeforeRetryAfterInMS.count());
-        
+
         // Update retry cache to indicate this request is pending to the endpoint
         apiState.callPending = true;
         state->set_retry_state(retryAfterCacheId, apiState);
-        
+
         return false;
     }
 
@@ -368,7 +368,7 @@ Result<bool> HC_CALL::ShouldFailFast(_Out_opt_ uint32_t& performDelay)
     return true;
 }
 
-bool HC_CALL::ShouldRetry(_Out_opt_ uint32_t& performDelay)
+bool HC_CALL::ShouldRetry(uint32_t& performDelay)
 {
     if (!retryAllowed)
     {
@@ -383,9 +383,9 @@ bool HC_CALL::ShouldRetry(_Out_opt_ uint32_t& performDelay)
     auto responseReceivedTime{ chrono_clock_t::now() };
 
     if (statusCode == 408 || // Request Timeout
-        statusCode == 429 || // Too Many Requests 
+        statusCode == 429 || // Too Many Requests
         statusCode == 500 || // Internal Error
-        statusCode == 502 || // Bad Gateway 
+        statusCode == 502 || // Bad Gateway
         statusCode == 503 || // Service Unavailable
         statusCode == 504 || // Gateway Timeout
         networkErrorCode != S_OK)
@@ -394,7 +394,7 @@ bool HC_CALL::ShouldRetry(_Out_opt_ uint32_t& performDelay)
         std::chrono::milliseconds timeElapsedSinceFirstCall = std::chrono::duration_cast<std::chrono::milliseconds>(responseReceivedTime - m_performStartTime);
         std::chrono::seconds timeoutWindow = std::chrono::seconds{ timeoutWindowInSeconds };
         std::chrono::milliseconds remainingTimeBeforeTimeout = timeoutWindow - timeElapsedSinceFirstCall;
-        if (traceCall) 
+        if (traceCall)
         {
             HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::ShouldRetry [ID %llu] remainingTimeBeforeTimeout %lld ms", TO_ULL(id), remainingTimeBeforeTimeout.count());
         }
@@ -402,7 +402,7 @@ bool HC_CALL::ShouldRetry(_Out_opt_ uint32_t& performDelay)
         // Based on the retry iteration, delay 2,4,8,16,etc seconds by default between retries
         // Jitter the response between the current and next delay based on system clock
         // Max wait time is 1 minute
-        
+
         double secondsToWaitMin = std::pow(retryDelayInSeconds, m_iterationNumber);
         double secondsToWaitMax = std::pow(retryDelayInSeconds, m_iterationNumber + 1);
         double secondsToWaitDelta = secondsToWaitMax - secondsToWaitMin;
@@ -502,7 +502,7 @@ void HC_CALL::ResetResponseProperties()
     responseHeaders.clear();
     statusCode = 0;
     networkErrorCode = S_OK;
-    platformNetworkErrorCode = 0;  
+    platformNetworkErrorCode = 0;
 }
 
 bool HeaderCompare::operator()(http_internal_string const& l, http_internal_string const& r) const

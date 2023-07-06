@@ -91,7 +91,7 @@ public:
         _In_opt_ void* context
     ) noexcept;
 
-protected: // Protected for HC_MOCK_CALL 
+protected: // Protected for HC_MOCK_CALL
     HC_CALL(uint64_t id);
 
 private:
@@ -100,16 +100,15 @@ private:
     static HRESULT CALLBACK PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderData const* data) noexcept;
     static void CALLBACK PerformSingleRequestComplete(XAsyncBlock* async);
 
-    Result<bool> ShouldFailFast(_Out_opt_ uint32_t& performDelay);   
-    bool ShouldRetry(_Out_opt_ uint32_t& performDelay);
+    Result<bool> ShouldFailFast(uint32_t& performDelay);
+    bool ShouldRetry(uint32_t& performDelay);
     Result<std::chrono::seconds> GetRetryAfterHeaderTime();
     void ResetResponseProperties();
 
     // Retry metadata
     chrono_clock_t::time_point m_performStartTime{};
-    uint32_t m_iterationNumber{ 0 };  
+    uint32_t m_iterationNumber{ 0 };
 
     HttpPerformInfo m_performInfo;
     HC_PERFORM_ENV* m_performEnv{ nullptr }; // non-owning
 };
-

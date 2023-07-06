@@ -30,7 +30,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI_(bool) 
+STDAPI_(bool)
 HCIsInitialized() noexcept
 {
     auto httpSingleton = get_http_singleton();
@@ -49,7 +49,7 @@ try
     {
         XAsyncBlock async{};
         async.queue = queue; // queue is required for this call
-        hr = HCCleanupAsync(&async); 
+        hr = HCCleanupAsync(&async);
         if (SUCCEEDED(hr))
         {
             XAsyncGetStatus(&async, true);
@@ -67,7 +67,7 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCSetGlobalProxy(_In_ const char* proxyUri) noexcept
+HCSetGlobalProxy(_In_z_ const char* proxyUri) noexcept
 try
 {
     auto httpSingleton = get_http_singleton();

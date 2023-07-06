@@ -628,7 +628,7 @@ void WinHttpConnection::callback_status_request_error(
         return;
 
     DWORD errorCode = error_result->dwError;
-    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%d dwError=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), error_result->dwResult, error_result->dwError);
+    HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_REQUEST_ERROR dwResult=%llu dwError=%u", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), error_result->dwResult, error_result->dwError);
 
     bool reissueSend{ false };
 
@@ -845,7 +845,7 @@ uint32_t WinHttpConnection::parse_status_code(
 
 void WinHttpConnection::parse_headers_string(
     _In_ HCCallHandle call,
-    _In_ wchar_t* headersStr)
+    _In_z_ wchar_t* headersStr)
 {
     wchar_t* context = nullptr;
     wchar_t* line = wcstok_s(headersStr, CRLF, &context);
@@ -1261,7 +1261,7 @@ HRESULT WinHttpConnection::set_autodiscover_proxy()
 
 void WinHttpConnection::SendRequest()
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [%d] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
+    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [%llu] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
 
     HC_UNIQUE_PTR<WinHttpCallbackContext> context = http_allocate_unique<WinHttpCallbackContext>(shared_from_this());
 

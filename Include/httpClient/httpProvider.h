@@ -42,8 +42,8 @@ typedef void
 /// <remarks>
 /// Must be called before HCInit.
 ///
-/// In the HCCallPerformFunction callback, use HCHttpCallRequestGet*() and HCSettingsGet*() to 
-/// get information about the HTTP call and perform the call as desired and set 
+/// In the HCCallPerformFunction callback, use HCHttpCallRequestGet*() and HCSettingsGet*() to
+/// get information about the HTTP call and perform the call as desired and set
 /// the response with HCHttpCallResponseSet*().
 /// </remarks>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or
@@ -54,10 +54,10 @@ STDAPI HCSetHttpCallPerformFunction(
     ) noexcept;
 
 /// <summary>
-/// Returns the current HCCallPerformFunction callback which implements the HTTP 
+/// Returns the current HCCallPerformFunction callback which implements the HTTP
 /// perform function on the current platform.
 /// </summary>
-/// <param name="performFunc">Set to the current HTTP perform function. Returns the default 
+/// <param name="performFunc">Set to the current HTTP perform function. Returns the default
 /// routine if not previously set.</param>
 /// <param name="performContext">The context for the callback.</param>
 /// <remarks>
@@ -107,8 +107,8 @@ STDAPI HCHttpCallSetContext(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetUrl(
     _In_ HCCallHandle call,
-    _Outptr_ const char** method,
-    _Outptr_ const char** url
+    _Outptr_result_z_ const char** method,
+    _Outptr_result_z_ const char** url
     ) noexcept;
 
 /// <summary>
@@ -233,14 +233,14 @@ STDAPI HCHttpCallRequestGetTimeout(
 /// <param name="retryDelayInSeconds">The retry delay in seconds.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 /// <remarks>
-/// Retries are delayed using a exponential back off.  By default, it will delay 2 seconds then the 
+/// Retries are delayed using a exponential back off.  By default, it will delay 2 seconds then the
 /// next retry will delay 4 seconds, then 8 seconds, and so on up to a max of 1 min until either
 /// the call succeeds or the HTTP timeout window is reached, at which point the call will fail.
 /// The delay is also jittered between the current and next delay to spread out service load.
 /// The default for the HTTP timeout window is 20 seconds and can be changed using HCSettingsSetTimeoutWindow()<br />
 /// <br />
-/// If the service returns an HTTP error with a "Retry-After" header, then all future calls to that API 
-/// will immediately fail with the original error without contacting the service until the "Retry-After" 
+/// If the service returns an HTTP error with a "Retry-After" header, then all future calls to that API
+/// will immediately fail with the original error without contacting the service until the "Retry-After"
 /// time has been reached.<br />
 ///<br />
 /// Idempotent service calls are retried when a network error occurs or the server responds <br />
@@ -301,7 +301,7 @@ STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Set APIs
-// 
+//
 
 /// <summary>
 /// Set the response body byte buffer of the HTTP call. If a custom write callback was previously set
@@ -402,7 +402,7 @@ STDAPI HCHttpCallResponseSetHeaderWithLength(
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket Set APIs
-// 
+//
 
 /// <summary>
 /// Function to connects to the WebSocket.  This API returns immediately and will spin up a thread under the covers.
@@ -477,17 +477,17 @@ typedef HRESULT
 /// <summary>
 /// Optionally allows the caller to implement the WebSocket functions.
 /// </summary>
-/// <param name="websocketConnectFunc">A callback that implements WebSocket connect function as desired. 
+/// <param name="websocketConnectFunc">A callback that implements WebSocket connect function as desired.
 /// Pass in nullptr to use the default implementation based on the current platform.</param>
-/// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired. 
+/// <param name="websocketSendMessageFunc">A callback that implements WebSocket send message function as desired.
 /// Pass in nullptr to use the default implementation based on the current platform.</param>
-/// <param name="websocketSendBinaryMessageFunc">A callback that implements WebSocket send binary message function as desired. 
+/// <param name="websocketSendBinaryMessageFunc">A callback that implements WebSocket send binary message function as desired.
 /// Pass in nullptr to use the default implementation based on the current platform.</param>
-/// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired. 
+/// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired.
 /// Pass in nullptr to use the default implementation based on the current platform.</param>
 /// <param name="context">The context pointer for the callbacks.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-STDAPI 
+STDAPI
 HCSetWebSocketFunctions(
     _In_ HCWebSocketConnectFunction websocketConnectFunc,
     _In_ HCWebSocketSendMessageFunction websocketSendMessageFunc,
@@ -505,7 +505,7 @@ HCSetWebSocketFunctions(
 /// <param name="websocketDisconnectFunc">A callback that implements WebSocket disconnect function as desired.</param>
 /// <param name="context">The context pointer for the callbacks.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
-STDAPI 
+STDAPI
 HCGetWebSocketFunctions(
     _Out_ HCWebSocketConnectFunction* websocketConnectFunc,
     _Out_ HCWebSocketSendMessageFunction* websocketSendMessageFunc,
@@ -520,7 +520,7 @@ HCGetWebSocketFunctions(
 /// <param name="websocket">The handle of the WebSocket.</param>
 /// <param name="proxyUri">The UTF-8 encoded proxy URI for the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI 
+STDAPI
 HCWebSocketGetProxyUri(
     _In_ HCWebsocketHandle websocket,
     _Out_ const char** proxyUri
@@ -533,7 +533,7 @@ HCWebSocketGetProxyUri(
 /// <param name="headerName">UTF-8 encoded header name for the WebSocket.</param>
 /// <param name="headerValue">UTF-8 encoded header value for the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
-STDAPI 
+STDAPI
 HCWebSocketGetHeader(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
@@ -546,7 +546,7 @@ HCWebSocketGetHeader(
 /// <param name="websocket">The handle of the WebSocket.</param>
 /// <param name="numHeaders">the number of headers in the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI 
+STDAPI
 HCWebSocketGetNumHeaders(
     _In_ HCWebsocketHandle websocket,
     _Out_ uint32_t* numHeaders
@@ -561,7 +561,7 @@ HCWebSocketGetNumHeaders(
 /// <param name="headerValue">UTF-8 encoded header value for the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 /// <remarks>Use HCHttpCallGetNumHeaders() to know how many headers there are in the HTTP call.</remarks>
-STDAPI 
+STDAPI
 HCWebSocketGetHeaderAtIndex(
     _In_ HCWebsocketHandle websocket,
     _In_ uint32_t headerIndex,
