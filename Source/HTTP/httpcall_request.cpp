@@ -9,13 +9,13 @@
 
 using namespace xbox::httpclient;
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetUrl(
     _In_ HCCallHandle call,
     _In_z_ const char* method,
     _In_z_ const char* url
     ) noexcept
-try 
+try
 {
     if (call == nullptr || method == nullptr || url == nullptr)
     {
@@ -36,11 +36,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetUrl(
     _In_ HCCallHandle call,
-    _Outptr_ const char** method,
-    _Outptr_ const char** url
+    _Outptr_result_z_ const char** method,
+    _Outptr_result_z_ const char** url
     ) noexcept
 try
 {
@@ -59,7 +59,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRequestBodyBytes(
     _In_ HCCallHandle call,
     _In_reads_bytes_(requestBodySize) const uint8_t* requestBodyBytes,
@@ -92,7 +92,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRequestBodyString(
     _In_ HCCallHandle call,
     _In_z_ const char* requestBodyString
@@ -141,13 +141,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRequestBodyBytes(
     _In_ HCCallHandle call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const uint8_t** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
     ) noexcept
-try 
+try
 {
     if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == nullptr)
     {
@@ -168,7 +168,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRequestBodyString(
     _In_ HCCallHandle call,
     _Outptr_ const char** requestBody
@@ -211,14 +211,14 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue,
     _In_ bool allowTracing
     ) noexcept
-try 
+try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
@@ -233,13 +233,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
     ) noexcept
-try 
+try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
@@ -259,7 +259,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetNumHeaders(
     _In_ HCCallHandle call,
     _Out_ uint32_t* numHeaders
@@ -276,7 +276,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetHeaderAtIndex(
     _In_ HCCallHandle call,
     _In_ uint32_t headerIndex,
@@ -309,7 +309,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRetryCacheId(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t retryAfterCacheId
@@ -331,7 +331,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRetryAllowed(
     _In_opt_ HCCallHandle call,
     _In_ bool retryAllowed
@@ -357,7 +357,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRetryAllowed(
     _In_opt_ HCCallHandle call,
     _Out_ bool* retryAllowed
@@ -385,7 +385,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRetryCacheId(
     _In_ HCCallHandle call,
     _Out_ uint32_t* retryAfterCacheId
@@ -404,7 +404,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetTimeout(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t timeoutInSeconds
@@ -431,7 +431,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetTimeout(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutInSeconds
@@ -460,7 +460,7 @@ try
 CATCH_RETURN()
 
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetTimeoutWindow(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t timeoutWindowInSeconds
@@ -487,7 +487,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetTimeoutWindow(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutWindowInSeconds
@@ -515,7 +515,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRetryDelay(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t* retryDelayInSeconds
@@ -543,7 +543,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRetryDelay(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t retryDelayInSeconds
@@ -568,7 +568,7 @@ try
 CATCH_RETURN()
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-STDAPI 
+STDAPI
 HCHttpDisableAssertsForSSLValidationInDevSandboxes(
     _In_ HCConfigSetting setting
 ) noexcept

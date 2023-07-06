@@ -145,9 +145,9 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
                 // Provider cleanup really should never fail. If it does, there isn't much we can do so log error and continue with cleanup
                 HC_TRACE_ERROR_HR(HTTPCLIENT, cleanupResult, "HC_PERFORM_ENV::CleanupAsync failed unexpectedly, continuing with cleanup");
             }
-            
+
             // PerformEnv cleanup complete, continue with singleton cleanup
-            XAsyncSchedule(singletonCleanupAsyncBlock, 0);            
+            XAsyncSchedule(singletonCleanupAsyncBlock, 0);
         };
 
         RETURN_IF_FAILED(HC_PERFORM_ENV::CleanupAsync(std::move(singleton->m_performEnv), performEnvCleanupAsyncBlock.get()));
@@ -250,7 +250,7 @@ void http_singleton::clear_retry_state(_In_ uint32_t retryAfterCacheId)
     m_retryAfterCache.erase(retryAfterCacheId);
 }
 
-HRESULT http_singleton::set_global_proxy(_In_ const char* proxyUri)
+HRESULT http_singleton::set_global_proxy(_In_z_ const char* proxyUri)
 {
 #if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_UNITTEST_API
     return m_performEnv->winHttpProvider->SetGlobalProxy(proxyUri);

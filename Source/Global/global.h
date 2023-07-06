@@ -65,7 +65,7 @@ public:
     HttpPerformInfo const m_httpPerform;
     PerformEnv m_performEnv;
 
-    HRESULT set_global_proxy(_In_ const char* proxyUri);
+    HRESULT set_global_proxy(_In_z_ const char* proxyUri);
 
     std::atomic<std::uint64_t> m_lastId{ 0 };
     bool m_retryAllowed = true;

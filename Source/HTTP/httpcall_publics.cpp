@@ -121,7 +121,7 @@ CATCH_RETURN()
 
 STDAPI HCHttpCallGetRequestUrl(
     _In_ HCCallHandle call,
-    _Out_ const char** url
+    _Outptr_result_z_ const char** url
 ) noexcept
 try
 {

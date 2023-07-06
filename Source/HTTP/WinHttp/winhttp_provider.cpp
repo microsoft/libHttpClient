@@ -167,7 +167,7 @@ HRESULT CALLBACK WinHttpProvider::WebSocketDisconnectHandler(
 }
 #endif //!HC_NOWEBSOCKETS
 
-HRESULT WinHttpProvider::SetGlobalProxy(_In_ const char* proxyUri) noexcept
+HRESULT WinHttpProvider::SetGlobalProxy(_In_z_ const char* proxyUri) noexcept
 {
     std::lock_guard<std::mutex> lock(m_lock);
     m_globalProxy = proxyUri;
