@@ -18,6 +18,7 @@ private:
     std::shared_ptr<WinHttpProvider> m_sharedProvider;
 };
 
+#if !HC_NOWEBSOCKETS
 class WinHttp_WebSocketProvider : public IWebSocketProvider
 {
 public:
@@ -51,6 +52,7 @@ public:
 private:
     std::shared_ptr<WinHttpProvider> m_sharedProvider;
 };
+#endif
 
 HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 {
@@ -64,7 +66,9 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     std::shared_ptr<WinHttpProvider> sharedProvider{ initWinHttpResult.ExtractPayload() };
 
     components.HttpProvider = http_allocate_unique<WinHttp_HttpProvider>(sharedProvider);
+#if !HC_NOWEBSOCKETS
     components.WebSocketProvider = http_allocate_unique<WinHttp_WebSocketProvider>(sharedProvider);
+#endif
 
     return S_OK;
 }
@@ -78,6 +82,7 @@ HRESULT WinHttp_HttpProvider::PerformAsync(HCCallHandle callHandle, XAsyncBlock*
     return m_sharedProvider->PerformAsync(callHandle, async);
 }
 
+#if !HC_NOWEBSOCKETS
 WinHttp_WebSocketProvider::WinHttp_WebSocketProvider(std::shared_ptr<WinHttpProvider> provider) : m_sharedProvider{ std::move(provider) }
 {
 }
@@ -118,5 +123,6 @@ HRESULT WinHttp_WebSocketProvider::Disconnect(
 {
     return m_sharedProvider->Disconnect(websocketHandle, closeStatus);
 }
+#endif // !HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

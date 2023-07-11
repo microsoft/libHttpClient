@@ -3,6 +3,8 @@
 #include <httpClient/httpProvider.h>
 #include "IWebSocketProvider.h"
 
+#if !HC_NOWEBSOCKETS
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 class ExternalWebSocketProvider : public IWebSocketProvider
@@ -69,3 +71,5 @@ private:
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
+
+#endif

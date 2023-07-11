@@ -5,6 +5,8 @@
 #include <httpClient/httpProvider.h>
 #include "winrt_websocket.h"
 
+#if !HC_NOWEBSOCKETS
+
 using namespace xbox::httpclient;
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;
@@ -670,3 +672,5 @@ HRESULT WinRTWebSocketProvider::Disconnect(
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
+
+#endif // !HC_NOWEBSOCKETS

@@ -6,6 +6,12 @@ steps:
   - template: checkout.yml
 
   - task: Bash@3
+    displayName: 'Build and install OpenSSL'
+    inputs:
+      filePath: './Utilities/LinuxBuildScripts/openssl.bash'
+      arguments: '-c ${{ parameters.configuration }}'
+
+  - task: Bash@3
     displayName: 'Build libcurl'
     inputs:
       filePath: './Utilities/LinuxBuildScripts/curl.bash'
@@ -15,4 +21,4 @@ steps:
     displayName: 'Build libHttpClient'
     inputs:
       filePath: './Utilities/LinuxBuildScripts/libHttpClient_Linux.bash'
-      arguments: '-c ${{ parameters.configuration }} -nc'
+      arguments: '-c ${{ parameters.configuration }} -nc -ns'

@@ -48,7 +48,10 @@ struct XPlatSecurityInformation
     uint32_t enabledHttpSecurityProtocolFlags;
 };
 
-class WinHttpProvider : public IHttpProvider, public IWebSocketProvider
+class WinHttpProvider : public IHttpProvider
+#if !HC_NOWEBSOCKETS
+    , public IWebSocketProvider
+#endif
 {
 public:
     static Result<HC_UNIQUE_PTR<WinHttpProvider>> Initialize();

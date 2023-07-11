@@ -5,6 +5,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+#if !HC_NOWEBSOCKETS
 class WinRTWebSocketProvider : public IWebSocketProvider
 {
 public:
@@ -38,5 +39,6 @@ public:
         HCWebSocketCloseStatus closeStatus
     ) noexcept override;
 };
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

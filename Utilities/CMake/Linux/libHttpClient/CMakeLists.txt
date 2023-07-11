@@ -26,6 +26,7 @@ get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
     HC_COMMON_SOURCE_FILES
     GLOBAL_SOURCE_FILES
+    PLATFORM_SOURCE_FILES
     WEBSOCKET_SOURCE_FILES
     TASK_SOURCE_FILES
     MOCK_SOURCE_FILES
@@ -38,6 +39,7 @@ set(COMMON_SOURCE_FILES
     "${PUBLIC_SOURCE_FILES}"
     "${HC_COMMON_SOURCE_FILES}"
     "${GLOBAL_SOURCE_FILES}"
+    "${PLATFORM_SOURCE_FILES}"
     "${WEBSOCKET_SOURCE_FILES}"
     "${TASK_SOURCE_FILES}"
     "${MOCK_SOURCE_FILES}"
@@ -52,7 +54,8 @@ set(LINUX_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/HTTP/Curl/CurlMulti.h"
     "${PATH_TO_ROOT}/Source/HTTP/Curl/CurlProvider.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/Curl/CurlProvider.h"
-    "${PATH_TO_ROOT}/Source/Logger/Generic/generic_logger.cpp"
+    "${PATH_TO_ROOT}/Source/Platform/Generic/PlatformTrace_Generic.cpp"
+    "${PATH_TO_ROOT}/Source/Platform/Linux/PlatformComponents_Linux.cpp"
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
     "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
