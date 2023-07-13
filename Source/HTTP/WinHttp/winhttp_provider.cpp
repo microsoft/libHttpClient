@@ -13,7 +13,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
 {
     http_stl_allocator<WinHttpProvider> a{};
-    auto provider = HC_UNIQUE_PTR<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider, a };
+    auto provider = HC_UNIQUE_PTR<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider };
 
     RETURN_IF_FAILED(XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &provider->m_immediateQueue));
 
@@ -587,5 +587,57 @@ void WinHttpProvider::AppStateChangedCallback(BOOLEAN isSuspended, void* context
     }
 }
 #endif // HC_PLATFORM == HC_PLATFORM_GDK
+
+WinHttp_HttpProvider::WinHttp_HttpProvider(std::shared_ptr<xbox::httpclient::WinHttpProvider> provider) : WinHttpProvider{ std::move(provider) }
+{
+}
+
+HRESULT WinHttp_HttpProvider::PerformAsync(HCCallHandle callHandle, XAsyncBlock* async) noexcept
+{
+    return WinHttpProvider->PerformAsync(callHandle, async);
+}
+
+#if !HC_NOWEBSOCKETS
+WinHttp_WebSocketProvider::WinHttp_WebSocketProvider(std::shared_ptr<xbox::httpclient::WinHttpProvider> provider) : WinHttpProvider{ std::move(provider) }
+{
+}
+
+HRESULT WinHttp_WebSocketProvider::ConnectAsync(
+    String const& uri,
+    String const& subprotocol,
+    HCWebsocketHandle websocketHandle,
+    XAsyncBlock* async
+) noexcept
+{
+    return WinHttpProvider->ConnectAsync(uri, subprotocol, websocketHandle, async);
+}
+
+HRESULT WinHttp_WebSocketProvider::SendAsync(
+    HCWebsocketHandle websocketHandle,
+    const char* message,
+    XAsyncBlock* async
+) noexcept
+{
+    return WinHttpProvider->SendAsync(websocketHandle, message, async);
+}
+
+HRESULT WinHttp_WebSocketProvider::SendBinaryAsync(
+    HCWebsocketHandle websocketHandle,
+    const uint8_t* payloadBytes,
+    uint32_t payloadSize,
+    XAsyncBlock* asyncBlock
+) noexcept
+{
+    return WinHttpProvider->SendBinaryAsync(websocketHandle, payloadBytes, payloadSize, asyncBlock);
+}
+
+HRESULT WinHttp_WebSocketProvider::Disconnect(
+    HCWebsocketHandle websocketHandle,
+    HCWebSocketCloseStatus closeStatus
+) noexcept
+{
+    return WinHttpProvider->Disconnect(websocketHandle, closeStatus);
+}
+#endif // !HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

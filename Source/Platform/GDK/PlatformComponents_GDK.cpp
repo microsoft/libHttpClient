@@ -21,7 +21,7 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     auto initWinHttpResult = WinHttpProvider::Initialize();
     RETURN_IF_FAILED(initWinHttpResult.hr);
  
-    components.WebSocketProvider = initWinHttpResult.ExtractPayload();
+    components.WebSocketProvider = http_allocate_unique<WinHttp_WebSocketProvider>(initWinHttpResult.ExtractPayload());
 #endif
 
     return S_OK;
@@ -30,14 +30,16 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 // Test hooks for GDK Suspend/Resume testing
 void HCWinHttpSuspend()
 {
-    //auto httpSingleton = get_http_singleton();
-    //httpSingleton->m_performEnv->winHttpProvider->Suspend();
+    auto httpSingleton = get_http_singleton();
+    auto& winHttpProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider())->WinHttpProvider;
+    winHttpProvider->Suspend();
 }
 
 void HCWinHttpResume()
 {
-    //auto httpSingleton = get_http_singleton();
-    //httpSingleton->m_performEnv->winHttpProvider->Resume();
+    auto httpSingleton = get_http_singleton();
+    auto& winHttpProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider())->WinHttpProvider;
+    winHttpProvider->Resume();
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

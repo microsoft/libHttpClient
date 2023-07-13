@@ -48,10 +48,7 @@ struct XPlatSecurityInformation
     uint32_t enabledHttpSecurityProtocolFlags;
 };
 
-class WinHttpProvider : public IHttpProvider
-#if !HC_NOWEBSOCKETS
-    , public IWebSocketProvider
-#endif
+class WinHttpProvider
 {
 public:
     static Result<HC_UNIQUE_PTR<WinHttpProvider>> Initialize();
@@ -67,7 +64,7 @@ public: // IHttpProvider
     HRESULT PerformAsync(
         HCCallHandle callHandle,
         XAsyncBlock* async
-    ) noexcept override;
+    ) noexcept;
 
     HRESULT SetGlobalProxy(
         _In_ String const& proxyUri
@@ -80,25 +77,25 @@ public: // IWebSocketProvider
         String const& subprotocol,
         HCWebsocketHandle websocketHandle,
         XAsyncBlock* async
-    ) noexcept override;
+    ) noexcept;
 
     HRESULT SendAsync(
         HCWebsocketHandle websocketHandle,
         const char* message,
         XAsyncBlock* async
-    ) noexcept override;
+    ) noexcept;
 
     HRESULT SendBinaryAsync(
         HCWebsocketHandle websocketHandle,
         const uint8_t* payloadBytes,
         uint32_t payloadSize,
         XAsyncBlock* asyncBlock
-    ) noexcept override;
+    ) noexcept;
 
     HRESULT Disconnect(
         HCWebsocketHandle websocketHandle,
         HCWebSocketCloseStatus closeStatus
-    ) noexcept override;
+    ) noexcept;
 #endif
 
 private:
@@ -138,5 +135,55 @@ private:
     PAPPSTATE_REGISTRATION m_appStateChangedToken{ nullptr };
 #endif
 };
+
+class WinHttp_HttpProvider : public IHttpProvider
+{
+public:
+    WinHttp_HttpProvider(std::shared_ptr<WinHttpProvider> provider);
+
+    HRESULT PerformAsync(
+        HCCallHandle callHandle,
+        XAsyncBlock* async
+    ) noexcept override;
+
+    SharedPtr<WinHttpProvider> const WinHttpProvider;
+};
+
+#if !HC_NOWEBSOCKETS
+class WinHttp_WebSocketProvider : public IWebSocketProvider
+{
+public:
+    WinHttp_WebSocketProvider(std::shared_ptr<WinHttpProvider> provider);
+
+    HRESULT ConnectAsync(
+        String const& uri,
+        String const& subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async
+    ) noexcept override;
+
+    HRESULT SendAsync(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async
+    ) noexcept override;
+
+    HRESULT SendBinaryAsync(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* asyncBlock
+    ) noexcept override;
+
+    HRESULT Disconnect(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus
+    ) noexcept override;
+
+    SharedPtr<WinHttpProvider> const WinHttpProvider;
+};
+#endif
+
+
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
