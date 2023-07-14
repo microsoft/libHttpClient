@@ -376,9 +376,9 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         bool scheduleCleanup = state->ScheduleCleanup();
 
 #if !HC_NOWEBSOCKETS
-        HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", env->m_activeHttpRequests.size(), env->m_connectingWebSockets.size(), env->m_connectedWebSockets.size());
+        HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", state->m_activeHttpRequests.size(), state->m_connectingWebSockets.size(), state->m_connectedWebSockets.size());
 #endif
-        for (auto& activeRequest : env->m_activeHttpRequests)
+        for (auto& activeRequest : state->m_activeHttpRequests)
         {
             XAsyncCancel(activeRequest);
         }
