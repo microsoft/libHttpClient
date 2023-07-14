@@ -102,8 +102,7 @@ private:
 
     // Retry metadata
     chrono_clock_t::time_point m_performStartTime{};
-    uint32_t m_iterationNumber{ 0 };  
+    uint32_t m_iterationNumber{ 0 };
 
     xbox::httpclient::IHttpProvider& m_provider;
 };
-

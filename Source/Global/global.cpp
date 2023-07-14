@@ -138,6 +138,8 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
         performEnvCleanupAsyncBlock->context = data->async;
         performEnvCleanupAsyncBlock->callback = [](XAsyncBlock* async)
         {
+            HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::CleanupAsync Complete");
+
             HC_UNIQUE_PTR<XAsyncBlock> performEnvCleanupAsyncBlock{ async };
             XAsyncBlock* singletonCleanupAsyncBlock = static_cast<XAsyncBlock*>(performEnvCleanupAsyncBlock->context);
 
@@ -149,7 +151,7 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
                 // Provider cleanup really should never fail. If it does, there isn't much we can do so log error and continue with cleanup
                 HC_TRACE_ERROR_HR(HTTPCLIENT, cleanupResult, "HC_PERFORM_ENV::CleanupAsync failed unexpectedly, continuing with cleanup");
             }
-            
+
             // PerformEnv cleanup complete, continue with singleton cleanup
             XAsyncSchedule(singletonCleanupAsyncBlock, 0);
         };

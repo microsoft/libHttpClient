@@ -328,7 +328,11 @@ typedef struct _LIST_ENTRY {
 #endif
 
 #ifndef _Outptr_
-#define _Outptr_ 
+#define _Outptr_
+#endif
+
+#ifndef _Outptr_result_z_
+#define _Outptr_result_z_
 #endif
 
 #ifndef _Outptr_result_maybenull_

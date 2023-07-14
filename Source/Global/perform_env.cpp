@@ -375,7 +375,10 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         state->m_cleanupAsyncBlock = data->async;
         bool scheduleCleanup = state->ScheduleCleanup();
 
-        for (auto& activeRequest : state->m_activeHttpRequests)
+#if !HC_NOWEBSOCKETS
+        HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", env->m_activeHttpRequests.size(), env->m_connectingWebSockets.size(), env->m_connectedWebSockets.size());
+#endif
+        for (auto& activeRequest : env->m_activeHttpRequests)
         {
             XAsyncCancel(activeRequest);
         }
@@ -452,7 +455,11 @@ bool NetworkState::ScheduleCleanup()
         // HC_PERFORM_ENV::CleanupAsync has not yet been called
         return false;
     }
-    else if (!m_activeHttpRequests.empty())
+
+#if !HC_NOWEBSOCKETS
+    HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::Cleaning up, HTTP=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", m_activeHttpRequests.size(), m_connectingWebSockets.size(), m_connectedWebSockets.size());
+#endif
+    if (!m_activeHttpRequests.empty())
     {
         // Pending Http Requests
         return false;

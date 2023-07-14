@@ -68,7 +68,7 @@ try
 CATCH_RETURN()
 
 STDAPI
-HCSetGlobalProxy(_In_ const char* proxyUri) noexcept
+HCSetGlobalProxy(_In_z_ const char* proxyUri) noexcept
 try
 {
     auto httpSingleton = get_http_singleton();

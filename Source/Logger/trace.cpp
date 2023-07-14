@@ -17,8 +17,9 @@
 namespace
 {
 
+#if !HC_PLATFORM_IS_MICROSOFT
 template<size_t SIZE>
-int stprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format ...) noexcept
+int sprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format ...) noexcept
 {
     va_list varArgs{};
     va_start(varArgs, format);
@@ -27,7 +28,7 @@ int stprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format ..
     return result;
 }
 
-int stprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* format ...) noexcept
+int sprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* format ...) noexcept
 {
     va_list varArgs{};
     va_start(varArgs, format);
@@ -37,10 +38,11 @@ int stprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* for
 }
 
 template<size_t SIZE>
-int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
+int vsprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
 {
     return vsnprintf(buffer, SIZE, format, varArgs);
 }
+#endif
 
 //------------------------------------------------------------------------------
 // Trace implementation
@@ -84,7 +86,7 @@ void TraceMessageToDebugger(
 
     char outputBuffer[BUFFER_SIZE] = {};
     // [threadId][level][time][area] message
-    auto written = stprintf_s(outputBuffer, "[%04llX][%s][%02d:%02d:%02d.%03u][%s] %s",
+    auto written = sprintf_s(outputBuffer, "[%04llX][%s][%02d:%02d:%02d.%03u][%s] %s",
         threadId,
         traceLevelNames[static_cast<size_t>(level)],
         fmtTime.tm_hour,
@@ -104,7 +106,7 @@ void TraceMessageToDebugger(
     auto remaining = BUFFER_SIZE - written;
 
     // Print new line
-    auto written2 = stprintf_s(outputBuffer + written, remaining, "\r\n");
+    auto written2 = sprintf_s(outputBuffer + written, remaining, "\r\n");
     if (written2 <= 0)
     {
         return;
@@ -191,7 +193,7 @@ STDAPI_(void) HCTraceImplMessage_v(
 
     char message[4096] = {};
 
-    auto result = vstprintf_s(message, format, varArgs);
+    auto result = vsprintf_s(message, format, varArgs);
 
     if (result < 0)
     {
