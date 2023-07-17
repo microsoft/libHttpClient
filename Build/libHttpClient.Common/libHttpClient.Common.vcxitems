@@ -34,7 +34,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\perform_env.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h" />
@@ -55,7 +55,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\perform_env.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_publics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />

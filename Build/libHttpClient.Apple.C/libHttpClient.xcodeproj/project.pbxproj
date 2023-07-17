@@ -82,6 +82,11 @@
 		7279792B2A4E32A800EB7079 /* ExternalWebSocketProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 727978F72A4E32A800EB7079 /* ExternalWebSocketProvider.h */; };
 		727979342A4E32A800EB7079 /* IHttpProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 727978FB2A4E32A800EB7079 /* IHttpProvider.h */; };
 		727979392A4E32A800EB7079 /* PlatformTrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 727978FE2A4E32A800EB7079 /* PlatformTrace.h */; };
+		72FC98D82A65FA5B00A158B6 /* NetworkState.h in Headers */ = {isa = PBXBuildFile; fileRef = 72FC98D62A65FA5B00A158B6 /* NetworkState.h */; };
+		72FC98D92A65FA5B00A158B6 /* NetworkState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72FC98D72A65FA5B00A158B6 /* NetworkState.cpp */; };
+		72FC98DA2A65FA5B00A158B6 /* NetworkState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72FC98D72A65FA5B00A158B6 /* NetworkState.cpp */; };
+		72FC98DB2A65FA5B00A158B6 /* NetworkState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72FC98D72A65FA5B00A158B6 /* NetworkState.cpp */; };
+		72FC98DC2A65FA5B00A158B6 /* NetworkState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72FC98D72A65FA5B00A158B6 /* NetworkState.cpp */; };
 		7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B6209ADEB100CC6774 /* global_publics.cpp */; };
 		7DB100BF2119276B00AE22F5 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B8209ADEB100CC6774 /* global.cpp */; };
 		7DB100C02119276B00AE22F5 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E9B9209ADEB100CC6774 /* mem.cpp */; };
@@ -118,10 +123,6 @@
 		A590598B27A9BD5D007AC168 /* httpcall_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A590598227A9BCD1007AC168 /* httpcall_publics.cpp */; };
 		A590598C27A9BD5D007AC168 /* httpcall_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A590598227A9BCD1007AC168 /* httpcall_publics.cpp */; };
 		A590598D27A9BD5E007AC168 /* httpcall_publics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A590598227A9BCD1007AC168 /* httpcall_publics.cpp */; };
-		A5A985FE2739B3A400361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
-		A5A985FF2739B3A500361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
-		A5A986002739B3A500361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
-		A5A986012739B3A600361934 /* perform_env.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5F9D6632734D19E007BBBBA /* perform_env.cpp */; };
 		A5A986092739CD6C00361934 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		A5A9860A2739CD6C00361934 /* hcwebsocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E97C209ADEB100CC6774 /* hcwebsocket.cpp */; };
 		D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D335CABE24085A9A005958B3 /* LocklessQueue.h */; };
@@ -345,6 +346,8 @@
 		727978F72A4E32A800EB7079 /* ExternalWebSocketProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExternalWebSocketProvider.h; sourceTree = "<group>"; };
 		727978FB2A4E32A800EB7079 /* IHttpProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IHttpProvider.h; sourceTree = "<group>"; };
 		727978FE2A4E32A800EB7079 /* PlatformTrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformTrace.h; sourceTree = "<group>"; };
+		72FC98D62A65FA5B00A158B6 /* NetworkState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetworkState.h; sourceTree = "<group>"; };
+		72FC98D72A65FA5B00A158B6 /* NetworkState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NetworkState.cpp; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
@@ -356,8 +359,6 @@
 		A590598227A9BCD1007AC168 /* httpcall_publics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httpcall_publics.cpp; sourceTree = "<group>"; };
 		A590598427A9BCFB007AC168 /* websocket_publics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocket_publics.cpp; sourceTree = "<group>"; };
 		A5A985FD27360CD100361934 /* Result.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Result.h; sourceTree = "<group>"; };
-		A5F9D6632734D19E007BBBBA /* perform_env.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = perform_env.cpp; sourceTree = "<group>"; };
-		A5F9D6642734D19E007BBBBA /* perform_env.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = perform_env.h; sourceTree = "<group>"; };
 		D335CABE24085A9A005958B3 /* LocklessQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocklessQueue.h; sourceTree = "<group>"; };
 		D3C5B5502148481F004BE1FF /* WaitTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaitTimer.h; sourceTree = "<group>"; };
 		D3C5B552214848B6004BE1FF /* ios_WaitTimer_target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_WaitTimer_target.h; sourceTree = "<group>"; };
@@ -652,8 +653,8 @@
 		58A7E9B4209ADEB100CC6774 /* Global */ = {
 			isa = PBXGroup;
 			children = (
-				A5F9D6632734D19E007BBBBA /* perform_env.cpp */,
-				A5F9D6642734D19E007BBBBA /* perform_env.h */,
+				72FC98D72A65FA5B00A158B6 /* NetworkState.cpp */,
+				72FC98D62A65FA5B00A158B6 /* NetworkState.h */,
 				58A7E9B6209ADEB100CC6774 /* global_publics.cpp */,
 				58A7E9B8209ADEB100CC6774 /* global.cpp */,
 				58A7E9B5209ADEB100CC6774 /* global.h */,
@@ -830,6 +831,7 @@
 				727977172A4E2FCF00EB7079 /* websocketpp_websocket.h in Headers */,
 				D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */,
 				7279792A2A4E32A800EB7079 /* PlatformComponents.h in Headers */,
+				72FC98D82A65FA5B00A158B6 /* NetworkState.h in Headers */,
 				7279790F2A4E32A800EB7079 /* IWebSocketProvider.h in Headers */,
 				727979292A4E32A800EB7079 /* ExternalHttpProvider.h in Headers */,
 				7279792B2A4E32A800EB7079 /* ExternalWebSocketProvider.h in Headers */,
@@ -1073,7 +1075,7 @@
 					};
 					67EE817D2362599C00A5F3DE = {
 						CreatedOnToolsVersion = 10.3;
-						LastSwiftMigration = 1310;
+						LastSwiftMigration = 1430;
 					};
 					7DB100A62119206B00AE22F5 = {
 						CreatedOnToolsVersion = 9.4.1;
@@ -1206,7 +1208,6 @@
 				58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */,
 				58A7E9C5209ADEB100CC6774 /* lhc_mock.cpp in Sources */,
 				58A7E9D4209ADEB100CC6774 /* httpcall_response.cpp in Sources */,
-				A5A985FE2739B3A400361934 /* perform_env.cpp in Sources */,
 				A590598627A9BD53007AC168 /* websocket_publics.cpp in Sources */,
 				9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				A590598A27A9BD5C007AC168 /* httpcall_publics.cpp in Sources */,
@@ -1220,6 +1221,7 @@
 				D3DAA85121C0E4090009C7F6 /* TaskQueue.cpp in Sources */,
 				727979072A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979032A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
+				72FC98D92A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				58A7E9C3209ADEB100CC6774 /* mock_publics.cpp in Sources */,
 				58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */,
 				A207D73E262F3E35005C0A65 /* request_body_stream.mm in Sources */,
@@ -1259,7 +1261,6 @@
 				7DB100C32119276B00AE22F5 /* httpcall_response.cpp in Sources */,
 				7DB100C42119276B00AE22F5 /* httpcall.cpp in Sources */,
 				2C872C5E221C8FB70054F791 /* TaskQueue.cpp in Sources */,
-				A5A985FF2739B3A500361934 /* perform_env.cpp in Sources */,
 				A590598727A9BD54007AC168 /* websocket_publics.cpp in Sources */,
 				A590598B27A9BD5D007AC168 /* httpcall_publics.cpp in Sources */,
 				9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
@@ -1272,6 +1273,7 @@
 				7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */,
 				727979082A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979042A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
+				72FC98DA2A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				2C872C5F221C8FB70054F791 /* ThreadPool_stl.cpp in Sources */,
 				7DB100C92119276B00AE22F5 /* lhc_mock.cpp in Sources */,
 				A207D73F262F3E35005C0A65 /* request_body_stream.mm in Sources */,
@@ -1303,7 +1305,6 @@
 				D9EF882F25A522BC005C4BDF /* trace.cpp in Sources */,
 				D9EF883025A522BC005C4BDF /* lhc_mock.cpp in Sources */,
 				D9EF883125A522BC005C4BDF /* httpcall_response.cpp in Sources */,
-				A5A986002739B3A500361934 /* perform_env.cpp in Sources */,
 				A590598827A9BD55007AC168 /* websocket_publics.cpp in Sources */,
 				D9EF883225A522BC005C4BDF /* websocketpp_websocket.cpp in Sources */,
 				A590598C27A9BD5D007AC168 /* httpcall_publics.cpp in Sources */,
@@ -1317,6 +1318,7 @@
 				A5A986092739CD6C00361934 /* hcwebsocket.cpp in Sources */,
 				727979092A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979052A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
+				72FC98DB2A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				D9EF883825A522BC005C4BDF /* mock_publics.cpp in Sources */,
 				D9EF883925A522BC005C4BDF /* log_publics.cpp in Sources */,
 				A207D740262F3E35005C0A65 /* request_body_stream.mm in Sources */,
@@ -1347,7 +1349,6 @@
 				D9FF0A6625A5366A0061B717 /* trace.cpp in Sources */,
 				D9FF0A6725A5366A0061B717 /* lhc_mock.cpp in Sources */,
 				D9FF0A6825A5366A0061B717 /* httpcall_response.cpp in Sources */,
-				A5A986012739B3A600361934 /* perform_env.cpp in Sources */,
 				A590598927A9BD55007AC168 /* websocket_publics.cpp in Sources */,
 				D9FF0A6925A5366A0061B717 /* websocketpp_websocket.cpp in Sources */,
 				A590598D27A9BD5E007AC168 /* httpcall_publics.cpp in Sources */,
@@ -1361,6 +1362,7 @@
 				A5A9860A2739CD6C00361934 /* hcwebsocket.cpp in Sources */,
 				7279790A2A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979062A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
+				72FC98DC2A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				D9FF0A6F25A5366A0061B717 /* mock_publics.cpp in Sources */,
 				D9FF0A7025A5366A0061B717 /* log_publics.cpp in Sources */,
 				A207D741262F3E35005C0A65 /* request_body_stream.mm in Sources */,

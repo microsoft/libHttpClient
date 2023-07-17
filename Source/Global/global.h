@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Platform/PlatformComponents.h"
-#include "perform_env.h"
+#include "NetworkState.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 

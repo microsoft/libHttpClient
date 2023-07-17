@@ -49,8 +49,8 @@ function(GET_COMMON_HC_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/Global/global_publics.cpp"
         "${PATH_TO_ROOT}/Source/Global/global.cpp"
         "${PATH_TO_ROOT}/Source/Global/global.h"
-        "${PATH_TO_ROOT}/Source/Global/perform_env.cpp"
-        "${PATH_TO_ROOT}/Source/Global/perform_env.h"
+        "${PATH_TO_ROOT}/Source/Global/NetworkState.cpp"
+        "${PATH_TO_ROOT}/Source/Global/NetworkState.h"
         PARENT_SCOPE
         )
 
