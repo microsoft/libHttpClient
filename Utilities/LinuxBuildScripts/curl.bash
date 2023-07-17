@@ -33,10 +33,10 @@ autoreconf -fi "$SCRIPT_DIR"/../../External/curl
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    ./configure --disable-shared --disable-dependency-tracking -with-openssl=/home/local/ssl --enable-symbol-hiding --enable-debug
+    ./configure --disable-shared --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --enable-debug
 else
     # make libcrypto and libssl
-    ./configure --disable-shared --disable-dependency-tracking -with-openssl=/home/local/ssl --enable-symbol-hiding --disable-debug
+    ./configure --disable-shared --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --disable-debug
 fi
 
 make

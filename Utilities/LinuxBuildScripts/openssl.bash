@@ -35,10 +35,10 @@ sed -i -e 's/\r$//' Configure
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    ./Configure --prefix=/home/local/ssl --openssldir=/home/local/ssl linux-x86_64-clang no-shared no-hw no-engine no-async -d
+    ./Configure linux-x86_64-clang no-shared no-hw no-engine no-async -d
 else
     # make libcrypto and libssl
-    ./Configure --prefix=/home/local/ssl --openssldir=/home/local/ssl linux-x86_64-clang no-shared no-hw no-engine no-async
+    ./Configure linux-x86_64-clang no-shared no-hw no-engine no-async
 fi
 
 make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
