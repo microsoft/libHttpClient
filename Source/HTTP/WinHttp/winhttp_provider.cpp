@@ -2,7 +2,6 @@
 #include "HTTP/httpcall.h"
 #include "winhttp_provider.h"
 #include "winhttp_connection.h"
-#include "Global/perform_env.h"
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XGameRuntimeFeature.h>
