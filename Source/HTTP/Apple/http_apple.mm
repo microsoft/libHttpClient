@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #import <Foundation/Foundation.h>
+#include <httpClient/httpProvider.h>
 #include "http_apple.h"
 #include "request_body_stream.h"
 #include "session_delegate.h"
@@ -148,23 +149,18 @@ bool http_task_apple::initiate_request()
     return true;
 }
 
-void AppleHttpCallPerformAsync(
+HRESULT AppleHttpProvider::PerformAsync(
     _In_ HCCallHandle call,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
+    _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    assert(context == nullptr);
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(env);
-
     std::unique_ptr<xbox::httpclient::http_task_apple> httpTask(new xbox::httpclient::http_task_apple(asyncBlock, call));
     HCHttpCallSetContext(call, &httpTask);
     if (httpTask->initiate_request())
     {
          httpTask.release();
     }
+    return S_OK;
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

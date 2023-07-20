@@ -1,37 +1,39 @@
 #pragma once
 
-#include "../hcwebsocket.h"
+#include "WebSocket/hcwebsocket.h"
+#include "Platform/IWebSocketProvider.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-HRESULT CALLBACK WebSocketppConnectAsync(
-    _In_z_ const char* uri,
-    _In_z_ const char* subProtocol,
-    _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* async,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-);
+#if !HC_NOWEBSOCKETS
+class WebSocketppProvider : public IWebSocketProvider
+{
+public:
+    HRESULT ConnectAsync(
+        String const& uri,
+        String const& subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async
+    ) noexcept override;
 
-HRESULT CALLBACK WebSocketppSendMessageAsync(
-    _In_ HCWebsocketHandle websocket,
-    _In_z_ const char* message,
-    _Inout_ XAsyncBlock* async,
-    _In_opt_ void* context
-);
+    HRESULT SendAsync(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async
+    ) noexcept override;
 
-HRESULT CALLBACK WebSocketppSendBinaryMessageAsync(
-    _In_ HCWebsocketHandle websocket,
-    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
-    _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context
-);
+    HRESULT SendBinaryAsync(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* async
+    ) noexcept override;
 
-HRESULT CALLBACK WebSocketppDisconnect(
-    _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus,
-    _In_opt_ void* context
-);
+    HRESULT Disconnect(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus
+    ) noexcept override;
+};
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

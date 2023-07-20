@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\bio_ssl.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\d1_lib.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\d1_msg.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\d1_srtp.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\dtls1_bitmap.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\extensions.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\extensions_clnt.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\extensions_cust.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\extensions_srvr.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\methods.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\packet.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\pqueue.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\rec_layer_d1.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\rec_layer_s3.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\s3_cbc.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\s3_enc.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\s3_lib.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\s3_msg.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_asn1.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_cert.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_ciph.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_conf.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_err.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_init.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_lib.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_mcnf.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_rsa.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_sess.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_stat.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_txt.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\ssl_utst.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\ssl3_buffer.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\ssl3_record.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\ssl3_record_tls13.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\statem.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\statem_clnt.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\statem_dtls.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\statem_lib.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\statem\statem_srvr.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\t1_enc.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\t1_lib.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\t1_trce.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\tls_srp.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\openssl\ssl\tls13_enc.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{9f86cc2d-6255-4e1c-88e6-1c6b4188bfbe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

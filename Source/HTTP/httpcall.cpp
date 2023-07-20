@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#include <httpClient/httpProvider.h>
 #include "httpcall.h"
 #include "../Mock/lhc_mock.h"
 
@@ -17,31 +18,15 @@ using namespace xbox::httpclient;
 #endif
 #define RETRY_AFTER_HEADER ("Retry-After")
 
-HC_CALL::HC_CALL(uint64_t _id) : id{ _id }
+HC_CALL::HC_CALL(uint64_t _id, IHttpProvider& provider) :
+    id{ _id },
+    m_provider{ provider }
 {
 }
 
 HC_CALL::~HC_CALL()
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, __FUNCTION__);
-}
-
-Result<HC_UNIQUE_PTR<HC_CALL>> HC_CALL::Initialize()
-{
-    auto httpSingleton = get_http_singleton();
-    RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
-
-    http_stl_allocator<HC_CALL> a{};
-    HC_UNIQUE_PTR<HC_CALL> call{ new (a.allocate(1)) HC_CALL{ ++httpSingleton->m_lastId }, http_alloc_deleter<HC_CALL>{} };
-
-    call->retryAllowed = httpSingleton->m_retryAllowed;
-    call->timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
-    call->timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
-    call->retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
-    call->m_performInfo = httpSingleton->m_httpPerform;
-    call->m_performEnv = httpSingleton->m_performEnv.get();
-
-    return call;
 }
 
 // Context for PerformAsyncProvider. Ensures HC_CALL lifetime until perform completes
@@ -215,7 +200,7 @@ HRESULT HC_CALL::PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderDa
 
         try
         {
-            call->m_performInfo.handler(call, data->async, call->m_performInfo.context, call->m_performEnv);
+            RETURN_IF_FAILED(call->m_provider.PerformAsync(call, data->async));
         }
         catch (...)
         {

@@ -4,9 +4,9 @@
 #include "UnitTestIncludes.h"
 #include "XAsync.h"
 #include "XAsyncProvider.h"
-#include "XAsyncProviderPriv.h"
+#include "Task\XAsyncProviderPriv.h"
 #include "XTaskQueue.h"
-#include "XTaskQueuePriv.h"
+#include "Task\XTaskQueuePriv.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 

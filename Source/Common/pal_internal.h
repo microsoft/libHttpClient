@@ -9,6 +9,7 @@
 #define MAXUINT UINT_MAX
 #endif
 
+#ifndef _WIN32
 typedef unsigned char BYTE;
 typedef unsigned long DWORD;
 typedef void *PVOID;
@@ -18,3 +19,5 @@ typedef BYTE BOOLEAN;
 typedef BYTE *PBYTE;
 typedef PVOID HANDLE;
 #endif
+#endif
+

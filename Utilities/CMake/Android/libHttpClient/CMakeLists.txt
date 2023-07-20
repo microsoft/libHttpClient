@@ -15,6 +15,7 @@ get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
     HC_COMMON_SOURCE_FILES
     GLOBAL_SOURCE_FILES
+    PLATFORM_SOURCE_FILES
     WEBSOCKET_SOURCE_FILES
     TASK_SOURCE_FILES
     MOCK_SOURCE_FILES
@@ -27,6 +28,7 @@ set(COMMON_SOURCE_FILES
     "${PUBLIC_SOURCE_FILES}"
     "${HC_COMMON_SOURCE_FILES}"
     "${GLOBAL_SOURCE_FILES}"
+    "${PLATFORM_SOURCE_FILES}"
     "${WEBSOCKET_SOURCE_FILES}"
     "${TASK_SOURCE_FILES}"
     "${MOCK_SOURCE_FILES}"
@@ -36,18 +38,19 @@ set(COMMON_SOURCE_FILES
 
 set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Include/httpClient/async_jvm.h"
-    "${PATH_TO_ROOT}/Source/Common/Android/utils_android.cpp"
-    "${PATH_TO_ROOT}/Source/Common/Android/utils_android.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/android_http_request.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/Android/android_http_request.h"
-    "${PATH_TO_ROOT}/Source/HTTP/Android/android_platform_context.cpp"
-    "${PATH_TO_ROOT}/Source/HTTP/Android/android_platform_context.h"
-    "${PATH_TO_ROOT}/Source/Logger/Android/android_logger.cpp"
+    "${PATH_TO_ROOT}/Source/HTTP/Android/AndroidHttpProvider.cpp"
+    "${PATH_TO_ROOT}/Source/HTTP/Android/AndroidHttpProvider.h"
+    "${PATH_TO_ROOT}/Source/Platform/Android/PlatformComponents_Android.cpp"
+    "${PATH_TO_ROOT}/Source/Platform/Android/PlatformComponents_Android.h"
+    "${PATH_TO_ROOT}/Source/Platform/Android/PlatformTrace_Android.cpp"
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Android/okhttp_websocket.cpp"
+    "${PATH_TO_ROOT}/Source/WebSocket/Android/AndroidWebSocketProvider.cpp"
+    "${PATH_TO_ROOT}/Source/WebSocket/Android/AndroidWebSocketProvider.h"
     )
 
  set(COMMON_INCLUDE_DIRS
@@ -55,6 +58,7 @@ set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Common"
     "${PATH_TO_ROOT}/Source/HTTP"
     "${PATH_TO_ROOT}/Source/Logger"
+    "${PATH_TO_ROOT}/Source/Platform"
     "${PATH_TO_ROOT}/Include"
     "${PATH_TO_ROOT}/Include/httpClient"
     "${PATH_TO_ROOT}/External/asio/asio/include"

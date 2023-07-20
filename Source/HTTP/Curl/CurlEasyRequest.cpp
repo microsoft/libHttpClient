@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <cstring>
+#include <httpClient/httpProvider.h>
 #include "CurlEasyRequest.h"
 #include "CurlProvider.h"
 
@@ -45,23 +46,24 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     // not being able to handle handshakes without a fixed body size.
     // The reason for an if def statement is to handle the behavioral differences in libCurl vs xCurl.
     
-    #if HC_PLATFORM == HC_PLATFORM_GDK
-        if (bodySize > 0) {
-            RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
-            RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
-
-            // read callback
-            RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
-            RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
-        }
-    #else
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (bodySize > 0)
+    {
         RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
         RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
 
         // read callback
         RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
         RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
-    #endif
+    }
+#else
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
+
+    // read callback
+    RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
+    RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
+#endif
 
     // url & method
     char const* url = nullptr;
@@ -111,7 +113,7 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     RETURN_IF_FAILED(HCHttpCallRequestGetTimeout(hcCall, &timeoutSeconds));
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_TIMEOUT_MS, timeoutSeconds * 1000));
 
-    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_VERBOSE, 0)); // verbose logging (0 off, 1 on)
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_VERBOSE, 1)); // verbose logging (0 off, 1 on)
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_HEADER, 0)); // do not write headers to the write callback
     RETURN_IF_FAILED(easyRequest->SetOpt<char*>(CURLOPT_ERRORBUFFER, easyRequest->m_errorBuffer));
 
@@ -199,7 +201,7 @@ HRESULT CurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
 
 size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::ReadCallback: reading body data (%llu items of size %llu)", nitems, size);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::ReadCallback: reading body data (%zu items of size %zu)", nitems, size);
 
     auto request = static_cast<CurlEasyRequest*>(context);
 
@@ -235,7 +237,7 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
 
 size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteHeaderCallback: received header (%llu items of size %llu)", nitems, size);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteHeaderCallback: received header (%zu items of size %zu)", nitems, size);
 
     auto request = static_cast<CurlEasyRequest*>(context);
 
@@ -299,7 +301,7 @@ size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t ni
 
 size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept
 {
-    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%llu bytes)", nmemb);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%zu bytes)", nmemb);
 
     auto request = static_cast<CurlEasyRequest*>(context);
 

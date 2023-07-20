@@ -1,33 +1,44 @@
 #pragma once
 
-#include "hcwebsocket.h"
+#include "WebSocket/hcwebsocket.h"
+#include "Platform/IWebSocketProvider.h"
 
-HRESULT CALLBACK WinRTWebSocketConnectAsync(
-    _In_z_ PCSTR uri,
-    _In_z_ PCSTR subProtocol,
-    _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-);
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-HRESULT CALLBACK WinRTWebSocketSendMessageAsync(
-    _In_ HCWebsocketHandle websocket,
-    _In_z_ PCSTR message,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context
-);
+#if !HC_NOWEBSOCKETS
+class WinRTWebSocketProvider : public IWebSocketProvider
+{
+public:
+    WinRTWebSocketProvider() = default;
+    WinRTWebSocketProvider(WinRTWebSocketProvider const&) = default;
+    WinRTWebSocketProvider& operator=(WinRTWebSocketProvider const&) = default;
+    ~WinRTWebSocketProvider() = default;
 
-HRESULT CALLBACK WinRTWebSocketSendBinaryMessageAsync(
-    _In_ HCWebsocketHandle websocket,
-    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
-    _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context
-);
+    HRESULT ConnectAsync(
+        String const& uri,
+        String const& subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async
+    ) noexcept override;
 
-HRESULT CALLBACK WinRTWebSocketDisconnect(
-    _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketCloseStatus closeStatus,
-    _In_opt_ void* context
-);
+    HRESULT SendAsync(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async
+    ) noexcept override;
+
+    HRESULT SendBinaryAsync(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* async
+    ) noexcept override;
+
+    HRESULT Disconnect(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus
+    ) noexcept override;
+};
+#endif
+
+NAMESPACE_XBOX_HTTP_CLIENT_END

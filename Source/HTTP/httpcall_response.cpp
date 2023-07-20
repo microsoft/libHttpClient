@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#include <httpClient/httpProvider.h>
 #include "httpcall.h"
 
 using namespace xbox::httpclient;
@@ -193,7 +194,7 @@ try
     call->responseBodyBytes.insert(call->responseBodyBytes.end(), bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%zu (total=%llu)", TO_ULL(call->id), bodySize, call->responseBodyBytes.size()); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%zu (total=%zu)", TO_ULL(call->id), bodySize, call->responseBodyBytes.size()); }
     return S_OK;
 }
 CATCH_RETURN()

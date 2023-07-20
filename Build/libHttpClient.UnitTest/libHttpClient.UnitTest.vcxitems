@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{8ef7009a-36cf-4d82-9fb7-6d69154893cf}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>HC_UNITTEST_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCRoot)\Tests\UnitTests\Support;$(HCRoot)\Tests\UnitTests;</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\DefineTestMacros.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\UnitTestIncludes.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\PumpedTaskQueue.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Generic\PlatformComponents_Generic.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\AsyncBlockTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueueTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />
+  </ItemGroup>
+</Project>

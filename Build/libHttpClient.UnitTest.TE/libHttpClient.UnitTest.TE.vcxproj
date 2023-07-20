@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9DD2BA60-6505-493A-8C41-8085C44E9F1F}</ProjectGuid>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Tests\UnitTests\Support\TE\UnitTestHelpers.h" />
+    <ClInclude Include="..\..\Tests\UnitTests\Support\TE\UnitTestIncludes_TE.h" />
+  </ItemGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems" Label="Shared" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems" Label="Shared" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;UNITTEST_TE;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalUsingDirectories>C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\store\references;C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\VC\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
