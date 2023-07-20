@@ -64,7 +64,7 @@ public:
     bool sslValidation{ true };
 #endif
     uint32_t timeoutInSeconds{ 0 };
-    HCCompressionAlgorithm compressionAlgorithm{ xbox::httpclient::HCCompressionAlgorithm::None };
+    xbox::httpclient::HCCompressionAlgorithm compressionAlgorithm{ xbox::httpclient::HCCompressionAlgorithm::None };
 
     // Response properties
     HRESULT networkErrorCode{ S_OK };
