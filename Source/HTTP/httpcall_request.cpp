@@ -93,6 +93,30 @@ try
 CATCH_RETURN()
 
 STDAPI
+HCHttpCallRequestEnableGzipCompression(
+    _In_ HCCallHandle call
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->compressionAlgorithm = xbox::httpclient::HCCompressionAlgorithm::Gzip;
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestEnableGzipCompression [ID %llu]", TO_ULL(call->id)); }
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
 HCHttpCallRequestSetRequestBodyString(
     _In_ HCCallHandle call,
     _In_z_ const char* requestBodyString

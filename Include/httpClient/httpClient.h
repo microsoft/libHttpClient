@@ -372,6 +372,16 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
     ) noexcept;
 
 /// <summary>
+/// TODO
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallRequestEnableGzipCompression(
+    _In_ HCCallHandle call
+) noexcept;
+
+/// <summary>
 /// The callback definition used by an HTTP call to read the request body. This callback will be invoked
 /// on an unspecified background thread which is platform dependent.
 /// </summary>

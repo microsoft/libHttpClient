@@ -18,6 +18,14 @@ struct HeaderCompare
 
 using HttpHeaders = http_internal_map<http_internal_string, http_internal_string, HeaderCompare>;
 
+enum class HCCompressionAlgorithm : uint32_t
+{
+    None = 0,
+    Gzip,
+    Deflate,
+    Brotli
+};
+
 } // namesapce httpclient
 } // namespace xbox
 
@@ -56,6 +64,7 @@ public:
     bool sslValidation{ true };
 #endif
     uint32_t timeoutInSeconds{ 0 };
+    HCCompressionAlgorithm compressionAlgorithm{ xbox::httpclient::HCCompressionAlgorithm::None };
 
     // Response properties
     HRESULT networkErrorCode{ S_OK };
