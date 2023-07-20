@@ -5,6 +5,7 @@
 #include <winhttp.h>
 #include "utils.h"
 #include "uri.h"
+#include "winhttp_provider.h"
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #endif

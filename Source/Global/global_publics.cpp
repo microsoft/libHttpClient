@@ -5,6 +5,7 @@
 #include "../HTTP/httpcall.h"
 #include "buildver.h"
 #include "global.h"
+#include "Platform/ExternalHttpProvider.h"
 
 using namespace xbox::httpclient;
 
@@ -76,7 +77,7 @@ try
         return E_HC_NOT_INITIALISED;
     }
 
-    return httpSingleton->set_global_proxy(proxyUri);
+    return httpSingleton->m_networkState->HttpProvider().SetGlobalProxy(proxyUri);
 }
 CATCH_RETURN()
 
@@ -84,23 +85,36 @@ STDAPI
 HCSetHttpCallPerformFunction(
     _In_ HCCallPerformFunction performFunc,
     _In_opt_ void* performContext
-    ) noexcept
+) noexcept
 {
-    if (performFunc == nullptr)
-    {
-        return E_INVALIDARG;
-    }
-
     auto httpSingleton = get_http_singleton();
     if (httpSingleton)
     {
         return E_HC_ALREADY_INITIALISED;
     }
 
-    auto& info = GetUserHttpPerformHandler();
-    info.handler = performFunc;
-    info.context = performContext;
-    return S_OK;
+    return ExternalHttpProvider::Get().SetCallback(performFunc, performContext);
+}
+
+void CALLBACK HttpProviderPerformAsyncProxy(
+    _In_ HCCallHandle call,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_opt_ HCPerformEnv env
+) noexcept
+{
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+    }
+    else
+    {
+        httpSingleton->m_networkState->HttpProvider().PerformAsync(call, asyncBlock);
+    }
 }
 
 STDAPI
@@ -110,15 +124,21 @@ HCGetHttpCallPerformFunction(
     ) noexcept
 try
 {
-    if (performFunc == nullptr || performContext == nullptr)
-    {
-        return E_INVALIDARG;
-    }
+    RETURN_HR_IF(E_INVALIDARG, !performFunc);
+    RETURN_HR_IF(E_INVALIDARG, !performContext);
 
-    auto& info = GetUserHttpPerformHandler();
-    *performFunc = info.handler;
-    *performContext = info.context;
-    return S_OK;
+    auto& externalProvider = ExternalHttpProvider::Get();
+    if (externalProvider.HasCallback())
+    {
+        // pass client hook directly if they set one
+        return externalProvider.GetCallback(performFunc, performContext);
+    }
+    else
+    {
+        *performFunc = HttpProviderPerformAsyncProxy;
+        *performContext = nullptr;
+        return S_OK;
+    }
 }
 CATCH_RETURN()
 

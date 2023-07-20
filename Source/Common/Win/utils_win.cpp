@@ -147,15 +147,34 @@ proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpcli
         }
         else
         {
-            static http_internal_unordered_map<proxy_protocol, http_internal_wstring> protocolsMap =
+            WString protocolString;
+            switch (protocol)
             {
-                { proxy_protocol::http, L"http" },
-                { proxy_protocol::https, L"https" },
-                { proxy_protocol::websocket, L"socks" },
-                { proxy_protocol::ftp, L"ftp" }
-            };
-
-            auto protocolString = protocolsMap[protocol];
+            case proxy_protocol::http:
+            {
+                protocolString = L"http";
+                break;
+            }
+            case proxy_protocol::https:
+            {
+                protocolString = L"https";
+                break;
+            }
+            case proxy_protocol::websocket:
+            {
+                protocolString = L"socks";
+                break;
+            }
+            case proxy_protocol::ftp:
+            {
+                protocolString = L"ftp";
+                break;
+            }
+            default:
+            {
+                assert(false);
+            }
+            }
 
             auto pos = proxyConfig.find(protocolString);
             if (pos != http_internal_wstring::npos)

@@ -5,7 +5,7 @@
 #include "XTaskQueue.h"
 #include "CallbackThunk.h"
 #include "PumpedTaskQueue.h"
-#include "XTaskQueuePriv.h"
+#include "Task/XTaskQueuePriv.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 

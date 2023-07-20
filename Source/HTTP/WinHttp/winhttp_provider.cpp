@@ -1,8 +1,7 @@
 #include "pch.h"
-#include "httpcall.h"
+#include "HTTP/httpcall.h"
 #include "winhttp_provider.h"
 #include "winhttp_connection.h"
-#include "Global/perform_env.h"
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XGameRuntimeFeature.h>
@@ -10,10 +9,10 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-Result<std::shared_ptr<WinHttpProvider>> WinHttpProvider::Initialize()
+Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
 {
     http_stl_allocator<WinHttpProvider> a{};
-    auto provider = std::shared_ptr<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider, http_alloc_deleter<WinHttpProvider>(), a };
+    auto provider = HC_UNIQUE_PTR<WinHttpProvider>{ new (a.allocate(1)) WinHttpProvider };
 
     RETURN_IF_FAILED(XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &provider->m_immediateQueue));
 
@@ -66,23 +65,6 @@ WinHttpProvider::~WinHttpProvider()
     m_hSessions.clear();
 }
 
-void CALLBACK WinHttpProvider::HttpCallPerformAsyncHandler(
-    HCCallHandle callHandle,
-    XAsyncBlock* async,
-    void* /*context*/,
-    HCPerformEnv env
-) noexcept
-{
-    assert(env && env->winHttpProvider);
-
-    HRESULT hr = env->winHttpProvider->HttpCallPerformAsync(callHandle, async);
-    if (FAILED(hr))
-    {
-        // Complete XAsyncBlock if we fail synchronously
-        XAsyncComplete(async, hr, 0);
-    }
-}
-
 WinHttpWebSocketExports GetWinHttpWebSocketExportsHelper()
 {
     WinHttpWebSocketExports exports;
@@ -105,89 +87,10 @@ WinHttpWebSocketExports WinHttpProvider::GetWinHttpWebSocketExports()
     return s_exports;
 }
 
-#if !HC_NOWEBSOCKETS
-HRESULT CALLBACK WinHttpProvider::WebSocketConnectAsyncHandler(
-    const char* uri,
-    const char* subprotocol,
-    HCWebsocketHandle websocketHandle,
-    XAsyncBlock* async,
-    void* /*context*/,
-    HCPerformEnv env
+HRESULT WinHttpProvider::PerformAsync(
+    HCCallHandle callHandle,
+    XAsyncBlock* async
 ) noexcept
-{
-    RETURN_HR_IF(E_UNEXPECTED, !env);
-    return env->winHttpProvider->WebSocketConnectAsync(uri, subprotocol, websocketHandle, async);
-}
-
-HRESULT CALLBACK WinHttpProvider::WebSocketSendAsyncHandler(
-    HCWebsocketHandle websocketHandle,
-    const char* message,
-    XAsyncBlock* async,
-    void* /*context*/
-) noexcept
-{
-    RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
-
-    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
-    RETURN_HR_IF(E_UNEXPECTED, !connection);
-
-    return connection->WebSocketSendMessageAsync(async, message);
-}
-
-HRESULT CALLBACK WinHttpProvider::WebSocketSendBinaryAsyncHandler(
-    HCWebsocketHandle websocketHandle,
-    const uint8_t* payloadBytes,
-    uint32_t payloadSize,
-    XAsyncBlock* asyncBlock,
-    void* /*context*/
-) noexcept
-{
-    RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
-
-    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
-    RETURN_HR_IF(E_UNEXPECTED, !connection);
-
-    return connection->WebSocketSendMessageAsync(asyncBlock, payloadBytes, payloadSize);
-}
-
-HRESULT CALLBACK WinHttpProvider::WebSocketDisconnectHandler(
-    HCWebsocketHandle websocketHandle,
-    HCWebSocketCloseStatus closeStatus,
-    void* /*context*/
-) noexcept
-{
-    RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
-
-    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
-    RETURN_HR_IF(E_UNEXPECTED, !connection);
-
-    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocketHandle->websocket->id));
-
-    return connection->WebSocketDisconnect(closeStatus);
-}
-#endif //!HC_NOWEBSOCKETS
-
-HRESULT WinHttpProvider::SetGlobalProxy(_In_z_ const char* proxyUri) noexcept
-{
-    std::lock_guard<std::mutex> lock(m_lock);
-    m_globalProxy = proxyUri;
-    for (auto& e : m_hSessions)
-    {
-        auto hSession = e.second;
-        if (hSession != nullptr)
-        {
-            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri);
-            if (FAILED(hr))
-            {
-                return hr;
-            }
-        }
-    }
-
-    return S_OK;
-}
-
-HRESULT WinHttpProvider::HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlock* async) noexcept
 {
     // Get Security information for the call
     auto getSecurityInfoResult = GetSecurityInformation(callHandle->url.data());
@@ -216,11 +119,36 @@ HRESULT WinHttpProvider::HttpCallPerformAsync(HCCallHandle callHandle, XAsyncBlo
     return initConnectionResult.Payload()->HttpCallPerformAsync(async);
 }
 
+HRESULT WinHttpProvider::SetGlobalProxy(_In_ String const& proxyUri) noexcept
+{
+    std::lock_guard<std::mutex> lock(m_lock);
+    m_globalProxy = proxyUri;
+    for (auto& e : m_hSessions)
+    {
+        auto hSession = e.second;
+        if (hSession != nullptr)
+        {
+            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri.data());
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+        }
+    }
+
+    return S_OK;
+}
+
 #if !HC_NOWEBSOCKETS
-HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* subprotocol, HCWebsocketHandle websocketHandle, XAsyncBlock* async) noexcept
+HRESULT WinHttpProvider::ConnectAsync(
+    String const& uri,
+    String const& subprotocol,
+    HCWebsocketHandle websocketHandle,
+    XAsyncBlock* async
+) noexcept
 {
     // Get Security information for the call
-    auto getSecurityInfoResult = GetSecurityInformation(uri);
+    auto getSecurityInfoResult = GetSecurityInformation(uri.data());
     RETURN_IF_FAILED(getSecurityInfoResult.hr);
 
     // Get HSession for the call
@@ -236,7 +164,7 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* subp
 #endif
 
     // Initialize WinHttpConnection
-    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), websocketHandle, uri, subprotocol, m_proxyType, getSecurityInfoResult.ExtractPayload());
+    auto initConnectionResult = WinHttpConnection::Initialize(getHSessionResult.ExtractPayload(), websocketHandle, uri.data(), subprotocol.data(), m_proxyType, getSecurityInfoResult.ExtractPayload());
     RETURN_IF_FAILED(initConnectionResult.hr);
 
     auto connection = initConnectionResult.ExtractPayload();
@@ -248,7 +176,51 @@ HRESULT WinHttpProvider::WebSocketConnectAsync(const char* uri, const char* subp
 
     return S_OK;
 }
-#endif
+
+HRESULT WinHttpProvider::SendAsync(
+    HCWebsocketHandle websocketHandle,
+    const char* message,
+    XAsyncBlock* async
+) noexcept
+{
+    RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
+
+    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
+    RETURN_HR_IF(E_UNEXPECTED, !connection);
+
+    return connection->WebSocketSendMessageAsync(async, message);
+}
+
+HRESULT WinHttpProvider::SendBinaryAsync(
+    HCWebsocketHandle websocketHandle,
+    const uint8_t* payloadBytes,
+    uint32_t payloadSize,
+    XAsyncBlock* asyncBlock
+) noexcept
+{
+    RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
+
+    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
+    RETURN_HR_IF(E_UNEXPECTED, !connection);
+
+    return connection->WebSocketSendMessageAsync(asyncBlock, payloadBytes, payloadSize);
+}
+
+HRESULT WinHttpProvider::Disconnect(
+    HCWebsocketHandle websocketHandle,
+    HCWebSocketCloseStatus closeStatus
+) noexcept
+{
+    RETURN_HR_IF(E_INVALIDARG, !websocketHandle);
+
+    auto connection = std::dynamic_pointer_cast<WinHttpConnection>(websocketHandle->websocket->impl);
+    RETURN_HR_IF(E_UNEXPECTED, !connection);
+
+    HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: disconnecting", TO_ULL(websocketHandle->websocket->id));
+
+    return connection->WebSocketDisconnect(closeStatus);
+}
+#endif //!HC_NOWEBSOCKETS
 
 HRESULT WinHttpProvider::CloseAllConnections()
 {
@@ -576,19 +548,6 @@ void WinHttpProvider::Resume()
     NetworkConnectivityChangedCallback(this, nullptr);
 }
 
-// Test hooks
-void HCWinHttpSuspend()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Suspend();
-}
-
-void HCWinHttpResume()
-{
-    auto httpSingleton = get_http_singleton();
-    httpSingleton->m_performEnv->winHttpProvider->Resume();
-}
-
 void WinHttpProvider::NetworkConnectivityChangedCallback(void* context, const XNetworkingConnectivityHint* /*hint*/)
 {
     assert(context);
@@ -630,5 +589,57 @@ void WinHttpProvider::AppStateChangedCallback(BOOLEAN isSuspended, void* context
     }
 }
 #endif // HC_PLATFORM == HC_PLATFORM_GDK
+
+WinHttp_HttpProvider::WinHttp_HttpProvider(std::shared_ptr<xbox::httpclient::WinHttpProvider> provider) : WinHttpProvider{ std::move(provider) }
+{
+}
+
+HRESULT WinHttp_HttpProvider::PerformAsync(HCCallHandle callHandle, XAsyncBlock* async) noexcept
+{
+    return WinHttpProvider->PerformAsync(callHandle, async);
+}
+
+#if !HC_NOWEBSOCKETS
+WinHttp_WebSocketProvider::WinHttp_WebSocketProvider(std::shared_ptr<xbox::httpclient::WinHttpProvider> provider) : WinHttpProvider{ std::move(provider) }
+{
+}
+
+HRESULT WinHttp_WebSocketProvider::ConnectAsync(
+    String const& uri,
+    String const& subprotocol,
+    HCWebsocketHandle websocketHandle,
+    XAsyncBlock* async
+) noexcept
+{
+    return WinHttpProvider->ConnectAsync(uri, subprotocol, websocketHandle, async);
+}
+
+HRESULT WinHttp_WebSocketProvider::SendAsync(
+    HCWebsocketHandle websocketHandle,
+    const char* message,
+    XAsyncBlock* async
+) noexcept
+{
+    return WinHttpProvider->SendAsync(websocketHandle, message, async);
+}
+
+HRESULT WinHttp_WebSocketProvider::SendBinaryAsync(
+    HCWebsocketHandle websocketHandle,
+    const uint8_t* payloadBytes,
+    uint32_t payloadSize,
+    XAsyncBlock* asyncBlock
+) noexcept
+{
+    return WinHttpProvider->SendBinaryAsync(websocketHandle, payloadBytes, payloadSize, asyncBlock);
+}
+
+HRESULT WinHttp_WebSocketProvider::Disconnect(
+    HCWebsocketHandle websocketHandle,
+    HCWebSocketCloseStatus closeStatus
+) noexcept
+{
+    return WinHttpProvider->Disconnect(websocketHandle, closeStatus);
+}
+#endif // !HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

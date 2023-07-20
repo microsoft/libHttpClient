@@ -10,7 +10,13 @@ try
 {
     RETURN_HR_IF(E_INVALIDARG, !call);
 
-    auto initResult = HC_CALL::Initialize();
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    auto initResult = httpSingleton->m_networkState->HttpCallCreate();
     RETURN_IF_FAILED(initResult.hr);
 
     *call = initResult.ExtractPayload().release();
@@ -70,7 +76,7 @@ try
         return E_HC_NOT_INITIALISED;
     }
 
-    return httpSingleton->m_performEnv->HttpCallPerformAsyncShim(call, asyncBlock);
+    return httpSingleton->m_networkState->HttpCallPerformAsync(call, asyncBlock);
 }
 CATCH_RETURN()
 

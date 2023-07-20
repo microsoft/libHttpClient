@@ -4,7 +4,7 @@
 #pragma once
 
 #include <httpClient/httpClient.h>
-#include "Global/perform_env.h"
+#include "Platform/IHttpProvider.h"
 
 namespace xbox
 {
@@ -32,13 +32,11 @@ enum class HCCompressionAlgorithm : uint32_t
 struct HC_CALL
 {
 public:
+    HC_CALL(uint64_t id, xbox::httpclient::IHttpProvider& provider);
     HC_CALL(const HC_CALL&) = delete;
     HC_CALL(HC_CALL&&) = delete;
     HC_CALL& operator=(const HC_CALL&) = delete;
     virtual ~HC_CALL();
-
-    // Create and initialize HttpCall based on global properties
-    static Result<HC_UNIQUE_PTR<HC_CALL>> Initialize();
 
     // Entry point for HCHttpCallPerformAsync
     HRESULT PerformAsync(XAsyncBlock* async) noexcept;
@@ -100,24 +98,20 @@ public:
         _In_opt_ void* context
     ) noexcept;
 
-protected: // Protected for HC_MOCK_CALL
-    HC_CALL(uint64_t id);
-
 private:
     static HRESULT CALLBACK PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
     static void CALLBACK PerformSingleRequest(void* context, bool canceled);
     static HRESULT CALLBACK PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderData const* data) noexcept;
     static void CALLBACK PerformSingleRequestComplete(XAsyncBlock* async);
 
-    Result<bool> ShouldFailFast(uint32_t& performDelay);
-    bool ShouldRetry(uint32_t& performDelay);
-    Result<std::chrono::seconds> GetRetryAfterHeaderTime();
+    xbox::httpclient::Result<bool> ShouldFailFast(_Out_opt_ uint32_t& performDelay);   
+    bool ShouldRetry(_Out_opt_ uint32_t& performDelay);
+    xbox::httpclient::Result<std::chrono::seconds> GetRetryAfterHeaderTime();
     void ResetResponseProperties();
 
     // Retry metadata
     chrono_clock_t::time_point m_performStartTime{};
     uint32_t m_iterationNumber{ 0 };
 
-    HttpPerformInfo m_performInfo;
-    HC_PERFORM_ENV* m_performEnv{ nullptr }; // non-owning
+    xbox::httpclient::IHttpProvider& m_provider;
 };

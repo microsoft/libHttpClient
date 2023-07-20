@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "hcwebsocket.h"
+#include "Platform/ExternalWebSocketProvider.h"
 
 using namespace xbox::httpclient;
 
@@ -16,7 +17,13 @@ try
 {
     RETURN_HR_IF(E_INVALIDARG, !handle);
 
-    auto createWebSocketResult = WebSocket::Initialize();
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    auto createWebSocketResult = httpSingleton->m_networkState->WebSocketCreate();
     RETURN_IF_FAILED(createWebSocketResult.hr);
 
     *handle = HC_WEBSOCKET_OBSERVER::Initialize(createWebSocketResult.ExtractPayload(), messageFunc, binaryMessageFunc, nullptr, closeFunc, functionContext).release();
@@ -85,7 +92,7 @@ try
     auto httpSingleton = get_http_singleton();
     RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
 
-    return httpSingleton->m_performEnv->WebSocketConnectAsyncShim(uri, subProtocol, handle, asyncBlock);
+    return httpSingleton->m_networkState->WebSocketConnectAsync(uri, subProtocol, handle, asyncBlock);
 }
 CATCH_RETURN()
 
@@ -175,28 +182,13 @@ STDAPI HCSetWebSocketFunctions(
 ) noexcept
 try
 {
-    if (websocketConnectFunc == nullptr ||
-        websocketSendMessageFunc == nullptr ||
-        websocketSendBinaryMessageFunc == nullptr ||
-        websocketDisconnectFunc == nullptr)
-    {
-        return E_INVALIDARG;
-    }
-
     auto httpSingleton = get_http_singleton();
     if (httpSingleton)
     {
         return E_HC_ALREADY_INITIALISED;
     }
 
-    auto& info = GetUserWebSocketPerformHandlers();
-
-    info.connect = websocketConnectFunc;
-    info.sendText = websocketSendMessageFunc;
-    info.sendBinary = websocketSendBinaryMessageFunc;
-    info.disconnect = websocketDisconnectFunc;
-    info.context = context;
-    return S_OK;
+    return ExternalWebSocketProvider::Get().SetCallbacks(websocketConnectFunc, websocketSendMessageFunc, websocketSendBinaryMessageFunc, websocketDisconnectFunc, context);
 }
 CATCH_RETURN()
 
@@ -209,23 +201,7 @@ STDAPI HCGetWebSocketFunctions(
 ) noexcept
 try
 {
-    if (websocketConnectFunc == nullptr ||
-        websocketSendMessageFunc == nullptr ||
-        websocketSendBinaryMessageFunc == nullptr ||
-        websocketDisconnectFunc == nullptr ||
-        context == nullptr)
-    {
-        return E_INVALIDARG;
-    }
-
-    auto const& info = GetUserWebSocketPerformHandlers();
-
-    *websocketConnectFunc = info.connect;
-    *websocketSendMessageFunc = info.sendText;
-    *websocketSendBinaryMessageFunc = info.sendBinary;
-    *websocketDisconnectFunc = info.disconnect;
-    *context = info.context;
-    return S_OK;
+    return ExternalWebSocketProvider::Get().GetCallbacks(websocketConnectFunc, websocketSendMessageFunc, websocketSendBinaryMessageFunc, websocketDisconnectFunc, context);
 }
 CATCH_RETURN()
 

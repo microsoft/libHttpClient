@@ -189,7 +189,12 @@ HRESULT CurlMulti::Perform() noexcept
     {
         // Reschedule Perform if there are still running requests
         int workAvailable{ 0 };
+#if HC_PLATFORM == HC_PLATFORM_GDK || LIBCURL_VERSION_NUM >= 0x074201
         result = curl_multi_poll(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
+#else
+        result = curl_multi_wait(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
+#endif
+
         if (result != CURLM_OK)
         {
             HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: curl_multi_poll failed with CURLCode=%u", result);

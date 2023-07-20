@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{673e9758-fafe-4f91-8fc1-addda12c5de5}</ItemsProjectGuid>
+  </PropertyGroup>
+  <Import Condition="'$(HCPathsImported)' != 'true'" Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.paths.props)" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCIncludeDir);$(HCSourceDir);$(HCSourceDir)\Common</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Types.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IWebSocketProvider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformComponents.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformTrace.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket_publics.cpp" />
+  </ItemGroup>
+</Project>

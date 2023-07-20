@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{decacf3b-0c15-40e4-a39f-193416a5dbfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP">
+      <UniqueIdentifier>{0063c159-34d2-4c24-931d-b56bc966e72e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\WebSocket">
+      <UniqueIdentifier>{6fb17d37-04f7-4410-8f75-f1a26a4bb521}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform">
+      <UniqueIdentifier>{1d79dc86-494c-47cc-8a5b-96e04a810fc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Task">
+      <UniqueIdentifier>{85167832-8f3f-45df-9596-c25f08c21135}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common">
+      <UniqueIdentifier>{c3a86480-303d-4f38-911a-21cd53d2d958}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common\Win">
+      <UniqueIdentifier>{5da9c27d-e660-4b6f-8506-4678a02eae13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform\Win32">
+      <UniqueIdentifier>{0d143168-df3f-463b-8003-7bb7c4472fbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\WebSocket\Websocketpp">
+      <UniqueIdentifier>{5382f4d5-9d55-4139-9baf-a088361fbe94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP\WinHttp">
+      <UniqueIdentifier>{428d0297-5b5f-4fd8-9cca-832b7a81072c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform\Windows">
+      <UniqueIdentifier>{a33dcb7f-3435-401d-8b9c-4c30fd992feb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
+      <Filter>Source\Common\Win</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.cpp">
+      <Filter>Source\HTTP\WinHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.cpp">
+      <Filter>Source\HTTP\WinHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Win32\PlatformComponents_Win32.cpp">
+      <Filter>Source\Platform\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp">
+      <Filter>Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp">
+      <Filter>Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp">
+      <Filter>Source\Platform\Windows</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
+      <Filter>Source\Common\Win</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.h">
+      <Filter>Source\HTTP\WinHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h">
+      <Filter>Source\HTTP\WinHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

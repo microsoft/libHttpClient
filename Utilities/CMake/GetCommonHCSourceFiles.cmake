@@ -4,6 +4,7 @@ function(GET_COMMON_HC_SOURCE_FILES
          OUT_PUBLIC_SOURCE_FILES
          OUT_COMMON_SOURCE_FILES
          OUT_GLOBAL_SOURCE_FILES
+         OUT_PLATFORM_SOURCE_FILES
          OUT_WEBSOCKET_SOURCE_FILES
          OUT_TASK_SOURCE_FILES
          OUT_MOCK_SOURCE_FILES
@@ -48,8 +49,21 @@ function(GET_COMMON_HC_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/Global/global_publics.cpp"
         "${PATH_TO_ROOT}/Source/Global/global.cpp"
         "${PATH_TO_ROOT}/Source/Global/global.h"
-        "${PATH_TO_ROOT}/Source/Global/perform_env.cpp"
-        "${PATH_TO_ROOT}/Source/Global/perform_env.h"
+        "${PATH_TO_ROOT}/Source/Global/NetworkState.cpp"
+        "${PATH_TO_ROOT}/Source/Global/NetworkState.h"
+        PARENT_SCOPE
+        )
+
+    set(${OUT_PLATFORM_SOURCE_FILES}
+        "${PATH_TO_ROOT}/Source/Platform/ExternalHttpProvider.cpp"
+        "${PATH_TO_ROOT}/Source/Platform/ExternalHttpProvider.h"
+        "${PATH_TO_ROOT}/Source/Platform/ExternalWebSocketProvider.cpp"
+        "${PATH_TO_ROOT}/Source/Platform/ExternalWebSocketProvider.h"
+        "${PATH_TO_ROOT}/Source/Platform/IHttpProvider.cpp"
+        "${PATH_TO_ROOT}/Source/Platform/IHttpProvider.h"
+        "${PATH_TO_ROOT}/Source/Platform/IWebSocketProvider.h"
+        "${PATH_TO_ROOT}/Source/Platform/PlatformComponents.h"
+        "${PATH_TO_ROOT}/Source/Platform/PlatformTrace.h"
         PARENT_SCOPE
         )
 

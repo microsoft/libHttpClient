@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Platform/IHttpProvider.h"
 #include "CurlMulti.h"
 #include "Result.h"
 
@@ -11,7 +12,7 @@ namespace httpclient
 HRESULT HrFromCurle(CURLcode c) noexcept;
 HRESULT HrFromCurlm(CURLMcode c) noexcept;
 
-struct CurlProvider
+struct CurlProvider : public IHttpProvider
 {
 public:
     static Result<HC_UNIQUE_PTR<CurlProvider>> Initialize();
@@ -20,19 +21,15 @@ public:
     CurlProvider& operator=(const CurlProvider&) = delete;
     virtual ~CurlProvider();
 
-    static void CALLBACK PerformAsyncHandler(
+    HRESULT PerformAsync(
         HCCallHandle callHandle,
-        XAsyncBlock* async,
-        void* context,
-        HCPerformEnv env
-    ) noexcept;
+        XAsyncBlock* async
+    ) noexcept override;
 
-    static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlProvider> provider, XAsyncBlock* async) noexcept;
+    HRESULT CleanupAsync(XAsyncBlock* async) noexcept override;
 
-private:
+protected:
     CurlProvider() = default;
-
-    HRESULT PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept;
 
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data) noexcept;
     static void CALLBACK MultiCleanupComplete(_Inout_ struct XAsyncBlock* asyncBlock) noexcept;

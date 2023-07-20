@@ -12,6 +12,7 @@
 
 #include "trace_internal.h"
 #include "utils.h"
+#include "Platform/PlatformTrace.h"
 
 namespace
 {
@@ -75,8 +76,10 @@ void TraceMessageToDebugger(
     uint32_t     fractionMSec = static_cast<uint32_t>(timestamp % 1000);
     std::tm      fmtTime = {};
 
-#if HC_PLATFORM_IS_MICROSOFT
+#if _WIN32
     localtime_s(&fmtTime, &timeTInSec);
+#elif HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5
+    localtime_s(&timeTInSec, &fmtTime);
 #else
     localtime_r(&timeTInSec, &fmtTime);
 #endif
@@ -109,7 +112,7 @@ void TraceMessageToDebugger(
         return;
     }
 
-    Internal_HCTraceMessage(areaName, level, outputBuffer);
+    xbox::httpclient::TraceToDebugger(areaName, level, outputBuffer);
 }
 
 void TraceMessageToClient(
@@ -186,7 +189,7 @@ STDAPI_(void) HCTraceImplMessage_v(
     }
 
     auto timestamp = GetTraceState().GetTimestamp();
-    auto threadId = Internal_ThisThreadId();
+    auto threadId = xbox::httpclient::GetThreadId();
 
     char message[4096] = {};
 

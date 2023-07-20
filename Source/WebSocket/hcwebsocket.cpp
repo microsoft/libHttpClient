@@ -126,33 +126,16 @@ namespace xbox
 namespace httpclient
 {
 
-WebSocket::WebSocket(uint64_t _id, WebSocketPerformInfo performInfo, HC_PERFORM_ENV* performEnv) :
+WebSocket::WebSocket(uint64_t _id, IWebSocketProvider& provider) :
     id{ _id },
     m_maxReceiveBufferSize{ WEBSOCKET_RECVBUFFER_MAXSIZE_DEFAULT },
-    m_performInfo{ performInfo },
-    m_performEnv{ performEnv }
+    m_provider{ provider }
 {
 }
 
 WebSocket::~WebSocket()
 {
     HC_TRACE_INFORMATION(WEBSOCKET, __FUNCTION__);
-}
-
-Result<std::shared_ptr<WebSocket>> WebSocket::Initialize()
-{
-    auto httpSingleton = get_http_singleton();
-    RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
-
-    http_stl_allocator<WebSocket> a{};
-    std::shared_ptr<WebSocket> websocket{ new (a.allocate(1)) WebSocket
-    {
-        ++httpSingleton->m_lastId,
-        httpSingleton->m_websocketPerform,
-        httpSingleton->m_performEnv.get()
-    }, http_alloc_deleter<WebSocket>{}, a };
-
-    return websocket;
 }
 
 uint32_t WebSocket::RegisterEventCallbacks(
@@ -230,7 +213,6 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
     {
         std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
 
-        RETURN_HR_IF(E_UNEXPECTED, !ws->m_performInfo.connect);
         RETURN_HR_IF(E_UNEXPECTED, ws->m_state != State::Initial);
 
         XTaskQueuePortHandle workPort{ nullptr };
@@ -242,7 +224,7 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
 
         try
         {
-            return ws->m_performInfo.connect(ws->m_uri.data(), ws->m_subProtocol.data(), context->observer.get(), &context->internalAsyncBlock, ws->m_performInfo.context, ws->m_performEnv);
+            return ws->m_provider.ConnectAsync(ws->m_uri, ws->m_subProtocol, context->observer.get(), &context->internalAsyncBlock);
         }
         catch (...)
         {
@@ -302,12 +284,11 @@ HRESULT WebSocket::SendAsync(
 {
     RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
-    RETURN_HR_IF(E_UNEXPECTED, !m_performInfo.sendText);
 
     try
     {
         NotifyWebSocketRoutedHandlers(m_providerContext->observer.get(), false, message, nullptr, 0);
-        return m_performInfo.sendText(m_providerContext->observer.get(), message, asyncBlock, m_performInfo.context);
+        return m_provider.SendAsync(m_providerContext->observer.get(), message, asyncBlock);
     }
     catch (...)
     {
@@ -324,12 +305,11 @@ HRESULT WebSocket::SendBinaryAsync(
 {
     RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
-    RETURN_HR_IF(E_UNEXPECTED, !m_performInfo.sendBinary);
 
     try
     {
         NotifyWebSocketRoutedHandlers(m_providerContext->observer.get(), false, nullptr, payloadBytes, payloadSize);
-        return m_performInfo.sendBinary(m_providerContext->observer.get(), payloadBytes, payloadSize, asyncBlock, m_performInfo.context);
+        return m_provider.SendBinaryAsync(m_providerContext->observer.get(), payloadBytes, payloadSize, asyncBlock);
     }
     catch (...)
     {
@@ -341,7 +321,6 @@ HRESULT WebSocket::SendBinaryAsync(
 HRESULT WebSocket::Disconnect()
 {
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
-    RETURN_HR_IF(E_UNEXPECTED, !m_performInfo.disconnect);
 
     std::unique_lock<std::mutex> lock{ m_stateMutex };
     RETURN_HR_IF(S_OK, m_state == State::Disconnecting);
@@ -352,7 +331,7 @@ HRESULT WebSocket::Disconnect()
 
     try
     {
-        return m_performInfo.disconnect(m_providerContext->observer.get(), HCWebSocketCloseStatus::Normal, m_performInfo.context);
+        return m_provider.Disconnect(m_providerContext->observer.get(), HCWebSocketCloseStatus::Normal);
     }
     catch (...)
     {

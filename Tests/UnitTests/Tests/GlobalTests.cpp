@@ -76,7 +76,7 @@ public:
         VERIFY_SUCCEEDED(HCInitialize(nullptr));
         PumpedTaskQueue pumpedQueue;
 
-        constexpr char* mockUrl{ "www.bing.com" };
+        constexpr char mockUrl[]{ "www.bing.com" };
 
         HCMockCallHandle mock{ nullptr };
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
@@ -120,7 +120,7 @@ public:
         VERIFY_SUCCEEDED(HCInitialize(nullptr));
         PumpedTaskQueue pumpedQueue;
 
-        constexpr char* mockUrl{ "www.bing.com" };
+        constexpr char mockUrl[]{ "www.bing.com" };
 
         HCMockCallHandle mock{ nullptr };
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));

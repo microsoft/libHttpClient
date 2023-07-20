@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Include">
+      <UniqueIdentifier>{050686e0-7355-443d-a934-98375724e985}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{3dd5ea6e-6f72-4c32-8769-8bcb3e99a320}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\httpClient">
+      <UniqueIdentifier>{984e5836-d6f3-4023-829f-1bb37cf9f4ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common">
+      <UniqueIdentifier>{725932d5-8333-439b-a922-80b720ee6166}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Global">
+      <UniqueIdentifier>{09a747de-f1b5-4b5a-9510-8a542463e9eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP">
+      <UniqueIdentifier>{5f29658d-dd05-489d-a0a2-3217b124befe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Logger">
+      <UniqueIdentifier>{bb186ef2-84a8-4f93-bb40-5d50cd539f3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Mock">
+      <UniqueIdentifier>{b08e0a13-fb87-47fc-a854-a91607b0ce81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform">
+      <UniqueIdentifier>{2ed98a1f-87b4-463c-848e-55e369f07b82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\WebSocket">
+      <UniqueIdentifier>{7c14843a-f715-4f95-8ff0-d10e8f81724c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Types.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch_common.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Result.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\ResultMacros.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.h">
+      <Filter>Source\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.h">
+      <Filter>Source\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.h">
+      <Filter>Source\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace_internal.h">
+      <Filter>Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.h">
+      <Filter>Source\Mock</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IWebSocketProvider.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformComponents.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.h">
+      <Filter>Source\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\async.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\config.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpClient.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\httpProvider.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\PlatformTrace.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.h">
+      <Filter>Source\Global</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
+      <Filter>Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\uri.cpp">
+      <Filter>Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\utils.cpp">
+      <Filter>Source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global.cpp">
+      <Filter>Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\global_publics.cpp">
+      <Filter>Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\mem.cpp">
+      <Filter>Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall.cpp">
+      <Filter>Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_publics.cpp">
+      <Filter>Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_request.cpp">
+      <Filter>Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\httpcall_response.cpp">
+      <Filter>Source\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\log_publics.cpp">
+      <Filter>Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Logger\trace.cpp">
+      <Filter>Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\lhc_mock.cpp">
+      <Filter>Source\Mock</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Mock\mock_publics.cpp">
+      <Filter>Source\Mock</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalHttpProvider.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\ExternalWebSocketProvider.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\IHttpProvider.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\hcwebsocket.cpp">
+      <Filter>Source\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\websocket_publics.cpp">
+      <Filter>Source\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.cpp">
+      <Filter>Source\Global</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

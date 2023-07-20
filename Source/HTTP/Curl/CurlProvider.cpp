@@ -22,7 +22,9 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     switch (c)
     {
     case CURLMcode::CURLM_OK: return S_OK;
+#if HC_PLATFORM == HC_PLATFORM_GDK || LIBCURL_VERSION_NUM >= 0x074201
     case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
+#endif
     default: return E_FAIL;
     }
 }
@@ -54,29 +56,12 @@ CurlProvider::~CurlProvider()
     curl_global_cleanup();
 }
 
-void CALLBACK CurlProvider::PerformAsyncHandler(
-    HCCallHandle callHandle,
-    XAsyncBlock* async,
-    void* /*context*/,
-    HCPerformEnv env
-) noexcept
-{
-    assert(env);
-
-    HRESULT hr = env->curlProvider->PerformAsync(callHandle, async);
-    if (FAILED(hr))
-    {
-        // Complete XAsyncBlock if we fail synchronously
-        XAsyncComplete(async, hr, 0);
-    }
-}
-
 HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept
 {
     XTaskQueuePortHandle workPort{ nullptr };
     RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HC_PERFORM_ENV::Perform: HCCallHandle=%p, workPort=%p", hcCall, workPort);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlProvider::PerformAsync: HCCallHandle=%p, workPort=%p", hcCall, workPort);
 
     auto easyInitResult = CurlEasyRequest::Initialize(hcCall, async);
     RETURN_IF_FAILED(easyInitResult.hr);
@@ -104,11 +89,9 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     return S_OK;
 }
 
-HRESULT CurlProvider::CleanupAsync(HC_UNIQUE_PTR<CurlProvider> provider, XAsyncBlock* async) noexcept
+HRESULT CurlProvider::CleanupAsync(XAsyncBlock* async) noexcept
 {
-    RETURN_IF_FAILED(XAsyncBegin(async, provider.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
-    provider.release();
-    return S_OK;
+    return XAsyncBegin(async, this, __FUNCTION__, __FUNCTION__, CleanupAsyncProvider);
 }
 
 HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data) noexcept
@@ -117,7 +100,7 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
     {
     case XAsyncOp::Begin:
     {
-        HC_UNIQUE_PTR<CurlProvider> provider{ static_cast<CurlProvider*>(data->context) };
+        CurlProvider* provider{ static_cast<CurlProvider*>(data->context) };
 
         // CleanupAsync should never be called more than once
         assert(provider->m_cleanupAsyncBlock == nullptr);
@@ -139,7 +122,7 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
             provider->m_cleanupTasksRemaining = 1 + localCurlMultis.size();
         }
 
-        XAsyncBlock multiCleanupAsyncBlock{ provider->m_multiCleanupQueue, provider.get(), CurlProvider::MultiCleanupComplete, 0 };
+        XAsyncBlock multiCleanupAsyncBlock{ provider->m_multiCleanupQueue, provider, CurlProvider::MultiCleanupComplete, { 0 } };
         provider->m_multiCleanupAsyncBlocks = http_internal_vector<XAsyncBlock>(localCurlMultis.size(), multiCleanupAsyncBlock);
 
         size_t multiIndex{ 0 };
@@ -170,13 +153,7 @@ HRESULT CALLBACK CurlProvider::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
 
         if (cleanupComplete)
         {
-            provider.reset();
             XAsyncComplete(data->async, S_OK, 0);
-        }
-        else
-        {
-            // Release ownership of provider, it will be cleaned up in MultiCleanupComplete
-            provider.release();
         }
 
         return S_OK;
@@ -200,11 +177,8 @@ void CALLBACK CurlProvider::MultiCleanupComplete(_Inout_ struct XAsyncBlock* asy
         // All CurlMultis have finished asyncCleanup. Destroy provider and complete provider's Cleanup XAsyncBlock
         XAsyncBlock* providerCleanupAsyncBlock{ provider->m_cleanupAsyncBlock };
 
-        // Release lock before destroying
+        // Release lock before completing async operation, since CurlProvider could be destroyed anytime after XAsyncComplete is called
         lock.unlock();
-
-        HC_UNIQUE_PTR<CurlProvider> reclaim{ provider };
-        reclaim.reset();
 
         XAsyncComplete(providerCleanupAsyncBlock, S_OK, 0);
     }

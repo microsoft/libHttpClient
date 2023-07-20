@@ -7,11 +7,6 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-using String = http_internal_string;
-
-template<class K, class V, class LESS = std::less<K>>
-using Map = std::map<K, V, LESS, http_stl_allocator<std::pair<K const, V>>>;
-
 void trim_whitespace(_In_ http_internal_wstring& str);
 void BasicAsciiLowercase(String& s);
 
@@ -188,7 +183,7 @@ public:
 
 static inline int str_icmp(const http_internal_string& left, const http_internal_string& right)
 {
-#if HC_PLATFORM_IS_MICROSOFT
+#if _WIN32
     return _stricmp(left.c_str(), right.c_str());
 #else
     return strcasecmp(left.c_str(), right.c_str());
