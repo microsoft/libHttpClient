@@ -82,26 +82,30 @@
   ****************************************************************************************************
   -->
   <PropertyGroup Condition="'$(GDKUseBWOI)' == 'true'">
+    <_AlternativeVCTargetsPath170>$(GDKMSBuildForVS2022)v170\</_AlternativeVCTargetsPath170>
     <_AlternativeVCTargetsPath160>$(GDKMSBuildForVS2019)v160\</_AlternativeVCTargetsPath160>
     <_AlternativeVCTargetsPath150>$(GDKMSBuildForVS2019)v150\</_AlternativeVCTargetsPath150>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GDKUseBWOI)' == 'true' and ('$(Platform)' == 'Gaming.Xbox.XboxOne.x64' and '$(VisualStudioVersion)' == '17.0')">
-    <VCTargetsPath>$(_AlternativeVCTargetsPath160)</VCTargetsPath>
+    <VCTargetsPath>$(_AlternativeVCTargetsPath170)</VCTargetsPath>
     <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
-    <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
+    <VCTargetsPath16 Condition="'$(_AlternativeVCTargetsPath160)'!=''">$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
+    <VCTargetsPath17>$(_AlternativeVCTargetsPath170)</VCTargetsPath17>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GDKUseBWOI)' == 'true' and ('$(Platform)' == 'Gaming.Xbox.Scarlett.x64' and '$(VisualStudioVersion)' == '17.0')">
-    <VCTargetsPath>$(_AlternativeVCTargetsPath160)</VCTargetsPath>
+    <VCTargetsPath>$(_AlternativeVCTargetsPath170)</VCTargetsPath>
     <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
-    <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
+    <VCTargetsPath16 Condition="'$(_AlternativeVCTargetsPath160)'!=''">$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
+    <VCTargetsPath17>$(_AlternativeVCTargetsPath170)</VCTargetsPath17>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GDKUseBWOI)' == 'true' and ('$(Platform)' == 'Gaming.Desktop.x64' and '$(VisualStudioVersion)' == '17.0')">
-    <VCTargetsPath>$(_AlternativeVCTargetsPath160)</VCTargetsPath>
+    <VCTargetsPath>$(_AlternativeVCTargetsPath170)</VCTargetsPath>
     <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
-    <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
+    <VCTargetsPath16 Condition="'$(_AlternativeVCTargetsPath160)'!=''">$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
+    <VCTargetsPath17>$(_AlternativeVCTargetsPath170)</VCTargetsPath17>
   </PropertyGroup>
 
   <!--
