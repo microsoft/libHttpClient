@@ -5,6 +5,7 @@
 #include <httpClient/httpProvider.h>
 #include "httpcall.h"
 #include "../Mock/lhc_mock.h"
+#include "compression.h"
 
 using namespace xbox::httpclient;
 
@@ -76,6 +77,36 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
     case XAsyncOp::Begin:
     {
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+        // Compress body before call if applicable
+        if (call->compressionAlgorithm != xbox::httpclient::HCCompressionAlgorithm::None)
+        {
+            auto bodyBytes = call->requestBodyBytes;
+            auto bodySize = call->requestBodySize;
+
+            if (bodySize > 0)
+            {
+                if (call->compressionAlgorithm == xbox::httpclient::HCCompressionAlgorithm::Gzip)
+                {
+                    http_internal_vector<uint8_t> compressedBodyBytes;
+
+                    Compression::CompressToGzip(bodyBytes, static_cast<unsigned int>(bodySize), compressedBodyBytes);
+
+                    RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyBytes(call, compressedBodyBytes.data(), (uint32_t)compressedBodyBytes.size()));
+                    RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call, "Content-Encoding", "gzip", true));
+                }
+                else
+                {
+                    if (call->traceCall)
+                    {
+                        HC_TRACE_ERROR(HTTPCLIENT, "Unsupported compression algorithm requested [ID %llu]", TO_ULL(static_cast<HC_CALL*>(call)->id));
+                    }
+                    return E_FAIL;
+                }
+            }
+        }
+#endif
+
         call->performCalled = true;
         call->m_performStartTime = chrono_clock_t::now();
 

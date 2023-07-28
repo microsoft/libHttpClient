@@ -67,6 +67,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.UnitTest.TE",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.XAsync", "Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems", "{B5118956-53CC-4B24-8807-DE8D7D226B40}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.Zlib", "Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems", "{F9061DCA-255B-4D5E-8DF5-4AFBFB4B98EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -345,6 +347,7 @@ Global
 		Build\libssl.Win32\libssl.Win32.vcxitems*{097e9d46-215e-43ae-b8df-339edf537eb6}*SharedItemsImports = 9
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{0a6d51a3-0d86-4d0e-9daa-54ba75e1da1c}*SharedItemsImports = 4
 		Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems*{0a6d51a3-0d86-4d0e-9daa-54ba75e1da1c}*SharedItemsImports = 4
+		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{0a6d51a3-0d86-4d0e-9daa-54ba75e1da1c}*SharedItemsImports = 4
 		Build\libcrypto.Win32\libcrypto.Win32.vcxitems*{16aa2ebe-6d49-41b7-a13f-887c12e78715}*SharedItemsImports = 4
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{2e55aa9f-a132-477c-b4ff-b4cd551e4322}*SharedItemsImports = 4
 		Build\libHttpClient.UWP\libHttpClient.UWP.vcxitems*{2e55aa9f-a132-477c-b4ff-b4cd551e4322}*SharedItemsImports = 4
@@ -356,6 +359,7 @@ Global
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
 		Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
+		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
 		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
@@ -366,5 +370,7 @@ Global
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
+		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
+		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{f9061dca-255b-4d5e-8df5-4afbfb4b98ef}*SharedItemsImports = 9
 	EndGlobalSection
 EndGlobal

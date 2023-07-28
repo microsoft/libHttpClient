@@ -92,6 +92,7 @@ try
 }
 CATCH_RETURN()
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 STDAPI
 HCHttpCallRequestEnableGzipCompression(
     _In_ HCCallHandle call
@@ -115,6 +116,7 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+#endif
 
 STDAPI
 HCHttpCallRequestSetRequestBodyString(

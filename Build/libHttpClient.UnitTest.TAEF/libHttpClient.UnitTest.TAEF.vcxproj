@@ -8,6 +8,7 @@
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems" Label="Shared" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />
   <PropertyGroup>
     <LinkIncremental>false</LinkIncremental>
     <LocalDebuggerCommand>C:\Program Files (x86)\Windows Kits\10\Testing\Runtimes\TAEF\x64\TE.exe</LocalDebuggerCommand>
@@ -21,7 +22,7 @@
       <CompileAsWinRT>true</CompileAsWinRT>
       <AdditionalUsingDirectories>$(WindowsSdkDir_10)UnionMetadata;$(VCToolsInstallDir)lib\x86\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/GS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;%(AdditionalIncludeDirectories);$(HCRoot)\External\zlib\</AdditionalIncludeDirectories>
       <RemoveUnreferencedCodeData Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</RemoveUnreferencedCodeData>
     </ClCompile>
     <Link>

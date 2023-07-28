@@ -45,6 +45,7 @@
   <PropertyGroup>
     <HCRoot Condition="'$(HCRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCRoot>
     <libHttpClientInclude>$(HCRoot)\Include\</libHttpClientInclude>
+    <zlibInclude>$(HCRoot)\External\zlib\</zlibInclude>
   </PropertyGroup>
 
   <!--Import hc_settings file after defining props so that they can be overriden-->
@@ -72,7 +73,7 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(libHttpClientInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(libHttpClientInclude);$(zlibInclude)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(HCLibPlatformType)'=='Win32' OR '$(HCLibPlatformType)'=='GDK'">%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>

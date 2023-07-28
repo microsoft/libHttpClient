@@ -373,6 +373,7 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
     _In_z_ const char* requestBodyString
     ) noexcept;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
 /// TODO
 /// </summary>
@@ -382,6 +383,7 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
 STDAPI HCHttpCallRequestEnableGzipCompression(
     _In_ HCCallHandle call
 ) noexcept;
+#endif
 
 /// <summary>
 /// The callback definition used by an HTTP call to read the request body. This callback will be invoked

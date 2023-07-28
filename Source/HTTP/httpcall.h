@@ -18,6 +18,7 @@ struct HeaderCompare
 
 using HttpHeaders = http_internal_map<http_internal_string, http_internal_string, HeaderCompare>;
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 enum class HCCompressionAlgorithm : uint32_t
 {
     None = 0,
@@ -25,6 +26,7 @@ enum class HCCompressionAlgorithm : uint32_t
     Deflate,
     Brotli
 };
+#endif
 
 } // namesapce httpclient
 } // namespace xbox
@@ -62,8 +64,9 @@ public:
     bool sslValidation{ true };
 #endif
     uint32_t timeoutInSeconds{ 0 };
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     xbox::httpclient::HCCompressionAlgorithm compressionAlgorithm{ xbox::httpclient::HCCompressionAlgorithm::None };
-
+#endif
     // Response properties
     HRESULT networkErrorCode{ S_OK };
     uint32_t platformNetworkErrorCode{ 0 };

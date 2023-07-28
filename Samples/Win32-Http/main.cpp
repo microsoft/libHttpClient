@@ -180,14 +180,21 @@ struct SampleHttpCallAsyncContext
 
 void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath)
 {
-    std::string method = "GET";
+    std::string method = "POST";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
     std::vector< std::string > header;
 
     header.clear();
-    header.push_back("TestHeader");
-    header.push_back("1.0");
+    header.push_back("X-TelemetryKey");
+    header.push_back("AQAAAAAADhjXAIWNJNeN2T4");
+
+    headers.push_back(header);
+
+    header.clear();
+    header.push_back("Content-Type");
+    header.push_back("application/json");
+
     headers.push_back(header);
 
     HCCallHandle call = nullptr;
@@ -195,6 +202,8 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
+    HCHttpCallRequestEnableGzipCompression(call);
+
     for (auto& header : headers)
     {
         std::string headerName = header[0];
@@ -304,11 +313,14 @@ int main()
     HCTraceSetTraceToDebugger(true);
     StartBackgroundThread();
 
-    std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
-    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "");
+    std::string url1 = "https://3C0E1.playfabapi.com/Event/WriteTelemetryEvents";
+    DoHttpCall(url1, "{ \"CustomTags\":{},\"Events\":[{\"CustomTags\":{},\"Entity\":null,\"EventNamespace\":\"custom.playfab.events.PlayFab.Test.UpdateBatchSize\",\"Name\":\"TelemetryEvent\",\"OriginalId\":\"8\",\"OriginalTimestamp\":\"2023-07-19T17:23:22.000Z\",\"Payload\":null,\"PayloadJSON\":\"{}\"},{\"CustomTags\":{},\"Entity\":null,\"EventNamespace\":\"custom.playfab.events.PlayFab.Test.UpdateBatchSize\",\"Name\":\"TelemetryEvent\",\"OriginalId\":\"9\",\"OriginalTimestamp\":\"2023-07-19T17:23:22.000Z\",\"Payload\":null,\"PayloadJSON\":\"{}\"},{\"CustomTags\":{},\"Entity\":null,\"EventNamespace\":\"custom.playfab.events.PlayFab.Test.UpdateBatchSize\",\"Name\":\"TelemetryEvent\",\"OriginalId\":\"10\",\"OriginalTimestamp\":\"2023-07-19T17:23:22.000Z\",\"Payload\":null,\"PayloadJSON\":\"{}\"},{\"CustomTags\":{},\"Entity\":null,\"EventNamespace\":\"custom.playfab.events.PlayFab.Test.UpdateBatchSize\",\"Name\":\"TelemetryEvent\",\"OriginalId\":\"11\",\"OriginalTimestamp\":\"2023-07-19T17:23:22.000Z\",\"Payload\":null,\"PayloadJSON\":\"{}\"}]}", true, "");
 
-    std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    DoHttpCall(url2, "", false, "SplashScreen.png");
+    //std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
+    //DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "");
+
+    //std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
+    //DoHttpCall(url2, "", false, "SplashScreen.png");
 
     HCCleanup();
     ShutdownActiveThreads();
