@@ -121,7 +121,9 @@ typedef struct HCInitArgs {
     /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
-#elif HC_PLATFORM != HC_PLATFORM_NINTENDO_SWITCH
+#elif HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH
+#include <httpClient/httpClient_switch.h>
+#elif
 /// <summary>
 /// Dummy init args used by non-Android devices.
 /// </summary>
