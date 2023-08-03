@@ -112,7 +112,11 @@ STDAPI HCMemGetFunctions(
 struct HCInitArgs;
 
 #if HC_PLATFORM_HEADER_OVERRIDE
-#include HC_PLATFORM_TYPES_PATH
+    #ifndef HC_PLATFORM_TYPES_PATH
+        #error HC_PLATFORM_TYPES_PATH is not defined.  Set to the path of the platform header to include.
+    #else
+        #include HC_PLATFORM_TYPES_PATH
+    #endif
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
 /// <summary>
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
