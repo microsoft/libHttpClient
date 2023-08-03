@@ -111,7 +111,13 @@ STDAPI HCMemGetFunctions(
 
 struct HCInitArgs;
 
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
+#ifndef LHC_PLATFORM_HEADER_OVERRIDE
+#define LHC_PLATFORM_HEADER_OVERRIDE 0
+#endif
+
+#if LHC_PLATFORM_HEADER_OVERRIDE
+#include LHC_PLATFORM_TYPES_PATH
+#elif HC_PLATFORM == HC_PLATFORM_ANDROID
 /// <summary>
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
 /// </summary>
@@ -121,8 +127,6 @@ typedef struct HCInitArgs {
     /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
-#elif HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH
-#include <httpClient/httpClient_switch.h>
 #elif
 /// <summary>
 /// Dummy init args used by non-Android devices.
