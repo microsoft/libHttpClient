@@ -77,6 +77,8 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
     case XAsyncOp::Begin:
     {
+#if !HC_NOZLIB
+
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
         // Compress body before call if applicable
         if (call->compressionAlgorithm != xbox::httpclient::HCCompressionAlgorithm::None)
@@ -106,6 +108,8 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
             }
         }
 #endif
+
+#endif // !HC_NOZLIB
 
         call->performCalled = true;
         call->m_performStartTime = chrono_clock_t::now();

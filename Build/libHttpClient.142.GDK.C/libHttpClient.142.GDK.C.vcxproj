@@ -9,5 +9,6 @@
   <Import Project="$(HCRoot)\libHttpClient.props" />
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.GDK\libHttpClient.GDK.vcxitems" Label="Shared" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -2,9 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
 
+#if !HC_NOZLIB
+
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 
 #include "compression.h"
+
+// TODO Raul - Address Warning
+#pragma warning (disable: 4189)
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -64,3 +69,5 @@ void Compression::CompressToGzip(http_internal_vector<uint8_t> inData, uInt inDa
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
 #endif
+
+#endif // !HC_NOZLIB

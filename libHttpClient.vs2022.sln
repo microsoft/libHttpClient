@@ -370,7 +370,6 @@ Global
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
-		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{f9061dca-255b-4d5e-8df5-4afbfb4b98ef}*SharedItemsImports = 9
 	EndGlobalSection
 EndGlobal
