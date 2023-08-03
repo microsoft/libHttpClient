@@ -111,12 +111,8 @@ STDAPI HCMemGetFunctions(
 
 struct HCInitArgs;
 
-#ifndef LHC_PLATFORM_HEADER_OVERRIDE
-#define LHC_PLATFORM_HEADER_OVERRIDE 0
-#endif
-
-#if LHC_PLATFORM_HEADER_OVERRIDE
-#include LHC_PLATFORM_TYPES_PATH
+#if HC_PLATFORM_HEADER_OVERRIDE
+#include HC_PLATFORM_TYPES_PATH
 #elif HC_PLATFORM == HC_PLATFORM_ANDROID
 /// <summary>
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
