@@ -9,6 +9,13 @@
 #include <httpClient/mock.h>
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
+#if HC_PLATFORM_HEADER_OVERRIDE == 1
+    #ifndef HC_PLATFORM_TYPES_PATH
+        #error HC_PLATFORM_TYPES_PATH is not defined.  Set to the path of the platform header to include.
+    #else
+        #include HC_PLATFORM_TYPES_PATH
+    #endif
+#endif
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"
@@ -111,13 +118,7 @@ STDAPI HCMemGetFunctions(
 
 struct HCInitArgs;
 
-#if HC_PLATFORM_HEADER_OVERRIDE
-    #ifndef HC_PLATFORM_TYPES_PATH
-        #error HC_PLATFORM_TYPES_PATH is not defined.  Set to the path of the platform header to include.
-    #else
-        #include HC_PLATFORM_TYPES_PATH
-    #endif
-#elif HC_PLATFORM == HC_PLATFORM_ANDROID
+#if HC_PLATFORM == HC_PLATFORM_ANDROID
 /// <summary>
 /// Used to wrap the JavaVM and ApplicationContext on Android devices.
 /// </summary>
@@ -127,7 +128,7 @@ typedef struct HCInitArgs {
     /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
-#else
+#elif HC_PLATFORM_HEADER_OVERRIDE == 0
 /// <summary>
 /// Dummy init args used by non-Android devices.
 /// </summary>
