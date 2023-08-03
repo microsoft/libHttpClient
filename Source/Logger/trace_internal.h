@@ -12,10 +12,12 @@ public:
     bool GetTraceToDebugger() noexcept;
     void SetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
     void SetClientCallback(HCTraceCallback* callback) noexcept;
-    void SetEtwEnabled(bool enabled) noexcept;
-    bool GetEtwEnabled() const noexcept;
     HCTraceCallback* GetClientCallback() const noexcept;
     uint64_t GetTimestamp() const noexcept;
+#if HC_PLATFORM_IS_MICROSOFT
+    void SetEtwEnabled(_In_ bool enabled) noexcept;
+    bool GetEtwEnabled() const noexcept;
+#endif
 
 private:
     std::atomic<uint32_t> m_tracingClients{ 0 };

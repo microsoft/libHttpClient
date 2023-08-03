@@ -164,6 +164,7 @@ void TraceMessageToClient(
         callback(areaName, level, threadId, timestamp, message);
     }
 
+#if HC_PLATFORM_IS_MICROSOFT
     if (GetTraceState().GetEtwEnabled())
     {
         // Needs to match the HCTraceLevel enum
@@ -183,11 +184,7 @@ void TraceMessageToClient(
         uint32_t     fractionMSec = static_cast<uint32_t>(timestamp % 1000);
         std::tm      fmtTime = {};
 
-#if _WIN32
         localtime_s(&fmtTime, &timeTInSec);
-#else
-        localtime_r(&timeTInSec, &fmtTime);
-#endif
 
         char outputBuffer[BUFFER_SIZE] = {};
         // [threadId][level][time][area] message
@@ -223,6 +220,7 @@ void TraceMessageToClient(
             TraceLoggingString(outputBuffer, "Message")
         );
     }
+#endif
 }
 
 }
@@ -237,10 +235,12 @@ STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexc
     GetTraceState().SetClientCallback(callback);
 }
 
+#if HC_PLATFORM_IS_MICROSOFT
 STDAPI_(void) HCTraceSetEtwEnabled(_In_ bool enabled) noexcept
 {
     GetTraceState().SetEtwEnabled(enabled);
 }
+#endif
 
 STDAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
@@ -344,6 +344,7 @@ void TraceState::SetTraceToDebugger(_In_ bool traceToDebugger) noexcept
     m_traceToDebugger = traceToDebugger;
 }
 
+#if HC_PLATFORM_IS_MICROSOFT
 bool TraceState::GetEtwEnabled() const noexcept
 {
     return m_etwEnabled;
@@ -353,6 +354,7 @@ void TraceState::SetEtwEnabled(_In_ bool etwEnabled) noexcept
 {
     m_etwEnabled = etwEnabled;
 }
+#endif
 
 void TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
 {
