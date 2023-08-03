@@ -127,7 +127,7 @@ typedef struct HCInitArgs {
     /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
-#elif
+#else
 /// <summary>
 /// Dummy init args used by non-Android devices.
 /// </summary>
