@@ -291,7 +291,9 @@ STDAPI_(void) HCTraceImplMessage_v(
 
     TraceMessageToDebugger(area->Name, level, threadId, timestamp, message);
     TraceMessageToClient(area->Name, level, threadId, timestamp, message);
+#if HC_PLATFORM_IS_MICROSOFT
     TraceMessageToETW(area->Name, level, threadId, timestamp, message);
+#endif
 }
 
 STDAPI_(uint64_t) HCTraceImplScopeId() noexcept
