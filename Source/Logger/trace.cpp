@@ -83,17 +83,16 @@ void RegisterProvider()
 // Trace implementation
 //------------------------------------------------------------------------------
 
-void TraceMessageToDebugger(
+template<size_t SIZE>
+void FormatTrace(
     char const* areaName,
     HCTraceLevel level,
     uint64_t threadId,
     uint64_t timestamp,
-    char const* message
-) noexcept
+    char const* message,
+    char (&outputBuffer)[SIZE]
+)
 {
-    if (!GetTraceState().GetTraceToDebugger())
-        return;
-
     // Needs to match the HCTraceLevel enum
     static char const* traceLevelNames[] =
     {
@@ -119,7 +118,6 @@ void TraceMessageToDebugger(
     localtime_r(&timeTInSec, &fmtTime);
 #endif
 
-    char outputBuffer[BUFFER_SIZE] = {};
     // [threadId][level][time][area] message
     auto written = sprintf_s(outputBuffer, "[%04llX][%s][%02d:%02d:%02d.%03u][%s] %s",
         threadId,
@@ -146,6 +144,24 @@ void TraceMessageToDebugger(
     {
         return;
     }
+}
+
+void TraceMessageToDebugger(
+    char const* areaName,
+    HCTraceLevel level,
+    uint64_t threadId,
+    uint64_t timestamp,
+    char const* message
+) noexcept
+{
+    if (!GetTraceState().GetTraceToDebugger())
+    {
+        return;
+    }
+    
+    static size_t const BUFFER_SIZE = 4096;
+    char outputBuffer[BUFFER_SIZE] = {};
+    FormatTrace(areaName, level, threadId, timestamp, message, outputBuffer);
 
     xbox::httpclient::TraceToDebugger(areaName, level, outputBuffer);
 }
@@ -163,65 +179,33 @@ void TraceMessageToClient(
     {
         callback(areaName, level, threadId, timestamp, message);
     }
+}
 
 #if HC_PLATFORM_IS_MICROSOFT
-    if (GetTraceState().GetEtwEnabled())
+void TraceMessageToETW(
+    char const* areaName,
+    HCTraceLevel level,
+    uint64_t threadId,
+    uint64_t timestamp,
+    char const* message
+) noexcept
+{
+    if (!GetTraceState().GetEtwEnabled())
     {
-        // Needs to match the HCTraceLevel enum
-        static char const* traceLevelNames[] =
-        {
-            "Off",
-            "E",
-            "W",
-            "P",
-            "I",
-            "V",
-        };
-
-        static size_t const BUFFER_SIZE = 4096;
-
-        std::time_t  timeTInSec = static_cast<std::time_t>(timestamp / 1000);
-        uint32_t     fractionMSec = static_cast<uint32_t>(timestamp % 1000);
-        std::tm      fmtTime = {};
-
-        localtime_s(&fmtTime, &timeTInSec);
-
-        char outputBuffer[BUFFER_SIZE] = {};
-        // [threadId][level][time][area] message
-        auto written = sprintf_s(outputBuffer, "[%04llX][%s][%02d:%02d:%02d.%03u][%s] %s",
-            threadId,
-            traceLevelNames[static_cast<size_t>(level)],
-            fmtTime.tm_hour,
-            fmtTime.tm_min,
-            fmtTime.tm_sec,
-            fractionMSec,
-            areaName,
-            message
-        );
-        if (written <= 0)
-        {
-            return;
-        }
-
-        // Make sure there is room for the \r \n and \0
-        written = std::min(written, static_cast<int>(BUFFER_SIZE - 3));
-        auto remaining = BUFFER_SIZE - written;
-
-        // Print new line
-        auto written2 = sprintf_s(outputBuffer + written, remaining, "\r\n");
-        if (written2 <= 0)
-        {
-            return;
-        }
-
-        TraceLoggingWrite(
-            g_hTraceLoggingProvider,
-            "libHttpClient_TraceMessage",
-            TraceLoggingString(outputBuffer, "Message")
-        );
+        return;
     }
-#endif
+
+    static size_t const BUFFER_SIZE = 4096;
+    char outputBuffer[BUFFER_SIZE] = {};
+    FormatTrace(areaName, level, threadId, timestamp, message, outputBuffer);
+
+    TraceLoggingWrite(
+        g_hTraceLoggingProvider,
+        "libHttpClient_TraceMessage",
+        TraceLoggingString(outputBuffer, "Message")
+    );
 }
+#endif
 
 }
 
@@ -239,6 +223,11 @@ STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexc
 STDAPI_(void) HCTraceSetEtwEnabled(_In_ bool enabled) noexcept
 {
     GetTraceState().SetEtwEnabled(enabled);
+
+    if (enabled)
+    {
+        RegisterProvider();
+    }
 }
 #endif
 
@@ -283,7 +272,7 @@ STDAPI_(void) HCTraceImplMessage_v(
     }
 
     // Only do work if there's reason to
-    if (GetTraceState().GetClientCallback() == nullptr && !GetTraceState().GetTraceToDebugger())
+    if (GetTraceState().GetClientCallback() == nullptr && !GetTraceState().GetTraceToDebugger() && !GetTraceState().GetEtwEnabled())
     {
         return;
     }
@@ -302,6 +291,7 @@ STDAPI_(void) HCTraceImplMessage_v(
 
     TraceMessageToDebugger(area->Name, level, threadId, timestamp, message);
     TraceMessageToClient(area->Name, level, threadId, timestamp, message);
+    TraceMessageToETW(area->Name, level, threadId, timestamp, message);
 }
 
 STDAPI_(uint64_t) HCTraceImplScopeId() noexcept
@@ -319,8 +309,6 @@ void TraceState::Init() noexcept
     if (previousCount == 0)
     {
         m_initTime = std::chrono::high_resolution_clock::now();
-
-        RegisterProvider();
     }
 }
 
@@ -344,12 +332,12 @@ void TraceState::SetTraceToDebugger(_In_ bool traceToDebugger) noexcept
     m_traceToDebugger = traceToDebugger;
 }
 
-#if HC_PLATFORM_IS_MICROSOFT
 bool TraceState::GetEtwEnabled() const noexcept
 {
     return m_etwEnabled;
 }
 
+#if HC_PLATFORM_IS_MICROSOFT
 void TraceState::SetEtwEnabled(_In_ bool etwEnabled) noexcept
 {
     m_etwEnabled = etwEnabled;

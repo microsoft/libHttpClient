@@ -14,9 +14,9 @@ public:
     void SetClientCallback(HCTraceCallback* callback) noexcept;
     HCTraceCallback* GetClientCallback() const noexcept;
     uint64_t GetTimestamp() const noexcept;
+    bool GetEtwEnabled() const noexcept;
 #if HC_PLATFORM_IS_MICROSOFT
     void SetEtwEnabled(_In_ bool enabled) noexcept;
-    bool GetEtwEnabled() const noexcept;
 #endif
 
 private:
