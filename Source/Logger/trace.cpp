@@ -14,6 +14,10 @@
 #include "utils.h"
 #include "Platform/PlatformTrace.h"
 
+#if HC_PLATFORM_IS_MICROSOFT
+#include <TraceLoggingProvider.h>
+#endif
+
 namespace
 {
 
@@ -44,6 +48,35 @@ int vsprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, v
     return vsnprintf(buffer, SIZE, format, varArgs);
 }
 #endif
+#endif
+
+#if HC_PLATFORM_IS_MICROSOFT
+TRACELOGGING_DEFINE_PROVIDER(
+    g_hTraceLoggingProvider,
+    "libHttpClient",
+    (0x2b6274b2, 0x159f, 0x4e6f, 0xb8, 0x0, 0xd, 0x17, 0x0, 0x9e, 0x14, 0x7a) // {2B6274B2-159F-4E6F-B800-0D17009E147A}
+);
+
+
+// Helper method to ensure our ETW Provider never gets registered twice. Registering an ETW provider twice may result
+// in a crash or undefined behavior.  See https://learn.microsoft.com/en-us/windows/win32/api/traceloggingprovider/nf-traceloggingprovider-traceloggingregister
+// for more details.
+void RegisterProvider()
+{
+    struct ProviderRegistrar
+    {
+        ProviderRegistrar()
+        {
+            TraceLoggingRegister(g_hTraceLoggingProvider);
+        }
+        ~ProviderRegistrar()
+        {
+            TraceLoggingUnregister(g_hTraceLoggingProvider);
+        }
+    };
+
+    static ProviderRegistrar s_registrar{};
+}
 #endif
 
 //------------------------------------------------------------------------------
@@ -130,6 +163,66 @@ void TraceMessageToClient(
     {
         callback(areaName, level, threadId, timestamp, message);
     }
+
+    if (GetTraceState().GetEtwEnabled())
+    {
+        // Needs to match the HCTraceLevel enum
+        static char const* traceLevelNames[] =
+        {
+            "Off",
+            "E",
+            "W",
+            "P",
+            "I",
+            "V",
+        };
+
+        static size_t const BUFFER_SIZE = 4096;
+
+        std::time_t  timeTInSec = static_cast<std::time_t>(timestamp / 1000);
+        uint32_t     fractionMSec = static_cast<uint32_t>(timestamp % 1000);
+        std::tm      fmtTime = {};
+
+#if _WIN32
+        localtime_s(&fmtTime, &timeTInSec);
+#else
+        localtime_r(&timeTInSec, &fmtTime);
+#endif
+
+        char outputBuffer[BUFFER_SIZE] = {};
+        // [threadId][level][time][area] message
+        auto written = sprintf_s(outputBuffer, "[%04llX][%s][%02d:%02d:%02d.%03u][%s] %s",
+            threadId,
+            traceLevelNames[static_cast<size_t>(level)],
+            fmtTime.tm_hour,
+            fmtTime.tm_min,
+            fmtTime.tm_sec,
+            fractionMSec,
+            areaName,
+            message
+        );
+        if (written <= 0)
+        {
+            return;
+        }
+
+        // Make sure there is room for the \r \n and \0
+        written = std::min(written, static_cast<int>(BUFFER_SIZE - 3));
+        auto remaining = BUFFER_SIZE - written;
+
+        // Print new line
+        auto written2 = sprintf_s(outputBuffer + written, remaining, "\r\n");
+        if (written2 <= 0)
+        {
+            return;
+        }
+
+        TraceLoggingWrite(
+            g_hTraceLoggingProvider,
+            "libHttpClient_TraceMessage",
+            TraceLoggingString(outputBuffer, "Message")
+        );
+    }
 }
 
 }
@@ -142,6 +235,11 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept
 STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
 {
     GetTraceState().SetClientCallback(callback);
+}
+
+STDAPI_(void) HCTraceSetEtwEnabled(_In_ bool enabled) noexcept
+{
+    GetTraceState().SetEtwEnabled(enabled);
 }
 
 STDAPI_(void) HCTraceImplMessage(
@@ -221,6 +319,8 @@ void TraceState::Init() noexcept
     if (previousCount == 0)
     {
         m_initTime = std::chrono::high_resolution_clock::now();
+
+        RegisterProvider();
     }
 }
 
@@ -242,6 +342,16 @@ bool TraceState::GetTraceToDebugger() noexcept
 void TraceState::SetTraceToDebugger(_In_ bool traceToDebugger) noexcept
 {
     m_traceToDebugger = traceToDebugger;
+}
+
+bool TraceState::GetEtwEnabled() const noexcept
+{
+    return m_etwEnabled;
+}
+
+void TraceState::SetEtwEnabled(_In_ bool etwEnabled) noexcept
+{
+    m_etwEnabled = etwEnabled;
 }
 
 void TraceState::SetClientCallback(HCTraceCallback* callback) noexcept

@@ -12,6 +12,8 @@ public:
     bool GetTraceToDebugger() noexcept;
     void SetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
     void SetClientCallback(HCTraceCallback* callback) noexcept;
+    void SetEtwEnabled(bool enabled) noexcept;
+    bool GetEtwEnabled() const noexcept;
     HCTraceCallback* GetClientCallback() const noexcept;
     uint64_t GetTimestamp() const noexcept;
 
@@ -23,6 +25,7 @@ private:
     };
     std::atomic<HCTraceCallback*> m_clientCallback{ nullptr };
     bool m_traceToDebugger = false;
+    bool m_etwEnabled = false;
 };
 
 TraceState& GetTraceState() noexcept;
