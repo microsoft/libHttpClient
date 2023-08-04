@@ -5,6 +5,15 @@
 
   <Import Condition="'$(HCPathsImported)' != 'true'" Project="libHttpClient.paths.props" />
 
+  <PropertyGroup>
+    <HcNoZlib>true</HcNoZlib>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(HcNoZlib)'=='true'">
+    <ClCompile>
+      <PreprocessorDefinitions>HC_NOZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
