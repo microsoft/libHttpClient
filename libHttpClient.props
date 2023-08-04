@@ -44,6 +44,7 @@
 
   <PropertyGroup>
     <HCRoot Condition="'$(HCRoot)'==''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\</HCRoot>
+    <HCBuildRoot>$(HCRoot)\Build</HCBuildRoot>
     <libHttpClientInclude>$(HCRoot)\Include\</libHttpClientInclude>
   </PropertyGroup>
 
