@@ -104,8 +104,6 @@ void FormatTrace(
         "V",
     };
 
-    static size_t const BUFFER_SIZE = 4096;
-
     std::time_t  timeTInSec = static_cast<std::time_t>(timestamp / 1000);
     uint32_t     fractionMSec = static_cast<uint32_t>(timestamp % 1000);
     std::tm      fmtTime = {};
@@ -135,8 +133,8 @@ void FormatTrace(
     }
 
     // Make sure there is room for the \r \n and \0
-    written = std::min(written, static_cast<int>(BUFFER_SIZE - 3));
-    auto remaining = BUFFER_SIZE - written;
+    written = std::min(written, static_cast<int>(SIZE - 3));
+    auto remaining = SIZE - written;
 
     // Print new line
     auto written2 = sprintf_s(outputBuffer + written, remaining, "\r\n");
