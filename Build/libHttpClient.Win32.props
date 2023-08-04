@@ -5,15 +5,6 @@
 
   <Import Condition="'$(HCPathsImported)' != 'true'" Project="libHttpClient.paths.props" />
 
-  <PropertyGroup>
-    <HcNoZlib>true</HcNoZlib>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(HcNoZlib)'=='true'">
-    <ClCompile>
-      <PreprocessorDefinitions>HC_NOZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-  </ItemDefinitionGroup>
-
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -112,6 +103,15 @@
       <OptimizeReferences>true</OptimizeReferences>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
     </Link>
+  </ItemDefinitionGroup>
+
+  <PropertyGroup>
+    <HCNoZlib>false</HCNoZlib>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(HCNoZlib)'=='true'">
+    <ClCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);HC_NOZLIB</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
 
   <!--Configure build output directories-->
