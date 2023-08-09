@@ -28,6 +28,9 @@
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
 
+  <!-- GDK Build without install props files overrides VCTargetsPath and a few other properties so it needs to be included before the default props -->
+  <Import Project="libHttpClient.gdk.bwoi.props" />
+
   <!-- Include the Default MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
@@ -80,6 +83,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
