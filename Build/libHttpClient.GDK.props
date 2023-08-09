@@ -28,6 +28,9 @@
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
 
+  <!-- GDK Build without install props files overrides VCTargetsPath and a few other properties so it needs to be included before the default props -->
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.gdk.bwoi.props))\libHttpClient.gdk.bwoi.props" />
+
   <!-- Include the Default MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
