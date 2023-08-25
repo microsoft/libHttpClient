@@ -81,7 +81,7 @@
   and do the same for the v150 for v141 downlevel
   ****************************************************************************************************
   -->
-  <PropertyGroup Condition="'$(GDKUseBWOI)' == 'true'">
+  <PropertyGroup Condition="'$(GDKUseBWOI)' == 'true' and '$(VisualStudioVersion)' == '17.0'">
     <_AlternativeVCTargetsPath170>$(GDKMSBuildForVS2022)v170\</_AlternativeVCTargetsPath170>
     <_AlternativeVCTargetsPath160>$(GDKMSBuildForVS2022)v160\</_AlternativeVCTargetsPath160>
     <_AlternativeVCTargetsPath150>$(GDKMSBuildForVS2022)v150\</_AlternativeVCTargetsPath150>
