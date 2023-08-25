@@ -112,8 +112,8 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    call->m_enableGzipCompression = true;
-    call->m_compressionLevel = level;
+    call->enableGzipCompression = true;
+    call->compressionLevel = level;
 
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestEnableGzipCompression [ID %llu]", TO_ULL(call->id)); }
 
@@ -156,6 +156,15 @@ try
         return E_INVALIDARG;
     }
     RETURN_IF_PERFORM_CALLED(call);
+
+#if !HC_NOZLIB
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+    if (call->enableGzipCompression)
+    {
+        return E_HC_COMPRESSION_ENABLED;
+    }
+#endif
+#endif // !HC_NOZLIB
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)

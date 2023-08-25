@@ -421,7 +421,7 @@ enum class HCCompressionLevel : uint32_t
 /// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallRequestEnableGzipCompression(
     _In_ HCCallHandle call,
-    _In_opt_ HCCompressionLevel level
+    _In_ HCCompressionLevel level
 ) noexcept;
 #endif
 

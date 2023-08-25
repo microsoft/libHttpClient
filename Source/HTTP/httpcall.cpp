@@ -158,11 +158,11 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     // Compress body before call if applicable
-    if (call->m_enableGzipCompression)
+    if (call->enableGzipCompression)
     {
         auto bodyBytes = call->requestBodyBytes;
         auto bodySize = call->requestBodySize;
-        auto compressionLevel = call->m_compressionLevel;
+        auto compressionLevel = call->compressionLevel;
 
         if (bodySize > 0 && compressionLevel != HCCompressionLevel::None)
         {
