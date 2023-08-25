@@ -18,6 +18,11 @@
 
 #define HC_PLATFORM_GSDK HC_PLATFORM_GDK // For backcompat
 
+// Set to 1 and define HC_PLATFORM_TYPES_PATH to include platform specific header
+#ifndef HC_PLATFORM_HEADER_OVERRIDE
+#define HC_PLATFORM_HEADER_OVERRIDE 0
+#endif
+
 // These macros define the datamodels that libHttpClient knows about
 // (a datamodel defines the size of primitive types such as int and pointers)
 #define HC_DATAMODEL_UNKNOWN 9999

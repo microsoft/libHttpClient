@@ -28,12 +28,15 @@
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
 
+  <!-- GDK Build without install props files overrides VCTargetsPath and a few other properties so it needs to be included before the default props -->
+  <Import Project="libHttpClient.gdk.bwoi.props" />
+
   <!-- Include the Default MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
   <PropertyGroup Label="Configuration">
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <SpectreMitigation>Spectre</SpectreMitigation>
+    <SpectreMitigation Condition="'$(SpectreMitigation)'==''">Spectre</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -62,7 +65,6 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>__WRL_NO_DEFAULT_LIB__;_LIB;$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -71,7 +73,6 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
       <AdditionalDependencies>$(Console_Libs);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/CETCOMPAT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Lib>
       <AdditionalOptions>/ignore:4099 /ignore:4264</AdditionalOptions>
@@ -80,6 +81,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
