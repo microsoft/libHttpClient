@@ -77,40 +77,6 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
     case XAsyncOp::Begin:
     {
-#if !HC_NOZLIB
-
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
-        // Compress body before call if applicable
-        if (call->compressionAlgorithm != xbox::httpclient::HCCompressionAlgorithm::None)
-        {
-            auto bodyBytes = call->requestBodyBytes;
-            auto bodySize = call->requestBodySize;
-
-            if (bodySize > 0)
-            {
-                if (call->compressionAlgorithm == xbox::httpclient::HCCompressionAlgorithm::Gzip)
-                {
-                    http_internal_vector<uint8_t> compressedBodyBytes;
-
-                    Compression::CompressToGzip(bodyBytes, static_cast<unsigned int>(bodySize), compressedBodyBytes);
-
-                    RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyBytes(call, compressedBodyBytes.data(), (uint32_t)compressedBodyBytes.size()));
-                    RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call, "Content-Encoding", "gzip", true));
-                }
-                else
-                {
-                    if (call->traceCall)
-                    {
-                        HC_TRACE_ERROR(HTTPCLIENT, "Unsupported compression algorithm requested [ID %llu]", TO_ULL(static_cast<HC_CALL*>(call)->id));
-                    }
-                    return E_FAIL;
-                }
-            }
-        }
-#endif
-
-#endif // !HC_NOZLIB
-
         call->performCalled = true;
         call->m_performStartTime = chrono_clock_t::now();
 
@@ -136,7 +102,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         else
         {
             // Schedule iteration 0
-            RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest));
+            RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::CompressRequestBody));
         }
         return S_OK;
     }
@@ -169,6 +135,62 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
         return S_OK;
     }
+    }
+}
+
+void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
+{
+    PerformContext* context{ static_cast<PerformContext*>(c) };
+    HC_CALL* call{ context->call };
+
+    if (canceled)
+    {
+        XAsyncComplete(context->asyncBlock, E_ABORT, 0);
+        return;
+    }
+
+    if (call->traceCall)
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::CompressRequestBody [ID %llu] Iteration %d", TO_ULL(call->id), call->m_iterationNumber);
+    }
+
+#if !HC_NOZLIB
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+    // Compress body before call if applicable
+    if (call->m_enableGzipCompression)
+    {
+        auto bodyBytes = call->requestBodyBytes;
+        auto bodySize = call->requestBodySize;
+        auto compressionLevel = call->m_compressionLevel;
+
+        if (bodySize > 0 && compressionLevel != HCCompressionLevel::None)
+        {
+            http_internal_vector<uint8_t> compressedBodyBytes;
+
+            Compression::CompressToGzip(bodyBytes, static_cast<unsigned int>(bodySize), compressionLevel, compressedBodyBytes);
+
+            auto requestCompressedBodyBytes = compressedBodyBytes.data();
+            auto requestCompressedBodySize = (uint32_t)compressedBodyBytes.size();
+
+            call->requestBodySize = requestCompressedBodySize;
+            call->requestBodyBytes.assign(requestCompressedBodyBytes, requestCompressedBodyBytes + requestCompressedBodySize);
+            call->requestBodyString.clear();
+
+            call->requestHeaders["Content-Encoding"] = "gzip";
+        }
+    }
+#endif
+
+#endif // !HC_NOZLIB
+
+    uint32_t performDelay{ 0 };
+    HRESULT hr = XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest);
+
+    if (FAILED(hr))
+    {
+        XAsyncComplete(context->asyncBlock, hr, 0);
+        return;
     }
 }
 

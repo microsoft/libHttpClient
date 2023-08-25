@@ -383,14 +383,45 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
 #if !HC_NOZLIB
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+
 /// <summary>
-/// TODO
+/// Defines the compression level that will be used on the compression algorithm.
+/// Lower levels perform less compression but have the highest speed in the compression and
+/// higher levels perform better compression but have the slowest speed in the compression.
+/// </summary>
+enum class HCCompressionLevel : uint32_t
+{
+    /// <summary>
+    /// A value of "None" indicates that no compression will be made.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// A value of "Low" indicates that compression level 1 will be made.
+    /// </summary>
+    Low = 1,
+
+    /// <summary>
+    /// A value of "Medium" indicates that compression level 6 will be made.
+    /// </summary>
+    Medium = 6,
+
+    /// <summary>
+    /// A value of "High" indicates that compression level 9 will be made.
+    /// </summary>
+    High = 9
+};
+
+/// <summary>
+/// Enable GZIP compression on the provided body payload.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
+/// <param name="level">The desired compression level.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 /// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallRequestEnableGzipCompression(
-    _In_ HCCallHandle call
+    _In_ HCCallHandle call,
+    _In_opt_ HCCompressionLevel level
 ) noexcept;
 #endif
 

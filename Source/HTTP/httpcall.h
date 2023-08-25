@@ -18,18 +18,6 @@ struct HeaderCompare
 
 using HttpHeaders = http_internal_map<http_internal_string, http_internal_string, HeaderCompare>;
 
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
-enum class HCCompressionAlgorithm : uint32_t
-{
-    None = 0,
-    Gzip,
-    Deflate,
-    Brotli
-};
-#endif
-#endif // !HC_NOZLIB
-
 } // namesapce httpclient
 } // namespace xbox
 
@@ -68,7 +56,8 @@ public:
     uint32_t timeoutInSeconds{ 0 };
 #if !HC_NOZLIB
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
-    xbox::httpclient::HCCompressionAlgorithm compressionAlgorithm{ xbox::httpclient::HCCompressionAlgorithm::None };
+    bool m_enableGzipCompression{ false };
+    HCCompressionLevel m_compressionLevel{ HCCompressionLevel::None };
 #endif
 #endif // !HC_NOZLIB
 
@@ -108,6 +97,7 @@ public:
 
 private:
     static HRESULT CALLBACK PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
+    static void CALLBACK CompressRequestBody(void* context, bool canceled);
     static void CALLBACK PerformSingleRequest(void* context, bool canceled);
     static HRESULT CALLBACK PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderData const* data) noexcept;
     static void CALLBACK PerformSingleRequestComplete(XAsyncBlock* async);

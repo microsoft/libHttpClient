@@ -17,9 +17,10 @@ Compression::Compression()
 {
 }
 
-void Compression::CompressToGzip(http_internal_vector<uint8_t> inData, uInt inDataSize, http_internal_vector<uint8_t>& outData)
+void Compression::CompressToGzip(http_internal_vector<uint8_t> inData, uInt inDataSize, HCCompressionLevel compressionLevel, http_internal_vector<uint8_t>& outData)
 {
     http_internal_vector<uint8_t> buffer;
+    uint32_t compressionLevelValue = static_cast<std::underlying_type<HCCompressionLevel>::type>(compressionLevel);
 
     const size_t BUFSIZE = 128 * 1024;
     uint8_t temp_buffer[BUFSIZE];
@@ -32,7 +33,7 @@ void Compression::CompressToGzip(http_internal_vector<uint8_t> inData, uInt inDa
     strm.next_out = temp_buffer;
     strm.avail_out = BUFSIZE;
 
-    deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
+    deflateInit2(&strm, compressionLevelValue, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
 
     while (strm.avail_in != 0)
     {

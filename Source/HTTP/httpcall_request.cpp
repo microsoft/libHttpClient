@@ -97,7 +97,8 @@ CATCH_RETURN()
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 STDAPI
 HCHttpCallRequestEnableGzipCompression(
-    _In_ HCCallHandle call
+    _In_ HCCallHandle call,
+    _In_ HCCompressionLevel level
 ) noexcept
 try
 {
@@ -111,7 +112,8 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    call->compressionAlgorithm = xbox::httpclient::HCCompressionAlgorithm::Gzip;
+    call->m_enableGzipCompression = true;
+    call->m_compressionLevel = level;
 
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestEnableGzipCompression [ID %llu]", TO_ULL(call->id)); }
 

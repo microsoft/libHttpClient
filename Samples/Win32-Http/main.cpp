@@ -199,7 +199,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
 
     if (enableGzipCompression)
     {
-        HCHttpCallRequestEnableGzipCompression(call);
+        HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Medium);
     }
 
     for (auto& header : headers)
