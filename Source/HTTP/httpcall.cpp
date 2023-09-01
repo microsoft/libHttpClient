@@ -158,27 +158,56 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     // Compress body before call if applicable
-    if (call->enableGzipCompression)
+    if (call->enableGzipCompression && call->compressionLevel != HCCompressionLevel::None)
     {
-        auto bodyBytes = call->requestBodyBytes;
-        auto bodySize = call->requestBodySize;
-        auto compressionLevel = call->compressionLevel;
+        HCHttpCallRequestBodyReadFunction clientRequestBodyReadCallback{ nullptr };
+        size_t requestBodySize{};
+        void* clientRequestBodyReadCallbackContext{ nullptr };
+        HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(call, &clientRequestBodyReadCallback, &requestBodySize, &clientRequestBodyReadCallbackContext);
 
-        if (bodySize > 0 && compressionLevel != HCCompressionLevel::None)
+        if (FAILED(hr) || !clientRequestBodyReadCallback)
         {
-            http_internal_vector<uint8_t> compressedBodyBytes;
-
-            Compression::CompressToGzip(bodyBytes, static_cast<unsigned int>(bodySize), compressionLevel, compressedBodyBytes);
-
-            auto requestCompressedBodyBytes = compressedBodyBytes.data();
-            auto requestCompressedBodySize = (uint32_t)compressedBodyBytes.size();
-
-            call->requestBodySize = requestCompressedBodySize;
-            call->requestBodyBytes.assign(requestCompressedBodyBytes, requestCompressedBodyBytes + requestCompressedBodySize);
-            call->requestBodyString.clear();
-
-            call->requestHeaders["Content-Encoding"] = "gzip";
+            HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::ReadCallback: Unable to get client's RequestBodyRead callback");
+            return;
         }
+        
+        size_t uncompressedRequestyBodySize = 0;
+        const size_t bufferSize = 128 * 1024;
+        uint8_t uncompressedRequestyBodyBuffer[bufferSize];
+
+        try
+        {
+            hr = clientRequestBodyReadCallback(call, 0, bufferSize, clientRequestBodyReadCallbackContext, uncompressedRequestyBodyBuffer, &uncompressedRequestyBodySize);
+
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReadCallback: client RequestBodyRead callback failed");
+                return;
+            }
+        }
+        catch (...)
+        {
+            return;
+        }
+
+        http_internal_vector<uint8_t> compressedRequestBodyBuffer;
+
+        Compression::CompressToGzip(uncompressedRequestyBodyBuffer, static_cast<unsigned int>(uncompressedRequestyBodySize), call->compressionLevel, compressedRequestBodyBuffer);
+
+        auto requestCompressedBodyBytes = compressedRequestBodyBuffer.data();
+        auto requestCompressedBodySize = (uint32_t)compressedRequestBodyBuffer.size();
+
+        // Setting back to default read request body callback to be invoked by the Platform-specific code
+        call->requestBodyReadFunction = HC_CALL::ReadRequestBody;
+        call->requestBodyReadFunctionContext = nullptr;
+
+        // Directly setting compressed body bytes to HCCall
+        call->requestBodySize = requestCompressedBodySize;
+        call->requestBodyBytes.assign(requestCompressedBodyBytes, requestCompressedBodyBytes + requestCompressedBodySize);
+        call->requestBodyString.clear();
+
+        // Setting GZIP as the Content Encoding
+        call->requestHeaders["Content-Encoding"] = "gzip";
     }
 #endif
 

@@ -13,7 +13,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 class Compression
 {
 public:
-    static void CompressToGzip(http_internal_vector<uint8_t> in_data, uInt in_data_size, HCCompressionLevel compressionLevel, http_internal_vector<uint8_t>& out_data);
+    static void CompressToGzip(uint8_t* inData, uInt inDataSize, HCCompressionLevel compressionLevel, http_internal_vector<uint8_t>& outData);
 
 private:
     Compression();

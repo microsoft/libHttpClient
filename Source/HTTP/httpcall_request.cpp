@@ -157,15 +157,6 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
-    if (call->enableGzipCompression)
-    {
-        return E_HC_COMPRESSION_ENABLED;
-    }
-#endif
-#endif // !HC_NOZLIB
-
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
