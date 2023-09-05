@@ -56,7 +56,6 @@ public:
     uint32_t timeoutInSeconds{ 0 };
 #if !HC_NOZLIB
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
-    bool enableGzipCompression{ false };
     HCCompressionLevel compressionLevel{ HCCompressionLevel::None };
 #endif
 #endif // !HC_NOZLIB

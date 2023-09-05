@@ -105,7 +105,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
             // Compress body before call if applicable
-            if (call->enableGzipCompression && call->compressionLevel != HCCompressionLevel::None)
+            if (call->compressionLevel != HCCompressionLevel::None)
             {
                 // Schedule compression task
                 RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::CompressRequestBody));
