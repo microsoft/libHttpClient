@@ -101,8 +101,32 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
-            // Schedule iteration 0
-            RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::CompressRequestBody));
+#if !HC_NOZLIB
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+            // Compress body before call if applicable
+            if (call->enableGzipCompression && call->compressionLevel != HCCompressionLevel::None)
+            {
+                // Schedule compression task
+                RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::CompressRequestBody));
+            }
+            else
+            {
+#endif
+
+#endif // !HC_NOZLIB
+
+                RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest));
+
+#if !HC_NOZLIB
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+
+            }
+#endif
+
+#endif // !HC_NOZLIB
+
         }
         return S_OK;
     }
@@ -138,6 +162,10 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     }
 }
 
+#if !HC_NOZLIB
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+
 void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 {
     PerformContext* context{ static_cast<PerformContext*>(c) };
@@ -154,67 +182,74 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
         HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::CompressRequestBody [ID %llu] Iteration %d", TO_ULL(call->id), call->m_iterationNumber);
     }
 
-#if !HC_NOZLIB
+    HCHttpCallRequestBodyReadFunction clientRequestBodyReadCallback{ nullptr };
+    size_t requestBodySize{};
+    void* clientRequestBodyReadCallbackContext{ nullptr };
+    HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(call, &clientRequestBodyReadCallback, &requestBodySize, &clientRequestBodyReadCallbackContext);
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
-    // Compress body before call if applicable
-    if (call->enableGzipCompression && call->compressionLevel != HCCompressionLevel::None)
+    if (FAILED(hr) || !clientRequestBodyReadCallback)
     {
-        HCHttpCallRequestBodyReadFunction clientRequestBodyReadCallback{ nullptr };
-        size_t requestBodySize{};
-        void* clientRequestBodyReadCallbackContext{ nullptr };
-        HRESULT hr = HCHttpCallRequestGetRequestBodyReadFunction(call, &clientRequestBodyReadCallback, &requestBodySize, &clientRequestBodyReadCallbackContext);
+        HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::CompressRequestBody: Unable to get client's RequestBodyRead callback");
+        return;
+    }
 
-        if (FAILED(hr) || !clientRequestBodyReadCallback)
-        {
-            HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::ReadCallback: Unable to get client's RequestBodyRead callback");
-            return;
-        }
-        
-        size_t uncompressedRequestyBodySize = 0;
-        const size_t bufferSize = 128 * 1024;
-        uint8_t uncompressedRequestyBodyBuffer[bufferSize];
+    size_t uncompressedRequestyBodySize = 0;
+    const size_t bufferSize = 500;
+    uint8_t* uncompressedRequestyBodyBuffer = new uint8_t[requestBodySize];
 
+    while (uncompressedRequestyBodySize < requestBodySize)
+    {
         try
         {
-            hr = clientRequestBodyReadCallback(call, 0, bufferSize, clientRequestBodyReadCallbackContext, uncompressedRequestyBodyBuffer, &uncompressedRequestyBodySize);
+            uint8_t buffer[bufferSize];
+            size_t bytesWritten = 0;
+            size_t offset = uncompressedRequestyBodySize;
+            hr = clientRequestBodyReadCallback(call, offset, bufferSize, clientRequestBodyReadCallbackContext, buffer, &bytesWritten);
+
+            // Avoid being stuck in a loop where client provides less bytes than expected.
+            if (bytesWritten == 0)
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::CompressRequestBody: Expected more data written by the client based on initial request body size provided.");
+                return;
+            }
 
             if (FAILED(hr))
             {
-                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReadCallback: client RequestBodyRead callback failed");
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "HC_CALL::CompressRequestBody: client RequestBodyRead callback failed");
                 return;
             }
+
+            uncompressedRequestyBodySize += bytesWritten;
+
+            std::memcpy(uncompressedRequestyBodyBuffer + offset, buffer, bytesWritten);
         }
         catch (...)
         {
             return;
         }
-
-        http_internal_vector<uint8_t> compressedRequestBodyBuffer;
-
-        Compression::CompressToGzip(uncompressedRequestyBodyBuffer, static_cast<unsigned int>(uncompressedRequestyBodySize), call->compressionLevel, compressedRequestBodyBuffer);
-
-        auto requestCompressedBodyBytes = compressedRequestBodyBuffer.data();
-        auto requestCompressedBodySize = (uint32_t)compressedRequestBodyBuffer.size();
-
-        // Setting back to default read request body callback to be invoked by the Platform-specific code
-        call->requestBodyReadFunction = HC_CALL::ReadRequestBody;
-        call->requestBodyReadFunctionContext = nullptr;
-
-        // Directly setting compressed body bytes to HCCall
-        call->requestBodySize = requestCompressedBodySize;
-        call->requestBodyBytes.assign(requestCompressedBodyBytes, requestCompressedBodyBytes + requestCompressedBodySize);
-        call->requestBodyString.clear();
-
-        // Setting GZIP as the Content Encoding
-        call->requestHeaders["Content-Encoding"] = "gzip";
     }
-#endif
 
-#endif // !HC_NOZLIB
+    http_internal_vector<uint8_t> compressedRequestBodyBuffer;
+
+    Compression::CompressToGzip(uncompressedRequestyBodyBuffer, static_cast<unsigned int>(uncompressedRequestyBodySize), call->compressionLevel, compressedRequestBodyBuffer);
+
+    delete[] uncompressedRequestyBodyBuffer;
+
+    // Setting back to default read request body callback to be invoked by Platform-specific code
+    call->requestBodyReadFunction = HC_CALL::ReadRequestBody;
+    call->requestBodyReadFunctionContext = nullptr;
+
+    // Directly setting compressed body bytes to HCCall
+    call->requestBodySize = (uint32_t)compressedRequestBodyBuffer.size();
+    //call->requestBodyBytes.assign(requestCompressedBodyBytes, requestCompressedBodyBytes + requestCompressedBodySize);
+    call->requestBodyBytes = std::move(compressedRequestBodyBuffer);
+    call->requestBodyString.clear();
+
+    // Setting GZIP as the Content Encoding
+    call->requestHeaders["Content-Encoding"] = "gzip";
 
     uint32_t performDelay{ 0 };
-    HRESULT hr = XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest);
+    hr = XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest);
 
     if (FAILED(hr))
     {
@@ -222,6 +257,9 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
         return;
     }
 }
+#endif
+
+#endif // !HC_NOZLIB
 
 void CALLBACK HC_CALL::PerformSingleRequest(void* c, bool canceled)
 {
