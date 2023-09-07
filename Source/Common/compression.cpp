@@ -3,13 +3,13 @@
 #include "pch.h"
 
 #if !HC_NOZLIB
-
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 
 #include "compression.h"
 
-// TODO Raul - Address Warning
-#pragma warning (disable: 4189)
+#define CHUNK 16384
+#define WINDOWBITS 15
+#define GZIP_ENCODING 16
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -19,56 +19,34 @@ Compression::Compression()
 
 void Compression::CompressToGzip(uint8_t* inData, uInt inDataSize, HCCompressionLevel compressionLevel, http_internal_vector<uint8_t>& outData)
 {
-    http_internal_vector<uint8_t> buffer;
     uint32_t compressionLevelValue = static_cast<std::underlying_type<HCCompressionLevel>::type>(compressionLevel);
-
-    const size_t BUFSIZE = 128 * 1024;
-    uint8_t temp_buffer[BUFSIZE];
-
+    uint8_t buffer[CHUNK];
     z_stream strm;
+
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+
+    deflateInit2(&strm, compressionLevelValue, Z_DEFLATED, WINDOWBITS | GZIP_ENCODING, 8, Z_DEFAULT_STRATEGY);
+
     strm.next_in = inData;
     strm.avail_in = inDataSize;
-    strm.next_out = temp_buffer;
-    strm.avail_out = BUFSIZE;
 
-    deflateInit2(&strm, compressionLevelValue, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
-
-    while (strm.avail_in != 0)
+    do
     {
-        int res = deflate(&strm, Z_NO_FLUSH);
-        assert(res == Z_OK);
-        if (strm.avail_out == 0)
-        {
-            buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
-            strm.next_out = temp_buffer;
-            strm.avail_out = BUFSIZE;
-        }
-    }
+        int have;
+        strm.avail_out = CHUNK;
+        strm.next_out = buffer;
+        deflate(&strm, Z_FINISH);
+        have = CHUNK - strm.avail_out;
+        outData.insert(outData.end(), buffer, buffer + have);
+    } 
+    while (strm.avail_out == 0);
 
-    int deflate_res = Z_OK;
-    while (deflate_res == Z_OK)
-    {
-        if (strm.avail_out == 0)
-        {
-            buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
-            strm.next_out = temp_buffer;
-            strm.avail_out = BUFSIZE;
-        }
-        deflate_res = deflate(&strm, Z_FINISH);
-    }
-
-    assert(deflate_res == Z_STREAM_END);
-
-    buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE - strm.avail_out);
     deflateEnd(&strm);
-
-    outData.swap(buffer);
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
 #endif
-
 #endif // !HC_NOZLIB

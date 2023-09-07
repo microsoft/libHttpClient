@@ -105,15 +105,6 @@
     </Link>
   </ItemDefinitionGroup>
 
-  <PropertyGroup>
-    <HCNoZlib>false</HCNoZlib>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(HCNoZlib)'=='true'">
-    <ClCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);HC_NOZLIB</PreprocessorDefinitions>
-    </ClCompile>
-  </ItemDefinitionGroup>
-
   <!--Configure build output directories-->
   <PropertyGroup>
     <OutDir>$(HCOutRoot)\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>

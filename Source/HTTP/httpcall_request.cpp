@@ -93,7 +93,6 @@ try
 CATCH_RETURN()
 
 #if !HC_NOZLIB
-
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 STDAPI
 HCHttpCallRequestEnableGzipCompression(
@@ -120,7 +119,6 @@ try
 }
 CATCH_RETURN()
 #endif
-
 #endif // !HC_NOZLIB
 
 STDAPI

@@ -381,7 +381,6 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
     ) noexcept;
 
 #if !HC_NOZLIB
-
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 
 /// <summary>
@@ -424,7 +423,6 @@ STDAPI HCHttpCallRequestEnableGzipCompression(
     _In_ HCCompressionLevel level
 ) noexcept;
 #endif
-
 #endif  // !HC_NOZLIB
 
 /// <summary>

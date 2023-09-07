@@ -101,9 +101,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
-#if !HC_NOZLIB
-
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+#if !HC_NOZLIB && (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK)
             // Compress body before call if applicable
             if (call->compressionLevel != HCCompressionLevel::None)
             {
@@ -112,20 +110,13 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
             }
             else
             {
-#endif
-
-#endif // !HC_NOZLIB
-
                 RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest));
-
-#if !HC_NOZLIB
-
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
-
             }
+#else
+            RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest));
 #endif
 
-#endif // !HC_NOZLIB
+
 
         }
         return S_OK;
@@ -163,7 +154,6 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
 }
 
 #if !HC_NOZLIB
-
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 
 void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
@@ -241,7 +231,6 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
     // Directly setting compressed body bytes to HCCall
     call->requestBodySize = (uint32_t)compressedRequestBodyBuffer.size();
-    //call->requestBodyBytes.assign(requestCompressedBodyBytes, requestCompressedBodyBytes + requestCompressedBodySize);
     call->requestBodyBytes = std::move(compressedRequestBodyBuffer);
     call->requestBodyString.clear();
 
@@ -258,7 +247,6 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
     }
 }
 #endif
-
 #endif // !HC_NOZLIB
 
 void CALLBACK HC_CALL::PerformSingleRequest(void* c, bool canceled)
