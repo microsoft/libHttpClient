@@ -123,6 +123,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.h">
       <Filter>Source\Global</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\compression.h">
+      <Filter>Source\HTTP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">
@@ -184,6 +187,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Global\NetworkState.cpp">
       <Filter>Source\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\compression.cpp">
+      <Filter>Source\HTTP</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

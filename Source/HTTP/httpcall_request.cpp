@@ -92,6 +92,35 @@ try
 }
 CATCH_RETURN()
 
+#if !HC_NOZLIB
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+STDAPI
+HCHttpCallRequestEnableGzipCompression(
+    _In_ HCCallHandle call,
+    _In_ HCCompressionLevel level
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->compressionLevel = level;
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestEnableGzipCompression [ID %llu]", TO_ULL(call->id)); }
+
+    return S_OK;
+}
+CATCH_RETURN()
+#endif
+#endif // !HC_NOZLIB
+
 STDAPI
 HCHttpCallRequestSetRequestBodyString(
     _In_ HCCallHandle call,
