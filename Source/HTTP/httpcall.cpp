@@ -184,17 +184,25 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
     }
 
     size_t uncompressedRequestyBodySize = 0;
-    const size_t bufferSize = 500;
-    uint8_t* uncompressedRequestyBodyBuffer = new uint8_t[requestBodySize];
+    const size_t chunkSize = 500;
+    http_internal_vector<uint8_t> uncompressedRequestyBodyBuffer(chunkSize);
+    uint8_t* bufferPtr = &uncompressedRequestyBodyBuffer.front();
+    size_t index = 0;
+    size_t bytesWritten = 0;
 
     while (uncompressedRequestyBodySize < requestBodySize)
     {
         try
         {
-            uint8_t buffer[bufferSize];
-            size_t bytesWritten = 0;
-            size_t offset = uncompressedRequestyBodySize;
-            hr = clientRequestBodyReadCallback(call, offset, bufferSize, clientRequestBodyReadCallbackContext, buffer, &bytesWritten);
+            bufferPtr = &uncompressedRequestyBodyBuffer.at(index);
+            bytesWritten = 0;
+            hr = clientRequestBodyReadCallback(call, uncompressedRequestyBodySize, chunkSize, clientRequestBodyReadCallbackContext, bufferPtr, &bytesWritten);
+
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "HC_CALL::CompressRequestBody: client RequestBodyRead callback failed");
+                return;
+            }
 
             // Avoid being stuck in a loop where client provides less bytes than expected.
             if (bytesWritten == 0)
@@ -203,15 +211,22 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
                 return;
             }
 
-            if (FAILED(hr))
+            // If bytesWritten are equal to the chunk size it means that we need to keep iterating because there are more body bytes left.
+            // Then we update the index for the buffer pointer and increase output buffer size for the next chunk of data.
+            if (bytesWritten == chunkSize)
             {
-                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "HC_CALL::CompressRequestBody: client RequestBodyRead callback failed");
-                return;
+                index = uncompressedRequestyBodyBuffer.size();
+                uncompressedRequestyBodyBuffer.resize(uncompressedRequestyBodyBuffer.size() + chunkSize);
+            }
+
+            // If bytesWritten is less thank the chunk size it means that not all bytes available were used so no more body bytes are expected.
+            // We just need to shrink output buffer size to the right size. 
+            if (bytesWritten < chunkSize)
+            {
+                uncompressedRequestyBodyBuffer.resize(uncompressedRequestyBodyBuffer.size() - (chunkSize - bytesWritten));
             }
 
             uncompressedRequestyBodySize += bytesWritten;
-
-            std::memcpy(uncompressedRequestyBodyBuffer + offset, buffer, bytesWritten);
         }
         catch (...)
         {
@@ -221,9 +236,7 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
     http_internal_vector<uint8_t> compressedRequestBodyBuffer;
 
-    Compression::CompressToGzip(uncompressedRequestyBodyBuffer, static_cast<unsigned int>(uncompressedRequestyBodySize), call->compressionLevel, compressedRequestBodyBuffer);
-
-    delete[] uncompressedRequestyBodyBuffer;
+    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(), static_cast<unsigned int>(uncompressedRequestyBodySize), call->compressionLevel, compressedRequestBodyBuffer);
 
     // Setting back to default read request body callback to be invoked by Platform-specific code
     call->requestBodyReadFunction = HC_CALL::ReadRequestBody;
