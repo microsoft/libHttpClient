@@ -101,7 +101,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
-#if !HC_NOZLIB && (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK)
+#if !HC_NOZLIB && (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH)
             // Compress body before call if applicable
             if (call->compressionLevel != HCCompressionLevel::None)
             {
