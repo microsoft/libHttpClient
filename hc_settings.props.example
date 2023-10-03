@@ -6,6 +6,6 @@
     <!-- Exclude WebSocket APIs from libHttpClient lib, prevents pulling in 3rd party WebSocket dependencies -->
     <HCNoWebSockets>true</HCNoWebSockets>
     <!-- Prevents adding references to libHttpClient's private OpenSSL projects. Be sure to include your own OpenSSL binaries when linking -->
-    <HCNoOpenSSL>true</HCNoOpenSSL>
+    <HCExternalOpenSSL>true</HCExternalOpenSSL>
   </PropertyGroup>
 </Project>

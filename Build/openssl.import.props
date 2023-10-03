@@ -25,7 +25,7 @@
     <HCSettingsImported>true</HCSettingsImported>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary' AND '$(HCNoOpenSSL)'!='true'">
+  <ItemGroup Condition="'$(ConfigurationType)'!='StaticLibrary' AND '$(HCExternalOpenSSL)'!='true'">
     <ProjectReference Include="$(HCBuildRoot)\$(libsslName)\$(libsslName).vcxproj">
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '141'">{A5EB6BDD-DD81-4B7B-83A0-A8AE0068FC3F}</Project>
       <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(opensslToolset)' == '142'">{23104CDA-C598-4D41-B7FF-70405B2871EC}</Project>
