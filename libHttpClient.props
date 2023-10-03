@@ -32,7 +32,7 @@
 
   <PropertyGroup>
     <useWsppWebsockets>false</useWsppWebsockets>
-    <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Win32'">true</useWsppWebsockets>
+    <useWsppWebsockets Condition="'$(HCLibPlatformType)'=='Win32' and '$(HCNoWebSockets)'!='true'">true</useWsppWebsockets>
 
     <HCLibToolset>$(PlatformToolsetVersion)</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
@@ -70,6 +70,16 @@
       <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(HCLibToolset)' == '143'">{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}</Project>
     </ProjectReference>
   </ItemGroup>
+
+  <ItemDefinitionGroup Condition="'$(HCNoWebSockets)'=='true'">
+    <ClCompile>
+      <PreprocessorDefinitions>
+        HC_NOWEBSOCKETS;
+        HC_WINHTTP_WEBSOCKETS=0;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
