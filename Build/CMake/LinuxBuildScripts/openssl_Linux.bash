@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-OPENSSL_SRC="$SCRIPT_DIR/../../External/openssl"
+OPENSSL_SRC="$SCRIPT_DIR/../../../External/openssl"
 CONFIGURATION="Release"
 
 while [[ $# -gt 0 ]]; do
@@ -22,15 +22,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-sudo hwclock --hctosys
-sudo apt-get install clang
-sudo apt-get install make
-sudo apt-get install autoconf
-sudo apt-get install automake
-sudo apt-get install libtool
-
 pushd $OPENSSL_SRC
-make clean
 sed -i -e 's/\r$//' Configure
 
 if [ "$CONFIGURATION" = "Debug" ]; then
@@ -50,5 +42,4 @@ cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcr
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
 cp -R "$PWD"/libssl.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
 
-make clean
 popd

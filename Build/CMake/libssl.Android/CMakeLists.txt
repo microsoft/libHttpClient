@@ -89,7 +89,7 @@ target_include_directories(
 include("../GetOpenSSLFlags.cmake")
 get_openssl_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
-include("../../TargetSetFlags.cmake")
+include("../TargetSetFlags.cmake")
 target_set_flags(
     "${PROJECT_NAME}"
     "${FLAGS}"

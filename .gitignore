@@ -78,6 +78,7 @@ Output-Build.txt
 
 **/Durango/
 **/XboxOne.x64/
+**/Int/
 Samples/**/bin/
 Samples/**/Debug/
 Samples/**/Release/
