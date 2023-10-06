@@ -57,8 +57,8 @@ fi
 log "CONFIGURATION  = ${CONFIGURATION}"
 log "BUILD SSL      = ${BUILD_SSL}"
 log "BUILD CURL     = ${BUILD_CURL}"
-log "CMakeLists.txt = ${SCRIPT_DIR}/../libHttpClient.Linux"
-log "CMake output   = ${SCRIPT_DIR}/../../../Int/CMake/libHttpClient.Linux.C"
+log "CMakeLists.txt = ${SCRIPT_DIR}"
+log "CMake output   = ${SCRIPT_DIR}/../../Int/CMake/libHttpClient.Linux.C"
 
 # make libcrypto and libssl
 if [ "$BUILD_SSL" = true ]; then
@@ -74,5 +74,5 @@ if [ "$BUILD_CURL" = true ]; then
 fi
 
 # make libHttpClient
-sudo cmake -S "$SCRIPT_DIR"/../libHttpClient.Linux -B "$SCRIPT_DIR"/../../../Int/CMake/libHttpClient.Linux.C -D CMAKE_BUILD_TYPE=$CONFIGURATION
-sudo make -C "$SCRIPT_DIR"/../../../Int/CMake/libHttpClient.Linux.C
+sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux.C -D CMAKE_BUILD_TYPE=$CONFIGURATION
+sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux.C

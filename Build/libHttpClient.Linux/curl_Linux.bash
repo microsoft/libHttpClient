@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 pushd "$SCRIPT_DIR"/../../External/curl
-autoreconf -fi "$SCRIPT_DIR"/../../../External/curl
+autoreconf -fi "$SCRIPT_DIR"/../../External/curl
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl

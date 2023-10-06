@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-OPENSSL_SRC="$SCRIPT_DIR/../../../External/openssl"
+OPENSSL_SRC="$SCRIPT_DIR/../../External/openssl"
 CONFIGURATION="Release"
 
 while [[ $# -gt 0 ]]; do
