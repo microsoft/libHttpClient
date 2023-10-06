@@ -37,7 +37,7 @@
         "Type": "git",
         "git": {
           "RepositoryUrl": "https://github.com/openssl/openssl",
-          "CommitHash": "d1c28d791a7391a8dc101713cd8646df96491d03"
+          "CommitHash": "fd78df59b0f656aefe96e39533130454aa957c00"
         }
       },
       "DevelopmentDependency": false
@@ -48,6 +48,16 @@
         "git": {
           "RepositoryUrl": "https://github.com/curl/curl",
           "CommitHash": "801bd5138ce31aa0d906fa4e2eabfc599d74e793"
+        }
+      },
+      "DevelopmentDependency": false
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "git": {
+          "RepositoryUrl": "https://github.com/madler/zlib",
+          "CommitHash": "09155eaa2f9270dc4ed1fa13e2b4b2613e6e4851"
         }
       },
       "DevelopmentDependency": false
