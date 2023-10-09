@@ -38,4 +38,5 @@ make
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcurl.Linux
 cp -R "$PWD"/lib/.libs/* "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcurl.Linux
 
+make clean
 popd

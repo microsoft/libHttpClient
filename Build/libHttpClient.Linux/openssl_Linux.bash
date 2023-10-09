@@ -42,4 +42,5 @@ cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcr
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
 cp -R "$PWD"/libssl.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
 
+make clean
 popd
