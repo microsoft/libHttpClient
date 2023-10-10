@@ -22,15 +22,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-sudo hwclock --hctosys
-sudo apt-get install clang
-sudo apt-get install make
-sudo apt-get install autoconf
-sudo apt-get install automake
-sudo apt-get install libtool
-
 pushd $OPENSSL_SRC
-make clean
 sed -i -e 's/\r$//' Configure
 
 if [ "$CONFIGURATION" = "Debug" ]; then

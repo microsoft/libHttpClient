@@ -1,7 +1,6 @@
 # libHttpClient Android CMake build system
 
-This directory contains `CMakeLists.txt` files for building `libHttpClient`,
-`libssl`, and `libcrypto` for Android via Gradle's
+This directory contains `CMakeLists.txt` files for building `libssl` for Android via Gradle's
 [external native build](https://developer.android.com/studio/projects/gradle-external-native-builds)
 integration with CMake.
 
