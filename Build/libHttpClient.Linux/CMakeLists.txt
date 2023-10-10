@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.6)
 
-get_filename_component(PATH_TO_ROOT "../../../.." ABSOLUTE)
+get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.Linux.C")
 
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_CXX_FLAGS "-fvisibility=hidden")
+set(CMAKE_C_FLAGS "-fvisibility=hidden")
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ###########################################
@@ -19,9 +22,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Binaries/Release/x64/
 # BINARY_DIR is a temp folder used by cmake itself.
 # Binary folder can be remove freely.
 # See more details: https://cmake.org/cmake/help/v3.4/command/add_subdirectory.html
-set(BINARY_DIR ${PATH_TO_ROOT}/Build/libHttpClient.Linux.C/build)
+set(BINARY_DIR ${PATH_TO_ROOT}/Int/CMake/libHttpClient.Linux.C)
 
-include("../../GetCommonHCSourceFiles.cmake")
+include("../libHttpClient.CMake/GetCommonHCSourceFiles.cmake")
 get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
     HC_COMMON_SOURCE_FILES
@@ -98,10 +101,10 @@ target_include_directories(
     "${LINUX_INCLUDE_DIRS}"
 )
 
-include("GetLibHCFlags.cmake")
+include("../libHttpClient.CMake/GetLibHCFlags.cmake")
 get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
-include("../TargetSetFlags.cmake")
+include("../libHttpClient.CMake/TargetSetFlags.cmake")
 target_set_flags(
     "${PROJECT_NAME}"
     "${FLAGS}"

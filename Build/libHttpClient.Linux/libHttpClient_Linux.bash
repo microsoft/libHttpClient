@@ -27,6 +27,10 @@ while [[ $# -gt 0 ]]; do
       BUILD_SSL=false
       shift
       ;;
+    -sg|--skipaptget)
+      DO_APTGET=false
+      shift
+      ;;
     -*|--*)
       echo "Unknown option $1"
       exit 1
@@ -40,22 +44,35 @@ done
 
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
+if [ "$DO_APTGET" != "false" ]; then
+  sudo hwclock --hctosys
+  sudo apt-get update
+  sudo apt-get install clang
+  sudo apt-get install make
+  sudo apt-get install autoconf
+  sudo apt-get install automake
+  sudo apt-get install libtool
+fi
+
 log "CONFIGURATION  = ${CONFIGURATION}"
-log "BUILD CURL     = ${SEARCHPATH}"
+log "BUILD SSL      = ${BUILD_SSL}"
+log "BUILD CURL     = ${BUILD_CURL}"
+log "CMakeLists.txt = ${SCRIPT_DIR}"
+log "CMake output   = ${SCRIPT_DIR}/../../Int/CMake/libHttpClient.Linux.C"
 
 # make libcrypto and libssl
 if [ "$BUILD_SSL" = true ]; then
     log "Building SSL"
-    sed -i -e 's/\r$//' "$SCRIPT_DIR"/openssl.bash
-    bash "$SCRIPT_DIR"/openssl.bash -c "$CONFIGURATION"
+    sed -i -e 's/\r$//' "$SCRIPT_DIR"/openssl_Linux.bash
+    bash "$SCRIPT_DIR"/openssl_Linux.bash -c "$CONFIGURATION"
 fi
 
 if [ "$BUILD_CURL" = true ]; then
     log "Building cURL"
-    sed -i -e 's/\r$//' "$SCRIPT_DIR"/curl.bash
-    bash "$SCRIPT_DIR"/curl.bash -c "$CONFIGURATION"
+    sed -i -e 's/\r$//' "$SCRIPT_DIR"/curl_Linux.bash
+    bash "$SCRIPT_DIR"/curl_Linux.bash -c "$CONFIGURATION"
 fi
 
 # make libHttpClient
-sudo cmake -S "$SCRIPT_DIR"/../CMake/Linux/libHttpClient -B "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++  -DCMAKE_CXX_FLAGS="-fvisibility=hidden" -DCMAKE_C_FLAGS="-fvisibility=hidden"
-sudo make -C "$SCRIPT_DIR"/../../Build/libHttpClient.Linux.C/build
+sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux.C -D CMAKE_BUILD_TYPE=$CONFIGURATION
+sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux.C

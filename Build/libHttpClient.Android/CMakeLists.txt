@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 
-get_filename_component(PATH_TO_ROOT "../../../.." ABSOLUTE)
+get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.Android")
 
@@ -10,7 +10,7 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 ### Set up paths for source and include ###
 ###########################################
 
-include("../../GetCommonHCSourceFiles.cmake")
+include("../libHttpClient.CMake/GetCommonHCSourceFiles.cmake")
 get_common_hc_source_files(
     PUBLIC_SOURCE_FILES
     HC_COMMON_SOURCE_FILES
@@ -88,10 +88,10 @@ target_include_directories(
     "${ANDROID_INCLUDE_DIRS}"
 )
 
-include("GetLibHCFlags.cmake")
+include("../libHttpClient.CMake/GetLibHCFlags.cmake")
 get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
-include("../TargetSetFlags.cmake")
+include("../libHttpClient.CMake/TargetSetFlags.cmake")
 target_set_flags(
     "${PROJECT_NAME}"
     "${FLAGS}"

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 
-get_filename_component(PATH_TO_ROOT "../../../../.." ABSOLUTE)
+get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libcrypto.Android")
 
@@ -683,10 +683,10 @@ target_include_directories(
     "${CRYPTO_INCLUDE_DIRS}"
 )
 
-include("../GetOpenSSLFlags.cmake")
+include("../libHttpClient.CMake/GetOpenSSLFlags.cmake")
 get_openssl_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
-include("../../TargetSetFlags.cmake")
+include("../libHttpClient.CMake/TargetSetFlags.cmake")
 target_set_flags(
     "${PROJECT_NAME}"
     "${FLAGS}"
