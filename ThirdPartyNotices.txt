@@ -71,7 +71,7 @@ listed below.
 
 base64.cpp and base64.h
 
-Copyright (C) 2004-2008 René Nyffenegger
+Copyright (C) 2004-2008 RenÃ© Nyffenegger
 
 This source code is provided 'as-is', without any express or implied
 warranty. In no event will the author be held liable for any damages
@@ -91,7 +91,7 @@ freely, subject to the following restrictions:
 
 3. This notice may not be removed or altered from any source distribution.
 
-René Nyffenegger rene.nyffenegger@adp-gmbh.ch
+RenÃ© Nyffenegger rene.nyffenegger@adp-gmbh.ch
 
 ****** SHA1 Library (sha1/sha1.hpp) ******
 sha1.hpp is a repackaging of the sha1.cpp and sha1.h files from the shallsha1
@@ -309,3 +309,31 @@ END OF Websocket++ NOTICES, INFORMATION, AND LICENSE
  */
  =========================================
 END OF OpenSSL NOTICES, INFORMATION, AND LICENSE
+
+4. ZLIB (https://github.com/madler/zlib)
+
+Copyright notice:
+
+ (C) 1995-2022 Jean-loup Gailly and Mark Adler
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Jean-loup Gailly        Mark Adler
+  jloup@gzip.org          madler@alumni.caltech.edu
+
+ =========================================
+END OF ZLIB LICENSE
