@@ -9,6 +9,13 @@
 #include <httpClient/mock.h>
 #include <httpClient/pal.h>
 #include <httpClient/trace.h>
+#if HC_PLATFORM_HEADER_OVERRIDE == 1
+    #ifndef HC_PLATFORM_TYPES_PATH
+        #error HC_PLATFORM_TYPES_PATH is not defined.  Set to the path of the platform header to include.
+    #else
+        #include HC_PLATFORM_TYPES_PATH
+    #endif
+#endif
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "jni.h"
@@ -24,18 +31,18 @@ extern "C"
 /// <summary>
 /// A callback invoked every time a new memory buffer must be dynamically allocated by the library.
 /// This callback is optionally installed by calling HCMemSetFunctions()
-/// 
-/// The callback must allocate and return a pointer to a contiguous block of memory of the 
-/// specified size that will remain valid until the app's corresponding HCMemFreeFunction 
+///
+/// The callback must allocate and return a pointer to a contiguous block of memory of the
+/// specified size that will remain valid until the app's corresponding HCMemFreeFunction
 /// callback is invoked to release it.
-/// 
+///
 /// Every non-null pointer returned by this method will be subsequently passed to the corresponding
 /// HCMemFreeFunction callback once the memory is no longer needed.
 /// </summary>
-/// <returns>A pointer to an allocated block of memory of the specified size, or a null 
+/// <returns>A pointer to an allocated block of memory of the specified size, or a null
 /// pointer if allocation failed.</returns>
 /// <param name="size">The size of the allocation to be made. This value will never be zero.</param>
-/// <param name="memoryType">An opaque identifier representing the internal category of 
+/// <param name="memoryType">An opaque identifier representing the internal category of
 /// memory being allocated.</param>
 typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
 (STDAPIVCALLTYPE* HCMemAllocFunction)(
@@ -44,16 +51,16 @@ typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void*
     );
 
 /// <summary>
-/// A callback invoked every time a previously allocated memory buffer is no longer needed by 
+/// A callback invoked every time a previously allocated memory buffer is no longer needed by
 /// the library and can be freed. This callback is optionally installed by calling HCMemSetFunctions()
 ///
-/// The callback is invoked whenever the library has finished using a memory buffer previously 
+/// The callback is invoked whenever the library has finished using a memory buffer previously
 /// returned by the app's corresponding HCMemAllocFunction such that the application can free the
 /// memory buffer.
 /// </summary>
 /// <param name="pointer">The pointer to the memory buffer previously allocated. This value will
 /// never be a null pointer.</param>
-/// <param name="memoryType">An opaque identifier representing the internal category of 
+/// <param name="memoryType">An opaque identifier representing the internal category of
 /// memory being allocated.</param>
 typedef void
 (STDAPIVCALLTYPE* HCMemFreeFunction)(
@@ -62,23 +69,23 @@ typedef void
     );
 
 /// <summary>
-/// Optionally sets the memory hook functions to allow callers to control route memory 
+/// Optionally sets the memory hook functions to allow callers to control route memory
 /// allocations to their own memory manager.
 /// </summary>
-/// <param name="memAllocFunc">A pointer to the custom allocation callback to use, or a null 
+/// <param name="memAllocFunc">A pointer to the custom allocation callback to use, or a null
 /// pointer to restore the default.</param>
-/// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null 
+/// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null
 /// pointer to restore the default.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_HC_ALREADY_INITIALIZED.</returns>
 /// <remarks>
 /// This must be called before HCInitialize().
 /// and can not be called again until HCCleanup().
 ///
-/// This method allows the application to install custom memory allocation routines in order 
+/// This method allows the application to install custom memory allocation routines in order
 /// to service all requests for new memory buffers instead of using default allocation routines.
 ///
 /// The <paramref name="memAllocFunc" /> and <paramref name="memFreeFunc" /> parameters can be null
-/// pointers to restore the default routines. Both callback pointers must be null or both must 
+/// pointers to restore the default routines. Both callback pointers must be null or both must
 /// be non-null. Mixing custom and default routines is not permitted.
 /// </remarks>
 STDAPI HCMemSetFunctions(
@@ -87,12 +94,12 @@ STDAPI HCMemSetFunctions(
     ) noexcept;
 
 /// <summary>
-/// Gets the memory hook functions to allow callers to control route memory allocations to their 
-/// own memory manager.  
+/// Gets the memory hook functions to allow callers to control route memory allocations to their
+/// own memory manager.
 /// </summary>
-/// <param name="memAllocFunc">Set to the current allocation callback.  Returns the default routine 
+/// <param name="memAllocFunc">Set to the current allocation callback.  Returns the default routine
 /// if not previously set.</param>
-/// <param name="memFreeFunc">Set to the to the current memory free callback.  Returns the default 
+/// <param name="memFreeFunc">Set to the to the current memory free callback.  Returns the default
 /// routine if not previously set.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 /// <remarks>
@@ -107,7 +114,9 @@ STDAPI HCMemGetFunctions(
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Global APIs
-// 
+//
+
+struct HCInitArgs;
 
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 /// <summary>
@@ -119,7 +128,7 @@ typedef struct HCInitArgs {
     /// <summary>The Java Application Context.</summary>
     jobject applicationContext;
 } HCInitArgs;
-#else 
+#elif HC_PLATFORM_HEADER_OVERRIDE == 0
 /// <summary>
 /// Dummy init args used by non-Android devices.
 /// </summary>
@@ -167,7 +176,7 @@ STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept;
 /// <summary>
 /// Returns the version of the library.
 /// </summary>
-/// <param name="version">The UTF-8 encoded version of the library in the format of release_year.release_month.date.rev.  
+/// <param name="version">The UTF-8 encoded version of the library in the format of release_year.release_month.date.rev.
 /// For example, 2017.07.20170710.01</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCGetLibVersion(_Outptr_ const char** version) noexcept;
@@ -206,10 +215,10 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
 /// <summary>
 /// Manually sets an explicit proxy address.
 /// </summary>
-/// <param name="proxyUri">The proxy address to use in the "[ip]:[port]" format.</param> 
+/// <param name="proxyUri">The proxy address to use in the "[ip]:[port]" format.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_HC_NOT_INITIALISED, or E_FAIL.</returns>
 /// <remarks> If it is passed a null proxy, it will reset to default. Does not include proxying web socket traffic.</remarks>
-STDAPI HCSetGlobalProxy(_In_ const char* proxyUri) noexcept;
+STDAPI HCSetGlobalProxy(_In_z_ const char* proxyUri) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Http APIs
@@ -226,14 +235,14 @@ STDAPI HCSetGlobalProxy(_In_ const char* proxyUri) noexcept;
 /// Then call HCHttpCallPerformAsync() to perform HTTP call using the HCCallHandle.
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 ///
-/// The perform call is asynchronous, so the work will be done on a background thread which calls 
-/// XTaskQueueDispatch( ..., XTaskQueuePort::Work ).  
+/// The perform call is asynchronous, so the work will be done on a background thread which calls
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Work ).
 ///
-/// The results will return to the callback on the thread that calls 
-/// XTaskQueueDispatch( ..., XTaskQueuePort::Completion ), then get the result of the HTTP call by calling 
+/// The results will return to the callback on the thread that calls
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Completion ), then get the result of the HTTP call by calling
 /// HCHttpCallResponseGet*() to get the HTTP response of the HCCallHandle.
-/// 
-/// When the HCCallHandle is no longer needed, call HCHttpCallCloseHandle() to free the 
+///
+/// When the HCCallHandle is no longer needed, call HCHttpCallCloseHandle() to free the
 /// memory associated with the HCCallHandle.
 /// </remarks>
 STDAPI HCHttpCallCreate(
@@ -252,14 +261,14 @@ STDAPI HCHttpCallCreate(
 /// Then call HCHttpCallPerformAsync() to perform HTTP call using the HCCallHandle.
 /// This call is asynchronous, so the work will be done on a background thread and will return via the callback.
 ///
-/// The perform call is asynchronous, so the work will be done on a background thread which calls 
-/// XTaskQueueDispatch( ..., XTaskQueuePort::Work ).  
+/// The perform call is asynchronous, so the work will be done on a background thread which calls
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Work ).
 ///
-/// The results will return to the callback on the thread that calls 
-/// XTaskQueueDispatch( ..., XTaskQueuePort::Completion ), then get the result of the HTTP call by calling 
+/// The results will return to the callback on the thread that calls
+/// XTaskQueueDispatch( ..., XTaskQueuePort::Completion ), then get the result of the HTTP call by calling
 /// HCHttpCallResponseGet*() to get the HTTP response of the HCCallHandle.
-/// 
-/// When the HCCallHandle is no longer needed, call HCHttpCallCloseHandle() to free the 
+///
+/// When the HCCallHandle is no longer needed, call HCHttpCallCloseHandle() to free the
 /// memory associated with the HCCallHandle.
 ///
 /// HCHttpCallPerformAsync can only be called once.  Create new HCCallHandle to repeat the call.
@@ -280,7 +289,7 @@ STDAPI_(HCCallHandle) HCHttpCallDuplicateHandle(
     ) noexcept;
 
 /// <summary>
-/// Decrements the reference count on the call object. 
+/// Decrements the reference count on the call object.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
@@ -320,7 +329,7 @@ STDAPI HCHttpCallSetTracing(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCHttpCallGetRequestUrl(
     _In_ HCCallHandle call,
-    _Out_ const char** url
+    _Outptr_result_z_ const char** url
     ) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -345,7 +354,7 @@ STDAPI HCHttpCallRequestSetUrl(
 /// Set the request body bytes of the HTTP call. This API operation is mutually exclusive with
 /// HCHttpCallRequestSetRequestBodyReadFunction and will result in any custom read callbacks that were
 /// previously set on this call handle to be ignored.
-/// </summary> 
+/// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="requestBodyBytes">The request body bytes of the HTTP call.</param>
 /// <param name="requestBodySize">The length in bytes of the body being set.</param>
@@ -361,7 +370,7 @@ STDAPI HCHttpCallRequestSetRequestBodyBytes(
 /// Set the request body string of the HTTP call. This API operation is mutually exclusive with
 /// HCHttpCallRequestSetRequestBodyReadFunction and will result in any custom read callbacks that were
 /// previously set on this call handle to be ignored.
-/// </summary> 
+/// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="requestBodyString">The UTF-8 encoded request body string of the HTTP call.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
@@ -370,6 +379,51 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
     _In_ HCCallHandle call,
     _In_z_ const char* requestBodyString
     ) noexcept;
+
+#if !HC_NOZLIB
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH
+
+/// <summary>
+/// Defines the compression level that will be used on the compression algorithm.
+/// Lower levels perform less compression but have the highest speed in the compression and
+/// higher levels perform better compression but have the slowest speed in the compression.
+/// </summary>
+enum class HCCompressionLevel : uint32_t
+{
+    /// <summary>
+    /// A value of "None" indicates that no compression will be made.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// A value of "Low" indicates that compression level 1 will be made.
+    /// </summary>
+    Low = 1,
+
+    /// <summary>
+    /// A value of "Medium" indicates that compression level 6 will be made.
+    /// </summary>
+    Medium = 6,
+
+    /// <summary>
+    /// A value of "High" indicates that compression level 9 will be made.
+    /// </summary>
+    High = 9
+};
+
+/// <summary>
+/// Enable GZIP compression on the provided body payload.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="level">The desired compression level.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallRequestEnableGzipCompression(
+    _In_ HCCallHandle call,
+    _In_ HCCompressionLevel level
+) noexcept;
+#endif
+#endif  // !HC_NOZLIB
 
 /// <summary>
 /// The callback definition used by an HTTP call to read the request body. This callback will be invoked
@@ -476,7 +530,7 @@ STDAPI HCHttpCallRequestSetTimeout(
 /// <param name="retryDelayInSeconds">The retry delay in seconds.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_FAIL.</returns>
 /// <remarks>
-/// Retries are delayed using a exponential back off.  By default, it will delay 2 seconds then the 
+/// Retries are delayed using a exponential back off.  By default, it will delay 2 seconds then the
 /// next retry will delay 4 seconds, then 8 seconds, and so on up to a max of 1 min until either
 /// the call succeeds or the HTTP timeout window is reached, at which point the call will fail.
 /// The delay is also jittered between the current and next delay to spread out service load.
@@ -554,7 +608,7 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 enum class HCConfigSetting : uint32_t
 {
     /// <summary>
-    /// Only passed to the below API's to warn callers that this SSL validation 
+    /// Only passed to the below API's to warn callers that this SSL validation
     /// is enforced RETAIL sandboxes regardless of this setting
     /// </summary>
     SSLValidationEnforcedInRetailSandbox = 1
@@ -568,7 +622,7 @@ enum class HCConfigSetting : uint32_t
 /// <remarks>
 /// On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of this setting.
 /// The asserts will not fire in RETAIL sandbox, and this setting has no affect in RETAIL sandboxes.
-/// It is best practice to not call this API, but this can be used as a temporary way 
+/// It is best practice to not call this API, but this can be used as a temporary way
 /// to get unblocked while in early stages of game development.
 /// </remarks>
 STDAPI HCHttpDisableAssertsForSSLValidationInDevSandboxes(
@@ -616,7 +670,7 @@ STDAPI HCHttpCallResponseSetResponseBodyWriteFunction(
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Get APIs
-// 
+//
 
 /// <summary>
 /// Get the response body string of the HTTP call. This API operation will fail if a custom write
@@ -720,7 +774,7 @@ STDAPI HCHttpCallResponseGetPlatformNetworkErrorMessage(
 STDAPI HCHttpCallResponseGetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
-    _Out_ const char** headerValue
+    _Outptr_result_z_ const char** headerValue
     ) noexcept;
 
 /// <summary>
@@ -754,14 +808,14 @@ STDAPI HCHttpCallResponseGetNumHeaders(
 STDAPI HCHttpCallResponseGetHeaderAtIndex(
     _In_ HCCallHandle call,
     _In_ uint32_t headerIndex,
-    _Out_ const char** headerName,
-    _Out_ const char** headerValue
+    _Outptr_result_z_ const char** headerName,
+    _Outptr_result_z_ const char** headerValue
     ) noexcept;
 
 #if !HC_NOWEBSOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket APIs
-// 
+//
 
 /// <summary>
 /// A callback invoked every time a WebSocket receives an incoming message
@@ -891,7 +945,7 @@ STDAPI HCWebSocketSetProxyUri(
 STDAPI HCWebSocketSetProxyDecryptsHttps(
     _In_ HCWebsocketHandle websocket,
     _In_ bool allowProxyToDecryptHttps
-) noexcept; 
+) noexcept;
 #endif
 
 /// <summary>
@@ -969,7 +1023,7 @@ typedef struct WebSocketCompletionResult
 /// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket.
 /// On Win32 (Win 7+), iOS, and Android, all background work (including initial connection process) will be added to the queue
 /// in the provided XAsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
-/// caller to dispatch that queue for as long as the websocket connection is active. Note that work for 
+/// caller to dispatch that queue for as long as the websocket connection is active. Note that work for
 /// HCWebSocketSendMessageAsync calls can be assigned to a separate queue if desired.
 /// </remarks>
 STDAPI HCWebSocketConnectAsync(
@@ -1071,7 +1125,7 @@ STDAPI_(HCWebsocketHandle) HCWebSocketDuplicateHandle(
     ) noexcept;
 
 /// <summary>
-/// Decrements the reference count on the WebSocket object. 
+/// Decrements the reference count on the WebSocket object.
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>

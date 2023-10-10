@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
+#include <httpClient/httpProvider.h>
 #include "../httpcall.h"
 #include "xmlhttp_http_task.h"
 #include "http_response_stream.h"

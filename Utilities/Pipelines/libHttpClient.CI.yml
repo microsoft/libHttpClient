@@ -33,35 +33,6 @@ name: $(Build.DefinitionName)_$(date:yyMM).$(date:dd)$(rev:rrr)
 
 jobs:
   ####################
-  # Visual Studio 2017
-  ####################
-
-  - job: Win32Vs17Build
-    displayName: libHttpClient Win32/UWP VS2017 Build
-    pool:
-      name: xbl-1es-vs2017-pool
-    timeoutInMinutes: 180
-    strategy:
-      matrix:
-        x86_Debug:
-          Platform: x86
-          Configuration: Debug
-        x64_Debug:
-          Platform: x64
-          Configuration: Debug
-        x86_Release:
-          Platform: x86
-          Configuration: Release
-        x64_Release:
-          Platform: x64
-          Configuration: Release
-    steps:
-      - template: Tasks/vs2017-build.yml
-        parameters:
-          platform: $(Platform)
-          configuration: $(Configuration)
-
-  ####################
   # Visual Studio 2019
   ####################
 
@@ -91,6 +62,35 @@ jobs:
           configuration: $(Configuration)
 
   ####################
+  # Visual Studio 2022
+  ####################
+
+  # - job: Win32Vs22Build
+  #   displayName: libHttpClient Win32/UWP VS2022 Build
+  #   pool:
+  #     name: VS2022-pool
+  #   timeoutInMinutes: 180
+  #   strategy:
+  #     matrix:
+  #       x86_Debug:
+  #         Platform: x86
+  #         Configuration: Debug
+  #       x64_Debug:
+  #         Platform: x64
+  #         Configuration: Debug
+  #       x86_Release:
+  #         Platform: x86
+  #         Configuration: Release
+  #       x64_Release:
+  #         Platform: x64
+  #         Configuration: Release
+  #   steps:
+  #     - template: Tasks/vs2022-build.yml
+  #       parameters:
+  #         platform: $(Platform)
+  #         configuration: $(Configuration)
+
+  ####################
   # Android
   ####################
 
@@ -117,7 +117,7 @@ jobs:
   - job: iOSBuild
     displayName: libHttpClient iOS Build
     pool:
-      vmImage: internal-macos-10.15
+      vmImage: macOS-13
     timeoutInMinutes: 180
     strategy:
       matrix:
@@ -150,26 +150,6 @@ jobs:
         parameters:
           configuration: $(Configuration)
 
-  ####################
-  # XDK
-  ####################
-
-  - job: XDKBuild
-    displayName: libHttpClient XDK Build
-    pool:
-      name: xbl-1es-vs2017-pool
-    timeoutInMinutes: 180
-    strategy:
-      matrix:
-        Durango_Release:
-          Configuration: Release
-        Durango_Debug:
-          Configuration: Debug
-    steps:
-      - template: Tasks/xdk-build.yml
-        parameters:
-          configuration: $(Configuration)
-
   #########################
   # Send email on failure
   #########################
@@ -178,11 +158,10 @@ jobs:
     displayName: Send email on build failure
     condition: and(failed(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     dependsOn:
-      - Win32Vs17Build
       - Win32Vs19Build
+      # - Win32Vs22Build
       - AndroidBuild
       - iOSBuild
-      - XDKBuild
     pool:
       name: xbl-1es-vs2019-pool
     steps:

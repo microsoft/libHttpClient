@@ -7,11 +7,6 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-using String = http_internal_string;
-
-template<class K, class V, class LESS = std::less<K>>
-using Map = std::map<K, V, LESS, http_stl_allocator<std::pair<K const, V>>>;
-
 void trim_whitespace(_In_ http_internal_wstring& str);
 void BasicAsciiLowercase(String& s);
 
@@ -23,17 +18,27 @@ void FormatHelper(TBuffer& buffer, _In_z_ _Printf_format_string_ char const* for
 {
     va_list args1{};
     va_copy(args1, args);
-    int required = std::vsnprintf(nullptr, 0, format, args1);
+    int required =
+#if HC_PLATFORM_IS_MICROSOFT
+         _vscprintf(format, args1);
+#else
+        std::vsnprintf(nullptr, 0, format, args1);
+#endif
     va_end(args1);
 
     ASSERT(required > 0);
 
     size_t originalSize = buffer.size();
+    buffer.resize(originalSize + static_cast<size_t>(required) + 1); // add space for null terminator
 
     va_list args2{};
     va_copy(args2, args);
-    buffer.resize(originalSize + static_cast<size_t>(required) + 1); // add space for null terminator
-    int written = std::vsnprintf(reinterpret_cast<char*>(&buffer[originalSize]), buffer.size(), format, args2);
+    int written =
+#if HC_PLATFORM_IS_MICROSOFT
+        vsprintf_s(reinterpret_cast<char*>(&buffer[originalSize]), required + 1, format, args2);
+#else
+        std::vsnprintf(reinterpret_cast<char*>(&buffer[originalSize]), required + 1, format, args2);
+#endif
     va_end(args2);
 
     ASSERT(written == required);
@@ -178,7 +183,7 @@ public:
 
 static inline int str_icmp(const http_internal_string& left, const http_internal_string& right)
 {
-#if HC_PLATFORM_IS_MICROSOFT
+#if _WIN32
     return _stricmp(left.c_str(), right.c_str());
 #else
     return strcasecmp(left.c_str(), right.c_str());

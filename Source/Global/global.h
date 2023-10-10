@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #pragma once
-#include <httpClient/httpProvider.h>
-#include "perform_env.h"
+
+#include "Platform/PlatformComponents.h"
+#include "NetworkState.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -39,7 +40,7 @@ typedef struct http_singleton
 {
 public:
     static std::shared_ptr<http_singleton> get() noexcept;
-    static HRESULT create(_In_ HCInitArgs* args) noexcept;
+    static HRESULT create(_In_opt_ HCInitArgs* args) noexcept;
     static HRESULT cleanup_async(_In_ XAsyncBlock* async) noexcept;
 
     http_singleton(const http_singleton&) = delete;
@@ -61,11 +62,8 @@ public:
     http_internal_unordered_map<int32_t, std::pair<HCWebSocketRoutedHandler, void*>> m_webSocketRoutedHandlers;
 #endif
 
-    // HTTP state
-    HttpPerformInfo const m_httpPerform;
-    PerformEnv m_performEnv;
-
-    HRESULT set_global_proxy(_In_ const char* proxyUri);
+public:
+    UniquePtr<NetworkState> m_networkState;
 
     std::atomic<std::uint64_t> m_lastId{ 0 };
     bool m_retryAllowed = true;
@@ -77,10 +75,6 @@ public:
     bool m_disableAssertsForSSLValidationInDevSandboxes{ false };
 #endif
 
-#if !HC_NOWEBSOCKETS
-    WebSocketPerformInfo const m_websocketPerform;
-#endif
-
     // Mock state
     std::recursive_mutex m_mocksLock;
     http_internal_vector<HC_MOCK_CALL*> m_mocks;
@@ -88,13 +82,7 @@ public:
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
-    http_singleton(
-        HttpPerformInfo const& httpPerformInfo,
-#if !HC_NOWEBSOCKETS
-        WebSocketPerformInfo const& websocketPerformInfo,
-#endif
-        PerformEnv&& performEnv
-    );
+    http_singleton(UniquePtr<NetworkState> networkManager);
 
 private:
     enum class singleton_access_mode
@@ -181,10 +169,5 @@ private:
     shared_ptr_cache(const shared_ptr_cache&);
     shared_ptr_cache& operator=(const shared_ptr_cache&);
 };
-
-HttpPerformInfo& GetUserHttpPerformHandler() noexcept;
-#if !HC_NOWEBSOCKETS
-WebSocketPerformInfo& GetUserWebSocketPerformHandlers() noexcept;
-#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

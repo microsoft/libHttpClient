@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#include <httpClient/httpProvider.h>
 #include "httpcall.h"
 
 using namespace xbox::httpclient;
@@ -51,7 +52,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseGetResponseString(
     _In_ HCCallHandle call,
     _Out_ const char** responseString
@@ -126,11 +127,6 @@ try
         return E_FAIL;
     }
 
-    if (call->responseBodyBytes.size() > bufferSize)
-    {
-        return E_BOUNDS;
-    }
-
 #if HC_PLATFORM_IS_MICROSOFT
     memcpy_s(buffer, bufferSize, call->responseBodyBytes.data(), call->responseBodyBytes.size());
 #else
@@ -145,13 +141,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseSetResponseBodyBytes(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bodySize) const uint8_t* bodyBytes,
     _In_ size_t bodySize
     ) noexcept
-try 
+try
 {
     if (call == nullptr || bodyBytes == nullptr)
     {
@@ -198,17 +194,17 @@ try
     call->responseBodyBytes.insert(call->responseBodyBytes.end(), bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%zu (total=%llu)", TO_ULL(call->id), bodySize, call->responseBodyBytes.size()); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAppendResponseBodyBytes [ID %llu]: bodySize=%zu (total=%zu)", TO_ULL(call->id), bodySize, call->responseBodyBytes.size()); }
     return S_OK;
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseGetStatusCode(
     _In_ HCCallHandle call,
     _Out_ uint32_t* statusCode
     ) noexcept
-try 
+try
 {
     if (call == nullptr || statusCode == nullptr)
     {
@@ -220,12 +216,12 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseSetStatusCode(
     _In_ HCCallHandle call,
     _In_ uint32_t statusCode
     ) noexcept
-try 
+try
 {
     if (call == nullptr)
     {
@@ -238,13 +234,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseGetNetworkErrorCode(
     _In_ HCCallHandle call,
     _Out_ HRESULT* networkErrorCode,
     _Out_ uint32_t* platformNetworkErrorCode
     ) noexcept
-try 
+try
 {
     if (call == nullptr || networkErrorCode == nullptr || platformNetworkErrorCode == nullptr)
     {
@@ -257,13 +253,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseSetNetworkErrorCode(
     _In_ HCCallHandle call,
     _In_ HRESULT networkErrorCode,
     _In_ uint32_t platformNetworkErrorCode
     ) noexcept
-try 
+try
 {
     if (call == nullptr)
     {
@@ -318,13 +314,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseGetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
-    _Out_ const char** headerValue
+    _Outptr_result_z_ const char** headerValue
     ) noexcept
-try 
+try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
@@ -344,12 +340,12 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseGetNumHeaders(
     _In_ HCCallHandle call,
     _Out_ uint32_t* numHeaders
     ) noexcept
-try 
+try
 {
     if (call == nullptr || numHeaders == nullptr)
     {
@@ -361,12 +357,12 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseGetHeaderAtIndex(
     _In_ HCCallHandle call,
     _In_ uint32_t headerIndex,
-    _Out_ const char** headerName,
-    _Out_ const char** headerValue
+    _Outptr_result_z_ const char** headerName,
+    _Outptr_result_z_ const char** headerValue
     ) noexcept
 try
 {
@@ -394,7 +390,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallResponseSetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
@@ -422,7 +418,7 @@ STDAPI HCHttpCallResponseSetHeaderWithLength(
     _In_reads_(valueSize) const char* headerValue,
     _In_ size_t valueSize
     ) noexcept
-try 
+try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
@@ -453,5 +449,3 @@ try
     return S_OK;
 }
 CATCH_RETURN()
-
-

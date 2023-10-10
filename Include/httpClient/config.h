@@ -14,8 +14,14 @@
 #define HC_PLATFORM_GENERIC 100
 #define HC_PLATFORM_NINTENDO_SWITCH 111
 #define HC_PLATFORM_SONY_PLAYSTATION_4 121
+#define HC_PLATFORM_SONY_PLAYSTATION_5 131
 
 #define HC_PLATFORM_GSDK HC_PLATFORM_GDK // For backcompat
+
+// Set to 1 and define HC_PLATFORM_TYPES_PATH to include platform specific header
+#ifndef HC_PLATFORM_HEADER_OVERRIDE
+#define HC_PLATFORM_HEADER_OVERRIDE 0
+#endif
 
 // These macros define the datamodels that libHttpClient knows about
 // (a datamodel defines the size of primitive types such as int and pointers)
@@ -120,7 +126,12 @@
 // HC_PLATFORM_IS_EXTERNAL describes platforms where the implementation is outside of the libHttpClient repository
 #if !defined(HC_PLATFORM_IS_EXTERNAL)
 #define HC_PLATFORM_IS_EXTERNAL \
-(HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM == HC_PLATFORM_GENERIC)
+(HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5 || HC_PLATFORM == HC_PLATFORM_GENERIC)
+#endif
+
+#if !defined(HC_PLATFORM_IS_PLAYSTATION)
+#define HC_PLATFORM_IS_PLAYSTATION \
+(HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5)
 #endif
 
 #if defined(HC_PLATFORM_MSBUILD_GUESS) && (HC_PLATFORM_MSBUILD_GUESS != HC_PLATFORM)

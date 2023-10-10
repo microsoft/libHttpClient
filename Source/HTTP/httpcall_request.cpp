@@ -9,13 +9,13 @@
 
 using namespace xbox::httpclient;
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetUrl(
     _In_ HCCallHandle call,
     _In_z_ const char* method,
     _In_z_ const char* url
     ) noexcept
-try 
+try
 {
     if (call == nullptr || method == nullptr || url == nullptr)
     {
@@ -36,11 +36,11 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetUrl(
     _In_ HCCallHandle call,
-    _Outptr_ const char** method,
-    _Outptr_ const char** url
+    _Outptr_result_z_ const char** method,
+    _Outptr_result_z_ const char** url
     ) noexcept
 try
 {
@@ -59,7 +59,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRequestBodyBytes(
     _In_ HCCallHandle call,
     _In_reads_bytes_(requestBodySize) const uint8_t* requestBodyBytes,
@@ -92,7 +92,36 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+#if !HC_NOZLIB
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH
+STDAPI
+HCHttpCallRequestEnableGzipCompression(
+    _In_ HCCallHandle call,
+    _In_ HCCompressionLevel level
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->compressionLevel = level;
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestEnableGzipCompression [ID %llu]", TO_ULL(call->id)); }
+
+    return S_OK;
+}
+CATCH_RETURN()
+#endif
+#endif // !HC_NOZLIB
+
+STDAPI
 HCHttpCallRequestSetRequestBodyString(
     _In_ HCCallHandle call,
     _In_z_ const char* requestBodyString
@@ -141,13 +170,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRequestBodyBytes(
     _In_ HCCallHandle call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const uint8_t** requestBodyBytes,
     _Out_ uint32_t* requestBodySize
     ) noexcept
-try 
+try
 {
     if (call == nullptr || requestBodyBytes == nullptr || requestBodySize == nullptr)
     {
@@ -168,7 +197,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRequestBodyString(
     _In_ HCCallHandle call,
     _Outptr_ const char** requestBody
@@ -211,14 +240,14 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue,
     _In_ bool allowTracing
     ) noexcept
-try 
+try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
@@ -233,13 +262,13 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetHeader(
     _In_ HCCallHandle call,
     _In_z_ const char* headerName,
     _Out_ const char** headerValue
     ) noexcept
-try 
+try
 {
     if (call == nullptr || headerName == nullptr || headerValue == nullptr)
     {
@@ -259,7 +288,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetNumHeaders(
     _In_ HCCallHandle call,
     _Out_ uint32_t* numHeaders
@@ -276,7 +305,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetHeaderAtIndex(
     _In_ HCCallHandle call,
     _In_ uint32_t headerIndex,
@@ -309,7 +338,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRetryCacheId(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t retryAfterCacheId
@@ -331,7 +360,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRetryAllowed(
     _In_opt_ HCCallHandle call,
     _In_ bool retryAllowed
@@ -357,7 +386,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRetryAllowed(
     _In_opt_ HCCallHandle call,
     _Out_ bool* retryAllowed
@@ -385,7 +414,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRetryCacheId(
     _In_ HCCallHandle call,
     _Out_ uint32_t* retryAfterCacheId
@@ -404,7 +433,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetTimeout(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t timeoutInSeconds
@@ -431,7 +460,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetTimeout(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutInSeconds
@@ -460,7 +489,7 @@ try
 CATCH_RETURN()
 
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetTimeoutWindow(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t timeoutWindowInSeconds
@@ -487,7 +516,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetTimeoutWindow(
     _In_opt_ HCCallHandle call,
     _Out_ uint32_t* timeoutWindowInSeconds
@@ -515,7 +544,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestGetRetryDelay(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t* retryDelayInSeconds
@@ -543,7 +572,7 @@ try
 }
 CATCH_RETURN()
 
-STDAPI 
+STDAPI
 HCHttpCallRequestSetRetryDelay(
     _In_opt_ HCCallHandle call,
     _In_ uint32_t retryDelayInSeconds
@@ -568,7 +597,7 @@ try
 CATCH_RETURN()
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-STDAPI 
+STDAPI
 HCHttpDisableAssertsForSSLValidationInDevSandboxes(
     _In_ HCConfigSetting setting
 ) noexcept

@@ -5,6 +5,7 @@
 #include <winhttp.h>
 #include "utils.h"
 #include "uri.h"
+#include "winhttp_provider.h"
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #endif
@@ -197,7 +198,7 @@ private:
     static void read_next_response_chunk(_In_ WinHttpConnection* pRequestContext, DWORD bytesRead);
     static void _multiple_segment_write_data(_In_ WinHttpConnection* pRequestContext);
 
-    static void parse_headers_string(_In_ HCCallHandle call, _In_ wchar_t* headersStr);
+    static void parse_headers_string(_In_ HCCallHandle call, _In_z_ wchar_t* headersStr);
 
     // WinHttp event callbacks
     static void CALLBACK completion_callback(

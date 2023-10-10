@@ -5,7 +5,7 @@
 
 #include <httpClient/httpClient.h>
 #include "HTTP/httpcall.h"
-#include "Global/perform_env.h"
+#include "Platform/IWebSocketProvider.h"
 
 HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
@@ -88,12 +88,11 @@ void ObserverDeleter::operator()(HC_WEBSOCKET_OBSERVER* ptr) noexcept
 class WebSocket : public std::enable_shared_from_this<WebSocket>
 {
 public:
+    WebSocket(uint64_t id, IWebSocketProvider& provider);
     WebSocket(const WebSocket&) = delete;
     WebSocket(WebSocket&&) = delete;
     WebSocket& operator=(const WebSocket&) = delete;
     virtual ~WebSocket();
-
-    static Result<std::shared_ptr<WebSocket>> Initialize();
 
     uint32_t RegisterEventCallbacks(
         _In_opt_ HCWebSocketMessageFunction messageFunc,
@@ -149,8 +148,6 @@ public:
     std::shared_ptr<hc_websocket_impl> impl;
 
 private:
-    WebSocket(uint64_t id, WebSocketPerformInfo performInfo, HC_PERFORM_ENV* performEnv);
-
     static HRESULT CALLBACK ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
     static void CALLBACK ConnectComplete(XAsyncBlock* async);
 
@@ -195,10 +192,9 @@ private:
     http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
     uint32_t m_nextToken{ 1 };
 
-    WebSocketPerformInfo const m_performInfo;
-    HC_PERFORM_ENV* const m_performEnv; // non-owning
-
     ProviderContext* m_providerContext{ nullptr };
+
+    IWebSocketProvider& m_provider;
 };
 
 } // namespace httpclient

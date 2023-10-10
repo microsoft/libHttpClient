@@ -14,6 +14,10 @@ public:
     void SetClientCallback(HCTraceCallback* callback) noexcept;
     HCTraceCallback* GetClientCallback() const noexcept;
     uint64_t GetTimestamp() const noexcept;
+    bool GetEtwEnabled() const noexcept;
+#if HC_PLATFORM_IS_MICROSOFT
+    void SetEtwEnabled(_In_ bool enabled) noexcept;
+#endif
 
 private:
     std::atomic<uint32_t> m_tracingClients{ 0 };
@@ -23,6 +27,7 @@ private:
     };
     std::atomic<HCTraceCallback*> m_clientCallback{ nullptr };
     bool m_traceToDebugger = false;
+    bool m_etwEnabled = false;
 };
 
 TraceState& GetTraceState() noexcept;
@@ -41,10 +46,3 @@ struct WriteToDebuggerInfo
 
 ThreadIdInfo& GetThreadIdInfo() noexcept;
 WriteToDebuggerInfo& GetWriteToDebuggerInfo() noexcept;
-
-//------------------------------------------------------------------------------
-// Platform specific functionality
-//------------------------------------------------------------------------------
-uint64_t Internal_ThisThreadId() noexcept;
-void Internal_HCTraceMessage(char const* area, HCTraceLevel level, char const* message) noexcept;
-

@@ -49,6 +49,15 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 * Optionally call HCSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl for an example of how to use this callback to make your own HTTP implementation.
 
+## Build customization
+
+If you are building libHttpClient from source, you can provide an hc_settings.props file with specific MSBuild properties to customize how the library gets built. When built, the libHttpClient projects look for an hc_settings.props file in any directory above the the repository root. Currently, the following build customizations are available:
+* Defining HCNoWebSockets will exclude WebSocket APIs (and all their dependencies) from the libHttpClient library
+* Defining HCNoZlib will exclude compression APIs and prevent libHttpClient from defining Zlib symbols within libHttpClient
+* Defining HCExternalOpenSSL will prevent libHttpClient from referencing our private OpenSSL projects. If this is defined, you will need to manually include your own (compatible) version of OpenSSL when linking.
+
+An example customization file hc_settings.props.example can be found at the root of the repository.
+
 ## How to clone repo
 
 This repo contains submodules.  There are two ways to make sure you get submodules.

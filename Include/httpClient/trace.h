@@ -208,6 +208,12 @@ STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexc
 /// <returns></returns>
 STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 
+#if HC_PLATFORM_IS_MICROSOFT
+/// <summary>
+/// Enables or disables ETW tracing for Xbox and PC platforms.
+/// </summary>
+STDAPI_(void) HCTraceSetEtwEnabled(_In_ bool enabled) noexcept;
+#endif
 
 //------------------------------------------------------------------------------
 // Trace macros

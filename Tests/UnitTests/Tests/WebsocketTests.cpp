@@ -7,6 +7,7 @@
 #include "DefineTestMacros.h"
 #include "Utils.h"
 #include "../global/global.h"
+#include <httpClient/httpProvider.h>
 
 #pragma warning(disable:4389)
 

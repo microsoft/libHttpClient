@@ -19,7 +19,7 @@ DEFINE_TEST_CLASS(MockTests)
 public:
     DEFINE_TEST_CLASS_PROPS(MockTests);
 
-    HCMockCallHandle CreateMockCall(CHAR* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
+    HCMockCallHandle CreateMockCall(CHAR const* strResponse, bool makeSpecificUrl, bool makeSpecificBody)
     {
         UNREFERENCED_PARAMETER(makeSpecificUrl);
         UNREFERENCED_PARAMETER(makeSpecificBody);

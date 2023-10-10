@@ -239,7 +239,7 @@ int main()
     XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
     StartBackgroundThread();
 
-    std::string url = "ws://localhost:9002";
+    std::string url = "wss://ws.postman-echo.com/raw";
 
     auto websocketContext = new WebSocketContext{};
     HCWebSocketCreate(&websocketContext->handle, WebSocketMessageReceived, WebSocketBinaryMessageReceived, WebSocketClosed, websocketContext);

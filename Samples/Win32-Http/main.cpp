@@ -178,7 +178,7 @@ struct SampleHttpCallAsyncContext
     std::string filePath;
 };
 
-void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath)
+void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression)
 {
     std::string method = "GET";
     bool retryAllowed = true;
@@ -188,6 +188,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     header.clear();
     header.push_back("TestHeader");
     header.push_back("1.0");
+
     headers.push_back(header);
 
     HCCallHandle call = nullptr;
@@ -195,6 +196,12 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
+
+    if (enableGzipCompression)
+    {
+        HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Medium);
+    }
+
     for (auto& header : headers)
     {
         std::string headerName = header[0];
@@ -305,10 +312,11 @@ int main()
     StartBackgroundThread();
 
     std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
-    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "");
+    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false);
+    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true);
 
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    DoHttpCall(url2, "", false, "SplashScreen.png");
+    DoHttpCall(url2, "", false, "SplashScreen.png", false);
 
     HCCleanup();
     ShutdownActiveThreads();

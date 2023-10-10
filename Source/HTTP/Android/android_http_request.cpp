@@ -3,6 +3,7 @@
 #include "android_http_request.h"
 #include "http_android.h"
 #include <httpClient/httpClient.h>
+#include <httpClient/httpProvider.h>
 #include <vector>
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
@@ -257,84 +258,6 @@ uint32_t HttpRequest::GetResponseHeaderCount(jobject response)
     jmethodID httpResponssNumHeadersMethod = jniEnv->GetMethodID(m_httpResponseClass, "getNumHeaders", "()I");
     jint numHeaders = jniEnv->CallIntMethod(response, httpResponssNumHeadersMethod);
     return (uint32_t)numHeaders;
-}
-
-void AndroidHttpCallPerformAsync(
-    _In_ HCCallHandle call,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* /*context*/,
-    _In_ HCPerformEnv env
-) noexcept
-{
-    auto httpSingleton = xbox::httpclient::get_http_singleton();
-    if (httpSingleton == nullptr)
-    {
-        HCHttpCallResponseSetNetworkErrorCode(call, E_HC_NOT_INITIALISED, 0);
-        XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
-        return;
-    }
-
-    std::unique_ptr<HttpRequest> httpRequest{
-        new HttpRequest(
-            asyncBlock,
-            env->androidPlatformContext->GetJavaVm(),
-            env->androidPlatformContext->GetApplicationContext(),
-            env->androidPlatformContext->GetHttpRequestClass(),
-            env->androidPlatformContext->GetHttpResponseClass()
-        )
-    };
-
-    HRESULT result = httpRequest->Initialize();
-
-    if (!SUCCEEDED(result))
-    {
-        HCHttpCallResponseSetNetworkErrorCode(call, result, 0);
-        XAsyncComplete(asyncBlock, result, 0);
-        return;
-    }
-
-    const char* requestUrl = nullptr;
-    const char* requestMethod = nullptr;
-
-    HCHttpCallRequestGetUrl(call, &requestMethod, &requestUrl);
-    httpRequest->SetUrl(requestUrl);
-
-    uint32_t numHeaders = 0;
-    HCHttpCallRequestGetNumHeaders(call, &numHeaders);
-
-    for (uint32_t i = 0; i < numHeaders; i++)
-    {
-        const char* headerName = nullptr;
-        const char* headerValue = nullptr;
-
-        HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
-        httpRequest->AddHeader(headerName, headerValue);
-    }
-
-    HCHttpCallRequestBodyReadFunction readFunction = nullptr;
-    size_t requestBodySize = 0;
-    void* readFunctionContext = nullptr;
-    HCHttpCallRequestGetRequestBodyReadFunction(call, &readFunction, &requestBodySize, &readFunctionContext);
-
-    const char* contentType = nullptr;
-    if (requestBodySize > 0)
-    {
-        HCHttpCallRequestGetHeader(call, "Content-Type", &contentType);
-    }
-
-    httpRequest->SetMethodAndBody(call, requestMethod, contentType, requestBodySize);
-
-    HCHttpCallSetContext(call, httpRequest.get());
-    result = httpRequest->ExecuteAsync(call);
-
-    if (SUCCEEDED(result))
-    {
-        httpRequest.release();
-    }
-    else
-    {
-        XAsyncComplete(asyncBlock, E_FAIL, 0);
-    }
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{d4dbdc9c-60b9-4de5-93f3-ce7361b2e6b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common">
+      <UniqueIdentifier>{6fef0c7d-dc84-4c50-b70b-6d975bcc3867}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common\Win">
+      <UniqueIdentifier>{4cc595af-80e7-4470-94f1-690c2db45450}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP">
+      <UniqueIdentifier>{59175ffa-6277-4a13-b72a-a006f7365d83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform">
+      <UniqueIdentifier>{1721775d-63b6-4119-9791-eebafbd9702d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Task">
+      <UniqueIdentifier>{e1825a9c-fd30-45dd-8b05-ebcd7475e501}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\WebSocket">
+      <UniqueIdentifier>{b993370c-ae23-4f3b-80a9-384613092769}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP\XMLHttp">
+      <UniqueIdentifier>{61091c04-ee4b-480c-adac-fe17b2aad965}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\WebSocket\WinRT">
+      <UniqueIdentifier>{170ff2f6-ae80-4f34-9ff3-f51a25932b05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform\UWP">
+      <UniqueIdentifier>{864b9021-81aa-425d-bb83-1623c8b0bacb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform\Windows">
+      <UniqueIdentifier>{4ce7cfb5-5d98-4cd6-bd15-3c8cb22562e4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
+      <Filter>Source\Common\Win</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.cpp">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_stream.cpp">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_response_stream.cpp">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.cpp">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_provider.cpp">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.cpp">
+      <Filter>Source\WebSocket\WinRT</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp">
+      <Filter>Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp">
+      <Filter>Source\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\UWP\PlatformComponents_UWP.cpp">
+      <Filter>Source\Platform\UWP</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp">
+      <Filter>Source\Platform\Windows</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
+      <Filter>Source\Common\Win</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_callback.h">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_request_stream.h">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\http_response_stream.h">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_http_task.h">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\XMLHttp\xmlhttp_provider.h">
+      <Filter>Source\HTTP\XMLHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\WinRT\winrt_websocket.h">
+      <Filter>Source\WebSocket\WinRT</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

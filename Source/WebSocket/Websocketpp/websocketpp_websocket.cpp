@@ -869,36 +869,30 @@ private:
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-HRESULT CALLBACK WebSocketppConnectAsync(
-    _In_z_ const char* uri,
-    _In_z_ const char* subProtocol,
-    _In_ HCWebsocketHandle websocket,
-    _Inout_ XAsyncBlock* async,
-    _In_opt_ void* context,
-    _In_ HCPerformEnv env
-    )
+HRESULT WebSocketppProvider::ConnectAsync(
+    String const& uri,
+    String const& subprotocol,
+    HCWebsocketHandle websocketHandle,
+    XAsyncBlock* async
+) noexcept
 {
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(env);
-    auto wsppSocket{ std::dynamic_pointer_cast<wspp_websocket_impl>(websocket->websocket->impl) };
+    auto wsppSocket{ std::dynamic_pointer_cast<wspp_websocket_impl>(websocketHandle->websocket->impl) };
 
     if (!wsppSocket)
     {
-        wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocket, uri, subProtocol);
-        websocket->websocket->impl = wsppSocket;
+        wsppSocket = http_allocate_shared<wspp_websocket_impl>(websocketHandle, uri.data(), subprotocol.data());
+        websocketHandle->websocket->impl = wsppSocket;
     }
 
     return wsppSocket->connect(async);
 }
 
-HRESULT CALLBACK WebSocketppSendMessageAsync(
-    _In_ HCWebsocketHandle websocketHandle,
-    _In_z_ const char* message,
-    _Inout_ XAsyncBlock* async,
-    _In_opt_ void* context
-    )
+HRESULT WebSocketppProvider::SendAsync(
+    HCWebsocketHandle websocketHandle,
+    const char* message,
+    XAsyncBlock* async
+) noexcept
 {
-    UNREFERENCED_PARAMETER(context);
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocketHandle->websocket->impl);
     if (wsppSocket == nullptr)
     {
@@ -907,30 +901,26 @@ HRESULT CALLBACK WebSocketppSendMessageAsync(
     return wsppSocket->send(async, message);
 }
 
-HRESULT CALLBACK WebSocketppSendBinaryMessageAsync(
-    _In_ HCWebsocketHandle websocketHandle,
-    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
-    _In_ uint32_t payloadSize,
-    _Inout_ XAsyncBlock* asyncBlock,
-    _In_opt_ void* context
-    )
+HRESULT WebSocketppProvider::SendBinaryAsync(
+    HCWebsocketHandle websocketHandle,
+    const uint8_t* payloadBytes,
+    uint32_t payloadSize,
+    XAsyncBlock* async
+) noexcept
 {
-    UNREFERENCED_PARAMETER(context);
     std::shared_ptr<wspp_websocket_impl> wsppSocket = std::dynamic_pointer_cast<wspp_websocket_impl>(websocketHandle->websocket->impl);
     if (wsppSocket == nullptr)
     {
         return E_UNEXPECTED;
     }
-    return wsppSocket->sendBinary(asyncBlock, payloadBytes, payloadSize);
+    return wsppSocket->sendBinary(async, payloadBytes, payloadSize);
 }
 
-HRESULT CALLBACK WebSocketppDisconnect(
-    _In_ HCWebsocketHandle websocketHandle,
-    _In_ HCWebSocketCloseStatus closeStatus,
-    _In_opt_ void* context
-    )
+HRESULT WebSocketppProvider::Disconnect(
+    HCWebsocketHandle websocketHandle,
+    HCWebSocketCloseStatus closeStatus
+) noexcept
 {
-    UNREFERENCED_PARAMETER(context);
     if (websocketHandle == nullptr)
     {
         return E_INVALIDARG;
