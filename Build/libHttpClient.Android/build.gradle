@@ -1,11 +1,12 @@
 apply plugin: "com.android.library"
 
 android {
-    compileSdkVersion 31
-    ndkVersion "25.1.8937393"
+    namespace "com.xbox.httpclient"
+    compileSdk 34
+    ndkVersion "26.0.10792818"
 
     defaultConfig {
-        targetSdkVersion 30
+        targetSdkVersion 34
         minSdkVersion 21
 
         externalNativeBuild {
