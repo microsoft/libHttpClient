@@ -19,7 +19,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "../../Utilities/Cmake/Android/openssl/libcrypto/CMakeLists.txt"
+            path "CMakeLists.txt"
             buildStagingDirectory "${project.buildDir.getParentFile().getAbsolutePath()}/.cxx/${project.name}"
         }
     }
