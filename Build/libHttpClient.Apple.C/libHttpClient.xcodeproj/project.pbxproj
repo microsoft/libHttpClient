@@ -103,6 +103,75 @@
 		7DB100D1211927DF00AE22F5 /* uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E98F209ADEB100CC6774 /* uri.cpp */; };
 		7DB100D2211927DF00AE22F5 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E987209ADEB100CC6774 /* utils.cpp */; };
 		7DB100DE2119F91B00AE22F5 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58A7E991209ADEB100CC6774 /* pch.cpp */; };
+		828CEC7A2AFC1FAF00CA08B1 /* compression.h in Headers */ = {isa = PBXBuildFile; fileRef = 828CEC782AFC1FAF00CA08B1 /* compression.h */; };
+		828CEC7B2AFC1FAF00CA08B1 /* compression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 828CEC792AFC1FAF00CA08B1 /* compression.cpp */; };
+		828CEC7C2AFC1FAF00CA08B1 /* compression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 828CEC792AFC1FAF00CA08B1 /* compression.cpp */; };
+		828CEC7D2AFC1FAF00CA08B1 /* compression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 828CEC792AFC1FAF00CA08B1 /* compression.cpp */; };
+		828CEC7E2AFC1FAF00CA08B1 /* compression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 828CEC792AFC1FAF00CA08B1 /* compression.cpp */; };
+		828CED282AFC484D00CA08B1 /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED192AFC484D00CA08B1 /* inffast.c */; };
+		828CED292AFC484D00CA08B1 /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED192AFC484D00CA08B1 /* inffast.c */; };
+		828CED2A2AFC484D00CA08B1 /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED192AFC484D00CA08B1 /* inffast.c */; };
+		828CED2B2AFC484D00CA08B1 /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED192AFC484D00CA08B1 /* inffast.c */; };
+		828CED2C2AFC484D00CA08B1 /* gzlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1A2AFC484D00CA08B1 /* gzlib.c */; };
+		828CED2D2AFC484D00CA08B1 /* gzlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1A2AFC484D00CA08B1 /* gzlib.c */; };
+		828CED2E2AFC484D00CA08B1 /* gzlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1A2AFC484D00CA08B1 /* gzlib.c */; };
+		828CED2F2AFC484D00CA08B1 /* gzlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1A2AFC484D00CA08B1 /* gzlib.c */; };
+		828CED302AFC484D00CA08B1 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1B2AFC484D00CA08B1 /* compress.c */; };
+		828CED312AFC484D00CA08B1 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1B2AFC484D00CA08B1 /* compress.c */; };
+		828CED322AFC484D00CA08B1 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1B2AFC484D00CA08B1 /* compress.c */; };
+		828CED332AFC484D00CA08B1 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1B2AFC484D00CA08B1 /* compress.c */; };
+		828CED342AFC484D00CA08B1 /* infback.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1C2AFC484D00CA08B1 /* infback.c */; };
+		828CED352AFC484D00CA08B1 /* infback.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1C2AFC484D00CA08B1 /* infback.c */; };
+		828CED362AFC484D00CA08B1 /* infback.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1C2AFC484D00CA08B1 /* infback.c */; };
+		828CED372AFC484D00CA08B1 /* infback.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1C2AFC484D00CA08B1 /* infback.c */; };
+		828CED382AFC484D00CA08B1 /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1D2AFC484D00CA08B1 /* deflate.c */; };
+		828CED392AFC484D00CA08B1 /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1D2AFC484D00CA08B1 /* deflate.c */; };
+		828CED3A2AFC484D00CA08B1 /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1D2AFC484D00CA08B1 /* deflate.c */; };
+		828CED3B2AFC484D00CA08B1 /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1D2AFC484D00CA08B1 /* deflate.c */; };
+		828CED3C2AFC484D00CA08B1 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1E2AFC484D00CA08B1 /* crc32.c */; };
+		828CED3D2AFC484D00CA08B1 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1E2AFC484D00CA08B1 /* crc32.c */; };
+		828CED3E2AFC484D00CA08B1 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1E2AFC484D00CA08B1 /* crc32.c */; };
+		828CED3F2AFC484D00CA08B1 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1E2AFC484D00CA08B1 /* crc32.c */; };
+		828CED402AFC484D00CA08B1 /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1F2AFC484D00CA08B1 /* zutil.c */; };
+		828CED412AFC484D00CA08B1 /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1F2AFC484D00CA08B1 /* zutil.c */; };
+		828CED422AFC484D00CA08B1 /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1F2AFC484D00CA08B1 /* zutil.c */; };
+		828CED432AFC484D00CA08B1 /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1F2AFC484D00CA08B1 /* zutil.c */; };
+		828CED442AFC484D00CA08B1 /* gzclose.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED202AFC484D00CA08B1 /* gzclose.c */; };
+		828CED452AFC484D00CA08B1 /* gzclose.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED202AFC484D00CA08B1 /* gzclose.c */; };
+		828CED462AFC484D00CA08B1 /* gzclose.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED202AFC484D00CA08B1 /* gzclose.c */; };
+		828CED472AFC484D00CA08B1 /* gzclose.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED202AFC484D00CA08B1 /* gzclose.c */; };
+		828CED482AFC484D00CA08B1 /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED212AFC484D00CA08B1 /* inftrees.c */; };
+		828CED492AFC484D00CA08B1 /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED212AFC484D00CA08B1 /* inftrees.c */; };
+		828CED4A2AFC484D00CA08B1 /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED212AFC484D00CA08B1 /* inftrees.c */; };
+		828CED4B2AFC484D00CA08B1 /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED212AFC484D00CA08B1 /* inftrees.c */; };
+		828CED4C2AFC484D00CA08B1 /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED222AFC484D00CA08B1 /* uncompr.c */; };
+		828CED4D2AFC484D00CA08B1 /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED222AFC484D00CA08B1 /* uncompr.c */; };
+		828CED4E2AFC484D00CA08B1 /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED222AFC484D00CA08B1 /* uncompr.c */; };
+		828CED4F2AFC484D00CA08B1 /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED222AFC484D00CA08B1 /* uncompr.c */; };
+		828CED502AFC484D00CA08B1 /* gzwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED232AFC484D00CA08B1 /* gzwrite.c */; };
+		828CED512AFC484D00CA08B1 /* gzwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED232AFC484D00CA08B1 /* gzwrite.c */; };
+		828CED522AFC484D00CA08B1 /* gzwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED232AFC484D00CA08B1 /* gzwrite.c */; };
+		828CED532AFC484D00CA08B1 /* gzwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED232AFC484D00CA08B1 /* gzwrite.c */; };
+		828CED542AFC484D00CA08B1 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED242AFC484D00CA08B1 /* inflate.c */; };
+		828CED552AFC484D00CA08B1 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED242AFC484D00CA08B1 /* inflate.c */; };
+		828CED562AFC484D00CA08B1 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED242AFC484D00CA08B1 /* inflate.c */; };
+		828CED572AFC484D00CA08B1 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED242AFC484D00CA08B1 /* inflate.c */; };
+		828CED582AFC484D00CA08B1 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED252AFC484D00CA08B1 /* gzread.c */; };
+		828CED592AFC484D00CA08B1 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED252AFC484D00CA08B1 /* gzread.c */; };
+		828CED5A2AFC484D00CA08B1 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED252AFC484D00CA08B1 /* gzread.c */; };
+		828CED5B2AFC484D00CA08B1 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED252AFC484D00CA08B1 /* gzread.c */; };
+		828CED5C2AFC484D00CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; };
+		828CED5D2AFC484D00CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; };
+		828CED5E2AFC484D00CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; };
+		828CED5F2AFC484D00CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; };
+		828CED602AFC484D00CA08B1 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED272AFC484D00CA08B1 /* trees.c */; };
+		828CED612AFC484D00CA08B1 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED272AFC484D00CA08B1 /* trees.c */; };
+		828CED622AFC484D00CA08B1 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED272AFC484D00CA08B1 /* trees.c */; };
+		828CED632AFC484D00CA08B1 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED272AFC484D00CA08B1 /* trees.c */; };
+		828CED652AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
+		828CED662AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
+		828CED672AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
+		828CED682AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
 		9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		A207D73D262F3E35005C0A65 /* request_body_stream.h in Headers */ = {isa = PBXBuildFile; fileRef = A207D73B262F3E35005C0A65 /* request_body_stream.h */; };
@@ -349,6 +418,24 @@
 		72FC98D62A65FA5B00A158B6 /* NetworkState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetworkState.h; sourceTree = "<group>"; };
 		72FC98D72A65FA5B00A158B6 /* NetworkState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NetworkState.cpp; sourceTree = "<group>"; };
 		7DB100A72119206B00AE22F5 /* libHttpClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libHttpClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		828CEC782AFC1FAF00CA08B1 /* compression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compression.h; sourceTree = "<group>"; };
+		828CEC792AFC1FAF00CA08B1 /* compression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = compression.cpp; sourceTree = "<group>"; };
+		828CED192AFC484D00CA08B1 /* inffast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inffast.c; path = ../External/zlib/inffast.c; sourceTree = "<group>"; };
+		828CED1A2AFC484D00CA08B1 /* gzlib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gzlib.c; path = ../External/zlib/gzlib.c; sourceTree = "<group>"; };
+		828CED1B2AFC484D00CA08B1 /* compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compress.c; path = ../External/zlib/compress.c; sourceTree = "<group>"; };
+		828CED1C2AFC484D00CA08B1 /* infback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = infback.c; path = ../External/zlib/infback.c; sourceTree = "<group>"; };
+		828CED1D2AFC484D00CA08B1 /* deflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deflate.c; path = ../External/zlib/deflate.c; sourceTree = "<group>"; };
+		828CED1E2AFC484D00CA08B1 /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crc32.c; path = ../External/zlib/crc32.c; sourceTree = "<group>"; };
+		828CED1F2AFC484D00CA08B1 /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zutil.c; path = ../External/zlib/zutil.c; sourceTree = "<group>"; };
+		828CED202AFC484D00CA08B1 /* gzclose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gzclose.c; path = ../External/zlib/gzclose.c; sourceTree = "<group>"; };
+		828CED212AFC484D00CA08B1 /* inftrees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inftrees.c; path = ../External/zlib/inftrees.c; sourceTree = "<group>"; };
+		828CED222AFC484D00CA08B1 /* uncompr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uncompr.c; path = ../External/zlib/uncompr.c; sourceTree = "<group>"; };
+		828CED232AFC484D00CA08B1 /* gzwrite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gzwrite.c; path = ../External/zlib/gzwrite.c; sourceTree = "<group>"; };
+		828CED242AFC484D00CA08B1 /* inflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inflate.c; path = ../External/zlib/inflate.c; sourceTree = "<group>"; };
+		828CED252AFC484D00CA08B1 /* gzread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gzread.c; path = ../External/zlib/gzread.c; sourceTree = "<group>"; };
+		828CED262AFC484D00CA08B1 /* adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = adler32.c; path = ../External/zlib/adler32.c; sourceTree = "<group>"; };
+		828CED272AFC484D00CA08B1 /* trees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = trees.c; path = ../External/zlib/trees.c; sourceTree = "<group>"; };
+		828CED642AFC486000CA08B1 /* unzip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = unzip.c; path = ../External/zlib/contrib/minizip/unzip.c; sourceTree = "<group>"; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
 		A207D73B262F3E35005C0A65 /* request_body_stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = request_body_stream.h; sourceTree = "<group>"; };
@@ -539,6 +626,7 @@
 		58A7E971209ADEB100CC6774 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				828CED182AFC47DD00CA08B1 /* Zlib */,
 				727978E52A4E32A800EB7079 /* Platform */,
 				58A7E985209ADEB100CC6774 /* Common */,
 				58A7E9B4209ADEB100CC6774 /* Global */,
@@ -607,6 +695,8 @@
 			isa = PBXGroup;
 			children = (
 				58A7E998209ADEB100CC6774 /* Apple */,
+				828CEC792AFC1FAF00CA08B1 /* compression.cpp */,
+				828CEC782AFC1FAF00CA08B1 /* compression.h */,
 				58A7E9A8209ADEB100CC6774 /* httpcall_request.cpp */,
 				A590598227A9BCD1007AC168 /* httpcall_publics.cpp */,
 				58A7E997209ADEB100CC6774 /* httpcall_response.cpp */,
@@ -756,6 +846,29 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		828CED182AFC47DD00CA08B1 /* Zlib */ = {
+			isa = PBXGroup;
+			children = (
+				828CED642AFC486000CA08B1 /* unzip.c */,
+				828CED262AFC484D00CA08B1 /* adler32.c */,
+				828CED1B2AFC484D00CA08B1 /* compress.c */,
+				828CED1E2AFC484D00CA08B1 /* crc32.c */,
+				828CED1D2AFC484D00CA08B1 /* deflate.c */,
+				828CED202AFC484D00CA08B1 /* gzclose.c */,
+				828CED1A2AFC484D00CA08B1 /* gzlib.c */,
+				828CED252AFC484D00CA08B1 /* gzread.c */,
+				828CED232AFC484D00CA08B1 /* gzwrite.c */,
+				828CED1C2AFC484D00CA08B1 /* infback.c */,
+				828CED192AFC484D00CA08B1 /* inffast.c */,
+				828CED242AFC484D00CA08B1 /* inflate.c */,
+				828CED212AFC484D00CA08B1 /* inftrees.c */,
+				828CED272AFC484D00CA08B1 /* trees.c */,
+				828CED222AFC484D00CA08B1 /* uncompr.c */,
+				828CED1F2AFC484D00CA08B1 /* zutil.c */,
+			);
+			name = Zlib;
+			sourceTree = "<group>";
+		};
 		9C3B253D212F29CF0080AEC6 /* Websocketpp */ = {
 			isa = PBXGroup;
 			children = (
@@ -827,6 +940,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A207D73D262F3E35005C0A65 /* request_body_stream.h in Headers */,
+				828CEC7A2AFC1FAF00CA08B1 /* compression.h in Headers */,
 				A2ACA1C22630C9C100D74874 /* session_delegate.h in Headers */,
 				727977172A4E2FCF00EB7079 /* websocketpp_websocket.h in Headers */,
 				D335CABF24085A9A005958B3 /* LocklessQueue.h in Headers */,
@@ -1198,35 +1312,52 @@
 			buildActionMask = 2147483647;
 			files = (
 				58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */,
+				828CED652AFC486000CA08B1 /* unzip.c in Sources */,
 				58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */,
 				727979102A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
 				D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */,
 				58A7E9CE209ADEB100CC6774 /* uri.cpp in Sources */,
+				828CED542AFC484D00CA08B1 /* inflate.c in Sources */,
+				828CED282AFC484D00CA08B1 /* inffast.c in Sources */,
+				828CED442AFC484D00CA08B1 /* gzclose.c in Sources */,
 				58A7E9EB209ADEB100CC6774 /* AsyncLib.cpp in Sources */,
+				828CED382AFC484D00CA08B1 /* deflate.c in Sources */,
+				828CED402AFC484D00CA08B1 /* zutil.c in Sources */,
 				58A7E9C7209ADEB100CC6774 /* utils.cpp in Sources */,
 				58A7E9F0209ADEB100CC6774 /* mem.cpp in Sources */,
 				58A7E9C1209ADEB100CC6774 /* trace.cpp in Sources */,
+				828CED3C2AFC484D00CA08B1 /* crc32.c in Sources */,
 				58A7E9C5209ADEB100CC6774 /* lhc_mock.cpp in Sources */,
+				828CEC7B2AFC1FAF00CA08B1 /* compression.cpp in Sources */,
 				58A7E9D4209ADEB100CC6774 /* httpcall_response.cpp in Sources */,
+				828CED302AFC484D00CA08B1 /* compress.c in Sources */,
 				A590598627A9BD53007AC168 /* websocket_publics.cpp in Sources */,
 				9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				A590598A27A9BD5C007AC168 /* httpcall_publics.cpp in Sources */,
 				58A7E9D5209ADEB100CC6774 /* http_apple.mm in Sources */,
 				727979142A4E32A800EB7079 /* IHttpProvider.cpp in Sources */,
+				828CED2C2AFC484D00CA08B1 /* gzlib.c in Sources */,
 				A2ACA1BE2630C9C100D74874 /* session_delegate.mm in Sources */,
 				58A7E9BF209ADEB100CC6774 /* hcwebsocket.cpp in Sources */,
+				828CED4C2AFC484D00CA08B1 /* uncompr.c in Sources */,
 				58A7E9E2209ADEB100CC6774 /* httpcall_request.cpp in Sources */,
+				828CED5C2AFC484D00CA08B1 /* adler32.c in Sources */,
+				828CED342AFC484D00CA08B1 /* infback.c in Sources */,
+				828CED582AFC484D00CA08B1 /* gzread.c in Sources */,
 				588C7E7C218275CE001098B3 /* WaitTimer_stl.cpp in Sources */,
+				828CED502AFC484D00CA08B1 /* gzwrite.c in Sources */,
 				727979182A4E32A800EB7079 /* ExternalHttpProvider.cpp in Sources */,
 				D3DAA85121C0E4090009C7F6 /* TaskQueue.cpp in Sources */,
 				727979072A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979032A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
 				72FC98D92A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				58A7E9C3209ADEB100CC6774 /* mock_publics.cpp in Sources */,
+				828CED482AFC484D00CA08B1 /* inftrees.c in Sources */,
 				58A7E9C0209ADEB100CC6774 /* log_publics.cpp in Sources */,
 				A207D73E262F3E35005C0A65 /* request_body_stream.mm in Sources */,
 				58A7E9E5209ADEB100CC6774 /* httpcall.cpp in Sources */,
 				58A7E9D0209ADEB100CC6774 /* pch.cpp in Sources */,
+				828CED602AFC484D00CA08B1 /* trees.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1250,35 +1381,52 @@
 			buildActionMask = 2147483647;
 			files = (
 				7DB100DE2119F91B00AE22F5 /* pch.cpp in Sources */,
+				828CED662AFC486000CA08B1 /* unzip.c in Sources */,
 				7DB100D1211927DF00AE22F5 /* uri.cpp in Sources */,
 				7DB100D2211927DF00AE22F5 /* utils.cpp in Sources */,
 				727979112A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
 				7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */,
+				828CED552AFC484D00CA08B1 /* inflate.c in Sources */,
+				828CED292AFC484D00CA08B1 /* inffast.c in Sources */,
+				828CED452AFC484D00CA08B1 /* gzclose.c in Sources */,
 				7DB100BF2119276B00AE22F5 /* global.cpp in Sources */,
+				828CED392AFC484D00CA08B1 /* deflate.c in Sources */,
+				828CED412AFC484D00CA08B1 /* zutil.c in Sources */,
 				7DB100C02119276B00AE22F5 /* mem.cpp in Sources */,
 				7DB100C12119276B00AE22F5 /* http_apple.mm in Sources */,
 				7DB100C22119276B00AE22F5 /* httpcall_request.cpp in Sources */,
+				828CED3D2AFC484D00CA08B1 /* crc32.c in Sources */,
 				7DB100C32119276B00AE22F5 /* httpcall_response.cpp in Sources */,
+				828CEC7C2AFC1FAF00CA08B1 /* compression.cpp in Sources */,
 				7DB100C42119276B00AE22F5 /* httpcall.cpp in Sources */,
+				828CED312AFC484D00CA08B1 /* compress.c in Sources */,
 				2C872C5E221C8FB70054F791 /* TaskQueue.cpp in Sources */,
 				A590598727A9BD54007AC168 /* websocket_publics.cpp in Sources */,
 				A590598B27A9BD5D007AC168 /* httpcall_publics.cpp in Sources */,
 				9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */,
 				727979152A4E32A800EB7079 /* IHttpProvider.cpp in Sources */,
+				828CED2D2AFC484D00CA08B1 /* gzlib.c in Sources */,
 				A2ACA1BF2630C9C100D74874 /* session_delegate.mm in Sources */,
 				7DB100C62119276B00AE22F5 /* log_publics.cpp in Sources */,
+				828CED4D2AFC484D00CA08B1 /* uncompr.c in Sources */,
 				7DB100C72119276B00AE22F5 /* trace.cpp in Sources */,
+				828CED5D2AFC484D00CA08B1 /* adler32.c in Sources */,
+				828CED352AFC484D00CA08B1 /* infback.c in Sources */,
+				828CED592AFC484D00CA08B1 /* gzread.c in Sources */,
 				588C7E7D218275DA001098B3 /* WaitTimer_stl.cpp in Sources */,
+				828CED512AFC484D00CA08B1 /* gzwrite.c in Sources */,
 				727979192A4E32A800EB7079 /* ExternalHttpProvider.cpp in Sources */,
 				7DB100C82119276B00AE22F5 /* mock_publics.cpp in Sources */,
 				727979082A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979042A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
 				72FC98DA2A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				2C872C5F221C8FB70054F791 /* ThreadPool_stl.cpp in Sources */,
+				828CED492AFC484D00CA08B1 /* inftrees.c in Sources */,
 				7DB100C92119276B00AE22F5 /* lhc_mock.cpp in Sources */,
 				A207D73F262F3E35005C0A65 /* request_body_stream.mm in Sources */,
 				7DB100CC2119276B00AE22F5 /* AsyncLib.cpp in Sources */,
 				7DB100D02119276B00AE22F5 /* hcwebsocket.cpp in Sources */,
+				828CED612AFC484D00CA08B1 /* trees.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1295,35 +1443,52 @@
 			buildActionMask = 2147483647;
 			files = (
 				D9EF882725A522BC005C4BDF /* global_publics.cpp in Sources */,
+				828CED672AFC486000CA08B1 /* unzip.c in Sources */,
 				D9EF882925A522BC005C4BDF /* global.cpp in Sources */,
 				727979122A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
 				D9EF882A25A522BC005C4BDF /* ThreadPool_stl.cpp in Sources */,
 				D9EF882B25A522BC005C4BDF /* uri.cpp in Sources */,
+				828CED562AFC484D00CA08B1 /* inflate.c in Sources */,
+				828CED2A2AFC484D00CA08B1 /* inffast.c in Sources */,
+				828CED462AFC484D00CA08B1 /* gzclose.c in Sources */,
 				D9EF882C25A522BC005C4BDF /* AsyncLib.cpp in Sources */,
+				828CED3A2AFC484D00CA08B1 /* deflate.c in Sources */,
+				828CED422AFC484D00CA08B1 /* zutil.c in Sources */,
 				D9EF882D25A522BC005C4BDF /* utils.cpp in Sources */,
 				D9EF882E25A522BC005C4BDF /* mem.cpp in Sources */,
 				D9EF882F25A522BC005C4BDF /* trace.cpp in Sources */,
+				828CED3E2AFC484D00CA08B1 /* crc32.c in Sources */,
 				D9EF883025A522BC005C4BDF /* lhc_mock.cpp in Sources */,
+				828CEC7D2AFC1FAF00CA08B1 /* compression.cpp in Sources */,
 				D9EF883125A522BC005C4BDF /* httpcall_response.cpp in Sources */,
+				828CED322AFC484D00CA08B1 /* compress.c in Sources */,
 				A590598827A9BD55007AC168 /* websocket_publics.cpp in Sources */,
 				D9EF883225A522BC005C4BDF /* websocketpp_websocket.cpp in Sources */,
 				A590598C27A9BD5D007AC168 /* httpcall_publics.cpp in Sources */,
 				D9EF883325A522BC005C4BDF /* http_apple.mm in Sources */,
 				727979162A4E32A800EB7079 /* IHttpProvider.cpp in Sources */,
+				828CED2E2AFC484D00CA08B1 /* gzlib.c in Sources */,
 				A2ACA1C02630C9C100D74874 /* session_delegate.mm in Sources */,
 				D9EF883525A522BC005C4BDF /* httpcall_request.cpp in Sources */,
+				828CED4E2AFC484D00CA08B1 /* uncompr.c in Sources */,
 				D9EF883625A522BC005C4BDF /* WaitTimer_stl.cpp in Sources */,
+				828CED5E2AFC484D00CA08B1 /* adler32.c in Sources */,
+				828CED362AFC484D00CA08B1 /* infback.c in Sources */,
+				828CED5A2AFC484D00CA08B1 /* gzread.c in Sources */,
 				D9EF883725A522BC005C4BDF /* TaskQueue.cpp in Sources */,
+				828CED522AFC484D00CA08B1 /* gzwrite.c in Sources */,
 				7279791A2A4E32A800EB7079 /* ExternalHttpProvider.cpp in Sources */,
 				A5A986092739CD6C00361934 /* hcwebsocket.cpp in Sources */,
 				727979092A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979052A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
 				72FC98DB2A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				D9EF883825A522BC005C4BDF /* mock_publics.cpp in Sources */,
+				828CED4A2AFC484D00CA08B1 /* inftrees.c in Sources */,
 				D9EF883925A522BC005C4BDF /* log_publics.cpp in Sources */,
 				A207D740262F3E35005C0A65 /* request_body_stream.mm in Sources */,
 				D9EF883A25A522BC005C4BDF /* httpcall.cpp in Sources */,
 				D9EF883B25A522BC005C4BDF /* pch.cpp in Sources */,
+				828CED622AFC484D00CA08B1 /* trees.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1339,35 +1504,52 @@
 			buildActionMask = 2147483647;
 			files = (
 				D9FF0A5E25A5366A0061B717 /* global_publics.cpp in Sources */,
+				828CED682AFC486000CA08B1 /* unzip.c in Sources */,
 				D9FF0A6025A5366A0061B717 /* global.cpp in Sources */,
 				727979132A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
 				D9FF0A6125A5366A0061B717 /* ThreadPool_stl.cpp in Sources */,
 				D9FF0A6225A5366A0061B717 /* uri.cpp in Sources */,
+				828CED572AFC484D00CA08B1 /* inflate.c in Sources */,
+				828CED2B2AFC484D00CA08B1 /* inffast.c in Sources */,
+				828CED472AFC484D00CA08B1 /* gzclose.c in Sources */,
 				D9FF0A6325A5366A0061B717 /* AsyncLib.cpp in Sources */,
+				828CED3B2AFC484D00CA08B1 /* deflate.c in Sources */,
+				828CED432AFC484D00CA08B1 /* zutil.c in Sources */,
 				D9FF0A6425A5366A0061B717 /* utils.cpp in Sources */,
 				D9FF0A6525A5366A0061B717 /* mem.cpp in Sources */,
 				D9FF0A6625A5366A0061B717 /* trace.cpp in Sources */,
+				828CED3F2AFC484D00CA08B1 /* crc32.c in Sources */,
 				D9FF0A6725A5366A0061B717 /* lhc_mock.cpp in Sources */,
+				828CEC7E2AFC1FAF00CA08B1 /* compression.cpp in Sources */,
 				D9FF0A6825A5366A0061B717 /* httpcall_response.cpp in Sources */,
+				828CED332AFC484D00CA08B1 /* compress.c in Sources */,
 				A590598927A9BD55007AC168 /* websocket_publics.cpp in Sources */,
 				D9FF0A6925A5366A0061B717 /* websocketpp_websocket.cpp in Sources */,
 				A590598D27A9BD5E007AC168 /* httpcall_publics.cpp in Sources */,
 				D9FF0A6A25A5366A0061B717 /* http_apple.mm in Sources */,
 				727979172A4E32A800EB7079 /* IHttpProvider.cpp in Sources */,
+				828CED2F2AFC484D00CA08B1 /* gzlib.c in Sources */,
 				A2ACA1C12630C9C100D74874 /* session_delegate.mm in Sources */,
 				D9FF0A6C25A5366A0061B717 /* httpcall_request.cpp in Sources */,
+				828CED4F2AFC484D00CA08B1 /* uncompr.c in Sources */,
 				D9FF0A6D25A5366A0061B717 /* WaitTimer_stl.cpp in Sources */,
+				828CED5F2AFC484D00CA08B1 /* adler32.c in Sources */,
+				828CED372AFC484D00CA08B1 /* infback.c in Sources */,
+				828CED5B2AFC484D00CA08B1 /* gzread.c in Sources */,
 				D9FF0A6E25A5366A0061B717 /* TaskQueue.cpp in Sources */,
+				828CED532AFC484D00CA08B1 /* gzwrite.c in Sources */,
 				7279791B2A4E32A800EB7079 /* ExternalHttpProvider.cpp in Sources */,
 				A5A9860A2739CD6C00361934 /* hcwebsocket.cpp in Sources */,
 				7279790A2A4E32A800EB7079 /* PlatformTrace_Apple.cpp in Sources */,
 				727979062A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */,
 				72FC98DC2A65FA5B00A158B6 /* NetworkState.cpp in Sources */,
 				D9FF0A6F25A5366A0061B717 /* mock_publics.cpp in Sources */,
+				828CED4B2AFC484D00CA08B1 /* inftrees.c in Sources */,
 				D9FF0A7025A5366A0061B717 /* log_publics.cpp in Sources */,
 				A207D741262F3E35005C0A65 /* request_body_stream.mm in Sources */,
 				D9FF0A7125A5366A0061B717 /* httpcall.cpp in Sources */,
 				D9FF0A7225A5366A0061B717 /* pch.cpp in Sources */,
+				828CED632AFC484D00CA08B1 /* trees.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1606,7 +1788,7 @@
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -1638,7 +1820,7 @@
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -1784,6 +1966,7 @@
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -1818,6 +2001,7 @@
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -1904,7 +2088,7 @@
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -1938,7 +2122,7 @@
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -2042,7 +2226,7 @@
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
@@ -2077,7 +2261,7 @@
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",

@@ -4,8 +4,10 @@
 #pragma once
 
 #include <httpClient/config.h>
+#include <unistd.h>
 
-#pragma warning(disable: 4503) // C4503: decorated name length exceeded, name was truncated  
+#ifdef __cplusplus
+#pragma warning(disable: 4503) // C4503: decorated name length exceeded, name was truncated
 #pragma warning(disable: 4242) 
 
 #ifdef _WIN32
@@ -149,3 +151,4 @@ HRESULT StdExceptionToResult(std::exception const& e, _In_z_ char const* file, u
 HRESULT UnknownExceptionToResult(_In_z_ char const* file, uint32_t line);
 
 NAMESPACE_XBOX_HTTP_CLIENT_DETAIL_END
+#endif	
