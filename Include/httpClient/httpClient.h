@@ -381,7 +381,7 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
     ) noexcept;
 
 #if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM == HC_PLATFORM_IOS || HC_PLATFORM_MAC
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM == HC_PLATFORM_IOS || HC_PLATFORM == HC_PLATFORM_MAC
 
 /// <summary>
 /// Defines the compression level that will be used on the compression algorithm.
