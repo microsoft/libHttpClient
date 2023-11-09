@@ -4,7 +4,10 @@
 #pragma once
 
 #include <httpClient/config.h>
+
+#if HC_PLATFORM_IS_APPLE
 #include <unistd.h>
+#endif
 
 #ifdef __cplusplus
 #pragma warning(disable: 4503) // C4503: decorated name length exceeded, name was truncated
