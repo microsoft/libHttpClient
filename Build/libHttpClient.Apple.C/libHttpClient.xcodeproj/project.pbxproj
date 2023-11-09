@@ -172,7 +172,7 @@
 		828CED8A2AFD887000CA08B1 /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED212AFC484D00CA08B1 /* inftrees.c */; settings = {COMPILER_FLAGS = "-Wno-error=macro-redefined "; }; };
 		828CED8B2AFD887000CA08B1 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED272AFC484D00CA08B1 /* trees.c */; settings = {COMPILER_FLAGS = "-Wno-error=comma -Wno-error=macro-redefined "; }; };
 		828CED8C2AFD887000CA08B1 /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1F2AFC484D00CA08B1 /* zutil.c */; settings = {COMPILER_FLAGS = "-Wno-error=macro-redefined -Wno-error=comma"; }; };
-		9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
+		9C3B2540212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; settings = {COMPILER_FLAGS = "-Wno-error=deprecated-declarations"; }; };
 		9C3B2541212F29CF0080AEC6 /* websocketpp_websocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */; };
 		A207D73D262F3E35005C0A65 /* request_body_stream.h in Headers */ = {isa = PBXBuildFile; fileRef = A207D73B262F3E35005C0A65 /* request_body_stream.h */; };
 		A207D73E262F3E35005C0A65 /* request_body_stream.mm in Sources */ = {isa = PBXBuildFile; fileRef = A207D73C262F3E35005C0A65 /* request_body_stream.mm */; };
