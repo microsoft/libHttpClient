@@ -113,7 +113,7 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     RETURN_IF_FAILED(HCHttpCallRequestGetTimeout(hcCall, &timeoutSeconds));
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_TIMEOUT_MS, timeoutSeconds * 1000));
 
-    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_VERBOSE, 1)); // verbose logging (0 off, 1 on)
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_VERBOSE, 0)); // verbose logging (0 off, 1 on)
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_HEADER, 0)); // do not write headers to the write callback
     RETURN_IF_FAILED(easyRequest->SetOpt<char*>(CURLOPT_ERRORBUFFER, easyRequest->m_errorBuffer));
 
@@ -354,7 +354,7 @@ int CurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype type, cha
         size -= 1;
     }
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "CURL %10s - %.*s", event, size, data);
+    HC_TRACE_VERBOSE(HTTPCLIENT, "CURL %10s - %.*s", event, size, data);
 
     return CURLE_OK;
 }

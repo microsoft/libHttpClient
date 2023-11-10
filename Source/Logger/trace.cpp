@@ -280,9 +280,10 @@ STDAPI_(void) HCTraceImplMessage_v(
 
     char message[4096] = {};
 
-    auto result = _vsnprintf_s(message, sizeof(message), _TRUNCATE, format, varArgs);
+    _set_errno(0);
+    _vsnprintf_s(message, _TRUNCATE, format, varArgs);
 
-    if (result < 0 && strlen(message) != sizeof(message) - 1)
+    if (errno != 0)
     {
         return;
     }
