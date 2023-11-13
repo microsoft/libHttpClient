@@ -383,7 +383,6 @@ HRESULT WinHttpConnection::WebSocketDisconnect(_In_ HCWebSocketCloseStatus close
 
 HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
 {
-    bool doWebSocketClose = false;
     bool doWinHttpClose = false;
     bool closeComplete = false;
 
@@ -402,9 +401,8 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
         {
         case ConnectionState::WebSocketConnected:
         {
-            doWebSocketClose = true;
-            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::Close: ConnectionState=WebSocketConnected, Closing WebSocket");
-            m_state = ConnectionState::WebSocketClosing;
+            doWinHttpClose = true;
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::Close: ConnectionState=WebSocketConnected, Closing WinHttp handle");
             break;
         }
         case ConnectionState::WebSocketClosing:
@@ -430,13 +428,7 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
         }
     }
 
-    if (doWebSocketClose)
-    {
-        assert(m_winHttpWebSocketExports.close);
-        DWORD result = m_winHttpWebSocketExports.close(m_hRequest, static_cast<USHORT>(HCWebSocketCloseStatus::GoingAway), nullptr, 0);
-        return HRESULT_FROM_WIN32(result);
-    }
-    else if (doWinHttpClose)
+    if (doWinHttpClose)
     {
         StartWinHttpClose();
     }
@@ -707,6 +699,11 @@ void WinHttpConnection::callback_status_request_error(
             if (pRequestContext->m_state == ConnectionState::WebSocketConnected || pRequestContext->m_state == ConnectionState::WebSocketClosing)
             {
                 HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::callback_status_request_error after WebSocket was connected, moving to disconnect flow.");
+                disconnect = true;
+            }
+            else if (pRequestContext->m_state == ConnectionState::WinHttpClosing)
+            {
+                HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::callback_status_request_error during WinHttpCloseHandle was connected, moving to disconnect flow.");
                 disconnect = true;
             }
         }
@@ -1326,7 +1323,7 @@ void WinHttpConnection::StartWinHttpClose()
         }
         else
         {
-            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, transitioning to ConnectionState::WinHttpClosing");
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, current state=%llu transitioning to ConnectionState::WinHttpClosing", m_state);
             m_state = ConnectionState::WinHttpClosing;
         }
     }
