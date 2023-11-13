@@ -41,13 +41,25 @@ int sprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* form
     return result;
 }
 
-#if !HC_PLATFORM_IS_PLAYSTATION
 template<size_t SIZE>
-int vsprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
+int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
 {
     return vsnprintf(buffer, SIZE, format, varArgs);
 }
-#endif
+#else
+template<size_t SIZE>
+int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
+{
+    _set_errno(0);
+    _vsnprintf_s(buffer, _TRUNCATE, format, varArgs);
+
+    if (errno != 0)
+    {
+        return -1;
+    }
+
+    return 0;
+}
 #endif
 
 #if HC_PLATFORM_IS_MICROSOFT
@@ -280,7 +292,7 @@ STDAPI_(void) HCTraceImplMessage_v(
 
     char message[4096] = {};
 
-    auto result = vsprintf_s(message, format, varArgs);
+    auto result = vstprintf_s(message, format, varArgs);
 
     if (result < 0)
     {
