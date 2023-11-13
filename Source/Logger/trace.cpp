@@ -41,16 +41,12 @@ int sprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* form
     return result;
 }
 
-#if !HC_PLATFORM_IS_PLAYSTATION
 template<size_t SIZE>
 int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
 {
     return vsnprintf(buffer, SIZE, format, varArgs);
 }
-#endif
-#endif
-
-#if HC_PLATFORM_IS_MICROSOFT || HC_PLATFORM_IS_PLAYSTATION
+#else
 template<size_t SIZE>
 int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
 {
