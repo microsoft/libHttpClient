@@ -42,6 +42,16 @@ int sprintf_s(char* buffer, size_t size, _Printf_format_string_ char const* form
 }
 
 template<size_t SIZE>
+int _snprintf_s(char(&buffer)[SIZE], size_t /*count*/, _Printf_format_string_ char const* format ...) noexcept
+{
+    va_list varArgs{};
+    va_start(varArgs, format);
+    auto result = vsnprintf(buffer, SIZE, format, varArgs);
+    va_end(varArgs);
+    return result;
+}
+
+template<size_t SIZE>
 int vstprintf_s(char(&buffer)[SIZE], _Printf_format_string_ char const* format, va_list varArgs) noexcept
 {
     return vsnprintf(buffer, SIZE, format, varArgs);
@@ -129,7 +139,7 @@ void FormatTrace(
 #endif
 
     // [threadId][level][time][area] message
-    auto written = sprintf_s(outputBuffer, "[%04llX][%s][%02d:%02d:%02d.%03u][%s] %s",
+    auto written = _snprintf_s(outputBuffer, SIZE - 3, "[%04llX][%s][%02d:%02d:%02d.%03u][%s] %s",
         threadId,
         traceLevelNames[static_cast<size_t>(level)],
         fmtTime.tm_hour,
