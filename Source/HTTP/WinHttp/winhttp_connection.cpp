@@ -1316,7 +1316,7 @@ void WinHttpConnection::StartWinHttpClose()
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
 
-        if (m_state == ConnectionState::WinHttpClosing || m_state == ConnectionState::Closed)
+        if (m_state == ConnectionState::WebSocketClosing || m_state == ConnectionState::WinHttpClosing || m_state == ConnectionState::Closed)
         {
             HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose called while already closing, ignored");
             return;
