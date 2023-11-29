@@ -22,6 +22,24 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+mkdir /usr/local/ssl
+mkdir /usr/local/ssl/lib
+mkdir /usr/local/ssl/include
+mkdir /usr/local/ssl/include/openssl
+
+if [ ! -d /usr/local/ssl ] ; then 
+    echo "Directory /usr/local/ssl does not exist"
+    exit 1
+fi
+if [ ! -d /usr/local/ssl/lib ] ; then 
+    echo "Directory /usr/local/ssl/lib does not exist"
+    exit 1
+fi
+if [ ! -d /usr/local/ssl/include/openssl ] ; then 
+    echo "Directory /usr/local/ssl/include/openssl does not exist"
+    exit 1
+fi
+
 pushd $OPENSSL_SRC
 sed -i -e 's/\r$//' Configure
 
