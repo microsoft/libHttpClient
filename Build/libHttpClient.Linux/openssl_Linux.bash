@@ -22,6 +22,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+sudo hwclock --hctosys
+
+rm -rf /usr/local/ssl
 mkdir /usr/local/ssl
 mkdir /usr/local/ssl/lib
 mkdir /usr/local/ssl/include
@@ -41,6 +44,7 @@ if [ ! -d /usr/local/ssl/include/openssl ] ; then
 fi
 
 pushd $OPENSSL_SRC
+make clean
 sed -i -e 's/\r$//' Configure
 
 if [ "$CONFIGURATION" = "Debug" ]; then
