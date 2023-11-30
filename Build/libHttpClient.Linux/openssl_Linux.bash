@@ -23,12 +23,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 sudo hwclock --hctosys
-
-rm -rf /usr/local/ssl
-mkdir /usr/local/ssl
-mkdir /usr/local/ssl/lib
-mkdir /usr/local/ssl/include
-mkdir /usr/local/ssl/include/openssl
+sudo rm -rf /usr/local/ssl
+sudo mkdir /usr/local/ssl
+sudo mkdir /usr/local/ssl/lib
+sudo mkdir /usr/local/ssl/include
+sudo mkdir /usr/local/ssl/include/openssl
 
 if [ ! -d /usr/local/ssl ] ; then 
     echo "Directory /usr/local/ssl does not exist"
