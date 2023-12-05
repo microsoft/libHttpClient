@@ -55,7 +55,7 @@ else
 fi
 
 make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
-make install
+sudo make install
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux
 cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux
