@@ -7,9 +7,6 @@
     <Filter Include="Source\HTTP">
       <UniqueIdentifier>{0063c159-34d2-4c24-931d-b56bc966e72e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\WebSocket">
-      <UniqueIdentifier>{6fb17d37-04f7-4410-8f75-f1a26a4bb521}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Platform">
       <UniqueIdentifier>{1d79dc86-494c-47cc-8a5b-96e04a810fc5}</UniqueIdentifier>
     </Filter>
@@ -24,9 +21,6 @@
     </Filter>
     <Filter Include="Source\Platform\Win32">
       <UniqueIdentifier>{0d143168-df3f-463b-8003-7bb7c4472fbc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\WebSocket\Websocketpp">
-      <UniqueIdentifier>{5382f4d5-9d55-4139-9baf-a088361fbe94}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\HTTP\WinHttp">
       <UniqueIdentifier>{428d0297-5b5f-4fd8-9cca-832b7a81072c}</UniqueIdentifier>
@@ -54,9 +48,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp">
       <Filter>Source\Task</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
-      <Filter>Source\WebSocket\Websocketpp</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp">
       <Filter>Source\Platform\Windows</Filter>
     </ClCompile>
@@ -70,12 +61,6 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h">
       <Filter>Source\HTTP\WinHttp</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h">
-      <Filter>Source\WebSocket\Websocketpp</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\x509_cert_utilities.hpp">
-      <Filter>Source\WebSocket\Websocketpp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

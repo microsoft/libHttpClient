@@ -7,6 +7,7 @@
 
 #pragma once
 #include <stdint.h>
+#include <httpClient/pal.h>
 
 extern "C"
 {
@@ -112,7 +113,7 @@ typedef void CALLBACK XTaskQueueTerminatedCallback(_In_opt_ void* context);
 /// <param name='workDispatchMode'>The dispatch mode for the "work" port of the queue.</param>
 /// <param name='completionDispatchMode'>The dispatch mode for the "completion" port of the queue.</param>
 /// <param name='queue'>The newly created queue.</param>
-STDAPI XTaskQueueCreate(
+HC_API XTaskQueueCreate(
     _In_ XTaskQueueDispatchMode workDispatchMode,
     _In_ XTaskQueueDispatchMode completionDispatchMode,
     _Out_ XTaskQueueHandle* queue
@@ -125,7 +126,7 @@ STDAPI XTaskQueueCreate(
 /// </summary>
 /// <param name='workPort'>The port to use for queuing work callbacks.</param>
 /// <param name='completionPort'>The port to use for queuing completion callbacks.</param>
-STDAPI XTaskQueueCreateComposite(
+HC_API XTaskQueueCreateComposite(
     _In_ XTaskQueuePortHandle workPort,
     _In_ XTaskQueuePortHandle completionPort,
     _Out_ XTaskQueueHandle* queue
@@ -139,7 +140,7 @@ STDAPI XTaskQueueCreateComposite(
 /// </summary>
 /// <param name='queue'>The task queue to get the port from.</param>
 /// <param name='port'>The port to get.</param>
-STDAPI XTaskQueueGetPort(
+HC_API XTaskQueueGetPort(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort port,
     _Out_ XTaskQueuePortHandle* portHandle
@@ -150,7 +151,7 @@ STDAPI XTaskQueueGetPort(
 /// </summary>
 /// <param name='queueHandle'>The queue to reference.</param>
 /// <param name='duplicatedHandle'>The duplicated queue handle.</param>
-STDAPI XTaskQueueDuplicateHandle(
+HC_API XTaskQueueDuplicateHandle(
     _In_ XTaskQueueHandle queueHandle,
     _Out_ XTaskQueueHandle* duplicatedHandle
     ) noexcept;
@@ -164,7 +165,7 @@ STDAPI XTaskQueueDuplicateHandle(
 /// <param name='queue'>The queue to dispatch work on.</param>
 /// <param name='port'>The port to dispatch.</param>
 /// <param name='timeoutInMs'>The number of ms to wait for work to arrive before returning false.</param>
-STDAPI_(bool) XTaskQueueDispatch(
+HC_API_(bool) XTaskQueueDispatch(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort port,
     _In_ uint32_t timeoutInMs
@@ -176,7 +177,7 @@ STDAPI_(bool) XTaskQueueDispatch(
 /// enqueued.
 /// </summary>
 /// <param name='queue'>The queue to close.</param>
-STDAPI_(void) XTaskQueueCloseHandle(
+HC_API_(void) XTaskQueueCloseHandle(
     _In_ XTaskQueueHandle queue
     ) noexcept;
 
@@ -190,7 +191,7 @@ STDAPI_(void) XTaskQueueCloseHandle(
 /// <param name='wait'>True to wait for the termination to complete.</param>
 /// <param name='callbackContext'>An optional context pointer to pass to the callback.</param>
 /// <param name='callback'>An optional callback that will be called when the queue has terminated.</param>
-STDAPI XTaskQueueTerminate(
+HC_API XTaskQueueTerminate(
     _In_ XTaskQueueHandle queue, 
     _In_ bool wait, 
     _In_opt_ void* callbackContext, 
@@ -204,7 +205,7 @@ STDAPI XTaskQueueTerminate(
 /// <param name='port'>The port to submit the callback to.</param>
 /// <param name='callbackContext'>An optional context pointer that will be passed to the callback.</param>
 /// <param name='callback'>A pointer to the callback function.</param>
-STDAPI XTaskQueueSubmitCallback(
+HC_API XTaskQueueSubmitCallback(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort port,
     _In_opt_ void* callbackContext,
@@ -220,7 +221,7 @@ STDAPI XTaskQueueSubmitCallback(
 /// <param name='delayMs'>The number of milliseconds to delay before submitting the callback to the queue.</param>
 /// <param name='callbackContext'>An optional context pointer that will be passed to the callback.</param>
 /// <param name='callback'>A pointer to the callback function.</param>
-STDAPI XTaskQueueSubmitDelayedCallback(
+HC_API XTaskQueueSubmitDelayedCallback(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort port,
     _In_ uint32_t delayMs,
@@ -240,7 +241,7 @@ STDAPI XTaskQueueSubmitDelayedCallback(
 /// <param name='callbackContext'>An optional context pointer that will be passed to the callback.</param>
 /// <param name='callback'>A pointer to the callback function.</param>
 /// <param name='token'>A registration token.</param>
-STDAPI XTaskQueueRegisterWaiter(
+HC_API XTaskQueueRegisterWaiter(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort port,
     _In_ HANDLE waitHandle,
@@ -254,7 +255,7 @@ STDAPI XTaskQueueRegisterWaiter(
 /// </summary>
 /// <param name='queue'>The queue to remove the waiter from.</param>
 /// <param name='token'>The token returned from XTaskQueueRegisterWaiter.</param>
-STDAPI_(void) XTaskQueueUnregisterWaiter(
+HC_API_(void) XTaskQueueUnregisterWaiter(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueueRegistrationToken token
     ) noexcept;
@@ -267,7 +268,7 @@ STDAPI_(void) XTaskQueueUnregisterWaiter(
 /// <param name='callbackContext'>An optional context pointer to be passed to the callback.</param>
 /// <param name='callback'>A callback that will be invoked when a new callback is submitted to the queue.</param>
 /// <param name='token'>A token used in a later call to XTaskQueueUnregisterMonitor to remove the callback.</param>
-STDAPI XTaskQueueRegisterMonitor(
+HC_API XTaskQueueRegisterMonitor(
     _In_ XTaskQueueHandle queue,
     _In_opt_ void* callbackContext,
     _In_ XTaskQueueMonitorCallback* callback,
@@ -280,7 +281,7 @@ STDAPI XTaskQueueRegisterMonitor(
 /// </summary>
 /// <param name='queue'>The queue to remove the submit callback from.</param>
 /// <param name='token'>The token returned from XTaskQueueRegisterMonitor.</param>
-STDAPI_(void) XTaskQueueUnregisterMonitor(
+HC_API_(void) XTaskQueueUnregisterMonitor(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueueRegistrationToken token
     ) noexcept;
@@ -298,7 +299,7 @@ STDAPI_(void) XTaskQueueUnregisterMonitor(
 /// You are responsible for calling XTaskQueueCloseHandle on the handle
 /// returned from this API.
 /// </summary>
-STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(_Out_ XTaskQueueHandle* queue) noexcept;
+HC_API_(bool) XTaskQueueGetCurrentProcessTaskQueue(_Out_ XTaskQueueHandle* queue) noexcept;
 
 /// <summary>
 /// Sets the given task queue as the process wide task queue.  The
@@ -307,7 +308,7 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(_Out_ XTaskQueueHandle* queue
 /// and any existing process task queue will have its handle closed.
 /// </summary>
 /// <param name='queue'>The queue to set up as the default task queue for the procces.</param>
-STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
+HC_API_(void) XTaskQueueSetCurrentProcessTaskQueue(
     _In_ XTaskQueueHandle queue
     ) noexcept;
 

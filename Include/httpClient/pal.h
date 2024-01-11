@@ -441,6 +441,24 @@ typedef struct _LIST_ENTRY {
 
 #endif // HC_PLATFORM_IS_MICROSOFT
 
+#if HC_PLATFORM_IS_MICROSOFT || HC_PLATFORM_IS_PLAYSTATION
+    #ifdef HC_EXPORT_ATTRIBUTE
+        #define HC_API_ATTRIBUTES __declspec(dllexport)
+    #else
+        #define HC_API_ATTRIBUTES
+        //#define HC_API_ATTRIBUTES __declspec(dllimport)
+    #endif
+#else
+    #define HC_API_ATTRIBUTES
+#endif
+
+#ifndef STDAPICALLTYPE
+    #define STDAPICALLTYPE
+#endif
+
+#define HC_API HC_API_ATTRIBUTES HRESULT STDAPICALLTYPE
+#define HC_API_(type) HC_API_ATTRIBUTES type STDAPICALLTYPE
+
 #define FACILITY_XBOX 2339
 #define MAKE_E_HC(code)                 MAKE_HRESULT(1, FACILITY_XBOX, code)
 
