@@ -4,16 +4,16 @@
     <ProjectGuid>{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}</ProjectGuid>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" />
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>HC_EXPORT_ATTRIBUTE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
-      <ModuleDefinitionFile>libHttpClient.Win32.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
-  <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" />
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.Win32.Shared\libHttpClient.Win32.Shared.vcxitems" Label="Shared" />
