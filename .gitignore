@@ -124,8 +124,8 @@ TestResults/
 # Build objects
 
 Casablanca/Intermediate/
-Obj/
-Binaries/
+Int/
+Out/
 Win32/
 !Source/**/Win32/
 Debug/
@@ -147,3 +147,6 @@ Tests/StressUnitTest/
 
 #Allow OpenSSL generated headers
 !External/opensslGeneratedHeaders/**
+
+#Exclude build logs
+Build/**/*.log

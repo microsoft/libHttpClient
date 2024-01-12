@@ -1,0 +1,2 @@
+com/dummy/libcrypto/BuildConfig.java
+ com.dummy.libcrypto.BuildConfig

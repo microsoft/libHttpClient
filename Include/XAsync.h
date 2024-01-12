@@ -69,7 +69,7 @@ struct XAsyncBlock
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to the async call.</param>
 /// <param name='wait'>If true, XAsyncGetStatus waits until the async call either completes or is canceled.</param>
-HC_API XAsyncGetStatus(
+STDAPI XAsyncGetStatus(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_ bool wait
     ) noexcept;
@@ -79,7 +79,7 @@ HC_API XAsyncGetStatus(
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to the async call.</param>
 /// <param name='bufferSize'>The required size of the buffer in bytes needed to hold the results.</param>
-HC_API XAsyncGetResultSize(
+STDAPI XAsyncGetResultSize(
     _Inout_ XAsyncBlock* asyncBlock,
     _Out_ size_t* bufferSize
     ) noexcept;
@@ -90,7 +90,7 @@ HC_API XAsyncGetResultSize(
 /// signaled.  This does nothing if the call has already completed.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to the async call.</param>
-HC_API_(void) XAsyncCancel(
+STDAPI_(void) XAsyncCancel(
     _Inout_ XAsyncBlock* asyncBlock
     ) noexcept;
 
@@ -99,7 +99,7 @@ HC_API_(void) XAsyncCancel(
 /// </summary>
 /// <param name='asyncBlock'>A pointer to an async block that is used to track the async call.</param>
 /// <param name='work'>A pointer to a callback function to run asynchronously.</param>
-HC_API XAsyncRun(
+STDAPI XAsyncRun(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_ XAsyncWork* work
     ) noexcept;

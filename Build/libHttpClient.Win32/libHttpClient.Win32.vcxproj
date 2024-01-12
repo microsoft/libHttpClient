@@ -10,6 +10,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>libHttpClient.Win32.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" />

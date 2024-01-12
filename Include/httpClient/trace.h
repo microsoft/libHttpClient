@@ -153,7 +153,7 @@ enum class HCTraceLevel : uint32_t
 /// multiple calls to HCTraceInit and HCTraceCleanup will not interfere with each other as long as
 /// each call to HCTraceInit is paired with exactly one call to HCTraceCleanup.
 /// </remarks>
-HC_API_(void) HCTraceInit() noexcept;
+STDAPI_(void) HCTraceInit() noexcept;
 
 /// <summary>
 /// Clean up tracing for the library.
@@ -162,14 +162,14 @@ HC_API_(void) HCTraceInit() noexcept;
 /// This function is implicitly called during HCCleanup. See HCTraceInit for remarks on reference
 /// counting and multiple calls to these functions.
 /// </remarks>
-HC_API_(void) HCTraceCleanup() noexcept;
+STDAPI_(void) HCTraceCleanup() noexcept;
 
 /// <summary>
 /// Sets the trace level for the library.  Traces are sent the debug output.
 /// </summary>
 /// <param name="traceLevel">Trace level.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-HC_API HCSettingsSetTraceLevel(
+STDAPI HCSettingsSetTraceLevel(
     _In_ HCTraceLevel traceLevel
     ) noexcept;
 
@@ -178,7 +178,7 @@ HC_API HCSettingsSetTraceLevel(
 /// </summary>
 /// <param name="traceLevel">Trace level.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-HC_API HCSettingsGetTraceLevel(
+STDAPI HCSettingsGetTraceLevel(
     _Out_ HCTraceLevel* traceLevel
     ) noexcept;
 
@@ -199,20 +199,20 @@ typedef void (CALLBACK HCTraceCallback)(
 /// </summary>
 /// <param name="callback">Trace callback.</param>
 /// <returns></returns>
-HC_API_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
+STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
 
 /// <summary>
 /// Sets or unsets if the trace is sent to the debugger.
 /// </summary>
 /// <param name="traceToDebugger">If True, sends the trace to the debugger.</param>
 /// <returns></returns>
-HC_API_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
+STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
 
 #if HC_PLATFORM_IS_MICROSOFT
 /// <summary>
 /// Enables or disables ETW tracing for Xbox and PC platforms.
 /// </summary>
-HC_API_(void) HCTraceSetEtwEnabled(_In_ bool enabled) noexcept;
+STDAPI_(void) HCTraceSetEtwEnabled(_In_ bool enabled) noexcept;
 #endif
 
 //------------------------------------------------------------------------------
@@ -321,7 +321,7 @@ typedef void (CALLBACK HCTracePlatformWriteMessageToDebuggerCallback)(char const
 /// <param name="writeToDebuggerCallback">The write to debbugger callback.</param>
 /// <param name="writeToDebuggerContext">The write to debbugger context.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, or E_HC_NOT_INITIALISED.</returns>
-HC_API HCTraceSetPlatformCallbacks(
+STDAPI HCTraceSetPlatformCallbacks(
     _In_ HCTracePlatformThisThreadIdCallback* threadIdCallback,
     _In_opt_ void* threadIdContext,
     _In_ HCTracePlatformWriteMessageToDebuggerCallback* writeToDebuggerCallback,
@@ -357,7 +357,7 @@ typedef struct HCTraceImplArea
 /// <remarks></remarks>
 /// <returns>This should be accessed through macros, such as HC_TRACE_SET_VERBOSITY, rather than called directly.</returns>
 EXTERN_C inline
-HC_API_(void) HCTraceImplSetAreaVerbosity(
+void STDAPIVCALLTYPE HCTraceImplSetAreaVerbosity(
     struct HCTraceImplArea* area,
     HCTraceLevel verbosity
     ) noexcept
@@ -385,21 +385,21 @@ HCTraceLevel STDAPIVCALLTYPE HCTraceImplGetAreaVerbosity(struct HCTraceImplArea*
 /// <param name="format">The message format and arguments.</param>
 /// <returns></returns>
 /// <remarks>This should be accessed through macros, such as HC_TRACE_MESSAGE, rather than called directly.</remarks>
-HC_API_(void) HCTraceImplMessage(
+STDAPI_(void) HCTraceImplMessage(
     struct HCTraceImplArea const* area,
     HCTraceLevel level,
     _Printf_format_string_ char const* format,
     ...
 ) noexcept;
 
-HC_API_(void) HCTraceImplMessage_v(
+STDAPI_(void) HCTraceImplMessage_v(
     struct HCTraceImplArea const* area,
     HCTraceLevel level,
     _Printf_format_string_ char const* format,
     va_list varArgs
 ) noexcept;
 
-HC_API_(uint64_t) HCTraceImplScopeId() noexcept;
+STDAPI_(uint64_t) HCTraceImplScopeId() noexcept;
 
 }
 

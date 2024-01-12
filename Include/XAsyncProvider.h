@@ -105,7 +105,7 @@ typedef HRESULT CALLBACK XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsyncPr
 /// <param name='identity'>An optional arbitrary pointer that can be used to identify this call.</param>
 /// <param name='identityName'>An optional string that names the async call.  This is typically the __FUNCTION__ compiler macro.</param>
 /// <param name='provider'>The function callback to invoke to implement the async call.</param>
-HC_API XAsyncBegin(
+STDAPI XAsyncBegin(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* context,
     _In_opt_ const void* identity,
@@ -121,7 +121,7 @@ HC_API XAsyncBegin(
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to XAsyncBegin.</param>
 /// <param name='delayInMs'>How long the system should wait before scheduling the async call with the async queue.</param>
-HC_API XAsyncSchedule(
+STDAPI XAsyncSchedule(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_ uint32_t delayInMs
     ) noexcept;
@@ -134,7 +134,7 @@ HC_API XAsyncSchedule(
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to XAsyncBegin.</param>
 /// <param name='result'>The resut of the call.  This should not be E_PENDING as that result is reserved for an incomplete call. If you are canceling this call you should pass E_ABORT.</param>
 /// <param name='requiredBufferSize'>The required size in bytes of the call result.  If the call has no data to return this should be zero.</param>
-HC_API_(void) XAsyncComplete(
+STDAPI_(void) XAsyncComplete(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_ HRESULT result,
     _In_ size_t requiredBufferSize
@@ -151,7 +151,7 @@ HC_API_(void) XAsyncComplete(
 /// <param name='bufferSize'>The size of the provided buffer, in bytes.</param>
 /// <param name='buffer'>A pointer to the result buffer.</param>
 /// <param name='bufferUsed'>An optional pointer that contains the number of bytes written to the buffer.  This is defined as the requiredResultSize passed to XAsyncComplete.</param>
-HC_API XAsyncGetResult(
+STDAPI XAsyncGetResult(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ const void* identity,
     _In_ size_t bufferSize,
