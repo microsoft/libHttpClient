@@ -124,6 +124,8 @@ TestResults/
 # Build objects
 
 Casablanca/Intermediate/
+Obj/
+Binaries/
 Int/
 Out/
 Win32/

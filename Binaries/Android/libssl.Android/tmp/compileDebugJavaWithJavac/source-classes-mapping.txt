@@ -1,2 +1,0 @@
-com/dummy/libssl/BuildConfig.java
- com.dummy.libssl.BuildConfig
