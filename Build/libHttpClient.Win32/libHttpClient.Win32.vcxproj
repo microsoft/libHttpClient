@@ -6,9 +6,6 @@
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" />
   <ItemDefinitionGroup>
-    <ClCompile>
-      <PreprocessorDefinitions>HC_EXPORT_ATTRIBUTE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
