@@ -153,7 +153,7 @@ enum class HCTraceLevel : uint32_t
 /// multiple calls to HCTraceInit and HCTraceCleanup will not interfere with each other as long as
 /// each call to HCTraceInit is paired with exactly one call to HCTraceCleanup.
 /// </remarks>
-void HCTraceInit() noexcept;
+STDAPI_(void) HCTraceInit() noexcept;
 
 /// <summary>
 /// Clean up tracing for the library.
@@ -162,7 +162,7 @@ void HCTraceInit() noexcept;
 /// This function is implicitly called during HCCleanup. See HCTraceInit for remarks on reference
 /// counting and multiple calls to these functions.
 /// </remarks>
-void HCTraceCleanup() noexcept;
+STDAPI_(void) HCTraceCleanup() noexcept;
 
 /// <summary>
 /// Sets the trace level for the library.  Traces are sent the debug output.

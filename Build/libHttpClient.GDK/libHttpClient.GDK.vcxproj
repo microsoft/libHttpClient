@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}</ProjectGuid>
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <ProjectGuid>{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}</ProjectGuid>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <GDKExtLibNames>Xbox.XCurl.API</GDKExtLibNames>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.GDK.props))" />
+  <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
+      <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems" Label="Shared" />
   <Import Condition="'$(HCNoZlib)' != 'true'" Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />

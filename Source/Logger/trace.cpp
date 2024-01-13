@@ -389,12 +389,12 @@ TraceState& GetTraceState() noexcept
     return state;
 }
 
-void HCTraceInit() noexcept
+STDAPI_(void) HCTraceInit() noexcept
 {
     GetTraceState().Init();
 }
 
-void HCTraceCleanup() noexcept
+STDAPI_(void) HCTraceCleanup() noexcept
 {
     GetTraceState().Cleanup();
 }

@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Props", "Props", "{B8C5CF8E
 	ProjectSection(SolutionItems) = preProject
 		Build\libHttpClient.gdk.bwoi.props = Build\libHttpClient.gdk.bwoi.props
 		Build\libHttpClient.GDK.props = Build\libHttpClient.GDK.props
+		Build\libHttpClient.import.props = Build\libHttpClient.import.props
 		Build\libHttpClient.paths.props = Build\libHttpClient.paths.props
 		libHttpClient.props = libHttpClient.props
 		Build\libHttpClient.UWP.props = Build\libHttpClient.UWP.props
@@ -19,13 +20,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Props", "Props", "{B8C5CF8E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Win32", "Win32", "{118840A6-8EB2-4D70-B0EE-65EE13E2FEAB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.Win32", "Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems", "{D980F91B-92BF-4CC4-89FD-1CD99DBA870F}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.143.Win32.C", "Build\libHttpClient.143.Win32.C\libHttpClient.143.Win32.C.vcxproj", "{9164C6C9-3872-4922-A3E3-3822622D3E71}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GDK", "GDK", "{348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.GDK", "Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems", "{8CA3B500-0D89-4DB1-BA8B-98AEB468CA13}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.143.GDK.C", "Build\libHttpClient.143.GDK.C\libHttpClient.143.GDK.C.vcxproj", "{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}"
 EndProject
@@ -68,6 +65,14 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.XAsync", "Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems", "{B5118956-53CC-4B24-8807-DE8D7D226B40}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.Zlib", "Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems", "{F9061DCA-255B-4D5E-8DF5-4AFBFB4B98EF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.Win32.Shared", "Build\libHttpClient.Win32.Shared\libHttpClient.Win32.Shared.vcxitems", "{D980F91B-92BF-4CC4-89FD-1CD99DBA870F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.Win32", "Build\libHttpClient.Win32\libHttpClient.Win32.vcxproj", "{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.GDK.Shared", "Build\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems", "{8CA3B500-0D89-4DB1-BA8B-98AEB468CA13}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.GDK", "Build\libHttpClient.GDK\libHttpClient.GDK.vcxproj", "{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -314,14 +319,52 @@ Global
 		{9DD2BA60-6505-493A-8C41-8085C44E9F1F}.Release|x64.Build.0 = Release|x64
 		{9DD2BA60-6505-493A-8C41-8085C44E9F1F}.Release|x86.ActiveCfg = Release|Win32
 		{9DD2BA60-6505-493A-8C41-8085C44E9F1F}.Release|x86.Build.0 = Release|Win32
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|ARM.ActiveCfg = Debug|ARM
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|ARM.Build.0 = Debug|ARM
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|ARM64.Build.0 = Debug|ARM64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|Gaming.Desktop.x64.Build.0 = Debug|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|x64.ActiveCfg = Debug|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|x64.Build.0 = Debug|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|x86.ActiveCfg = Debug|Win32
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Debug|x86.Build.0 = Debug|Win32
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|ARM.ActiveCfg = Release|ARM
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|ARM.Build.0 = Release|ARM
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|ARM64.ActiveCfg = Release|ARM64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|ARM64.Build.0 = Release|ARM64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|Gaming.Desktop.x64.ActiveCfg = Release|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|Gaming.Desktop.x64.Build.0 = Release|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|x64.ActiveCfg = Release|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|x64.Build.0 = Release|x64
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|x86.ActiveCfg = Release|Win32
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}.Release|x86.Build.0 = Release|Win32
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|ARM.ActiveCfg = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|ARM.Build.0 = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|ARM64.Build.0 = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.Build.0 = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x86.Build.0 = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.Build.0 = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM64.Build.0 = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|x64.Build.0 = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|x86.ActiveCfg = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|x86.Build.0 = Release|Gaming.Desktop.x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{D980F91B-92BF-4CC4-89FD-1CD99DBA870F} = {118840A6-8EB2-4D70-B0EE-65EE13E2FEAB}
 		{9164C6C9-3872-4922-A3E3-3822622D3E71} = {118840A6-8EB2-4D70-B0EE-65EE13E2FEAB}
-		{8CA3B500-0D89-4DB1-BA8B-98AEB468CA13} = {348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C} = {348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}
 		{47564F2B-9ED7-4527-997A-5D76C36998D1} = {AEECE539-001A-4CB1-B7A3-6E6FB345D108}
 		{097E9D46-215E-43AE-B8DF-339EDF537EB6} = {118840A6-8EB2-4D70-B0EE-65EE13E2FEAB}
@@ -339,6 +382,10 @@ Global
 		{8EF7009A-36CF-4D82-9FB7-6D69154893CF} = {6BBCD917-A163-48D8-9385-3F6135E031FE}
 		{E885BB30-F51E-4BAB-9300-4B303144BB49} = {6BBCD917-A163-48D8-9385-3F6135E031FE}
 		{9DD2BA60-6505-493A-8C41-8085C44E9F1F} = {6BBCD917-A163-48D8-9385-3F6135E031FE}
+		{D980F91B-92BF-4CC4-89FD-1CD99DBA870F} = {118840A6-8EB2-4D70-B0EE-65EE13E2FEAB}
+		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8} = {118840A6-8EB2-4D70-B0EE-65EE13E2FEAB}
+		{8CA3B500-0D89-4DB1-BA8B-98AEB468CA13} = {348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743} = {348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1878024A-14E8-41AD-8422-BED12651F958}
@@ -346,7 +393,7 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Build\libssl.Win32\libssl.Win32.vcxitems*{097e9d46-215e-43ae-b8df-339edf537eb6}*SharedItemsImports = 9
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{0a6d51a3-0d86-4d0e-9daa-54ba75e1da1c}*SharedItemsImports = 4
-		Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems*{0a6d51a3-0d86-4d0e-9daa-54ba75e1da1c}*SharedItemsImports = 4
+		Build\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems*{0a6d51a3-0d86-4d0e-9daa-54ba75e1da1c}*SharedItemsImports = 4
 		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{0a6d51a3-0d86-4d0e-9daa-54ba75e1da1c}*SharedItemsImports = 4
 		Build\libcrypto.Win32\libcrypto.Win32.vcxitems*{16aa2ebe-6d49-41b7-a13f-887c12e78715}*SharedItemsImports = 4
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{2e55aa9f-a132-477c-b4ff-b4cd551e4322}*SharedItemsImports = 4
@@ -354,19 +401,26 @@ Global
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{2e55aa9f-a132-477c-b4ff-b4cd551e4322}*SharedItemsImports = 4
 		Build\libHttpClient.UWP\libHttpClient.UWP.vcxitems*{47564f2b-9ed7-4527-997a-5d76c36998d1}*SharedItemsImports = 9
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{673e9758-fafe-4f91-8fc1-addda12c5de5}*SharedItemsImports = 9
-		Build\libHttpClient.GDK\libHttpClient.GDK.vcxitems*{8ca3b500-0d89-4db1-ba8b-98aeb468ca13}*SharedItemsImports = 9
+		Build\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems*{8ca3b500-0d89-4db1-ba8b-98aeb468ca13}*SharedItemsImports = 9
 		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{8ef7009a-36cf-4d82-9fb7-6d69154893cf}*SharedItemsImports = 9
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
-		Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
+		Build\libHttpClient.Win32.Shared\libHttpClient.Win32.Shared.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
 		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{9164c6c9-3872-4922-a3e3-3822622d3e71}*SharedItemsImports = 4
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
 		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{9dd2ba60-6505-493a-8c41-8085c44e9f1f}*SharedItemsImports = 4
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{a5a6e02a-21ba-4d55-9fb9-7b24dedd3743}*SharedItemsImports = 4
+		Build\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems*{a5a6e02a-21ba-4d55-9fb9-7b24dedd3743}*SharedItemsImports = 4
+		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{a5a6e02a-21ba-4d55-9fb9-7b24dedd3743}*SharedItemsImports = 4
 		Build\libssl.Win32\libssl.Win32.vcxitems*{aaf08544-8aaa-41a5-a86b-2af4d8985258}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{b5118956-53cc-4b24-8807-de8d7d226b40}*SharedItemsImports = 9
 		Build\libcrypto.Win32\libcrypto.Win32.vcxitems*{d01bf0fd-d450-41dc-bfa4-62468528b91e}*SharedItemsImports = 9
-		Build\libHttpClient.Win32\libHttpClient.Win32.vcxitems*{d980f91b-92bf-4cc4-89fd-1cd99dba870f}*SharedItemsImports = 9
+		Build\libHttpClient.Win32.Shared\libHttpClient.Win32.Shared.vcxitems*{d980f91b-92bf-4cc4-89fd-1cd99dba870f}*SharedItemsImports = 9
+		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{e35ba8a1-ae7b-4fb5-8200-469b98bc1ca8}*SharedItemsImports = 4
+		Build\libHttpClient.Win32.Shared\libHttpClient.Win32.Shared.vcxitems*{e35ba8a1-ae7b-4fb5-8200-469b98bc1ca8}*SharedItemsImports = 4
+		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{e35ba8a1-ae7b-4fb5-8200-469b98bc1ca8}*SharedItemsImports = 4
+		Build\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems*{e35ba8a1-ae7b-4fb5-8200-469b98bc1ca8}*SharedItemsImports = 4
 		Build\libHttpClient.Common\libHttpClient.Common.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 		Build\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
 		Build\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems*{e885bb30-f51e-4bab-9300-4b303144bb49}*SharedItemsImports = 4
