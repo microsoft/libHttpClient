@@ -321,6 +321,7 @@ private:
 
     // WebSocket state
     HCWebsocketHandle m_websocketHandle{ nullptr };
+    String m_websocketSubprotocol;
     HCCallHandle m_websocketCall{ nullptr };
     bool m_disconnectHandlerInvoked{ false };
     std::recursive_mutex m_websocketSendMutex; // controls access to m_websocketSendQueue
