@@ -4,6 +4,9 @@
     <ProjectGuid>{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}</ProjectGuid>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="libHttpClient.Win32.def" />
+  </ItemGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" />
   <ItemDefinitionGroup>
     <Link>
