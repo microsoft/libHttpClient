@@ -24,6 +24,8 @@ using namespace xbox::httpclient;
 #define WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET 114
 #endif
 
+#define SUB_PROTOCOL_HEADER "Sec-WebSocket-Protocol"
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 WinHttpConnection::WinHttpConnection(
@@ -92,7 +94,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     HINTERNET hSession,
     HCWebsocketHandle webSocket,
     const char* uri,
-    const char* /*subprotocol*/,
+    const char* subprotocol,
     proxy_type proxyType,
     XPlatSecurityInformation&& securityInformation
 )
@@ -112,10 +114,14 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     }
     else
     {
-        // WinHttpConnection now owns webSocketCall
-        initResult.Payload()->m_websocketCall = webSocketCall;
-        initResult.Payload()->m_websocketHandle = webSocket;
-        return std::move(initResult);
+        auto& connection{ initResult.Payload() };
+        connection->m_websocketCall = webSocketCall; // WinHttpConnection now owns webSocketCall
+        connection->m_websocketHandle = webSocket;
+        if (subprotocol)
+        {
+            connection->m_websocketSubprotocol = subprotocol;
+        }
+        return initResult;
     }
 }
 #endif
@@ -308,7 +314,14 @@ HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
     RETURN_HR_IF(E_INVALIDARG, !async);
 
     // Set WebSocket specific options and then call send
-    auto& headers{ m_websocketHandle->websocket->Headers() };
+    auto headers{ m_websocketHandle->websocket->Headers() };
+
+    // Add subprotocol header manually 
+    if (headers.find(SUB_PROTOCOL_HEADER) == headers.end() && !m_websocketSubprotocol.empty())
+    {
+        headers[SUB_PROTOCOL_HEADER] = m_websocketSubprotocol;
+    }
+
     if (!headers.empty())
     {
         http_internal_wstring flattenedHeaders = flatten_http_headers(headers);
