@@ -85,7 +85,6 @@ EXPORTS
     HCTraceImplMessage
     HCTraceImplMessage_v
     HCTraceImplScopeId
-    HCTraceImplSetAreaVerbosity
     HCTraceInit
     HCTraceSetClientCallback
     HCTraceSetEtwEnabled

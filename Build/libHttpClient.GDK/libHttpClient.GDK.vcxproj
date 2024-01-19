@@ -5,6 +5,9 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <GDKExtLibNames>Xbox.XCurl.API</GDKExtLibNames>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="libHttpClient.GDK.def" />
+  </ItemGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.GDK.props))" />
   <ItemDefinitionGroup>
     <Link>
