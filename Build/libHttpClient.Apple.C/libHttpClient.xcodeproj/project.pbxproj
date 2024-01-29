@@ -1618,6 +1618,10 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = (
+					"$(BUILT_PRODUCTS_DIR)/openssl/lib/libssl.a",
+					"$(BUILT_PRODUCTS_DIR)/openssl/lib/libcrypto.a",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.microsoft.libHttpClientFramework-mac";
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -1646,6 +1650,10 @@
 					"@loader_path/Frameworks",
 				);
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = (
+					"$(BUILT_PRODUCTS_DIR)/openssl/lib/libssl.a",
+					"$(BUILT_PRODUCTS_DIR)/openssl/lib/libcrypto.a",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.microsoft.libHttpClientFramework-mac";
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
