@@ -86,6 +86,9 @@ _HCWebSocketGetProxyUri
 _HCWebSocketGetHeader
 _HCWebSocketGetNumHeaders
 _HCWebSocketGetHeaderAtIndex
+_HCAddWebSocketRoutedHandler
+_HCRemoveWebSocketRoutedHandler
+_HCSetGlobalProxy
 
 #
 # mock.h
