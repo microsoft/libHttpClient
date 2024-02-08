@@ -76,9 +76,15 @@ set(ANDROID_INCLUDE_DIRS
 
 add_library(
     "${PROJECT_NAME}"
-    STATIC
+    SHARED
     "${COMMON_SOURCE_FILES}"
     "${ANDROID_SOURCE_FILES}"
+)
+
+find_library(ANDROID_LOG_PATH log) # Android log library
+target_link_libraries(
+    "${PROJECT_NAME}"
+    "${ANDROID_LOG_PATH}"
 )
 
 target_include_directories(
