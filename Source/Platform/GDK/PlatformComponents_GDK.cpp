@@ -21,7 +21,8 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     auto initWinHttpResult = WinHttpProvider::Initialize();
     RETURN_IF_FAILED(initWinHttpResult.hr);
  
-    components.WebSocketProvider = http_allocate_unique<WinHttp_WebSocketProvider>(initWinHttpResult.ExtractPayload());
+    auto winHttpProvider = initWinHttpResult.ExtractPayload();
+    components.WebSocketProvider = http_allocate_unique<WinHttp_WebSocketProvider>(SharedPtr<WinHttpProvider>{ winHttpProvider.release(), std::move(winHttpProvider.get_deleter()), http_stl_allocator<WinHttpProvider>{} });
 #endif
 
     return S_OK;
