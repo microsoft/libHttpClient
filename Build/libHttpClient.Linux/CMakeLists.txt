@@ -2,27 +2,45 @@ cmake_minimum_required(VERSION 3.6)
 
 get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
-project("libHttpClient.Linux.C")
+project("libHttpClient.Linux")
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_CXX_FLAGS "-fvisibility=hidden")
-set(CMAKE_C_FLAGS "-fvisibility=hidden")
-set(CMAKE_STATIC_LIBRARY_PREFIX "")
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,--version-script=${PATH_TO_ROOT}/Build/libHttpClient.CMake/libHttpClientExports.txt")
 
 ###########################################
 ### Set up paths for source and include ###
 ###########################################
 
 # Set final static libraries output folder
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Binaries/Debug/x64/libHttpClient.Linux.C)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Binaries/Release/x64/libHttpClient.Linux.C)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Out/x64/Debug/libHttpClient.Linux)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHttpClient.Linux)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Out/x64/Debug/libHttpClient.Linux)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHttpClient.Linux)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Out/x64/Debug/libHttpClient.Linux)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHttpClient.Linux)
 
 # BINARY_DIR is a temp folder used by cmake itself.
 # Binary folder can be remove freely.
 # See more details: https://cmake.org/cmake/help/v3.4/command/add_subdirectory.html
-set(BINARY_DIR ${PATH_TO_ROOT}/Int/CMake/libHttpClient.Linux.C)
+set(BINARY_DIR ${PATH_TO_ROOT}/Int/CMake/libHttpClient.Linux)
+
+set(LIBCRYPTO_BINARY_PATH
+    ${PATH_TO_ROOT}/Out/x64/${CMAKE_BUILD_TYPE}/libcrypto.Linux/libcrypto.a
+)
+message(STATUS "LIBCRYPTO_BINARY_PATH: ${LIBCRYPTO_BINARY_PATH}")
+
+set(LIBSSL_BINARY_PATH
+    ${PATH_TO_ROOT}/Out/x64/${CMAKE_BUILD_TYPE}/libssl.Linux/libssl.a
+)
+message(STATUS "LIBSSL_BINARY_PATH: ${LIBSSL_BINARY_PATH}")
+
+set(LIBCURL_BINARY_PATH
+    ${PATH_TO_ROOT}/Out/x64/${CMAKE_BUILD_TYPE}/libcurl.Linux/libcurl.a
+)
+message(STATUS "LIBCURL_BINARY_PATH: ${LIBCURL_BINARY_PATH}")
 
 include("../libHttpClient.CMake/GetCommonHCSourceFiles.cmake")
 get_common_hc_source_files(
@@ -84,14 +102,20 @@ set(LINUX_INCLUDE_DIRS
     )
 
 #########################
-### Set up static lib ###
+### Set up shared lib ###
 #########################
 
 add_library(
     "${PROJECT_NAME}"
-    STATIC
+    SHARED
     "${COMMON_SOURCE_FILES}"
     "${LINUX_SOURCE_FILES}"
+)
+
+target_link_libraries("${PROJECT_NAME}" 
+    PRIVATE ${LIBCURL_BINARY_PATH}
+    PRIVATE ${LIBSSL_BINARY_PATH}
+    PRIVATE ${LIBCRYPTO_BINARY_PATH} 
 )
 
 target_include_directories(
@@ -111,3 +135,5 @@ target_set_flags(
     "${FLAGS_DEBUG}"
     "${FLAGS_RELEASE}"
 )
+
+export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
