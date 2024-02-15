@@ -1,6 +1,6 @@
 # Building libHttpClient for Linux
 
-These scripts will be used to build the static library dependencies for libHttpClient and link them against the static library build for libHttpClient.
+These scripts will be used to build the static library dependencies for libHttpClient and link them against the shared library build for libHttpClient.
 
 ## Dependencies 
 
@@ -8,19 +8,19 @@ You will need a Linux machine, a Linux virtual machine, or Windows Subsystem for
 
 ## libHttpClient_Linux.bash
 
-Running `libHttpClient_Linux` can generate a variety of build configurations and binaries for libHttpClient and its dependencies. These binaries will be placed at `Binaries/{Configuration}/x64/{Library}`. Example usage is below.
+Running `libHttpClient_Linux` can generate a variety of build configurations and binaries for libHttpClient and its dependencies. These binaries will be placed at `Out/x64/{Configuration}/{Library}`. Example usage is below.
 
 ```
 ./libHttpClient_Linux.bash
 ```
 
-Running the build script with no arguments will generate a Release binary of `libcurl.a`,`libssl.a`, `libcrypto.a`, and `libHttpClient.a`.
+Running the build script with no arguments will generate a Release binary of `libcurl.a`,`libssl.a`, `libcrypto.a`, and `libHttpClient.Linux.so`.
 
 ```
 ./libHttpClient_Linux.bash <-c|--config> <Debug|Release>
 ```
 
-Running the build script with the `-c|--config` argument will generate  Debug or Release binaries of `libssl.a`, `libcrypto.a`, `libcurl.a` and `libHttpClient.a`.
+Running the build script with the `-c|--config` argument will generate  Debug or Release binaries of `libssl.a`, `libcrypto.a`, `libcurl.a` and `libHttpClient.Linux.so`.
 
 ```
 ./libHttpClient_Linux.bash <-nc|--nocurl>
@@ -45,7 +45,7 @@ sed -i -e 's/\r$//' libHttpClient_Linux.bash
 
 ## curl.bash
 
-libHttpClient for Linux uses cURL 7.81.0. When `curl.bash` is run, it auto generates cURL and places it in `Binaries/{Configuration}/x64/libcurl.Linux`.
+libHttpClient for Linux uses cURL 7.81.0. When `curl.bash` is run, it auto generates cURL and places it in `Out/x64/{Configuration}/libcurl.Linux`.
 
 ```
 ./curl.bash
@@ -59,7 +59,7 @@ Running the build script with no arguments will generate a Release binary of `li
 
 Running the build script with the `-c|--config` argument will generate Debug or Release binaries of `libcurl.a`.
 
-If you choose to use your own version of cURL, you can place your own copy of `libcurl.a` in `Binaries/{Configuration}/x64/libcurl.Linux`.
+If you choose to use your own version of cURL, you can place your own copy of `libcurl.a` in `Out/x64/{Configuration}/libcurl.Linux`.
 
 **libHttpClient for Linux has only been tested against version 7.81.0.**
 
@@ -78,7 +78,7 @@ sed -i -e 's/\r$//' curl.bash
 
 ## openssl.bash
 
-libHttpClient for Linux uses OpenSSL 1.1.1k. When `openssl.bash` is run, it generates `libssl.a` and `libcrypto.a` and places it in `Binaries/{Configuration}/x64/{Library}.Linux`.
+libHttpClient for Linux uses OpenSSL 1.1.1k. When `openssl.bash` is run, it generates `libssl.a` and `libcrypto.a` and places it in `Out/x64/{Configuration}/{Library}.Linux`.
 
 Running the build script with no arguments will generate a Release binary of `libssl.a` and `libcrypto.a`.
 
@@ -88,7 +88,7 @@ Running the build script with no arguments will generate a Release binary of `li
 
 Running the build script with the `-c|--config` argument will generate Debug or Release binaries of `libssl.a` and `libcrypto.a`.
 
-If you choose to use your own version of OpenSSL, you can place your own copies in `Binaries/{Configuration}/x64/{Library}.Linux`.
+If you choose to use your own version of OpenSSL, you can place your own copies in `Out/x64/{Configuration}/{Library}.Linux`.
 
 **libHttpClient for Linux has only been tested against version 1.1.1k**
 
