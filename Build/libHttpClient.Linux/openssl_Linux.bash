@@ -57,11 +57,11 @@ fi
 make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
 sudo make install
 # copies binaries to final directory
-mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux
-cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcrypto.Linux
+mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
+cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
 
-mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
-cp -R "$PWD"/libssl.a "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libssl.Linux
+mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libssl.Linux
+cp -R "$PWD"/libssl.a "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libssl.Linux
 
 make clean
 popd

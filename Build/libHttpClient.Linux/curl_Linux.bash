@@ -35,8 +35,8 @@ fi
 make
 
 # copies binaries to final directory
-mkdir -p "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcurl.Linux
-cp -R "$PWD"/lib/.libs/* "$SCRIPT_DIR"/../../Binaries/"$CONFIGURATION"/x64/libcurl.Linux
+mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux
+cp -R "$PWD"/lib/.libs/* "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux
 
 make clean
 popd
