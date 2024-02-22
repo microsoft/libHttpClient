@@ -4,7 +4,10 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.Android")
 
-set(CMAKE_STATIC_LIBRARY_PREFIX "")
+set(CMAKE_CXX_FLAGS_RELEASE "-gdwarf-5")
+set(CMAKE_C_FLAGS_RELEASE "-gdwarf-5")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,now")
 
 ###########################################
 ### Set up paths for source and include ###
