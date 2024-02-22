@@ -10,6 +10,7 @@ android {
 
         externalNativeBuild {
             cmake {
+                arguments "-DANDROID_TOOLCHAIN=clang++"
                 if (project.hasProperty("HC_NOWEBSOCKETS")) {
                     arguments << "-DHC_NOWEBSOCKETS=1"
                 }
