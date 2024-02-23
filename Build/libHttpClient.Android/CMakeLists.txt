@@ -88,13 +88,11 @@ add_library(
     "${ANDROID_SOURCE_FILES}"
 )
 
-if(BUILD_SHARED_LIBS)
-    find_library(ANDROID_LOG_PATH log) # Android log library
-    target_link_libraries(
-        "${PROJECT_NAME}"
-        "${ANDROID_LOG_PATH}"
-    )
-endif()
+find_library(ANDROID_LOG_PATH log) # Android log library
+target_link_libraries(
+    "${PROJECT_NAME}"
+    "${ANDROID_LOG_PATH}"
+)
 
 target_include_directories(
     "${PROJECT_NAME}"
