@@ -4,7 +4,7 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.Android")
 
-option(BUILD_SHARED_LIBS "Build using shared libraries")
+option(BUILD_SHARED_LIBS "Build libHC Shared Library")
 
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 if(BUILD_SHARED_LIBS)
@@ -86,12 +86,6 @@ add_library(
     "${PROJECT_NAME}"
     "${COMMON_SOURCE_FILES}"
     "${ANDROID_SOURCE_FILES}"
-)
-
-find_library(ANDROID_LOG_PATH log) # Android log library
-target_link_libraries(
-    "${PROJECT_NAME}"
-    "${ANDROID_LOG_PATH}"
 )
 
 target_include_directories(
