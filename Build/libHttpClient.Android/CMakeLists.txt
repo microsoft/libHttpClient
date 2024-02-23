@@ -4,10 +4,15 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.Android")
 
-set(CMAKE_CXX_FLAGS_RELEASE "-gdwarf-5")
-set(CMAKE_C_FLAGS_RELEASE "-gdwarf-5")
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,now")
+option(BUILD_SHARED_LIBS "Build using shared libraries")
+
+set(CMAKE_STATIC_LIBRARY_PREFIX "")
+if(BUILD_SHARED_LIBS)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    set(CMAKE_CXX_FLAGS_RELEASE "-gdwarf-5")
+    set(CMAKE_C_FLAGS_RELEASE "-gdwarf-5")
+    set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,now")
+endif()
 
 ###########################################
 ### Set up paths for source and include ###
@@ -79,16 +84,17 @@ set(ANDROID_INCLUDE_DIRS
 
 add_library(
     "${PROJECT_NAME}"
-    SHARED
     "${COMMON_SOURCE_FILES}"
     "${ANDROID_SOURCE_FILES}"
 )
 
-find_library(ANDROID_LOG_PATH log) # Android log library
-target_link_libraries(
-    "${PROJECT_NAME}"
-    "${ANDROID_LOG_PATH}"
-)
+if(BUILD_SHARED_LIBS)
+    find_library(ANDROID_LOG_PATH log) # Android log library
+    target_link_libraries(
+        "${PROJECT_NAME}"
+        "${ANDROID_LOG_PATH}"
+    )
+endif()
 
 target_include_directories(
     "${PROJECT_NAME}"
