@@ -10,9 +10,11 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_TOOLCHAIN=clang++"
                 if (project.hasProperty("HC_NOWEBSOCKETS")) {
                     arguments << "-DHC_NOWEBSOCKETS=1"
+                }
+                if (project.hasProperty("BUILD_SHARED_LIBS")) {
+                    arguments << "-DBUILD_SHARED_LIBS=1"
                 }
 
                 // externalNativeBuild normally skips static
@@ -26,34 +28,6 @@ android {
         cmake {
             path "CMakeLists.txt"
             buildStagingDirectory "${project.buildDir.getParentFile().getAbsolutePath()}/.cxx/${project.name}"
-        }
-    }
-
-    flavorDimensions "ABI"
-    productFlavors {
-        full {
-            dimension "ABI"
-            externalNativeBuild {
-                cmake {
-                    abiFilters "arm64-v8a", "x86_64"
-                }
-            }
-        }
-        arm8 {
-            dimension "ABI"
-            externalNativeBuild {
-                cmake {
-                    abiFilters "arm64-v8a"
-                }
-            }
-        }
-        x86_64 {
-            dimension "ABI"
-            externalNativeBuild {
-                cmake {
-                    abiFilters "x86_64"
-                }
-            }
         }
     }
 
