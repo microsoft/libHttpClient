@@ -59,6 +59,16 @@ skipping `libssl` and `libcrypto` entirely, as well as passing the
 [cmd]  > gradlew.bat assemble -PHC_NOWEBSOCKETS
 ```
 
+#### Building shared libraries
+
+Passing the `BUILD_SHARED_LIBS` project property to Gradle will build a shared
+library rather than a static library for libHttpClient:
+
+```sh
+[bash] $ ./gradlew assemble -PBUILD_SHARED_LIBS
+[cmd]  > gradlew.bat assemble -PBUILD_SHARED_LIBS
+```
+
 Android Studio can also be configured to pass this flag, or it can be
 configured in the project's `build.gradle`.
 
