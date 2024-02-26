@@ -12,6 +12,7 @@ if(BUILD_SHARED_LIBS)
     set(CMAKE_CXX_FLAGS_RELEASE "-gdwarf-5")
     set(CMAKE_C_FLAGS_RELEASE "-gdwarf-5")
     set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,now")
+    set(CMAKE_SHARED_LIBRARY_PREFIX "")
 endif()
 
 ###########################################
