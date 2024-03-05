@@ -47,6 +47,7 @@ set(COMMON_SOURCE_FILES
 
 set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Include/httpClient/async_jvm.h"
+    "${PATH_TO_ROOT}/Include/httpClient/types_android.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/Android/http_android.h"
     "${PATH_TO_ROOT}/Source/HTTP/Android/android_http_request.cpp"

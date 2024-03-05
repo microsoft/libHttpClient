@@ -14,16 +14,17 @@ function(GET_COMMON_HC_SOURCE_FILES
          )
 
     set(${OUT_PUBLIC_SOURCE_FILES}
+        "${PATH_TO_ROOT}/Include/httpClient/async.h"
         "${PATH_TO_ROOT}/Include/httpClient/config.h"
         "${PATH_TO_ROOT}/Include/httpClient/httpClient.h"
         "${PATH_TO_ROOT}/Include/httpClient/httpProvider.h"
         "${PATH_TO_ROOT}/Include/httpClient/mock.h"
+        "${PATH_TO_ROOT}/Include/httpClient/pal.h"
+        "${PATH_TO_ROOT}/Include/httpClient/trace.h"
+        "${PATH_TO_ROOT}/Include/httpClient/types_generic.h"
         "${PATH_TO_ROOT}/Include/XAsync.h"
         "${PATH_TO_ROOT}/Include/XAsyncProvider.h"
         "${PATH_TO_ROOT}/Include/XTaskQueue.h"
-        "${PATH_TO_ROOT}/Include/httpClient/trace.h"
-        "${PATH_TO_ROOT}/Include/httpClient/pal.h"
-        "${PATH_TO_ROOT}/Include/httpClient/async.h"
         PARENT_SCOPE
         )
 
@@ -98,6 +99,8 @@ function(GET_COMMON_HC_SOURCE_FILES
         )
 
     set(${OUT_HTTP_SOURCE_FILES}
+        "${PATH_TO_ROOT}/Source/HTTP/compression.cpp"
+        "${PATH_TO_ROOT}/Source/HTTP/compression.h"
         "${PATH_TO_ROOT}/Source/HTTP/httpcall.cpp"
         "${PATH_TO_ROOT}/Source/HTTP/httpcall.h"
         "${PATH_TO_ROOT}/Source/HTTP/httpcall_publics.cpp"
