@@ -1,14 +1,16 @@
 #pragma once
 
 #include "HTTP/httpcall.h"
-#include "WebSocket/hcwebsocket.h"
 #include "Platform/IHttpProvider.h"
+#if !HC_NOWEBSOCKETS
+#include "WebSocket/hcwebsocket.h"
 #include "Platform/IWebSocketProvider.h"
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 // Global state related to network operations.
-// 
+//
 // Responsible for tracking ongoing network operations and awaiting them during cleanup. It also owns the IHttpProvider
 // and IWebSocketProvider that will be used to perform HttpCalls and WebSockets operations.
 
@@ -63,7 +65,7 @@ public: // WebSocket
 private:
 #if !HC_NOWEBSOCKETS
     NetworkState(UniquePtr<IHttpProvider> httpProvider, UniquePtr<IWebSocketProvider> webSocketProvider) noexcept;
-#else 
+#else
     NetworkState(UniquePtr<IHttpProvider> httpProvider) noexcept;
 #endif
 
@@ -95,8 +97,8 @@ private:
 
     Set<XAsyncBlock*> m_connectingWebSockets;
     Set<ActiveWebSocketContext*> m_connectedWebSockets;
-#endif 
-    
+#endif
+
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

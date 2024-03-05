@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include <httpClient/httpProvider.h>
+#include "compression.h"
 #include "httpcall.h"
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include "XSystem.h"
@@ -93,8 +94,6 @@ try
 }
 CATCH_RETURN()
 
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE
 STDAPI
 HCHttpCallRequestEnableGzipCompression(
     _In_ HCCallHandle call,
@@ -108,6 +107,11 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
+    if (!Compression::Available() && level != HCCompressionLevel::None)
+    {
+        return E_NOT_SUPPORTED;
+    }
+
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
@@ -119,8 +123,6 @@ try
     return S_OK;
 }
 CATCH_RETURN()
-#endif
-#endif // !HC_NOZLIB
 
 STDAPI
 HCHttpCallRequestSetRequestBodyString(
