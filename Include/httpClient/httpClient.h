@@ -380,9 +380,6 @@ STDAPI HCHttpCallRequestSetRequestBodyString(
     _In_z_ const char* requestBodyString
     ) noexcept;
 
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE
-
 /// <summary>
 /// Defines the compression level that will be used on the compression algorithm.
 /// Lower levels perform less compression but have the highest speed in the compression and
@@ -422,8 +419,6 @@ STDAPI HCHttpCallRequestEnableGzipCompression(
     _In_ HCCallHandle call,
     _In_ HCCompressionLevel level
 ) noexcept;
-#endif
-#endif  // !HC_NOZLIB
 
 /// <summary>
 /// The callback definition used by an HTTP call to read the request body. This callback will be invoked
@@ -536,8 +531,8 @@ STDAPI HCHttpCallRequestSetTimeout(
 /// The delay is also jittered between the current and next delay to spread out service load.
 /// The default for the HTTP timeout window is 20 seconds and can be changed using HCSettingsSetTimeoutWindow()<br />
 /// <br />
-/// If the service returns an HTTP error with a "Retry-After" header and the title had previously called 
-/// HCHttpCallRequestSetRetryCacheId(), then all future calls to that API will immediately fail with the 
+/// If the service returns an HTTP error with a "Retry-After" header and the title had previously called
+/// HCHttpCallRequestSetRetryCacheId(), then all future calls to that API will immediately fail with the
 /// original error without contacting the service until the "Retry-After" time has been reached.<br />
 ///  <br />
 /// Idempotent service calls are retried when a network error occurs or the server responds with<br />

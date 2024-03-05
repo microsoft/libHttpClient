@@ -20,4 +20,3 @@ typedef BYTE *PBYTE;
 typedef PVOID HANDLE;
 #endif
 #endif
-

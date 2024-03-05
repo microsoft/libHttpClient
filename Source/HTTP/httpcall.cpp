@@ -101,9 +101,8 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
-#if !HC_NOZLIB && (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE)
             // Compress body before call if applicable
-            if (call->compressionLevel != HCCompressionLevel::None)
+            if (Compression::Available() && call->compressionLevel != HCCompressionLevel::None)
             {
                 // Schedule compression task
                 RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::CompressRequestBody));
@@ -112,11 +111,6 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
             {
                 RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest));
             }
-#else
-            RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest));
-#endif
-
-
 
         }
         return S_OK;
@@ -153,13 +147,12 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     }
 }
 
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE
-
 void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 {
     PerformContext* context{ static_cast<PerformContext*>(c) };
     HC_CALL* call{ context->call };
+
+    assert(Compression::Available());
 
     if (canceled)
     {
@@ -211,7 +204,7 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
     http_internal_vector<uint8_t> compressedRequestBodyBuffer;
 
-    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(), static_cast<unsigned int>(requestBodySize), call->compressionLevel, compressedRequestBodyBuffer);
+    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(), requestBodySize, call->compressionLevel, compressedRequestBodyBuffer);
 
     // Setting back to default read request body callback to be invoked by Platform-specific code
     call->requestBodyReadFunction = HC_CALL::ReadRequestBody;
@@ -234,8 +227,6 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
         return;
     }
 }
-#endif
-#endif // !HC_NOZLIB
 
 void CALLBACK HC_CALL::PerformSingleRequest(void* c, bool canceled)
 {

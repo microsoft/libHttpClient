@@ -2,10 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #include "pch.h"
 
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE
-
 #include "compression.h"
+
+#if !HC_NOZLIB && (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE)
+
+#include <zlib.h>
 
 #define CHUNK 16384
 #define WINDOWBITS 15
@@ -13,11 +14,12 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-Compression::Compression()
+bool Compression::Available() noexcept
 {
+    return false;
 }
 
-void Compression::CompressToGzip(uint8_t* inData, uInt inDataSize, HCCompressionLevel compressionLevel, http_internal_vector<uint8_t>& outData)
+void Compression::CompressToGzip(uint8_t* inData, size_t inDataSize, HCCompressionLevel compressionLevel, http_internal_vector<uint8_t>& outData)
 {
     uint32_t compressionLevelValue = static_cast<std::underlying_type<HCCompressionLevel>::type>(compressionLevel);
     z_stream stream;
@@ -30,7 +32,7 @@ void Compression::CompressToGzip(uint8_t* inData, uInt inDataSize, HCCompression
     deflateInit2(&stream, compressionLevelValue, Z_DEFLATED, WINDOWBITS | GZIP_ENCODING, 8, Z_DEFAULT_STRATEGY);
 
     stream.next_in = inData;
-    stream.avail_in = inDataSize;
+    stream.avail_in = static_cast<uInt>(inDataSize);
 
     // Initialize output buffer with CHUNK size so first iteration of deflate will have enough room to allocate compressed bytes.
     outData = http_internal_vector<uint8_t>(CHUNK);
@@ -58,7 +60,7 @@ void Compression::CompressToGzip(uint8_t* inData, uInt inDataSize, HCCompression
         {
             outData.resize(outData.size() - stream.avail_out);
         }
-    } 
+    }
     while (stream.avail_out == 0);
 
     deflateEnd(&stream);
@@ -66,5 +68,20 @@ void Compression::CompressToGzip(uint8_t* inData, uInt inDataSize, HCCompression
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
-#endif
+#else
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+bool Compression::Available() noexcept
+{
+    return false;
+}
+
+void Compression::CompressToGzip(uint8_t*, size_t, HCCompressionLevel, http_internal_vector<uint8_t>&)
+{
+    assert(false);
+}
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
+
 #endif // !HC_NOZLIB
