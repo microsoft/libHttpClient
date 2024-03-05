@@ -16,7 +16,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 bool Compression::Available() noexcept
 {
-    return false;
+    return true;
 }
 
 void Compression::CompressToGzip(uint8_t* inData, size_t inDataSize, HCCompressionLevel compressionLevel, http_internal_vector<uint8_t>& outData)
