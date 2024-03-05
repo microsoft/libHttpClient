@@ -15,10 +15,10 @@
     #else
         #include HC_PLATFORM_TYPES_PATH
     #endif
-#endif
-
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
-#include "jni.h"
+#elif HC_PLATFORM == HC_PLATFORM_ANDROID
+    #include <httpClient/types_android.h>
+#else
+    #include <httpClient/types_generic.h>
 #endif
 
 extern "C"
@@ -115,28 +115,6 @@ STDAPI HCMemGetFunctions(
 /////////////////////////////////////////////////////////////////////////////////////////
 // Global APIs
 //
-
-struct HCInitArgs;
-
-#if HC_PLATFORM == HC_PLATFORM_ANDROID
-/// <summary>
-/// Used to wrap the JavaVM and ApplicationContext on Android devices.
-/// </summary>
-typedef struct HCInitArgs {
-    /// <summary>The Java Virtual machine.</summary>
-    JavaVM *javaVM;
-    /// <summary>The Java Application Context.</summary>
-    jobject applicationContext;
-} HCInitArgs;
-#elif HC_PLATFORM_HEADER_OVERRIDE == 0
-/// <summary>
-/// Dummy init args used by non-Android devices.
-/// </summary>
-typedef struct HCInitArgs {
-    /// <summary>A dummy field.</summary>
-    void* dummy;
-} HCInitArgs;
-#endif
 
 /// <summary>
 /// Initializes the library instance.

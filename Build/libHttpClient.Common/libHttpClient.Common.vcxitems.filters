@@ -126,6 +126,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\compression.h">
       <Filter>Source\HTTP</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types_android.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types_generic.h">
+      <Filter>Include\httpClient</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pch.cpp">

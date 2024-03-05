@@ -27,6 +27,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\mock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\pal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\trace.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types_android.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Include\httpClient\types_generic.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\buildver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\EntryList.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\pal_internal.h" />
