@@ -55,6 +55,10 @@
 		58BD25C42214DFD2008942EB /* XAsync.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85521C0E47F0009C7F6 /* XAsync.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85621C0E47F0009C7F6 /* XAsyncProvider.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = D3DAA85421C0E47F0009C7F6 /* XTaskQueue.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5DBAF40C2B9A515F001E01FB /* types_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 5DC334502B9A4D4D0047B20C /* types_generic.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5DBAF40D2B9A5160001E01FB /* types_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 5DC334502B9A4D4D0047B20C /* types_generic.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5DBAF40E2B9A5161001E01FB /* types_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 5DC334502B9A4D4D0047B20C /* types_generic.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5DC334512B9A4D4D0047B20C /* types_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 5DC334502B9A4D4D0047B20C /* types_generic.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		727977172A4E2FCF00EB7079 /* websocketpp_websocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 727977162A4E2FCF00EB7079 /* websocketpp_websocket.h */; };
 		727979032A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 727978E72A4E32A800EB7079 /* PlatformComponents_Apple.cpp */; };
 		727979042A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 727978E72A4E32A800EB7079 /* PlatformComponents_Apple.cpp */; };
@@ -402,6 +406,7 @@
 		58A7EA2B209AE8BB00CC6774 /* pal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pal.h; sourceTree = "<group>"; };
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		5DC334502B9A4D4D0047B20C /* types_generic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types_generic.h; sourceTree = "<group>"; };
 		67EE817E2362599C00A5F3DE /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		727977162A4E2FCF00EB7079 /* websocketpp_websocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = websocketpp_websocket.h; sourceTree = "<group>"; };
 		727978E72A4E32A800EB7079 /* PlatformComponents_Apple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformComponents_Apple.cpp; sourceTree = "<group>"; };
@@ -801,6 +806,7 @@
 				584BFB8122164BCA00CDCCBE /* mock.h */,
 				58A7EA2B209AE8BB00CC6774 /* pal.h */,
 				58A7EA2A209AE8BB00CC6774 /* trace.h */,
+				5DC334502B9A4D4D0047B20C /* types_generic.h */,
 			);
 			path = httpClient;
 			sourceTree = "<group>";
@@ -914,6 +920,7 @@
 				2C872C75221C932A0054F791 /* httpProvider.h in Headers */,
 				2C872C76221C932A0054F791 /* mock.h in Headers */,
 				2C872C77221C932A0054F791 /* pal.h in Headers */,
+				5DBAF40C2B9A515F001E01FB /* types_generic.h in Headers */,
 				2C872C78221C932A0054F791 /* trace.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -929,6 +936,7 @@
 				584BFB8222164C4800CDCCBE /* mock.h in Headers */,
 				58BD25C22214DEF7008942EB /* pal.h in Headers */,
 				58BD25C32214DEF7008942EB /* trace.h in Headers */,
+				5DC334512B9A4D4D0047B20C /* types_generic.h in Headers */,
 				58BD25C42214DFD2008942EB /* XAsync.h in Headers */,
 				58BD25C52214DFD2008942EB /* XAsyncProvider.h in Headers */,
 				58BD25C62214DFD2008942EB /* XTaskQueue.h in Headers */,
@@ -965,6 +973,7 @@
 				D9EF887425A52685005C4BDF /* mock.h in Headers */,
 				D9EF887525A52685005C4BDF /* pal.h in Headers */,
 				D9EF887625A52685005C4BDF /* trace.h in Headers */,
+				5DBAF40D2B9A5160001E01FB /* types_generic.h in Headers */,
 				D9EF887725A52685005C4BDF /* XAsync.h in Headers */,
 				D9EF887825A52685005C4BDF /* XAsyncProvider.h in Headers */,
 				D9EF887925A52685005C4BDF /* XTaskQueue.h in Headers */,
@@ -982,6 +991,7 @@
 				D9FF0A9225A536A20061B717 /* mock.h in Headers */,
 				D9FF0A9325A536A20061B717 /* pal.h in Headers */,
 				D9FF0A9425A536A20061B717 /* trace.h in Headers */,
+				5DBAF40E2B9A5161001E01FB /* types_generic.h in Headers */,
 				D9FF0A9525A536A20061B717 /* XAsync.h in Headers */,
 				D9FF0A9625A536A20061B717 /* XAsyncProvider.h in Headers */,
 				D9FF0A9725A536A20061B717 /* XTaskQueue.h in Headers */,
