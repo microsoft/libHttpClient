@@ -54,11 +54,7 @@ public:
     bool sslValidation{ true };
 #endif
     uint32_t timeoutInSeconds{ 0 };
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE
     HCCompressionLevel compressionLevel{ HCCompressionLevel::None };
-#endif
-#endif // !HC_NOZLIB
 
     // Response properties
     HRESULT networkErrorCode{ S_OK };
@@ -99,14 +95,9 @@ private:
     static void CALLBACK PerformSingleRequest(void* context, bool canceled);
     static HRESULT CALLBACK PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderData const* data) noexcept;
     static void CALLBACK PerformSingleRequestComplete(XAsyncBlock* async);
-
-#if !HC_NOZLIB
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE
     static void CALLBACK CompressRequestBody(void* context, bool canceled);
-#endif
-#endif // !HC_NOZLIB
 
-    xbox::httpclient::Result<bool> ShouldFailFast(_Out_opt_ uint32_t& performDelay);   
+    xbox::httpclient::Result<bool> ShouldFailFast(_Out_opt_ uint32_t& performDelay);
     bool ShouldRetry(_Out_opt_ uint32_t& performDelay);
     xbox::httpclient::Result<std::chrono::seconds> GetRetryAfterHeaderTime();
     void ResetResponseProperties();
