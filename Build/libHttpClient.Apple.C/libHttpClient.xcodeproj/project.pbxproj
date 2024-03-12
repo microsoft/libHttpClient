@@ -59,6 +59,8 @@
 		5DBAF40D2B9A5160001E01FB /* types_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 5DC334502B9A4D4D0047B20C /* types_generic.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5DBAF40E2B9A5161001E01FB /* types_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 5DC334502B9A4D4D0047B20C /* types_generic.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5DC334512B9A4D4D0047B20C /* types_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 5DC334502B9A4D4D0047B20C /* types_generic.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		637064EF2B92BC4500DBF1E5 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 637064EE2B92BC4500DBF1E5 /* CFNetwork.framework */; };
+		637064F02B92BC4C00DBF1E5 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 637064EE2B92BC4500DBF1E5 /* CFNetwork.framework */; };
 		727977172A4E2FCF00EB7079 /* websocketpp_websocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 727977162A4E2FCF00EB7079 /* websocketpp_websocket.h */; };
 		727979032A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 727978E72A4E32A800EB7079 /* PlatformComponents_Apple.cpp */; };
 		727979042A4E32A800EB7079 /* PlatformComponents_Apple.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 727978E72A4E32A800EB7079 /* PlatformComponents_Apple.cpp */; };
@@ -183,6 +185,9 @@
 		A207D73F262F3E35005C0A65 /* request_body_stream.mm in Sources */ = {isa = PBXBuildFile; fileRef = A207D73C262F3E35005C0A65 /* request_body_stream.mm */; };
 		A207D740262F3E35005C0A65 /* request_body_stream.mm in Sources */ = {isa = PBXBuildFile; fileRef = A207D73C262F3E35005C0A65 /* request_body_stream.mm */; };
 		A207D741262F3E35005C0A65 /* request_body_stream.mm in Sources */ = {isa = PBXBuildFile; fileRef = A207D73C262F3E35005C0A65 /* request_body_stream.mm */; };
+		A23D0BA62B925EC900624E90 /* utils_apple.mm in Sources */ = {isa = PBXBuildFile; fileRef = A23D0BA42B925EC900624E90 /* utils_apple.mm */; };
+		A23D0BA72B925EC900624E90 /* utils_apple.mm in Sources */ = {isa = PBXBuildFile; fileRef = A23D0BA42B925EC900624E90 /* utils_apple.mm */; };
+		A23D0BA82B925EC900624E90 /* utils_apple.h in Headers */ = {isa = PBXBuildFile; fileRef = A23D0BA52B925EC900624E90 /* utils_apple.h */; };
 		A2ACA1BE2630C9C100D74874 /* session_delegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2ACA1BC2630C9C100D74874 /* session_delegate.mm */; };
 		A2ACA1BF2630C9C100D74874 /* session_delegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2ACA1BC2630C9C100D74874 /* session_delegate.mm */; };
 		A2ACA1C02630C9C100D74874 /* session_delegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2ACA1BC2630C9C100D74874 /* session_delegate.mm */; };
@@ -407,6 +412,7 @@
 		58BD256222123EF9008942EB /* HttpClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HttpClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		58BD258F2213626E008942EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		5DC334502B9A4D4D0047B20C /* types_generic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types_generic.h; sourceTree = "<group>"; };
+		637064EE2B92BC4500DBF1E5 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		67EE817E2362599C00A5F3DE /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		727977162A4E2FCF00EB7079 /* websocketpp_websocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = websocketpp_websocket.h; sourceTree = "<group>"; };
 		727978E72A4E32A800EB7079 /* PlatformComponents_Apple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformComponents_Apple.cpp; sourceTree = "<group>"; };
@@ -445,6 +451,8 @@
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
 		A207D73B262F3E35005C0A65 /* request_body_stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = request_body_stream.h; sourceTree = "<group>"; };
 		A207D73C262F3E35005C0A65 /* request_body_stream.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = request_body_stream.mm; sourceTree = "<group>"; };
+		A23D0BA42B925EC900624E90 /* utils_apple.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = utils_apple.mm; sourceTree = "<group>"; };
+		A23D0BA52B925EC900624E90 /* utils_apple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = utils_apple.h; sourceTree = "<group>"; };
 		A2ACA1BC2630C9C100D74874 /* session_delegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = session_delegate.mm; sourceTree = "<group>"; };
 		A2ACA1BD2630C9C100D74874 /* session_delegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = session_delegate.h; sourceTree = "<group>"; };
 		A529DDBC20A4C88F00D50640 /* http_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_apple.h; sourceTree = "<group>"; };
@@ -485,6 +493,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				637064F02B92BC4C00DBF1E5 /* CFNetwork.framework in Frameworks */,
 				2C872C7F221C93810054F791 /* libc++.tbd in Frameworks */,
 				2C872C7D221C93710054F791 /* Security.framework in Frameworks */,
 				2C872C7B221C93620054F791 /* Foundation.framework in Frameworks */,
@@ -504,6 +513,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				637064EF2B92BC4500DBF1E5 /* CFNetwork.framework in Frameworks */,
 				5841E99122150E900009B183 /* libc++.tbd in Frameworks */,
 				58BD2591221362BD008942EB /* libHttpClient.a in Frameworks */,
 				584BFB952217994000CDCCBE /* Foundation.framework in Frameworks */,
@@ -680,6 +690,7 @@
 		58A7E985209ADEB100CC6774 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				A23D0BA32B925EAF00624E90 /* Apple */,
 				A5A985FD27360CD100361934 /* Result.h */,
 				58A7E98D209ADEB100CC6774 /* buildver.h */,
 				58A7E990209ADEB100CC6774 /* EntryList.h */,
@@ -840,6 +851,7 @@
 		7DB100D92119383400AE22F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				637064EE2B92BC4500DBF1E5 /* CFNetwork.framework */,
 				2CE97719225EB368001F5E22 /* libcrypto.a */,
 				2CE9771A225EB368001F5E22 /* libssl.a */,
 				2C872C7A221C93620054F791 /* Foundation.framework */,
@@ -883,6 +895,15 @@
 				9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */,
 			);
 			path = Websocketpp;
+			sourceTree = "<group>";
+		};
+		A23D0BA32B925EAF00624E90 /* Apple */ = {
+			isa = PBXGroup;
+			children = (
+				A23D0BA52B925EC900624E90 /* utils_apple.h */,
+				A23D0BA42B925EC900624E90 /* utils_apple.mm */,
+			);
+			path = Apple;
 			sourceTree = "<group>";
 		};
 		A5304E1D20C0AC10000667A3 /* iOS */ = {
@@ -948,6 +969,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A207D73D262F3E35005C0A65 /* request_body_stream.h in Headers */,
+				A23D0BA82B925EC900624E90 /* utils_apple.h in Headers */,
 				828CEC7A2AFC1FAF00CA08B1 /* compression.h in Headers */,
 				A2ACA1C22630C9C100D74874 /* session_delegate.h in Headers */,
 				727977172A4E2FCF00EB7079 /* websocketpp_websocket.h in Headers */,
@@ -1324,6 +1346,7 @@
 				58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */,
 				828CED652AFC486000CA08B1 /* unzip.c in Sources */,
 				58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */,
+				A23D0BA62B925EC900624E90 /* utils_apple.mm in Sources */,
 				727979102A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
 				D3DAA85221C0E4090009C7F6 /* ThreadPool_stl.cpp in Sources */,
 				58A7E9CE209ADEB100CC6774 /* uri.cpp in Sources */,
@@ -1405,6 +1428,7 @@
 				828CED662AFC486000CA08B1 /* unzip.c in Sources */,
 				7DB100D1211927DF00AE22F5 /* uri.cpp in Sources */,
 				7DB100D2211927DF00AE22F5 /* utils.cpp in Sources */,
+				A23D0BA72B925EC900624E90 /* utils_apple.mm in Sources */,
 				727979112A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
 				7DB100BE2119276B00AE22F5 /* global_publics.cpp in Sources */,
 				828CED452AFC484D00CA08B1 /* gzclose.c in Sources */,

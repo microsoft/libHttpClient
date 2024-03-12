@@ -9,6 +9,10 @@
 #include "uri.h"
 #include "x509_cert_utilities.hpp"
 
+#if HC_PLATFORM_IS_APPLE
+#include "Apple/utils_apple.h"
+#endif
+
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 
@@ -441,6 +445,32 @@ private:
                 }
             }
         }
+#elif HC_PLATFORM_IS_APPLE
+    else
+    {
+        Uri proxyUri;
+        std::string username;
+        std::string password;
+        if (getSystemProxyForUri(m_uri, &proxyUri, &username, &password))
+        {
+            con->set_proxy(proxyUri.FullPath().data(), ec);
+            if (ec)
+            {
+                HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy failed", TO_ULL(m_hcWebsocketHandle->websocket->id));
+                return E_FAIL;
+            }
+
+            if (!username.empty() && !password.empty())
+            {
+                con->set_proxy_basic_auth(username, password, ec);
+                if (ec)
+                {
+                    HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: wspp set_proxy_basic_auth failed", TO_ULL(m_hcWebsocketHandle->websocket->id));
+                    return E_FAIL;
+                }
+            }
+        }
+    }
 #endif
         // Initialize the 'connect' XAsyncBlock here, but the actually work will happen on the ASIO background thread below
         auto hr = XAsyncBegin(async, shared_ptr_cache::store(shared_from_this()), (void*)HCWebSocketConnectAsync, __FUNCTION__,
