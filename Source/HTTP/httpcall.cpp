@@ -103,6 +103,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
+            // If Custom ReponseWriteFunction is specified and uncompress
             // Compress body before call if applicable
             if (Compression::Available() && call->compressionLevel != HCCompressionLevel::None)
             {
@@ -133,6 +134,8 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     }
     case XAsyncOp::Cleanup:
     {
+        // Here is potential location to uncompress body bytes
+
         if (call->traceCall)
         {
             HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider Cleanup [ID %llu]", TO_ULL(call->id));
