@@ -18,6 +18,7 @@ _HCHttpCallGetId
 _HCHttpCallSetTracing
 _HCHttpCallGetRequestUrl
 _HCHttpCallRequestEnableGzipCompression
+_HCHttpCallSetCompressedResponse
 _HCHttpCallRequestSetUrl
 _HCHttpCallRequestSetRequestBodyBytes
 _HCHttpCallRequestSetRequestBodyString

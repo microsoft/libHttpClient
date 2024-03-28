@@ -122,7 +122,32 @@ try
 
     return S_OK;
 }
-CATCH_RETURN()
+CATCH_RETURN() 
+
+STDAPI
+HCHttpCallSetCompressedResponse(
+    _In_ HCCallHandle call,
+    _In_ bool compressed
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call); // ?
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->compressedResponse = compressed;
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestEnableGzipCompression [ID %llu]", TO_ULL(call->id)); }
+
+    return S_OK;
+} CATCH_RETURN() // try-catch ...
+
 
 STDAPI
 HCHttpCallRequestSetRequestBodyString(
@@ -376,7 +401,7 @@ try
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
-        httpSingleton->m_retryAllowed = retryAllowed;
+        httpSingleton->m_retryAllowed = retryAllowed; // Why are we setting here if HCCallHandle null?
     }
     else
     {

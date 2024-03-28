@@ -6,6 +6,8 @@
 #include "httpcall.h"
 #include "../Mock/lhc_mock.h"
 #include "compression.h"
+// remove this
+#include <iostream>
 
 using namespace xbox::httpclient;
 
@@ -204,7 +206,10 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
     http_internal_vector<uint8_t> compressedRequestBodyBuffer;
 
-    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(), requestBodySize, call->compressionLevel, compressedRequestBodyBuffer);
+    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(),
+        requestBodySize,
+        call->compressionLevel,
+        compressedRequestBodyBuffer);
 
     // Setting back to default read request body callback to be invoked by Platform-specific code
     call->requestBodyReadFunction = HC_CALL::ReadRequestBody;
@@ -311,7 +316,7 @@ HRESULT HC_CALL::PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderDa
 }
 
 void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
-{
+{   
     HC_UNIQUE_PTR<XAsyncBlock> reclaimAsyncBlock{ async };
     PerformContext* context{ static_cast<PerformContext*>(async->context) };
     HC_CALL* call{ context->call };
@@ -387,6 +392,7 @@ HRESULT CALLBACK HC_CALL::ReadRequestBody(
     return S_OK;
 }
 
+// Where is bytesAvailable coming from?
 HRESULT CALLBACK HC_CALL::ResponseBodyWrite(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,
@@ -394,7 +400,30 @@ HRESULT CALLBACK HC_CALL::ResponseBodyWrite(
     _In_opt_ void* /*context*/
 ) noexcept
 {
-    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);
+    HRESULT hr = HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);    
+    
+    if (Compression::Available() && call->compressedResponse == true)
+    {
+        std::cout << "compressedResponse field is true...decompressing" << std::endl;
+
+        http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
+
+        std::cout << "Uncompress Call Response" << std::endl;
+
+        Compression::DecompressFromGzip(
+            call->responseBodyBytes.data(),
+            bytesAvailable,
+            uncompressedResponseBodyBuffer);
+
+        std::cout << "Finished Uncompressing Call Response" << std::endl;
+
+        call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
+        call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+    }else if(call->compressedResponse == false){
+        std::cout << "compressedResponse field is false...we'll get response as is" << std::endl;
+    }
+
+    return hr;
 }
 
 Result<bool> HC_CALL::ShouldFailFast(uint32_t& performDelay)

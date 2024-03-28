@@ -398,6 +398,12 @@ STDAPI HCHttpCallRequestEnableGzipCompression(
     _In_ HCCompressionLevel level
 ) noexcept;
 
+// TODO: ADD Set CompressedResponse method
+STDAPI HCHttpCallSetCompressedResponse(
+    _In_ HCCallHandle call,
+    _In_ bool compress
+) noexcept;
+
 /// <summary>
 /// The callback definition used by an HTTP call to read the request body. This callback will be invoked
 /// on an unspecified background thread which is platform dependent.

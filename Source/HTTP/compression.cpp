@@ -3,6 +3,8 @@
 #include "pch.h"
 
 #include "compression.h"
+// remove this
+#include <iostream>
 
 #if !HC_NOZLIB && (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK || HC_PLATFORM == HC_PLATFORM_NINTENDO_SWITCH || HC_PLATFORM_IS_APPLE)
 
@@ -64,6 +66,61 @@ void Compression::CompressToGzip(uint8_t* inData, size_t inDataSize, HCCompressi
     while (stream.avail_out == 0);
 
     deflateEnd(&stream);
+}
+
+void  Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_internal_vector<uint8_t>& outData) {
+    // The fields next_in, avail_in, zalloc, zfree and opaque must be initialized before by the caller
+    z_stream stream;
+
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+
+    // inflateInit will use zlib (inflate) decompression
+    // WINDOWBITS | GZIP_ENCODING - add 16 to decode only the gzip format 
+    inflateInit2(&stream, WINDOWBITS | GZIP_ENCODING);
+
+    // inflateInit2() does not perform any decompression apart from reading the zlib header if present
+    // actual decompression be done by inflate()
+
+    // Insert Position
+    stream.next_in = inData; // do I need to cast to const_cast<uint8_t*>
+    stream.avail_in = static_cast<uInt>(inDataSize); // Space left within next_in (array?)
+
+    int ret;
+    do {
+        outData.resize(outData.size() + CHUNK); // Expand outData size by CHUNK size
+
+        stream.avail_out = CHUNK; // We have CHUNK 
+        stream.next_out = outData.data() + outData.size() - CHUNK;
+
+        // The application can consume the uncompressed output when it wants, for example when the output
+        // buffer is full (avail_out == 0), or after each call of inflate().
+        // If inflate returns Z_OK and with zero avail_out, it must be called again after making room 
+        // in the output buffer because there might be more output pending.
+        ret = inflate(&stream, Z_NO_FLUSH);
+
+        if (ret == Z_OK || ret == Z_BUF_ERROR) {
+            // Z_BUF_ERROR -> no progress was possible or if there was not enough room in the output buffer when Z_FINISH is used
+            // Z_OK -> if some progress has been made (more input processed or more output produced)
+            // If more data is needed or there is more data to decompress
+            continue;
+        }
+        else if (ret != Z_STREAM_END) {
+            // Handle error
+            // All dynamically allocated data structures for this stream are freed
+            inflateEnd(&stream);
+            // Clear output data since it may contain incomplete or corrupted data
+            outData.clear();
+            return;
+        }
+
+        // Decompression finished successfully, resize the output buffer to the actual size
+        outData.resize(outData.size() - stream.avail_out);
+
+    } while (ret != Z_STREAM_END); // Z_STREAM_END if the end of the compressed data has been reached and all uncompressed output has been produced
+
+    inflateEnd(&stream);
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
