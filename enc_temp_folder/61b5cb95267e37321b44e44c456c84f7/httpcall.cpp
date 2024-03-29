@@ -262,7 +262,7 @@ void CALLBACK HC_CALL::PerformSingleRequest(void* c, bool canceled)
             HC_CALL::PerformSingleRequestComplete
         }
     };
-    // Here?
+
     HRESULT hr = XAsyncBegin(iterationAsyncBlock.get(), call, nullptr, nullptr, HC_CALL::PerformSingleRequestAsyncProvider);
     if (FAILED(hr))
     {
@@ -361,7 +361,6 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
             }
         }
     }
-    // Decompress Here
 
     // Complete perform if we aren't retrying or if there were any XAsync failures
     XAsyncComplete(context->asyncBlock, hr, 0);

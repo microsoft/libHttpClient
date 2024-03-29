@@ -1016,6 +1016,7 @@ HRESULT WinHttpConnection::flush_response_buffer(
 
     try
     {
+        //Here ?
         hr = writeFunction(pRequestContext->m_call, pRequestContext->m_responseBuffer.data(), pRequestContext->m_responseBuffer.size(), context);
         if (FAILED(hr))
         {
