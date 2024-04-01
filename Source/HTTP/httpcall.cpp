@@ -103,7 +103,12 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
-            // If Custom ReponseWriteFunction is specified and uncompress
+            // If Custom ReponseWriteFunction is specified and compressedResponse is specified reset to default response body write callback
+            if (((void*) call->responseBodyWriteFunction != (void *) HC_CALL::ResponseBodyWrite) && call->compressedResponse) {
+                call->responseBodyWriteFunction = HC_CALL::ResponseBodyWrite;
+                call->responseBodyWriteFunctionContext = nullptr;
+            }
+
             // Compress body before call if applicable
             if (Compression::Available() && call->compressionLevel != HCCompressionLevel::None)
             {
@@ -361,7 +366,20 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
             }
         }
     }
-    // Decompress Here
+
+    // Decompress Response Bytes 
+    if (Compression::Available() && call->compressedResponse == true)
+    {
+        http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
+
+        Compression::DecompressFromGzip(
+            call->responseBodyBytes.data(),
+            call->responseBodyBytes.size(),
+            uncompressedResponseBodyBuffer);
+
+        call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
+        call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+    }
 
     // Complete perform if we aren't retrying or if there were any XAsync failures
     XAsyncComplete(context->asyncBlock, hr, 0);
@@ -405,30 +423,7 @@ HRESULT CALLBACK HC_CALL::ResponseBodyWrite(
     _In_opt_ void* /*context*/
 ) noexcept
 {
-    HRESULT hr = HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);    
-    
-    if (Compression::Available() && call->compressedResponse == true)
-    {
-        std::cout << "compressedResponse field is true...decompressing" << std::endl;
-
-        http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
-
-        std::cout << "Uncompress Call Response" << std::endl;
-
-        Compression::DecompressFromGzip(
-            call->responseBodyBytes.data(),
-            bytesAvailable,
-            uncompressedResponseBodyBuffer);
-
-        std::cout << "Finished Uncompressing Call Response" << std::endl;
-
-        call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
-        call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
-    }else if(call->compressedResponse == false){
-        std::cout << "compressedResponse field is false...we'll get response as is" << std::endl;
-    }
-
-    return hr;
+    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);    
 }
 
 Result<bool> HC_CALL::ShouldFailFast(uint32_t& performDelay)

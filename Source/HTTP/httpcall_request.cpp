@@ -135,7 +135,7 @@ try
     {
         return E_INVALIDARG;
     }
-    RETURN_IF_PERFORM_CALLED(call); // ?
+    RETURN_IF_PERFORM_CALLED(call); 
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
@@ -143,10 +143,10 @@ try
 
     call->compressedResponse = compressed;
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestEnableGzipCompression [ID %llu]", TO_ULL(call->id)); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallSetCompressedResponse [ID %llu]", TO_ULL(call->id)); }
 
     return S_OK;
-} CATCH_RETURN() // try-catch ...
+} CATCH_RETURN() 
 
 
 STDAPI
