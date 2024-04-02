@@ -52,6 +52,7 @@ if [ "$DO_APTGET" != "false" ]; then
   sudo apt-get install autoconf
   sudo apt-get install automake
   sudo apt-get install libtool
+  sudo apt-get install zlib1g zlib1g-dev
 fi
 
 log "CONFIGURATION  = ${CONFIGURATION}"
