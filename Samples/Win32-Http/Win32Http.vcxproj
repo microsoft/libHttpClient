@@ -8,7 +8,6 @@
   <Import Project="$(HCBuildRoot)\libHttpClient.import.props" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <WarningLevel>Level2</WarningLevel>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
