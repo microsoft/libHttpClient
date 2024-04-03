@@ -4,6 +4,7 @@
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
     <ItemsProjectGuid>{d980f91b-92bf-4cc4-89fd-1cd99dba870f}</ItemsProjectGuid>
+    <WarningLevel>Level2</WarningLevel>
   </PropertyGroup>
   <Import Condition="'$(HCPathsImported)' != 'true'" Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.paths.props)" />
   <ItemGroup>
