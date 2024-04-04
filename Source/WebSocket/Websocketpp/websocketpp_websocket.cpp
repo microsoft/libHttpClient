@@ -18,7 +18,7 @@
 
 #ifdef _WIN32
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
+#pragma warning( disable : 4100 4127 4512 4996 4701 )
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #define _SCL_SECURE_NO_WARNINGS
