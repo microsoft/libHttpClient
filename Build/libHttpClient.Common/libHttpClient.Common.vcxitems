@@ -6,6 +6,10 @@
     <ItemsProjectGuid>{673e9758-fafe-4f91-8fc1-addda12c5de5}</ItemsProjectGuid>
   </PropertyGroup>
   <Import Condition="'$(HCPathsImported)' != 'true'" Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.paths.props)" />
+  <PropertyGroup>
+    <HCSettingsFile>$([MSBuild]::GetPathOfFileAbove(hc_settings.props))</HCSettingsFile>
+  </PropertyGroup>
+  <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCIncludeDir);$(HCSourceDir);$(HCSourceDir)\Common</AdditionalIncludeDirectories>
@@ -17,6 +21,11 @@
   <ItemDefinitionGroup Condition="'$(HCNoZlib)'=='true'">
     <ClCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);HC_NOZLIB</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(HCNoWebSockets)'=='true'">
+    <ClCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);HC_NOWEBSOCKETS</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
