@@ -203,6 +203,11 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     }
 
     header.clear();
+    header.push_back("Accept-Encoding");
+    header.push_back("application/gzip");
+    headers.push_back(header);
+
+    header.clear();
     header.push_back("TestHeader");
     header.push_back("1.0");
     headers.push_back(header);
@@ -215,10 +220,10 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     // returns result of HCHttpCallRequestSetRequestBodyReadFunction(call, HC_CALL::ReadRequestBody, requestBodySize, nullptr);
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed); // Set HCCallHandler's retry field
 
-    if (playFabCall)
-    {
+   /* if (playFabCall)
+    {*/
         HCHttpCallSetCompressedResponse(call, true);
-    }
+    // }
 
     if (enableGzipCompression) // Global Flag for gzip compression
     {
@@ -344,13 +349,13 @@ int main()
     StartBackgroundThread();
 
     std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
-    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false);
-    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false);
+    // DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false);
+    // DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false);
 
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-   DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
+    // DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
 
-    std::string url3 = "https://3C0E1.playfabapi.com/authentication/GetEntityToken";
+    std::string url3 = "https://E18D7.playfabapi.com/authentication/GetEntityToken";
     DoHttpCall(url3, "", true, "", false, true);
 
     HCCleanup();
