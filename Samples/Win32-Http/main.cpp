@@ -188,7 +188,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     if (playFabCall) {
         method = "POST";
         header.push_back("X-SecretKey");
-        header.push_back(""); 
+        header.push_back(""); // Remove this
         headers.push_back(header);
 
         header.clear();
