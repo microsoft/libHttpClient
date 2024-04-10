@@ -116,6 +116,8 @@ STDAPI HCMemGetFunctions(
 // Global APIs
 //
 
+struct HCInitArgs;
+
 /// <summary>
 /// Initializes the library instance.
 /// </summary>
