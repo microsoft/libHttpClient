@@ -208,25 +208,20 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     headers.push_back(header);
 
     HCCallHandle call = nullptr;
-    HCHttpCallCreate(&call); // Populate call with httpSingleton (payload)
-    HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str()); // set call' method and url fields
-    HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str()); // set request body string using HCHttpCallRequestSetRequestBodyBytes()
-    // Set Call's requestBodyBytes (convert payload to array of bytes) and requestBodySize (length of bytes array)
-    // returns result of HCHttpCallRequestSetRequestBodyReadFunction(call, HC_CALL::ReadRequestBody, requestBodySize, nullptr);
-    HCHttpCallRequestSetRetryAllowed(call, retryAllowed); // Set HCCallHandler's retry field
+    HCHttpCallCreate(&call);
+    HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
+    HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
+    HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
 
   
     HCHttpCallSetCompressedResponse(call, true);
 
-    if (enableGzipCompression) // Global Flag for gzip compression
+    if (enableGzipCompression) 
     {
-        // Set HCCallHandle's compression field
-        // Also check to see if compression is possible on platform (and that compression is not asked for) else error
         HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Medium);
     }
 
-    // iterate through headers and set them in HCCallHandle
-    // are we not just adding "test header"?
+    
     for (auto& header : headers)
     {
         std::string headerName = header[0];
@@ -236,20 +231,14 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
-    // Create context struct with func parameters 
+     
     SampleHttpCallAsyncContext* hcContext =  new SampleHttpCallAsyncContext{ call, isJson, filePath };
-    // Create XAsyncBlock
     XAsyncBlock* asyncBlock = new XAsyncBlock;
-    // Initialize asyncBlock as null (sanity)
     ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
-    // set asyncBlock to recently created hcContext
     asyncBlock->context = hcContext;
-    // TODO: Clarify
-    // global XTaskQueueHandle g_queue declared above ... this is a queue that callbacks are placed on and processed ...
     asyncBlock->queue = g_queue;
 
-    // TODO: Clarify this whole thing is a asyncBlock?
-    // HCCallHandle + AsyncBlock needed to make a call...process on block queue
+    
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         const char* str;
@@ -325,9 +314,9 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         SetEvent(g_exampleTaskDone.get());
         delete asyncBlock;
     };
-    // end of asyncBlock
 
-    HCHttpCallPerformAsync(call, asyncBlock); // This calls HC_CALL::CompressRequestBody
+
+    HCHttpCallPerformAsync(call, asyncBlock); 
 
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 }
