@@ -203,11 +203,6 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     }
 
     header.clear();
-    header.push_back("Accept-Encoding");
-    header.push_back("application/gzip");
-    headers.push_back(header);
-
-    header.clear();
     header.push_back("TestHeader");
     header.push_back("1.0");
     headers.push_back(header);
@@ -220,10 +215,8 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     // returns result of HCHttpCallRequestSetRequestBodyReadFunction(call, HC_CALL::ReadRequestBody, requestBodySize, nullptr);
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed); // Set HCCallHandler's retry field
 
-   /* if (playFabCall)
-    {*/
-        HCHttpCallSetCompressedResponse(call, true);
-    // }
+  
+    HCHttpCallSetCompressedResponse(call, true);
 
     if (enableGzipCompression) // Global Flag for gzip compression
     {
