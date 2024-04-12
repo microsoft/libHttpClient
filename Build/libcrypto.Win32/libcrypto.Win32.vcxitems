@@ -22,7 +22,7 @@
       </AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
-      <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164;4244;4267</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164</DisableSpecificWarnings>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>
@@ -44,7 +44,7 @@
         _WINSOCK_DEPRECATED_NO_WARNINGS;
         %(PreprocessorDefinitions)
       </PreprocessorDefinitions>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
