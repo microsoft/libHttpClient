@@ -6,8 +6,6 @@
 #include "httpcall.h"
 #include "../Mock/lhc_mock.h"
 #include "compression.h"
-// remove this
-#include <iostream>
 
 using namespace xbox::httpclient;
 
@@ -266,7 +264,7 @@ void CALLBACK HC_CALL::PerformSingleRequest(void* c, bool canceled)
             HC_CALL::PerformSingleRequestComplete
         }
     };
-    // Here?
+    
     HRESULT hr = XAsyncBegin(iterationAsyncBlock.get(), call, nullptr, nullptr, HC_CALL::PerformSingleRequestAsyncProvider);
     if (FAILED(hr))
     {
@@ -420,7 +418,7 @@ HRESULT CALLBACK HC_CALL::ResponseBodyWrite(
     _In_opt_ void* /*context*/
 ) noexcept
 {
-    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);    
+    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);  
 }
 
 Result<bool> HC_CALL::ShouldFailFast(uint32_t& performDelay)
