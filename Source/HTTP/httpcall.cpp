@@ -139,7 +139,6 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     }
     case XAsyncOp::Cleanup:
     {
-        // Here is potential location to uncompress body bytes
 
         if (call->traceCall)
         {
@@ -323,7 +322,6 @@ HRESULT HC_CALL::PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderDa
     }
 }
 
-// This may be it...after response had been written completely
 void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
 {   
     HC_UNIQUE_PTR<XAsyncBlock> reclaimAsyncBlock{ async };
@@ -415,7 +413,6 @@ HRESULT CALLBACK HC_CALL::ReadRequestBody(
     return S_OK;
 }
 
-// Where is bytesAvailable coming from?
 HRESULT CALLBACK HC_CALL::ResponseBodyWrite(
     _In_ HCCallHandle call,
     _In_reads_bytes_(bytesAvailable) const uint8_t* source,

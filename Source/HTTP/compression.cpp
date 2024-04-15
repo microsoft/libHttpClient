@@ -102,7 +102,7 @@ void  Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_i
 
         outData.resize(outData.size() - stream.avail_out);
 
-    } while (ret != Z_STREAM_END); // Z_STREAM_END if the end of the compressed data has been reached and all uncompressed output has been produced
+    } while (ret != Z_STREAM_END); // Z_STREAM_END if the end of the compressed data has been reached 
 
     inflateEnd(&stream);
 }

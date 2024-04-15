@@ -398,7 +398,7 @@ STDAPI HCHttpCallRequestEnableGzipCompression(
     _In_ HCCompressionLevel level
 ) noexcept;
 
-// TODO: ADD Set CompressedResponse method
+// TODO: Add summary
 STDAPI HCHttpCallSetCompressedResponse(
     _In_ HCCallHandle call,
     _In_ bool compress

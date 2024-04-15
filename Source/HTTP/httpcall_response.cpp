@@ -4,9 +4,6 @@
 #include "pch.h"
 #include <httpClient/httpProvider.h>
 #include "httpcall.h"
-// remove this
-#include <iostream>
-#include "compression.h"
 
 using namespace xbox::httpclient;
 
@@ -77,7 +74,6 @@ try
 
     if (call->responseString.empty())
     {
-        // Take bytes from HCCallHandle responseBodyBytes and copy it into responseString
         call->responseString = http_internal_string(reinterpret_cast<char const*>(call->responseBodyBytes.data()), call->responseBodyBytes.size());
         if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseGetResponseString [ID %llu]: responseString=%.2048s", TO_ULL(call->id), call->responseString.c_str()); }
     }
@@ -110,7 +106,6 @@ try
 }
 CATCH_RETURN()
 
-// HERE
 STDAPI HCHttpCallResponseGetResponseBodyBytes(
     _In_ HCCallHandle call,
     _In_ size_t bufferSize,
@@ -196,7 +191,6 @@ try
         return E_FAIL;
     }
 
-    // Response buffer flushed -> Something -> Copy reponsebytes from something to call responseBodyBytes
     call->responseBodyBytes.insert(call->responseBodyBytes.end(), bodyBytes, bodyBytes + bodySize);
     call->responseString.clear();
 

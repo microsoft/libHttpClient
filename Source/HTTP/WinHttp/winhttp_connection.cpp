@@ -975,7 +975,7 @@ void WinHttpConnection::callback_status_read_complete(
     _In_ DWORD statusInfoLength)
 {
     // Status information length contains the number of bytes read.
-    const DWORD bytesRead = statusInfoLength; // Changes bytesRead local var here
+    const DWORD bytesRead = statusInfoLength; 
 
     HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_READ_COMPLETE bytesRead=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesRead);
 
@@ -1271,7 +1271,7 @@ HRESULT WinHttpConnection::set_autodiscover_proxy()
 }
 #endif
 
-void WinHttpConnection::SendRequest() // Called from HCHttpCallPerformAsync
+void WinHttpConnection::SendRequest() 
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [%llu] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
 
