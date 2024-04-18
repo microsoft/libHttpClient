@@ -72,6 +72,8 @@ struct ITaskQueuePort: IApi
 
     virtual bool __stdcall IsEmpty() = 0;
 
+    virtual void __stdcall WaitForUnwind() = 0;
+
     virtual HRESULT __stdcall SuspendTermination(
         _In_ ITaskQueuePortContext* portContext) = 0;
 

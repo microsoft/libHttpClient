@@ -13,6 +13,8 @@
 #include "SuspendState.h"
 #endif
 
+SYSTEM_HANDLE_DEFINE_HELPERS(XTaskQueueHandle, XSystemHandleType::TaskQueue);
+
 namespace ApiDiag
 {
     void GlobalAddRef();
@@ -202,6 +204,8 @@ public:
 
     bool __stdcall IsEmpty();
 
+    void __stdcall WaitForUnwind();
+
     HRESULT __stdcall SuspendTermination(
         _In_ ITaskQueuePortContext* portContext);
 
@@ -251,6 +255,7 @@ private:
     XTaskQueueDispatchMode m_dispatchMode = XTaskQueueDispatchMode::Manual;
     AtomicVector<ITaskQueuePortContext*> m_attachedContexts;
     std::atomic<uint32_t> m_processingCallback{ 0 };
+    std::condition_variable m_processingCallbackCv;
     std::mutex m_lock;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_queueList;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
@@ -482,11 +487,24 @@ inline ITaskQueue* GetQueue(XTaskQueueHandle handle)
 {
     if (handle->m_signature != TASK_QUEUE_SIGNATURE)
     {
+        SystemHandleAssert(handle);
         ASSERT("Invalid XTaskQueueHandle");
         return nullptr;
     }
 
     ITaskQueue* queue = handle->m_queue;
+
+    // Only SystemHandleAssert if the handle provided here is
+    // not the internal queue handle, which is never tracked
+    // by handle tracking. The internal queue handle is given out
+    // for the default process queue, when calling back into
+    // task queue monitors, and when async operations are created.
+
+    if (handle != queue->GetHandle())
+    {
+        SystemHandleAssert(handle);
+    }
+
     ASSERT(queue->GetHandle()->m_signature == TASK_QUEUE_SIGNATURE);
     return queue;
 }

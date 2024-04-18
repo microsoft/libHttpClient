@@ -674,7 +674,7 @@ private:
             // Connect all the nodes in the new block. Element zero is
             // the "tail" of this block.
             
-            Address prev{};
+            Address prev = { 0 };
             for (uint32_t index = 0; index < m_blockSize; index++)
             {
                 block->nodes[index].next = prev;
@@ -696,8 +696,8 @@ private:
                 // Initial contruction.  We need to store the block list
                 // and then initialize the free list.
 
-                Address end{};
-                Address a{};
+                Address end = { 0 };
+                Address a = { 0 };
                 a.block = static_cast<uint16_t>(block->id);
 
                 block->nodes[0].next = end;
@@ -732,8 +732,8 @@ private:
 
             // Now add the tail and the head to the free list.
 
-            Address rangeBegin{};
-            Address rangeEnd{};
+            Address rangeBegin { 0 };
+            Address rangeEnd { 0 };
 
             rangeBegin.block = rangeEnd.block = static_cast<uint16_t>(block->id);
             rangeBegin.index = m_blockSize - 1;

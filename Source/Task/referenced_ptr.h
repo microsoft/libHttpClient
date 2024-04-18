@@ -96,13 +96,13 @@ private:
 };
 
 template <typename TInterface>
-bool operator==(referenced_ptr<TInterface>& p, std::nullptr_t)
+bool operator==(referenced_ptr<TInterface>& p, nullptr_t)
 {
     return p.get() == nullptr;
 }
 
 template <typename TInterface>
-bool operator!=(referenced_ptr<TInterface>& p, std::nullptr_t)
+bool operator!=(referenced_ptr<TInterface>& p, nullptr_t)
 {
     return p.get() != nullptr;
 }

@@ -130,6 +130,15 @@ HC_DECLARE_TRACE_AREA(WEBSOCKET);
 #define ASYNC_LIB_TRACE(result, message)            \
     HC_TRACE_ERROR_HR(HTTPCLIENT, result, message); \
 
+// Handle tracking for TaskQueue
+#define SYSTEM_HANDLE_DEFINE_HELPERS(a, b)
+#define SystemHandleAssert(h)
+#define SystemHandleMarkCreated(h)
+#define SystemHandleMarkDestroyed(h)
+
+// We always use unique handles
+#define USE_UNIQUE_HANDLES() (true)
+
 #define CATCH_RETURN() CATCH_RETURN_IMPL(__FILE__, __LINE__)
 
 #define CATCH_RETURN_IMPL(file, line) \
