@@ -225,7 +225,7 @@ private:
         if (opCode == XAsyncOp::Begin)
         {
             // Must run the ctor for the newly allocated memory, and the initial
-            // has already been copied in here so we must rescue it.
+            // value has already been copied in here so we must rescue it.
             FactorialCallData* d = (FactorialCallData*)data->context;
             DWORD value = d->value;
             d = new (data->context) FactorialCallData;
