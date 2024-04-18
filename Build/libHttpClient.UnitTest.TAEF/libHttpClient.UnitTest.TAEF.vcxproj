@@ -21,7 +21,7 @@
       <CompileAsWinRT>true</CompileAsWinRT>
       <AdditionalUsingDirectories>$(WindowsSDK_UnionMetadataPath);$(VCToolsInstallDir)lib\x86\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/GS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(HCSourceDir)\Task;c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;$(HCSourceDir)\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RemoveUnreferencedCodeData Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</RemoveUnreferencedCodeData>
     </ClCompile>
     <Link>
