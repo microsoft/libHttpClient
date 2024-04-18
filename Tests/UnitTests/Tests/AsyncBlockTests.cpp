@@ -224,7 +224,12 @@ private:
     {
         if (opCode == XAsyncOp::Begin)
         {
+            // Must run the ctor for the newly allocated memory, and the initial
+            // has already been copied in here so we must rescue it.
             FactorialCallData* d = (FactorialCallData*)data->context;
+            DWORD value = d->value;
+            d = new (data->context) FactorialCallData;
+            d->value = value;
 
             // leak a ref on this guy so we don't try to free it. We need
             // to do two addrefs because a new object starts with refcount
