@@ -55,9 +55,9 @@ struct AsyncState
     const void* identity = nullptr;
     const char* identityName = nullptr;
 
-    void* operator new(size_t size, size_t additional)
+    void* operator new(size_t size, size_t additional, const std::nothrow_t& tag)
     {
-        return ::operator new(size + additional);
+        return ::operator new(size + additional, tag);
     }
 
     void operator delete(void* ptr)
@@ -388,7 +388,7 @@ static void RevertProviderCleanup(_Inout_ AsyncStateRef& state, _In_ ProviderCle
 static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ AsyncBlockInternal* internal, _In_ size_t contextSize)
 {
     AsyncStateRef state;
-    state.Attach(new (contextSize) AsyncState);
+    state.Attach(new (contextSize, std::nothrow) AsyncState);
     RETURN_IF_NULL_ALLOC(state);
 
     if (contextSize != 0)
@@ -398,14 +398,23 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
         state->providerData.context = (state.Get() + 1);
     }
     
+    // Addref the task queue. We duplicate with "Reference" to prevent spamming
+    // the handle tracker with each async call (and to prevent a needless allocation of
+    // the task queue handle wrapper).
+
     XTaskQueueHandle queue = asyncBlock->queue;
     if (queue == nullptr)
     {
-        RETURN_HR_IF(E_NO_TASK_QUEUE, XTaskQueueGetCurrentProcessTaskQueue(&state->queue) == false);
+        RETURN_HR_IF(E_NO_TASK_QUEUE, XTaskQueueGetCurrentProcessTaskQueueWithOptions(
+            XTaskQueueDuplicateOptions::Reference,
+            &state->queue) == false);
     }
     else
     {
-        RETURN_IF_FAILED(XTaskQueueDuplicateHandle(queue, &state->queue));
+        RETURN_IF_FAILED(XTaskQueueDuplicateHandleWithOptions(
+            queue,
+            XTaskQueueDuplicateOptions::Reference,
+            &state->queue));
     }
 
     state->userAsyncBlock = asyncBlock;

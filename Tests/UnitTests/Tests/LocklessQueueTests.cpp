@@ -2,7 +2,7 @@
 
 #include "pch.h"
 #include "UnitTestIncludes.h"
-#include "Task/LocklessQueue.h"
+#include "LocklessQueue.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 
