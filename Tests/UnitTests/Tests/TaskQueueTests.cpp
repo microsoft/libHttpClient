@@ -5,7 +5,7 @@
 #include "XTaskQueue.h"
 #include "CallbackThunk.h"
 #include "PumpedTaskQueue.h"
-#include "Task/XTaskQueuePriv.h"
+#include "XTaskQueuePriv.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -215,12 +215,15 @@ public:
         for(int idx = 0; idx < count; idx++)
         {
             VERIFY_SUCCEEDED(XTaskQueueDuplicateHandle(queue, &dups[idx]));
+            VERIFY_IS_TRUE(queue != dups[idx]);
         }
 
         for(int idx = 0; idx < count; idx++)
         {
             XTaskQueueCloseHandle(dups[idx]);
         }
+
+        VERIFY_ARE_EQUAL(E_INVALIDARG, XTaskQueueDuplicateHandle(dups[0], &dups[1]));
         XTaskQueueCloseHandle(queue);
     }
 

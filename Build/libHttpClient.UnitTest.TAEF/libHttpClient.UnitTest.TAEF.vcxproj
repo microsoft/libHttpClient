@@ -19,9 +19,9 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>USING_TAEF;DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;HC_NOZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAsWinRT>true</CompileAsWinRT>
-      <AdditionalUsingDirectories>$(WindowsSdkDir_10)UnionMetadata;$(VCToolsInstallDir)lib\x86\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>$(WindowsSDK_UnionMetadataPath);$(VCToolsInstallDir)lib\x86\store\references;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/GS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>c:\Program Files (x86)\Windows Kits\10\Testing\Development\inc;$(HCSourceDir)\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RemoveUnreferencedCodeData Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</RemoveUnreferencedCodeData>
     </ClCompile>
     <Link>

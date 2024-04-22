@@ -64,3 +64,44 @@ STDAPI_(void) XTaskQueueGlobalSuspend();
 /// 2. The dispatcher will start returing items again.
 /// </summary>
 STDAPI_(void) XTaskQueueGlobalResume();
+
+/// <summary>
+/// Options when duplicating a task queue handle.
+/// </summary>
+enum class XTaskQueueDuplicateOptions
+{
+    /// <summary>
+    /// Default behavior.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// The duplicated queue is a reference to the actual
+    /// queue object, not a duplicated queue handle. References
+    /// work just like fully duplicated handles but they are not
+    /// tracked by the handle tracking infrastructure and do not
+    /// cause an allocation for the handle.
+    /// </summary>
+    Reference
+};
+
+/// <summary>
+/// Increments the refcount on the queue and allows supplying
+/// options as to how the duplicate is performed.
+/// </summary>
+STDAPI XTaskQueueDuplicateHandleWithOptions(
+    _In_ XTaskQueueHandle queueHandle,
+    _In_ XTaskQueueDuplicateOptions options,
+    _Out_ XTaskQueueHandle *duplicatedHandle
+    ) noexcept;
+
+/// <summary>
+/// Returns a handle to the process task queue, or nullptr if there is no
+/// process task queue.  By default, there is a default process task queue
+/// that uses the thread pool for both work and completion ports. This is an
+/// internal variant that takes duplicate options.
+/// </summary>
+STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
+    _In_ XTaskQueueDuplicateOptions options,
+    _Out_ XTaskQueueHandle *queue
+    ) noexcept;
