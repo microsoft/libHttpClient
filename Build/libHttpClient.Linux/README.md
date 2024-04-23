@@ -26,7 +26,7 @@ Running the build script with the `-c|--config` argument will generate  Debug or
 ./libHttpClient_Linux.bash <-st|--static>
 ```
 
-Running the build script with the `-st|--static` will generate `libHttpClient.Linux.a` instead of `libHttpClient.Linux.so`. Use this flag if you wish to make a static lib of libHttpClient.
+Running the build script with the `-st|--static` argument will generate a static lib of libHttpClient.
 
 ```
 ./libHttpClient_Linux.bash <-nc|--nocurl>
