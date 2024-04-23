@@ -18,7 +18,13 @@ steps:
       arguments: '-c ${{ parameters.configuration }}'
 
   - task: Bash@3
-    displayName: 'Build libHttpClient'
+    displayName: 'Build libHttpClient Static'
+    inputs:
+      filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
+      arguments: '-c ${{ parameters.configuration }} -nc -ns -st'
+
+  - task: Bash@3
+    displayName: 'Build libHttpClient Shared'
     inputs:
       filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
       arguments: '-c ${{ parameters.configuration }} -nc -ns'
