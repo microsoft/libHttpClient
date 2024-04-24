@@ -124,6 +124,11 @@ void Compression::CompressToGzip(uint8_t*, size_t, HCCompressionLevel, http_inte
     assert(false);
 }
 
+void Compression::DecompressFromGzip(uint8_t*, size_t, http_internal_vector<uint8_t>&)
+{
+    assert(false);
+}
+
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
 #endif // !HC_NOZLIB
