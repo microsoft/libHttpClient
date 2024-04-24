@@ -16,7 +16,7 @@ EXPORTS
     HCHttpCallGetRequestUrl
     HCHttpCallPerformAsync
     HCHttpCallRequestEnableGzipCompression
-    HCHttpCallSetCompressedResponse
+    HCHttpCallSetCompressResponse
     HCHttpCallRequestGetHeader
     HCHttpCallRequestGetHeaderAtIndex
     HCHttpCallRequestGetNumHeaders

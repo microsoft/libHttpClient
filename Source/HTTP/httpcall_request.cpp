@@ -125,7 +125,7 @@ try
 CATCH_RETURN() 
 
 STDAPI
-HCHttpCallSetCompressedResponse(
+HCHttpCallSetCompressResponse(
     _In_ HCCallHandle call,
     _In_ bool compressed
 ) noexcept
@@ -143,7 +143,7 @@ try
 
     call->compressedResponse = compressed;
 
-    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallSetCompressedResponse [ID %llu]", TO_ULL(call->id)); }
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallSetCompressResponse [ID %llu]", TO_ULL(call->id)); }
 
     return S_OK;
 } CATCH_RETURN() 

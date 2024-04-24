@@ -219,7 +219,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
 
     if (playFabCall) {
-        HCHttpCallSetCompressedResponse(call, true);
+        HCHttpCallSetCompressResponse(call, true);
     }
     
     if (enableGzipCompression) 
@@ -342,7 +342,7 @@ int main()
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
     DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
 
-    std::string url3 = "https://3C0E1.playfabapi.com/authentication/GetEntityToken";
+    std::string url3 = "https://80996.playfabapi.com/authentication/GetEntityToken";
     DoHttpCall(url3, "", true, "", false, true);
 
     HCCleanup();
