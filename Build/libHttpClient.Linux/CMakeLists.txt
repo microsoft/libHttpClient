@@ -100,23 +100,35 @@ set(LINUX_SOURCE_FILES
 set(LINUX_INCLUDE_DIRS
     "${PATH_TO_ROOT}/External/opensslGeneratedHeaders/linux"
     )
+if (BUILD_SHARED_LIBS)
+    #########################
+    ### Set up shared lib ###
+    #########################
 
-#########################
-### Set up shared lib ###
-#########################
+    add_library(
+        "${PROJECT_NAME}"
+        SHARED
+        "${COMMON_SOURCE_FILES}"
+        "${LINUX_SOURCE_FILES}"
+    )
 
-add_library(
-    "${PROJECT_NAME}"
-    SHARED
-    "${COMMON_SOURCE_FILES}"
-    "${LINUX_SOURCE_FILES}"
-)
+    target_link_libraries("${PROJECT_NAME}" 
+        PRIVATE ${LIBCURL_BINARY_PATH}
+        PRIVATE ${LIBSSL_BINARY_PATH}
+        PRIVATE ${LIBCRYPTO_BINARY_PATH} 
+    )
+else()
+    #########################
+    ### Set up static lib ###
+    #########################
 
-target_link_libraries("${PROJECT_NAME}" 
-    PRIVATE ${LIBCURL_BINARY_PATH}
-    PRIVATE ${LIBSSL_BINARY_PATH}
-    PRIVATE ${LIBCRYPTO_BINARY_PATH} 
-)
+    add_library(
+        "${PROJECT_NAME}"
+        STATIC
+        "${COMMON_SOURCE_FILES}"
+        "${LINUX_SOURCE_FILES}"
+    )
+endif()
 
 target_include_directories(
     "${PROJECT_NAME}"

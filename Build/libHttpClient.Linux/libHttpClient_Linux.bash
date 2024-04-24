@@ -11,6 +11,7 @@ POSITIONAL_ARGS=()
 CONFIGURATION="Release"
 BUILD_CURL=true
 BUILD_SSL=true
+BUILD_STATIC=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -29,6 +30,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -sg|--skipaptget)
       DO_APTGET=false
+      shift
+      ;;
+    -st|--static)
+      BUILD_STATIC=true
       shift
       ;;
     -*|--*)
@@ -74,6 +79,12 @@ if [ "$BUILD_CURL" = true ]; then
     bash "$SCRIPT_DIR"/curl_Linux.bash -c "$CONFIGURATION"
 fi
 
-# make libHttpClient
-sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION
-sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+if [ "$BUILD_STATIC" = false ]; then
+    # make libHttpClient static
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D BUILD_SHARED_LIBS=YES
+    sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+else
+    # make libHttpClient shared
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION
+    sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+fi
