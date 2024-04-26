@@ -16,7 +16,6 @@ EXPORTS
     HCHttpCallGetRequestUrl
     HCHttpCallPerformAsync
     HCHttpCallRequestEnableGzipCompression
-    HCHttpCallSetCompressResponse
     HCHttpCallRequestGetHeader
     HCHttpCallRequestGetHeaderAtIndex
     HCHttpCallRequestGetNumHeaders
@@ -132,3 +131,4 @@ EXPORTS
     XTaskQueueTerminate
     XTaskQueueUnregisterMonitor
     XTaskQueueUnregisterWaiter
+    HCHttpCallSetCompressResponse
