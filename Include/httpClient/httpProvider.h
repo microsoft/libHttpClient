@@ -300,7 +300,7 @@ STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
     ) noexcept;
 
 /// <summary>
-/// Get the place holder function within the the HTTP call
+/// Get the place holder write function within the HTTP call.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="writeFunction">The write function of this HTTP call.</param>
