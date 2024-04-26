@@ -185,7 +185,8 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     std::vector<std::vector<std::string>> headers;
     std::vector< std::string > header;
 
-    if (enableGzipResponseCompression) {
+    if (enableGzipResponseCompression) 
+    {
         method = "POST";
         header.push_back("X-SecretKey");
         header.push_back(""); 
@@ -213,7 +214,8 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
 
-    if (enableGzipResponseCompression) {
+    if (enableGzipResponseCompression)
+    {
         HCHttpCallSetCompressResponse(call, true);
     }
     
