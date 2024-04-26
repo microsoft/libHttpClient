@@ -66,6 +66,8 @@ public:
     xbox::httpclient::HttpHeaders responseHeaders{};
     HCHttpCallResponseBodyWriteFunction responseBodyWriteFunction{ HC_CALL::ResponseBodyWrite };
     void* responseBodyWriteFunctionContext{ nullptr };
+    HCHttpCallResponseBodyWriteFunction temporaryResponseBodyWriteFunction{ HC_CALL::ResponseBodyWrite };
+    void* temporaryResponseBodyWriteFunctionContext{ nullptr };
     bool compressedResponse{ false };
 
     // Request metadata

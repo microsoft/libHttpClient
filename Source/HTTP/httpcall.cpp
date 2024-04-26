@@ -102,9 +102,13 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         else
         {
             // If Custom ReponseWriteFunction is specified and compressedResponse is specified reset to default response body write callback
-            if (((void*) call->responseBodyWriteFunction != (void *) HC_CALL::ResponseBodyWrite) && call->compressedResponse) {
-                call->responseBodyWriteFunction = HC_CALL::ResponseBodyWrite;
-                call->responseBodyWriteFunctionContext = nullptr;
+            HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
+            void* writeContext = nullptr;
+            HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &writeContext);
+            if (writeFunction != HC_CALL::ResponseBodyWrite && call->compressedResponse)
+            {
+                // Store custom response write callback
+                HCHttpCallResponseSetTemporaryResponseBodyWriteFunction(call, writeFunction, writeContext);
             }
 
             // Compress body before call if applicable
@@ -375,6 +379,17 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
 
         call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
         call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+    }
+
+    // Check if we 'reset' the custom response write callback before decompressing the response
+    HCHttpCallResponseBodyWriteFunction temporaryWriteFunction = nullptr;
+    void* temporaryWriteContext = nullptr;
+    HCHttpCallResponseGetTemporaryResponseBodyWriteFunction(call, &temporaryWriteFunction, &temporaryWriteContext);
+
+    // call->temporaryResponseBodyWriteFunction should remain HC_CALL::ResponseBodyWrite if we did not 'reset' custom response write callback
+    if (temporaryWriteFunction != HC_CALL::ResponseBodyWrite)
+    {
+        HCHttpCallResponseSetResponseBodyWriteFunction(call, temporaryWriteFunction, temporaryWriteContext);
     }
 
     // Complete perform if we aren't retrying or if there were any XAsync failures

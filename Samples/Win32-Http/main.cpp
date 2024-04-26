@@ -178,21 +178,16 @@ struct SampleHttpCallAsyncContext
     std::string filePath;
 };
 
-void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool playFabCall)
+void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression)
 {
     std::string method = "GET";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
     std::vector< std::string > header;
 
-    if (playFabCall) {
+    if (enableGzipResponseCompression) {
         method = "POST";
         header.push_back("X-SecretKey");
-        header.push_back(""); 
-        headers.push_back(header);
-
-        header.clear();
-        header.push_back("X-EntityToken");
         header.push_back(""); 
         headers.push_back(header);
 
@@ -218,7 +213,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
 
-    if (playFabCall) {
+    if (enableGzipResponseCompression) {
         HCHttpCallSetCompressResponse(call, true);
     }
     

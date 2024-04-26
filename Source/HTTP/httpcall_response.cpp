@@ -53,6 +53,54 @@ try
 CATCH_RETURN()
 
 STDAPI
+HCHttpCallResponseGetTemporaryResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction,
+    _Out_ void** context
+) noexcept
+try
+{
+    if (call == nullptr || writeFunction == nullptr || context == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *writeFunction = call->temporaryResponseBodyWriteFunction;
+    *context = call->temporaryResponseBodyWriteFunctionContext;
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallResponseSetTemporaryResponseBodyWriteFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallResponseBodyWriteFunction writeFunction,
+    _In_opt_ void* context
+) noexcept
+try
+{
+    if (call == nullptr || writeFunction == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->temporaryResponseBodyWriteFunction = writeFunction;
+    call->temporaryResponseBodyWriteFunctionContext = context;
+
+    call->responseBodyWriteFunction = HC_CALL::ResponseBodyWrite;
+    call->responseBodyWriteFunctionContext = nullptr;
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
 HCHttpCallResponseGetResponseString(
     _In_ HCCallHandle call,
     _Out_ const char** responseString
