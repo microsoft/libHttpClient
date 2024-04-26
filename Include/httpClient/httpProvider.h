@@ -299,7 +299,6 @@ STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
     _Out_ void** context
     ) noexcept;
 
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Set APIs
 //

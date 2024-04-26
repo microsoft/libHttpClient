@@ -224,7 +224,6 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Medium);
     }
 
-    
     for (auto& header : headers)
     {
         std::string headerName = header[0];
@@ -234,14 +233,11 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
-     
     SampleHttpCallAsyncContext* hcContext =  new SampleHttpCallAsyncContext{ call, isJson, filePath };
     XAsyncBlock* asyncBlock = new XAsyncBlock;
     ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
     asyncBlock->context = hcContext;
     asyncBlock->queue = g_queue;
-
-    
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         const char* str;
