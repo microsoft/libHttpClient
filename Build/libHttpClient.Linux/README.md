@@ -23,6 +23,12 @@ Running the build script with no arguments will generate a Release binary of `li
 Running the build script with the `-c|--config` argument will generate  Debug or Release binaries of `libssl.a`, `libcrypto.a`, `libcurl.a` and `libHttpClient.Linux.so`.
 
 ```
+./libHttpClient_Linux.bash <-st|--static>
+```
+
+Running the build script with the `-st|--static` argument will generate a static lib of libHttpClient.
+
+```
 ./libHttpClient_Linux.bash <-nc|--nocurl>
 ```
 

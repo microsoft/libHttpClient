@@ -4,6 +4,7 @@
 #include "referenced_ptr.h"
 #include "TaskQueueP.h"
 #include "TaskQueueImpl.h"
+#include "XTaskQueuePriv.h"
 
 //
 // Note:  ApiDiag is only used for reference count validation during
@@ -362,6 +363,13 @@ HRESULT __stdcall TaskQueuePortImpl::QueueItem(
 
     // QueueEntry now owns the ref.
     portContextHolder.release();
+
+    // If we raced with termination, cancel the item we just added
+    if (portContext->GetStatus() != TaskQueuePortStatus::Active)
+    {
+        CancelPendingEntries(portContext, true);
+    }
+
     return S_OK;
 }
 
@@ -612,6 +620,7 @@ bool TaskQueuePortImpl::DrainOneItem(
 
         entry.callback(entry.callbackContext, IsCallCanceled(entry));
         m_processingCallback--;
+        m_processingCallbackCv.notify_all();
 
 #ifdef _WIN32
         // If this entry has a wait registration, it needs
@@ -634,6 +643,7 @@ bool TaskQueuePortImpl::DrainOneItem(
     else
     {
         m_processingCallback--;
+        m_processingCallbackCv.notify_all();
     }
 
     if (m_queueList->empty())
@@ -745,6 +755,26 @@ bool __stdcall TaskQueuePortImpl::IsEmpty()
         (m_processingCallback == 0);
 
     return empty;
+}
+
+void __stdcall TaskQueuePortImpl::WaitForUnwind()
+{
+    std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+
+    while(m_processingCallback.load() != 0)
+    {
+        // wait for 10 ms.  We do not modify m_processingCallback under
+        // the protection of a mutex because we don't want the hit of
+        // taking a lock.  Therefore, we can't wait forever for the
+        // cv here.  We could miss it due to a race. This API is only
+        // called during task queue termination and therefore some polling
+        // is OK.
+
+        std::chrono::milliseconds ms{10};
+        auto when = std::chrono::steady_clock::time_point(ms);
+        m_processingCallbackCv.wait_until(lock, when);
+    }
 }
 
 HRESULT __stdcall TaskQueuePortImpl::SuspendTermination(
@@ -979,7 +1009,19 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
         }
         else if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
         {
+            // remove_if works by removing items from the list and
+            // re-adding them if this callback returns false. If we
+            // are going to keep an item beyond this callback we need
+            // to make sure fields we're using stay valid. Only the
+            // port context is a risk.
+
+            if (hasNextItem)
+            {
+                nextItem.portContext->Release();
+            }
+
             nextItem = entry;
+            nextItem.portContext->AddRef();
             hasNextItem = true;
         }
 
@@ -988,21 +1030,34 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
 
     if (hasNextItem)
     {
-        while (true)
+        if (nextItem.portContext->GetStatus() == TaskQueuePortStatus::Active)
         {
-            if (m_timerDue.compare_exchange_weak(dueTime, nextItem.enqueueTime))
+            while (true)
             {
-                m_timer.Start(nextItem.enqueueTime);
-                break;
-            }
+                if (m_timerDue.compare_exchange_weak(dueTime, nextItem.enqueueTime))
+                {
+                    m_timer.Start(nextItem.enqueueTime);
+                    break;
+                }
 
-            dueTime = m_timerDue.load();
+                dueTime = m_timerDue.load();
 
-            if (dueTime <= nextItem.enqueueTime)
-            {
-                break;
+                if (dueTime <= nextItem.enqueueTime)
+                {
+                    break;
+                }
             }
         }
+        else
+        {
+            // The port is no longer active. Pending entries are canceled
+            // when the port is terminated, but if we were iterating above
+            // it's possible that we removed an item while the termination was
+            // being processed and it got missed.
+            CancelPendingEntries(nextItem.portContext, true);
+        }
+
+        nextItem.portContext->Release();
     }
     else
     {
@@ -1046,7 +1101,9 @@ void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionStatu
     {
         DrainOneItem(status);
     }
+
     m_processingCallback--;
+    m_processingCallbackCv.notify_all();
 
     // Important that this comes before Release; otherwise
     // cleanup may deadlock.
@@ -1568,9 +1625,16 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
     entry.release();
 
     // Addref ourself to ensure we don't lose the queue to a close
-    // while termination is in flight.  This is released on OnTerminationCallback
+    // while termination is in flight.  This is released on OnTerminationCallback.
+    // If we are waiting we will take another reference and release it
+    // after the wait completes.
 
     AddRef();
+
+    if (wait)
+    {
+        AddRef();
+    }
 
     m_work.Port->Terminate(workToken);
     
@@ -1581,6 +1645,17 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
         {
             m_termination.cv.wait(lock);
         }
+
+        // Termination notify happens through a callback and when the
+        // terminated flag gets set that callback and other frames
+        // are still on the stack. Wait for them to unwind here so
+        // if the caller wants to exit the process there isn't code
+        // on the stack in another thread.
+
+        m_work.Port->WaitForUnwind();
+        m_completion.Port->WaitForUnwind();
+
+        Release();
     }
 
     return S_OK;
@@ -1673,6 +1748,7 @@ static HRESULT CreateTaskQueueHandle(
 
     *queue = q.release();
 
+    SystemHandleMarkCreated(*queue);
     return S_OK;
 }
 
@@ -1821,16 +1897,16 @@ STDAPI_(void) XTaskQueueCloseHandle(
 {
     ITaskQueue* aq = GetQueue(queue);
 
-    // The default handle is only returned for queues
-    // that cannot be closed.
-
-    ASSERT(aq != nullptr && aq->CanClose() != (queue == aq->GetHandle()));
-
     if (aq != nullptr && aq->CanClose())
     {
-        queue->m_signature = 0;
-        queue->m_queue = nullptr;
-        delete queue;
+        if (USE_UNIQUE_HANDLES() && queue != aq->GetHandle())
+        {
+            SystemHandleMarkDestroyed(queue);
+
+            queue->m_signature = 0;
+            queue->m_queue = nullptr;
+            delete queue;
+        }
 
         aq->Release();
     }
@@ -1923,10 +1999,12 @@ STDAPI_(void) XTaskQueueUnregisterWaiter(
 }
 
 //
-// Increments the refcount on the queue
+// Increments the refcount on the queue and allows supplying
+// options as to how the duplicate is performed.
 //
-STDAPI XTaskQueueDuplicateHandle(
+STDAPI XTaskQueueDuplicateHandleWithOptions(
     _In_ XTaskQueueHandle queueHandle,
+    _In_ XTaskQueueDuplicateOptions options,
     _Out_ XTaskQueueHandle* duplicatedHandle
     ) noexcept
 {
@@ -1942,7 +2020,15 @@ STDAPI XTaskQueueDuplicateHandle(
 
     if (queue->CanClose())
     {
-        RETURN_IF_FAILED(CreateTaskQueueHandle(queue, duplicatedHandle));
+        if (USE_UNIQUE_HANDLES() && (options != XTaskQueueDuplicateOptions::Reference))
+        {
+            RETURN_IF_FAILED(CreateTaskQueueHandle(queue, duplicatedHandle));
+        }
+        else
+        {
+            queue->AddRef();
+            *duplicatedHandle = queue->GetHandle();
+        }
     }
     else
     {
@@ -1950,6 +2036,20 @@ STDAPI XTaskQueueDuplicateHandle(
     }
 
     return S_OK;
+}
+
+//
+// Increments the refcount on the queue
+//
+STDAPI XTaskQueueDuplicateHandle(
+    _In_ XTaskQueueHandle queueHandle,
+    _Out_ XTaskQueueHandle* duplicatedHandle
+    ) noexcept
+{
+    return XTaskQueueDuplicateHandleWithOptions(
+        queueHandle,
+        XTaskQueueDuplicateOptions::None,
+        duplicatedHandle);
 }
 
 //
@@ -1988,9 +2088,11 @@ STDAPI_(void) XTaskQueueUnregisterMonitor(
 //
 // Returns a handle to the process task queue, or nullptr if there is no
 // process task queue.  By default, there is a default process task queue
-// that uses the thread pool for both work and completion ports.
+// that uses the thread pool for both work and completion ports. This is an
+// internal variant that takes duplicate options.
 //
-STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
+STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
+    _In_ XTaskQueueDuplicateOptions options,
     _Out_ XTaskQueueHandle* queue
     ) noexcept
 {
@@ -2033,17 +2135,24 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
         processQueue = nullptr;
     }
 
-    if (processQueue != nullptr &&
-        processQueue->m_queue->CanClose())
+    if (processQueue != nullptr)
     {
-        (void)CreateTaskQueueHandle(processQueue->m_queue, queue);
-    }
-    else
-    {
-        *queue = processQueue;
+        (void)XTaskQueueDuplicateHandleWithOptions(processQueue, options, queue);
     }
 
     return (*queue) != nullptr;
+}
+
+//
+// Returns a handle to the process task queue, or nullptr if there is no
+// process task queue.  By default, there is a default process task queue
+// that uses the thread pool for both work and completion ports.
+//
+STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
+    _Out_ XTaskQueueHandle* queue
+    ) noexcept
+{
+    return XTaskQueueGetCurrentProcessTaskQueueWithOptions(XTaskQueueDuplicateOptions::None, queue);
 }
 
 //

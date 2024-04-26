@@ -6,6 +6,7 @@ project("libHttpClient.Linux")
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_STATIC_LIBRARY_PREFIX "")
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,-z,now,--version-script=${PATH_TO_ROOT}/Build/libHttpClient.CMake/libHttpClientExports.txt")
@@ -100,23 +101,35 @@ set(LINUX_SOURCE_FILES
 set(LINUX_INCLUDE_DIRS
     "${PATH_TO_ROOT}/External/opensslGeneratedHeaders/linux"
     )
+if (BUILD_SHARED_LIBS)
+    #########################
+    ### Set up shared lib ###
+    #########################
 
-#########################
-### Set up shared lib ###
-#########################
+    add_library(
+        "${PROJECT_NAME}"
+        SHARED
+        "${COMMON_SOURCE_FILES}"
+        "${LINUX_SOURCE_FILES}"
+    )
 
-add_library(
-    "${PROJECT_NAME}"
-    SHARED
-    "${COMMON_SOURCE_FILES}"
-    "${LINUX_SOURCE_FILES}"
-)
+    target_link_libraries("${PROJECT_NAME}" 
+        PRIVATE ${LIBCURL_BINARY_PATH}
+        PRIVATE ${LIBSSL_BINARY_PATH}
+        PRIVATE ${LIBCRYPTO_BINARY_PATH} 
+    )
+else()
+    #########################
+    ### Set up static lib ###
+    #########################
 
-target_link_libraries("${PROJECT_NAME}" 
-    PRIVATE ${LIBCURL_BINARY_PATH}
-    PRIVATE ${LIBSSL_BINARY_PATH}
-    PRIVATE ${LIBCRYPTO_BINARY_PATH} 
-)
+    add_library(
+        "${PROJECT_NAME}"
+        STATIC
+        "${COMMON_SOURCE_FILES}"
+        "${LINUX_SOURCE_FILES}"
+    )
+endif()
 
 target_include_directories(
     "${PROJECT_NAME}"
