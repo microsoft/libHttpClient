@@ -653,21 +653,6 @@ STDAPI HCHttpCallResponseSetResponseBodyWriteFunction(
     _In_opt_ void* context
     ) noexcept;
 
-/// <summary>
-/// Used to temporarily store a custom callback function that will be used to write the response body after the HTTP call
-/// has been completed. This should be called in the case where gzip compression has enabled for responses AND
-/// a custom response write callback function has been specified. 
-/// </summary>
-/// <param name="call">The handle of the HTTP call.</param>
-/// <param name="writeFunction">The custom response body write function this call should use.</param>
-/// <param name="context">The context to associate with this write function.</param>
-/// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
-/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
-STDAPI HCHttpCallResponseSetTemporaryResponseBodyWriteFunction(
-    _In_ HCCallHandle call,
-    _In_ HCHttpCallResponseBodyWriteFunction writeFunction,
-    _In_opt_ void* context
-) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Get APIs

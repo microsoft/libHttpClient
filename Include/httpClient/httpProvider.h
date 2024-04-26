@@ -299,18 +299,6 @@ STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
     _Out_ void** context
     ) noexcept;
 
-/// <summary>
-/// Get the place holder write function within the HTTP call.
-/// </summary>
-/// <param name="call">The handle of the HTTP call.</param>
-/// <param name="writeFunction">The write function of this HTTP call.</param>
-/// <param name="context">The context associated with this write function.</param>
-/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCHttpCallResponseGetTemporaryResponseBodyWriteFunction(
-    _In_ HCCallHandle call,
-    _Out_ HCHttpCallResponseBodyWriteFunction* writeFunction,
-    _Out_ void** context
-) noexcept;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Set APIs

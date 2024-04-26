@@ -106,10 +106,12 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
             void* writeContext = nullptr;
             HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &writeContext);
             if (writeFunction != HC_CALL::ResponseBodyWrite && call->compressedResponse)
-            {   // Set response write callback to HC_CALL::ResponseBodyWrite
-                HCHttpCallResponseSetResponseBodyWriteFunction(call, HC_CALL::ResponseBodyWrite, nullptr);
+            {   
                 // Store custom response write callback
-                HCHttpCallResponseSetTemporaryResponseBodyWriteFunction(call, writeFunction, writeContext);
+                call->clientResponseBodyWriteFunction = writeFunction;
+                call->clientResponseBodyWriteContext = context;
+                // Set response write callback to HC_CALL::ResponseBodyWrite
+                HCHttpCallResponseSetResponseBodyWriteFunction(call, HC_CALL::ResponseBodyWrite, nullptr);
             }
 
             // Compress body before call if applicable
@@ -381,14 +383,12 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     }
 
     // Check if we 'reset' the custom response write callback before decompressing the response
-    HCHttpCallResponseBodyWriteFunction temporaryWriteFunction = nullptr;
-    void* temporaryWriteContext = nullptr;
-    HCHttpCallResponseGetTemporaryResponseBodyWriteFunction(call, &temporaryWriteFunction, &temporaryWriteContext);
+    HCHttpCallResponseBodyWriteFunction temporaryWriteFunction = call->clientResponseBodyWriteFunction;
 
     // call->temporaryResponseBodyWriteFunction should remain HC_CALL::ResponseBodyWrite if we did not 'reset' the custom response write callback
-    if (temporaryWriteFunction != HC_CALL::ResponseBodyWrite)
+    if (temporaryWriteFunction != nullptr)
     {
-        HCHttpCallResponseSetResponseBodyWriteFunction(call, temporaryWriteFunction, temporaryWriteContext);
+        HCHttpCallResponseSetResponseBodyWriteFunction(call, call->clientResponseBodyWriteFunction, call->clientResponseBodyWriteContext);
     }
 
     // Complete perform if we aren't retrying or if there were any XAsync failures

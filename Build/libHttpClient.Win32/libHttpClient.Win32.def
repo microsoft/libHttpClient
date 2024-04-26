@@ -49,7 +49,6 @@ EXPORTS
     HCHttpCallResponseGetResponseBodyBytes
     HCHttpCallResponseGetResponseBodyBytesSize
     HCHttpCallResponseGetResponseBodyWriteFunction
-    HCHttpCallResponseGetTemporaryResponseBodyWriteFunction
     HCHttpCallResponseGetResponseString
     HCHttpCallResponseGetStatusCode
     HCHttpCallResponseSetHeader
@@ -58,7 +57,6 @@ EXPORTS
     HCHttpCallResponseSetPlatformNetworkErrorMessage
     HCHttpCallResponseSetResponseBodyBytes
     HCHttpCallResponseSetResponseBodyWriteFunction
-    HCHttpCallResponseSetTemporaryResponseBodyWriteFunction
     HCHttpCallResponseSetStatusCode
     HCHttpCallSetContext
     HCHttpCallSetTracing
