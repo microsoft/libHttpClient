@@ -93,9 +93,6 @@ try
     call->temporaryResponseBodyWriteFunction = writeFunction;
     call->temporaryResponseBodyWriteFunctionContext = context;
 
-    call->responseBodyWriteFunction = HC_CALL::ResponseBodyWrite;
-    call->responseBodyWriteFunctionContext = nullptr;
-
     return S_OK;
 }
 CATCH_RETURN()

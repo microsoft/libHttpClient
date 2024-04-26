@@ -106,7 +106,8 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
             void* writeContext = nullptr;
             HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &writeContext);
             if (writeFunction != HC_CALL::ResponseBodyWrite && call->compressedResponse)
-            {
+            {   // Set response write callback to HC_CALL::ResponseBodyWrite
+                HCHttpCallResponseSetResponseBodyWriteFunction(call, HC_CALL::ResponseBodyWrite, nullptr);
                 // Store custom response write callback
                 HCHttpCallResponseSetTemporaryResponseBodyWriteFunction(call, writeFunction, writeContext);
             }
@@ -215,9 +216,7 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
     http_internal_vector<uint8_t> compressedRequestBodyBuffer;
 
-    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(),
-        requestBodySize,
-        call->compressionLevel,
+    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(), requestBodySize, call->compressionLevel,
         compressedRequestBodyBuffer);
 
     // Setting back to default read request body callback to be invoked by Platform-specific code
@@ -386,7 +385,7 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     void* temporaryWriteContext = nullptr;
     HCHttpCallResponseGetTemporaryResponseBodyWriteFunction(call, &temporaryWriteFunction, &temporaryWriteContext);
 
-    // call->temporaryResponseBodyWriteFunction should remain HC_CALL::ResponseBodyWrite if we did not 'reset' custom response write callback
+    // call->temporaryResponseBodyWriteFunction should remain HC_CALL::ResponseBodyWrite if we did not 'reset' the custom response write callback
     if (temporaryWriteFunction != HC_CALL::ResponseBodyWrite)
     {
         HCHttpCallResponseSetResponseBodyWriteFunction(call, temporaryWriteFunction, temporaryWriteContext);
@@ -433,7 +432,7 @@ HRESULT CALLBACK HC_CALL::ResponseBodyWrite(
     _In_opt_ void* /*context*/
 ) noexcept
 {
-    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);  
+    return HCHttpCallResponseAppendResponseBodyBytes(call, source, bytesAvailable);
 }
 
 Result<bool> HC_CALL::ShouldFailFast(uint32_t& performDelay)

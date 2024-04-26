@@ -401,7 +401,7 @@ try
         if (nullptr == httpSingleton)
             return E_HC_NOT_INITIALISED;
 
-        httpSingleton->m_retryAllowed = retryAllowed; // Why are we setting here if HCCallHandle null?
+        httpSingleton->m_retryAllowed = retryAllowed;
     }
     else
     {
