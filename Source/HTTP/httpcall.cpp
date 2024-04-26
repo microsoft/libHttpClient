@@ -269,7 +269,7 @@ void CALLBACK HC_CALL::PerformSingleRequest(void* c, bool canceled)
             HC_CALL::PerformSingleRequestComplete
         }
     };
-    
+
     HRESULT hr = XAsyncBegin(iterationAsyncBlock.get(), call, nullptr, nullptr, HC_CALL::PerformSingleRequestAsyncProvider);
     if (FAILED(hr))
     {
@@ -326,7 +326,7 @@ HRESULT HC_CALL::PerformSingleRequestAsyncProvider(XAsyncOp op, XAsyncProviderDa
 }
 
 void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
-{   
+{
     HC_UNIQUE_PTR<XAsyncBlock> reclaimAsyncBlock{ async };
     PerformContext* context{ static_cast<PerformContext*>(async->context) };
     HC_CALL* call{ context->call };
