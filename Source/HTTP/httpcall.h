@@ -66,7 +66,6 @@ public:
     xbox::httpclient::HttpHeaders responseHeaders{};
     HCHttpCallResponseBodyWriteFunction responseBodyWriteFunction{ HC_CALL::ResponseBodyWrite };
     void* responseBodyWriteFunctionContext{ nullptr };
-
     // Response Compression 
     // If a custom write callback is set and a compressed response is expected then we would need 
     // to 'reset' responseBodyWriteFunction to HC_CALL::ResponseBodyWrite prior to decompression.
