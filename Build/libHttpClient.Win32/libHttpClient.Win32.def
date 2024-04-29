@@ -108,6 +108,8 @@ EXPORTS
     HCWebSocketSetMaxReceiveBufferSize
     HCWebSocketSetProxyDecryptsHttps
     HCWebSocketSetProxyUri
+    HCWinHttpResume
+    HCWinHttpSuspend
     XAsyncBegin
     XAsyncCancel
     XAsyncComplete

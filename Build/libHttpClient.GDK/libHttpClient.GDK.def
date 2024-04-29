@@ -108,3 +108,5 @@ EXPORTS
     HCWebSocketSetHeader
     HCWebSocketSetMaxReceiveBufferSize
     HCWebSocketSetProxyUri
+    HCWinHttpResume
+    HCWinHttpSuspend
