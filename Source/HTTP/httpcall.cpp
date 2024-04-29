@@ -388,7 +388,10 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     // call->temporaryResponseBodyWriteFunction should remain HC_CALL::ResponseBodyWrite if we did not 'reset' the custom response write callback
     if (temporaryWriteFunction != nullptr)
     {
-        HCHttpCallResponseSetResponseBodyWriteFunction(call, call->clientResponseBodyWriteFunction, call->clientResponseBodyWriteContext);
+        // Invoke custom response write callback 
+        temporaryWriteFunction(call, reinterpret_cast<uint8_t*>(call->responseBodyBytes.data()), call.responseBodyBytes.size(), call->clientResponseBodyWriteContext);
+        // Set responseBodyWriteFunction to call->temporaryResponseBodyWriteFunction
+        HCHttpCallResponseSetResponseBodyWriteFunction(call, temporaryWriteFunction, call->clientResponseBodyWriteContext)
     }
 
     // Complete perform if we aren't retrying or if there were any XAsync failures
