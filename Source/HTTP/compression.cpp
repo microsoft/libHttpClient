@@ -66,7 +66,8 @@ void Compression::CompressToGzip(uint8_t* inData, size_t inDataSize, HCCompressi
     deflateEnd(&stream);
 }
 
-void  Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_internal_vector<uint8_t>& outData) {
+void Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_internal_vector<uint8_t>& outData) 
+{
     z_stream stream;
 
     stream.zalloc = Z_NULL;
@@ -88,11 +89,14 @@ void  Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_i
 
         ret = inflate(&stream, Z_NO_FLUSH);
 
-        if (ret == Z_OK || ret == Z_BUF_ERROR) {
+        if (ret == Z_OK || ret == Z_BUF_ERROR) 
+        {
             // Z_BUF_ERROR -> no progress was possible or there was not enough room in the output buffer 
             // Z_OK -> some progress has been made 
             continue;
-        } else if (ret != Z_STREAM_END) {
+        } 
+            else if (ret != Z_STREAM_END) 
+        {
             // Handle error
             // All dynamically allocated data structures for this stream are freed
             inflateEnd(&stream);
