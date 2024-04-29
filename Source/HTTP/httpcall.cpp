@@ -385,12 +385,12 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     // Check if we 'reset' the custom response write callback before decompressing the response
     HCHttpCallResponseBodyWriteFunction temporaryWriteFunction = call->clientResponseBodyWriteFunction;
 
-    // call->temporaryResponseBodyWriteFunction should remain HC_CALL::ResponseBodyWrite if we did not 'reset' the custom response write callback
+    // call->clientResponseBodyWriteFunction should remain uninitialized if we did not 'reset' a call's custom response write callback
     if (temporaryWriteFunction != nullptr)
     {
         // Invoke custom response write callback 
         temporaryWriteFunction(call, reinterpret_cast<uint8_t*>(call->responseBodyBytes.data()), call->responseBodyBytes.size(), call->clientResponseBodyWriteContext);
-        // Set responseBodyWriteFunction to call->temporaryResponseBodyWriteFunction
+        // Set responseBodyWriteFunction to call->clientResponseBodyWriteFunction
         HCHttpCallResponseSetResponseBodyWriteFunction(call, temporaryWriteFunction, call->clientResponseBodyWriteContext);
     }
 
