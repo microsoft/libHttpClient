@@ -95,7 +95,7 @@ void Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_in
             // Z_OK -> some progress has been made 
             continue;
         } 
-            else if (ret != Z_STREAM_END) 
+        else if (ret != Z_STREAM_END) 
         {
             // Handle error
             // All dynamically allocated data structures for this stream are freed
