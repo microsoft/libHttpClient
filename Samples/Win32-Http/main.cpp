@@ -189,7 +189,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     {
         method = "POST";
         header.push_back("X-SecretKey");
-        header.push_back("Q617Y4YAGAH4QFQOZQFO3THCTWPAPASRPCPNFIUZ93IS1KRH5B"); 
+        header.push_back(""); 
         headers.push_back(header);
 
         header.clear();
@@ -330,8 +330,8 @@ int main()
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false);
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false);
 
-    //std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    //DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
+    std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
+    DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
 
     std::string url3 = "https://80996.playfabapi.com/authentication/GetEntityToken";
     DoHttpCall(url3, "", true, "", false, true);
