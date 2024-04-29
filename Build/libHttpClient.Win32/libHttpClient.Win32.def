@@ -131,4 +131,4 @@ EXPORTS
     XTaskQueueTerminate
     XTaskQueueUnregisterMonitor
     XTaskQueueUnregisterWaiter
-    HCHttpCallSetCompressResponse
+    HCHttpCallResponseSetGzipCompressed

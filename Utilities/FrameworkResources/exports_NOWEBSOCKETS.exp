@@ -40,7 +40,7 @@ _HCHttpCallRequestSetRequestBodyReadFunction
 _HCHttpCallRequestGetRequestBodyReadFunction
 _HCHttpCallResponseSetResponseBodyWriteFunction
 _HCHttpCallResponseGetResponseBodyWriteFunction
-_HCHttpCallSetCompressResponse
+_HCHttpCallResponseSetGzipCompressed
 
 #
 # httpProvider.h

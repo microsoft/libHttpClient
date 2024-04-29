@@ -189,7 +189,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     {
         method = "POST";
         header.push_back("X-SecretKey");
-        header.push_back(""); 
+        header.push_back("Q617Y4YAGAH4QFQOZQFO3THCTWPAPASRPCPNFIUZ93IS1KRH5B"); 
         headers.push_back(header);
 
         header.clear();
@@ -216,7 +216,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
 
     if (enableGzipResponseCompression)
     {
-        HCHttpCallSetCompressResponse(call, true);
+        HCHttpCallResponseSetGzipCompressed(call, true);
     }
     
     if (enableGzipCompression) 
@@ -305,10 +305,8 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
             web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
         }
 
-        
         printf_s("Response string:\r\n%s\r\n", responseString.c_str());
         
-
         SetEvent(g_exampleTaskDone.get());
         delete asyncBlock;
     };
@@ -332,8 +330,8 @@ int main()
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false);
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false);
 
-    std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
+    //std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
+    //DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
 
     std::string url3 = "https://80996.playfabapi.com/authentication/GetEntityToken";
     DoHttpCall(url3, "", true, "", false, true);

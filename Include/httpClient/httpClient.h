@@ -403,9 +403,9 @@ STDAPI HCHttpCallRequestEnableGzipCompression(
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="level">Boolean denoting whether a compressed response is expected.</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_HC_NOT_INITIALISED.</returns>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_HC_NOT_INITIALISED.</returns>
 /// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
-STDAPI HCHttpCallSetCompressResponse(
+STDAPI HCHttpCallResponseSetGzipCompressed(
     _In_ HCCallHandle call,
     _In_ bool compress
 ) noexcept;
