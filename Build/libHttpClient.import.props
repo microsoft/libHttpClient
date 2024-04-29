@@ -21,7 +21,7 @@
     <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v143'">143</HCLibToolset>
-    <HCProjectName>libHttpClient.$(HCPlatform)</HCProjectName>
+    <HCProjectName>libHttpClient.$(HCLibToolset).$(HCPlatform).C</HCProjectName>
   </PropertyGroup>
   <PropertyGroup>
     <HCOutDir>$(HCOutRoot)\$(Platform)\$(Configuration)\$(HCProjectName)\</HCOutDir>
