@@ -37,8 +37,7 @@
     <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
     <HCLibToolset Condition="'$(PlatformToolset)'=='v143'">143</HCLibToolset>
 
-    <HCProjectName Condition="'$(XsapiLhcLibType)' == 'DynamicLibrary'">libHttpClient.$(HCLibPlatformType)</HCProjectName>
-    <HCProjectName Condition="'$(XsapiLhcLibType)' != 'DynamicLibrary'">libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
+    <HCProjectName>libHttpClient.$(HCLibToolset).$(HCLibPlatformType).C</HCProjectName>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -58,17 +57,15 @@
 
   <ItemGroup>
     <ProjectReference Include="$(HCRoot)\Build\$(HCProjectName)\$(HCProjectName).vcxproj" Condition="'$(ConfigurationType)'!='StaticLibrary' And ('$(HCLibPlatformType)' == 'Win32' Or '$(HCLibPlatformType)' == 'GDK' Or '$(HCLibPlatformType)' == 'UWP')">
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(XsapiLhcLibType)' == 'DynamicLibrary'">{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(XsapiLhcLibType)' == 'DynamicLibrary'">{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '141' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{BEDE280F-17F7-4A09-9F5D-2E02FBB1C490}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '142' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{961F48EA-33A9-47F1-9C96-715D6094D79B}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '143' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and '$(HCLibToolset)' == '141' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{5B498CF9-1803-438F-98FC-25F42759F440}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and '$(HCLibToolset)' == '142' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{53C69CF3-B0B8-4A64-B178-0E9370737F70}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and '$(HCLibToolset)' == '143' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{2E55AA9F-A132-477C-B4FF-B4CD551E4322}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(HCLibToolset)' == '141' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{78C0122C-6B2D-4054-8C49-448277DD7A7D}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(HCLibToolset)' == '142' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{66365E18-7B53-44BF-A348-6735058E359E}</Project>
-      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(HCLibToolset)' == '143' and '$(XsapiLhcLibType)' != 'DynamicLibrary'">{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '141'">{BEDE280F-17F7-4A09-9F5D-2E02FBB1C490}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '142'">{961F48EA-33A9-47F1-9C96-715D6094D79B}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'Win32' and '$(HCLibToolset)' == '143'">{9164C6C9-3872-4922-A3E3-3822622D3E71}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and '$(HCLibToolset)' == '141'">{5B498CF9-1803-438F-98FC-25F42759F440}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and '$(HCLibToolset)' == '142'">{53C69CF3-B0B8-4A64-B178-0E9370737F70}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'UWP' and '$(HCLibToolset)' == '143'">{2E55AA9F-A132-477C-B4FF-B4CD551E4322}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(HCLibToolset)' == '141'">{78C0122C-6B2D-4054-8C49-448277DD7A7D}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(HCLibToolset)' == '142'">{66365E18-7B53-44BF-A348-6735058E359E}</Project>
+      <Project Condition="'$(HCLibPlatformType)' == 'GDK' and '$(HCLibToolset)' == '143'">{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}</Project>
     </ProjectReference>
   </ItemGroup>
 
