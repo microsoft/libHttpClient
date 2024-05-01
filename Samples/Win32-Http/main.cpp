@@ -198,7 +198,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     {
         method = "POST";
         header.push_back("X-SecretKey");
-        header.push_back("Q617Y4YAGAH4QFQOZQFO3THCTWPAPASRPCPNFIUZ93IS1KRH5B"); 
+        header.push_back(""); 
         headers.push_back(header);
 
         header.clear();
@@ -250,7 +250,8 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     asyncBlock->queue = g_queue;
     if (customWrite) 
     {
-        HCHttpCallResponseBodyWriteFunction customWriteWrapper = [](HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context) -> HRESULT {
+        HCHttpCallResponseBodyWriteFunction customWriteWrapper = [](HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context) -> HRESULT 
+        {
             return CustomResponseBodyWrite(call, source, bytesAvailable, context);
         };
 
