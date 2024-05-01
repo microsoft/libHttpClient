@@ -250,7 +250,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     asyncBlock->queue = g_queue;
     if (customWrite) 
     {
-        HCHttpCallResponseSetResponseBodyWriteFunction(call, CustomResponseBodyWrite, asyncBlock->context);
+        HCHttpCallResponseSetResponseBodyWriteFunction(call, static_cast<HCHttpCallResponseBodyWriteFunction>(CustomResponseBodyWrite), asyncBlock->context);
     }
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
