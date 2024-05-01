@@ -176,9 +176,19 @@ struct SampleHttpCallAsyncContext
     HCCallHandle call;
     bool isJson;
     std::string filePath;
+    std::vector<uint8_t> response;
+    bool isCustom;
 };
 
-void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression)
+HRESULT CustomResponseBodyWrite(HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context) 
+{
+    SampleHttpCallAsyncContext* customContext = static_cast<SampleHttpCallAsyncContext*> (context);
+    customContext->response.insert(customContext->response.end(), source, source + bytesAvailable);
+    customContext->response.push_back('\0');
+    return S_OK;
+}
+
+void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression, bool customWrite)
 {
     std::string method = "GET";
     bool retryAllowed = true;
@@ -189,7 +199,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     {
         method = "POST";
         header.push_back("X-SecretKey");
-        header.push_back(""); 
+        header.push_back("Q617Y4YAGAH4QFQOZQFO3THCTWPAPASRPCPNFIUZ93IS1KRH5B"); 
         headers.push_back(header);
 
         header.clear();
@@ -233,11 +243,16 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
 
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
-    SampleHttpCallAsyncContext* hcContext =  new SampleHttpCallAsyncContext{ call, isJson, filePath };
+    std::vector<uint8_t> buffer;
+    SampleHttpCallAsyncContext* hcContext =  new SampleHttpCallAsyncContext{ call, isJson, filePath, buffer, customWrite};
     XAsyncBlock* asyncBlock = new XAsyncBlock;
     ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
     asyncBlock->context = hcContext;
     asyncBlock->queue = g_queue;
+    if (customWrite) 
+    {
+        HCHttpCallResponseSetResponseBodyWriteFunction(call, CustomResponseBodyWrite, asyncBlock->context);
+    }
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         const char* str;
@@ -251,7 +266,8 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         HCCallHandle call = hcContext->call;
         bool isJson = hcContext->isJson;
         std::string filePath = hcContext->filePath;
-
+        std::vector<uint8_t> readBuffer = hcContext->response;
+        bool customWriteUsed = hcContext->isCustom;
         HRESULT hr = XAsyncGetStatus(asyncBlock, false);
         if (FAILED(hr))
         {
@@ -263,24 +279,27 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
 
         HCHttpCallResponseGetNetworkErrorCode(call, &networkErrorCode, &platErrCode);
         HCHttpCallResponseGetStatusCode(call, &statusCode);
-        HCHttpCallResponseGetResponseString(call, &str);
-        if (str != nullptr) responseString = str;
-        std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
-
-        if (!isJson)
+        if (!customWriteUsed)
         {
-            size_t bufferSize = 0;
-            HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
-            uint8_t* buffer = new uint8_t[bufferSize];
-            size_t bufferUsed = 0;
-            HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
-            HANDLE hFile = CreateFileA(filePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-            DWORD bufferWritten = 0;
-            WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
-            CloseHandle(hFile);
-            delete[] buffer;
+            HCHttpCallResponseGetResponseString(call, &str);
+            if (str != nullptr) responseString = str;
+
+            if (!isJson)
+            {
+                size_t bufferSize = 0;
+                HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
+                uint8_t* buffer = new uint8_t[bufferSize];
+                size_t bufferUsed = 0;
+                HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
+                HANDLE hFile = CreateFileA(filePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+                DWORD bufferWritten = 0;
+                WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
+                CloseHandle(hFile);
+                delete[] buffer;
+            }
         }
 
+        std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
         HCHttpCallCloseHandle(call);
 
         printf_s("HTTP call done\r\n");
@@ -294,18 +313,26 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
             i++;
         }
 
-        if (isJson && responseString.length() > 0)
+        if (!customWriteUsed) 
         {
-            // Returned string starts with a BOM strip it out.
-            uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
-            if (responseString.find(reinterpret_cast<char*>(BOM)) == 0)
+            if (isJson && responseString.length() > 0)
             {
-                responseString = responseString.substr(3);
+                // Returned string starts with a BOM strip it out.
+                uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
+                if (responseString.find(reinterpret_cast<char*>(BOM)) == 0)
+                {
+                    responseString = responseString.substr(3);
+                }
+                web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
             }
-            web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
-        }
 
-        printf_s("Response string:\r\n%s\r\n", responseString.c_str());
+            printf_s("Response string:\r\n%s\r\n", responseString.c_str());
+        }
+        else 
+        {
+            const char* responseStr = reinterpret_cast<const char*>(readBuffer.data());
+            printf_s("Response string: %s\n", responseStr);
+        }
         
         SetEvent(g_exampleTaskDone.get());
         delete asyncBlock;
@@ -327,14 +354,15 @@ int main()
     StartBackgroundThread();
 
     std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
-    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false);
-    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false);
+    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false, false);
+    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false, false);
 
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    DoHttpCall(url2, "", false, "SplashScreen.png", false, false);
+    DoHttpCall(url2, "", false, "SplashScreen.png", false, false, false);
 
     std::string url3 = "https://80996.playfabapi.com/authentication/GetEntityToken";
-    DoHttpCall(url3, "", true, "", false, true);
+    DoHttpCall(url3, "", false, "", false, true, false);
+    DoHttpCall(url3, "", false, "", false, true, true);
 
     HCCleanup();
     ShutdownActiveThreads();

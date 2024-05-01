@@ -102,16 +102,14 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         else
         {
             // If Custom ReponseWriteFunction is specified and compressedResponse is specified reset to default response body write callback
-            HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
-            void* writeContext = nullptr;
-            HCHttpCallResponseGetResponseBodyWriteFunction(call, &writeFunction, &writeContext);
-            if (writeFunction != HC_CALL::ResponseBodyWrite && call->compressedResponse)
+            if (call->responseBodyWriteFunction != HC_CALL::ResponseBodyWrite && call->compressedResponse)
             {   
                 // Store custom response write callback
-                call->clientResponseBodyWriteFunction = writeFunction;
-                call->clientResponseBodyWriteContext = context;
+                call->clientResponseBodyWriteFunction = call->responseBodyWriteFunction;
+                call->clientResponseBodyWriteContext = call->responseBodyWriteFunctionContext;
                 // Set response write callback to HC_CALL::ResponseBodyWrite
-                HCHttpCallResponseSetResponseBodyWriteFunction(call, HC_CALL::ResponseBodyWrite, nullptr);
+                call->responseBodyWriteFunction = HC_CALL::ResponseBodyWrite;
+                call->responseBodyWriteFunctionContext = nullptr;
             }
 
             // Compress body before call if applicable
@@ -383,15 +381,19 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     }
 
     // Check if we 'reset' the custom response write callback before decompressing the response
-    HCHttpCallResponseBodyWriteFunction temporaryWriteFunction = call->clientResponseBodyWriteFunction;
+     HCHttpCallResponseBodyWriteFunction temporaryWriteFunction = call->clientResponseBodyWriteFunction;
 
     // call->clientResponseBodyWriteFunction should remain uninitialized if we did not 'reset' a call's custom response write callback
     if (temporaryWriteFunction != nullptr)
     {
-        // Invoke custom response write callback 
-        temporaryWriteFunction(call, reinterpret_cast<uint8_t*>(call->responseBodyBytes.data()), call->responseBodyBytes.size(), call->clientResponseBodyWriteContext);
-        // Set responseBodyWriteFunction to call->clientResponseBodyWriteFunction
-        HCHttpCallResponseSetResponseBodyWriteFunction(call, temporaryWriteFunction, call->clientResponseBodyWriteContext);
+       // Invoke custom response write callback 
+       temporaryWriteFunction(call, reinterpret_cast<uint8_t*>(call->responseBodyBytes.data()), call->responseBodyBytes.size(), call->clientResponseBodyWriteContext);
+       // Set responseBodyWriteFunction to call->clientResponseBodyWriteFunction
+       call->responseBodyWriteFunction = call->clientResponseBodyWriteFunction;
+       call->responseBodyWriteFunctionContext = call->clientResponseBodyWriteContext;
+       call->clientResponseBodyWriteFunction = nullptr;
+       call->clientResponseBodyWriteContext = nullptr;
+
     }
 
     // Complete perform if we aren't retrying or if there were any XAsync failures
