@@ -184,7 +184,6 @@ HRESULT CustomResponseBodyWrite(HCCallHandle call, const uint8_t* source, size_t
 {
     SampleHttpCallAsyncContext* customContext = static_cast<SampleHttpCallAsyncContext*> (context);
     customContext->response.insert(customContext->response.end(), source, source + bytesAvailable);
-    customContext->response.push_back('\0');
     return S_OK;
 }
 
@@ -267,6 +266,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         bool isJson = hcContext->isJson;
         std::string filePath = hcContext->filePath;
         std::vector<uint8_t> readBuffer = hcContext->response;
+        readBuffer.push_back('\0');
         bool customWriteUsed = hcContext->isCustom;
         HRESULT hr = XAsyncGetStatus(asyncBlock, false);
         if (FAILED(hr))
@@ -330,6 +330,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
         }
         else 
         {
+            readBuffer.push_back('\0');
             const char* responseStr = reinterpret_cast<const char*>(readBuffer.data());
             printf_s("Response string: %s\n", responseStr);
         }
@@ -353,12 +354,12 @@ int main()
     HCTraceSetTraceToDebugger(true);
     StartBackgroundThread();
 
-    std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
+    /*std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false, false);
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false, false);
 
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    DoHttpCall(url2, "", false, "SplashScreen.png", false, false, false);
+    DoHttpCall(url2, "", false, "SplashScreen.png", false, false, false);*/
 
     std::string url3 = "https://80996.playfabapi.com/authentication/GetEntityToken";
     DoHttpCall(url3, "", false, "", false, true, false);
