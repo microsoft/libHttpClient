@@ -110,3 +110,4 @@ EXPORTS
     HCWebSocketSetProxyUri
     HCWinHttpResume
     HCWinHttpSuspend
+    HCHttpCallResponseSetGzipCompressed

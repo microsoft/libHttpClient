@@ -66,6 +66,52 @@ void Compression::CompressToGzip(uint8_t* inData, size_t inDataSize, HCCompressi
     deflateEnd(&stream);
 }
 
+void Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_internal_vector<uint8_t>& outData) 
+{
+    z_stream stream;
+
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+
+    // WINDOWBITS | GZIP_ENCODING - add 16 to decode only the gzip format 
+    inflateInit2(&stream, WINDOWBITS | GZIP_ENCODING);
+
+    stream.next_in = inData; 
+    stream.avail_in = static_cast<uInt>(inDataSize); 
+
+    int ret;
+    do {
+        outData.resize(outData.size() + CHUNK); 
+
+        stream.avail_out = CHUNK; 
+        stream.next_out = outData.data() + outData.size() - CHUNK;
+
+        ret = inflate(&stream, Z_NO_FLUSH);
+
+        if (ret == Z_OK || ret == Z_BUF_ERROR) 
+        {
+            // Z_BUF_ERROR -> no progress was possible or there was not enough room in the output buffer 
+            // Z_OK -> some progress has been made 
+            continue;
+        } 
+        else if (ret != Z_STREAM_END) 
+        {
+            // Handle error
+            // All dynamically allocated data structures for this stream are freed
+            inflateEnd(&stream);
+            // Clear output data since it may contain incomplete or corrupted data
+            outData.clear();
+            return;
+        }
+
+        outData.resize(outData.size() - stream.avail_out);
+
+    } while (ret != Z_STREAM_END); // Z_STREAM_END if the end of the compressed data has been reached 
+
+    inflateEnd(&stream);
+}
+
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
 #else
@@ -78,6 +124,11 @@ bool Compression::Available() noexcept
 }
 
 void Compression::CompressToGzip(uint8_t*, size_t, HCCompressionLevel, http_internal_vector<uint8_t>&)
+{
+    assert(false);
+}
+
+void Compression::DecompressFromGzip(uint8_t*, size_t, http_internal_vector<uint8_t>&)
 {
     assert(false);
 }

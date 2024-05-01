@@ -101,6 +101,17 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
+            // If Custom ReponseWriteFunction is specified and compressedResponse is specified reset to default response body write callback
+            if (call->responseBodyWriteFunction != HC_CALL::ResponseBodyWrite && call->compressedResponse)
+            {   
+                // Store custom response write callback
+                call->clientResponseBodyWriteFunction = call->responseBodyWriteFunction;
+                call->clientResponseBodyWriteContext = call->responseBodyWriteFunctionContext;
+                // Set response write callback to HC_CALL::ResponseBodyWrite
+                call->responseBodyWriteFunction = HC_CALL::ResponseBodyWrite;
+                call->responseBodyWriteFunctionContext = nullptr;
+            }
+
             // Compress body before call if applicable
             if (Compression::Available() && call->compressionLevel != HCCompressionLevel::None)
             {
@@ -131,6 +142,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     }
     case XAsyncOp::Cleanup:
     {
+
         if (call->traceCall)
         {
             HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider Cleanup [ID %llu]", TO_ULL(call->id));
@@ -204,7 +216,8 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
 
     http_internal_vector<uint8_t> compressedRequestBodyBuffer;
 
-    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(), requestBodySize, call->compressionLevel, compressedRequestBodyBuffer);
+    Compression::CompressToGzip(uncompressedRequestyBodyBuffer.data(), requestBodySize, call->compressionLevel,
+        compressedRequestBodyBuffer);
 
     // Setting back to default read request body callback to be invoked by Platform-specific code
     call->requestBodyReadFunction = HC_CALL::ReadRequestBody;
@@ -351,6 +364,36 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
                 return;
             }
         }
+    }
+
+    // Decompress Response Bytes 
+    if (Compression::Available() && call->compressedResponse == true)
+    {
+        http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
+
+        Compression::DecompressFromGzip(
+            call->responseBodyBytes.data(),
+            call->responseBodyBytes.size(),
+            uncompressedResponseBodyBuffer);
+
+        call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
+        call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+    }
+
+    // Check if we 'reset' the custom response write callback before decompressing the response
+     HCHttpCallResponseBodyWriteFunction temporaryWriteFunction = call->clientResponseBodyWriteFunction;
+
+    // call->clientResponseBodyWriteFunction should remain uninitialized if we did not 'reset' a call's custom response write callback
+    if (temporaryWriteFunction != nullptr)
+    {
+       // Invoke custom response write callback 
+       temporaryWriteFunction(call, reinterpret_cast<uint8_t*>(call->responseBodyBytes.data()), call->responseBodyBytes.size(), call->clientResponseBodyWriteContext);
+       // Set responseBodyWriteFunction to call->clientResponseBodyWriteFunction
+       call->responseBodyWriteFunction = call->clientResponseBodyWriteFunction;
+       call->responseBodyWriteFunctionContext = call->clientResponseBodyWriteContext;
+       call->clientResponseBodyWriteFunction = nullptr;
+       call->clientResponseBodyWriteContext = nullptr;
+
     }
 
     // Complete perform if we aren't retrying or if there were any XAsync failures

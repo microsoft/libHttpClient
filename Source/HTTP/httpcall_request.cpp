@@ -122,7 +122,32 @@ try
 
     return S_OK;
 }
-CATCH_RETURN()
+CATCH_RETURN() 
+
+STDAPI
+HCHttpCallResponseSetGzipCompressed(
+    _In_ HCCallHandle call,
+    _In_ bool compressed
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call); 
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->compressedResponse = compressed;
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetGzipCompressed [ID %llu]", TO_ULL(call->id)); }
+
+    return S_OK;
+} CATCH_RETURN() 
+
 
 STDAPI
 HCHttpCallRequestSetRequestBodyString(
