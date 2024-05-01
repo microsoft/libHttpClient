@@ -9,40 +9,57 @@ cmake_minimum_required(VERSION 3.18.1)
 
 project("zlib.Android")
 
-# Creates and names a library, sets it as either STATIC
-# or SHARED, and provides the relative paths to its source code.
-# You can define multiple libraries, and CMake builds them for you.
-# Gradle automatically packages shared libraries with your APK.
+set(CMAKE_STATIC_LIBRARY_PREFIX "")
+
+get_filename_component(PATH_TO_ROOT "../../../../.." ABSOLUTE)
+
+###########################################
+### Set up paths for source and include ###
+###########################################
+
+set(PATH_TO_EXTERNAL "${PATH_TO_ROOT}/External")
+set(PATH_TO_ZLIB "${PATH_TO_EXTERNAL}/zlib")
+
+set(ZLIB_SOURCE_FILES
+        "${PATH_TO_ZLIB}/adler32.c"
+        "${PATH_TO_ZLIB}/compress.c"
+        "${PATH_TO_ZLIB}/crc32.c"
+        "${PATH_TO_ZLIB}/deflate.c"
+        "${PATH_TO_ZLIB}/gzclose.c"
+        "${PATH_TO_ZLIB}/gzlib.c"
+        "${PATH_TO_ZLIB}/gzread.c"
+        "${PATH_TO_ZLIB}/gzwrite.c"
+        "${PATH_TO_ZLIB}/infback.c"
+        "${PATH_TO_ZLIB}/inffast.c"
+        "${PATH_TO_ZLIB}/inflate.c"
+        "${PATH_TO_ZLIB}/inftrees.c"
+        "${PATH_TO_ZLIB}/trees.c"
+        "${PATH_TO_ZLIB}/uncompr.c"
+        "${PATH_TO_ZLIB}/zutil.c"
+        "${PATH_TO_ZLIB}/contrib/minizip/unzip.c"
+)
+
+set(ZLIB_INCLUDE_DIRS
+        "${PATH_TO_ZLIB}"
+        "${PATH_TO_ZLIB}/contrib/minizip"
+)
+
+#########################
+### Set up static lib ###
+#########################
 
 add_library( # Sets the name of the library.
         zlib.Android
 
         # Sets the library as a shared library.
-        SHARED
+        STATIC
 
         # Provides a relative path to your source file(s).
-        zlib.cpp)
+        "${ZLIB_SOURCE_FILES}"
+)
 
-# Searches for a specified prebuilt library and stores the path as a
-# variable. Because CMake includes system libraries in the search path by
-# default, you only need to specify the name of the public NDK library
-# you want to add. CMake verifies that the library exists before
-# completing its build.
-
-find_library( # Sets the name of the path variable.
-        log-lib
-
-        # Specifies the name of the NDK library that
-        # you want CMake to locate.
-        log)
-
-# Specifies libraries CMake should link to your target library. You
-# can link multiple libraries, such as libraries you define in this
-# build script, prebuilt third-party libraries, or system libraries.
-
-target_link_libraries( # Specifies the target library.
+target_include_directories(
         zlib.Android
-
-        # Links the target library to the log library
-        # included in the NDK.
-        ${log-lib})
+        PRIVATE
+        "${ZLIB_INCLUDE_DIRS}"
+)
