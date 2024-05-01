@@ -180,7 +180,7 @@ struct SampleHttpCallAsyncContext
     bool isCustom;
 };
 
-HRESULT CustomResponseBodyWrite(HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context) 
+HRESULT CustomResponseBodyWrite(HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context)
 {
     SampleHttpCallAsyncContext* customContext = static_cast<SampleHttpCallAsyncContext*> (context);
     customContext->response.insert(customContext->response.end(), source, source + bytesAvailable);
@@ -198,7 +198,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     {
         method = "POST";
         header.push_back("X-SecretKey");
-        header.push_back(""); 
+        header.push_back("Q617Y4YAGAH4QFQOZQFO3THCTWPAPASRPCPNFIUZ93IS1KRH5B"); 
         headers.push_back(header);
 
         header.clear();
@@ -250,7 +250,11 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     asyncBlock->queue = g_queue;
     if (customWrite) 
     {
-        HCHttpCallResponseSetResponseBodyWriteFunction(call, static_cast<HCHttpCallResponseBodyWriteFunction>(CustomResponseBodyWrite), asyncBlock->context);
+        HCHttpCallResponseBodyWriteFunction customWriteWrapper = [](HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context) -> HRESULT {
+            return CustomResponseBodyWrite(call, source, bytesAvailable, context);
+        };
+
+        HCHttpCallResponseSetResponseBodyWriteFunction(call, customWriteWrapper, asyncBlock->context);
     }
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
@@ -354,12 +358,12 @@ int main()
     HCTraceSetTraceToDebugger(true);
     StartBackgroundThread();
 
-    /*std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
+    std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false, false);
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false, false);
 
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
-    DoHttpCall(url2, "", false, "SplashScreen.png", false, false, false);*/
+    DoHttpCall(url2, "", false, "SplashScreen.png", false, false, false);
 
     std::string url3 = "https://80996.playfabapi.com/authentication/GetEntityToken";
     DoHttpCall(url3, "", false, "", false, true, false);
