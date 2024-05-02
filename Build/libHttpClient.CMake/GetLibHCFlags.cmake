@@ -19,6 +19,10 @@ function(GET_LIBHC_FLAGS OUT_FLAGS OUT_FLAGS_DEBUG OUT_FLAGS_RELEASE)
         list(APPEND FLAGS "-DHC_NOWEBSOCKETS=1")
     endif()
 
+    if (DEFINED HC_NOZLIB)
+        list(APPEND FLAGS "-DHC_NOZLIB=1")
+    endif()
+
     set("${OUT_FLAGS}" "${FLAGS}" PARENT_SCOPE)
 
     set("${OUT_FLAGS_DEBUG}"
