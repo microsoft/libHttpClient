@@ -63,6 +63,32 @@ set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/WebSocket/Android/AndroidWebSocketProvider.h"
     )
 
+if (NOT DEFINED HC_NOZLIB)
+ set(ZLIB_SOURCE_FILES
+    "${PATH_TO_ROOT}/External/zlib/adler32.c"
+    "${PATH_TO_ROOT}/External/zlib/compress.c"
+    "${PATH_TO_ROOT}/External/zlib/crc32.c"
+    "${PATH_TO_ROOT}/External/zlib/deflate.c"
+    "${PATH_TO_ROOT}/External/zlib/gzclose.c"
+    "${PATH_TO_ROOT}/External/zlib/gzlib.c"
+    "${PATH_TO_ROOT}/External/zlib/gzread.c"
+    "${PATH_TO_ROOT}/External/zlib/gzwrite.c"
+    "${PATH_TO_ROOT}/External/zlib/infback.c"
+    "${PATH_TO_ROOT}/External/zlib/inffast.c"
+    "${PATH_TO_ROOT}/External/zlib/inflate.c"
+    "${PATH_TO_ROOT}/External/zlib/inftrees.c"
+    "${PATH_TO_ROOT}/External/zlib/trees.c"
+    "${PATH_TO_ROOT}/External/zlib/uncompr.c"
+    "${PATH_TO_ROOT}/External/zlib/zutil.c"
+    "${PATH_TO_ROOT}/External/zlib/contrib/minizip/unzip.c"
+ )
+    
+ set(ZLIB_INCLUDE_DIRS
+    "${PATH_TO_ROOT}/External/zlib"
+    "${PATH_TO_ROOT}/External/zlib/contrib/minizip"
+ )
+endif()
+
  set(COMMON_INCLUDE_DIRS
     "${PATH_TO_ROOT}/Source"
     "${PATH_TO_ROOT}/Source/Common"
@@ -110,34 +136,4 @@ target_set_flags(
     "${FLAGS_RELEASE}"
 )
 
-if(NOT DEFINED HC_NOZLIB)
-    set(ZLIB_SOURCE_FILES
-    "${PATH_TO_ROOT}/External/zlib/adler32.c"
-    "${PATH_TO_ROOT}/External/zlib/compress.c"
-    "${PATH_TO_ROOT}/External/zlib/crc32.c"
-    "${PATH_TO_ROOT}/External/zlib/deflate.c"
-    "${PATH_TO_ROOT}/External/zlib/gzclose.c"
-    "${PATH_TO_ROOT}/External/zlib/gzlib.c"
-    "${PATH_TO_ROOT}/External/zlib/gzread.c"
-    "${PATH_TO_ROOT}/External/zlib/gzwrite.c"
-    "${PATH_TO_ROOT}/External/zlib/infback.c"
-    "${PATH_TO_ROOT}/External/zlib/inffast.c"
-    "${PATH_TO_ROOT}/External/zlib/inflate.c"
-    "${PATH_TO_ROOT}/External/zlib/inftrees.c"
-    "${PATH_TO_ROOT}/External/zlib/trees.c"
-    "${PATH_TO_ROOT}/External/zlib/uncompr.c"
-    "${PATH_TO_ROOT}/External/zlib/zutil.c"
-    "${PATH_TO_ROOT}/External/zlib/contrib/minizip/unzip.c"
-    )
-
-    set(ZLIB_INCLUDE_DIRS
-    "${PATH_TO_ROOT}/External/zlib"
-    "${PATH_TO_ROOT}/External/zlib/contrib/minizip"
-    )
-
-    include("../libHttpClient.CMake/RemoveFlagFromFile.cmake")
-
-    foreach(file "${ZLIB_SOURCE_FILES}")
-        remove_flag_from_file("${PROJECT_NAME}" ${file} -std=c++17)
-    endforeach()
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
