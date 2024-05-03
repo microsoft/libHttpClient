@@ -8,7 +8,6 @@ function(GET_LIBHC_FLAGS OUT_FLAGS OUT_FLAGS_DEBUG OUT_FLAGS_RELEASE)
         "-Wall"
         "-fexceptions"
         "-frtti"
-        "-std=c++17"
         "-Wno-unknown-pragmas"
         "-Wno-pragma-once-outside-header"
         "-DHC_PLATFORM_MSBUILD_GUESS=HC_PLATFORM_LINUX"
@@ -19,18 +18,20 @@ function(GET_LIBHC_FLAGS OUT_FLAGS OUT_FLAGS_DEBUG OUT_FLAGS_RELEASE)
         list(APPEND FLAGS "-DHC_NOWEBSOCKETS=1")
     endif()
 
+    if (DEFINED HC_NOZLIB)
+        list(APPEND FLAGS "-DHC_NOZLIB=1")
+    endif()
+
     set("${OUT_FLAGS}" "${FLAGS}" PARENT_SCOPE)
 
     set("${OUT_FLAGS_DEBUG}"
         "-O0"
-        "-std=c++17"
         "-DHC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE"
         PARENT_SCOPE
         )
 
     set("${OUT_FLAGS_RELEASE}"
         "-Os"
-        "-std=c++17"
         "-DHC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT"
         PARENT_SCOPE
         )

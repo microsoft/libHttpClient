@@ -149,4 +149,6 @@ target_set_flags(
     "${FLAGS_RELEASE}"
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
