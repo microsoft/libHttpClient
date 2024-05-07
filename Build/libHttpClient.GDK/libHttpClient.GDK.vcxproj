@@ -4,6 +4,10 @@
     <ProjectGuid>{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}</ProjectGuid>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <GDKExtLibNames>Xbox.XCurl.API</GDKExtLibNames>
+    <PlatformToolset Condition="$(VisualStudioVersion)==14">v140</PlatformToolset>
+    <PlatformToolset Condition="$(VisualStudioVersion)==15">v141</PlatformToolset>
+    <PlatformToolset Condition="$(VisualStudioVersion)==16">v142</PlatformToolset>
+    <PlatformToolset Condition="$(VisualStudioVersion)==17">v143</PlatformToolset>
   </PropertyGroup>
   <ItemGroup>
     <None Include="libHttpClient.GDK.def" />
