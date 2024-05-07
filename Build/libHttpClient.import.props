@@ -15,10 +15,6 @@
   <!--Project names and paths-->
   <PropertyGroup>
     <HCProjectName>libHttpClient.$(HCPlatform)</HCProjectName>
-    <HCLibToolset>$(PlatformToolsetVersion)</HCLibToolset>
-    <HCLibToolset Condition="'$(PlatformToolset)'=='v141'">141</HCLibToolset>
-    <HCLibToolset Condition="'$(PlatformToolset)'=='v142'">142</HCLibToolset>
-    <HCLibToolset Condition="'$(PlatformToolset)'=='v143'">143</HCLibToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(HCStaticLib)' == 'true'">
     <HCLibToolset>$(PlatformToolsetVersion)</HCLibToolset>
