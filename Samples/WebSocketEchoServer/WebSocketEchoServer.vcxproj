@@ -8,7 +8,7 @@
   <Import Project="$(HCBuildRoot)\libHttpClient.import.props" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <WarningLevel>Level2</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;_CONSOLE;ASIO_STANDALONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
