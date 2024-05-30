@@ -81,6 +81,7 @@ if (NOT DEFINED HC_NOZLIB)
     "${PATH_TO_ROOT}/External/zlib/uncompr.c"
     "${PATH_TO_ROOT}/External/zlib/zutil.c"
     "${PATH_TO_ROOT}/External/zlib/contrib/minizip/unzip.c"
+    "${PATH_TO_ROOT}/External/zlib/contrib/minizip/ioapi.c"
  )
     
  set(ZLIB_INCLUDE_DIRS
