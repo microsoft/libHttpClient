@@ -18,7 +18,7 @@
         $(HCRoot)\External\opensslGeneratedHeaders\Win32\internal\
       </AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
-      <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164;4244;4267</DisableSpecificWarnings>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>
@@ -40,7 +40,7 @@
         _WINSOCK_DEPRECATED_NO_WARNINGS;
         %(PreprocessorDefinitions)
       </PreprocessorDefinitions>
-      <WarningLevel>Level2</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
