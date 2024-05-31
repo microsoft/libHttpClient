@@ -369,15 +369,25 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     // Decompress Response Bytes 
     if (Compression::Available() && call->compressedResponse == true)
     {
-        http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
+        // Retrieve the value of Content=Encoding response header
+        const char* encodingHeaderValue;
+        HCHttpCallResponseGetHeader(call, "Content-Encoding", &encodingHeaderValue);
+        
+        if (encodingHeaderValue != nullptr)
+        {
+            if (std::strcmp(encodingHeaderValue, "gzip") == 0)
+            {
+                http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
 
-        Compression::DecompressFromGzip(
-            call->responseBodyBytes.data(),
-            call->responseBodyBytes.size(),
-            uncompressedResponseBodyBuffer);
+                Compression::DecompressFromGzip(
+                    call->responseBodyBytes.data(),
+                    call->responseBodyBytes.size(),
+                    uncompressedResponseBodyBuffer);
 
-        call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
-        call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+                call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
+                call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+            }
+        }
     }
 
     // Check if we 'reset' the custom response write callback before decompressing the response

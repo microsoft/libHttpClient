@@ -192,7 +192,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     std::string method = "GET";
     bool retryAllowed = true;
     std::vector<std::vector<std::string>> headers;
-    std::vector< std::string > header;
+    std::vector<std::string> header;
 
     if (enableGzipResponseCompression) 
     {
