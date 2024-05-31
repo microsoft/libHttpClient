@@ -1,7 +1,7 @@
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4512 4996 4701 )
+#pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #define _SCL_SECURE_NO_WARNINGS
