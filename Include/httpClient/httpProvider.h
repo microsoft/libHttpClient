@@ -151,12 +151,10 @@ STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
     ) noexcept;
 
 /// <summary>
-/// TODO - Add documentation
+/// Get the function used by the HTTP call to get progress updates
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
-/// <param name="readFunction">The read function of this HTTP call.</param>
-/// <param name="bodySize">The size of the body.</param>
-/// <param name="context">The context associated with this read function.</param>
+/// <param name="progressReportFunction">The progress report callback function of this HTTP call.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetProgressReportFunction(
     _In_ HCCallHandle call,

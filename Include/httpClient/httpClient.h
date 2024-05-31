@@ -442,7 +442,7 @@ typedef HRESULT
 (CALLBACK* HCHttpCallProgressReportFunction)(
     _In_ HCCallHandle call,
     _Out_ size_t progress
-    );
+);
 
 /// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
@@ -464,10 +464,12 @@ STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     ) noexcept;
 
 /// <summary>
-/// TODO - Documentation
+/// Sets a custom callback function that will be used to provide progress updates when uploading 
+/// or downloading a file.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
-/// <param name="progressReportFunction">The progress report function this call should use.</param>
+/// <param name="progressReportFunction">The progress report callback function this call should use.</param>
+/// <param name="progressReportFrequency">This is a percentage value from 1 - 100 that represents of how often you'd like to get progress reports.</param>
 /// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
 /// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallRequestSetProgressReportFunction(
