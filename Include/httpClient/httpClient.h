@@ -432,6 +432,19 @@ typedef HRESULT
     );
 
 /// <summary>
+/// The callback definition used by an HTTP call to get progress updates when uploading or downloading a file. This callback will be invoked
+/// on an unspecified background thread which is platform dependent.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="progress">The current progress percentage of the file being uploaded/downloaded.</param>
+/// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+typedef HRESULT
+(CALLBACK* HCHttpCallProgressReportFunction)(
+    _In_ HCCallHandle call,
+    _Out_ size_t progress
+    );
+
+/// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
 /// performed. If a custom read callback is used, any request body data previously set by
 /// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
@@ -449,6 +462,19 @@ STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ size_t bodySize,
     _In_opt_ void* context
     ) noexcept;
+
+/// <summary>
+/// TODO - Documentation
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="progressReportFunction">The progress report function this call should use.</param>
+/// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallRequestSetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallProgressReportFunction progressReportFunction,
+    _In_ size_t progressReportFrequency
+) noexcept;
 
 /// <summary>
 /// Set a request header for the HTTP call.

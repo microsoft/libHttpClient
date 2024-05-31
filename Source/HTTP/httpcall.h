@@ -83,6 +83,12 @@ public:
     uint32_t timeoutWindowInSeconds{ 0 };
     uint32_t retryDelayInSeconds{ 0 };
 
+    // Progress Report
+    HCHttpCallProgressReportFunction progressReportFunction{};
+    size_t progressReportFrequency{ 1 };
+
+    //static HRESULT CALLBACK ReportProgress(uint32_t progress, void* status);
+
     static HRESULT CALLBACK ReadRequestBody(
         _In_ HCCallHandle call,
         _In_ size_t offset,

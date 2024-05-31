@@ -199,6 +199,31 @@ try
 CATCH_RETURN()
 
 STDAPI
+HCHttpCallRequestSetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallProgressReportFunction progressReportFunction,
+    _In_ size_t progressReportFrequency
+) noexcept
+try
+{
+    if (call == nullptr || progressReportFunction == nullptr || progressReportFrequency == 0)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+        return E_HC_NOT_INITIALISED;
+
+    call->progressReportFunction = progressReportFunction;
+    call->progressReportFrequency = progressReportFrequency;
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
 HCHttpCallRequestGetRequestBodyBytes(
     _In_ HCCallHandle call,
     _Outptr_result_bytebuffer_maybenull_(*requestBodySize) const uint8_t** requestBodyBytes,
@@ -263,6 +288,24 @@ try
     *readFunction = call->requestBodyReadFunction;
     *context = call->requestBodyReadFunctionContext;
     *requestBodySize = call->requestBodySize;
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallRequestGetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _Out_ HCHttpCallProgressReportFunction* progressReportFunction
+) noexcept
+try
+{
+    if (call == nullptr || progressReportFunction == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *progressReportFunction = call->progressReportFunction;
 
     return S_OK;
 }

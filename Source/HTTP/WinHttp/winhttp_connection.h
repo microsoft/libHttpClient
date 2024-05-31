@@ -298,6 +298,14 @@ private:
     proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
 
+    // Progress Report properties
+    size_t m_responseBodySize = 0;
+    size_t m_responseBodyRemainingToRead = 0;
+    size_t m_responseBodyLastProgressReport = 0;
+    static void ReportProgress(_In_ WinHttpConnection* pRequestContext, _In_ size_t bodySize, _In_ bool isResponse);
+    static size_t GetResponseContentLength(_In_ WinHttpConnection* pRequestContext);
+
+
     struct WebSocketSendContext
     {
         XAsyncBlock* async; // non-owning

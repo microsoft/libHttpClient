@@ -151,6 +151,19 @@ STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
     ) noexcept;
 
 /// <summary>
+/// TODO - Add documentation
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="readFunction">The read function of this HTTP call.</param>
+/// <param name="bodySize">The size of the body.</param>
+/// <param name="context">The context associated with this read function.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestGetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _Out_ HCHttpCallProgressReportFunction* progressReportFunction
+) noexcept;
+
+/// <summary>
 /// Get a request header for the HTTP call for a given header name.
 /// </summary>
 /// <param name="call">The handle of the HTTP call</param>

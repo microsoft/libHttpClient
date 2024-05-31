@@ -187,6 +187,16 @@ HRESULT CustomResponseBodyWrite(HCCallHandle call, const uint8_t* source, size_t
     return S_OK;
 }
 
+HRESULT CALLBACK ProgressReportFunction(
+    _In_ HCCallHandle call,
+    _Out_ size_t progress
+) noexcept
+{
+    printf("PROGRESS: %zu\n", progress);
+
+    return S_OK;
+}
+
 void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression, bool customWrite)
 {
     std::string method = "GET";
@@ -222,6 +232,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
+    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 5);
 
     if (enableGzipResponseCompression)
     {
@@ -350,6 +361,194 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
 }
 
+void DoHttpCallWithBytes(std::string url, std::vector<uint8_t> requestBytes, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression, bool customWrite)
+{
+    std::string method = "GET";
+    bool retryAllowed = true;
+    std::vector<std::vector<std::string>> headers;
+    std::vector< std::string > header;
+
+    if (enableGzipResponseCompression)
+    {
+        method = "POST";
+        header.push_back("X-SecretKey");
+        header.push_back("");
+        headers.push_back(header);
+
+        header.clear();
+        header.push_back("Accept-Encoding");
+        header.push_back("application/gzip");
+        headers.push_back(header);
+
+        header.clear();
+        header.push_back("Content-Type");
+        header.push_back("application/json");
+        headers.push_back(header);
+    }
+
+    header.clear();
+    header.push_back("TestHeader");
+    header.push_back("1.0");
+    headers.push_back(header);
+
+    HCCallHandle call = nullptr;
+    HCHttpCallCreate(&call);
+    HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
+    HCHttpCallRequestSetRequestBodyBytes(call, requestBytes.data(), (uint32_t)requestBytes.size());
+    HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
+    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 5);
+
+    if (enableGzipResponseCompression)
+    {
+        HCHttpCallResponseSetGzipCompressed(call, true);
+    }
+
+    if (enableGzipCompression)
+    {
+        HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Medium);
+    }
+
+    for (auto& header : headers)
+    {
+        std::string headerName = header[0];
+        std::string headerValue = header[1];
+        HCHttpCallRequestSetHeader(call, headerName.c_str(), headerValue.c_str(), true);
+    }
+
+    printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
+
+    std::vector<uint8_t> buffer;
+    SampleHttpCallAsyncContext* hcContext = new SampleHttpCallAsyncContext{ call, isJson, filePath, buffer, customWrite };
+    XAsyncBlock* asyncBlock = new XAsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
+    asyncBlock->context = hcContext;
+    asyncBlock->queue = g_queue;
+    if (customWrite)
+    {
+        HCHttpCallResponseBodyWriteFunction customWriteWrapper = [](HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context) -> HRESULT
+            {
+                return CustomResponseBodyWrite(call, source, bytesAvailable, context);
+            };
+
+        HCHttpCallResponseSetResponseBodyWriteFunction(call, customWriteWrapper, asyncBlock->context);
+    }
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+        {
+            const char* str;
+            HRESULT networkErrorCode = S_OK;
+            uint32_t platErrCode = 0;
+            uint32_t statusCode = 0;
+            std::string responseString;
+            std::string errMessage;
+
+            SampleHttpCallAsyncContext* hcContext = static_cast<SampleHttpCallAsyncContext*>(asyncBlock->context);
+            HCCallHandle call = hcContext->call;
+            bool isJson = hcContext->isJson;
+            std::string filePath = hcContext->filePath;
+            std::vector<uint8_t> readBuffer = hcContext->response;
+            readBuffer.push_back('\0');
+            bool customWriteUsed = hcContext->isCustom;
+            HRESULT hr = XAsyncGetStatus(asyncBlock, false);
+            if (FAILED(hr))
+            {
+                // This should be a rare error case when the async task fails
+                printf_s("Couldn't get HTTP call object 0x%0.8x\r\n", hr);
+                HCHttpCallCloseHandle(call);
+                return;
+            }
+
+            HCHttpCallResponseGetNetworkErrorCode(call, &networkErrorCode, &platErrCode);
+            HCHttpCallResponseGetStatusCode(call, &statusCode);
+            if (!customWriteUsed)
+            {
+                HCHttpCallResponseGetResponseString(call, &str);
+                if (str != nullptr) responseString = str;
+
+                if (!isJson)
+                {
+                    size_t bufferSize = 0;
+                    HCHttpCallResponseGetResponseBodyBytesSize(call, &bufferSize);
+                    uint8_t* buffer = new uint8_t[bufferSize];
+                    size_t bufferUsed = 0;
+                    HCHttpCallResponseGetResponseBodyBytes(call, bufferSize, buffer, &bufferUsed);
+                    HANDLE hFile = CreateFileA(filePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+                    DWORD bufferWritten = 0;
+                    WriteFile(hFile, buffer, (DWORD)bufferUsed, &bufferWritten, NULL);
+                    CloseHandle(hFile);
+                    delete[] buffer;
+                }
+            }
+
+            std::vector<std::vector<std::string>> headers = ExtractAllHeaders(call);
+            HCHttpCallCloseHandle(call);
+
+            printf_s("HTTP call done\r\n");
+            printf_s("Network error code: 0x%0.8x\r\n", networkErrorCode);
+            printf_s("HTTP status code: %d\r\n", statusCode);
+
+            int i = 0;
+            for (auto& header : headers)
+            {
+                printf_s("Header[%d] '%s'='%s'\r\n", i, header[0].c_str(), header[1].c_str());
+                i++;
+            }
+
+            if (!customWriteUsed)
+            {
+                if (isJson && responseString.length() > 0)
+                {
+                    // Returned string starts with a BOM strip it out.
+                    uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
+                    if (responseString.find(reinterpret_cast<char*>(BOM)) == 0)
+                    {
+                        responseString = responseString.substr(3);
+                    }
+                    web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
+                }
+
+                printf_s("Response string:\r\n%s\r\n", responseString.c_str());
+            }
+            else
+            {
+                readBuffer.push_back('\0');
+                const char* responseStr = reinterpret_cast<const char*>(readBuffer.data());
+                printf_s("Response string: %s\n", responseStr);
+            }
+
+            SetEvent(g_exampleTaskDone.get());
+            delete asyncBlock;
+        };
+
+
+    HCHttpCallPerformAsync(call, asyncBlock);
+
+    WaitForSingleObject(g_exampleTaskDone.get(), INFINITE);
+}
+
+void GetFileBytes(std::string filePath)
+{
+    std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
+
+    std::ifstream largeFile(filePath);
+    constexpr size_t bufferSize = 1024 * 1024;
+
+    std::vector<unsigned char> buffer(bufferSize);
+
+    while (largeFile)
+    {
+        largeFile.read(reinterpret_cast<char*>(buffer.data()), bufferSize);
+        DoHttpCallWithBytes(url1, buffer, true, "", false, false, false);
+    }
+}
+
+void GetFileBytes2()
+{
+    std::string url1 = "http://212.183.159.230/20MB.zip";
+    //std::string url1 = "https://proof.ovh.net/files/1Mb.dat";
+
+    DoHttpCall(url1, "", true, "", false, false, false);
+}
+
 int main()
 {
     HCInitialize(nullptr);
@@ -360,7 +559,7 @@ int main()
     StartBackgroundThread();
 
     std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
-    DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false, false);
+    /*DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false, false);
     DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", true, false, false);
 
     std::string url2 = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
@@ -368,7 +567,11 @@ int main()
 
     std::string url3 = "https://80996.playfabapi.com/authentication/GetEntityToken";
     DoHttpCall(url3, "", false, "", false, true, false);
-    DoHttpCall(url3, "", false, "", false, true, true);
+    DoHttpCall(url3, "", false, "", false, true, true);*/
+
+    //GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\XSAPI_GDK2017_Release.zip");
+    //GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\1GB.bin");
+    GetFileBytes2();
 
     HCCleanup();
     ShutdownActiveThreads();
