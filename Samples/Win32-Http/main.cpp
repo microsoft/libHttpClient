@@ -189,10 +189,12 @@ HRESULT CustomResponseBodyWrite(HCCallHandle call, const uint8_t* source, size_t
 
 HRESULT CALLBACK ProgressReportFunction(
     _In_ HCCallHandle call,
-    _Out_ size_t progress
+    _Out_ uint64_t current,
+    _Out_ uint64_t total
 ) noexcept
 {
-    printf("PROGRESS: %zu\n", progress);
+    float progress = (float)current / (float)total;
+    printf("PROGRESS: %.2f\n", progress * 100);
 
     return S_OK;
 }
@@ -232,7 +234,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
-    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 5);
+    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 1);
 
     if (enableGzipResponseCompression)
     {
@@ -329,27 +331,27 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
             i++;
         }
 
-        if (!customWriteUsed) 
-        {
-            if (isJson && responseString.length() > 0)
-            {
-                // Returned string starts with a BOM strip it out.
-                uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
-                if (responseString.find(reinterpret_cast<char*>(BOM)) == 0)
-                {
-                    responseString = responseString.substr(3);
-                }
-                web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
-            }
+        //if (!customWriteUsed) 
+        //{
+        //    if (isJson && responseString.length() > 0)
+        //    {
+        //        // Returned string starts with a BOM strip it out.
+        //        uint8_t BOM[] = { 0xef, 0xbb, 0xbf, 0x0 };
+        //        if (responseString.find(reinterpret_cast<char*>(BOM)) == 0)
+        //        {
+        //            responseString = responseString.substr(3);
+        //        }
+        //        web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
+        //    }
 
-            printf_s("Response string:\r\n%s\r\n", responseString.c_str());
-        }
-        else 
-        {
-            readBuffer.push_back('\0');
-            const char* responseStr = reinterpret_cast<const char*>(readBuffer.data());
-            printf_s("Response string: %s\n", responseStr);
-        }
+        //    printf_s("Response string:\r\n%s\r\n", responseString.c_str());
+        //}
+        //else 
+        //{
+        //    readBuffer.push_back('\0');
+        //    const char* responseStr = reinterpret_cast<const char*>(readBuffer.data());
+        //    printf_s("Response string: %s\n", responseStr);
+        //}
         
         SetEvent(g_exampleTaskDone.get());
         delete asyncBlock;
@@ -569,9 +571,9 @@ int main()
     DoHttpCall(url3, "", false, "", false, true, false);
     DoHttpCall(url3, "", false, "", false, true, true);*/
 
-    //GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\XSAPI_GDK2017_Release.zip");
+    GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\XSAPI_GDK2017_Release.zip");
     //GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\1GB.bin");
-    GetFileBytes2();
+    //GetFileBytes2();
 
     HCCleanup();
     ShutdownActiveThreads();

@@ -518,14 +518,17 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
     if (progressReportFunction != nullptr)
     {
         size_t progress;
+        uint64_t current;
 
         if (isResponse)
         {
             progress = 100 - (size_t)(((float)pRequestContext->m_responseBodyRemainingToRead * 100) / (float)bodySize);
+            current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
         }
         else
         {
             progress = (size_t)(((float)pRequestContext->m_requestBodyOffset / (float)bodySize) * 100);
+            current = pRequestContext->m_requestBodyOffset;
         }
 
         if (progress != pRequestContext->m_responseBodyLastProgressReport)
@@ -534,7 +537,7 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
             {
                 pRequestContext->m_responseBodyLastProgressReport = progress;
 
-                hr = progressReportFunction(pRequestContext->m_call, progress);
+                hr = progressReportFunction(pRequestContext->m_call, current, bodySize);
                 if (FAILED(hr))
                 {
                     pRequestContext->complete_task(hr);

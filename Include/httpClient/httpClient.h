@@ -436,12 +436,14 @@ typedef HRESULT
 /// on an unspecified background thread which is platform dependent.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
-/// <param name="progress">The current progress percentage of the file being uploaded/downloaded.</param>
+/// <param name="current">The current amount of processed bytes of the file being uploaded/downloaded.</param>
+/// <param name="total">The total size in bytes of the file being uploaded/downloaded.</param>
 /// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCHttpCallProgressReportFunction)(
     _In_ HCCallHandle call,
-    _Out_ size_t progress
+    _Out_ uint64_t current,
+    _Out_ uint64_t total
 );
 
 /// <summary>
