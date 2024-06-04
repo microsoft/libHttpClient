@@ -194,8 +194,7 @@ HRESULT CALLBACK ProgressReportFunction(
 ) noexcept
 {
     float progress = (float)current / (float)total;
-    printf("PROGRESS: %.2f\n", progress * 100);
-
+    printf("%d / %d -> %.2f %% \n", (int)current, (int)total, progress * 100);
     return S_OK;
 }
 
@@ -234,7 +233,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
-    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 1);
+    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 5);
 
     if (enableGzipResponseCompression)
     {
@@ -545,8 +544,10 @@ void GetFileBytes(std::string filePath)
 
 void GetFileBytes2()
 {
-    std::string url1 = "http://212.183.159.230/20MB.zip";
+    //std::string url1 = "http://212.183.159.230/20MB.zip";
     //std::string url1 = "https://proof.ovh.net/files/1Mb.dat";
+    //std::string url1 = "https://ash-speed.hetzner.com/1GB.bin";
+    std::string url1 = "http://212.183.159.230/512MB.zip";
 
     DoHttpCall(url1, "", true, "", false, false, false);
 }
@@ -571,9 +572,9 @@ int main()
     DoHttpCall(url3, "", false, "", false, true, false);
     DoHttpCall(url3, "", false, "", false, true, true);*/
 
-    GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\XSAPI_GDK2017_Release.zip");
+    //GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\XSAPI_GDK2017_Release.zip");
     //GetFileBytes("C:\\Users\\raulalbertog\\Downloads\\1GB.bin");
-    //GetFileBytes2();
+    GetFileBytes2();
 
     HCCleanup();
     ShutdownActiveThreads();
