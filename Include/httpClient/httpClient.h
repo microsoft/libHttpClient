@@ -442,8 +442,8 @@ typedef HRESULT
 typedef HRESULT
 (CALLBACK* HCHttpCallProgressReportFunction)(
     _In_ HCCallHandle call,
-    _Out_ uint64_t current,
-    _Out_ uint64_t total
+    _In_ uint64_t current,
+    _In_ uint64_t total
 );
 
 /// <summary>
@@ -471,13 +471,15 @@ STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="progressReportFunction">The progress report callback function this call should use.</param>
-/// <param name="progressReportFrequency">This is a percentage value from 1 - 100 that represents of how often you'd like to get progress reports.</param>
+/// <param name="isUploadFunction">Indicates if the function provided will get progress reports when uploading or downloading.</param>
+/// <param name="minimumProgressReportInterval">The minimum interval in seconds that needs to pass for the client to get progress reports.</param>
 /// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
 /// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallRequestSetProgressReportFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallProgressReportFunction progressReportFunction,
-    _In_ size_t progressReportFrequency
+    _In_ bool isUploadFunction,
+    _In_ size_t minimumProgressReportInterval
 ) noexcept;
 
 /// <summary>

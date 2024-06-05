@@ -505,10 +505,10 @@ void WinHttpConnection::read_next_response_chunk(_In_ WinHttpConnection* pReques
     }
 }
 
-void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, _In_ size_t bodySize, _In_ bool isResponse)
+void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, _In_ size_t bodySize, _In_ bool isUpload)
 {
     HCHttpCallProgressReportFunction progressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(pRequestContext->m_call, &progressReportFunction);
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(pRequestContext->m_call, isUpload, &progressReportFunction);
     if (FAILED(hr))
     {
         pRequestContext->complete_task(hr);
@@ -517,32 +517,42 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
 
     if (progressReportFunction != nullptr)
     {
-        size_t progress;
         uint64_t current;
+        std::chrono::steady_clock::time_point lastProgressReport;
+        long minimumProgressReportIntervalInMs;
 
-        if (isResponse)
+        if (isUpload)
         {
-            progress = 100 - (size_t)(((float)pRequestContext->m_responseBodyRemainingToRead * 100) / (float)bodySize);
-            current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            current = pRequestContext->m_requestBodyOffset;
+            lastProgressReport = pRequestContext->m_call->uploadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->uploadMinimumProgressReportInterval * 1000);
         }
         else
         {
-            progress = (size_t)(((float)pRequestContext->m_requestBodyOffset / (float)bodySize) * 100);
-            current = pRequestContext->m_requestBodyOffset;
+            current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            lastProgressReport = pRequestContext->m_call->downloadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->downloadMinimumProgressReportInterval * 1000);
         }
 
-        if (progress != pRequestContext->m_responseBodyLastProgressReport)
-        {
-            if ((progress - pRequestContext->m_responseBodyLastProgressReport) >= pRequestContext->m_call->progressReportFrequency)
-            {
-                pRequestContext->m_responseBodyLastProgressReport = progress;
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastProgressReport).count();
 
-                hr = progressReportFunction(pRequestContext->m_call, current, bodySize);
-                if (FAILED(hr))
-                {
-                    pRequestContext->complete_task(hr);
-                    return;
-                }
+        if (elapsed >= minimumProgressReportIntervalInMs)
+        {
+            if (isUpload)
+            {
+                pRequestContext->m_call->uploadLastProgressReport = now;
+            }
+            else
+            {
+                pRequestContext->m_call->downloadLastProgressReport = now;
+            }
+
+            hr = progressReportFunction(pRequestContext->m_call, current, bodySize);
+            if (FAILED(hr))
+            {
+                pRequestContext->complete_task(hr);
+                return;
             }
         }
     }
@@ -606,7 +616,7 @@ void WinHttpConnection::_multiple_segment_write_data(_In_ WinHttpConnection* pRe
     }
     pRequestContext->m_requestBodyOffset += bytesWritten;
 
-    ReportProgress(pRequestContext, bodySize, false);
+    ReportProgress(pRequestContext, bodySize, true);
 }
 
 void WinHttpConnection::callback_status_write_complete(
@@ -1085,7 +1095,7 @@ void WinHttpConnection::callback_status_read_complete(
         if (pRequestContext->m_responseBodySize > 0)
         {
             pRequestContext->m_responseBodyRemainingToRead -= bytesRead;
-            ReportProgress(pRequestContext, pRequestContext->m_responseBodySize, true);
+            ReportProgress(pRequestContext, pRequestContext->m_responseBodySize, false);
         }
 
         read_next_response_chunk(pRequestContext, bytesRead);

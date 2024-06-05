@@ -233,7 +233,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyString(call, requestBody.c_str());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
-    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 5);
+    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, false, 5);
 
     if (enableGzipResponseCompression)
     {
@@ -397,7 +397,7 @@ void DoHttpCallWithBytes(std::string url, std::vector<uint8_t> requestBytes, boo
     HCHttpCallRequestSetUrl(call, method.c_str(), url.c_str());
     HCHttpCallRequestSetRequestBodyBytes(call, requestBytes.data(), (uint32_t)requestBytes.size());
     HCHttpCallRequestSetRetryAllowed(call, retryAllowed);
-    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, 5);
+    HCHttpCallRequestSetProgressReportFunction(call, ProgressReportFunction, true, 1);
 
     if (enableGzipResponseCompression)
     {

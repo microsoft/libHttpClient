@@ -83,9 +83,15 @@ public:
     uint32_t timeoutWindowInSeconds{ 0 };
     uint32_t retryDelayInSeconds{ 0 };
 
-    // Progress Report
-    HCHttpCallProgressReportFunction progressReportFunction{};
-    size_t progressReportFrequency{ 1 };
+    // Upload Progress Report
+    HCHttpCallProgressReportFunction uploadProgressReportFunction{};
+    size_t uploadMinimumProgressReportInterval{ 2 };
+    std::chrono::steady_clock::time_point uploadLastProgressReport{};
+
+    // Download Progress Report
+    HCHttpCallProgressReportFunction downloadProgressReportFunction{};
+    size_t downloadMinimumProgressReportInterval{ 2 };
+    std::chrono::steady_clock::time_point downloadLastProgressReport{};
 
     //static HRESULT CALLBACK ReportProgress(uint32_t progress, void* status);
 

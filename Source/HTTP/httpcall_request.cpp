@@ -202,11 +202,12 @@ STDAPI
 HCHttpCallRequestSetProgressReportFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallProgressReportFunction progressReportFunction,
-    _In_ size_t progressReportFrequency
+    _In_ bool isUploadFunction,
+    _In_ size_t minimumProgressReportInterval
 ) noexcept
 try
 {
-    if (call == nullptr || progressReportFunction == nullptr || progressReportFrequency == 0)
+    if (call == nullptr || progressReportFunction == nullptr || minimumProgressReportInterval <= 0)
     {
         return E_INVALIDARG;
     }
@@ -216,8 +217,16 @@ try
     if (nullptr == httpSingleton)
         return E_HC_NOT_INITIALISED;
 
-    call->progressReportFunction = progressReportFunction;
-    call->progressReportFrequency = progressReportFrequency;
+    if (isUploadFunction)
+    {
+        call->uploadProgressReportFunction = progressReportFunction;
+        call->uploadMinimumProgressReportInterval = minimumProgressReportInterval;
+    }
+    else
+    {
+        call->downloadProgressReportFunction = progressReportFunction;
+        call->downloadMinimumProgressReportInterval = minimumProgressReportInterval;
+    }
 
     return S_OK;
 }
@@ -296,6 +305,7 @@ CATCH_RETURN()
 STDAPI
 HCHttpCallRequestGetProgressReportFunction(
     _In_ HCCallHandle call,
+    _In_ bool isUploadFunction,
     _Out_ HCHttpCallProgressReportFunction* progressReportFunction
 ) noexcept
 try
@@ -305,7 +315,15 @@ try
         return E_INVALIDARG;
     }
 
-    *progressReportFunction = call->progressReportFunction;
+    if (isUploadFunction)
+    {
+        *progressReportFunction = call->uploadProgressReportFunction;
+
+    }
+    else
+    {
+        *progressReportFunction = call->downloadProgressReportFunction;
+    }
 
     return S_OK;
 }
