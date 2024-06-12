@@ -9,6 +9,16 @@ namespace xbox
 namespace httpclient
 {
 
+#if HC_PLATFORM != HC_PLATFORM_GDK
+#define MINIMAL_PROGRESS_FUNCTIONALITY_INTERVAL     3000000
+#define STOP_DOWNLOAD_AFTER_THIS_MANY_BYTES         6000
+
+struct myprogress {
+    curl_off_t lastruntime; /* type depends on version, see above */
+    CURL* curl;
+};
+#endif
+
 CurlEasyRequest::CurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsyncBlock* async)
     : m_curlEasyHandle{ curlEasyHandle },
     m_hcCallHandle{ hcCall },
@@ -39,6 +49,25 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     size_t bodySize{};
     void* clientRequestBodyReadCallbackContext{};
     RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyReadFunction(hcCall, &clientRequestBodyReadCallback, &bodySize, &clientRequestBodyReadCallbackContext));
+
+// Specify libcurl progress callback and create libcurl progress callback for non-GDK platforms since XCurl doesn't support libcurl progress callback 
+#if HC_PLATFORM != HC_PLATFORM_GDK
+    // Get LHC Progress callback functions
+    HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
+    RETURN_IF_FAILED(HCHttpCallRequestGetProgressReportFunction(hcCall, true, &uploadProgressReportFunction));
+
+    HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
+    RETURN_IF_FAILED(HCHttpCallRequestGetProgressReportFunction(hcCall, false, &downloadProgressReportFunction));
+
+    // If progress callbacks were provided by client then specify libcurl progress callback
+    if (uploadProgressReportFunction != nullptr || downloadProgressReportFunction != nullptr)
+    {
+        struct myprogress prog;
+        easyRequest->SetOpt<void*>(CURLOPT_XFERINFODATA, &prog);
+        easyRequest->SetOpt<curl_xferinfo_callback>(CURLOPT_XFERINFOFUNCTION, &ProgressReportCallback);
+        easyRequest->SetOpt<long>(CURLOPT_NOPROGRESS, 0L);
+    }
+#endif
 
     // we set both POSTFIELDSIZE and INFILESIZE because curl uses one or the
     // other depending on method
@@ -130,6 +159,31 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
 
     return Result<HC_UNIQUE_PTR<CurlEasyRequest>>{ std::move(easyRequest) };
 }
+
+#if HC_PLATFORM != HC_PLATFORM_GDK
+void CurlEasyRequest::Perform()
+{
+    //// Get LHC Progress callback functions
+    //HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
+    //HCHttpCallRequestGetProgressReportFunction(m_hcCallHandle, true, &uploadProgressReportFunction);
+
+    //HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
+    //HCHttpCallRequestGetProgressReportFunction(m_hcCallHandle, false, &downloadProgressReportFunction);
+
+    //// If function is not null then specify libcurl progress callback
+    //if (uploadProgressReportFunction != nullptr || downloadProgressReportFunction != nullptr)
+    //{
+        //struct myprogress prog;
+        //curl_easy_setopt(m_curlEasyHandle, CURLOPT_XFERINFODATA, &prog);
+        //curl_easy_setopt(m_curlEasyHandle, CURLOPT_NOPROGRESS, 0L);
+        //curl_easy_setopt(m_curlEasyHandle, CURLOPT_XFERINFOFUNCTION, &CurlEasyRequest::ProgressReportCallback);
+    //}
+
+    curl_easy_setopt(m_curlEasyHandle, CURLOPT_TIMEOUT, 500);
+    CURLcode result = curl_easy_perform(m_curlEasyHandle);
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::Perform Completed: CURLCode=%ul", result);
+}
+#endif
 
 CURL* CurlEasyRequest::Handle() const noexcept
 {
@@ -232,6 +286,10 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
         return CURL_READFUNC_ABORT;
     }
 
+    request->m_requestBodyOffset += bytesWritten;
+
+    ReportProgress(request, bodySize, true);
+
     return bytesWritten;
 }
 
@@ -299,6 +357,66 @@ size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t ni
     return bufferSize;
 }
 
+size_t CurlEasyRequest::GetResponseContentLength(CURL* curlHandle)
+{
+    curl_off_t contentLength = 0;
+    curl_easy_getinfo(curlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
+    return contentLength;
+}
+
+void CurlEasyRequest::ReportProgress(CurlEasyRequest* request, size_t bodySize, bool isUpload)
+{
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    HCHttpCallProgressReportFunction progressReportFunction = nullptr;
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, isUpload, &progressReportFunction);
+    if (FAILED(hr))
+    {
+        return;
+    }
+
+    if (progressReportFunction != nullptr)
+    {
+        uint64_t current;
+        std::chrono::steady_clock::time_point lastProgressReport;
+        long minimumProgressReportIntervalInMs;
+
+        if (isUpload)
+        {
+            current = request->m_requestBodyOffset;
+            lastProgressReport = request->m_hcCallHandle->uploadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(request->m_hcCallHandle->uploadMinimumProgressReportInterval * 1000);
+        }
+        else
+        {
+            current = bodySize - request->m_responseBodyRemainingToRead;
+            lastProgressReport = request->m_hcCallHandle->downloadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(request->m_hcCallHandle->downloadMinimumProgressReportInterval * 1000);
+        }
+
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastProgressReport).count();
+
+        if (elapsed >= minimumProgressReportIntervalInMs)
+        {
+            if (isUpload)
+            {
+                request->m_hcCallHandle->uploadLastProgressReport = now;
+            }
+            else
+            {
+                request->m_hcCallHandle->downloadLastProgressReport = now;
+            }
+
+            hr = progressReportFunction(request->m_hcCallHandle, current, bodySize);
+            if (FAILED(hr))
+            {
+                return;
+            }
+        }
+    }
+#endif
+}
+
 size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%zu bytes)", nmemb);
@@ -331,6 +449,20 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
         return 0;
     }
 
+    if (!request->m_responseBodySize)
+    {
+        size_t contentLength = GetResponseContentLength(request->m_curlEasyHandle);
+
+        request->m_responseBodySize = contentLength;
+        request->m_responseBodyRemainingToRead = contentLength;
+    }
+
+    if (request->m_responseBodySize > 0)
+    {
+        request->m_responseBodyRemainingToRead -= bufferSize;
+        ReportProgress(request, request->m_responseBodySize, false);
+    }
+
     return bufferSize;
 }
 
@@ -358,6 +490,36 @@ int CurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype type, cha
 
     return CURLE_OK;
 }
+
+#if HC_PLATFORM != HC_PLATFORM_GDK
+int CurlEasyRequest::ProgressReportCallback(void* p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept
+{
+    printf("HELLO WORLD");
+    struct myprogress* myp = (struct myprogress*)p;
+    CURL* curl = myp->curl;
+    curl_off_t curtime = 0;
+
+    curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME_T, &curtime);
+
+    /* under certain circumstances it may be desirable for certain functionality
+       to only run every N seconds, in order to do this the transaction time can
+       be used */
+    if ((curtime - myp->lastruntime) >= MINIMAL_PROGRESS_FUNCTIONALITY_INTERVAL) {
+        myp->lastruntime = curtime;
+        fprintf(stderr, "TOTAL TIME: %lu.%06lu\r\n",
+            (unsigned long)(curtime / 1000000),
+            (unsigned long)(curtime % 1000000));
+    }
+
+    fprintf(stderr, "UP: %lu of %lu  DOWN: %lu of %lu\r\n",
+        (unsigned long)ulnow, (unsigned long)ultotal,
+        (unsigned long)dlnow, (unsigned long)dltotal);
+
+    if (dlnow > STOP_DOWNLOAD_AFTER_THIS_MANY_BYTES)
+        return 1;
+    return 0;
+}
+#endif
 
 HRESULT CurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt) noexcept
 {

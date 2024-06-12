@@ -32,6 +32,7 @@ public:
 
     void Complete(CURLcode result);
     void Fail(HRESULT hr);
+    void Perform();
 
 private:
     CurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsyncBlock* async);
@@ -52,8 +53,18 @@ private:
     static size_t WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept;
     static size_t WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept;
     static int DebugCallback(CURL* curlHandle, curl_infotype type, char* data, size_t size, void* context) noexcept;
-
+    #if HC_PLATFORM != HC_PLATFORM_GDK
+    static int ProgressReportCallback(void* p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept;
+    #endif
     static HRESULT MethodStringToOpt(char const* method, CURLoption& opt) noexcept;
+
+    // Progress Report properties
+    size_t m_requestBodyOffset = 0;
+    size_t m_responseBodySize = 0;
+    size_t m_responseBodyRemainingToRead = 0;
+    static void ReportProgress(CurlEasyRequest* easyRequest, size_t bodySize, bool isUpload);
+    static size_t GetResponseContentLength(CURL* curlHandle);
+
 
     CURL* m_curlEasyHandle;
     HCCallHandle m_hcCallHandle; // non-owning
