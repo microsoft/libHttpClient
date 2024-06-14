@@ -5,6 +5,7 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 project("libssl.Android")
 
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ###########################################
 ### Set up paths for source and include ###

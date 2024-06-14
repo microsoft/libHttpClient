@@ -5,6 +5,7 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 project("libcrypto.Android")
 
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ###########################################
 ### Set up paths for source and include ###
@@ -157,6 +158,8 @@ set(CRYPTO_SOURCE_FILES
     "${PATH_TO_CRYPTO}/bn/bn_srp.c"
     "${PATH_TO_CRYPTO}/bn/bn_word.c"
     "${PATH_TO_CRYPTO}/bn/bn_x931p.c"
+    "${PATH_TO_CRYPTO}/bn/rsa_sup_mul.c"
+    "${PATH_TO_CRYPTO}/bn/rsaz_exp.c"
     "${PATH_TO_CRYPTO}/buffer/buf_err.c"
     "${PATH_TO_CRYPTO}/buffer/buffer.c"
     "${PATH_TO_CRYPTO}/camellia/camellia.c"
