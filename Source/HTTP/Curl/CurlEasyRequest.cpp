@@ -368,59 +368,6 @@ size_t CurlEasyRequest::GetResponseContentLength(CURL* curlHandle)
     return contentLength;
 }
 
-void CurlEasyRequest::ReportProgress(CurlEasyRequest* request, size_t bodySize, bool isUpload)
-{
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    HCHttpCallProgressReportFunction progressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, isUpload, &progressReportFunction);
-    if (FAILED(hr))
-    {
-        return;
-    }
-
-    if (progressReportFunction != nullptr)
-    {
-        uint64_t current;
-        std::chrono::steady_clock::time_point lastProgressReport;
-        long minimumProgressReportIntervalInMs;
-
-        if (isUpload)
-        {
-            current = request->m_requestBodyOffset;
-            lastProgressReport = request->m_hcCallHandle->uploadLastProgressReport;
-            minimumProgressReportIntervalInMs = static_cast<long>(request->m_hcCallHandle->uploadMinimumProgressReportInterval * 1000);
-        }
-        else
-        {
-            current = bodySize - request->m_responseBodyRemainingToRead;
-            lastProgressReport = request->m_hcCallHandle->downloadLastProgressReport;
-            minimumProgressReportIntervalInMs = static_cast<long>(request->m_hcCallHandle->downloadMinimumProgressReportInterval * 1000);
-        }
-
-        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastProgressReport).count();
-
-        if (elapsed >= minimumProgressReportIntervalInMs)
-        {
-            if (isUpload)
-            {
-                request->m_hcCallHandle->uploadLastProgressReport = now;
-            }
-            else
-            {
-                request->m_hcCallHandle->downloadLastProgressReport = now;
-            }
-
-            hr = progressReportFunction(request->m_hcCallHandle, current, bodySize);
-            if (FAILED(hr))
-            {
-                return;
-            }
-        }
-    }
-#endif
-}
-
 size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%zu bytes)", nmemb);
