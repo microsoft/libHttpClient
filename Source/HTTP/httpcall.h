@@ -93,8 +93,6 @@ public:
     size_t downloadMinimumProgressReportInterval{ 2 };
     std::chrono::steady_clock::time_point downloadLastProgressReport{};
 
-    //static HRESULT CALLBACK ReportProgress(uint32_t progress, void* status);
-
     static HRESULT CALLBACK ReadRequestBody(
         _In_ HCCallHandle call,
         _In_ size_t offset,
