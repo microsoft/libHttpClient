@@ -455,7 +455,6 @@ void CurlEasyRequest::ReportProgress(HCCallHandle call, HCHttpCallProgressReport
     }
 }
 
-#if HC_PLATFORM != HC_PLATFORM_GDK
 int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept
 {
     CurlEasyRequest* request = (CurlEasyRequest*)context;
@@ -504,7 +503,6 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
 
     return 0;
 }
-#endif
 
 HRESULT CurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt) noexcept
 {
