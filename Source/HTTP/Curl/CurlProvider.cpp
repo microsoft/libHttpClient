@@ -66,9 +66,6 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     auto easyInitResult = CurlEasyRequest::Initialize(hcCall, async);
     RETURN_IF_FAILED(easyInitResult.hr);
 
-    //printf("EXECUTING");
-    //easyInitResult.ExtractPayload().get()->Perform();
-
     http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>>::iterator iter;
     {
         // CurlProvider::PerformAsync can be called simultaneously from multiple threads so we need to lock
