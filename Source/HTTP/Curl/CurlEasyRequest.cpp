@@ -149,31 +149,6 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     return Result<HC_UNIQUE_PTR<CurlEasyRequest>>{ std::move(easyRequest) };
 }
 
-#if HC_PLATFORM != HC_PLATFORM_GDK
-void CurlEasyRequest::Perform()
-{
-    //// Get LHC Progress callback functions
-    //HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
-    //HCHttpCallRequestGetProgressReportFunction(m_hcCallHandle, true, &uploadProgressReportFunction);
-
-    //HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
-    //HCHttpCallRequestGetProgressReportFunction(m_hcCallHandle, false, &downloadProgressReportFunction);
-
-    //// If function is not null then specify libcurl progress callback
-    //if (uploadProgressReportFunction != nullptr || downloadProgressReportFunction != nullptr)
-    //{
-        //struct myprogress prog;
-        //curl_easy_setopt(m_curlEasyHandle, CURLOPT_XFERINFODATA, &prog);
-        //curl_easy_setopt(m_curlEasyHandle, CURLOPT_NOPROGRESS, 0L);
-        //curl_easy_setopt(m_curlEasyHandle, CURLOPT_XFERINFOFUNCTION, &CurlEasyRequest::ProgressReportCallback);
-    //}
-
-    curl_easy_setopt(m_curlEasyHandle, CURLOPT_TIMEOUT, 500);
-    CURLcode result = curl_easy_perform(m_curlEasyHandle);
-    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::Perform Completed: CURLCode=%ul", result);
-}
-#endif
-
 CURL* CurlEasyRequest::Handle() const noexcept
 {
     return m_curlEasyHandle;
