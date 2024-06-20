@@ -32,7 +32,6 @@ public:
 
     void Complete(CURLcode result);
     void Fail(HRESULT hr);
-    void Perform();
 
 private:
     CurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsyncBlock* async);
@@ -53,9 +52,7 @@ private:
     static size_t WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept;
     static size_t WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept;
     static int DebugCallback(CURL* curlHandle, curl_infotype type, char* data, size_t size, void* context) noexcept;
-    #if HC_PLATFORM != HC_PLATFORM_GDK
     static int ProgressReportCallback(void* context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept;
-#endif
     static HRESULT MethodStringToOpt(char const* method, CURLoption& opt) noexcept;
 
     // Progress Report properties
