@@ -42,6 +42,13 @@ if [ ! -d /usr/local/ssl/include/openssl ] ; then
     exit 1
 fi
 
+if [ -f "$SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a" ]; then
+  echo "Previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a - skipping build"
+  exit 0
+else
+  echo "No previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a - performing build"
+fi
+
 pushd $OPENSSL_SRC
 make clean
 sed -i -e 's/\r$//' Configure
