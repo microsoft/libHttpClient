@@ -134,8 +134,8 @@ void CurlMulti::ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, u
     HRESULT hr = XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, delay, this, CurlMulti::TaskQueueCallback);
     if (FAILED(hr))
     {
-        // Treat errors scheduling the callback as cancellations by calling TaskQueueCallback so that m_taskQueueCallbacksPending
-        // gets updated approrpriately
+        // Treat errors scheduling the callback as cancellations by synchronously calling 'TaskQueueCallback' with canceled=true.
+        // Pending requests will be completed with an E_ABORT failure and m_taskQueueCallbacksPending will be appropriatly updated.
         TaskQueueCallback(this, true);
 
         HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "CurlMulti::ScheduleTaskQueueCallback: XTaskQueueSubmitDelayedCallback failed");
