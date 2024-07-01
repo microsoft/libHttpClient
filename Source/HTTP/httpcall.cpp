@@ -379,8 +379,8 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
             // Check that the response was compressed using gzip
             if (std::strcmp(encodingHeaderValue, "gzip") == 0)
             {
-                // Added Check for Mac + iOS
-                // Attempt to decompress only if gzip header is present (NSData is already decompressed therefore responseBodyBytes will not contain a gzip header)
+                // Added Check for gzip header
+                // Attempt to decompress only if gzip header is present (skip manual decompression if responseBodyBytes is already decompressed)
                 if (call->responseBodyBytes.size() > 2 && (call->responseBodyBytes[0] == 0x1f && call->responseBodyBytes[1] == 0x8b))
                 {
                     http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
