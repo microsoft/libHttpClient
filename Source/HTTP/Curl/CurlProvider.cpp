@@ -67,7 +67,6 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     RETURN_IF_FAILED(easyInitResult.hr);
 
     http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>>::iterator iter;
-
     {
         // CurlProvider::PerformAsync can be called simultaneously from multiple threads so we need to lock
         // to prevent unsafe access to m_curlMultis

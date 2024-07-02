@@ -83,6 +83,16 @@ public:
     uint32_t timeoutWindowInSeconds{ 0 };
     uint32_t retryDelayInSeconds{ 0 };
 
+    // Upload Progress Report
+    HCHttpCallProgressReportFunction uploadProgressReportFunction{};
+    size_t uploadMinimumProgressReportInterval{ 2 };
+    std::chrono::steady_clock::time_point uploadLastProgressReport{};
+
+    // Download Progress Report
+    HCHttpCallProgressReportFunction downloadProgressReportFunction{};
+    size_t downloadMinimumProgressReportInterval{ 2 };
+    std::chrono::steady_clock::time_point downloadLastProgressReport{};
+
     static HRESULT CALLBACK ReadRequestBody(
         _In_ HCCallHandle call,
         _In_ size_t offset,
