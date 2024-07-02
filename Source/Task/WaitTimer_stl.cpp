@@ -5,9 +5,12 @@ using Deadline = std::chrono::high_resolution_clock::time_point;
 
 namespace OS
 {
+    class TimerQueue;
+
     class WaitTimerImpl
     {
     public:
+        ~WaitTimerImpl();
         HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback);
         void Start(_In_ uint64_t absoluteTime);
         void Cancel();
@@ -17,6 +20,7 @@ namespace OS
 
         void* m_context;
         WaitTimerCallback* m_callback;
+        std::shared_ptr<TimerQueue> m_timerQueue;
     };
 
     struct TimerEntry
@@ -37,7 +41,7 @@ namespace OS
     class TimerQueue
     {
     public:
-        bool LazyInit() noexcept;
+        bool Init() noexcept;
         ~TimerQueue();
 
         void Set(WaitTimerImpl* timer, Deadline deadline) noexcept;
@@ -59,8 +63,8 @@ namespace OS
 
     namespace
     {
-        std::once_flag g_timerQueueLazyInit;
-        TimerQueue g_timerQueue;
+        std::shared_ptr<TimerQueue> g_timerQueue;
+        std::mutex g_timerQueueMutex;
     }
 
     TimerQueue::~TimerQueue()
@@ -77,24 +81,22 @@ namespace OS
         }
     }
 
-    bool TimerQueue::LazyInit() noexcept
+    bool TimerQueue::Init() noexcept
     {
         m_exitThread = false;
-        std::call_once(g_timerQueueLazyInit, [this]()
+
+        try
         {
-            try
+            m_t = std::thread([this]()
             {
-                m_t = std::thread([this]()
-                {
-                    Worker();
-                });
-                m_initialized = true;
-            }
-            catch (...)
-            {
-                m_initialized = false;
-            }
-        });
+                Worker();
+            });
+            m_initialized = true;
+        }
+        catch (...)
+        {
+            m_initialized = false;
+        }
 
         return m_initialized;
     }
@@ -186,27 +188,61 @@ namespace OS
         return e;
     }
 
+    WaitTimerImpl::~WaitTimerImpl()
+    {
+        std::lock_guard<std::mutex> lock{ g_timerQueueMutex };
+
+        // If we are the last one referencing the global timer the
+        // shared use count will be two (us + the global). If it is,
+        // clear out the global. We let our own reference reset
+        // as the class destructs. This puts it outside the mutex
+        // lock, which we want since there is some shutdown cost
+        // associated with shutting the timer down.
+
+        if (g_timerQueue.use_count() == 2)
+        {
+            g_timerQueue.reset();
+        }
+    }
+
     HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback)
     {
         m_context = context;
         m_callback = callback;
 
-        if (!g_timerQueue.LazyInit())
+        std::lock_guard<std::mutex> lock{ g_timerQueueMutex };
+
+        if (g_timerQueue == nullptr)
         {
-            return E_FAIL;
+            try
+            {
+                auto queue = std::make_shared<TimerQueue>();
+                if (!queue->Init())
+                {
+                    return E_FAIL;
+                }
+
+                g_timerQueue = std::move(queue);
+            }
+            catch (const std::bad_alloc&)
+            {
+                return E_OUTOFMEMORY;
+            }
         }
+
+        m_timerQueue = g_timerQueue;
 
         return S_OK;
     }
 
     void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
     {
-        g_timerQueue.Set(this, Deadline(Deadline::duration(absoluteTime)));
+        m_timerQueue->Set(this, Deadline(Deadline::duration(absoluteTime)));
     }
 
     void WaitTimerImpl::Cancel()
     {
-        g_timerQueue.Remove(this);
+        m_timerQueue->Remove(this);
     }
 
     void WaitTimerImpl::InvokeCallback()
