@@ -216,7 +216,7 @@ namespace OS
         {
             try
             {
-                auto queue = std::make_shared<TimerQueue>();
+                auto queue = http_allocate_shared<TimerQueue>();
                 if (!queue->Init())
                 {
                     return E_FAIL;
