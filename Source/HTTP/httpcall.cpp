@@ -370,7 +370,7 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     if (Compression::Available() && call->compressedResponse == true)
     {
         // Retrieve the value of Content-Encoding response header
-        const char* encodingHeaderValue;
+        const char* encodingHeaderValue = nullptr;
         HCHttpCallResponseGetHeader(call, "Content-Encoding", &encodingHeaderValue);
         
         // Ensure Content-Encoding header exists
