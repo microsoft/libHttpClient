@@ -21,7 +21,7 @@ Result<HC_UNIQUE_PTR<CurlMulti>> CurlMulti::Initialize(XTaskQueuePortHandle work
     multi->m_curlMultiHandle = curl_multi_init();
     if (!multi->m_curlMultiHandle)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Initialize: curl_multi_init failed");
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Initialize: curl_multi_init failed");
         return E_FAIL;
     }
 
@@ -39,7 +39,7 @@ CurlMulti::~CurlMulti()
 
     if (!m_easyRequests.empty())
     {
-        HC_TRACE_WARNING(HTTPCLIENT, "XCurlMulti::~XCurlMulti: Failing all active requests.");
+        HC_TRACE_WARNING(HTTPCLIENT, "CurlMulti::~XCurlMulti: Failing all active requests.");
         FailAllRequests(E_UNEXPECTED);
     }
 
@@ -53,18 +53,23 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest)
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
 
+    if (m_cleanupAsyncBlock)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::AddRequest: request added after cleanup");
+        return E_FAIL;
+    }
+
     auto result = curl_multi_add_handle(m_curlMultiHandle, easyRequest->Handle());
     if (result != CURLM_OK)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::AddRequest: curl_multi_add_handle failed with CURLCode=%u", result);
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::AddRequest: curl_multi_add_handle failed with CURLCode=%u", result);
         return HrFromCurlm(result);
     }
 
     m_easyRequests.emplace(easyRequest->Handle(), std::move(easyRequest));
 
-    // Release lock before scheduling Perform in case m_queue is an Immediate dispatch queue
-    lock.unlock();
-    RETURN_IF_FAILED(XTaskQueueSubmitCallback(m_queue, XTaskQueuePort::Work, this, CurlMulti::TaskQueueCallback));
+    // Schedule the perform callback immediately
+    ScheduleTaskQueueCallback(std::move(lock), 0);
 
     return S_OK;
 }
@@ -89,9 +94,10 @@ HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProvid
         assert(multi->m_cleanupAsyncBlock == nullptr);
         multi->m_cleanupAsyncBlock = data->async;
 
-        if (multi->m_easyRequests.empty())
+        if (multi->m_taskQueueCallbacksPending == 0)
         {
-            // No outstanding HTTP requests schedule cleanup immediately
+            // No outstanding HTTP requests schedule cleanup immediately. This condition also ensures that we don't have
+            // a pending Perform call scheduled.
             RETURN_IF_FAILED(XAsyncSchedule(data->async, 0));
         }
         else
@@ -119,8 +125,26 @@ HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProvid
     }
 }
 
+void CurlMulti::ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, uint32_t delay)
+{
+    assert(lock.owns_lock());
+    m_taskQueueCallbacksPending++;
+    lock.unlock();
+
+    HRESULT hr = XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, delay, this, CurlMulti::TaskQueueCallback);
+    if (FAILED(hr))
+    {
+        // Treat errors scheduling the callback as cancellations by synchronously calling 'TaskQueueCallback' with canceled=true.
+        // Pending requests will be completed with an E_ABORT failure and m_taskQueueCallbacksPending will be appropriatly updated.
+        TaskQueueCallback(this, true);
+
+        HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "CurlMulti::ScheduleTaskQueueCallback: XTaskQueueSubmitDelayedCallback failed");
+    }
+}
+
 void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
 {
+    assert(context);
     auto multi = static_cast<CurlMulti*>(context);
 
     if (!canceled)
@@ -128,13 +152,25 @@ void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool can
         HRESULT hr = multi->Perform();
         if (FAILED(hr))
         {
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "XCurlMulti::Perform failed. Failing all active requests.");
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::Perform failed. Failing all active requests.");
             multi->FailAllRequests(hr);
         }
     }
     else
     {
         multi->FailAllRequests(E_ABORT);
+    }
+
+    std::unique_lock<std::mutex> lock{ multi->m_mutex };
+    // If CurlMulti::CleanupAsync was called and there are no remaining task queue callbacks, schedule cleanup now
+    if (--multi->m_taskQueueCallbacksPending == 0 && multi->m_cleanupAsyncBlock)
+    {
+        HRESULT hr = XAsyncSchedule(multi->m_cleanupAsyncBlock, 0);
+        if (FAILED(hr))
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::TaskQueueCallback: Failed to schedule CleanupAsyncProvider!");
+            assert(false);
+        }
     }
 }
 
@@ -146,7 +182,7 @@ HRESULT CurlMulti::Perform() noexcept
     CURLMcode result = curl_multi_perform(m_curlMultiHandle, &runningRequests);
     if (result != CURLM_OK)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: curl_multi_perform failed with CURLCode=%u", result);
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_perform failed with CURLCode=%u", result);
         return HrFromCurlm(result);
     }
 
@@ -166,7 +202,7 @@ HRESULT CurlMulti::Perform() noexcept
                 result = curl_multi_remove_handle(m_curlMultiHandle, message->easy_handle);
                 if (result != CURLM_OK)
                 {
-                    HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: curl_multi_remove_handle failed with CURLCode=%u", result);
+                    HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_remove_handle failed with CURLCode=%u", result);
                 }
 
                 requestIter->second->Complete(message->data.result);
@@ -177,7 +213,7 @@ HRESULT CurlMulti::Perform() noexcept
             case CURLMSG_LAST:
             default:
             {
-                HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: Unrecognized CURLMsg!");
+                HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: Unrecognized CURLMsg!");
                 assert(false);
             }
             break;
@@ -197,11 +233,12 @@ HRESULT CurlMulti::Perform() noexcept
 
         if (result != CURLM_OK)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::Perform: curl_multi_poll failed with CURLCode=%u", result);
+            HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_poll failed with CURLCode=%u", result);
             return HrFromCurlm(result);
         }
 
-        RETURN_IF_FAILED(XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, workAvailable ? 0 : PERFORM_DELAY_MS, this, CurlMulti::TaskQueueCallback));
+        uint32_t delay = workAvailable ? 0 : PERFORM_DELAY_MS;
+        ScheduleTaskQueueCallback(std::move(lock), delay);
     }
     else if (m_cleanupAsyncBlock)
     {
@@ -209,7 +246,7 @@ HRESULT CurlMulti::Perform() noexcept
         HRESULT hr = XAsyncSchedule(m_cleanupAsyncBlock, 0);
         if (FAILED(hr))
         {
-            HC_TRACE_ERROR_HR(HTTPCLIENT, "CurlMulti: Failed to schedule CleanupAsyncProvider!", hr);
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti: Failed to schedule CleanupAsyncProvider!");
             assert(false);
         }
     }
@@ -228,22 +265,11 @@ void CurlMulti::FailAllRequests(HRESULT hr) noexcept
             auto result = curl_multi_remove_handle(m_curlMultiHandle, pair.first);
             if (FAILED(HrFromCurlm(result)))
             {
-                HC_TRACE_ERROR(HTTPCLIENT, "XCurlMulti::FailAllRequests: curl_multi_remove_handle failed with CURLCode=%u", result);
+                HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::FailAllRequests: curl_multi_remove_handle failed with CURLCode=%u", result);
             }
             pair.second->Fail(hr);
         }
         m_easyRequests.clear();
-
-        if (m_cleanupAsyncBlock)
-        {
-            // CleanupAsync was called and no remaining requests, schedule cleanup now
-            hr = XAsyncSchedule(m_cleanupAsyncBlock, 0);
-            if (FAILED(hr))
-            {
-                HC_TRACE_ERROR_HR(HTTPCLIENT, "CurlMulti: Failed to schedule CleanupAsyncProvider!", hr);
-                assert(false);
-            }
-        }
     }
 }
 
