@@ -34,6 +34,15 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
         jboolean isNoNetwork
 );
 
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress(
+        JNIEnv* env,
+        jobject /* instance */,
+        jlong call,
+        jlong current,
+        jlong total,
+        jboolean isUpload
+);
+
 JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
         JNIEnv* env,
         jobject /* instance */,
