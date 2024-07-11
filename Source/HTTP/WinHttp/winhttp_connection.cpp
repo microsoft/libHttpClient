@@ -507,8 +507,10 @@ void WinHttpConnection::read_next_response_chunk(_In_ WinHttpConnection* pReques
 
 void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, _In_ size_t bodySize, _In_ bool isUpload)
 {
+    size_t minimumProgressInterval;
+    void* progressReportCallbackContext{};
     HCHttpCallProgressReportFunction progressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(pRequestContext->m_call, isUpload, &progressReportFunction);
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(pRequestContext->m_call, isUpload, &progressReportFunction, &minimumProgressInterval, &progressReportCallbackContext);
     if (FAILED(hr))
     {
         pRequestContext->complete_task(hr);
@@ -548,7 +550,7 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
                 pRequestContext->m_call->downloadLastProgressReport = now;
             }
 
-            hr = progressReportFunction(pRequestContext->m_call, current, bodySize);
+            hr = progressReportFunction(pRequestContext->m_call, current, bodySize, progressReportCallbackContext);
             if (FAILED(hr))
             {
                 pRequestContext->complete_task(hr);

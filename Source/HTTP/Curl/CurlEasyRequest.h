@@ -60,7 +60,7 @@ private:
     size_t m_responseBodySize = 0;
     size_t m_responseBodyRemainingToRead = 0;
     static size_t GetResponseContentLength(CURL* curlHandle);
-    static void ReportProgress(HCCallHandle call, HCHttpCallProgressReportFunction progressReportFunction, size_t minimumInterval, size_t current, size_t total, std::chrono::steady_clock::time_point* lastProgressReport);
+    static void ReportProgress(HCCallHandle call, HCHttpCallProgressReportFunction progressReportFunction, size_t minimumInterval, size_t current, size_t total, void* progressReportCallbackContext, std::chrono::steady_clock::time_point* lastProgressReport);
 
     CURL* m_curlEasyHandle;
     HCCallHandle m_hcCallHandle; // non-owning

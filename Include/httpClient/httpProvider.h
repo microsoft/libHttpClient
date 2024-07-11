@@ -156,11 +156,15 @@ STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="isUploadFunction">Indicates if the function returned will get progress reports when uploading or downloading.</param>
 /// <param name="progressReportFunction">The progress report callback function of this HTTP call.</param>
+/// <param name="minimumProgressReportInterval">The minimum interval in seconds that needs to pass for the client to get progress reports.</param>
+/// <param name="context">Optional context pointer to data used by the callback.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 STDAPI HCHttpCallRequestGetProgressReportFunction(
     _In_ HCCallHandle call,
     _In_ bool isUploadFunction,
-    _Out_ HCHttpCallProgressReportFunction* progressReportFunction
+    _Out_ HCHttpCallProgressReportFunction* progressReportFunction,
+    _Out_ size_t* minimumProgressReportInterval,
+    _Out_ void** context
 ) noexcept;
 
 /// <summary>

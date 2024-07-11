@@ -203,7 +203,8 @@ HCHttpCallRequestSetProgressReportFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallProgressReportFunction progressReportFunction,
     _In_ bool isUploadFunction,
-    _In_ size_t minimumProgressReportInterval
+    _In_ size_t minimumProgressReportInterval,
+    _In_opt_ void* context
 ) noexcept
 try
 {
@@ -221,11 +222,13 @@ try
     {
         call->uploadProgressReportFunction = progressReportFunction;
         call->uploadMinimumProgressReportInterval = minimumProgressReportInterval;
+        call->uploadProgressReportFunctionContext = context;
     }
     else
     {
         call->downloadProgressReportFunction = progressReportFunction;
         call->downloadMinimumProgressReportInterval = minimumProgressReportInterval;
+        call->downloadProgressReportFunctionContext = context;
     }
 
     return S_OK;
@@ -302,15 +305,18 @@ try
 }
 CATCH_RETURN()
 
+
 STDAPI
 HCHttpCallRequestGetProgressReportFunction(
     _In_ HCCallHandle call,
     _In_ bool isUploadFunction,
-    _Out_ HCHttpCallProgressReportFunction* progressReportFunction
+    _Out_ HCHttpCallProgressReportFunction* progressReportFunction,
+    _Out_ size_t* minimumProgressReportInterval,
+    _Out_ void** context
 ) noexcept
 try
 {
-    if (call == nullptr || progressReportFunction == nullptr)
+    if (call == nullptr || progressReportFunction == nullptr || minimumProgressReportInterval == nullptr || context == nullptr)
     {
         return E_INVALIDARG;
     }
@@ -318,11 +324,14 @@ try
     if (isUploadFunction)
     {
         *progressReportFunction = call->uploadProgressReportFunction;
-
+        *minimumProgressReportInterval = call->uploadMinimumProgressReportInterval;
+        *context = call->uploadProgressReportFunctionContext;
     }
     else
     {
         *progressReportFunction = call->downloadProgressReportFunction;
+        *minimumProgressReportInterval = call->downloadMinimumProgressReportInterval;
+        *context = call->downloadProgressReportFunctionContext;
     }
 
     return S_OK;

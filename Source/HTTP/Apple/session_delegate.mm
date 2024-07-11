@@ -16,7 +16,7 @@
     return [[SessionDelegate alloc] initWithHCCallHandle: call andCompletionHandler:completionHandler];
 }
 
-+ (void) reportProgress:(HCCallHandle)call progressReportFunction:(HCHttpCallProgressReportFunction)progressReportFunction minimumInterval:(size_t)minimumInterval current:(size_t)current total:(size_t)total lastProgressReport:(std::chrono::steady_clock::time_point*)lastProgressReport
++ (void) reportProgress:(HCCallHandle)call progressReportFunction:(HCHttpCallProgressReportFunction)progressReportFunction minimumInterval:(size_t)minimumInterval current:(size_t)current total:(size_t)total progressReportCallbackContext:(void*)progressReportCallbackContext lastProgressReport:(std::chrono::steady_clock::time_point*)lastProgressReport
 {
     if (progressReportFunction != nullptr)
     {
@@ -27,7 +27,7 @@
 
         if (elapsed >= minimumProgressReportIntervalInMs)
         {
-            HRESULT hr = progressReportFunction(call, (int)current, (int)total);
+            HRESULT hr = progressReportFunction(call, (int)current, (int)total, progressReportCallbackContext);
             if (FAILED(hr))
             {
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReportProgress: something went wrong after invoking the progress callback function.");
@@ -90,14 +90,16 @@
     
     [_dataToDownload appendData:data];
     
+    size_t downloadMinimumProgressInterval;
+    void* downloadProgressReportCallbackContext{};
     HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(_call, false, &downloadProgressReportFunction);
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(_call, false, &downloadProgressReportFunction, &downloadMinimumProgressInterval, &downloadProgressReportCallbackContext);
     if (FAILED(hr))
     {
         HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ProgressReportCallback: failed getting Progress Report upload function");
     }
 
-    [SessionDelegate reportProgress:_call progressReportFunction:downloadProgressReportFunction minimumInterval:_call->downloadMinimumProgressReportInterval current:[ _dataToDownload length ] total:_downloadSize lastProgressReport:&_call->downloadLastProgressReport ];
+    [SessionDelegate reportProgress:_call progressReportFunction:downloadProgressReportFunction minimumInterval:_call->downloadMinimumProgressReportInterval current:[ _dataToDownload length ] total:_downloadSize progressReportCallbackContext: downloadProgressReportCallbackContext lastProgressReport:&_call->downloadLastProgressReport];
 }
 
 - (void)URLSession:(NSURLSession *)session
@@ -105,15 +107,17 @@
    didSendBodyData:(int64_t)bytesSent
     totalBytesSent:(int64_t)totalBytesSent
 totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend
-{       
+{
+    size_t uploadMinimumProgressInterval;
+    void* uploadProgressReportCallbackContext{};
     HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(_call, true, &uploadProgressReportFunction);
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(_call, true, &uploadProgressReportFunction, &uploadMinimumProgressInterval, &uploadProgressReportCallbackContext);
     if (FAILED(hr))
     {
         HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ProgressReportCallback: failed getting Progress Report upload function");
     }
 
-    [SessionDelegate reportProgress:_call progressReportFunction:uploadProgressReportFunction minimumInterval:_call->uploadMinimumProgressReportInterval current:totalBytesSent total:totalBytesExpectedToSend lastProgressReport:&_call->uploadLastProgressReport ];
+    [SessionDelegate reportProgress:_call progressReportFunction:uploadProgressReportFunction minimumInterval:_call->uploadMinimumProgressReportInterval current:totalBytesSent total:totalBytesExpectedToSend progressReportCallbackContext:uploadProgressReportCallbackContext lastProgressReport:&_call->uploadLastProgressReport];
     
 }
 

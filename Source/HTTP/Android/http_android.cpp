@@ -164,8 +164,10 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress
         lastProgressReport = &sourceCall->downloadLastProgressReport;
     }
 
+    size_t minimumProgressInterval;
+    void* progressReportCallbackContext{};
     HCHttpCallProgressReportFunction progressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(sourceCall, isUpload, &progressReportFunction);
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(sourceCall, isUpload, &progressReportFunction, &minimumProgressInterval, &progressReportCallbackContext);
     if (FAILED(hr)) {
         const char* functionStr = isUpload ? "upload function" : "download function";
         std::string msg = "Java_com_xbox_httpclient_HttpClientRequest_ReportProgress: failed getting Progress Report ";
@@ -182,7 +184,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress
 
         if (elapsed >= minimumProgressReportIntervalInMs)
         {
-            HRESULT hr = progressReportFunction(sourceCall, (int)current, (int)total);
+            HRESULT hr = progressReportFunction(sourceCall, (int)current, (int)total, progressReportCallbackContext);
             if (FAILED(hr))
             {
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Java_com_xbox_httpclient_HttpClientRequest_ReportProgress: something went wrong after invoking the progress callback function.");
