@@ -5,17 +5,9 @@
       <Configuration>Debug</Configuration>
       <Platform>Gaming.Desktop.x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|Gaming.Xbox.Scarlett.x64">
-      <Configuration>Debug</Configuration>
-      <Platform>Gaming.Xbox.Scarlett.x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Gaming.Desktop.x64">
       <Configuration>Release</Configuration>
       <Platform>Gaming.Desktop.x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Gaming.Xbox.Scarlett.x64">
-      <Configuration>Release</Configuration>
-      <Platform>Gaming.Xbox.Scarlett.x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
