@@ -272,6 +272,7 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
         request->m_hcCallHandle->uploadMinimumProgressReportInterval,
         request->m_requestBodyOffset,
         bodySize,
+        uploadProgressReportCallbackContext,
         &request->m_hcCallHandle->uploadLastProgressReport
     );
 
