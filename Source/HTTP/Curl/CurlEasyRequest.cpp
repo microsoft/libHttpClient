@@ -512,6 +512,7 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
             request->m_hcCallHandle->downloadMinimumProgressReportInterval,
             dlnow,
             dltotal,
+            downloadProgressReportCallbackContext,
             &request->m_hcCallHandle->downloadLastProgressReport);
     }
 
