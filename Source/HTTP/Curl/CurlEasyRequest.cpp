@@ -409,6 +409,7 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
             request->m_hcCallHandle->downloadMinimumProgressReportInterval,
             request->m_responseBodySize - request->m_responseBodyRemainingToRead,
             request->m_responseBodySize,
+            downloadProgressReportCallbackContext,
             &request->m_hcCallHandle->downloadLastProgressReport
         );
     }
@@ -488,6 +489,7 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
             request->m_hcCallHandle->uploadMinimumProgressReportInterval,
             ulnow,
             ultotal,
+            uploadProgressReportCallbackContext,
             &request->m_hcCallHandle->uploadLastProgressReport
         );
     }
