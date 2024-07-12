@@ -356,8 +356,6 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
 
     auto request = static_cast<CurlEasyRequest*>(context);
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "'%.*s'", nmemb, buffer);
-
     HCHttpCallResponseBodyWriteFunction clientResponseBodyWriteCallback{ nullptr };
     void* clientResponseBodyWriteCallbackContext{ nullptr };
     HRESULT hr = HCHttpCallResponseGetResponseBodyWriteFunction(request->m_hcCallHandle, &clientResponseBodyWriteCallback, &clientResponseBodyWriteCallbackContext);
