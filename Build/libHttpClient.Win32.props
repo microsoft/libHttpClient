@@ -47,6 +47,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <DefaultLanguage>en-US</DefaultLanguage>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>8.1</WindowsTargetPlatformMinVersion>
   </PropertyGroup>
 
