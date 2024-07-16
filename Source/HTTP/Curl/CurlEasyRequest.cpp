@@ -256,6 +256,7 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
 
     request->m_requestBodyOffset += bytesWritten;
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
     size_t uploadMinimumProgressInterval;
     void* uploadProgressReportCallbackContext{};
     HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
@@ -275,6 +276,7 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
         uploadProgressReportCallbackContext,
         &request->m_hcCallHandle->uploadLastProgressReport
     );
+#endif
 
     return bytesWritten;
 }
@@ -392,6 +394,7 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
     {
         request->m_responseBodyRemainingToRead -= bufferSize;
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
         size_t downloadMinimumProgressInterval;
         void* downloadProgressReportCallbackContext{};
         HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
@@ -412,6 +415,7 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
             &request->m_hcCallHandle->downloadLastProgressReport
         );
     }
+#endif
 
     return bufferSize;
 }
