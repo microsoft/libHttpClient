@@ -414,8 +414,8 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
             downloadProgressReportCallbackContext,
             &request->m_hcCallHandle->downloadLastProgressReport
         );
-    }
 #endif
+    }
 
     return bufferSize;
 }
