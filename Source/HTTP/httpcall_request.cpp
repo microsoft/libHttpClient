@@ -27,7 +27,9 @@ try
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     call->method = method;
     call->url = url;
@@ -53,7 +55,9 @@ try
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     *method = call->method.c_str();
     *url = call->url.c_str();
@@ -77,7 +81,9 @@ try
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     HRESULT hr = HCHttpCallRequestSetRequestBodyReadFunction(call, HC_CALL::ReadRequestBody, requestBodySize, nullptr);
     if (FAILED(hr))
@@ -114,7 +120,9 @@ try
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     call->compressionLevel = level;
 
@@ -139,7 +147,9 @@ try
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     call->compressedResponse = compressed;
 
@@ -184,7 +194,9 @@ try
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     call->requestBodyReadFunction = readFunction;
     call->requestBodyReadFunctionContext = context;
@@ -193,6 +205,45 @@ try
     call->requestBodyString.clear();
     call->requestBodyBytes.clear();
     call->requestBodyBytes.shrink_to_fit();
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallRequestSetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallProgressReportFunction progressReportFunction,
+    _In_ bool isUploadFunction,
+    _In_ size_t minimumProgressReportInterval,
+    _In_opt_ void* context
+) noexcept
+try
+{
+    if (call == nullptr || progressReportFunction == nullptr || minimumProgressReportInterval <= 0)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    if (isUploadFunction)
+    {
+        call->uploadProgressReportFunction = progressReportFunction;
+        call->uploadMinimumProgressReportInterval = minimumProgressReportInterval;
+        call->uploadProgressReportFunctionContext = context;
+    }
+    else
+    {
+        call->downloadProgressReportFunction = progressReportFunction;
+        call->downloadMinimumProgressReportInterval = minimumProgressReportInterval;
+        call->downloadProgressReportFunctionContext = context;
+    }
 
     return S_OK;
 }
@@ -263,6 +314,39 @@ try
     *readFunction = call->requestBodyReadFunction;
     *context = call->requestBodyReadFunctionContext;
     *requestBodySize = call->requestBodySize;
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+
+STDAPI
+HCHttpCallRequestGetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _In_ bool isUploadFunction,
+    _Out_ HCHttpCallProgressReportFunction* progressReportFunction,
+    _Out_ size_t* minimumProgressReportInterval,
+    _Out_ void** context
+) noexcept
+try
+{
+    if (call == nullptr || progressReportFunction == nullptr || minimumProgressReportInterval == nullptr || context == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    if (isUploadFunction)
+    {
+        *progressReportFunction = call->uploadProgressReportFunction;
+        *minimumProgressReportInterval = call->uploadMinimumProgressReportInterval;
+        *context = call->uploadProgressReportFunctionContext;
+    }
+    else
+    {
+        *progressReportFunction = call->downloadProgressReportFunction;
+        *minimumProgressReportInterval = call->downloadMinimumProgressReportInterval;
+        *context = call->downloadProgressReportFunctionContext;
+    }
 
     return S_OK;
 }
@@ -399,7 +483,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         httpSingleton->m_retryAllowed = retryAllowed;
     }
@@ -430,7 +516,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         *retryAllowed = httpSingleton->m_retryAllowed;
     }
@@ -472,7 +560,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         httpSingleton->m_timeoutInSeconds = timeoutInSeconds;
     }
@@ -504,7 +594,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         *timeoutInSeconds = httpSingleton->m_timeoutInSeconds;
     }
@@ -528,7 +620,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         httpSingleton->m_timeoutWindowInSeconds = timeoutWindowInSeconds;
     }
@@ -560,7 +654,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         *timeoutWindowInSeconds = httpSingleton->m_timeoutWindowInSeconds;
     }
@@ -588,7 +684,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         *retryDelayInSeconds = httpSingleton->m_retryDelayInSeconds;
     }
@@ -611,7 +709,9 @@ try
     {
         auto httpSingleton = get_http_singleton();
         if (nullptr == httpSingleton)
+        {
             return E_HC_NOT_INITIALISED;
+        }
 
         httpSingleton->m_retryDelayInSeconds = retryDelayInSeconds;
     }
@@ -634,7 +734,9 @@ try
     // On GDK console, SSL validation is enforced on retail sandboxes
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
+    {
         return E_HC_NOT_INITIALISED;
+    }
 
     if (setting == HCConfigSetting::SSLValidationEnforcedInRetailSandbox)
     {
@@ -670,8 +772,10 @@ try
                 // On GDK console, SSL validation is enforced on RETAIL sandboxes
                 auto httpSingleton = get_http_singleton();
                 if (nullptr == httpSingleton)
+                {
                     return E_HC_NOT_INITIALISED;
-
+                }
+                
                 HC_TRACE_WARNING(HTTPCLIENT, "HCHttpCallRequestSetSSLValidation [ID %llu]: On GDK console, SSL validation is enforced on RETAIL sandboxes regardless of this setting", TO_ULL(call->id));
                 if (!httpSingleton->m_disableAssertsForSSLValidationInDevSandboxes)
                 {

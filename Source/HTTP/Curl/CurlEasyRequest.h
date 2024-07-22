@@ -1,7 +1,7 @@
 #pragma once
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-// When developing titles for Xbox consoles, you must use WinHTTP or xCurl. 
+// When developing titles for Xbox consoles, you must use WinHTTP or xCurl.
 // See https://docs.microsoft.com/en-us/gaming/gdk/_content/gc/networking/overviews/web-requests/http-networking for detail
 #include <XCurl.h>
 #else
@@ -52,8 +52,15 @@ private:
     static size_t WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept;
     static size_t WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept;
     static int DebugCallback(CURL* curlHandle, curl_infotype type, char* data, size_t size, void* context) noexcept;
-
+    static int ProgressReportCallback(void* context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept;
     static HRESULT MethodStringToOpt(char const* method, CURLoption& opt) noexcept;
+
+    // Progress Report properties
+    size_t m_requestBodyOffset = 0;
+    size_t m_responseBodySize = 0;
+    size_t m_responseBodyRemainingToRead = 0;
+    static size_t GetResponseContentLength(CURL* curlHandle);
+    static void ReportProgress(HCCallHandle call, HCHttpCallProgressReportFunction progressReportFunction, size_t minimumInterval, size_t current, size_t total, void* progressReportCallbackContext, std::chrono::steady_clock::time_point* lastProgressReport);
 
     CURL* m_curlEasyHandle;
     HCCallHandle m_hcCallHandle; // non-owning

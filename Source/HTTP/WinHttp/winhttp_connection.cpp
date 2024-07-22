@@ -505,6 +505,61 @@ void WinHttpConnection::read_next_response_chunk(_In_ WinHttpConnection* pReques
     }
 }
 
+void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, _In_ size_t bodySize, _In_ bool isUpload)
+{
+    size_t minimumProgressInterval;
+    void* progressReportCallbackContext{};
+    HCHttpCallProgressReportFunction progressReportFunction = nullptr;
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(pRequestContext->m_call, isUpload, &progressReportFunction, &minimumProgressInterval, &progressReportCallbackContext);
+    if (FAILED(hr))
+    {
+        pRequestContext->complete_task(hr);
+        return;
+    }
+
+    if (progressReportFunction != nullptr)
+    {
+        uint64_t current;
+        std::chrono::steady_clock::time_point lastProgressReport;
+        long minimumProgressReportIntervalInMs;
+
+        if (isUpload)
+        {
+            current = pRequestContext->m_requestBodyOffset;
+            lastProgressReport = pRequestContext->m_call->uploadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->uploadMinimumProgressReportInterval * 1000);
+        }
+        else
+        {
+            current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            lastProgressReport = pRequestContext->m_call->downloadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->downloadMinimumProgressReportInterval * 1000);
+        }
+
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastProgressReport).count();
+
+        if (elapsed >= minimumProgressReportIntervalInMs)
+        {
+            if (isUpload)
+            {
+                pRequestContext->m_call->uploadLastProgressReport = now;
+            }
+            else
+            {
+                pRequestContext->m_call->downloadLastProgressReport = now;
+            }
+
+            hr = progressReportFunction(pRequestContext->m_call, current, bodySize, progressReportCallbackContext);
+            if (FAILED(hr))
+            {
+                pRequestContext->complete_task(hr);
+                return;
+            }
+        }
+    }
+}
+
 void WinHttpConnection::_multiple_segment_write_data(_In_ WinHttpConnection* pRequestContext)
 {
     const size_t defaultChunkSize = 64 * 1024;
@@ -562,6 +617,8 @@ void WinHttpConnection::_multiple_segment_write_data(_In_ WinHttpConnection* pRe
         pRequestContext->m_requestBodyType = msg_body_type::no_body;
     }
     pRequestContext->m_requestBodyOffset += bytesWritten;
+
+    ReportProgress(pRequestContext, bodySize, true);
 }
 
 void WinHttpConnection::callback_status_write_complete(
@@ -969,6 +1026,42 @@ void WinHttpConnection::callback_status_data_available(
     }
 }
 
+size_t WinHttpConnection::GetResponseContentLength(_In_ WinHttpConnection* pRequestContext)
+{
+    size_t contentLength = 0;
+    std::wstring responseHeader;
+    BOOL result = FALSE;
+    DWORD headerSize = 0;
+    responseHeader.resize(0);
+
+    result = WinHttpQueryHeaders(pRequestContext->m_hRequest, WINHTTP_QUERY_CONTENT_LENGTH, NULL, WINHTTP_NO_OUTPUT_BUFFER, &headerSize, WINHTTP_NO_HEADER_INDEX);
+    if ((!result) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+    {
+        responseHeader.resize(headerSize / sizeof(wchar_t));
+        if (responseHeader.empty())
+        {
+            result = TRUE;
+        }
+        else
+        {
+            result = WinHttpQueryHeaders(pRequestContext->m_hRequest, WINHTTP_QUERY_CONTENT_LENGTH, NULL, &responseHeader[0], &headerSize, WINHTTP_NO_HEADER_INDEX);
+            if (!result) headerSize = 0;
+            responseHeader.resize(headerSize / sizeof(wchar_t));
+        }
+    }
+
+    try
+    {
+        contentLength = std::stoi(responseHeader);
+    }
+    catch (const std::exception& e)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [%d] std::stoi error in callback_status_read_complete: %s", E_FAIL, e.what());
+    }
+
+    return contentLength;
+}
+
 void WinHttpConnection::callback_status_read_complete(
     _In_ HINTERNET /*hRequestHandle*/,
     _In_ WinHttpConnection* pRequestContext,
@@ -993,6 +1086,20 @@ void WinHttpConnection::callback_status_read_complete(
     }
     else
     {
+        if (!pRequestContext->m_responseBodySize)
+        {
+            size_t contentLength = GetResponseContentLength(pRequestContext);
+
+            pRequestContext->m_responseBodySize = contentLength;
+            pRequestContext->m_responseBodyRemainingToRead = contentLength;
+        }
+
+        if (pRequestContext->m_responseBodySize > 0)
+        {
+            pRequestContext->m_responseBodyRemainingToRead -= bytesRead;
+            ReportProgress(pRequestContext, pRequestContext->m_responseBodySize, false);
+        }
+
         read_next_response_chunk(pRequestContext, bytesRead);
     }
 }

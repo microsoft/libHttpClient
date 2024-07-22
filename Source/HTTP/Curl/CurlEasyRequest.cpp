@@ -40,12 +40,34 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     void* clientRequestBodyReadCallbackContext{};
     RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyReadFunction(hcCall, &clientRequestBodyReadCallback, &bodySize, &clientRequestBodyReadCallbackContext));
 
+// Specify libcurl progress callback and create libcurl progress callback for non-GDK platforms since XCurl doesn't support libcurl progress callback
+#if HC_PLATFORM != HC_PLATFORM_GDK
+    // Get LHC Progress callback functions
+    size_t uploadMinimumProgressInterval;
+    void* uploadProgressReportCallbackContext{};
+    HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
+    RETURN_IF_FAILED(HCHttpCallRequestGetProgressReportFunction(hcCall, true, &uploadProgressReportFunction, &uploadMinimumProgressInterval, &uploadProgressReportCallbackContext));
+
+    size_t downloadMinimumProgressInterval;
+    void* downloadProgressReportCallbackContext{};
+    HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
+    RETURN_IF_FAILED(HCHttpCallRequestGetProgressReportFunction(hcCall, false, &downloadProgressReportFunction, &downloadMinimumProgressInterval, &downloadProgressReportCallbackContext));
+
+    // If progress callbacks were provided by client then specify libcurl progress callback
+    if (uploadProgressReportFunction != nullptr || downloadProgressReportFunction != nullptr)
+    {
+        easyRequest->SetOpt<void*>(CURLOPT_XFERINFODATA, easyRequest.get());
+        easyRequest->SetOpt<curl_xferinfo_callback>(CURLOPT_XFERINFOFUNCTION, &ProgressReportCallback);
+        easyRequest->SetOpt<long>(CURLOPT_NOPROGRESS, 0L);
+    }
+#endif
+
     // we set both POSTFIELDSIZE and INFILESIZE because curl uses one or the
     // other depending on method
     // We are allowing Setops to happen with a bodySize of zero in linux to handle certain clients
     // not being able to handle handshakes without a fixed body size.
     // The reason for an if def statement is to handle the behavioral differences in libCurl vs xCurl.
-    
+
 #if HC_PLATFORM == HC_PLATFORM_GDK
     if (bodySize > 0)
     {
@@ -214,7 +236,7 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
         HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::ReadCallback: Unable to get client's RequestBodyRead callback");
         return CURL_READFUNC_ABORT;
     }
-    
+
     size_t bytesWritten = 0;
     size_t bufferSize = size * nitems;
     try
@@ -231,6 +253,30 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
     {
         return CURL_READFUNC_ABORT;
     }
+
+    request->m_requestBodyOffset += bytesWritten;
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    size_t uploadMinimumProgressInterval;
+    void* uploadProgressReportCallbackContext{};
+    HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
+    hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, true, &uploadProgressReportFunction, &uploadMinimumProgressInterval, &uploadProgressReportCallbackContext);
+    if (FAILED(hr))
+    {
+        HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReadCallback: failed getting Progress Report upload function");
+        return 1;
+    }
+
+    ReportProgress(
+        request->m_hcCallHandle,
+        uploadProgressReportFunction,
+        request->m_hcCallHandle->uploadMinimumProgressReportInterval,
+        request->m_requestBodyOffset,
+        bodySize,
+        uploadProgressReportCallbackContext,
+        &request->m_hcCallHandle->uploadLastProgressReport
+    );
+#endif
 
     return bytesWritten;
 }
@@ -299,13 +345,18 @@ size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t ni
     return bufferSize;
 }
 
+size_t CurlEasyRequest::GetResponseContentLength(CURL* curlHandle)
+{
+    curl_off_t contentLength = 0;
+    curl_easy_getinfo(curlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
+    return contentLength;
+}
+
 size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::WriteDataCallback: received data (%zu bytes)", nmemb);
 
     auto request = static_cast<CurlEasyRequest*>(context);
-
-    HC_TRACE_INFORMATION(HTTPCLIENT, "'%.*s'", nmemb, buffer);
 
     HCHttpCallResponseBodyWriteFunction clientResponseBodyWriteCallback{ nullptr };
     void* clientResponseBodyWriteCallbackContext{ nullptr };
@@ -329,6 +380,41 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
     catch (...)
     {
         return 0;
+    }
+
+    if (!request->m_responseBodySize)
+    {
+        size_t contentLength = GetResponseContentLength(request->m_curlEasyHandle);
+
+        request->m_responseBodySize = contentLength;
+        request->m_responseBodyRemainingToRead = contentLength;
+    }
+
+    if (request->m_responseBodySize > 0)
+    {
+        request->m_responseBodyRemainingToRead -= bufferSize;
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        size_t downloadMinimumProgressInterval;
+        void* downloadProgressReportCallbackContext{};
+        HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
+        hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, false, &downloadProgressReportFunction, &downloadMinimumProgressInterval, &downloadProgressReportCallbackContext);
+        if (FAILED(hr))
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::WriteDataCallback: failed getting Progress Report download function");
+            return 1;
+        }
+
+        ReportProgress(
+            request->m_hcCallHandle,
+            downloadProgressReportFunction,
+            request->m_hcCallHandle->downloadMinimumProgressReportInterval,
+            request->m_responseBodySize - request->m_responseBodyRemainingToRead,
+            request->m_responseBodySize,
+            downloadProgressReportCallbackContext,
+            &request->m_hcCallHandle->downloadLastProgressReport
+        );
+#endif
     }
 
     return bufferSize;
@@ -357,6 +443,83 @@ int CurlEasyRequest::DebugCallback(CURL* /*curlHandle*/, curl_infotype type, cha
     HC_TRACE_VERBOSE(HTTPCLIENT, "CURL %10s - %.*s", event, size, data);
 
     return CURLE_OK;
+}
+
+void CurlEasyRequest::ReportProgress(HCCallHandle call, HCHttpCallProgressReportFunction progressReportFunction, size_t minimumInterval, size_t current, size_t total, void* progressReportCallbackContext, std::chrono::steady_clock::time_point* lastProgressReport)
+{
+    if (progressReportFunction != nullptr)
+    {
+        long minimumProgressReportIntervalInMs = static_cast<long>(minimumInterval * 1000);
+
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - *lastProgressReport).count();
+
+        if (elapsed >= minimumProgressReportIntervalInMs)
+        {
+            HRESULT hr = progressReportFunction(call, (int)current, (int)total, progressReportCallbackContext);
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReportProgress: something went wrong after invoking the progress callback function.");
+            }
+
+            *lastProgressReport = now;
+        }
+    }
+}
+
+int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept
+{
+    CurlEasyRequest* request = (CurlEasyRequest*)context;
+
+    bool isUpload = ultotal > 0;
+    bool isDownload = dltotal > 0;
+
+    if (isUpload)
+    {
+        size_t uploadMinimumProgressInterval;
+        void* uploadProgressReportCallbackContext{};
+        HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
+        HRESULT hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, true, &uploadProgressReportFunction, &uploadMinimumProgressInterval, &uploadProgressReportCallbackContext);
+        if (FAILED(hr))
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ProgressReportCallback: failed getting Progress Report upload function");
+            return 1;
+        }
+
+        ReportProgress(
+            request->m_hcCallHandle,
+            uploadProgressReportFunction,
+            request->m_hcCallHandle->uploadMinimumProgressReportInterval,
+            ulnow,
+            ultotal,
+            uploadProgressReportCallbackContext,
+            &request->m_hcCallHandle->uploadLastProgressReport
+        );
+    }
+
+    if (isDownload)
+    {
+        size_t downloadMinimumProgressInterval;
+        void* downloadProgressReportCallbackContext{};
+        HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
+        HRESULT hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, false, &downloadProgressReportFunction, &downloadMinimumProgressInterval, &downloadProgressReportCallbackContext);
+        if (FAILED(hr))
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ProgressReportCallback: failed getting Progress Report download function");
+            return 1;
+        }
+
+        ReportProgress(
+            request->m_hcCallHandle,
+            downloadProgressReportFunction,
+            request->m_hcCallHandle->downloadMinimumProgressReportInterval,
+            dlnow,
+            dltotal,
+            downloadProgressReportCallbackContext,
+            &request->m_hcCallHandle->downloadLastProgressReport);
+    }
+
+    return 0;
 }
 
 HRESULT CurlEasyRequest::MethodStringToOpt(char const* method, CURLoption& opt) noexcept

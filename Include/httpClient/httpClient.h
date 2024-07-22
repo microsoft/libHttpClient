@@ -432,6 +432,23 @@ typedef HRESULT
     );
 
 /// <summary>
+/// The callback definition used by an HTTP call to get progress updates when uploading or downloading a file. This callback will be invoked
+/// on an unspecified background thread which is platform dependent.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="current">The current amount of processed bytes of the file being uploaded/downloaded.</param>
+/// <param name="total">The total size in bytes of the file being uploaded/downloaded.</param>
+/// <param name="context">Optional context pointer to data used by the callback.</param>
+/// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+typedef HRESULT
+(CALLBACK* HCHttpCallProgressReportFunction)(
+    _In_ HCCallHandle call,
+    _In_ uint64_t current,
+    _In_ uint64_t total,
+    _In_opt_ void* context
+);
+
+/// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
 /// performed. If a custom read callback is used, any request body data previously set by
 /// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
@@ -449,6 +466,25 @@ STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ size_t bodySize,
     _In_opt_ void* context
     ) noexcept;
+
+/// <summary>
+/// Sets a custom callback function that will be used to provide progress updates when uploading 
+/// or downloading a file.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="progressReportFunction">The progress report callback function this call should use.</param>
+/// <param name="isUploadFunction">Indicates if the function provided will get progress reports when uploading or downloading.</param>
+/// <param name="minimumProgressReportInterval">The minimum interval in seconds that needs to pass for the client to get progress reports.</param>
+/// <param name="context">Optional context pointer to data used by the callback.</param>
+/// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallRequestSetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallProgressReportFunction progressReportFunction,
+    _In_ bool isUploadFunction,
+    _In_ size_t minimumProgressReportInterval,
+    _In_opt_ void* context
+) noexcept;
 
 /// <summary>
 /// Set a request header for the HTTP call.
