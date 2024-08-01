@@ -6,7 +6,7 @@
 #include <httpClient/config.h>
 #include <httpClient/pal.h>
 
-#if (!defined(HC_LINK_STATIC) || HC_LINK_STATIC == 0) && HC_PLATFORM_IS_APPLE
+#if (!defined(HC_LINK_STATIC) || HC_LINK_STATIC == 0) && HC_PLATFORM_IS_APPLE && (!defined(USE_PFCORE_SDK))
 #include <httpClient/XAsync.h>
 #include <httpClient/XAsyncProvider.h>
 #include <httpClient/XTaskQueue.h>
