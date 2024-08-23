@@ -66,6 +66,71 @@ try
 CATCH_RETURN()
 
 STDAPI
+HCHttpCallRequestSetDynamicSize(
+    _In_ HCCallHandle call,
+    _In_ uint64_t dynamicBodySize
+) noexcept
+try
+{
+    if (call == nullptr || dynamicBodySize == 0)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    if (Compression::Available() && call->compressionLevel != HCCompressionLevel::None)
+    {
+        return E_NOT_SUPPORTED;
+    }
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    call->dynamicRequestBodySize = dynamicBodySize;
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetDynamicSize [ID %llu]: dynamicBodySize=%llu", TO_ULL(call->id), TO_ULL(dynamicBodySize)); }
+
+    HCHttpCallRequestSetHeader(call, "Transfer-Encoding", "chunked", true);
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallRequestAddDynamicBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ uint64_t bytesWritten
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    if (call->dynamicRequestBodySize == 0)
+    {
+        return E_UNEXPECTED;
+    }
+
+    call->dynamicRequestBodyBytesWritten += bytesWritten;
+
+    if (call->dynamicRequestBodyBytesWritten > call->dynamicRequestBodySize)
+    {
+        HC_TRACE_WARNING(HTTPCLIENT, "HCHttpCallRequestAddDynamicBytesWritten [ID %llu]: Reducing excessive bytesWritten=%llu to dynamicBodySize=%llu", TO_ULL(call->id), TO_ULL(call->dynamicRequestBodyBytesWritten), TO_ULL(call->dynamicRequestBodySize));
+        call->dynamicRequestBodyBytesWritten = call->dynamicRequestBodySize;
+    }
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestAddDynamicBytesWritten [ID %llu]: bytesWritten=%llu", TO_ULL(call->id), TO_ULL(bytesWritten)); }
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
 HCHttpCallRequestSetRequestBodyBytes(
     _In_ HCCallHandle call,
     _In_reads_bytes_(requestBodySize) const uint8_t* requestBodyBytes,
@@ -113,7 +178,7 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-    if (!Compression::Available() && level != HCCompressionLevel::None)
+    if ((!Compression::Available() && level != HCCompressionLevel::None) || call->dynamicRequestBodySize > 0)
     {
         return E_NOT_SUPPORTED;
     }
@@ -319,6 +384,24 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCHttpCallRequestGetDynamicBytesWritten(
+    _In_ HCCallHandle call,
+    _Out_ size_t* dynamicBodySize,
+    _Out_ size_t* dynamicBodyBytesWritten
+) noexcept
+try
+{
+    if (call == nullptr || dynamicBodySize == nullptr || dynamicBodyBytesWritten == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *dynamicBodySize = call->dynamicRequestBodySize;
+    *dynamicBodyBytesWritten = call->dynamicRequestBodyBytesWritten;
+
+    return S_OK;
+}
+CATCH_RETURN()
 
 STDAPI
 HCHttpCallRequestGetProgressReportFunction(

@@ -68,24 +68,26 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     // not being able to handle handshakes without a fixed body size.
     // The reason for an if def statement is to handle the behavioral differences in libCurl vs xCurl.
 
+    uint64_t dynamicBodySize{};
+    uint64_t dynamicBodyBytesWritten{};
+    HCHttpCallRequestGetDynamicBytesWritten(hcCall, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+    bool provideBody = true;
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    if (bodySize > 0)
+    provideBody = bodySize > 0;
+#endif
+    if (provideBody)
     {
-        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
-        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
+        if (dynamicBodySize == 0)
+        {
+            RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
+            RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
+        }
 
         // read callback
         RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
         RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
     }
-#else
-    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_POSTFIELDSIZE, static_cast<long>(bodySize)));
-    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_INFILESIZE, static_cast<long>(bodySize)));
-
-    // read callback
-    RETURN_IF_FAILED(easyRequest->SetOpt<curl_read_callback>(CURLOPT_READFUNCTION, &ReadCallback));
-    RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_READDATA, easyRequest.get()));
-#endif
 
     // url & method
     char const* url = nullptr;
@@ -267,12 +269,24 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
         return 1;
     }
 
+    uint64_t dynamicBodySize{};
+    uint64_t dynamicBodyBytesWritten{};
+    HCHttpCallRequestGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+    uint64_t reportBytesWritten = request->m_requestBodyOffset;
+    uint64_t reportTotalBytes = bodySize;
+    if (dynamicBodySize > 0)
+    {
+        reportBytesWritten = dynamicBodyBytesWritten;
+        reportTotalBytes = dynamicBodySize;
+    }
+
     ReportProgress(
         request->m_hcCallHandle,
         uploadProgressReportFunction,
         request->m_hcCallHandle->uploadMinimumProgressReportInterval,
-        request->m_requestBodyOffset,
-        bodySize,
+        reportBytesWritten,
+        reportTotalBytes,
         uploadProgressReportCallbackContext,
         &request->m_hcCallHandle->uploadLastProgressReport
     );
@@ -405,12 +419,24 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
             return 1;
         }
 
+        uint64_t dynamicBodySize{};
+        uint64_t dynamicBodyBytesWritten{};
+        HCHttpCallResponseGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+        uint64_t reportBytesWritten = request->m_responseBodySize - request->m_responseBodyRemainingToRead;
+        uint64_t reportTotalBytes = request->m_responseBodySize;
+        if (dynamicBodySize > 0)
+        {
+            reportBytesWritten = dynamicBodyBytesWritten;
+            reportTotalBytes = dynamicBodySize;
+        }
+
         ReportProgress(
             request->m_hcCallHandle,
             downloadProgressReportFunction,
             request->m_hcCallHandle->downloadMinimumProgressReportInterval,
-            request->m_responseBodySize - request->m_responseBodyRemainingToRead,
-            request->m_responseBodySize,
+            reportBytesWritten,
+            reportTotalBytes,
             downloadProgressReportCallbackContext,
             &request->m_hcCallHandle->downloadLastProgressReport
         );
@@ -486,6 +512,16 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
             return 1;
         }
 
+        uint64_t dynamicBodySize{};
+        uint64_t dynamicBodyBytesWritten{};
+        HCHttpCallRequestGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+        if (dynamicBodySize > 0)
+        {
+            ulnow = dynamicBodyBytesWritten;
+            ultotal = dynamicBodySize;
+        }
+
         ReportProgress(
             request->m_hcCallHandle,
             uploadProgressReportFunction,
@@ -507,6 +543,16 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
         {
             HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ProgressReportCallback: failed getting Progress Report download function");
             return 1;
+        }
+
+        uint64_t dynamicBodySize{};
+        uint64_t dynamicBodyBytesWritten{};
+        HCHttpCallResponseGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+        if (dynamicBodySize > 0)
+        {
+            dlnow = dynamicBodyBytesWritten;
+            dltotal = dynamicBodySize;
         }
 
         ReportProgress(
