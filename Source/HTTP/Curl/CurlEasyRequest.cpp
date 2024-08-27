@@ -72,6 +72,11 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     uint64_t dynamicBodyBytesWritten{};
     HCHttpCallRequestGetDynamicBytesWritten(hcCall, &dynamicBodySize, &dynamicBodyBytesWritten);
 
+    if (dynamicBodySize > 0)
+    {
+        bodySize = dynamicBodySize;
+    }
+
     bool provideBody = true;
 #if HC_PLATFORM == HC_PLATFORM_GDK
     provideBody = bodySize > 0;

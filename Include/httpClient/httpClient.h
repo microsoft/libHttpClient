@@ -330,7 +330,8 @@ STDAPI HCHttpCallRequestSetUrl(
 
 /// <summary>
 /// Mark the HTTP call as having a dynamically sized request body and set the size to use for reporting. A custom read callback must be set and
-/// the callback must report the bytes written using HCHttpCallRequestAddDynamicBytesWritten. Unsupported when request gzip compression is enabled.
+/// the callback must report the bytes written using HCHttpCallRequestAddDynamicBytesWritten. The bodySize provided when setting the custom 
+/// callback will be ignored. Unsupported when request gzip compression is enabled.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="dynamicBodySize">The length in bytes to use for reporting.</param>
