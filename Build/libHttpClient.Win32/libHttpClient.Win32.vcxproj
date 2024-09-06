@@ -8,6 +8,9 @@
     <PlatformToolset Condition="$(VisualStudioVersion)==16">v142</PlatformToolset>
     <PlatformToolset Condition="$(VisualStudioVersion)==17">v143</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <SpectreMitigation>Spectre</SpectreMitigation>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="libHttpClient.Win32.def" />
   </ItemGroup>

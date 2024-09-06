@@ -4,6 +4,9 @@
     <ProjectGuid>{00867B85-BAE6-4129-85EA-18CCFA002E00}</ProjectGuid>
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <SpectreMitigation>Spectre</SpectreMitigation>
+  </PropertyGroup>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\libHttpClient.Win32.props" />
   <Import Project="$(HCBuildRoot)\libHttpClient.import.props" />
   <ItemDefinitionGroup>
