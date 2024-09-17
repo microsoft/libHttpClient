@@ -78,11 +78,6 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-    if (Compression::Available() && call->compressionLevel != HCCompressionLevel::None)
-    {
-        return E_NOT_SUPPORTED;
-    }
-
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
     {
@@ -92,8 +87,6 @@ try
     call->dynamicRequestBodySize = dynamicBodySize;
 
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetDynamicSize [ID %llu]: dynamicBodySize=%llu", TO_ULL(call->id), TO_ULL(dynamicBodySize)); }
-
-    HCHttpCallRequestSetHeader(call, "Transfer-Encoding", "chunked", true);
 
     return S_OK;
 }
@@ -178,7 +171,7 @@ try
     }
     RETURN_IF_PERFORM_CALLED(call);
 
-    if ((!Compression::Available() && level != HCCompressionLevel::None) || call->dynamicRequestBodySize > 0)
+    if (!Compression::Available() && level != HCCompressionLevel::None)
     {
         return E_NOT_SUPPORTED;
     }

@@ -242,17 +242,7 @@ HRESULT WinHttpConnection::Initialize()
         void* context{ nullptr };
         RETURN_IF_FAILED(HCHttpCallRequestGetRequestBodyReadFunction(m_call, &requestBodyReadFunction, &m_requestBodySize, &context));
 
-        uint64_t dynamicRequestBodySize{};
-        uint64_t dynamicRequestBodyBytesWritten{};
-        RETURN_IF_FAILED(HCHttpCallRequestGetDynamicBytesWritten(m_call, &dynamicRequestBodySize, &dynamicRequestBodyBytesWritten));
-
-        if (dynamicRequestBodySize > 0)
-        {
-            // We will be transfer-encoding the data in chunks since we don't know the size of the data yet.
-            m_requestBodyType = msg_body_type::transfer_encoding_chunked;
-            m_requestBodySize = dynamicRequestBodySize;
-        }
-        else if (m_requestBodySize > 0)
+        if (m_requestBodySize > 0)
         {
             // While we won't be transfer-encoding the data, we will write it in portions.
             m_requestBodyType = msg_body_type::content_length_chunked;
@@ -535,7 +525,20 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
 
         if (isUpload)
         {
-            current = pRequestContext->m_requestBodyOffset;
+            uint64_t dynamicBodySize{};
+            uint64_t dynamicBodyBytesWritten{};
+            HCHttpCallRequestGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+            if (dynamicBodySize > 0)
+            {
+                bodySize = dynamicBodySize;
+                current = dynamicBodyBytesWritten;
+            }
+            else
+            {
+                current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            }
+
             lastProgressReport = pRequestContext->m_call->uploadLastProgressReport;
             minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->uploadMinimumProgressReportInterval * 1000);
         }
@@ -633,33 +636,13 @@ void WinHttpConnection::_multiple_segment_write_data(_In_ WinHttpConnection* pRe
         return;
     }
 
-    if (pRequestContext->m_requestBodyType == transfer_encoding_chunked)
+    // Stop writing chunks after this one if no more data.
+    pRequestContext->m_requestBodyRemainingToWrite -= bytesWritten;
+    if (pRequestContext->m_requestBodyRemainingToWrite == 0)
     {
-        uint64_t dynamicBodySize{};
-        uint64_t dynamicBodyBytesWritten{};
-        HCHttpCallRequestGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
-
-        pRequestContext->m_requestBodyRemainingToWrite = dynamicBodySize - dynamicBodyBytesWritten;
-        pRequestContext->m_requestBodyOffset = dynamicBodyBytesWritten;
-        bodySize = dynamicBodySize;
-
-        // Stop writing chunks after this one if we just sent an empty chunk
-        if (bytesWritten == 0)
-        {
-            pRequestContext->m_requestBodyType = msg_body_type::no_body;
-        }
+        pRequestContext->m_requestBodyType = msg_body_type::no_body;
     }
-    else
-    {
-        pRequestContext->m_requestBodyRemainingToWrite -= bytesWritten;
-        pRequestContext->m_requestBodyOffset += bytesWritten;
-
-        // Stop writing chunks after this one if no more data.
-        if (pRequestContext->m_requestBodyRemainingToWrite == 0)
-        {
-            pRequestContext->m_requestBodyType = msg_body_type::no_body;
-        }
-    }
+    pRequestContext->m_requestBodyOffset += bytesWritten;
 
     ReportProgress(pRequestContext, bodySize, true);
 }
@@ -676,7 +659,7 @@ void WinHttpConnection::callback_status_write_complete(
         HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE bytesWritten=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), bytesWritten);
         UNREFERENCED_LOCAL(bytesWritten);
 
-        if (pRequestContext->m_requestBodyType == content_length_chunked || pRequestContext->m_requestBodyType == transfer_encoding_chunked)
+        if (pRequestContext->m_requestBodyType == content_length_chunked)
         {
             _multiple_segment_write_data(pRequestContext);
             return;
@@ -873,7 +856,7 @@ void WinHttpConnection::callback_status_sendrequest_complete(
 
         HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId());
 
-        if (pRequestContext->m_requestBodyType == content_length_chunked || pRequestContext->m_requestBodyType == transfer_encoding_chunked)
+        if (pRequestContext->m_requestBodyType == content_length_chunked)
         {
             _multiple_segment_write_data(pRequestContext);
             return;
@@ -1140,14 +1123,7 @@ void WinHttpConnection::callback_status_read_complete(
         if (pRequestContext->m_responseBodySize > 0)
         {
             pRequestContext->m_responseBodyRemainingToRead -= bytesRead;
-
-            uint64_t dynamicBodySize{};
-            uint64_t dynamicBodyBytesWritten{};
-            HCHttpCallResponseGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
-
-            size_t bodySize = dynamicBodySize > 0 ? dynamicBodySize : pRequestContext->m_responseBodySize;
-
-            ReportProgress(pRequestContext, bodySize, false);
+            ReportProgress(pRequestContext, pRequestContext->m_responseBodySize, false);
         }
 
         read_next_response_chunk(pRequestContext, bytesRead);
@@ -1458,7 +1434,6 @@ void WinHttpConnection::SendRequest()
     {
         case msg_body_type::no_body: dwTotalLength = 0; break;
         case msg_body_type::content_length_chunked: dwTotalLength = (DWORD)m_requestBodySize; break;
-        case msg_body_type::transfer_encoding_chunked: dwTotalLength = WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH; break;
         default: dwTotalLength = WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH; break;
     }
 

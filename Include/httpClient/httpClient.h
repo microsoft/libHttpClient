@@ -329,9 +329,8 @@ STDAPI HCHttpCallRequestSetUrl(
     ) noexcept;
 
 /// <summary>
-/// Mark the HTTP call as having a dynamically sized request body and set the size to use for reporting. A custom read callback must be set and
-/// the callback must report the bytes written using HCHttpCallRequestAddDynamicBytesWritten. The bodySize provided when setting the custom 
-/// callback will be ignored. Unsupported when request gzip compression is enabled.
+/// Mark the HTTP call as having a dynamic size request body for progress reporting. Report the bytes written in the custom callback using
+/// HCHttpCallRequestAddDynamicBytesWritten.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="dynamicBodySize">The length in bytes to use for reporting.</param>
@@ -342,7 +341,7 @@ STDAPI HCHttpCallRequestSetDynamicSize(
 ) noexcept;
 
 /// <summary>
-/// Report a custom amount of bytes written in a custom read callback when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
+/// Report a custom amount of bytes written when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bytesWritten">The number of bytes written.</param>
@@ -411,7 +410,7 @@ enum class HCCompressionLevel : uint32_t
 };
 
 /// <summary>
-/// Enable GZIP compression on the provided body payload. Unsupported when the request body size is dynamic.
+/// Enable GZIP compression on the provided body payload.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="level">The desired compression level.</param>
@@ -706,11 +705,7 @@ typedef HRESULT
 /// <param name="writeFunction">The response body write function this call should use.</param>
 /// <param name="context">The context to associate with this write function.</param>
 /// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
-/// <remarks>
-/// This must be called prior to calling HCHttpCallPerformAsync. When sending a dynamic size request
-/// body, the custom write function must handle an extra call after the last byte is written to send
-/// an empty chunk to signal the end of the request body.
-/// </remarks>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
 STDAPI HCHttpCallResponseSetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
     _In_ HCHttpCallResponseBodyWriteFunction writeFunction,

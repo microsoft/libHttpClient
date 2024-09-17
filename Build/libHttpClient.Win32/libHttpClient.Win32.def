@@ -57,6 +57,12 @@ EXPORTS
     HCHttpCallResponseSetResponseBodyBytes
     HCHttpCallResponseSetResponseBodyWriteFunction
     HCHttpCallResponseSetStatusCode
+    HCHttpCallRequestSetDynamicSize
+    HCHttpCallRequestAddDynamicBytesWritten
+    HCHttpCallRequestGetDynamicBytesWritten
+    HCHttpCallResponseSetDynamicSize
+    HCHttpCallResponseAddDynamicBytesWritten
+    HCHttpCallResponseGetDynamicBytesWritten
     HCHttpCallSetContext
     HCHttpCallSetTracing
     HCInitialize

@@ -347,8 +347,8 @@ STDAPI HCHttpCallResponseGetDynamicBytesWritten(
 //
 
 /// <summary>
-/// Mark the HTTP call as having a dynamic size response body and set the size to use for reporting. A custom write callback must be set and
-/// the callback must report the bytes written using HCHttpCallResponseAddDynamicBytesWritten.
+/// Mark the HTTP call as having a dynamic size response body for progress reporting. Report the bytes written in the custom callback using
+/// HCHttpCallResponseAddDynamicBytesWritten.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="dynamicBodySize">The length in bytes of the body being set.</param>
@@ -359,7 +359,7 @@ STDAPI HCHttpCallResponseSetDynamicSize(
 ) noexcept;
 
 /// <summary>
-/// Report a custom amount of bytes written in a custom write callback when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
+/// Report a custom amount of bytes written when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="bytesWritten">The number of bytes written.</param>
