@@ -329,6 +329,29 @@ STDAPI HCHttpCallRequestSetUrl(
     ) noexcept;
 
 /// <summary>
+/// Mark the HTTP call as having a dynamic size request body for progress reporting. Report the bytes written in the custom callback using
+/// HCHttpCallRequestAddDynamicBytesWritten.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="dynamicBodySize">The length in bytes to use for reporting.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestSetDynamicSize(
+    _In_ HCCallHandle call,
+    _In_ uint64_t dynamicBodySize
+) noexcept;
+
+/// <summary>
+/// Report a custom amount of bytes written when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bytesWritten">The number of bytes written.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestAddDynamicBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ uint64_t bytesWritten
+) noexcept;
+
+/// <summary>
 /// Set the request body bytes of the HTTP call. This API operation is mutually exclusive with
 /// HCHttpCallRequestSetRequestBodyReadFunction and will result in any custom read callbacks that were
 /// previously set on this call handle to be ignored.
