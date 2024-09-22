@@ -80,10 +80,10 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
 
             iter = m_curlMultis.emplace(workPort, multiInitResult.ExtractPayload()).first;
         }
-    }
 
-    auto& multi{ iter->second };
-    RETURN_IF_FAILED(multi->AddRequest(easyInitResult.ExtractPayload()));
+        auto& multi{ iter->second };
+        RETURN_IF_FAILED(multi->AddRequest(easyInitResult.ExtractPayload()));
+    }
 
     return S_OK;
 }

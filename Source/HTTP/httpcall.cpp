@@ -369,23 +369,30 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     // Decompress Response Bytes 
     if (Compression::Available() && call->compressedResponse == true)
     {
-        // Retrieve the value of Content=Encoding response header
-        const char* encodingHeaderValue;
+        // Retrieve the value of Content-Encoding response header
+        const char* encodingHeaderValue = nullptr;
         HCHttpCallResponseGetHeader(call, "Content-Encoding", &encodingHeaderValue);
         
+        // Ensure Content-Encoding header exists
         if (encodingHeaderValue != nullptr)
         {
+            // Check that the response was compressed using gzip
             if (std::strcmp(encodingHeaderValue, "gzip") == 0)
             {
-                http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
+                // Added Check for gzip header
+                // Attempt to decompress only if gzip header is present (skip manual decompression if responseBodyBytes is already decompressed)
+                if (call->responseBodyBytes.size() > 2 && (call->responseBodyBytes[0] == 0x1f && call->responseBodyBytes[1] == 0x8b))
+                {
+                    http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
 
-                Compression::DecompressFromGzip(
-                    call->responseBodyBytes.data(),
-                    call->responseBodyBytes.size(),
-                    uncompressedResponseBodyBuffer);
+                    Compression::DecompressFromGzip(
+                        call->responseBodyBytes.data(),
+                        call->responseBodyBytes.size(),
+                        uncompressedResponseBodyBuffer);
 
-                call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
-                call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+                    call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
+                    call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+                }
             }
         }
     }
