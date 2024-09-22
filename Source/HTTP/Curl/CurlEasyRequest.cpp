@@ -267,12 +267,24 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
         return 1;
     }
 
+    uint64_t dynamicBodySize{};
+    uint64_t dynamicBodyBytesWritten{};
+    HCHttpCallRequestGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+    uint64_t reportBytesWritten = request->m_requestBodyOffset;
+    uint64_t reportTotalBytes = bodySize;
+    if (dynamicBodySize > 0)
+    {
+        reportBytesWritten = dynamicBodyBytesWritten;
+        reportTotalBytes = dynamicBodySize;
+    }
+
     ReportProgress(
         request->m_hcCallHandle,
         uploadProgressReportFunction,
         request->m_hcCallHandle->uploadMinimumProgressReportInterval,
-        request->m_requestBodyOffset,
-        bodySize,
+        reportBytesWritten,
+        reportTotalBytes,
         uploadProgressReportCallbackContext,
         &request->m_hcCallHandle->uploadLastProgressReport
     );
@@ -405,12 +417,24 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
             return 1;
         }
 
+        uint64_t dynamicBodySize{};
+        uint64_t dynamicBodyBytesWritten{};
+        HCHttpCallResponseGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+        uint64_t reportBytesWritten = request->m_responseBodySize - request->m_responseBodyRemainingToRead;
+        uint64_t reportTotalBytes = request->m_responseBodySize;
+        if (dynamicBodySize > 0)
+        {
+            reportBytesWritten = dynamicBodyBytesWritten;
+            reportTotalBytes = dynamicBodySize;
+        }
+
         ReportProgress(
             request->m_hcCallHandle,
             downloadProgressReportFunction,
             request->m_hcCallHandle->downloadMinimumProgressReportInterval,
-            request->m_responseBodySize - request->m_responseBodyRemainingToRead,
-            request->m_responseBodySize,
+            reportBytesWritten,
+            reportTotalBytes,
             downloadProgressReportCallbackContext,
             &request->m_hcCallHandle->downloadLastProgressReport
         );
@@ -486,12 +510,24 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
             return 1;
         }
 
+        uint64_t dynamicBodySize{};
+        uint64_t dynamicBodyBytesWritten{};
+        HCHttpCallRequestGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+        uint64_t reportBytesWritten = ulnow;
+        uint64_t reportTotalBytes = ultotal;
+        if (dynamicBodySize > 0)
+        {
+            reportBytesWritten = dynamicBodyBytesWritten;
+            reportTotalBytes = dynamicBodySize;
+        }
+
         ReportProgress(
             request->m_hcCallHandle,
             uploadProgressReportFunction,
             request->m_hcCallHandle->uploadMinimumProgressReportInterval,
-            ulnow,
-            ultotal,
+            reportBytesWritten,
+            reportTotalBytes,
             uploadProgressReportCallbackContext,
             &request->m_hcCallHandle->uploadLastProgressReport
         );
@@ -509,12 +545,24 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
             return 1;
         }
 
+        uint64_t dynamicBodySize{};
+        uint64_t dynamicBodyBytesWritten{};
+        HCHttpCallResponseGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+        uint64_t reportBytesWritten = ulnow;
+        uint64_t reportTotalBytes = ultotal;
+        if (dynamicBodySize > 0)
+        {
+            reportBytesWritten = dynamicBodyBytesWritten;
+            reportTotalBytes = dynamicBodySize;
+        }
+
         ReportProgress(
             request->m_hcCallHandle,
             downloadProgressReportFunction,
             request->m_hcCallHandle->downloadMinimumProgressReportInterval,
-            dlnow,
-            dltotal,
+            reportBytesWritten,
+            reportTotalBytes,
             downloadProgressReportCallbackContext,
             &request->m_hcCallHandle->downloadLastProgressReport);
     }

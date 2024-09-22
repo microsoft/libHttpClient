@@ -95,6 +95,11 @@ public:
     std::chrono::steady_clock::time_point downloadLastProgressReport{};
     void* downloadProgressReportFunctionContext{ nullptr };
 
+    // Dynamic size properties
+    uint64_t dynamicRequestBodySize{ 0 };
+    uint64_t dynamicRequestBodyBytesWritten{ 0 };
+    uint64_t dynamicResponseBodySize{ 0 };
+    uint64_t dynamicResponseBodyBytesWritten{ 0 };
 
     static HRESULT CALLBACK ReadRequestBody(
         _In_ HCCallHandle call,

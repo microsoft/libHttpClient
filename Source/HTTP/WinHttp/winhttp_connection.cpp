@@ -525,13 +525,39 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
 
         if (isUpload)
         {
-            current = pRequestContext->m_requestBodyOffset;
+            uint64_t dynamicBodySize{};
+            uint64_t dynamicBodyBytesWritten{};
+            HCHttpCallRequestGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+            if (dynamicBodySize > 0)
+            {
+                bodySize = dynamicBodySize;
+                current = dynamicBodyBytesWritten;
+            }
+            else
+            {
+                current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            }
+
             lastProgressReport = pRequestContext->m_call->uploadLastProgressReport;
             minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->uploadMinimumProgressReportInterval * 1000);
         }
         else
         {
-            current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            uint64_t dynamicBodySize{};
+            uint64_t dynamicBodyBytesWritten{};
+            HCHttpCallResponseGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+            if (dynamicBodySize > 0)
+            {
+                bodySize = dynamicBodySize;
+                current = dynamicBodyBytesWritten;
+            }
+            else
+            {
+                current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            }
+
             lastProgressReport = pRequestContext->m_call->downloadLastProgressReport;
             minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->downloadMinimumProgressReportInterval * 1000);
         }
