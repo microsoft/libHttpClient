@@ -491,7 +491,7 @@ void CurlEasyRequest::ReportProgress(HCCallHandle call, HCHttpCallProgressReport
     }
 }
 
-int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept
+int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, curl_off_t , curl_off_t ultotal, curl_off_t ulnow) noexcept
 {
     CurlEasyRequest* request = (CurlEasyRequest*)context;
 
