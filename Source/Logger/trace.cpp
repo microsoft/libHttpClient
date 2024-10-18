@@ -194,10 +194,13 @@ void TraceMessageToClient(
     char const* message
 ) noexcept
 {
-    auto callback = GetTraceState().GetClientCallback();
-    if (callback)
+    TraceState& traceState{ GetTraceState() };
+    for (size_t i = 0; i < _countof(traceState.clientCallbacks); ++i)
     {
-        callback(areaName, level, threadId, timestamp, message);
+        if (traceState.clientCallbacks[i])
+        {
+            traceState.clientCallbacks[i](areaName, level, threadId, timestamp, message);
+        }
     }
 }
 
@@ -239,6 +242,11 @@ STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexc
     GetTraceState().SetClientCallback(callback);
 }
 
+STDAPI_(void) HCTraceRemoveClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
+{
+    GetTraceState().RemoveClientCallback(callback);
+}
+
 #if HC_PLATFORM_IS_MICROSOFT
 STDAPI_(void) HCTraceSetEtwEnabled(_In_ bool enabled) noexcept
 {
@@ -271,6 +279,8 @@ STDAPI_(void) HCTraceImplMessage_v(
     va_list varArgs
 ) noexcept
 {
+    TraceState& traceState{ GetTraceState() };
+
     if (!area)
     {
         return;
@@ -281,7 +291,7 @@ STDAPI_(void) HCTraceImplMessage_v(
         return;
     }
 
-    if (!GetTraceState().IsSetup())
+    if (!traceState.IsSetup())
     {
         return;
     }
@@ -292,7 +302,17 @@ STDAPI_(void) HCTraceImplMessage_v(
     }
 
     // Only do work if there's reason to
-    if (GetTraceState().GetClientCallback() == nullptr && !GetTraceState().GetTraceToDebugger() && !GetTraceState().GetEtwEnabled())
+    bool haveClientCallback = false;
+    for (size_t i = 0; i < _countof(traceState.clientCallbacks); ++i)
+    {
+        if (traceState.clientCallbacks[i])
+        {
+            haveClientCallback = true;
+            break;
+        }
+    }
+
+    if (haveClientCallback && !traceState.GetTraceToDebugger() && !traceState.GetEtwEnabled())
     {
         return;
     }
@@ -368,12 +388,28 @@ void TraceState::SetEtwEnabled(_In_ bool etwEnabled) noexcept
 
 void TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
 {
-    m_clientCallback = callback;
+    // Try to add a client callback. If MAX_TRACE_CLIENTS have already set callbacks, the callback won't be set
+    // and the client will not get trace callbacks.
+    for (size_t i = 0; i < _countof(clientCallbacks); ++i)
+    {
+        if (clientCallbacks[i] == nullptr)
+        {
+            clientCallbacks[i] = callback;
+            break;
+        }
+    }
 }
 
-HCTraceCallback* TraceState::GetClientCallback() const noexcept
+void TraceState::RemoveClientCallback(HCTraceCallback* callback) noexcept
 {
-    return m_clientCallback;
+    for (size_t i = 0; i < _countof(clientCallbacks); ++i)
+    {
+        if (clientCallbacks[i] == callback)
+        {
+            clientCallbacks[i] = nullptr;
+            break;
+        }
+    }
 }
 
 uint64_t TraceState::GetTimestamp() const noexcept
