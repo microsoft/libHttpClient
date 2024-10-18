@@ -91,6 +91,7 @@ _HCTraceCleanup
 _HCSettingsSetTraceLevel
 _HCSettingsGetTraceLevel
 _HCTraceSetClientCallback
+_HCTraceRemoveClientCallback
 _HCTraceSetTraceToDebugger
 _HCTraceSetPlatformCallbacks
 _HCTraceImplMessage
