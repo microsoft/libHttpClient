@@ -14,7 +14,6 @@ public:
     bool GetTraceToDebugger() noexcept;
     void SetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
     void SetClientCallback(HCTraceCallback* callback) noexcept;
-    void RemoveClientCallback(HCTraceCallback* callback) noexcept;
     uint64_t GetTimestamp() const noexcept;
     bool GetEtwEnabled() const noexcept;
 #if HC_PLATFORM_IS_MICROSOFT

@@ -195,18 +195,12 @@ typedef void (CALLBACK HCTraceCallback)(
     );
 
 /// <summary>
-/// Set a client callback for tracing.
+/// Set a client callback for tracing. Note that once a trace callback is set, it may be
+/// called until the library is fully cleaned up.
 /// </summary>
 /// <param name="callback">Trace callback.</param>
 /// <returns></returns>
 STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
-
-/// <summary>
-/// Remove a client callback for tracing.
-/// </summary>
-/// <param name="callback">Trace callback.</param>
-/// <returns></returns>
-STDAPI_(void) HCTraceRemoveClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
 
 /// <summary>
 /// Sets or unsets if the trace is sent to the debugger.

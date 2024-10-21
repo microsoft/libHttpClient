@@ -132,4 +132,3 @@ EXPORTS
     XTaskQueueUnregisterMonitor
     XTaskQueueUnregisterWaiter
     HCHttpCallResponseSetGzipCompressed
-    HCTraceRemoveClientCallback

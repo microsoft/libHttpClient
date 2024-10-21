@@ -195,7 +195,7 @@ void TraceMessageToClient(
 ) noexcept
 {
     TraceState& traceState{ GetTraceState() };
-    for (size_t i = 0; i < _countof(traceState.clientCallbacks); ++i)
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
         if (traceState.clientCallbacks[i])
         {
@@ -240,11 +240,6 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept
 STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
 {
     GetTraceState().SetClientCallback(callback);
-}
-
-STDAPI_(void) HCTraceRemoveClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
-{
-    GetTraceState().RemoveClientCallback(callback);
 }
 
 #if HC_PLATFORM_IS_MICROSOFT
@@ -303,7 +298,7 @@ STDAPI_(void) HCTraceImplMessage_v(
 
     // Only do work if there's reason to
     bool haveClientCallback = false;
-    for (size_t i = 0; i < _countof(traceState.clientCallbacks); ++i)
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
         if (traceState.clientCallbacks[i])
         {
@@ -312,7 +307,7 @@ STDAPI_(void) HCTraceImplMessage_v(
         }
     }
 
-    if (haveClientCallback && !traceState.GetTraceToDebugger() && !traceState.GetEtwEnabled())
+    if (!haveClientCallback && !traceState.GetTraceToDebugger() && !traceState.GetEtwEnabled())
     {
         return;
     }
@@ -390,23 +385,11 @@ void TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
 {
     // Try to add a client callback. If MAX_TRACE_CLIENTS have already set callbacks, the callback won't be set
     // and the client will not get trace callbacks.
-    for (size_t i = 0; i < _countof(clientCallbacks); ++i)
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
         if (clientCallbacks[i] == nullptr)
         {
             clientCallbacks[i] = callback;
-            break;
-        }
-    }
-}
-
-void TraceState::RemoveClientCallback(HCTraceCallback* callback) noexcept
-{
-    for (size_t i = 0; i < _countof(clientCallbacks); ++i)
-    {
-        if (clientCallbacks[i] == callback)
-        {
-            clientCallbacks[i] = nullptr;
             break;
         }
     }
