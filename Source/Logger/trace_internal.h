@@ -2,6 +2,8 @@
 
 #include <httpClient/trace.h>
 
+#define MAX_TRACE_CLIENTS 10
+
 class TraceState
 {
 public:
@@ -12,12 +14,13 @@ public:
     bool GetTraceToDebugger() noexcept;
     void SetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
     void SetClientCallback(HCTraceCallback* callback) noexcept;
-    HCTraceCallback* GetClientCallback() const noexcept;
     uint64_t GetTimestamp() const noexcept;
     bool GetEtwEnabled() const noexcept;
 #if HC_PLATFORM_IS_MICROSOFT
     void SetEtwEnabled(_In_ bool enabled) noexcept;
 #endif
+
+    HCTraceCallback* clientCallbacks[MAX_TRACE_CLIENTS]{};
 
 private:
     std::atomic<uint32_t> m_tracingClients{ 0 };
@@ -25,7 +28,6 @@ private:
     {
         std::chrono::high_resolution_clock::time_point{}
     };
-    std::atomic<HCTraceCallback*> m_clientCallback{ nullptr };
     bool m_traceToDebugger = false;
     bool m_etwEnabled = false;
 };
