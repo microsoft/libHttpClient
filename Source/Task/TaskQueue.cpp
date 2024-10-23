@@ -537,10 +537,12 @@ void __stdcall TaskQueuePortImpl::Terminate(
     // true if this is the first suspend added.
     if (cxt->AddSuspend())
     {
+        //printf("[0x%p] m_work.Port->Terminate cxt->AddSuspend.\n", this);
         ScheduleTermination(term);
     }
     else
     {
+        //printf("[0x%p] m_work.Port->Terminate pushing back dummy item.\n", this);
         m_pendingTerminationList->push_back(term, term->node);
         term->node = 0;
     }
@@ -787,7 +789,7 @@ HRESULT __stdcall TaskQueuePortImpl::SuspendTermination(
     
     if (FAILED(hr))
     {
-        portContext->RemoveSuspend();
+        ResumeTermination(portContext);
         RETURN_HR(hr);
     }
 
@@ -799,6 +801,7 @@ void __stdcall TaskQueuePortImpl::ResumeTermination(
 {
     if (portContext->RemoveSuspend())
     {
+        //printf("[0x%p] TaskQueuePortImpl::ResumeTermination.\n", this);
         // Removed the last external callback.  Look for
         // parked terminations and reschedule them.
 
@@ -806,6 +809,7 @@ void __stdcall TaskQueuePortImpl::ResumeTermination(
         {
             if (entry->portContext == portContext)
             {
+                //printf("[0x%p] TaskQueuePortImpl::ResumeTermination Remove item.\n", this);
                 // This entry is for the port that's resuming,
                 // we can schedule it.
                 entry->node = address;
@@ -1193,6 +1197,7 @@ void TaskQueuePortImpl::SignalTerminations()
 void TaskQueuePortImpl::ScheduleTermination(
     _In_ TerminationEntry* term)
 {
+    //printf("[0x%p] Schedule Termination.\n", this);
     // Insert the termination callback into the queue.  Even if the
     // main queue is empty, we still signal it and run through
     // a cycle.  This ensures we flush the queue out with no 
@@ -1610,6 +1615,7 @@ HRESULT __stdcall TaskQueueImpl::Terminate(
 
     void* workToken;
     
+    //printf("[0x%p] TaskQueueImpl::Terminate begins.\n", this);
     RETURN_IF_FAILED(m_work.Port->PrepareTerminate(&m_work, entry.get(), OnTerminationCallback, &workToken));
 
     HRESULT hr = m_completion.Port->PrepareTerminate(&m_completion, entry.get(), OnTerminationCallback, &entry->completionPortToken);
@@ -1706,11 +1712,13 @@ void TaskQueueImpl::OnTerminationCallback(_In_ void* context)
     switch(entry->level)
     {
         case TerminationLevel::Work:
+            //printf("OnTerminationCallback Work.\n");
             entry->level = TerminationLevel::Completion;
             entry->owner->m_completion.Port->Terminate(entry->completionPortToken);
             break;
 
         case TerminationLevel::Completion:
+            //printf("OnTerminationCallback Completion.\n");
             if (entry->callback != nullptr)
             {
                 entry->callback(entry->context);
