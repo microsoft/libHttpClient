@@ -24,6 +24,13 @@ done
 pushd "$SCRIPT_DIR"/../../External/curl
 autoreconf -fi "$SCRIPT_DIR"/../../External/curl
 
+if [ -f "$SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a" ]; then
+  echo "Previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a - skipping build"
+  exit 0
+else
+  echo "No previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a - performing build"
+fi
+
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
     ./configure --disable-shared --without-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --enable-debug

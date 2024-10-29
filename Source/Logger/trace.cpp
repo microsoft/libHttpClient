@@ -194,10 +194,13 @@ void TraceMessageToClient(
     char const* message
 ) noexcept
 {
-    auto callback = GetTraceState().GetClientCallback();
-    if (callback)
+    TraceState& traceState{ GetTraceState() };
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        callback(areaName, level, threadId, timestamp, message);
+        if (traceState.clientCallbacks[i])
+        {
+            traceState.clientCallbacks[i](areaName, level, threadId, timestamp, message);
+        }
     }
 }
 
@@ -271,6 +274,8 @@ STDAPI_(void) HCTraceImplMessage_v(
     va_list varArgs
 ) noexcept
 {
+    TraceState& traceState{ GetTraceState() };
+
     if (!area)
     {
         return;
@@ -281,7 +286,7 @@ STDAPI_(void) HCTraceImplMessage_v(
         return;
     }
 
-    if (!GetTraceState().IsSetup())
+    if (!traceState.IsSetup())
     {
         return;
     }
@@ -292,7 +297,17 @@ STDAPI_(void) HCTraceImplMessage_v(
     }
 
     // Only do work if there's reason to
-    if (GetTraceState().GetClientCallback() == nullptr && !GetTraceState().GetTraceToDebugger() && !GetTraceState().GetEtwEnabled())
+    bool haveClientCallback = false;
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
+    {
+        if (traceState.clientCallbacks[i])
+        {
+            haveClientCallback = true;
+            break;
+        }
+    }
+
+    if (!haveClientCallback && !traceState.GetTraceToDebugger() && !traceState.GetEtwEnabled())
     {
         return;
     }
@@ -368,12 +383,16 @@ void TraceState::SetEtwEnabled(_In_ bool etwEnabled) noexcept
 
 void TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
 {
-    m_clientCallback = callback;
-}
-
-HCTraceCallback* TraceState::GetClientCallback() const noexcept
-{
-    return m_clientCallback;
+    // Try to add a client callback. If MAX_TRACE_CLIENTS have already set callbacks, the callback won't be set
+    // and the client will not get trace callbacks.
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
+    {
+        if (clientCallbacks[i] == nullptr)
+        {
+            clientCallbacks[i] = callback;
+            break;
+        }
+    }
 }
 
 uint64_t TraceState::GetTimestamp() const noexcept

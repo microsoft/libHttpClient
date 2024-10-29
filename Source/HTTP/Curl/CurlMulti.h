@@ -26,6 +26,7 @@ public:
 private:
     CurlMulti() = default;
 
+    void ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, uint32_t delay);
     static void CALLBACK TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept;
     HRESULT Perform() noexcept;
 
@@ -38,6 +39,7 @@ private:
     XTaskQueueHandle m_queue{ nullptr };
     std::mutex m_mutex;
     http_internal_map<CURL*, HC_UNIQUE_PTR<CurlEasyRequest>> m_easyRequests;
+    uint32_t m_taskQueueCallbacksPending{ 0 };
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr };
 };
 

@@ -96,7 +96,7 @@ namespace OS
                                 // calls.
 
                                 {
-                                    std::unique_lock<std::mutex> lock(m_activeLock);
+                                    std::unique_lock<std::mutex> lock2(m_activeLock);
                                     m_activeCalls++;
                                 }
 
