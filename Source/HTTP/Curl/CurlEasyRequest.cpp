@@ -549,8 +549,8 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
         uint64_t dynamicBodyBytesWritten{};
         HCHttpCallResponseGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
 
-        uint64_t reportBytesWritten = ulnow;
-        uint64_t reportTotalBytes = ultotal;
+        uint64_t reportBytesWritten = dlnow;
+        uint64_t reportTotalBytes = dltotal;
         if (dynamicBodySize > 0)
         {
             reportBytesWritten = dynamicBodyBytesWritten;
