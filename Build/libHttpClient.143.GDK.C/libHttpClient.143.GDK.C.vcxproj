@@ -9,5 +9,15 @@
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems" Label="Shared" />
   <Import Condition="'$(HCNoZlib)' != 'true'" Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">
+    <ClCompile>
+      <AdditionalOptions>/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">
+    <ClCompile>
+      <AdditionalOptions>/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -1,16 +1,16 @@
 ## Welcome!
 
-libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api), PlayFab SDKs, and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
+libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api), [PlayFab SDK](https://github.com/PlayFab/PlayFabCSdk), and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
 
 ## Goals
 
 - libHttpClient provides a **platform abstraction layer** for **HTTP** and **WebSocket**
-- Stock implementations that call **native platform HTTP / WebSocket APIs** on GDK, XDK ERA, Win32 Win7+, UWP, iOS, Android 
+- Stock implementations that call **native platform HTTP / WebSocket APIs** on GDK, XDK ERA, Win32 Win7+, UWP, iOS, Android, Linux 
 - Caller can add support for **other platforms via callback** API
 - Sample showing off an [**HTTP implementation via Curl**](https://github.com/curl/curl) via this callback
 - Designed around the needs of **professional game developers** that use Xbox Live and PlayFab
-- **used by** the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api) and PlayFab SDKs
-- Builds for **GDK, XDK ERA, UWP, Win32 Win7+, iOS, and Android**
+- **used by** the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api) and [PlayFab SDK](https://github.com/PlayFab/PlayFabCSdk)
+- Builds for **GDK, XDK ERA, UWP, Win32 Win7+, iOS, Android, and Linux**
 - Public API is a **flat C API**
 - **Asynchronous** API
 - Public API **supports simple P/Invoke** without needing to use the ["C#/.NET P/Invoke Interop SDK" or C++/CLI](https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK)

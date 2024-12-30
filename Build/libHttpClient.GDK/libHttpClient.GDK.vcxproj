@@ -17,7 +17,15 @@
     <Link>
       <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
       <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <ClCompile>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems" Label="Shared" />
