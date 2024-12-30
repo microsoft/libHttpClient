@@ -1,11 +1,11 @@
 ## Welcome!
 
-libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api), [PlayFab SDK](https://github.com/PlayFab/PlayFabCSdk), and game devs.  If you want to contribute to the project, please talk to us to avoid overlap.
+libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and is designed for use by the Microsoft Xbox Live Service API [(XSAPI)](https://github.com/Microsoft/xbox-live-api), [PlayFab SDK](https://github.com/PlayFab/PlayFabCSdk), and game devs. If you want to contribute to the project, please talk to us to avoid overlap.
 
 ## Goals
 
 - libHttpClient provides a **platform abstraction layer** for **HTTP** and **WebSocket**
-- Stock implementations that call **native platform HTTP / WebSocket APIs** on GDK, XDK ERA, Win32 Win7+, UWP, iOS, Android, Linux 
+- Stock implementations that call **native platform HTTP / WebSocket APIs** on GDK, XDK ERA, Win32 Win7+, UWP, iOS, Android, Linux
 - Caller can add support for **other platforms via callback** API
 - Sample showing off an [**HTTP implementation via Curl**](https://github.com/curl/curl) via this callback
 - Designed around the needs of **professional game developers** that use Xbox Live and PlayFab
@@ -14,7 +14,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 - Public API is a **flat C API**
 - **Asynchronous** API
 - Public API **supports simple P/Invoke** without needing to use the ["C#/.NET P/Invoke Interop SDK" or C++/CLI](https://en.wikipedia.org/wiki/Platform_Invocation_Services#C.23.2F.NET_P.2FInvoke_Interop_SDK)
-- Public APIs to **manage async tasks** 
+- Public APIs to **manage async tasks**
 - Async data can be returned to a specific game thread so the **game doesn't need to marshal the data between threads**
 - **No dependencies** on PPL or Boost
 - **Does not throw exceptions** as a means of non-fatal error reporting
@@ -36,7 +36,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Optionally call HCSettingsSet*()
 1. Call HCHttpCallCreate() to create a new HCCallHandle
 1. Call HCHttpCallRequestSet*() to prepare the HCCallHandle
-1. Call HCHttpCallPerform() to perform an HTTP call using the HCCallHandle.  
+1. Call HCHttpCallPerform() to perform an HTTP call using the HCCallHandle.
 1. The perform call is asynchronous, so the work will be done on a background thread which calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Work ).  The results will return to the callback on the thread that calls DispatchAsyncQueue( ..., AsyncQueueCallbackType_Completion ).
 1. Call HCHttpCallResponseGet*() to get the HTTP response of the HCCallHandle
 1. Call HCHttpCallCloseHandle() to cleanup the HCCallHandle
@@ -75,13 +75,13 @@ Note that using GitHub's feature to "Download Zip" does not contain the submodul
 
 ## Contribute Back!
 
-Is there a feature missing that you'd like to see, or have you found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](../../issues).  
+Is there a feature missing that you'd like to see, or have you found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](../../issues).
 
 Big or small we'd like to take your contributions back to help improve the libHttpClient for game devs.
 
 ## Having Trouble?
 
-We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a an issue in our [issue tracker](../../issues).  
+We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a an issue in our [issue tracker](../../issues).
 
 ### Xbox Live GitHub projects
 *   [Xbox Live Service API for C++](https://github.com/Microsoft/xbox-live-api)
