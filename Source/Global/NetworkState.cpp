@@ -294,15 +294,18 @@ void CALLBACK NetworkState::WebSocketConnectComplete(XAsyncBlock* async)
     bool disconnect{ false };
 
     HRESULT hr = HCGetWebSocketConnectResult(&context->internalAsyncBlock, &context->connectResult);
-    if (SUCCEEDED(hr) && SUCCEEDED(context->connectResult.errorCode))
+    if (SUCCEEDED(hr))
     {
         // Pass the clients handle back to them in the result
         context->connectResult.websocket = context->websocketHandle;
 
-        state.m_connectedWebSockets.insert(new (http_stl_allocator<ActiveWebSocketContext>{}.allocate(1)) ActiveWebSocketContext{ state, context->websocket });
-        if (state.m_cleanupAsyncBlock)
+        if (SUCCEEDED(context->connectResult.errorCode))
         {
-            disconnect = true;
+            state.m_connectedWebSockets.insert(new (http_stl_allocator<ActiveWebSocketContext>{}.allocate(1)) ActiveWebSocketContext{ state, context->websocket });
+            if (state.m_cleanupAsyncBlock)
+            {
+                disconnect = true;
+            }
         }
     }
 
