@@ -353,12 +353,9 @@ void TraceState::Cleanup() noexcept
 {
     --m_tracingClients;
 
-    if (m_tracingClients == 0)
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
-        {
-            clientCallbacks[i] = nullptr;
-        }
+        clientCallbacks[i] = nullptr;
     }
 }
 

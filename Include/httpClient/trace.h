@@ -150,8 +150,9 @@ enum class HCTraceLevel : uint32_t
 /// </summary>
 /// <remarks>
 /// This function is implicitly called during HCInitialize. Initialization is reference counted, and
-/// multiple calls to HCTraceInit and HCTraceCleanup will not interfere with each other as long as
-/// each call to HCTraceInit is paired with exactly one call to HCTraceCleanup.
+/// multiple calls to HCTraceInit and HCTraceCleanup are supported as long as
+/// each call to HCTraceInit is paired with exactly one call to HCTraceCleanup. Client callbacks will 
+/// all be cleared each time HCTraceCleanup is called.
 /// </remarks>
 STDAPI_(void) HCTraceInit() noexcept;
 
@@ -196,7 +197,7 @@ typedef void (CALLBACK HCTraceCallback)(
 
 /// <summary>
 /// Set a client callback for tracing. Note that once a trace callback is set, it may be
-/// called until the library is fully cleaned up.
+/// called until HCTraceCleanup is called.
 /// </summary>
 /// <param name="callback">Trace callback.</param>
 /// <returns></returns>
