@@ -352,6 +352,11 @@ void TraceState::Init() noexcept
 void TraceState::Cleanup() noexcept
 {
     --m_tracingClients;
+
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
+    {
+        clientCallbacks[i] = nullptr;
+    }
 }
 
 bool TraceState::IsSetup() const noexcept
