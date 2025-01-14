@@ -1756,6 +1756,24 @@ static HRESULT CreateTaskQueueHandle(
 // XTaskQueue.h APIs
 ///////////////////
 
+#define TRY_GRTS_XASYNC(__returnVal, __funcName, ...) \
+    auto asyncLib = LoadLibraryEx(L"xgameruntime.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32); \
+    if (asyncLib != NULL) \
+    { \
+        auto asyncFunc = (GRTS##__funcName)GetProcAddress(asyncLib, "XAsync" #__funcName); \
+        if (asyncFunc == NULL) \
+        { \
+            return __returnVal; \
+        } \
+        \
+        return asyncFunc(__VA_ARGS__); \
+    }
+
+typedef HRESULT(__stdcall* GRTSXTaskQueueCreate)(
+    _In_ XTaskQueueDispatchMode workDispatchMode,
+    _In_ XTaskQueueDispatchMode completionDispatchMode,
+    _Out_ XTaskQueueHandle* queue
+    );
 //
 // Creates a Task Queue, which can be used to queue
 // different calls together.
@@ -1766,6 +1784,8 @@ STDAPI XTaskQueueCreate(
     _Out_ XTaskQueueHandle* queue
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueCreate, workDispatchMode, completionDispatchMode, queue);
+
     *queue = nullptr;
 
     referenced_ptr<TaskQueueImpl> aq(new (std::nothrow) TaskQueueImpl);
@@ -1782,6 +1802,11 @@ STDAPI XTaskQueueCreate(
     return S_OK;
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueGetPort)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port,
+    _Out_ XTaskQueuePortHandle* portHandle
+    );
 /// <summary>
 /// Returns the task queue port handle for the given
 /// port. Task queue port handles are owned by the
@@ -1796,6 +1821,8 @@ STDAPI XTaskQueueGetPort(
     _Out_ XTaskQueuePortHandle* portHandle
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueGetPort, queue, port, portHandle);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     if (aq == nullptr)
     {
@@ -1810,6 +1837,11 @@ STDAPI XTaskQueueGetPort(
     return S_OK;
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueCreateComposite)(
+    _In_ XTaskQueuePortHandle workPort,
+    _In_ XTaskQueuePortHandle completionPort,
+    _Out_ XTaskQueueHandle* queue
+    );
 /// <summary>
 /// Creates a task queue composed of ports of other
 /// task queue ports. A composite task queue will duplicate
@@ -1823,6 +1855,8 @@ STDAPI XTaskQueueCreateComposite(
      _Out_ XTaskQueueHandle* queue
      ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueCreateComposite, workPort, completionPort, queue);
+
     *queue = nullptr;
 
     referenced_ptr<TaskQueueImpl> aq(new (std::nothrow) TaskQueueImpl);
@@ -1834,6 +1868,11 @@ STDAPI XTaskQueueCreateComposite(
     return S_OK;
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueDispatch)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port,
+    _In_ uint32_t timeoutInMs
+    );
 //
 // Processes items in the task queue of the given type. If an item
 // is processed this will return TRUE. If there are no items to process
@@ -1846,6 +1885,8 @@ STDAPI_(bool) XTaskQueueDispatch(
     _In_ uint32_t timeoutInMs
     ) noexcept
 {
+    TRY_GRTS_XASYNC(false, XTaskQueueDispatch, queue, port, timeoutInMs);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     if (aq == nullptr)
     {
@@ -1861,6 +1902,10 @@ STDAPI_(bool) XTaskQueueDispatch(
     return portContext->GetPort()->Dispatch(portContext.get(), timeoutInMs);
 }
 
+typedef bool(__stdcall* GRTSXTaskQueueIsEmpty)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port
+    );
 //
 // Returns TRUE if there is no outstanding work in this
 // queue.  Note this API is only used for testing and
@@ -1871,6 +1916,8 @@ STDAPI_(bool) XTaskQueueIsEmpty(
     _In_ XTaskQueuePort port
     ) noexcept
 {
+    TRY_GRTS_XASYNC(false, XTaskQueueIsEmpty, queue, port);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     if (aq == nullptr)
     {
@@ -1886,6 +1933,9 @@ STDAPI_(bool) XTaskQueueIsEmpty(
     return portContext->GetPort()->IsEmpty();
 }
 
+typedef void(__stdcall* GRTSXTaskQueueCloseHandle)(
+    _In_ XTaskQueueHandle queue
+    );
 //
 // Closes the task queue.  A queue can only be closed if it
 // is not in use by a task or is empty.  If not true, the queue
@@ -1895,6 +1945,8 @@ STDAPI_(void) XTaskQueueCloseHandle(
     _In_ XTaskQueueHandle queue
     ) noexcept
 {
+    TRY_GRTS_XASYNC(, XTaskQueueCloseHandle, queue);
+
     ITaskQueue* aq = GetQueue(queue);
 
     if (aq != nullptr && aq->CanClose())
@@ -1912,6 +1964,12 @@ STDAPI_(void) XTaskQueueCloseHandle(
     }
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueTerminate)(
+    _In_ XTaskQueueHandle queue,
+    _In_ bool wait,
+    _In_opt_ void* callbackContext,
+    _In_opt_ XTaskQueueTerminatedCallback* callback
+    );
 //
 // Terminates a task queue by canceling all pending items and
 // preventing new items from being queued.  Once a queue is terminated
@@ -1924,10 +1982,18 @@ STDAPI XTaskQueueTerminate(
     _In_opt_ XTaskQueueTerminatedCallback* callback
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueTerminate, queue, wait, callbackContext, callback);
+    
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     return aq->Terminate(wait, callbackContext, callback);
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueSubmitCallback)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port,
+    _In_opt_ void* callbackContext,
+    _In_ XTaskQueueCallback* callback
+    );
 //
 // Submits either a work or completion callback immediately.
 //
@@ -1938,9 +2004,18 @@ STDAPI XTaskQueueSubmitCallback(
     _In_ XTaskQueueCallback* callback
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueSubmitCallback, queue, port, callbackContext, callback);
+
     return XTaskQueueSubmitDelayedCallback(queue, port, 0, callbackContext, callback);
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueSubmitDelayedCallback)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port,
+    _In_ uint32_t delayMs,
+    _In_opt_ void* callbackContext,
+    _In_ XTaskQueueCallback* callback
+    );
 //
 // Submits either a work or completion callback.
 //
@@ -1952,6 +2027,8 @@ STDAPI XTaskQueueSubmitDelayedCallback(
     _In_ XTaskQueueCallback* callback
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueSubmitDelayedCallback, queue, port, delayMs, callbackContext, callback);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
 
@@ -1962,6 +2039,14 @@ STDAPI XTaskQueueSubmitDelayedCallback(
     return S_OK;
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueRegisterWaiter)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port,
+    _In_ HANDLE waitHandle,
+    _In_opt_ void* callbackContext,
+    _In_ XTaskQueueCallback* callback,
+    _Out_ XTaskQueueRegistrationToken* token
+    );
 //
 // Registers a wait handle with the task queue.  When the wait handle
 // is satisfied the task queue will invoke the given callback. This
@@ -1977,12 +2062,18 @@ STDAPI XTaskQueueRegisterWaiter(
     _Out_ XTaskQueueRegistrationToken* token
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueRegisterWaiter, queue, port, waitHandle, callbackContext, callback, token);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
     RETURN_IF_FAILED(aq->RegisterWaitHandle(port, waitHandle, callbackContext, callback, token));
     return S_OK;
 }
 
+typedef void(__stdcall* GRTSXTaskQueueUnregisterWaiter)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueueRegistrationToken token
+    );
 //
 // Unregisters a previously registered task queue waiter.
 //
@@ -1991,6 +2082,8 @@ STDAPI_(void) XTaskQueueUnregisterWaiter(
     _In_ XTaskQueueRegistrationToken token
     ) noexcept
 {
+    TRY_GRTS_XASYNC(, XTaskQueueUnregisterWaiter, queue, token);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     if (aq != nullptr)
     {
@@ -1998,6 +2091,11 @@ STDAPI_(void) XTaskQueueUnregisterWaiter(
     }
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueDuplicateHandleWithOptions)(
+    _In_ XTaskQueueHandle queueHandle,
+    _In_ XTaskQueueDuplicateOptions options,
+    _Out_ XTaskQueueHandle* duplicatedHandle
+    );
 //
 // Increments the refcount on the queue and allows supplying
 // options as to how the duplicate is performed.
@@ -2008,6 +2106,8 @@ STDAPI XTaskQueueDuplicateHandleWithOptions(
     _Out_ XTaskQueueHandle* duplicatedHandle
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueDuplicateHandleWithOptions, queueHandle, options, duplicatedHandle);
+
     RETURN_HR_IF(E_POINTER, duplicatedHandle == nullptr);
 
     *duplicatedHandle = nullptr;
@@ -2038,6 +2138,10 @@ STDAPI XTaskQueueDuplicateHandleWithOptions(
     return S_OK;
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueDuplicateHandle)(
+    _In_ XTaskQueueHandle queueHandle,
+    _Out_ XTaskQueueHandle* duplicatedHandle
+    );
 //
 // Increments the refcount on the queue
 //
@@ -2046,12 +2150,20 @@ STDAPI XTaskQueueDuplicateHandle(
     _Out_ XTaskQueueHandle* duplicatedHandle
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueDuplicateHandle, queueHandle, duplicatedHandle);
+
     return XTaskQueueDuplicateHandleWithOptions(
         queueHandle,
         XTaskQueueDuplicateOptions::None,
         duplicatedHandle);
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueRegisterMonitor)(
+    _In_ XTaskQueueHandle queue,
+    _In_opt_ void* callbackContext,
+    _In_ XTaskQueueMonitorCallback* callback,
+    _Out_ XTaskQueueRegistrationToken* token
+    );
 //
 // Registers a callback that will be called when a new callback
 // is submitted. The callback will be directly invoked when
@@ -2064,12 +2176,18 @@ STDAPI XTaskQueueRegisterMonitor(
     _Out_ XTaskQueueRegistrationToken* token
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueRegisterMonitor, queue, callbackContext, callback, token);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
     RETURN_IF_FAILED(aq->RegisterSubmitCallback(callbackContext, callback, token));
     return S_OK;
 }
 
+typedef void(__stdcall* GRTSXTaskQueueUnregisterMonitor)(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueueRegistrationToken token
+    );
 //
 // Unregisters a previously added callback.
 //
@@ -2078,6 +2196,8 @@ STDAPI_(void) XTaskQueueUnregisterMonitor(
     _In_ XTaskQueueRegistrationToken token
     ) noexcept
 {
+    TRY_GRTS_XASYNC(, XTaskQueueUnregisterMonitor, queue, token);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     if (aq != nullptr)
     {
@@ -2085,6 +2205,10 @@ STDAPI_(void) XTaskQueueUnregisterMonitor(
     }
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueGetCurrentProcessTaskQueueWithOptions)(
+    _In_ XTaskQueueDuplicateOptions options,
+    _Out_ XTaskQueueHandle* queue
+    );
 //
 // Returns a handle to the process task queue, or nullptr if there is no
 // process task queue.  By default, there is a default process task queue
@@ -2096,6 +2220,8 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
     _Out_ XTaskQueueHandle* queue
     ) noexcept
 {
+    TRY_GRTS_XASYNC(false, XTaskQueueGetCurrentProcessTaskQueueWithOptions, options, queue);
+
     *queue = nullptr;
 
     XTaskQueueHandle processQueue = ProcessGlobals::g_processQueue;
@@ -2143,6 +2269,9 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
     return (*queue) != nullptr;
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueGetCurrentProcessTaskQueue)(
+    _Out_ XTaskQueueHandle* queue
+    );
 //
 // Returns a handle to the process task queue, or nullptr if there is no
 // process task queue.  By default, there is a default process task queue
@@ -2152,9 +2281,14 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
     _Out_ XTaskQueueHandle* queue
     ) noexcept
 {
+    TRY_GRTS_XASYNC(false, XTaskQueueGetCurrentProcessTaskQueue, queue);
+
     return XTaskQueueGetCurrentProcessTaskQueueWithOptions(XTaskQueueDuplicateOptions::None, queue);
 }
 
+typedef void(__stdcall* GRTSXTaskQueueSetCurrentProcessTaskQueue)(
+    _In_ XTaskQueueHandle queue
+    );
 //
 // Sets the given task queue as the process wide task queue.  The
 // queue can be set to nullptr, in which case XTaskQueueGetCurrentProcessTaskQueue will
@@ -2165,6 +2299,8 @@ STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
     _In_ XTaskQueueHandle queue
     ) noexcept
 {
+    TRY_GRTS_XASYNC(, XTaskQueueSetCurrentProcessTaskQueue, queue);
+
     XTaskQueueHandle newQueue = nullptr;
 
     if (queue != nullptr)
@@ -2179,6 +2315,9 @@ STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
     }
 }
 
+typedef HRESULT(__stdcall* GRTSXTaskQueueSuspendTermination)(
+    _In_ XTaskQueueHandle queue
+    );
 //
 // Submits a callback that will be invoked asynchronously via some external
 // system.  This is used to prevent queue termination while other work
@@ -2188,6 +2327,8 @@ STDAPI XTaskQueueSuspendTermination(
     _In_ XTaskQueueHandle queue
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XTaskQueueSuspendTermination, queue);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
 
@@ -2198,6 +2339,9 @@ STDAPI XTaskQueueSuspendTermination(
     return S_OK;
 }
 
+typedef void(__stdcall* GRTSXTaskQueueResumeTermination)(
+    _In_ XTaskQueueHandle queue
+    );
 //
 // Tells the queue that a previously submitted external callback
 // has been dispatched.
@@ -2206,6 +2350,8 @@ STDAPI_(void) XTaskQueueResumeTermination(
     _In_ XTaskQueueHandle queue
     ) noexcept
 {
+    TRY_GRTS_XASYNC(, XTaskQueueResumeTermination, queue);
+
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
     if (aq == nullptr)
     {

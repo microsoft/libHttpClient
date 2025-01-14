@@ -640,6 +640,23 @@ static void CALLBACK WorkerCallback(
 // Public APIs
 //
 
+#define TRY_GRTS_XASYNC(__returnVal, __funcName, ...) \
+    auto asyncLib = LoadLibraryEx(L"xgameruntime.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32); \
+    if (asyncLib != NULL) \
+    { \
+        auto asyncFunc = (GRTS##__funcName)GetProcAddress(asyncLib, "XAsync" #__funcName); \
+        if (asyncFunc == NULL) \
+        { \
+            return __returnVal; \
+        } \
+        \
+        return asyncFunc(__VA_ARGS__); \
+    }
+
+typedef HRESULT(__cdecl* GRTSXAsyncGetStatus)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ bool wait
+    );
 /// <summary>
 /// Returns the status of the asynchronous operation, optionally waiting
 /// for it to complete.  Once complete, you may call XAsyncGetResult if
@@ -651,6 +668,18 @@ STDAPI XAsyncGetStatus(
     _In_ bool wait
     ) noexcept
 {
+    auto asyncLib = LoadLibraryEx(L"xgameruntime.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (asyncLib != NULL)
+    {
+        auto asyncFunc = (GRTSXAsyncGetStatus)GetProcAddress(asyncLib, "XAsyncGetStatus");
+        if (asyncFunc == NULL)
+        {
+            return E_NOTIMPL;
+        }
+        
+        return asyncFunc(asyncBlock, wait);
+    }
+
     HRESULT result = E_PENDING;
     AsyncStateRef state;
     {
@@ -713,6 +742,10 @@ STDAPI XAsyncGetStatus(
     return result;
 }
 
+typedef HRESULT(__cdecl* GRTSXAsyncGetResultSize)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _Out_ size_t* bufferSize
+    );
 /// <summary>
 /// Returns the required size of the buffer to pass to XAsyncGetResult.
 /// </summary>
@@ -721,6 +754,8 @@ STDAPI XAsyncGetResultSize(
     _Out_ size_t* bufferSize
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XAsyncGetResultSize, asyncBlock, bufferSize);
+
     HRESULT result = E_PENDING;
     AsyncStateRef state;
     {
@@ -734,6 +769,9 @@ STDAPI XAsyncGetResultSize(
     return result;
 }
 
+typedef void(__cdecl* GRTSXAsyncCancel)(
+    _Inout_ XAsyncBlock* asyncBlock
+    );
 /// <summary>
 /// Tries to cancel an asynchronous operation. If canceled the status result will return E_ABORT
 /// and the completion callback will be invoked.
@@ -742,6 +780,8 @@ STDAPI_(void) XAsyncCancel(
     _Inout_ XAsyncBlock* asyncBlock
     ) noexcept
 {
+    TRY_GRTS_XASYNC(, XAsyncCancel, asyncBlock);
+
     AsyncStateRef state;
     {
         AsyncBlockInternalGuard internal{ asyncBlock };
@@ -768,6 +808,10 @@ STDAPI_(void) XAsyncCancel(
     }
 }
 
+typedef HRESULT(__cdecl* GRTSXAsyncRun)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ XAsyncWork* work
+    );
 /// <summary>
 /// Runs the given callback asynchronously.
 /// </summary>
@@ -776,6 +820,8 @@ STDAPI XAsyncRun(
     _In_ XAsyncWork* work
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XAsyncRun, asyncBlock, work);
+
     RETURN_IF_FAILED(XAsyncBegin(
         asyncBlock,
         reinterpret_cast<void*>(work),
@@ -813,6 +859,13 @@ STDAPI XAsyncRun(
 // XAsyncProvider APIs
 //
 
+typedef HRESULT(__cdecl* GRTSXAsyncBegin)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_opt_ const void* identity,
+    _In_opt_ const char* identityName,
+    _In_ XAsyncProvider* provider
+    );
 /// <summary>
 /// Initializes an async block for use.  Once begun calls such
 /// as XAsyncGetStatus will provide meaningful data. It is assumed the
@@ -827,6 +880,8 @@ STDAPI XAsyncBegin(
     _In_ XAsyncProvider* provider
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XAsyncBegin, asyncBlock, context, identity, identityName, provider);
+
     RETURN_IF_FAILED(AllocState(asyncBlock, 0));
 
     AsyncStateRef state;
@@ -855,6 +910,15 @@ STDAPI XAsyncBegin(
     return S_OK;
 }
 
+typedef HRESULT(__cdecl* GRTSXAsyncBeginAlloc)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ const void* identity,
+    _In_opt_ const char* identityName,
+    _In_ XAsyncProvider* provider,
+    _In_ size_t contextSize,
+    _In_ size_t parameterBlockSize,
+    _In_opt_ void* parameterBlock
+    );
 /// <summary>
 /// Initializes an async block for use.  Once begun calls such
 /// as XAsyncGetStatus will provide meaningful data. It is assumed the
@@ -880,6 +944,8 @@ STDAPI XAsyncBeginAlloc(
     _In_opt_ void* parameterBlock
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XAsyncBeginAlloc, asyncBlock, identity, identityName, provider, contextSize, parameterBlockSize, parameterBlock);
+
     RETURN_HR_IF(E_INVALIDARG, contextSize == 0);
 
     if (parameterBlockSize != 0)
@@ -931,6 +997,10 @@ STDAPI XAsyncBeginAlloc(
     return S_OK;
 }
 
+typedef HRESULT(__cdecl* GRTSXAsyncSchedule)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ uint32_t delayInMs
+    );
 /// <summary>
 /// Schedules a callback to do async work.  Calling this is optional.  If the async work can be done
 /// through a system - async mechanism like overlapped IO or async COM, there is no need to schedule
@@ -942,6 +1012,8 @@ STDAPI XAsyncSchedule(
     _In_ uint32_t delayInMs
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XAsyncSchedule, asyncBlock, delayInMs);
+
     HRESULT existingStatus;
     AsyncStateRef state;
     {
@@ -979,6 +1051,11 @@ STDAPI XAsyncSchedule(
     return S_OK;
 }
 
+typedef void(__cdecl* GRTSXAsyncComplete)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_ HRESULT result,
+    _In_ size_t requiredBufferSize
+    );
 /// <summary>
 /// Called when async work is completed and the results can be returned.
 /// The caller should supply the resulting data payload size.  If the call
@@ -990,6 +1067,8 @@ STDAPI_(void) XAsyncComplete(
     _In_ size_t requiredBufferSize
     ) noexcept
 {
+    TRY_GRTS_XASYNC(, XAsyncComplete, asyncBlock, result, requiredBufferSize);
+
     // E_PENDING is special -- if you still have work to do don't complete.
 
     if (result == E_PENDING)
@@ -1045,6 +1124,13 @@ STDAPI_(void) XAsyncComplete(
     }
 }
 
+typedef HRESULT(__cdecl* GRTSXAsyncGetResult)(
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ const void* identity,
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_opt_(bufferSize, *bufferUsed) void* buffer,
+    _Out_opt_ size_t* bufferUsed
+    );
 /// <summary>
 /// Returns the result data for the asynchronous operation.  After this call
 /// the async block is completed and no longer associated with the
@@ -1058,6 +1144,8 @@ STDAPI XAsyncGetResult(
     _Out_opt_ size_t* bufferUsed
     ) noexcept
 {
+    TRY_GRTS_XASYNC(E_NOTIMPL, XAsyncGetResult, asyncBlock, identity, bufferSize, buffer, bufferUsed);
+
     HRESULT result = E_PENDING;
     AsyncStateRef state;
     bool resultsAlreadyReturned;
