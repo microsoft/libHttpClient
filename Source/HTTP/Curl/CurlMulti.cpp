@@ -94,16 +94,22 @@ HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProvid
         assert(multi->m_cleanupAsyncBlock == nullptr);
         multi->m_cleanupAsyncBlock = data->async;
 
-        if (multi->m_taskQueueCallbacksPending == 0)
+        // If there are no pending task queue callbacks (and thus no pending HTTP requets), schedule cleanup immediately.
+        // If this condition is true, we're also guaranteed to be the final remaining reference to the CurlMulti.
+        bool cleanupImmediately = multi->m_taskQueueCallbacksPending == 0;
+        XTaskQueueHandle queue = multi->m_queue;
+
+        // Release the lock before going any further because the multi may be destroyed before Begin completes
+        lock.unlock();
+
+        if (cleanupImmediately)
         {
-            // No outstanding HTTP requests schedule cleanup immediately. This condition also ensures that we don't have
-            // a pending Perform call scheduled.
             RETURN_IF_FAILED(XAsyncSchedule(data->async, 0));
         }
         else
         {
             // Terminate the XTaskQueue. Cleanup will be completed after completing remaining HTTP requests
-            RETURN_IF_FAILED(XTaskQueueTerminate(multi->m_queue, false, nullptr, nullptr));
+            RETURN_IF_FAILED(XTaskQueueTerminate(queue, false, nullptr, nullptr));
         }
         return S_OK;
     }
@@ -162,9 +168,11 @@ void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool can
     }
 
     std::unique_lock<std::mutex> lock{ multi->m_mutex };
-    // If CurlMulti::CleanupAsync was called and there are no remaining task queue callbacks, schedule cleanup now
     if (--multi->m_taskQueueCallbacksPending == 0 && multi->m_cleanupAsyncBlock)
     {
+        // If CurlMulti::CleanupAsync was called and there are no remaining task queue callbacks, schedule cleanup now
+        // Release the lock before going any further because the multi may be destroyed before this method returns
+        lock.unlock();
         HRESULT hr = XAsyncSchedule(multi->m_cleanupAsyncBlock, 0);
         if (FAILED(hr))
         {
@@ -239,16 +247,6 @@ HRESULT CurlMulti::Perform() noexcept
 
         uint32_t delay = workAvailable ? 0 : PERFORM_DELAY_MS;
         ScheduleTaskQueueCallback(std::move(lock), delay);
-    }
-    else if (m_cleanupAsyncBlock)
-    {
-        // CleanupAsync was called and no remaining requests, schedule cleanup now
-        HRESULT hr = XAsyncSchedule(m_cleanupAsyncBlock, 0);
-        if (FAILED(hr))
-        {
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti: Failed to schedule CleanupAsyncProvider!");
-            assert(false);
-        }
     }
 
     return S_OK;
