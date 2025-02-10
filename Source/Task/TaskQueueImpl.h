@@ -485,7 +485,8 @@ private:
 
 inline ITaskQueue* GetQueue(XTaskQueueHandle handle)
 {
-    if (handle->m_signature != TASK_QUEUE_SIGNATURE)
+    if (handle->m_signature != TASK_QUEUE_SIGNATURE ||
+        handle->m_runtimeIteration != GetCurrentRuntimeIteration())
     {
         SystemHandleAssert(handle);
         ASSERT("Invalid XTaskQueueHandle");

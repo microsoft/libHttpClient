@@ -130,6 +130,10 @@ HC_DECLARE_TRACE_AREA(WEBSOCKET);
 #define ASYNC_LIB_TRACE(result, message)            \
     HC_TRACE_ERROR_HR(HTTPCLIENT, result, message); \
 
+// Game runtime specific error symbols we convert to standard
+// values
+#define E_GAMERUNTIME_INVALID_HANDLE E_HANDLE
+
 // Handle tracking for TaskQueue
 #define SYSTEM_HANDLE_DEFINE_HELPERS(a, b)
 #define SystemHandleAssert(h)
@@ -138,6 +142,9 @@ HC_DECLARE_TRACE_AREA(WEBSOCKET);
 
 // We always use unique handles
 #define USE_UNIQUE_HANDLES() (true)
+
+// We don't use runtime iterations
+#define GetCurrentRuntimeIteration() 0
 
 #define CATCH_RETURN() CATCH_RETURN_IMPL(__FILE__, __LINE__)
 
