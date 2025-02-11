@@ -95,7 +95,8 @@ public:
         m_localHeap(*this),
         m_heap(m_localHeap),
         m_activeList(*this),
-        m_blockCache(nullptr)
+        m_blockCache(nullptr),
+        m_lock{}
     {
         m_localHeap.init(blockSize);
         Initialize();
@@ -114,7 +115,8 @@ public:
         m_localHeap(*this),
         m_heap(shared.m_heap),
         m_activeList(*this),
-        m_blockCache(nullptr)
+        m_blockCache(nullptr),
+        m_lock{}
     {
         Initialize();
     }
@@ -280,9 +282,15 @@ public:
     // If the callback returns true, it is taking ownership of the data and the
     // address. If it returns false, the node is placed back on the queue.
     //
-    // This is a lock-free call: if there are interleaving calls to push_back
-    // while this action is in progress final node order is not guaranteed (nodes
-    // this API processes may be interleaved with newly pushed nodes).
+    // This call is not completely lock-free. It does not impact calls to
+    // push or pop items from the queue, but it does guard against multiple
+    // calls to remove_if with a spinlock. This guarantees that all calls to
+    // remove_if "see" all the nodes, but makes the call non-reentrant. Don't
+    // call remove_if from the callback or you will busy wait.
+    //
+    // If there are interleaving calls to push_back while this action is in
+    // progress final node order is not guaranteed (nodes this API processes
+    // may be interleaved with newly pushed nodes).
     //
     template <typename TCallback>
     void remove_if(TCallback callback)
@@ -290,6 +298,8 @@ public:
         LocklessQueue<TData> retain(*this);
         TData entry;
         uint64_t address;
+
+        SpinLock lock(*this);
 
         while (pop_front(entry, address))
         {
@@ -744,6 +754,25 @@ private:
         }
     };
 
+    // SpinLock - in very specific cases TaskQueue may need to block
+    // other operations. SpinLock can do this, but is not re-entrant.
+    class SpinLock
+    {
+    public:
+        SpinLock(_In_ LocklessQueue<TData>& queue) : m_queue(queue)
+        {
+            while (m_queue.m_lock.test_and_set());
+        }
+
+        ~SpinLock()
+        {
+            m_queue.m_lock.clear();
+        }
+
+    private:
+        LocklessQueue<TData>& m_queue;
+    };
+
     /*
      *
      * Members
@@ -754,7 +783,8 @@ private:
     Heap& m_heap;
     List m_activeList;
     std::atomic<Block*> m_blockCache;
-    
+    std::atomic_flag m_lock;
+
     /*
      *
      * Private APIs

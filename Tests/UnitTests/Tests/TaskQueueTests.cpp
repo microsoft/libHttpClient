@@ -223,7 +223,7 @@ public:
             XTaskQueueCloseHandle(dups[idx]);
         }
 
-        VERIFY_ARE_EQUAL(E_INVALIDARG, XTaskQueueDuplicateHandle(dups[0], &dups[1]));
+        VERIFY_FAILED(XTaskQueueDuplicateHandle(dups[0], &dups[1]));
         XTaskQueueCloseHandle(queue);
     }
 

@@ -157,18 +157,19 @@ struct ITaskQueue : IApi
         _In_opt_ XTaskQueueTerminatedCallback* callback) = 0;         
 };
 
-// Defines the structure that backs a XTaskQueueHandle.  This structure can never
-// change, nor can its signature.
+// Defines the structure that backs an XTaskQueueHandle.
 struct XTaskQueueObject
 {
     uint32_t m_signature;
+    uint32_t m_runtimeIteration;
     ITaskQueue* m_queue;
 };
 
-// Ditto for backing XTaskQueuePortHandle
+// Defines the structure that backs an XTaskQueuePortObject
 struct XTaskQueuePortObject
 {
     uint32_t m_signature;
+    uint32_t m_runtimeIteration;
     ITaskQueuePort* m_port;
     ITaskQueue* m_queue;
 };

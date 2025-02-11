@@ -145,6 +145,7 @@ typedef void* HANDLE;
 #define E_ABORT                                 _HRESULTYPEDEF_(0x80004004L)
 #define E_FAIL                                  _HRESULTYPEDEF_(0x80004005L)
 #define E_ACCESSDENIED                          _HRESULTYPEDEF_(0x80070005L)
+#define E_HANDLE                                _HRESULTYPEDEF_(0x80070006L)
 #define E_PENDING                               _HRESULTYPEDEF_(0x8000000AL)
 #define E_UNEXPECTED                            _HRESULTYPEDEF_(0x8000FFFFL)
 #define E_POINTER                               _HRESULTYPEDEF_(0x80004003L)

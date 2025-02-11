@@ -248,4 +248,51 @@ public:
         VERIFY_ARE_EQUAL(oddCount, evenPushCount);
         VERIFY_ARE_EQUAL(oddCount, evenCount);
     }
+
+
+    TEST_METHOD(VerifyRemoveIf)
+    {
+        LocklessQueue<int> list;
+        constexpr int total = 20;
+        for (int idx = 0; idx < total; idx++)
+        {
+            list.push_back(idx);
+        }
+
+        // We will create 10 threads. Each thread has a
+        // target index it removes. When done, all even
+        // numbers should be removed.
+
+        std::thread threads[total / 2];
+
+        for(int threadIndex = 0; threadIndex < total / 2; threadIndex++)
+        {
+            std::thread newThread([threadIndex, &list]
+            {
+                list.remove_if([threadIndex, &list](auto& value, auto& address)
+                {
+                    if (value == threadIndex * 2)
+                    {
+                        list.free_node(address);
+                        return true;
+                    }
+                    return false;
+                });
+            });
+            threads[threadIndex].swap(newThread);
+        }
+
+        for (int threadIndex = 0; threadIndex < total / 2; threadIndex++)
+        {
+            threads[threadIndex].join();
+        }
+
+        // There should only be odd items left
+
+        int value;
+        while (list.pop_front(value))
+        {
+            VERIFY_IS_TRUE(value % 2 != 0);
+        }
+    }
 };
