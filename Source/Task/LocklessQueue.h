@@ -96,7 +96,7 @@ public:
         m_heap(m_localHeap),
         m_activeList(*this),
         m_blockCache(nullptr),
-        m_sync{}
+        m_lock{}
     {
         m_localHeap.init(blockSize);
         Initialize();
@@ -116,7 +116,7 @@ public:
         m_heap(shared.m_heap),
         m_activeList(*this),
         m_blockCache(nullptr),
-        m_sync{}
+        m_lock{}
     {
         Initialize();
     }
@@ -299,7 +299,7 @@ public:
         TData entry;
         uint64_t address;
 
-        SpinLock(this);
+        SpinLock lock(*this);
 
         while (pop_front(entry, address))
         {
@@ -754,6 +754,25 @@ private:
         }
     };
 
+    // SpinLock - in very specific cases TaskQueue may need to block
+    // other operations. SpinLock can do this, but is not re-entrant.
+    class SpinLock
+    {
+    public:
+        SpinLock(_In_ LocklessQueue<TData>& queue) : m_queue(queue)
+        {
+            while (m_queue.m_lock.test_and_set());
+        }
+
+        ~SpinLock()
+        {
+            m_queue.m_lock.clear();
+        }
+
+    private:
+        LocklessQueue<TData>& m_queue;
+    };
+
     /*
      *
      * Members
@@ -764,26 +783,7 @@ private:
     Heap& m_heap;
     List m_activeList;
     std::atomic<Block*> m_blockCache;
-    std::atomic_flag m_sync;
-
-    // SpinLock - in very specific cases TaskQueue may need to block
-    // other operations. SpinLock can do this, but is not re-entrant.
-    class SpinLock
-    {
-    public:
-        SpinLock(_In_ LocklessQueue<TData>* queue) : m_queue(*queue)
-        {
-            while (m_queue.m_sync.test_and_set());
-        }
-
-        ~SpinLock()
-        {
-            m_queue.m_sync.clear();
-        }
-
-    private:
-        LocklessQueue<TData> m_queue;
-    };
+    std::atomic_flag m_lock;
 
     /*
      *
