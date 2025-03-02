@@ -1604,17 +1604,30 @@ void WinHttpConnection::callback_websocket_status_headers_available(
     auto winHttpConnection = winHttpContext->winHttpConnection;
     winHttpConnection->m_lock.lock();
 
-    HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId());
+    HC_TRACE_INFORMATION(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId());
+
+    // Check HTTP status code returned by the server and behave accordingly.
+    const uint32_t statusCode = parse_status_code(winHttpConnection->m_call, hRequestHandle, winHttpConnection.get());
+
+    if (statusCode == 0) // parse_statusCode failed and already called WinHttpConnection::complete_task, simply return
+    {
+        return;
+    }
+    else if (statusCode != HTTP_STATUS_SWITCH_PROTOCOLS)
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] Upgrade request status code %ul", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), statusCode);
+        winHttpConnection->m_lock.unlock();
+        winHttpConnection->complete_task(MAKE_HRESULT(SEVERITY_ERROR, FACILITY_HTTP, statusCode), S_OK);
+        return;
+    }
 
     assert(winHttpConnection->m_winHttpWebSocketExports.completeUpgrade);
 
-    // Application should check what is the HTTP status code returned by the server and behave accordingly.
-    // WinHttpWebSocketCompleteUpgrade will fail if the HTTP status code is different than 101.
     winHttpConnection->m_hRequest = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, (DWORD_PTR)(winHttpContext));
     if (winHttpConnection->m_hRequest == NULL)
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
         winHttpConnection->m_lock.unlock();
         winHttpConnection->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
         return;
@@ -1625,7 +1638,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
     if (!status)
     {
         DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(WEBSOCKET, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
     }
 
     winHttpConnection->m_state = ConnectionState::WebSocketConnected;

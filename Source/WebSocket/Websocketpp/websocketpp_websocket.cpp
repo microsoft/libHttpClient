@@ -316,6 +316,7 @@ private:
             ASSERT(sharedThis->m_state == CONNECTING);
             sharedThis->m_state = CONNECTED;
             sharedThis->set_connection_error<WebsocketConfigType>();
+            sharedThis->set_connect_status<WebsocketConfigType>();
             sharedThis->send_ping();
             XAsyncComplete(async, S_OK, sizeof(WebSocketCompletionResult));
         });
@@ -324,6 +325,7 @@ private:
         {
             ASSERT(sharedThis->m_state == CONNECTING);
             sharedThis->set_connection_error<WebsocketConfigType>();
+            sharedThis->set_connect_status<WebsocketConfigType>();
             sharedThis->shutdown_wspp_impl<WebsocketConfigType>(
                 [
                     sharedThis,
@@ -487,7 +489,16 @@ private:
                 auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                 result->websocket = context->m_hcWebsocketHandle;
                 result->platformErrorCode = context->m_connectError.value();
-                result->errorCode = context->m_connectError ? E_FAIL : S_OK;
+
+                // capture http status
+                if (context->m_connectError == make_error_code(websocketpp::processor::error::invalid_http_status))
+                {
+                    result->errorCode = MAKE_HRESULT(1, FACILITY_HTTP, context->m_connectStatusCode);
+                }
+                else
+                {
+                    result->errorCode = context->m_connectError ? E_FAIL : S_OK;
+                }
             }
             else if (op == XAsyncOp::Cleanup)
             {
@@ -814,6 +825,14 @@ private:
         m_connectError = connection->get_ec();
     }
 
+    template <typename WebsocketConfigType>
+    inline void set_connect_status()
+    {
+        auto& client = m_client->client<WebsocketConfigType>();
+        const auto& connection = client.get_con_from_hdl(m_con);
+        m_connectStatusCode = connection->get_response_code();
+    }
+
     // Wrappers for the different types of websocketpp clients.
     // Perform type erasure to set the websocketpp client in use at runtime
     // after construction based on the URI.
@@ -870,6 +889,7 @@ private:
     websocketpp::connection_hdl m_con;
 
     websocketpp::lib::error_code m_connectError{};
+    websocketpp::http::status_code::value m_connectStatusCode{};
     websocketpp::close::status::value m_closeCode{};
 
     // Used to safe guard the wspp client.
