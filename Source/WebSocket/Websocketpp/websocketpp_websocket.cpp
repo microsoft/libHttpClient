@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
+#include "websocketpp/logger/levels.hpp"
+#include "websocketpp/logger/stub.hpp"
 
 #if !HC_NOWEBSOCKETS
 
@@ -51,6 +53,110 @@
 #define WSPP_SHUTDOWN_TIMEOUT_MS 5000
 
 using namespace xbox::httpclient;
+
+namespace
+{
+
+struct alevel_logger : websocketpp::log::stub
+{
+    using websocketpp::log::stub::stub;
+
+#if HC_TRACE_VERBOSE_ENABLE
+    void write(websocketpp::log::level level, const std::string& message) noexcept
+    {
+        write(level, message.c_str());
+    }
+
+    void write(websocketpp::log::level /*level*/, const char* message) noexcept
+    {
+        HC_TRACE_VERBOSE(WEBSOCKET, "%s", message);
+    }
+
+    bool static_test(websocketpp::log::level /*level*/) noexcept
+    {
+        return true;
+    }
+
+    bool dyanmic_test(websocketpp::log::level /*level*/) noexcept
+    {
+        return true;
+    }
+#endif
+};
+
+struct elevel_logger : websocketpp::log::stub
+{
+    using websocketpp::log::stub::stub;
+
+#if HC_TRACE_ENABLE
+    void write(websocketpp::log::level level, const std::string& message) noexcept
+    {
+        write(level, message.c_str());
+    }
+
+    void write(websocketpp::log::level level, const char* message) noexcept
+    {
+        switch (level)
+        {
+            case websocketpp::log::elevel::devel:
+                HC_TRACE_VERBOSE(WEBSOCKET, "%s", message);
+                break;
+            case websocketpp::log::elevel::library:
+                HC_TRACE_INFORMATION(WEBSOCKET, "%s", message);
+                break;
+            case websocketpp::log::elevel::info:
+                HC_TRACE_IMPORTANT(WEBSOCKET, "%s", message);
+                break;
+            case websocketpp::log::elevel::warn:
+                HC_TRACE_WARNING(WEBSOCKET, "%s", message);
+                break;
+            case websocketpp::log::elevel::rerror:
+            case websocketpp::log::elevel::fatal:
+                HC_TRACE_ERROR(WEBSOCKET, "%s", message);
+                break;
+            case websocketpp::log::elevel::none:
+            case websocketpp::log::elevel::all:
+            default:
+                break;
+        }
+    }
+
+    bool static_test(websocketpp::log::level /*level*/) noexcept
+    {
+        return HC_TRACE_ENABLE;
+    }
+
+    bool dyanmic_test(websocketpp::log::level /*level*/) noexcept
+    {
+        return HC_TRACE_ENABLE;
+    }
+#endif
+};
+
+template<typename base>
+struct custom_config : public base
+{
+    /// Logging policies
+    using alog_type = alevel_logger;
+    using elog_type = elevel_logger;
+
+    /// Default static error logging channels
+    static const websocketpp::log::level alog_level = websocketpp::log::alevel::all;
+
+    /// Default static access logging channels
+    static const websocketpp::log::level elog_level = websocketpp::log::elevel::all;
+
+    struct transport_config : public base::transport_config
+    {
+        using alog_type = alog_type;
+        using elog_type = elog_type;
+    };
+
+    using transport_type = websocketpp::transport::asio::endpoint<transport_config>;
+};
+
+using ws = custom_config<websocketpp::config::asio_client>;
+using wss = custom_config<websocketpp::config::asio_tls_client>;
 
 struct websocket_outgoing_message
 {
@@ -104,7 +210,7 @@ public:
             auto sharedThis{ shared_from_this() };
 
             // Options specific to TLS client.
-            auto &client = m_client->client<websocketpp::config::asio_tls_client>();
+            auto &client = m_client->impl<wss>();
             client.set_tls_init_handler([sharedThis](websocketpp::connection_hdl)
             {
                 auto sslContext = websocketpp::lib::shared_ptr<asio::ssl::context>(new asio::ssl::context(asio::ssl::context::sslv23));
@@ -162,12 +268,12 @@ public:
                 SSL_set_tlsext_host_name(ssl_stream.native_handle(), sharedThis->m_uri.Host().data());
             });
 
-            return connect_impl<websocketpp::config::asio_tls_client>(async);
+            return connect_impl<wss>(async);
         }
         else
         {
             m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_client());
-            return connect_impl<websocketpp::config::asio_client>(async);
+            return connect_impl<ws>(async);
         }
     }
 
@@ -273,12 +379,12 @@ public:
             websocketpp::lib::error_code ec{};
             if (m_client->is_tls_client())
             {
-                auto &client = m_client->client<websocketpp::config::asio_tls_client>();
+                auto &client = m_client->impl<wss>();
                 client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
             }
             else
             {
-                auto &client = m_client->client<websocketpp::config::asio_client>();
+                auto &client = m_client->impl<ws>();
                 client.close(m_con, static_cast<websocketpp::close::status::value>(status), std::string(), ec);
             }
 
@@ -301,10 +407,8 @@ private:
             RETURN_IF_FAILED(XTaskQueueCreateComposite(worker, worker, &m_backgroundQueue));
         }
 
-        auto &client = m_client->client<WebsocketConfigType>();
+        auto &client = m_client->impl<WebsocketConfigType>();
 
-        client.clear_access_channels(websocketpp::log::alevel::all);
-        client.clear_error_channels(websocketpp::log::alevel::all);
         client.init_asio();
         client.start_perpetual();
 
@@ -334,7 +438,7 @@ private:
             });
         });
 
-        client.set_message_handler([sharedThis](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
+        client.set_message_handler([sharedThis](websocketpp::connection_hdl, const ws::message_type::ptr &msg)
         {
             HCWebSocketMessageFunction messageFunc{ nullptr };
             HCWebSocketBinaryMessageFunction binaryMessageFunc{ nullptr };
@@ -603,11 +707,11 @@ private:
                     {
                         if (m_client->is_tls_client())
                         {
-                            m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                            m_client->impl<wss>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
                         }
                         else
                         {
-                            m_client->client<websocketpp::config::asio_client>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                            m_client->impl<ws>().send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
                         }
                     }
                     else
@@ -619,11 +723,11 @@ private:
                 {
                     if (m_client->is_tls_client())
                     {
-                        m_client->client<websocketpp::config::asio_tls_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                        m_client->impl<wss>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
                     }
                     else
                     {
-                        m_client->client<websocketpp::config::asio_client>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                        m_client->impl<ws>().send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
                     }
                 }
             }
@@ -744,11 +848,11 @@ private:
                     {
                         if (sharedThis->m_client->is_tls_client())
                         {
-                            sharedThis->m_client->client<websocketpp::config::asio_tls_client>().ping(sharedThis->m_con, std::string{});
+                            sharedThis->m_client->impl<wss>().ping(sharedThis->m_con, std::string{});
                         }
                         else
                         {
-                            sharedThis->m_client->client<websocketpp::config::asio_client>().ping(sharedThis->m_con, std::string{});
+                            sharedThis->m_client->impl<ws>().ping(sharedThis->m_con, std::string{});
                         }
 
                         sharedThis->send_ping();
@@ -768,7 +872,7 @@ private:
     template <typename WebsocketConfigType>
     void shutdown_wspp_impl(std::function<void()> shutdownCompleteCallback)
     {
-        auto &client = m_client->client<WebsocketConfigType>();
+        auto &client = m_client->impl<WebsocketConfigType>();
         const auto &connection = client.get_con_from_hdl(m_con);
         m_closeCode = connection->get_local_close_code();
         client.stop_perpetual();
@@ -787,7 +891,7 @@ private:
                 if (future.wait_for(std::chrono::milliseconds(WSPP_SHUTDOWN_TIMEOUT_MS)) == std::future_status::timeout)
                 {
                     HC_TRACE_WARNING(WEBSOCKET, "Warning: WSPP client thread didn't complete execution within the expected timeout. Force stopping processing loop.");
-                    sharedThis->m_client->client<WebsocketConfigType>().stop();
+                    sharedThis->m_client->impl<WebsocketConfigType>().stop();
                 }
             }
 
@@ -809,7 +913,7 @@ private:
     template <typename WebsocketConfigType>
     inline void set_connection_error()
     {
-        auto &client = m_client->client<WebsocketConfigType>();
+        auto &client = m_client->impl<WebsocketConfigType>();
         const auto &connection = client.get_con_from_hdl(m_con);
         m_connectError = connection->get_ec();
     }
@@ -819,9 +923,11 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-        virtual ~websocketpp_client_base() noexcept {}
+        websocketpp_client_base() noexcept = default;
+        virtual ~websocketpp_client_base() noexcept = default;
+
         template <typename WebsocketConfig>
-        websocketpp::client<WebsocketConfig> & client()
+        websocketpp::client<WebsocketConfig> & impl()
         {
             if (is_tls_client())
             {
@@ -832,11 +938,12 @@ private:
                 return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(non_tls_client());
             }
         }
-        virtual websocketpp::client<websocketpp::config::asio_client> & non_tls_client()
+
+        virtual websocketpp::client<ws> & non_tls_client()
         {
             throw std::bad_cast();
         }
-        virtual websocketpp::client<websocketpp::config::asio_tls_client> & tls_client()
+        virtual websocketpp::client<wss> & tls_client()
         {
             throw std::bad_cast();
         }
@@ -845,22 +952,22 @@ private:
 
     struct websocketpp_client : websocketpp_client_base
     {
-        websocketpp::client<websocketpp::config::asio_client> & non_tls_client() override
+        websocketpp::client<ws> & non_tls_client() override
         {
             return m_client;
         }
         bool is_tls_client() const override { return false; }
-        websocketpp::client<websocketpp::config::asio_client> m_client;
+        websocketpp::client<ws> m_client;
     };
 
     struct websocketpp_tls_client : websocketpp_client_base
     {
-        websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
+        websocketpp::client<wss> & tls_client() override
         {
             return m_client;
         }
         bool is_tls_client() const override { return true; }
-        websocketpp::client<websocketpp::config::asio_tls_client> m_client;
+        websocketpp::client<wss> m_client;
     };
 
     // Asio client has a long running "run" task that we need to provide a thread for
@@ -896,6 +1003,8 @@ private:
     Uri m_uri;
     http_internal_string m_subprotocol;
 };
+
+}
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
