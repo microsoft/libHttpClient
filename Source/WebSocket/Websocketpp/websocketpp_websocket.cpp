@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "pch.h"
-#include "websocketpp/logger/levels.hpp"
-#include "websocketpp/logger/stub.hpp"
 
 #if !HC_NOWEBSOCKETS
 
@@ -38,6 +36,8 @@
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
+#include <websocketpp/logger/levels.hpp>
+#include <websocketpp/logger/stub.hpp>
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "../HTTP/Android/android_platform_context.h"
 #endif
