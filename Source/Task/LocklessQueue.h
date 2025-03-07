@@ -56,8 +56,10 @@
  ******************************************************************************/
 
 // LocklessQueue needs certain alignment.  Disable alignment warning.
+#if _WIN32
 #pragma warning(push)
 #pragma warning(disable: 4324)
+#endif
 
 template <typename TData>
 class alignas(8) LocklessQueue
@@ -868,4 +870,6 @@ private:
     }
 };
 
+#if _WIN32
 #pragma warning(pop)
+#endif
