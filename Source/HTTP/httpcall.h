@@ -32,6 +32,7 @@ public:
 
     // Entry point for HCHttpCallPerformAsync
     HRESULT PerformAsync(XAsyncBlock* async) noexcept;
+    uint32_t GetPerformCount() const noexcept { return m_iterationNumber; }
 
     // Request ID for logging
     const uint64_t id;

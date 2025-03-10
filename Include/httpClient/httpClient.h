@@ -310,6 +310,18 @@ STDAPI HCHttpCallGetRequestUrl(
     _Outptr_result_z_ const char** url
     ) noexcept;
 
+/// <summary>
+/// Gets the number of times the HTTP call has been performed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="performCount">The number of times the HTTP call has been performed.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>This should only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.</remarks>
+STDAPI HCHttpCallGetPerformCount(
+    _In_ HCCallHandle call,
+    _Out_ uint32_t* performCount
+) noexcept;
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs
 //
