@@ -55,7 +55,7 @@ public final class HttpClientWebSocket extends WebSocketListener {
 
     @Override
     public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-        onFailure(response.code());
+        onFailure(response != null ? response.code() : -1);
     }
 
     @Override
