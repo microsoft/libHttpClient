@@ -110,6 +110,9 @@ NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
 #define VERIFY_SUCCEEDED(x) \
     xbox::httpclienttest::AssertHelper::AreEqual(S_OK, (HRESULT)x)
 
+#define VERIFY_FAILED(x) \
+    Assert::IsTrue(FAILED((HRESULT)x))
+
 #define VERIFY_FAIL() \
     Assert::Fail()
 

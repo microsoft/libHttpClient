@@ -196,6 +196,7 @@ TaskQueuePortImpl::TaskQueuePortImpl()
     : Api()
 {
     m_header.m_signature = TASK_QUEUE_PORT_SIGNATURE;
+    m_header.m_runtimeIteration = GetCurrentRuntimeIteration();
     m_header.m_port = this;
     m_header.m_queue = nullptr;
 }
@@ -787,7 +788,7 @@ HRESULT __stdcall TaskQueuePortImpl::SuspendTermination(
     
     if (FAILED(hr))
     {
-        portContext->RemoveSuspend();
+        ResumeTermination(portContext);
         RETURN_HR(hr);
     }
 
@@ -1421,6 +1422,7 @@ TaskQueueImpl::TaskQueueImpl() :
     m_allowClose(true)
 {
     m_header.m_signature = TASK_QUEUE_SIGNATURE;
+    m_header.m_runtimeIteration = GetCurrentRuntimeIteration();
     m_header.m_queue = this;
 
     m_termination.allowed = true;
@@ -1479,9 +1481,9 @@ HRESULT TaskQueueImpl::Initialize(
     _In_ XTaskQueuePortHandle workPort,
     _In_ XTaskQueuePortHandle completionPort)
 {
-    RETURN_HR_IF(E_INVALIDARG, workPort== nullptr || workPort->m_signature != TASK_QUEUE_PORT_SIGNATURE);
-    RETURN_HR_IF(E_INVALIDARG, completionPort == nullptr || completionPort->m_signature != TASK_QUEUE_PORT_SIGNATURE);
-    
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, workPort== nullptr || workPort->m_signature != TASK_QUEUE_PORT_SIGNATURE || workPort->m_runtimeIteration != GetCurrentRuntimeIteration());
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, completionPort == nullptr || completionPort->m_signature != TASK_QUEUE_PORT_SIGNATURE || completionPort->m_runtimeIteration != GetCurrentRuntimeIteration());
+
     m_work.Port = referenced_ptr<ITaskQueuePort>(workPort->m_port);
     m_completion.Port = referenced_ptr<ITaskQueuePort>(completionPort->m_port);
     m_work.Source = referenced_ptr<ITaskQueue>(workPort->m_queue);
@@ -1743,6 +1745,7 @@ static HRESULT CreateTaskQueueHandle(
     RETURN_IF_NULL_ALLOC(q);
 
     q->m_signature = TASK_QUEUE_SIGNATURE;
+    q->m_runtimeIteration = GetCurrentRuntimeIteration();
     q->m_queue = impl;
     impl->AddRef();
 
@@ -1797,11 +1800,8 @@ STDAPI XTaskQueueGetPort(
     ) noexcept
 {
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
-    if (aq == nullptr)
-    {
-        RETURN_HR(E_INVALIDARG);
-    }
-    
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
+
     referenced_ptr<ITaskQueuePortContext> portContext;
     RETURN_IF_FAILED(aq->GetPortContext(port, portContext.address_of()));
     
@@ -1876,7 +1876,7 @@ STDAPI_(bool) XTaskQueueIsEmpty(
     {
         return false;
     }
-    
+
     referenced_ptr<ITaskQueuePortContext> portContext;
     if (FAILED(aq->GetPortContext(port, portContext.address_of())))
     {
@@ -1953,7 +1953,7 @@ STDAPI XTaskQueueSubmitDelayedCallback(
     ) noexcept
 {
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
-    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
 
     referenced_ptr<ITaskQueuePortContext> portContext;
     RETURN_IF_FAILED(aq->GetPortContext(port, portContext.address_of()));
@@ -1978,7 +1978,7 @@ STDAPI XTaskQueueRegisterWaiter(
     ) noexcept
 {
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
-    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
     RETURN_IF_FAILED(aq->RegisterWaitHandle(port, waitHandle, callbackContext, callback, token));
     return S_OK;
 }
@@ -2013,7 +2013,7 @@ STDAPI XTaskQueueDuplicateHandleWithOptions(
     *duplicatedHandle = nullptr;
 
     auto queue = GetQueue(queueHandle);
-    RETURN_HR_IF(E_INVALIDARG, queue == nullptr);
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, queue == nullptr);
 
     // For queues that cannot be closed we return the default
     // handle provided by the queue.
@@ -2065,7 +2065,7 @@ STDAPI XTaskQueueRegisterMonitor(
     ) noexcept
 {
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
-    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
     RETURN_IF_FAILED(aq->RegisterSubmitCallback(callbackContext, callback, token));
     return S_OK;
 }
@@ -2125,6 +2125,13 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
             }
 
             defaultProcessQueue = ProcessGlobals::g_defaultProcessQueue;
+        }
+        else
+        {
+            // The default process task queue never terminates and survives
+            // a re-init of the runtime. Ensure the handle's runtime iteration
+            // matches the current iteration.
+            defaultProcessQueue->m_runtimeIteration = GetCurrentRuntimeIteration();
         }
 
         processQueue = defaultProcessQueue;
@@ -2189,7 +2196,7 @@ STDAPI XTaskQueueSuspendTermination(
     ) noexcept
 {
     referenced_ptr<ITaskQueue> aq(GetQueue(queue));
-    RETURN_HR_IF(E_INVALIDARG, aq == nullptr);
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
 
     referenced_ptr<ITaskQueuePortContext> portContext;
     RETURN_IF_FAILED(aq->GetPortContext(XTaskQueuePort::Work, portContext.address_of()));
