@@ -11,7 +11,7 @@
 extern "C"
 {
     void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject);
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject);
+    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint);
     void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv*, jobject, jint);
     void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv*, jobject, jstring);
     void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv*, jobject, jobject);
@@ -369,7 +369,7 @@ private:
 struct okhttp_websocket_impl : hc_websocket_impl, std::enable_shared_from_this<okhttp_websocket_impl>
 {
     friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject);
-    friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject);
+    friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint);
     friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv*, jobject, jint);
     friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv*, jobject, jstring);
     friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv*, jobject, jobject);
@@ -451,7 +451,14 @@ struct okhttp_websocket_impl : hc_websocket_impl, std::enable_shared_from_this<o
 
                             WebSocketCompletionResult& result = context->completionResult;
                             result.websocket = sharedThis->GetHandle();
-                            result.errorCode = E_FAIL;
+                            if (sharedThis->m_connectStatusCode != -1)
+                            {
+                                result.errorCode = MAKE_HRESULT(1, FACILITY_HTTP, sharedThis->m_connectStatusCode);
+                            }
+                            else
+                            {
+                                result.errorCode = E_FAIL;
+                            }
                             XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
                             return S_OK;
                         }
@@ -746,15 +753,17 @@ private:
         if (m_socketState == State::Connecting)
         {
             m_socketState = State::ConnectSucceeded;
+            m_connectStatusCode = 101;
         }
     }
 
-    void OnFailure(UniqueLock lock)
+    void OnFailure(UniqueLock lock, jint statusCode)
     {
         switch (m_socketState)
         {
             case State::Connecting:
                 m_socketState = State::ConnectFailed;
+                m_connectStatusCode = statusCode;
                 break;
             case State::Connected:
                 OnClose(std::move(lock), HCWebSocketCloseStatus::AbnormalClose);
@@ -830,6 +839,7 @@ private:
     }
 private:
     State m_socketState = State::Disconnected;
+    int m_connectStatusCode = -1;
     mutable std::mutex m_socketMutex;
 
     const HCWebsocketHandle m_handle;
@@ -945,7 +955,7 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv *env, jobject thiz)
 }
 
 JNIEXPORT void JNICALL
-Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz)
+Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz, jint statusCode)
 {
     using namespace xbox::httpclient;
 
@@ -955,7 +965,7 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz
         return;
     }
 
-    owner->OnFailure(owner->Lock());
+    owner->OnFailure(owner->Lock(), statusCode);
 }
 
 JNIEXPORT void JNICALL
