@@ -18,7 +18,7 @@
 
 #ifdef _WIN32
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
+#pragma warning( disable : 4100 4127 4512 4996 4701 4267 4244 )
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #define _SCL_SECURE_NO_WARNINGS
@@ -30,8 +30,6 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
-
-#pragma warning(disable: 4244) 
 
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
