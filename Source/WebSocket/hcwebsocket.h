@@ -132,11 +132,13 @@ public:
     const http_internal_string& ProxyUri() const noexcept;
     const bool ProxyDecryptsHttps() const noexcept;
     size_t MaxReceiveBufferSize() const noexcept;
+    uint32_t PingInterval() const noexcept;
 
     HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
     HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
     HRESULT SetProxyDecryptsHttps(bool allowProxyToDecryptHttps) noexcept;  
     HRESULT SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept;
+    HRESULT SetPingInterval(uint32_t pingInterval) noexcept;
 
     // Event functions
     static void CALLBACK MessageFunc(HCWebsocketHandle handle, const char* message, void* context);
@@ -165,6 +167,7 @@ private:
     http_internal_string m_uri;
     http_internal_string m_subProtocol;
     size_t m_maxReceiveBufferSize{ 0 };
+    uint32_t m_pingInterval{ 0 };
 
     struct ConnectContext;
     struct ProviderContext;
