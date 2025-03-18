@@ -22,7 +22,7 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     switch (c)
     {
     case CURLMcode::CURLM_OK: return S_OK;
-#if HC_PLATFORM == HC_PLATFORM_GDK || LIBCURL_VERSION_NUM >= 0x074201
+#if HC_PLATFORM == HC_PLATFORM_GDK || CURL_AT_LEAST_VERSION(7,69,0)
     case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
 #endif
     default: return E_FAIL;

@@ -78,6 +78,16 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCWebSocketSetPingInterval(
+    _In_ HCWebsocketHandle handle,
+    _In_ uint32_t pingIntervalSeconds
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle);
+    return handle->websocket->SetPingInterval(pingIntervalSeconds);
+}
+CATCH_RETURN()
 
 STDAPI HCWebSocketConnectAsync(
     _In_z_ const char* uri,
@@ -278,6 +288,19 @@ try
 
     *headerName = nullptr;
     *headerValue = nullptr;
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI HCWebSocketGetPingInterval(
+    _In_ HCWebsocketHandle handle,
+    _Out_ uint32_t* pingIntervalSeconds
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle || !pingIntervalSeconds);
+
+    *pingIntervalSeconds = handle->websocket->PingInterval();
     return S_OK;
 }
 CATCH_RETURN()
