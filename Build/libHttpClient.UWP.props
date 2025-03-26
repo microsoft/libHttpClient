@@ -92,7 +92,7 @@
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
     </Link>
     <Lib>
-      <AdditionalOptions>/ignore:4099 /ignore:4264</AdditionalOptions>
+      <AdditionalOptions>/ignore:4099 /ignore:4264 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
   </ItemDefinitionGroup>
 
@@ -103,11 +103,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <GuardEHContMetadata>true</GuardEHContMetadata>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
+      <AdditionalOptions>/guard:ehcont %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 
