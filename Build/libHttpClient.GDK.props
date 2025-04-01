@@ -91,13 +91,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <GuardEHContMetadata>true</GuardEHContMetadata>
+      <AdditionalOptions Condition="'$(PlatformToolset)'!='v141'">/guard:ehcont %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
-      <AdditionalOptions>/guard:ehcont %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(PlatformToolset)'!='v141'">/guard:ehcont %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 
