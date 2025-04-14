@@ -370,6 +370,11 @@ size_t WebSocket::MaxReceiveBufferSize() const noexcept
     return m_maxReceiveBufferSize;
 }
 
+uint32_t WebSocket::PingInterval() const noexcept
+{
+    return m_pingInterval;
+}
+
 HRESULT WebSocket::SetHeader(
     http_internal_string&& headerName,
     http_internal_string&& headerValue
@@ -405,6 +410,12 @@ HRESULT WebSocket::SetProxyDecryptsHttps(
 HRESULT WebSocket::SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept
 {
     m_maxReceiveBufferSize = maxReceiveBufferSizeBytes;
+    return S_OK;
+}
+
+HRESULT WebSocket::SetPingInterval(uint32_t pingInterval) noexcept
+{
+    m_pingInterval = pingInterval;
     return S_OK;
 }
 
