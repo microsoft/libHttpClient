@@ -13,14 +13,14 @@ public:
     bool IsSetup() const noexcept;
     bool GetTraceToDebugger() noexcept;
     void SetTraceToDebugger(_In_ bool traceToDebugger) noexcept;
-    void SetClientCallback(HCTraceCallback* callback) noexcept;
+    bool SetClientCallback(HCTraceCallback* callback) noexcept;
     uint64_t GetTimestamp() const noexcept;
     bool GetEtwEnabled() const noexcept;
 #if HC_PLATFORM_IS_MICROSOFT
     void SetEtwEnabled(_In_ bool enabled) noexcept;
 #endif
 
-    HCTraceCallback* clientCallbacks[MAX_TRACE_CLIENTS]{};
+    std::atomic<HCTraceCallback*> clientCallbacks[MAX_TRACE_CLIENTS]{};
 
 private:
     std::atomic<uint32_t> m_tracingClients{ 0 };
