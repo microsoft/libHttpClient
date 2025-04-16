@@ -12,11 +12,11 @@
 #define RETURN_LAST_ERROR_IF(condition)                         do { if (condition) { RETURN_LAST_ERROR(); }} while (0, 0)
 #define RETURN_LAST_ERROR_IF_NULL(ptr)                          do { if ((ptr) == nullptr) { RETURN_LAST_ERROR(); }} while (0, 0)
 
-#define LOG_IF_FAILED(hr)                                       do { HRESULT __hrRet = hr; if (FAILED(__hrRet)) { HC_TRACE_ERROR(HTTPCLIENT, "%s: 0x%08", #hr, __hrRet); }} while (0, 0)
+#define LOG_IF_FAILED(hr)                                       do { HRESULT __hrRet = hr; if (FAILED(__hrRet)) { HC_TRACE_ERROR(HTTPCLIENT, "%s: 0x%08X", #hr, __hrRet); }} while (0, 0)
 
 #define FAIL_FAST_MSG(fmt, ...)                        \
     HC_TRACE_ERROR(HTTPCLIENT, fmt, ##__VA_ARGS__);    \
     ASSERT(false);                                     \
 
 
-#define FAIL_FAST_IF_FAILED(hr)                                 do { HRESULT __hrRet = hr; if (FAILED(__hrRet)) { FAIL_FAST_MSG("%s 0x%08", #hr, __hrRet); }} while (0, 0)
+#define FAIL_FAST_IF_FAILED(hr)                                 do { HRESULT __hrRet = hr; if (FAILED(__hrRet)) { FAIL_FAST_MSG("%s 0x%08X", #hr, __hrRet); }} while (0, 0)
