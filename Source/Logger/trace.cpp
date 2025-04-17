@@ -197,9 +197,10 @@ void TraceMessageToClient(
     TraceState& traceState{ GetTraceState() };
     for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        if (traceState.clientCallbacks[i])
+        HCTraceCallback* cb = traceState.clientCallbacks[i].load();
+        if (cb)
         {
-            traceState.clientCallbacks[i].load()(areaName, level, threadId, timestamp, message);
+            cb(areaName, level, threadId, timestamp, message);
         }
     }
 }
@@ -300,7 +301,7 @@ STDAPI_(void) HCTraceImplMessage_v(
     bool haveClientCallback = false;
     for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        if (traceState.clientCallbacks[i])
+        if (traceState.clientCallbacks[i].load()) // be explicit about the bool coercion
         {
             haveClientCallback = true;
             break;
