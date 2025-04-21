@@ -85,10 +85,14 @@ struct HttpClientWebSocket
         const jstring headerValue = env->NewStringUTF(value);
         if (HadException(env) || !headerValue)
         {
+            env->DeleteLocalRef(headerName);
             return E_UNEXPECTED;
         }
 
         env->CallVoidMethod(m_webSocket, m_addHeader, headerName, headerValue);
+        env->DeleteLocalRef(headerName);
+        env->DeleteLocalRef(headerValue);
+
         if (HadException(env))
         {
             return E_UNEXPECTED;
@@ -119,10 +123,14 @@ struct HttpClientWebSocket
         const jstring javaSubProtocol = env->NewStringUTF(subProtocol.c_str());
         if (HadException(env) || !javaSubProtocol)
         {
+            env->DeleteLocalRef(javaUri);
             return E_UNEXPECTED;
         }
 
         env->CallVoidMethod(m_webSocket, m_connect, javaUri, javaSubProtocol);
+        env->DeleteLocalRef(javaUri);
+        env->DeleteLocalRef(javaSubProtocol);
+
         if (HadException(env))
         {
             return E_UNEXPECTED;
@@ -149,6 +157,7 @@ struct HttpClientWebSocket
         {
             return E_UNEXPECTED;
         }
+        env->DeleteLocalRef(javaMessage);
 
         const jboolean result = env->CallBooleanMethod(m_webSocket, m_sendMessage, javaMessage);
         if (HadException(env))
@@ -188,6 +197,7 @@ struct HttpClientWebSocket
         {
             return E_UNEXPECTED;
         }
+        env->DeleteLocalRef(buffer);
 
         return result ? S_OK : E_FAIL;
     }
@@ -337,7 +347,9 @@ private:
             return nullptr;
         }
 
-        return env->NewGlobalRef(localRef);
+        jobject globalRef = env->NewGlobalRef(localRef);
+        env->DeleteLocalRef(localRef);
+        return globalRef;
     }
 
     static bool HadException(JNIEnv* env)
