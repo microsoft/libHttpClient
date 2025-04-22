@@ -79,13 +79,20 @@ struct HttpClientWebSocket
         const jstring headerName = env->NewStringUTF(name);
         if (HadException(env) || !headerName)
         {
+            if (headerName)
+            {
+                env->DeleteLocalRef(headerName);
+            }
             return E_UNEXPECTED;
         }
 
         const jstring headerValue = env->NewStringUTF(value);
         if (HadException(env) || !headerValue)
         {
-            env->DeleteLocalRef(headerName);
+            if (headerValue)
+            {
+                env->DeleteLocalRef(headerValue);
+            }
             return E_UNEXPECTED;
         }
 
@@ -117,13 +124,20 @@ struct HttpClientWebSocket
         const jstring javaUri = env->NewStringUTF(uri.c_str());
         if (HadException(env) || !javaUri)
         {
+            if (javaUri)
+            {
+                env->DeleteLocalRef(javaUri);
+            }
             return E_UNEXPECTED;
         }
 
         const jstring javaSubProtocol = env->NewStringUTF(subProtocol.c_str());
         if (HadException(env) || !javaSubProtocol)
         {
-            env->DeleteLocalRef(javaUri);
+            if (javaSubProtocol)
+            {
+                env->DeleteLocalRef(javaSubProtocol);
+            }
             return E_UNEXPECTED;
         }
 
@@ -157,9 +171,10 @@ struct HttpClientWebSocket
         {
             return E_UNEXPECTED;
         }
-        env->DeleteLocalRef(javaMessage);
 
         const jboolean result = env->CallBooleanMethod(m_webSocket, m_sendMessage, javaMessage);
+        env->DeleteLocalRef(javaMessage);
+
         if (HadException(env))
         {
             return E_UNEXPECTED;
@@ -189,15 +204,19 @@ struct HttpClientWebSocket
         const jobject buffer = env->NewDirectByteBuffer(const_cast<uint8_t*>(data), static_cast<jlong>(dataSize));
         if (HadException(env) || !buffer)
         {
+            if (buffer)
+            {
+                env->DeleteLocalRef(buffer);
+            }
             return E_UNEXPECTED;
         }
 
         const jboolean result = env->CallBooleanMethod(m_webSocket, m_sendBinaryMessage, buffer);
+        env->DeleteLocalRef(buffer);
         if (HadException(env))
         {
             return E_UNEXPECTED;
         }
-        env->DeleteLocalRef(buffer);
 
         return result ? S_OK : E_FAIL;
     }
