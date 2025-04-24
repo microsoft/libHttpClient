@@ -142,7 +142,6 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     }
     case XAsyncOp::Cleanup:
     {
-
         if (call->traceCall)
         {
             HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider Cleanup [ID %llu]", TO_ULL(call->id));

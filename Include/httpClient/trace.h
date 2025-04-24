@@ -28,7 +28,7 @@ extern "C"
 //
 // HC_TRACE_BUILD_LEVEL [trace level (0-5)]
 //     controls the maximum level of verbosity that will be built in the
-//     executable. To control verbosity at runtime see TraceArea. Set to 0 to 
+//     executable. To control verbosity at runtime see TraceArea. Set to 0 to
 //     completely disable tracing
 //
 // HC_TRACE_TO_DEBUGGER [0,1]
@@ -151,7 +151,7 @@ enum class HCTraceLevel : uint32_t
 /// <remarks>
 /// This function is implicitly called during HCInitialize. Initialization is reference counted, and
 /// multiple calls to HCTraceInit and HCTraceCleanup are supported as long as
-/// each call to HCTraceInit is paired with exactly one call to HCTraceCleanup. Client callbacks will 
+/// each call to HCTraceInit is paired with exactly one call to HCTraceCleanup. Client callbacks will
 /// all be cleared each time HCTraceCleanup is called.
 /// </remarks>
 STDAPI_(void) HCTraceInit() noexcept;
@@ -185,7 +185,7 @@ STDAPI HCSettingsGetTraceLevel(
 
 /// <summary>
 /// Register callback for tracing so that the client can merge tracing into their
-/// own traces. 
+/// own traces.
 /// </summary>
 typedef void (CALLBACK HCTraceCallback)(
     _In_z_ const char* areaName,
@@ -201,7 +201,7 @@ typedef void (CALLBACK HCTraceCallback)(
 /// </summary>
 /// <param name="callback">Trace callback.</param>
 /// <returns></returns>
-STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
+STDAPI_(bool) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept;
 
 /// <summary>
 /// Sets or unsets if the trace is sent to the debugger.
@@ -352,7 +352,7 @@ typedef struct HCTraceImplArea
 } HCTraceImplArea;
 
 /// <summary>
-/// Set the verbosity level of an trace area. 
+/// Set the verbosity level of an trace area.
 /// </summary>
 /// <param name="area">The trace area.</param>
 /// <param name="verbosity">The verbosity level.</param>
@@ -420,7 +420,7 @@ private:
 };
 
 /// <summary>
-/// HCTraceImplScopeHelper constructor. This should be accessed through macros, such as HC_TRACE_SCOPE, 
+/// HCTraceImplScopeHelper constructor. This should be accessed through macros, such as HC_TRACE_SCOPE,
 /// rather than called directly.
 /// </summary>
 /// <param name="area">The trace area.</param>
