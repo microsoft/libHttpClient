@@ -3,6 +3,12 @@
 #include <atomic>
 #include <thread>
 
+#if defined(_WIN32) || defined(__WINDOWS__) 
+#include <intrin.h>
+#elif (defined(_M_IX86) || defined(_M_X64))
+#include <x86intrin.h>
+#endif
+
 //
 // SpinLock: A spinlock implementation based on std::atomic_flag that
 // prevents CPU starvation. SpinLock can be used as a RAII wrapper around
