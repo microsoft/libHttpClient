@@ -569,6 +569,18 @@ HCWebSocketGetHeaderAtIndex(
     _Out_ const char** headerValue
 ) noexcept;
 
+/// <summary>
+/// Gets the ping interval for this WebSocket.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="pingIntervalSeconds">The ping interval of this WebSocket.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, or E_INVALIDARG.</returns>
+STDAPI
+HCWebSocketGetPingInterval(
+    _In_ HCWebsocketHandle websocket,
+    _Out_ uint32_t* pingIntervalSeconds
+) noexcept;
+
 #endif // !HC_NOWEBSOCKETS
 
 }

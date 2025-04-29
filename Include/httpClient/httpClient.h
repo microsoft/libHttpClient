@@ -874,7 +874,7 @@ typedef void
 /// <remarks>
 /// WebSocket usage:<br />
 /// Create a WebSocket handle using HCWebSocketCreate()<br />
-/// Call HCWebSocketSetProxyUri() and HCWebSocketSetHeader() to prepare the HCWebsocketHandle<br />
+/// Call HCWebSocketSetProxyUri(), HCWebSocketSetHeader(), or HCWebSocketSetPingInterval() to prepare the HCWebsocketHandle<br />
 /// Call HCWebSocketConnectAsync() to connect the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketSendMessageAsync() to send a message to the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketDisconnect() to disconnect the WebSocket using the HCWebsocketHandle.<br />
@@ -945,6 +945,17 @@ STDAPI HCWebSocketSetHeader(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
+    ) noexcept;
+
+/// <summary>
+/// Set the ping interval for the WebSocket.
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="pingIntervalSeconds">The interval at which this websocket should send keepalive frames, in seconds.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_UNEXPECTED.</returns>
+/// </summary>
+STDAPI HCWebSocketSetPingInterval(
+    _In_ HCWebsocketHandle websocket,
+    _In_ uint32_t pingIntervalSeconds
     ) noexcept;
 
 /// <summary>

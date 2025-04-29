@@ -1633,8 +1633,16 @@ void WinHttpConnection::callback_websocket_status_headers_available(
         return;
     }
 
+    DWORD keepAliveMs = std::min<DWORD>(winHttpConnection->m_websocketHandle->websocket->PingInterval() * 1000, WINHTTP_WEB_SOCKET_MIN_KEEPALIVE_VALUE);
+    bool status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_KEEPALIVE_INTERVAL, (LPVOID)&keepAliveMs, sizeof(DWORD));
+    if (!status)
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errrocode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
+    }
+
     constexpr DWORD closeTimeoutMs = 1000;
-    bool status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_CLOSE_TIMEOUT, (LPVOID)&closeTimeoutMs, sizeof(DWORD));
+    status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_CLOSE_TIMEOUT, (LPVOID)&closeTimeoutMs, sizeof(DWORD));
     if (!status)
     {
         DWORD dwError = GetLastError();
