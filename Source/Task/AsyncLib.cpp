@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "XTaskQueuePriv.h"
+#include "SpinLock.h"
 
 #define ASYNC_BLOCK_SIG         0x41535942 // ASYB
 #define ASYNC_BLOCK_RESULT_SIG  0x41535242 // ASRB
@@ -221,7 +222,7 @@ public:
 
         if (m_userInternal != m_internal)
         {
-            while (m_userInternal->lock.test_and_set()) {}
+            SpinLock::Lock(m_userInternal->lock);
         }
     }
 
@@ -335,7 +336,7 @@ private:
             return nullptr;
         }
 
-        while (lockedResult->lock.test_and_set()) {}
+        SpinLock::Lock(lockedResult->lock);
 
         // We've locked the async block. We only ever want to keep a lock on one block
         // to prevent deadlocks caused by lock ordering.  If the state is still valid
@@ -351,7 +352,7 @@ private:
 
             // Now lock the async block on the state struct
             AsyncBlockInternal* stateAsyncBlockInternal = reinterpret_cast<AsyncBlockInternal*>(state->providerAsyncBlock.internal);
-            while (stateAsyncBlockInternal->lock.test_and_set()) {}
+            SpinLock::Lock(stateAsyncBlockInternal->lock);
 
             // We locked the right object, but we need to check here to see if we
             // lost the state after clearing the lock above.  If we did, then this
@@ -362,7 +363,7 @@ private:
             if (stateAsyncBlockInternal->state == nullptr)
             {
                 stateAsyncBlockInternal->lock.clear();
-                while (lockedResult->lock.test_and_set()) {}
+                SpinLock::Lock(lockedResult->lock);
             }
             else
             {
