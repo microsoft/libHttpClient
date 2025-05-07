@@ -389,8 +389,8 @@ try
         return E_INVALIDARG;
     }
 
-    *dynamicBodySize = call->dynamicRequestBodySize;
-    *dynamicBodyBytesWritten = call->dynamicRequestBodyBytesWritten;
+    *dynamicBodySize = static_cast<size_t>(call->dynamicRequestBodySize);
+    *dynamicBodyBytesWritten = static_cast<size_t>(call->dynamicRequestBodyBytesWritten);
 
     return S_OK;
 }

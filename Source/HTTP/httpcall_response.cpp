@@ -39,8 +39,8 @@ try
         return E_INVALIDARG;
     }
 
-    *dynamicBodySize = call->dynamicResponseBodySize;
-    *dynamicBodyBytesWritten = call->dynamicResponseBodyBytesWritten;
+    *dynamicBodySize = static_cast<size_t>(call->dynamicResponseBodySize);
+    *dynamicBodyBytesWritten = static_cast<size_t>(call->dynamicResponseBodyBytesWritten);
 
     return S_OK;
 

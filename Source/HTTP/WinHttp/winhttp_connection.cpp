@@ -525,8 +525,8 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
 
         if (isUpload)
         {
-            uint64_t dynamicBodySize{};
-            uint64_t dynamicBodyBytesWritten{};
+            size_t dynamicBodySize{};
+            size_t dynamicBodyBytesWritten{};
             HCHttpCallRequestGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
 
             if (dynamicBodySize > 0)
@@ -544,8 +544,8 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
         }
         else
         {
-            uint64_t dynamicBodySize{};
-            uint64_t dynamicBodyBytesWritten{};
+            size_t dynamicBodySize{};
+            size_t dynamicBodyBytesWritten{};
             HCHttpCallResponseGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
 
             if (dynamicBodySize > 0)
