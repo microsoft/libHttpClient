@@ -368,6 +368,10 @@ typedef struct _LIST_ENTRY {
 #define _Ret_z_
 #endif
 
+#ifndef _Deref_pre_z_
+#define _Deref_pre_z_
+#endif
+
 #ifndef _Deref_out_opt_
 #define _Deref_out_opt_
 #endif

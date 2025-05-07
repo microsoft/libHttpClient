@@ -188,7 +188,7 @@ try
 
     return S_OK;
 }
-CATCH_RETURN() 
+CATCH_RETURN()
 
 STDAPI
 HCHttpCallResponseSetGzipCompressed(

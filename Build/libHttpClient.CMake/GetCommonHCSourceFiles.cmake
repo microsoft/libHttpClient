@@ -80,6 +80,7 @@ function(GET_COMMON_HC_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/Task/AtomicVector.h"
         "${PATH_TO_ROOT}/Source/Task/LocklessQueue.h"
         "${PATH_TO_ROOT}/Source/Task/referenced_ptr.h"
+        "${PATH_TO_ROOT}/Source/Task/SpinLock.h"
         "${PATH_TO_ROOT}/Source/Task/StaticArray.h"
         "${PATH_TO_ROOT}/Source/Task/TaskQueue.cpp"
         "${PATH_TO_ROOT}/Source/Task/TaskQueueImpl.h"

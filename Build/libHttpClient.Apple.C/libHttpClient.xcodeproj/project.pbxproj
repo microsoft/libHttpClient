@@ -470,6 +470,7 @@
 		D3DAA84821C0E4090009C7F6 /* TaskQueueP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskQueueP.h; sourceTree = "<group>"; };
 		D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TaskQueue.cpp; sourceTree = "<group>"; };
 		D3DAA84A21C0E4090009C7F6 /* referenced_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = referenced_ptr.h; sourceTree = "<group>"; };
+		D3DAA84B21C0E4090009C7F6 /* SpinLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpinLock.h; sourceTree = "<group>"; };
 		D3DAA84B21C0E4090009C7F6 /* StaticArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StaticArray.h; sourceTree = "<group>"; };
 		D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadPool_stl.cpp; sourceTree = "<group>"; };
 		D3DAA84D21C0E4090009C7F6 /* TaskQueueImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskQueueImpl.h; sourceTree = "<group>"; };

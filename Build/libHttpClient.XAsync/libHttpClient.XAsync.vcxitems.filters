@@ -30,6 +30,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\referenced_ptr.h">
       <Filter>Source\Task</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\SpinLock.h">
+      <Filter>Source\Task</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\StaticArray.h">
       <Filter>Source\Task</Filter>
     </ClInclude>

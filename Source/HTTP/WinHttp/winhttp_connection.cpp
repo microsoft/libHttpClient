@@ -316,7 +316,7 @@ HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
     // Set WebSocket specific options and then call send
     auto headers{ m_websocketHandle->websocket->Headers() };
 
-    // Add subprotocol header manually 
+    // Add subprotocol header manually
     if (headers.find(SUB_PROTOCOL_HEADER) == headers.end() && !m_websocketSubprotocol.empty())
     {
         headers[SUB_PROTOCOL_HEADER] = m_websocketSubprotocol;
@@ -1469,7 +1469,7 @@ void WinHttpConnection::StartWinHttpClose()
         }
         else
         {
-            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, current state=%llu transitioning to ConnectionState::WinHttpClosing", m_state);
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, current state=%u transitioning to ConnectionState::WinHttpClosing", m_state);
             m_state = ConnectionState::WinHttpClosing;
         }
     }

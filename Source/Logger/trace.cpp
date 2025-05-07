@@ -178,7 +178,7 @@ void TraceMessageToDebugger(
     {
         return;
     }
-    
+
     static size_t const BUFFER_SIZE = 4096;
     char outputBuffer[BUFFER_SIZE] = {};
     FormatTrace(areaName, level, threadId, timestamp, message, outputBuffer);
@@ -197,9 +197,10 @@ void TraceMessageToClient(
     TraceState& traceState{ GetTraceState() };
     for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        if (traceState.clientCallbacks[i])
+        HCTraceCallback* cb = traceState.clientCallbacks[i].load();
+        if (cb)
         {
-            traceState.clientCallbacks[i](areaName, level, threadId, timestamp, message);
+            cb(areaName, level, threadId, timestamp, message);
         }
     }
 }
@@ -237,9 +238,9 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept
     GetTraceState().SetTraceToDebugger(traceToDebugger);
 }
 
-STDAPI_(void) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
+STDAPI_(bool) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
 {
-    GetTraceState().SetClientCallback(callback);
+    return GetTraceState().SetClientCallback(callback);
 }
 
 #if HC_PLATFORM_IS_MICROSOFT
@@ -300,7 +301,7 @@ STDAPI_(void) HCTraceImplMessage_v(
     bool haveClientCallback = false;
     for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        if (traceState.clientCallbacks[i])
+        if (traceState.clientCallbacks[i].load()) // be explicit about the bool coercion
         {
             haveClientCallback = true;
             break;
@@ -386,18 +387,20 @@ void TraceState::SetEtwEnabled(_In_ bool etwEnabled) noexcept
 }
 #endif
 
-void TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
+bool TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
 {
     // Try to add a client callback. If MAX_TRACE_CLIENTS have already set callbacks, the callback won't be set
     // and the client will not get trace callbacks.
     for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        if (clientCallbacks[i] == nullptr)
+        // the first argument of compare exchange is in/out
+        HCTraceCallback* oldVal = nullptr;
+        if (clientCallbacks[i].compare_exchange_strong(oldVal, callback))
         {
-            clientCallbacks[i] = callback;
-            break;
+            return true;
         }
     }
+    return false;
 }
 
 uint64_t TraceState::GetTimestamp() const noexcept

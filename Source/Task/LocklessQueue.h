@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
+#include "SpinLock.h"
 
 /*****************************************************************************
  
@@ -56,10 +57,8 @@
  ******************************************************************************/
 
 // LocklessQueue needs certain alignment.  Disable alignment warning.
-#if _WIN32
 #pragma warning(push)
 #pragma warning(disable: 4324)
-#endif
 
 template <typename TData>
 class alignas(8) LocklessQueue
@@ -301,7 +300,7 @@ public:
         TData entry;
         uint64_t address;
 
-        SpinLock lock(*this);
+        SpinLock lock(m_lock);
 
         while (pop_front(entry, address))
         {
@@ -756,25 +755,6 @@ private:
         }
     };
 
-    // SpinLock - in very specific cases TaskQueue may need to block
-    // other operations. SpinLock can do this, but is not re-entrant.
-    class SpinLock
-    {
-    public:
-        SpinLock(_In_ LocklessQueue<TData>& queue) : m_queue(queue)
-        {
-            while (m_queue.m_lock.test_and_set());
-        }
-
-        ~SpinLock()
-        {
-            m_queue.m_lock.clear();
-        }
-
-    private:
-        LocklessQueue<TData>& m_queue;
-    };
-
     /*
      *
      * Members
@@ -870,6 +850,4 @@ private:
     }
 };
 
-#if _WIN32
 #pragma warning(pop)
-#endif
