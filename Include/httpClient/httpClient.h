@@ -868,7 +868,7 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
     _Outptr_result_z_ const char** headerValue
     ) noexcept;
 
-#if !HC_NOWEBSOCKETS
+#if !defined(HC_NOWEBSOCKETS) || !HC_NOWEBSOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket APIs
 //
