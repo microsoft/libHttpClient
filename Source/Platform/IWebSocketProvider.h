@@ -4,7 +4,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 // Internal interface for a WebSocket Provider. Used as a base class for any in-box WebSocket implementations.
 class IWebSocketProvider

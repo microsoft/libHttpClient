@@ -36,7 +36,7 @@
 #define HC_UWP_API (HC_PLATFORM == HC_PLATFORM_UWP)
 #endif
 
-#if defined(HC_UNITTEST_API) && HC_UNITTEST_API
+#ifdef HC_UNITTEST_API
 #undef HC_UWP_API
 #define HC_UWP_API 1
 #endif 

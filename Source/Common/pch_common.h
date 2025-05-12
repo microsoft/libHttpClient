@@ -97,7 +97,7 @@ typedef std::chrono::steady_clock chrono_clock_t;
 #define NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN                namespace xbox { namespace httpclienttest {
 #define NAMESPACE_XBOX_HTTP_CLIENT_TEST_END                  }}
 
-#if !HC_UNITTEST_API
+#ifndef HC_UNITTEST_API
 #define ENABLE_LOGS 1
 #endif
 

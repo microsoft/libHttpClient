@@ -5,7 +5,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 class WinRTWebSocketProvider : public IWebSocketProvider
 {
 public:

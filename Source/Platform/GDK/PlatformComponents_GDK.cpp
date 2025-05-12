@@ -16,7 +16,7 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 
     components.HttpProvider = initXCurlResult.ExtractPayload();
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     // WinHttp will be used for WebSockets
     auto initWinHttpResult = WinHttpProvider::Initialize();
     RETURN_IF_FAILED(initWinHttpResult.hr);

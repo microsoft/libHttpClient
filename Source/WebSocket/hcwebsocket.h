@@ -34,7 +34,7 @@ using ObserverPtr = std::unique_ptr<HC_WEBSOCKET_OBSERVER, ObserverDeleter>;
 }
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 // An observer of a WebSocket. Holds a shared reference to the WebSocket and receives callbacks on WebSocket events
 struct HC_WEBSOCKET_OBSERVER
