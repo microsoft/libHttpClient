@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 #include "websocketpp_websocket.h"
 #include "uri.h"

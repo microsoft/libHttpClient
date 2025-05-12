@@ -11,7 +11,7 @@ using namespace xbox::httpclient;
 
 #define MAX_DELAY_TIME_IN_SEC 60
 #define MIN_DELAY_FOR_HTTP_INTERNAL_ERROR_IN_MS 10000
-#if HC_UNITTEST_API
+#ifdef HC_UNITTEST_API
 // Speed up unit tests
 #define MIN_HTTP_TIMEOUT_IN_MS 0
 #else
@@ -542,7 +542,7 @@ bool HC_CALL::ShouldRetry(uint32_t& performDelay)
         double secondsToWaitMax = std::pow(retryDelayInSeconds, m_iterationNumber + 1);
         double secondsToWaitDelta = secondsToWaitMax - secondsToWaitMin;
         double lerpScaler = (responseReceivedTime.time_since_epoch().count() % 10000) / 10000.0; // from 0 to 1 based on clock
-#if HC_UNITTEST_API
+#ifdef HC_UNITTEST_API
         lerpScaler = 0; // make unit tests deterministic
 #endif
         double secondsToWaitUncapped = secondsToWaitMin + secondsToWaitDelta * lerpScaler; // lerp between min & max wait

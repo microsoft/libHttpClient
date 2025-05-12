@@ -464,7 +464,7 @@ STDAPI HCHttpCallResponseSetHeaderWithLength(
     _In_ size_t valueSize
 ) noexcept;
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket Set APIs

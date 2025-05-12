@@ -70,7 +70,7 @@ public: // IHttpProvider
         _In_ String const& proxyUri
     ) noexcept;
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 public: // IWebSocketProvider
     HRESULT ConnectAsync(
         String const& uri,
@@ -149,7 +149,7 @@ public:
     SharedPtr<WinHttpProvider> const WinHttpProvider;
 };
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 class WinHttp_WebSocketProvider : public IWebSocketProvider
 {
 public:

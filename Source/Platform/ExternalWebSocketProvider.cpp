@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "ExternalWebSocketProvider.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
