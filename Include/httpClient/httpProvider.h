@@ -150,6 +150,7 @@ STDAPI HCHttpCallRequestGetRequestBodyReadFunction(
     _Out_ void** context
     ) noexcept;
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Get the custom bytes written and total body size for an HTTP call with a dynamic body size. Use standard request body info if dynamicBodySize is 0.
 /// </summary>
@@ -162,7 +163,9 @@ STDAPI HCHttpCallRequestGetDynamicBytesWritten(
     _Out_ size_t* dynamicBodySize,
     _Out_ size_t* dynamicBodyBytesWritten
 ) noexcept;
+#endif
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Get the function used by the HTTP call to get progress updates
 /// </summary>
@@ -179,6 +182,7 @@ STDAPI HCHttpCallRequestGetProgressReportFunction(
     _Out_ size_t* minimumProgressReportInterval,
     _Out_ void** context
 ) noexcept;
+#endif
 
 /// <summary>
 /// Get a request header for the HTTP call for a given header name.
@@ -329,6 +333,7 @@ STDAPI HCHttpCallResponseGetResponseBodyWriteFunction(
     _Out_ void** context
     ) noexcept;
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Get the custom bytes written and total body size for an HTTP call with a dynamic body size. Use standard response body info if dynamicBodySize is 0.
 /// </summary>
@@ -341,11 +346,13 @@ STDAPI HCHttpCallResponseGetDynamicBytesWritten(
     _Out_ size_t* dynamicBodySize,
     _Out_ size_t* dynamicBodyBytesWritten
 ) noexcept;
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Set APIs
 //
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Mark the HTTP call as having a dynamic size response body for progress reporting. Report the bytes written in the custom callback using
 /// HCHttpCallResponseAddDynamicBytesWritten.
@@ -357,7 +364,9 @@ STDAPI HCHttpCallResponseSetDynamicSize(
     _In_ HCCallHandle call,
     _In_ uint64_t dynamicBodySize
 ) noexcept;
+#endif
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Report a custom amount of bytes written when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
 /// </summary>
@@ -368,6 +377,7 @@ STDAPI HCHttpCallResponseAddDynamicBytesWritten(
     _In_ HCCallHandle call,
     _In_ uint64_t bytesWritten
 ) noexcept;
+#endif
 
 /// <summary>
 /// Set the response body byte buffer of the HTTP call. If a custom write callback was previously set

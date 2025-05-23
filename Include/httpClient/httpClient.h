@@ -310,6 +310,7 @@ STDAPI HCHttpCallGetRequestUrl(
     _Outptr_result_z_ const char** url
     ) noexcept;
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Gets the number of times the HTTP call has been performed.
 /// </summary>
@@ -321,6 +322,7 @@ STDAPI HCHttpCallGetPerformCount(
     _In_ HCCallHandle call,
     _Out_ uint32_t* performCount
 ) noexcept;
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs
@@ -340,6 +342,7 @@ STDAPI HCHttpCallRequestSetUrl(
     _In_z_ const char* url
     ) noexcept;
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Mark the HTTP call as having a dynamic size request body for progress reporting. Report the bytes written in the custom callback using
 /// HCHttpCallRequestAddDynamicBytesWritten.
@@ -351,7 +354,9 @@ STDAPI HCHttpCallRequestSetDynamicSize(
     _In_ HCCallHandle call,
     _In_ uint64_t dynamicBodySize
 ) noexcept;
+#endif
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Report a custom amount of bytes written when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
 /// </summary>
@@ -362,6 +367,7 @@ STDAPI HCHttpCallRequestAddDynamicBytesWritten(
     _In_ HCCallHandle call,
     _In_ uint64_t bytesWritten
 ) noexcept;
+#endif
 
 /// <summary>
 /// Set the request body bytes of the HTTP call. This API operation is mutually exclusive with
@@ -466,6 +472,7 @@ typedef HRESULT
     _Out_ size_t* bytesWritten
     );
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// The callback definition used by an HTTP call to get progress updates when uploading or downloading a file. This callback will be invoked
 /// on an unspecified background thread which is platform dependent.
@@ -482,6 +489,7 @@ typedef HRESULT
     _In_ uint64_t total,
     _In_opt_ void* context
 );
+#endif
 
 /// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
@@ -502,6 +510,7 @@ STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     _In_opt_ void* context
     ) noexcept;
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Sets a custom callback function that will be used to provide progress updates when uploading 
 /// or downloading a file.
@@ -520,6 +529,7 @@ STDAPI HCHttpCallRequestSetProgressReportFunction(
     _In_ size_t minimumProgressReportInterval,
     _In_opt_ void* context
 ) noexcept;
+#endif 
 
 /// <summary>
 /// Set a request header for the HTTP call.

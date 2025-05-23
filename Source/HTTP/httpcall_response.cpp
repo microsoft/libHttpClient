@@ -27,6 +27,7 @@ try
 }
 CATCH_RETURN()
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 STDAPI HCHttpCallResponseGetDynamicBytesWritten(
     _In_ HCCallHandle call,
     _Out_ size_t* dynamicBodySize,
@@ -46,6 +47,7 @@ try
 
 }
 CATCH_RETURN()
+#endif
 
 STDAPI
 HCHttpCallResponseSetResponseBodyWriteFunction(
@@ -161,6 +163,7 @@ try
 }
 CATCH_RETURN()
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 STDAPI
 HCHttpCallResponseSetDynamicSize(
     _In_ HCCallHandle call,
@@ -187,7 +190,9 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+#endif
 
+#if !HC_PLATFORM_IS_PLAYSTATION
 STDAPI
 HCHttpCallResponseAddDynamicBytesWritten(
     _In_ HCCallHandle call,
@@ -218,6 +223,7 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+#endif
 
 STDAPI
 HCHttpCallResponseSetResponseBodyBytes(

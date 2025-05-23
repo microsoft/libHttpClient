@@ -84,6 +84,7 @@ public:
     uint32_t timeoutWindowInSeconds{ 0 };
     uint32_t retryDelayInSeconds{ 0 };
 
+#if !HC_PLATFORM_IS_PLAYSTATION
     // Upload Progress Report
     HCHttpCallProgressReportFunction uploadProgressReportFunction{};
     size_t uploadMinimumProgressReportInterval{ 2 };
@@ -101,6 +102,7 @@ public:
     uint64_t dynamicRequestBodyBytesWritten{ 0 };
     uint64_t dynamicResponseBodySize{ 0 };
     uint64_t dynamicResponseBodyBytesWritten{ 0 };
+#endif
 
     static HRESULT CALLBACK ReadRequestBody(
         _In_ HCCallHandle call,
