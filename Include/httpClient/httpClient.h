@@ -310,7 +310,6 @@ STDAPI HCHttpCallGetRequestUrl(
     _Outptr_result_z_ const char** url
     ) noexcept;
 
-#if !HC_PLATFORM_IS_PLAYSTATION
 /// <summary>
 /// Gets the number of times the HTTP call has been performed.
 /// </summary>
@@ -322,7 +321,6 @@ STDAPI HCHttpCallGetPerformCount(
     _In_ HCCallHandle call,
     _Out_ uint32_t* performCount
 ) noexcept;
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs

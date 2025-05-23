@@ -138,7 +138,6 @@ try
 }
 CATCH_RETURN()
 
-#if !HC_PLATFORM_IS_PLAYSTATION
 STDAPI HCHttpCallGetPerformCount(
     _In_ HCCallHandle call,
     _Out_ uint32_t* performCount
@@ -150,4 +149,3 @@ try
     return S_OK;
 }
 CATCH_RETURN()
-#endif
