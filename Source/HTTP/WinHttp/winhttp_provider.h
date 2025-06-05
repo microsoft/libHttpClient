@@ -45,7 +45,11 @@ struct XPlatSecurityInformation
     http_internal_vector<uint8_t> buffer;
     XNetworkingSecurityInformation* securityInformation{ nullptr };
 #endif
-    uint32_t enabledHttpSecurityProtocolFlags;
+    uint32_t enabledHttpSecurityProtocolFlags { 0 };
+    XPlatSecurityInformation(uint32_t flags)
+    {
+        enabledHttpSecurityProtocolFlags = flags;
+    }
 };
 
 class WinHttpProvider
