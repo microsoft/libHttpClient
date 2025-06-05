@@ -46,6 +46,10 @@ struct XPlatSecurityInformation
     XNetworkingSecurityInformation* securityInformation{ nullptr };
 #endif
     uint32_t enabledHttpSecurityProtocolFlags;
+    XPlatSecurityInformation(uint32_t flags)
+    {
+        enabledHttpSecurityProtocolFlags = flags;
+    }
 };
 
 class WinHttpProvider
