@@ -89,7 +89,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     return connection;
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     HINTERNET hSession,
     HCWebsocketHandle webSocket,
@@ -308,7 +308,7 @@ HRESULT WinHttpConnection::HttpCallPerformAsync(XAsyncBlock* async)
     return S_OK;
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
 {
     RETURN_HR_IF(E_INVALIDARG, !async);
@@ -469,7 +469,7 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
         HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
 
         size_t resultSize{ 0 };
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
         if (m_websocketHandle)
         {
             resultSize = sizeof(WebSocketCompletionResult);
@@ -502,6 +502,87 @@ void WinHttpConnection::read_next_response_chunk(_In_ WinHttpConnection* pReques
         DWORD dwError = GetLastError();
         HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryDataAvailable errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
         pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
+    }
+}
+
+void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, _In_ size_t bodySize, _In_ bool isUpload)
+{
+    size_t minimumProgressInterval;
+    void* progressReportCallbackContext{};
+    HCHttpCallProgressReportFunction progressReportFunction = nullptr;
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(pRequestContext->m_call, isUpload, &progressReportFunction, &minimumProgressInterval, &progressReportCallbackContext);
+    if (FAILED(hr))
+    {
+        pRequestContext->complete_task(hr);
+        return;
+    }
+
+    if (progressReportFunction != nullptr)
+    {
+        uint64_t current;
+        std::chrono::steady_clock::time_point lastProgressReport;
+        long minimumProgressReportIntervalInMs;
+
+        if (isUpload)
+        {
+            size_t dynamicBodySize{};
+            size_t dynamicBodyBytesWritten{};
+            HCHttpCallRequestGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+            if (dynamicBodySize > 0)
+            {
+                bodySize = dynamicBodySize;
+                current = dynamicBodyBytesWritten;
+            }
+            else
+            {
+                current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            }
+
+            lastProgressReport = pRequestContext->m_call->uploadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->uploadMinimumProgressReportInterval * 1000);
+        }
+        else
+        {
+            size_t dynamicBodySize{};
+            size_t dynamicBodyBytesWritten{};
+            HCHttpCallResponseGetDynamicBytesWritten(pRequestContext->m_call, &dynamicBodySize, &dynamicBodyBytesWritten);
+
+            if (dynamicBodySize > 0)
+            {
+                bodySize = dynamicBodySize;
+                current = dynamicBodyBytesWritten;
+            }
+            else
+            {
+                current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+            }
+
+            lastProgressReport = pRequestContext->m_call->downloadLastProgressReport;
+            minimumProgressReportIntervalInMs = static_cast<long>(pRequestContext->m_call->downloadMinimumProgressReportInterval * 1000);
+        }
+
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastProgressReport).count();
+
+        if (elapsed >= minimumProgressReportIntervalInMs)
+        {
+            if (isUpload)
+            {
+                pRequestContext->m_call->uploadLastProgressReport = now;
+            }
+            else
+            {
+                pRequestContext->m_call->downloadLastProgressReport = now;
+            }
+
+            hr = progressReportFunction(pRequestContext->m_call, current, bodySize, progressReportCallbackContext);
+            if (FAILED(hr))
+            {
+                pRequestContext->complete_task(hr);
+                return;
+            }
+        }
     }
 }
 
@@ -562,6 +643,8 @@ void WinHttpConnection::_multiple_segment_write_data(_In_ WinHttpConnection* pRe
         pRequestContext->m_requestBodyType = msg_body_type::no_body;
     }
     pRequestContext->m_requestBodyOffset += bytesWritten;
+
+    ReportProgress(pRequestContext, bodySize, true);
 }
 
 void WinHttpConnection::callback_status_write_complete(
@@ -594,7 +677,7 @@ void WinHttpConnection::callback_status_write_complete(
 
 void WinHttpConnection::callback_websocket_status_write_complete(WinHttpConnection* connection)
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     WebSocketSendContext* nextSendContext{ nullptr };
     WebSocketSendContext* completedSendContext{ nullptr };
 
@@ -969,6 +1052,42 @@ void WinHttpConnection::callback_status_data_available(
     }
 }
 
+size_t WinHttpConnection::GetResponseContentLength(_In_ WinHttpConnection* pRequestContext)
+{
+    size_t contentLength = 0;
+    std::wstring responseHeader;
+    BOOL result = FALSE;
+    DWORD headerSize = 0;
+    responseHeader.resize(0);
+
+    result = WinHttpQueryHeaders(pRequestContext->m_hRequest, WINHTTP_QUERY_CONTENT_LENGTH, NULL, WINHTTP_NO_OUTPUT_BUFFER, &headerSize, WINHTTP_NO_HEADER_INDEX);
+    if ((!result) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+    {
+        responseHeader.resize(headerSize / sizeof(wchar_t));
+        if (responseHeader.empty())
+        {
+            result = TRUE;
+        }
+        else
+        {
+            result = WinHttpQueryHeaders(pRequestContext->m_hRequest, WINHTTP_QUERY_CONTENT_LENGTH, NULL, &responseHeader[0], &headerSize, WINHTTP_NO_HEADER_INDEX);
+            if (!result) headerSize = 0;
+            responseHeader.resize(headerSize / sizeof(wchar_t));
+        }
+    }
+
+    try
+    {
+        contentLength = std::stoi(responseHeader);
+    }
+    catch (const std::exception& e)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [%d] std::stoi error in callback_status_read_complete: %s", E_FAIL, e.what());
+    }
+
+    return contentLength;
+}
+
 void WinHttpConnection::callback_status_read_complete(
     _In_ HINTERNET /*hRequestHandle*/,
     _In_ WinHttpConnection* pRequestContext,
@@ -993,6 +1112,20 @@ void WinHttpConnection::callback_status_read_complete(
     }
     else
     {
+        if (!pRequestContext->m_responseBodySize)
+        {
+            size_t contentLength = GetResponseContentLength(pRequestContext);
+
+            pRequestContext->m_responseBodySize = contentLength;
+            pRequestContext->m_responseBodyRemainingToRead = contentLength;
+        }
+
+        if (pRequestContext->m_responseBodySize > 0)
+        {
+            pRequestContext->m_responseBodyRemainingToRead -= bytesRead;
+            ReportProgress(pRequestContext, pRequestContext->m_responseBodySize, false);
+        }
+
         read_next_response_chunk(pRequestContext, bytesRead);
     }
 }
@@ -1353,7 +1486,7 @@ void WinHttpConnection::StartWinHttpClose()
 
 void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendContext)
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     assert(m_winHttpWebSocketExports.send);
 
     DWORD dwError = m_winHttpWebSocketExports.send(m_hRequest,
@@ -1376,7 +1509,7 @@ void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendCon
 
 void WinHttpConnection::WebSocketCompleteEntireSendQueueWithError(HRESULT error)
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     std::lock_guard<std::recursive_mutex> lock{ m_websocketSendMutex };
     for (; !m_websocketSendQueue.empty(); m_websocketSendQueue.pop())
     {
@@ -1390,7 +1523,7 @@ void WinHttpConnection::WebSocketCompleteEntireSendQueueWithError(HRESULT error)
 
 void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
         // If we've already notified of disconnect, don't do it again
@@ -1427,7 +1560,7 @@ const char* WinHttpConnection::winhttp_web_socket_buffer_type_to_string(
     _In_ WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType
 )
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     switch (bufferType)
     {
         case WINHTTP_WEB_SOCKET_BUFFER_TYPE::WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE: return "WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE";
@@ -1448,7 +1581,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
     _In_ WinHttpConnection* pRequestContext,
     _In_ void* statusInfo)
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     WINHTTP_WEB_SOCKET_STATUS* wsStatus = static_cast<WINHTTP_WEB_SOCKET_STATUS*>(statusInfo);
     if (wsStatus == nullptr)
     {
@@ -1500,7 +1633,7 @@ void WinHttpConnection::callback_websocket_status_read_complete(
 
 HRESULT WinHttpConnection::WebSocketReadAsync()
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     win32_cs_autolock autoCriticalSection(&m_lock);
 
     if (m_websocketReceiveBuffer.GetBuffer() == nullptr)
@@ -1542,7 +1675,7 @@ HRESULT WinHttpConnection::WebSocketReadAsync()
 
 HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool endOfMessage)
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     websocket_message_buffer messageBuffer;
     HCWebSocketMessageFunction messageFunc = nullptr;
     HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr;
@@ -1600,7 +1733,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
     _In_ WinHttpCallbackContext* winHttpContext
 )
 {
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     auto winHttpConnection = winHttpContext->winHttpConnection;
     winHttpConnection->m_lock.lock();
 
@@ -1666,7 +1799,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
 #endif
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 HRESULT CALLBACK WinHttpConnection::WebSocketConnectProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
     auto winHttpConnection = static_cast<WinHttpConnection*>(data->context);

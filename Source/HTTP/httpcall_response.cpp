@@ -27,6 +27,26 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCHttpCallResponseGetDynamicBytesWritten(
+    _In_ HCCallHandle call,
+    _Out_ size_t* dynamicBodySize,
+    _Out_ size_t* dynamicBodyBytesWritten
+) noexcept
+try
+{
+    if (call == nullptr || dynamicBodySize == nullptr || dynamicBodyBytesWritten == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *dynamicBodySize = static_cast<size_t>(call->dynamicResponseBodySize);
+    *dynamicBodyBytesWritten = static_cast<size_t>(call->dynamicResponseBodyBytesWritten);
+
+    return S_OK;
+
+}
+CATCH_RETURN()
+
 STDAPI
 HCHttpCallResponseSetResponseBodyWriteFunction(
     _In_ HCCallHandle call,
@@ -137,6 +157,64 @@ try
     {
         *bufferUsed = call->responseBodyBytes.size();
     }
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallResponseSetDynamicSize(
+    _In_ HCCallHandle call,
+    _In_ uint64_t dynamicBodySize
+) noexcept
+try
+{
+    if (call == nullptr || dynamicBodySize == 0)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    call->dynamicResponseBodySize = dynamicBodySize;
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetDynamicSize [ID %llu]: dynamicBodySize=%llu", TO_ULL(call->id), TO_ULL(dynamicBodySize)); }
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallResponseAddDynamicBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ uint64_t bytesWritten
+) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    if (call->dynamicResponseBodySize == 0)
+    {
+        return E_UNEXPECTED;
+    }
+
+    call->dynamicResponseBodyBytesWritten += bytesWritten;
+
+    if (call->dynamicResponseBodyBytesWritten > call->dynamicResponseBodySize)
+    {
+        HC_TRACE_WARNING(HTTPCLIENT, "HCHttpCallResponseAddDynamicBytesWritten [ID %llu]: Reducing excessive bytesWritten=%llu to dynamicBodySize=%llu", TO_ULL(call->id), TO_ULL(call->dynamicResponseBodyBytesWritten), TO_ULL(call->dynamicResponseBodySize));
+        call->dynamicResponseBodyBytesWritten = call->dynamicResponseBodySize;
+    }
+
+    if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseAddDynamicBytesWritten [ID %llu]: bytesWritten=%llu", TO_ULL(call->id), TO_ULL(bytesWritten)); }
+
     return S_OK;
 }
 CATCH_RETURN()

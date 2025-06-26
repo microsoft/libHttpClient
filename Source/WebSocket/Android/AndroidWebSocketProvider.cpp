@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 #include "jni.h"
 #include "AndroidWebSocketProvider.h"

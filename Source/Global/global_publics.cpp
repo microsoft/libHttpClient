@@ -174,7 +174,7 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
     }
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 STDAPI_(int32_t) HCAddWebSocketRoutedHandler(
     _In_ HCWebSocketRoutedHandler handler,
     _In_opt_ void* context

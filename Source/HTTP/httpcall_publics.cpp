@@ -137,3 +137,15 @@ try
     return S_OK;
 }
 CATCH_RETURN()
+
+STDAPI HCHttpCallGetPerformCount(
+    _In_ HCCallHandle call,
+    _Out_ uint32_t* performCount
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !call || !performCount);
+    *performCount = call->GetPerformCount();
+    return S_OK;
+}
+CATCH_RETURN()

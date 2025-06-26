@@ -16,7 +16,7 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 
     components.HttpProvider = initXCurlResult.ExtractPayload();
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     // WinHttp will be used for WebSockets
     auto initWinHttpResult = WinHttpProvider::Initialize();
     RETURN_IF_FAILED(initWinHttpResult.hr);
@@ -29,14 +29,14 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 }
 
 // Test hooks for GDK Suspend/Resume testing
-void HCWinHttpSuspend()
+STDAPI_(void) HCWinHttpSuspend()
 {
     auto httpSingleton = get_http_singleton();
     auto& winHttpProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider())->WinHttpProvider;
     winHttpProvider->Suspend();
 }
 
-void HCWinHttpResume()
+STDAPI_(void) HCWinHttpResume()
 {
     auto httpSingleton = get_http_singleton();
     auto& winHttpProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider())->WinHttpProvider;

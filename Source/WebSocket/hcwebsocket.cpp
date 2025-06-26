@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "hcwebsocket.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 using namespace xbox::httpclient;
 

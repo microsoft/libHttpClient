@@ -139,7 +139,7 @@ HRESULT WinHttpProvider::SetGlobalProxy(_In_ String const& proxyUri) noexcept
     return S_OK;
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 HRESULT WinHttpProvider::ConnectAsync(
     String const& uri,
     String const& subprotocol,
@@ -603,7 +603,7 @@ HRESULT WinHttp_HttpProvider::PerformAsync(HCCallHandle callHandle, XAsyncBlock*
     return WinHttpProvider->PerformAsync(callHandle, async);
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 WinHttp_WebSocketProvider::WinHttp_WebSocketProvider(std::shared_ptr<xbox::httpclient::WinHttpProvider> provider) : WinHttpProvider{ std::move(provider) }
 {
 }

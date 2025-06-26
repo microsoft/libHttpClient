@@ -32,6 +32,7 @@ public:
 
     // Entry point for HCHttpCallPerformAsync
     HRESULT PerformAsync(XAsyncBlock* async) noexcept;
+    uint32_t GetPerformCount() const noexcept { return m_iterationNumber; }
 
     // Request ID for logging
     const uint64_t id;
@@ -82,6 +83,24 @@ public:
     uint32_t retryAfterCacheId{ 0 };
     uint32_t timeoutWindowInSeconds{ 0 };
     uint32_t retryDelayInSeconds{ 0 };
+
+    // Upload Progress Report
+    HCHttpCallProgressReportFunction uploadProgressReportFunction{};
+    size_t uploadMinimumProgressReportInterval{ 2 };
+    std::chrono::steady_clock::time_point uploadLastProgressReport{};
+    void* uploadProgressReportFunctionContext{ nullptr };
+
+    // Download Progress Report
+    HCHttpCallProgressReportFunction downloadProgressReportFunction{};
+    size_t downloadMinimumProgressReportInterval{ 2 };
+    std::chrono::steady_clock::time_point downloadLastProgressReport{};
+    void* downloadProgressReportFunctionContext{ nullptr };
+
+    // Dynamic size properties
+    uint64_t dynamicRequestBodySize{ 0 };
+    uint64_t dynamicRequestBodyBytesWritten{ 0 };
+    uint64_t dynamicResponseBodySize{ 0 };
+    uint64_t dynamicResponseBodyBytesWritten{ 0 };
 
     static HRESULT CALLBACK ReadRequestBody(
         _In_ HCCallHandle call,

@@ -310,6 +310,18 @@ STDAPI HCHttpCallGetRequestUrl(
     _Outptr_result_z_ const char** url
     ) noexcept;
 
+/// <summary>
+/// Gets the number of times the HTTP call has been performed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="performCount">The number of times the HTTP call has been performed.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>This should only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.</remarks>
+STDAPI HCHttpCallGetPerformCount(
+    _In_ HCCallHandle call,
+    _Out_ uint32_t* performCount
+) noexcept;
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs
 //
@@ -327,6 +339,29 @@ STDAPI HCHttpCallRequestSetUrl(
     _In_z_ const char* method,
     _In_z_ const char* url
     ) noexcept;
+
+/// <summary>
+/// Mark the HTTP call as having a dynamic size request body for progress reporting. Report the bytes written in the custom callback using
+/// HCHttpCallRequestAddDynamicBytesWritten.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="dynamicBodySize">The length in bytes to use for reporting.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestSetDynamicSize(
+    _In_ HCCallHandle call,
+    _In_ uint64_t dynamicBodySize
+) noexcept;
+
+/// <summary>
+/// Report a custom amount of bytes written when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bytesWritten">The number of bytes written.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestAddDynamicBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ uint64_t bytesWritten
+) noexcept;
 
 /// <summary>
 /// Set the request body bytes of the HTTP call. This API operation is mutually exclusive with
@@ -432,6 +467,23 @@ typedef HRESULT
     );
 
 /// <summary>
+/// The callback definition used by an HTTP call to get progress updates when uploading or downloading a file. This callback will be invoked
+/// on an unspecified background thread which is platform dependent.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="current">The current amount of processed bytes of the file being uploaded/downloaded.</param>
+/// <param name="total">The total size in bytes of the file being uploaded/downloaded.</param>
+/// <param name="context">Optional context pointer to data used by the callback.</param>
+/// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+typedef HRESULT
+(CALLBACK* HCHttpCallProgressReportFunction)(
+    _In_ HCCallHandle call,
+    _In_ uint64_t current,
+    _In_ uint64_t total,
+    _In_opt_ void* context
+);
+
+/// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
 /// performed. If a custom read callback is used, any request body data previously set by
 /// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
@@ -449,6 +501,25 @@ STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ size_t bodySize,
     _In_opt_ void* context
     ) noexcept;
+
+/// <summary>
+/// Sets a custom callback function that will be used to provide progress updates when uploading 
+/// or downloading a file.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="progressReportFunction">The progress report callback function this call should use.</param>
+/// <param name="isUploadFunction">Indicates if the function provided will get progress reports when uploading or downloading.</param>
+/// <param name="minimumProgressReportInterval">The minimum interval in seconds that needs to pass for the client to get progress reports.</param>
+/// <param name="context">Optional context pointer to data used by the callback.</param>
+/// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallRequestSetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallProgressReportFunction progressReportFunction,
+    _In_ bool isUploadFunction,
+    _In_ size_t minimumProgressReportInterval,
+    _In_opt_ void* context
+) noexcept;
 
 /// <summary>
 /// Set a request header for the HTTP call.
@@ -797,7 +868,7 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
     _Outptr_result_z_ const char** headerValue
     ) noexcept;
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket APIs
 //

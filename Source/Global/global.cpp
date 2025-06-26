@@ -8,7 +8,7 @@
 #include "../Logger/trace_internal.h"
 #include "../Mock/lhc_mock.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
 #endif
 
@@ -44,7 +44,7 @@ HRESULT http_singleton::singleton_access(
 
             auto performEnvInitResult = NetworkState::Initialize(
                 std::move(platform.HttpProvider)
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
                 , std::move(platform.WebSocketProvider)
 #endif
             );

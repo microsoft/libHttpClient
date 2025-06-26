@@ -4,7 +4,7 @@
 
 using namespace xbox::httpclient;
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 STDAPI HCWebSocketCreate(
     _Out_ HCWebsocketHandle* handle,
