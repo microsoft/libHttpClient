@@ -107,6 +107,7 @@ EXPORTS
     HCWebSocketGetHeader
     HCWebSocketGetHeaderAtIndex
     HCWebSocketGetNumHeaders
+    HCWebSocketGetPingInterval
     HCWebSocketGetProxyUri
     HCWebSocketSendBinaryMessageAsync
     HCWebSocketSendMessageAsync
@@ -114,6 +115,7 @@ EXPORTS
     HCWebSocketSetHeader
     HCWebSocketSetMaxReceiveBufferSize
     HCWebSocketSetProxyDecryptsHttps
+    HCWebSocketSetPingInterval
     HCWebSocketSetProxyUri
     XAsyncBegin
     XAsyncCancel
