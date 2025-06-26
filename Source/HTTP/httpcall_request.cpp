@@ -826,10 +826,14 @@ try
         return E_HC_NOT_INITIALISED;
     }
 
+#if !defined(HC_WINHTTP_WIN32_NOXASYNC)
     if (setting == HCConfigSetting::SSLValidationEnforcedInRetailSandbox)
     {
         httpSingleton->m_disableAssertsForSSLValidationInDevSandboxes = true;
     }
+#else
+    UNREFERENCED_PARAMETER(setting);
+#endif
 
     return S_OK;
 }
