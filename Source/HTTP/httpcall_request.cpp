@@ -800,7 +800,19 @@ try
 }
 CATCH_RETURN()
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
+#if defined(HC_WINHTTP_WIN32_NOXASYNC)
+STDAPI_(void) HCWinHttpSuspend()
+{
+    // TODO: fix properly later
+}
+
+STDAPI_(void) HCWinHttpResume()
+{
+    // TODO: fix properly later
+}
+#endif
+
+#if (HC_PLATFORM == HC_PLATFORM_GDK || defined(HC_WINHTTP_WIN32_NOXASYNC))
 STDAPI
 HCHttpDisableAssertsForSSLValidationInDevSandboxes(
     _In_ HCConfigSetting setting

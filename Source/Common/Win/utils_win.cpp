@@ -124,7 +124,7 @@ proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpcli
 {
     proxy_type proxyType = proxy_type::automatic_proxy;
 
-#if HC_PLATFORM != HC_PLATFORM_GDK
+#if HC_PLATFORM != HC_PLATFORM_GDK && !defined(HC_WINHTTP_WIN32_NOXASYNC)
     WINHTTP_CURRENT_USER_IE_PROXY_CONFIG config = { 0 };
     if (!WinHttpGetIEProxyConfigForCurrentUser(&config))
     {
