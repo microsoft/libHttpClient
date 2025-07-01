@@ -737,7 +737,7 @@ bool TaskQueuePortImpl::Wait(
 
         if (!m_signaled)
         {
-            if (timeout == INFINITE)
+            if (timeout == 0xFFFFFFFF /* INFINITE */)
             {
                 m_event.wait(lock);
             }
