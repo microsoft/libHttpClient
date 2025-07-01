@@ -735,12 +735,18 @@ bool TaskQueuePortImpl::Wait(
 
         std::unique_lock<std::mutex> lock(m_lock);
 
-        if (!m_signaled &&
-            m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+        if (!m_signaled)
         {
-            return false;
+            if (timeout == INFINITE)
+            {
+                m_event.wait(lock);
+            }
+            else if (m_event.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+            {
+                return false;
+            }
         }
-
+    
         m_signaled = false;
     }
 #endif
