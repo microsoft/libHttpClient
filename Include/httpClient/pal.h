@@ -5,6 +5,9 @@
 #endif
 
 #pragma once
+
+#include <httpClient/config.h>
+
 #if HC_PLATFORM != HC_PLATFORM_ANDROID && HC_PLATFORM != HC_PLATFORM_LINUX
 #pragma warning(disable: 4062) // enumerator 'identifier' in switch of enum 'enumeration' is not handled
 #pragma warning(disable: 4702) // unreachable code
@@ -13,8 +16,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#include <httpClient/config.h>
 
 #if _WIN32
 
