@@ -66,7 +66,7 @@
 
   <!--Bring in XCurl on GDK-->
   <ImportGroup Condition="'$(HCPlatform)' == 'GDK' AND '$(GameDK)' != ''">
-    <Import Project="$(GameDK)\$(XdkEditionTarget)\GRDK\ExtensionLibraries\Xbox.XCurl.API\DesignTime\CommonConfiguration\neutral\ExtensionLibrary.props"/>
+    <Import Project="$(GameDK)\$(XdkEditionTarget)\GRDK\ExtensionLibraries\Xbox.XCurl.API\ExtensionLibrary.props"/>
   </ImportGroup>
   <ItemDefinitionGroup>
     <Link>

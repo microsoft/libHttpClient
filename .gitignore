@@ -152,3 +152,6 @@ Tests/StressUnitTest/
 
 #Exclude build logs
 Build/**/*.log
+
+#Exclude nuget packages
+packages/
