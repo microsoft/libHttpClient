@@ -657,7 +657,7 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 ) noexcept;
 #endif
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
+#if HC_PLATFORM == HC_PLATFORM_GDK || defined(HC_WINHTTP_WIN32_NOXASYNC)
 /// <summary>
 /// Defines the config settings value that is passed to the below API's.
 /// </summary>
