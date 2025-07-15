@@ -800,7 +800,19 @@ try
 }
 CATCH_RETURN()
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
+#if defined(HC_WINHTTP_WIN32_NOXASYNC)
+STDAPI_(void) HCWinHttpSuspend()
+{
+    // TODO: fix properly later
+}
+
+STDAPI_(void) HCWinHttpResume()
+{
+    // TODO: fix properly later
+}
+#endif
+
+#if (HC_PLATFORM == HC_PLATFORM_GDK || defined(HC_WINHTTP_WIN32_NOXASYNC))
 STDAPI
 HCHttpDisableAssertsForSSLValidationInDevSandboxes(
     _In_ HCConfigSetting setting
@@ -814,10 +826,14 @@ try
         return E_HC_NOT_INITIALISED;
     }
 
+#if !defined(HC_WINHTTP_WIN32_NOXASYNC)
     if (setting == HCConfigSetting::SSLValidationEnforcedInRetailSandbox)
     {
         httpSingleton->m_disableAssertsForSSLValidationInDevSandboxes = true;
     }
+#else
+    UNREFERENCED_PARAMETER(setting);
+#endif
 
     return S_OK;
 }
