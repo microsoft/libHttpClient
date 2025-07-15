@@ -5,7 +5,7 @@
 #include "pch.h"
 #include "Game.h"
 #include <httpClient/httpClient.h>
-#include <json_cpp\json.h>
+#include <json.h>
 
 extern void ExitGame() noexcept;
 
@@ -39,55 +39,19 @@ std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HCCallHandle call)
     return headers;
 }
 
-class win32_handle
+DWORD WINAPI Game::BackgroundThreadEntry(LPVOID lpParam)
 {
-public:
-    win32_handle() : m_handle(nullptr)
-    {
-    }
+    Game& game{ *static_cast<Game*>(lpParam) };
 
-    ~win32_handle()
-    {
-        if (m_handle != nullptr) CloseHandle(m_handle);
-        m_handle = nullptr;
-    }
-
-    void set(HANDLE handle)
-    {
-        m_handle = handle;
-    }
-
-    HANDLE get() { return m_handle; }
-
-private:
-    HANDLE m_handle;
-};
-
-win32_handle g_stopRequestedHandle;
-win32_handle g_workReadyHandle;
-win32_handle g_completionReadyHandle;
-win32_handle g_exampleTaskDone;
-
-DWORD g_targetNumThreads = 2;
-HANDLE g_hActiveThreads[10] = { 0 };
-DWORD g_defaultIdealProcessor = 0;
-DWORD g_numActiveThreads = 0;
-
-XTaskQueueHandle g_queue;
-XTaskQueueRegistrationToken g_callbackToken;
-
-
-DWORD WINAPI background_thread_proc(LPVOID /*lpParam*/)
-{
     HANDLE hEvents[3] =
     {
-        g_workReadyHandle.get(),
-        g_completionReadyHandle.get(),
-        g_stopRequestedHandle.get()
+        game.m_workReadyHandle.get(),
+        game.m_completionReadyHandle.get(),
+        game.m_stopRequestedHandle.get()
     };
 
     XTaskQueueHandle queue;
-    XTaskQueueDuplicateHandle(g_queue, &queue);
+    XTaskQueueDuplicateHandle(game.m_queue, &queue);
 
     bool stop = false;
     while (!stop)
@@ -99,7 +63,7 @@ DWORD WINAPI background_thread_proc(LPVOID /*lpParam*/)
             if (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
             {
                 // If we executed work, set our event again to check next time.
-                SetEvent(g_workReadyHandle.get());
+                SetEvent(game.m_workReadyHandle.get());
             }
             break;
 
@@ -109,7 +73,7 @@ DWORD WINAPI background_thread_proc(LPVOID /*lpParam*/)
             if (XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0))
             {
                 // If we executed a completion set our event again to check next time
-                SetEvent(g_completionReadyHandle.get());
+                SetEvent(game.m_completionReadyHandle.get());
             }
             break;
 
@@ -123,67 +87,69 @@ DWORD WINAPI background_thread_proc(LPVOID /*lpParam*/)
     return 0;
 }
 
-void CALLBACK HandleAsyncQueueCallback(
+void CALLBACK Game::HandleAsyncQueueCallback(
     _In_ void* context,
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort type
 )
 {
-    UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(queue);
+
+    Game& game = *static_cast<Game*>(context);
 
     switch (type)
     {
     case XTaskQueuePort::Work:
-        SetEvent(g_workReadyHandle.get());
+        SetEvent(game.m_workReadyHandle.get());
         break;
 
     case XTaskQueuePort::Completion:
-        SetEvent(g_completionReadyHandle.get());
+        SetEvent(game.m_completionReadyHandle.get());
         break;
     }
 }
 
-void StartBackgroundThread()
+void Game::StartBackgroundThreads()
 {
-    g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
-    g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
-    g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
-    g_exampleTaskDone.set(CreateEvent(nullptr, false, false, nullptr));
+    m_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
+    m_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    m_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+    m_exampleTaskDone.set(CreateEvent(nullptr, false, false, nullptr));
 
-    for (uint32_t i = 0; i < g_targetNumThreads; i++)
+    for (uint32_t i = 0; i < m_targetNumThreads; i++)
     {
-        g_hActiveThreads[i] = CreateThread(nullptr, 0, background_thread_proc, nullptr, 0, nullptr);
-        if (g_defaultIdealProcessor != MAXIMUM_PROCESSORS)
+        m_hActiveThreads[i] = CreateThread(nullptr, 0, BackgroundThreadEntry, this, 0, nullptr);
+        if (m_defaultIdealProcessor != MAXIMUM_PROCESSORS)
         {
-            if (g_hActiveThreads[i] != nullptr)
+            if (m_hActiveThreads[i] != nullptr)
             {
-                SetThreadIdealProcessor(g_hActiveThreads[i], g_defaultIdealProcessor);
+                SetThreadIdealProcessor(m_hActiveThreads[i], m_defaultIdealProcessor);
             }
         }
     }
 
-    g_numActiveThreads = g_targetNumThreads;
+    m_numActiveThreads = m_targetNumThreads;
 }
 
-void ShutdownActiveThreads()
+void Game::ShutdownBackgroundThreads()
 {
-    SetEvent(g_stopRequestedHandle.get());
-    DWORD dwResult = WaitForMultipleObjectsEx(g_numActiveThreads, g_hActiveThreads, true, INFINITE, false);
-    if (dwResult >= WAIT_OBJECT_0 && dwResult <= WAIT_OBJECT_0 + g_numActiveThreads - 1)
+    SetEvent(m_stopRequestedHandle.get());
+    DWORD dwResult = WaitForMultipleObjectsEx(m_numActiveThreads, m_hActiveThreads, true, INFINITE, false);
+    if (dwResult >= WAIT_OBJECT_0 && dwResult <= WAIT_OBJECT_0 + m_numActiveThreads - 1)
     {
-        for (DWORD i = 0; i < g_numActiveThreads; i++)
+        for (DWORD i = 0; i < m_numActiveThreads; i++)
         {
-            CloseHandle(g_hActiveThreads[i]);
-            g_hActiveThreads[i] = nullptr;
+            CloseHandle(m_hActiveThreads[i]);
+            m_hActiveThreads[i] = nullptr;
         }
-        g_numActiveThreads = 0;
-        ResetEvent(g_stopRequestedHandle.get());
+        m_numActiveThreads = 0;
+        ResetEvent(m_stopRequestedHandle.get());
     }
 }
 
 struct SampleHttpCallAsyncContext
 {
+    Game& game;
     HCCallHandle call;
     bool isJson;
     std::string filePath;
@@ -198,7 +164,7 @@ HRESULT CustomResponseBodyWrite(HCCallHandle /*call*/, const uint8_t* source, si
     return S_OK;
 }
 
-void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression, bool customWrite)
+void Game::PerformHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression, bool customWrite)
 {
     std::string method = "GET";
     bool retryAllowed = true;
@@ -254,11 +220,11 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
     printf_s("Calling %s %s\r\n", method.c_str(), url.c_str());
 
     std::vector<uint8_t> buffer;
-    SampleHttpCallAsyncContext* hcContext = new SampleHttpCallAsyncContext{ call, isJson, filePath, buffer, customWrite };
+    SampleHttpCallAsyncContext* hcContext = new SampleHttpCallAsyncContext{ *this, call, isJson, filePath, buffer, customWrite };
     XAsyncBlock* asyncBlock = new XAsyncBlock;
     ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
     asyncBlock->context = hcContext;
-    asyncBlock->queue = g_queue;
+    asyncBlock->queue = m_queue;
     if (customWrite)
     {
         HCHttpCallResponseBodyWriteFunction customWriteWrapper = [](HCCallHandle call, const uint8_t* source, size_t bytesAvailable, void* context) -> HRESULT
@@ -351,7 +317,7 @@ void DoHttpCall(std::string url, std::string requestBody, bool isJson, std::stri
             printf_s("Response string: %s\n", responseStr);
         }
 
-        SetEvent(g_exampleTaskDone.get());
+        SetEvent(hcContext->game.m_exampleTaskDone.get());
         delete asyncBlock;
     };
 
@@ -399,10 +365,10 @@ void Game::Initialize(HWND window, int width, int height)
     assert(SUCCEEDED(hr));
     UNREFERENCED_PARAMETER(hr);
 
-    XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &g_queue);
-    XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+    XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &m_queue);
+    XTaskQueueRegisterMonitor(m_queue, this, HandleAsyncQueueCallback, &m_callbackToken);
     HCTraceSetTraceToDebugger(true);
-    StartBackgroundThread();
+    StartBackgroundThreads();
 }
 
 #pragma region Frame Update
@@ -418,30 +384,70 @@ void Game::Tick()
 }
 
 // Updates the world.
-void Game::Update(DX::StepTimer const& timer)
+void Game::Update(DX::StepTimer const& /*timer*/)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
 
-    static bool callStarted = false;
-    if (!callStarted)
+    if (m_httpCallPending)
     {
-        std::string url1 = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
-        DoHttpCall(url1, "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}", true, "", false, false, false);
-
-        callStarted = true;
+        // See if call completed
+        auto waitResult = WaitForSingleObject(m_exampleTaskDone.get(), 10);
+        if (waitResult == WAIT_OBJECT_0)
+        {
+            m_httpCallsCompleted++;
+            m_httpCallPending = false;
+        }
     }
-
-    // See if call completed
-    auto waitResult = WaitForSingleObject(g_exampleTaskDone.get(), 10);
-    if (waitResult == WAIT_OBJECT_0)
+    else
     {
-        ExitGame();
+        m_httpCallPending = true;
+        std::string url;
+
+        switch (m_httpCallsCompleted)
+        {
+        case 0:
+        {
+            url = "https://raw.githubusercontent.com/Microsoft/libHttpClient/master/Samples/Win32-Http/TestContent.json";
+            PerformHttpCall(
+                url, 
+                "{\"test\":\"value\"},{\"test2\":\"value\"},{\"test3\":\"value\"},{\"test4\":\"value\"},{\"test5\":\"value\"},{\"test6\":\"value\"},{\"test7\":\"value\"}",
+                true, 
+                "",
+                false,
+                false,
+                false
+            );
+        }
+        break;
+
+        case 1:
+        {
+            url = "https://github.com/Microsoft/libHttpClient/raw/master/Samples/XDK-Http/Assets/SplashScreen.png";
+            PerformHttpCall(url, "", false, "SplashScreen.png", false, false, false);
+        }
+        break;
+
+        case 2:
+        {
+            url = "https://80996.playfabapi.com/authentication/GetEntityToken";
+            PerformHttpCall(url, "", false, "", false, true, false);
+        }
+        break;
+
+        case 3:
+        {
+            url = "https://80996.playfabapi.com/authentication/GetEntityToken";
+            PerformHttpCall(url, "", false, "", false, true, true);
+        }
+        break;
+
+        default:
+        {
+            // All HttpCalls complete
+            ExitGame();
+        }
+        }
     }
-
-    float elapsedTime = float(timer.GetElapsedSeconds());
-
-    // TODO: Add your game logic here.
-    elapsedTime;
 
     PIXEndEvent();
 }

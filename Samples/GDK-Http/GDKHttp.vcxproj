@@ -13,6 +13,18 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">
     <ClCompile>
       <ShowIncludes>true</ShowIncludes>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(HCIncludeDir)\json_cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <PreBuildEvent>
+      <Command>mkdir $(ProjectDir)\httpClient &amp; copy $(HCIncludeDir)\httpClient\ $(ProjectDir)\httpClient\</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">
+    <PreBuildEvent>
+      <Command>mkdir $(ProjectDir)\httpClient &amp; copy $(HCIncludeDir)\httpClient\ $(ProjectDir)\httpClient\</Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(HCIncludeDir)\json_cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
