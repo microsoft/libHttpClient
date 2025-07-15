@@ -28,7 +28,7 @@
   </PropertyGroup>
 
   <!--Include paths-->
-  <ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(HCPlatform)' != 'GDK'">
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCIncludeDir)</AdditionalIncludeDirectories>
     </ClCompile>

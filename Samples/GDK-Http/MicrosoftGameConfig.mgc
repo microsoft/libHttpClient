@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Game configVersion="1">
+  <!-- For more information on MicrosoftGame.config elements,
+       please refer to online GDK documentation found at https://aka.ms/GDK_MSGC
+       or the MicrosoftGame.config topic in the System section of the offline GDK documentation. -->
+
+  <Identity Name="GDKHttpSample"
+            Publisher="CN=Publisher"
+            Version="1.0.0.0"/>
+
+  <ExecutableList>
+    <Executable Name="GDKHttpSample.exe"
+                Id="Game"
+                Alias="GDKHttpSample.exe"/>
+    <!--        TargetDeviceFamily="PC"
+                IsDevOnly="false" | IsDevOnly specifies if is a Development only executable.
+                OverrideDisplayName="Xbox Game Override"
+                OverrideLogo="GraphicsLogoOverride.png"
+                OverrideSquare480x480Logo="LargeLogoOverride.png"
+                OverrideSquare44x44Logo="SmallLogoOverride.png"
+                OverrideSplashScreenImage="SplashScreenOverride.png" -->
+  </ExecutableList>
+
+  <ShellVisuals DefaultDisplayName="GDKHttpSample"
+                PublisherDisplayName="PublisherName"
+                Square480x480Logo="LargeLogo.png"
+                Square150x150Logo="GraphicsLogo.png"
+                Square44x44Logo="SmallLogo.png"
+                Description="GDKHttpSample"
+                ForegroundText="light"
+                BackgroundColor="#000040"
+                SplashScreenImage="SplashScreen.png"
+                StoreLogo="StoreLogo.png"/>
+
+  <!-- NOTE: SplashScreenImage is an optional attribute for Desktop titles -->
+  <!-- The image, if defined, is displayed when the PC Bootstrapper is launching the title -->
+
+  <!-- The MSAAppId and TitleId elements are required for Xbox Live and XUser interaction as of the March 2022 GDK to enable improvements to
+       developer sign-in, test and launch workflows.
+
+       The default values of PleaseChangeMe and FFFFFFFF are allowed for early compilation but it is recommended to update these as soon as
+       possible with the real values for your project. The MSAAppId value can be found in the Xbox services -> Xbox Settings section in your
+       projects Partner Center portal, while the TitleId value can be found in Game Setup -> Identity details section in the portal.
+
+       The Store Association Wizard, as part of the MicrosoftGame.config Editor within the GDK, allows for optimized syncing of the MSAAppId and TitleId
+      (and other important Ids and names) from Partner Center directly to the MicrosoftGame.config file. For more information on this, please see https://aka.ms/GDK_MSGC. -->
+  <MSAAppId>PleaseChangeMe</MSAAppId>
+  <TitleId>FFFFFFFF</TitleId>
+
+  <!-- <Resources> | Resources is a list of Language Locale pairs used to localize Shell Visuals.
+        <Resource Language="en-us"/>
+        <Resource Language="de-de"/>
+        <Resource Language="es-mx"/>
+    </Resources> -->
+
+  <!-- <DesktopRegistration>
+      <CustomInstallActions> | CustomInstallActions specifies a custom installer action with Administrator privileges the first time your game runs.
+        <Folder>Installers</Folder>
+        <InstallActionList>
+          <InstallAction File="CustomInstaller.exe" Name="UniqueInstallTaskName" Arguments="/silent /example" />
+        </InstallActionList>
+      </CustomInstallActions>
+      <DependencyList> | DependencyList determines which framework packages need to be installed before installing the title package.
+        <Dependency Name="Microsoft.DirectXRuntime" MinVersion="9.29.952.0"/>
+      </DependencyList>
+      <ProcessorArchitecture>x64</ProcessorArchitecture> | ProcessorArchitecture specifies the processor architecture that matches your game executables.
+      <WindowsOsVersion
+        RequiredMinimum="10.0.18363.1350"
+        SuggestedMinimum="10.0.19045.3570" /> | Provides OS version requirements and recommendations. This sets the required minimum to match the requirements for the DirectX 12 Agility SDK (https://aka.ms/directx12agility).
+  </DesktopRegistration> -->
+
+  <!-- <StoreId>000000000000</StoreId> | StoreId specifies the store identity of this title. -->
+
+</Game>
+
