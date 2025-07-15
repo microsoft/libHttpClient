@@ -1366,6 +1366,7 @@ void CALLBACK WinHttpConnection::completion_callback(
 #if HC_PLATFORM != HC_PLATFORM_GDK
 HRESULT WinHttpConnection::set_autodiscover_proxy()
 {
+#if !defined(HC_WINHTTP_WIN32_NOXASYNC)
     WINHTTP_PROXY_INFO info = { 0 };
 
     WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
@@ -1398,6 +1399,7 @@ HRESULT WinHttpConnection::set_autodiscover_proxy()
     {
         // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
     }
+#endif
 
     return S_OK;
 }
