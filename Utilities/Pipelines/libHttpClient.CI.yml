@@ -149,22 +149,3 @@ jobs:
       - template: Tasks/linux-build.yml
         parameters:
           configuration: $(Configuration)
-
-  #########################
-  # Send email on failure
-  #########################
-
-  - job: SendEmailOnFailure
-    displayName: Send email on build failure
-    condition: and(failed(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-    dependsOn:
-      - Win32Vs19Build
-      # - Win32Vs22Build
-      - AndroidBuild
-      - iOSBuild
-    pool:
-      name: xbl-1es-vs2019-pool
-    steps:
-      - template: Tasks/send-build-failed-email.yml
-        parameters:
-          toAddress: $(TeamEmail)
