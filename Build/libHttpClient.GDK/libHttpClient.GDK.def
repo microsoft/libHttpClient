@@ -108,16 +108,16 @@ EXPORTS
     HCWebSocketGetHeader
     HCWebSocketGetHeaderAtIndex
     HCWebSocketGetNumHeaders
-    HCWebSocketGetPingInterval
     HCWebSocketGetProxyUri
     HCWebSocketSendBinaryMessageAsync
     HCWebSocketSendMessageAsync
     HCWebSocketSetBinaryMessageFragmentEventFunction
     HCWebSocketSetHeader
     HCWebSocketSetMaxReceiveBufferSize
-    HCWebSocketSetPingInterval
     HCWebSocketSetProxyUri
     HCWinHttpResume
     HCWinHttpSuspend
     HCHttpCallResponseSetGzipCompressed
     HCHttpCallRequestSetProgressReportFunction
+    HCWebSocketGetPingInterval
+    HCWebSocketSetPingInterval
