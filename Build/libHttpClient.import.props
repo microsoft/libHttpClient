@@ -4,7 +4,11 @@
   <!-- This props file pulls in a source reference to LibHttpClient. By default, a reference to the dynamic library version will be used.-->
   <!-- To use the static library version, define HCStaticLib=true prior to importing this file-->
 
-  <Import Condition="'$(LibHttpClientImported)' == 'true'" Project="Error attempting to import LibHttpClient twice. Condition all imports on ('ProjectName'Imported) != true." />
+  <!-- Check if LibHttpClient is already imported -->
+  <PropertyGroup Condition="'$(LibHttpClientImported)' == 'true'">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+  
   <PropertyGroup>
     <LibHttpClientImported>true</LibHttpClientImported>
   </PropertyGroup>
