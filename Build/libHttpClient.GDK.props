@@ -110,4 +110,78 @@
     <IntDir>$(HCIntRoot)\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</IntDir>
   </PropertyGroup>
 
+  <!-- GDK Dynamic Loading Solution: Backup/Restore System -->
+  <!-- This solves the issue where GDK's _CopyFilesMarkedCopyLocal target overwrites custom-built DLLs -->
+  
+  <!-- Target 1: Backup custom DLL and PDB immediately after Link, before GDK overwrites it -->
+  <Target Name="BackupCustomDLL" AfterTargets="Link" BeforeTargets="_CopyFilesMarkedCopyLocal">
+    <Message Text="BackupCustomDLL: Creating backup of fresh-built DLL and PDB before Microsoft overwrites it" Importance="high" />
+    
+    <!-- Backup the DLL -->
+    <Copy SourceFiles="$(OutDir)libHttpClient.GDK.dll" 
+          DestinationFiles="$(OutDir)libHttpClient.GDK.dll.custom" 
+          Condition="Exists('$(OutDir)libHttpClient.GDK.dll')" 
+          OverwriteReadOnlyFiles="true" />
+    
+    <!-- Backup the PDB if it exists -->
+    <Copy SourceFiles="$(OutDir)libHttpClient.GDK.pdb" 
+          DestinationFiles="$(OutDir)libHttpClient.GDK.pdb.custom" 
+          Condition="Exists('$(OutDir)libHttpClient.GDK.pdb')" 
+          OverwriteReadOnlyFiles="true" />
+    
+    <Message Text="BackupCustomDLL: Custom DLL and PDB backed up successfully" Importance="high" />
+  </Target>
+
+  <!-- Target 2: Restore custom DLL and PDB after Microsoft's copy operation completes -->
+  <Target Name="RestoreCustomDLL" AfterTargets="Build">
+    <PropertyGroup>
+      <CustomDLLBackup>$(OutDir)libHttpClient.GDK.dll.custom</CustomDLLBackup>
+      <CustomPDBBackup>$(OutDir)libHttpClient.GDK.pdb.custom</CustomPDBBackup>
+      <FinalDLL>$(OutDir)libHttpClient.GDK.dll</FinalDLL>
+      <FinalPDB>$(OutDir)libHttpClient.GDK.pdb</FinalPDB>
+    </PropertyGroup>
+    
+    <!-- Check if our custom backup exists -->
+    <Message Text="Checking for custom DLL backup at: $(CustomDLLBackup)" Importance="high" />
+    
+    <!-- Restore our custom DLL if backup exists -->
+    <Copy Condition="Exists('$(CustomDLLBackup)')" 
+          SourceFiles="$(CustomDLLBackup)" 
+          DestinationFiles="$(FinalDLL)" 
+          OverwriteReadOnlyFiles="true" />
+    
+    <!-- Restore our custom PDB if backup exists -->
+    <Copy Condition="Exists('$(CustomPDBBackup)')" 
+          SourceFiles="$(CustomPDBBackup)" 
+          DestinationFiles="$(FinalPDB)" 
+          OverwriteReadOnlyFiles="true" />
+    
+    <Message Condition="Exists('$(CustomDLLBackup)')" 
+             Text="Restored custom dynamic loading DLL over Microsoft's static version" 
+             Importance="high" />
+    
+    <Message Condition="Exists('$(CustomPDBBackup)')" 
+             Text="Restored custom PDB file for proper debugging symbols" 
+             Importance="high" />
+    
+    <Warning Condition="!Exists('$(CustomDLLBackup)')" 
+             Text="Custom DLL backup not found - Microsoft's DLL with static XCurl linking will be used" />
+  </Target>
+
+  <!-- Target 3: Cleanup backup files after successful restore -->
+  <Target Name="CleanupCustomBackups" AfterTargets="RestoreCustomDLL">
+    <PropertyGroup>
+      <CustomDLLBackup>$(OutDir)libHttpClient.GDK.dll.custom</CustomDLLBackup>
+      <CustomPDBBackup>$(OutDir)libHttpClient.GDK.pdb.custom</CustomPDBBackup>
+    </PropertyGroup>
+    
+    <Message Text="CleanupCustomBackups: Removing temporary backup files" Importance="high" />
+    
+    <!-- Delete backup files -->
+    <Delete Files="$(CustomDLLBackup)" Condition="Exists('$(CustomDLLBackup)')" />
+    <Delete Files="$(CustomPDBBackup)" Condition="Exists('$(CustomPDBBackup)')" />
+    
+    <Message Text="CleanupCustomBackups: Backup files cleaned up successfully" Importance="high" />
+  </Target>
+
 </Project>

@@ -31,7 +31,19 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
 
 Result<HC_UNIQUE_PTR<CurlProvider>> CurlProvider::Initialize()
 {
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Initialize dynamic curl loader first
+    auto& loader = CurlDynamicLoader::GetInstance();
+    if (!loader.Initialize())
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlProvider::Initialize: Failed to load XCurl.dll");
+        return E_FAIL;
+    }
+
+    CURLcode initRes = CURL_CALL(curl_global_init)(CURL_GLOBAL_ALL);
+#else
     CURLcode initRes = curl_global_init(CURL_GLOBAL_ALL);
+#endif
     RETURN_IF_FAILED(HrFromCurle(initRes));
 
     http_stl_allocator<CurlProvider> a{};
@@ -53,11 +65,27 @@ CurlProvider::~CurlProvider()
     // make sure XCurlMultis are cleaned up before curl_global_cleanup
     m_curlMultis.clear();
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (CurlDynamicLoader::GetInstance().IsLoaded())
+    {
+        CURL_CALL(curl_global_cleanup)();
+    }
+#else
     curl_global_cleanup();
+#endif
 }
 
 HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept
 {
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Check if curl is available before proceeding
+    if (!CurlDynamicLoader::GetInstance().IsLoaded())
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlProvider::PerformAsync: XCurl.dll not available");
+        return E_FAIL;
+    }
+#endif
+
     XTaskQueuePortHandle workPort{ nullptr };
     RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
 
