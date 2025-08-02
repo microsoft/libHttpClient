@@ -75,9 +75,9 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     // If progress callbacks were provided by client then specify libcurl progress callback
     if (uploadProgressReportFunction != nullptr || downloadProgressReportFunction != nullptr)
     {
-        easyRequest->SetOpt<void*>(CURLOPT_XFERINFODATA, easyRequest.get());
-        easyRequest->SetOpt<curl_xferinfo_callback>(CURLOPT_XFERINFOFUNCTION, &ProgressReportCallback);
-        easyRequest->SetOpt<long>(CURLOPT_NOPROGRESS, 0L);
+        RETURN_IF_FAILED(easyRequest->SetOpt<void*>(CURLOPT_XFERINFODATA, easyRequest.get()));
+        RETURN_IF_FAILED(easyRequest->SetOpt<curl_xferinfo_callback>(CURLOPT_XFERINFOFUNCTION, &ProgressReportCallback));
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_NOPROGRESS, 0L));
     }
 #endif
 
@@ -291,39 +291,48 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
 
     request->m_requestBodyOffset += bytesWritten;
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
+    // For GDK, we need to manually report progress since XCurl doesn't support libcurl progress callback
+    // For non-GDK platforms, this serves as additional progress reporting in the read callback
     size_t uploadMinimumProgressInterval;
     void* uploadProgressReportCallbackContext{};
     HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
     hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, true, &uploadProgressReportFunction, &uploadMinimumProgressInterval, &uploadProgressReportCallbackContext);
-    if (FAILED(hr))
+    if (SUCCEEDED(hr) && uploadProgressReportFunction)
     {
-        HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReadCallback: failed getting Progress Report upload function");
-        return 1;
-    }
+        uint64_t dynamicBodySize{};
+        uint64_t dynamicBodyBytesWritten{};
+        HCHttpCallRequestGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
 
-    uint64_t dynamicBodySize{};
-    uint64_t dynamicBodyBytesWritten{};
-    HCHttpCallRequestGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+        uint64_t reportBytesWritten = request->m_requestBodyOffset;
+        uint64_t reportTotalBytes = bodySize;
+        if (dynamicBodySize > 0)
+        {
+            reportBytesWritten = dynamicBodyBytesWritten;
+            reportTotalBytes = dynamicBodySize;
+        }
 
-    uint64_t reportBytesWritten = request->m_requestBodyOffset;
-    uint64_t reportTotalBytes = bodySize;
-    if (dynamicBodySize > 0)
-    {
-        reportBytesWritten = dynamicBodyBytesWritten;
-        reportTotalBytes = dynamicBodySize;
-    }
-
-    ReportProgress(
-        request->m_hcCallHandle,
-        uploadProgressReportFunction,
-        request->m_hcCallHandle->uploadMinimumProgressReportInterval,
-        reportBytesWritten,
-        reportTotalBytes,
-        uploadProgressReportCallbackContext,
-        &request->m_hcCallHandle->uploadLastProgressReport
-    );
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        ReportProgress(
+            request->m_hcCallHandle,
+            uploadProgressReportFunction,
+            request->m_hcCallHandle->uploadMinimumProgressReportInterval,
+            reportBytesWritten,
+            reportTotalBytes,
+            uploadProgressReportCallbackContext,
+            &request->m_hcCallHandle->uploadLastProgressReport
+        );
+#else
+        ReportProgress(
+            request->m_hcCallHandle,
+            uploadProgressReportFunction,
+            uploadMinimumProgressInterval,
+            reportBytesWritten,
+            reportTotalBytes,
+            uploadProgressReportCallbackContext,
+            &request->m_hcCallHandle->uploadLastProgressReport
+        );
 #endif
+    }
 
     return bytesWritten;
 }
@@ -445,39 +454,48 @@ size_t CurlEasyRequest::WriteDataCallback(char* buffer, size_t size, size_t nmem
     {
         request->m_responseBodyRemainingToRead -= bufferSize;
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
+        // For GDK, we need to manually report progress since XCurl doesn't support libcurl progress callback
+        // For non-GDK platforms, this serves as additional progress reporting in the write callback
         size_t downloadMinimumProgressInterval;
         void* downloadProgressReportCallbackContext{};
         HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
         hr = HCHttpCallRequestGetProgressReportFunction(request->m_hcCallHandle, false, &downloadProgressReportFunction, &downloadMinimumProgressInterval, &downloadProgressReportCallbackContext);
-        if (FAILED(hr))
+        if (SUCCEEDED(hr) && downloadProgressReportFunction)
         {
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::WriteDataCallback: failed getting Progress Report download function");
-            return 1;
-        }
+            uint64_t dynamicBodySize{};
+            uint64_t dynamicBodyBytesWritten{};
+            HCHttpCallResponseGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
 
-        uint64_t dynamicBodySize{};
-        uint64_t dynamicBodyBytesWritten{};
-        HCHttpCallResponseGetDynamicBytesWritten(request->m_hcCallHandle, &dynamicBodySize, &dynamicBodyBytesWritten);
+            uint64_t reportBytesWritten = request->m_responseBodySize - request->m_responseBodyRemainingToRead;
+            uint64_t reportTotalBytes = request->m_responseBodySize;
+            if (dynamicBodySize > 0)
+            {
+                reportBytesWritten = dynamicBodyBytesWritten;
+                reportTotalBytes = dynamicBodySize;
+            }
 
-        uint64_t reportBytesWritten = request->m_responseBodySize - request->m_responseBodyRemainingToRead;
-        uint64_t reportTotalBytes = request->m_responseBodySize;
-        if (dynamicBodySize > 0)
-        {
-            reportBytesWritten = dynamicBodyBytesWritten;
-            reportTotalBytes = dynamicBodySize;
-        }
-
-        ReportProgress(
-            request->m_hcCallHandle,
-            downloadProgressReportFunction,
-            request->m_hcCallHandle->downloadMinimumProgressReportInterval,
-            reportBytesWritten,
-            reportTotalBytes,
-            downloadProgressReportCallbackContext,
-            &request->m_hcCallHandle->downloadLastProgressReport
-        );
+#if HC_PLATFORM == HC_PLATFORM_GDK
+            ReportProgress(
+                request->m_hcCallHandle,
+                downloadProgressReportFunction,
+                request->m_hcCallHandle->downloadMinimumProgressReportInterval,
+                reportBytesWritten,
+                reportTotalBytes,
+                downloadProgressReportCallbackContext,
+                &request->m_hcCallHandle->downloadLastProgressReport
+            );
+#else
+            ReportProgress(
+                request->m_hcCallHandle,
+                downloadProgressReportFunction,
+                downloadMinimumProgressInterval,
+                reportBytesWritten,
+                reportTotalBytes,
+                downloadProgressReportCallbackContext,
+                &request->m_hcCallHandle->downloadLastProgressReport
+            );
 #endif
+        }
     }
 
     return bufferSize;
@@ -564,7 +582,7 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
         ReportProgress(
             request->m_hcCallHandle,
             uploadProgressReportFunction,
-            request->m_hcCallHandle->uploadMinimumProgressReportInterval,
+            uploadMinimumProgressInterval,
             reportBytesWritten,
             reportTotalBytes,
             uploadProgressReportCallbackContext,
@@ -599,7 +617,7 @@ int CurlEasyRequest::ProgressReportCallback(void* context, curl_off_t dltotal, c
         ReportProgress(
             request->m_hcCallHandle,
             downloadProgressReportFunction,
-            request->m_hcCallHandle->downloadMinimumProgressReportInterval,
+            downloadMinimumProgressInterval,
             reportBytesWritten,
             reportTotalBytes,
             downloadProgressReportCallbackContext,
