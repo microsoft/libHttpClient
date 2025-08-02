@@ -464,7 +464,7 @@ try
 
     *headerName = nullptr;
     *headerValue = nullptr;
-    return S_OK;
+    return E_INVALIDARG;
 }
 CATCH_RETURN()
 

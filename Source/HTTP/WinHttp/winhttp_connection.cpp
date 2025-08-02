@@ -231,6 +231,24 @@ HRESULT WinHttpConnection::Initialize()
         }
 #endif
 
+        // Set receive buffer size if specified
+        size_t maxReceiveBufferSize{ 0 };
+        RETURN_IF_FAILED(HCHttpCallRequestGetMaxReceiveBufferSize(m_call, &maxReceiveBufferSize));
+        if (maxReceiveBufferSize > 0)
+        {
+            DWORD bufferSize = static_cast<DWORD>(maxReceiveBufferSize);
+            if (!WinHttpSetOption(
+                m_hRequest,
+                WINHTTP_OPTION_READ_BUFFER_SIZE,
+                &bufferSize,
+                sizeof(bufferSize)))
+            {
+                DWORD dwError = GetLastError();
+                HC_TRACE_WARNING(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption WINHTTP_OPTION_READ_BUFFER_SIZE errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
+                // Don't fail the call for this - it's not critical
+            }
+        }
+
 #if HC_PLATFORM != HC_PLATFORM_GDK
         if (m_proxyType == proxy_type::autodiscover_proxy)
         {
