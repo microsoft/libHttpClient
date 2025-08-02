@@ -5,7 +5,7 @@
 #include "pch.h"
 #include "Game.h"
 #include <httpClient/httpClient.h>
-#include <json.h>
+// #include <json.h>  // Removed - using GDK's libHttpClient instead of custom build
 
 extern void ExitGame() noexcept;
 
@@ -305,7 +305,20 @@ void Game::PerformHttpCall(std::string url, std::string requestBody, bool isJson
                 {
                     responseString = responseString.substr(3);
                 }
-                web::json::value json = web::json::value::parse(utility::conversions::to_string_t(responseString));;
+                
+                // Simple JSON validation - just check if it looks like JSON
+                if (responseString.front() == '{' && responseString.back() == '}')
+                {
+                    printf_s("Response appears to be valid JSON object\r\n");
+                }
+                else if (responseString.front() == '[' && responseString.back() == ']')
+                {
+                    printf_s("Response appears to be valid JSON array\r\n");
+                }
+                else
+                {
+                    printf_s("Response doesn't appear to be well-formed JSON\r\n");
+                }
             }
 
             printf_s("Response string:\r\n%s\r\n", responseString.c_str());
