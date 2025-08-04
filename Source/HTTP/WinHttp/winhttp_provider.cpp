@@ -387,6 +387,18 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags)
         return hr;
     }
 
+    BOOL enableFallback = TRUE;
+    result = WinHttpSetOption(
+        hSession,
+        WINHTTP_OPTION_IPV6_FAST_FALLBACK,
+        &enableFallback,
+        sizeof(enableFallback));
+    if (!result)
+    {
+        HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+        HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption");
+    }
+
     if (!m_globalProxy.empty())
     {
         (void)SetGlobalProxyForHSession(hSession, m_globalProxy.c_str());
