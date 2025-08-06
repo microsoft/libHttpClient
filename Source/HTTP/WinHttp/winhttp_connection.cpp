@@ -231,23 +231,8 @@ HRESULT WinHttpConnection::Initialize()
         }
 #endif
 
-        // Set receive buffer size if specified
-        size_t maxReceiveBufferSize{ 0 };
-        RETURN_IF_FAILED(HCHttpCallRequestGetMaxReceiveBufferSize(m_call, &maxReceiveBufferSize));
-        if (maxReceiveBufferSize > 0)
-        {
-            DWORD bufferSize = static_cast<DWORD>(maxReceiveBufferSize);
-            if (!WinHttpSetOption(
-                m_hRequest,
-                WINHTTP_OPTION_READ_BUFFER_SIZE,
-                &bufferSize,
-                sizeof(bufferSize)))
-            {
-                DWORD dwError = GetLastError();
-                HC_TRACE_WARNING(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption WINHTTP_OPTION_READ_BUFFER_SIZE errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
-                // Don't fail the call for this - it's not critical
-            }
-        }
+        // Note: maxReceiveBufferSize will be used later during WinHttpReadData calls
+        // The deprecated WINHTTP_OPTION_READ_BUFFER_SIZE option has no effect and should not be used
 
 #if HC_PLATFORM != HC_PLATFORM_GDK
         if (m_proxyType == proxy_type::autodiscover_proxy)
@@ -1045,13 +1030,37 @@ void WinHttpConnection::callback_status_data_available(
     // Read new data into buffer
     if (newBytesAvailable > 0)
     {
-        pRequestContext->m_responseBuffer.resize(newBytesAvailable);
+        // Stage 1 performance optimization: For requests with known Content-Length,
+        // use maxReceiveBufferSize instead of WinHttpQueryDataAvailable result
+        DWORD bytesToRead = newBytesAvailable;
+        
+        // Check if we have a known content length and a custom buffer size
+        if (pRequestContext->m_responseBodySize > 0)
+        {
+            size_t maxReceiveBufferSize = 0;
+            HRESULT hr = HCHttpCallRequestGetMaxReceiveBufferSize(pRequestContext->m_call, &maxReceiveBufferSize);
+            if (SUCCEEDED(hr) && maxReceiveBufferSize > 0)
+            {
+                // Use the larger of the two, but cap at remaining bytes to read
+                size_t remainingBytes = pRequestContext->m_responseBodyRemainingToRead;
+                bytesToRead = static_cast<DWORD>(std::min({
+                    static_cast<size_t>(maxReceiveBufferSize),
+                    remainingBytes,
+                    static_cast<size_t>(MAXDWORD)
+                }));
+                
+                HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] Using maxReceiveBufferSize=%zu for known content-length, reading %d bytes", 
+                    TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), maxReceiveBufferSize, bytesToRead);
+            }
+        }
+        
+        pRequestContext->m_responseBuffer.resize(bytesToRead);
 
         // Read in body all at once.
         if (!WinHttpReadData(
             hRequestHandle,
             pRequestContext->m_responseBuffer.data(),
-            newBytesAvailable,
+            bytesToRead,
             nullptr))
         {
             DWORD dwError = GetLastError();

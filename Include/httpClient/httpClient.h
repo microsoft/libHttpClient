@@ -642,7 +642,7 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
 /// Sets the maximum receive buffer size for HTTP responses.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
-/// <param name="bufferSizeInBytes">The maximum buffer size in bytes. Must be greater than 0.</param>
+/// <param name="bufferSizeInBytes">The maximum buffer size in bytes. Pass 0 to reset to provider default.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 /// <remarks>
 /// This must be called prior to calling HCHttpCallPerformAsync.
@@ -658,7 +658,7 @@ STDAPI HCHttpCallRequestSetMaxReceiveBufferSize(
 /// Gets the maximum receive buffer size for HTTP responses.
 /// </summary>
 /// <param name="call">The handle of the HTTP call.</param>
-/// <param name="bufferSizeInBytes">The maximum buffer size in bytes.</param>
+/// <param name="bufferSizeInBytes">The maximum buffer size in bytes. Returns 0 if no custom size has been set (meaning use provider default).</param>
 /// <returns>Result code for this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
 STDAPI HCHttpCallRequestGetMaxReceiveBufferSize(
     _In_ HCCallHandle call,

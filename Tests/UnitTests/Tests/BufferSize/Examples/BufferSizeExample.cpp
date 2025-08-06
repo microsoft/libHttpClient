@@ -49,14 +49,14 @@ void ExampleLargeDownload()
         return;
     }
 
-    std::cout << "✓ Set receive buffer size to " << largeBufferSize << " bytes\n";
+    std::cout << "[PASS] Set receive buffer size to " << largeBufferSize << " bytes\n";
 
     // Verify the setting
     size_t retrievedBufferSize = 0;
     hr = HCHttpCallRequestGetMaxReceiveBufferSize(call, &retrievedBufferSize);
     if (SUCCEEDED(hr))
     {
-        std::cout << "✓ Confirmed buffer size: " << retrievedBufferSize << " bytes\n";
+        std::cout << "[PASS] Confirmed buffer size: " << retrievedBufferSize << " bytes\n";
     }
 
     // At this point you would normally call HCHttpCallPerformAsync
@@ -103,7 +103,7 @@ void ExampleMemoryConstrainedEnvironment()
         return;
     }
 
-    std::cout << "✓ Set smaller receive buffer size to " << smallBufferSize << " bytes for memory conservation\n";
+    std::cout << "[PASS] Set smaller receive buffer size to " << smallBufferSize << " bytes for memory conservation\n";
 
     // Cleanup
     HCHttpCallCloseHandle(call);
@@ -120,6 +120,6 @@ int main()
 
     ExampleMemoryConstrainedEnvironment();
 
-    std::cout << "\n🎉 Examples completed successfully!\n";
+    std::cout << "\n[SUCCESS] Examples completed successfully!\n";
     return 0;
 }

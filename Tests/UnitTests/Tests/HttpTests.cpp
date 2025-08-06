@@ -425,13 +425,16 @@ public:
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallRequestSetMaxReceiveBufferSize(nullptr, testBufferSize));
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallRequestGetMaxReceiveBufferSize(nullptr, &bufferSize));
 
-        // Test invalid parameters - zero buffer size
-        VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallRequestSetMaxReceiveBufferSize(call, 0));
+        // Test setting zero buffer size (reset to provider default)
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetMaxReceiveBufferSize(call, 0));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(call, &retrievedBufferSize));
+        VERIFY_ARE_EQUAL(0U, retrievedBufferSize);
 
         // Test invalid parameters - null output parameter
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallRequestGetMaxReceiveBufferSize(call, nullptr));
 
         // Test that the buffer size persists through call operations
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetMaxReceiveBufferSize(call, newBufferSize));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "GET", "https://www.example.com"));
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(call, &retrievedBufferSize));
         VERIFY_ARE_EQUAL(newBufferSize, retrievedBufferSize);

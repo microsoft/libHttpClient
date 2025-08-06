@@ -901,7 +901,7 @@ HCHttpCallRequestSetMaxReceiveBufferSize(
     ) noexcept
 try
 {
-    if (call == nullptr || bufferSizeInBytes == 0)
+    if (call == nullptr)
     {
         return E_INVALIDARG;
     }
