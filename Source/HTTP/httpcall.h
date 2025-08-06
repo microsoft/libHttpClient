@@ -56,6 +56,7 @@ public:
 #endif
     uint32_t timeoutInSeconds{ 0 };
     HCCompressionLevel compressionLevel{ HCCompressionLevel::None };
+    size_t maxReceiveBufferSize{ 0 }; // 0 = use provider default
 
     // Response properties
     HRESULT networkErrorCode{ S_OK };

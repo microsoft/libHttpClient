@@ -638,6 +638,33 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     ) noexcept;
 
+/// <summary>
+/// Sets the maximum receive buffer size for HTTP responses.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bufferSizeInBytes">The maximum buffer size in bytes. Pass 0 to reset to provider default.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This must be called prior to calling HCHttpCallPerformAsync.
+/// The actual buffer size used may be limited by the underlying HTTP provider.
+/// Default buffer size varies by platform but is typically 16KB.
+/// </remarks>
+STDAPI HCHttpCallRequestSetMaxReceiveBufferSize(
+    _In_ HCCallHandle call,
+    _In_ size_t bufferSizeInBytes
+    ) noexcept;
+
+/// <summary>
+/// Gets the maximum receive buffer size for HTTP responses.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bufferSizeInBytes">The maximum buffer size in bytes. Returns 0 if no custom size has been set (meaning use provider default).</param>
+/// <returns>Result code for this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+STDAPI HCHttpCallRequestGetMaxReceiveBufferSize(
+    _In_ HCCallHandle call,
+    _Out_ size_t* bufferSizeInBytes
+    ) noexcept;
+
 #if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
 /// <summary>
 /// Enables or disables SSL server certificate validation for this specific HTTP call.

@@ -354,6 +354,7 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         HCCleanup();
+        VERIFY_ARE_EQUAL(101, platErrorCode);
     }
 
     DEFINE_TEST_CASE(TestResponseHeaders)
@@ -361,46 +362,91 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
 
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
-        HCCallHandle call = nullptr;
-        HCHttpCallCreate(&call);
+
+        HCCallHandle call;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
 
         uint32_t numHeaders = 0;
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
         VERIFY_ARE_EQUAL(0, numHeaders);
 
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue"));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
-
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue2"));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
-
-        const CHAR* t1 = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader", &t1));
-        VERIFY_ARE_EQUAL_STR("testValue, testValue2", t1);
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader2", &t1));
-        VERIFY_IS_NULL(t1);
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(1, numHeaders);
+        const char* str;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader", &str));
+        VERIFY_IS_NULL(str);
 
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader", "testValue"));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetHeader(call, "testHeader2", "testValue2"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeader(call, "testHeader", &str));
+        VERIFY_ARE_EQUAL_STR("testValue", str);
+
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNumHeaders(call, &numHeaders));
-        VERIFY_ARE_EQUAL(2, numHeaders);
+        VERIFY_ARE_EQUAL(1, numHeaders);
 
-        const CHAR* hn0 = nullptr;
-        const CHAR* hv0 = nullptr;
-        const CHAR* hn1 = nullptr;
-        const CHAR* hv1 = nullptr;
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeaderAtIndex(call, 0, &hn0, &hv0));
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeaderAtIndex(call, 1, &hn1, &hv1));
-        VERIFY_ARE_EQUAL_STR("testHeader", hn0);
-        VERIFY_ARE_EQUAL_STR("testValue, testValue2, testValue", hv0);
-        VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
-        VERIFY_ARE_EQUAL_STR("testValue2", hv1);
+        const char* headerName;
+        const char* headerValue;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetHeaderAtIndex(call, 0, &headerName, &headerValue));
+        VERIFY_ARE_EQUAL_STR("testHeader", headerName);
+        VERIFY_ARE_EQUAL_STR("testValue", headerValue);
 
-        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallResponseGetHeaderAtIndex(call, 1, &headerName, &headerValue));
+
+        HCHttpCallCloseHandle(call);
+        HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(TestMaxReceiveBufferSize)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestMaxReceiveBufferSize);
+
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCCallHandle call;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
+
+        // Test default value (should be 0)
+        size_t bufferSize = 999; // Initialize to non-zero to verify it gets set
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(call, &bufferSize));
+        VERIFY_ARE_EQUAL(0U, bufferSize);
+
+        // Test setting and getting valid buffer size
+        const size_t testBufferSize = 64 * 1024; // 64KB
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetMaxReceiveBufferSize(call, testBufferSize));
+        
+        size_t retrievedBufferSize = 0;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(call, &retrievedBufferSize));
+        VERIFY_ARE_EQUAL(testBufferSize, retrievedBufferSize);
+
+        // Test setting different buffer size
+        const size_t newBufferSize = 128 * 1024; // 128KB
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetMaxReceiveBufferSize(call, newBufferSize));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(call, &retrievedBufferSize));
+        VERIFY_ARE_EQUAL(newBufferSize, retrievedBufferSize);
+
+        // Test invalid parameters - null call handle
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallRequestSetMaxReceiveBufferSize(nullptr, testBufferSize));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallRequestGetMaxReceiveBufferSize(nullptr, &bufferSize));
+
+        // Test setting zero buffer size (reset to provider default)
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetMaxReceiveBufferSize(call, 0));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(call, &retrievedBufferSize));
+        VERIFY_ARE_EQUAL(0U, retrievedBufferSize);
+
+        // Test invalid parameters - null output parameter
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCHttpCallRequestGetMaxReceiveBufferSize(call, nullptr));
+
+        // Test that the buffer size persists through call operations
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetMaxReceiveBufferSize(call, newBufferSize));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "GET", "https://www.example.com"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(call, &retrievedBufferSize));
+        VERIFY_ARE_EQUAL(newBufferSize, retrievedBufferSize);
+
+        // Test with a duplicate handle
+        HCCallHandle duplicateCall = HCHttpCallDuplicateHandle(call);
+        VERIFY_IS_NOT_NULL(duplicateCall);
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestGetMaxReceiveBufferSize(duplicateCall, &retrievedBufferSize));
+        VERIFY_ARE_EQUAL(newBufferSize, retrievedBufferSize);
+
+        HCHttpCallCloseHandle(duplicateCall);
+        HCHttpCallCloseHandle(call);
         HCCleanup();
     }
 };

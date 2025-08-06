@@ -311,6 +311,17 @@ STDAPI HCHttpCallRequestGetTimeoutWindow(
     _Out_ uint32_t* timeoutWindowInSeconds
     ) noexcept;
 
+/// <summary>
+/// Gets the maximum receive buffer size for HTTP responses.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bufferSizeInBytes">The maximum buffer size in bytes.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+STDAPI HCHttpCallRequestGetMaxReceiveBufferSize(
+    _In_ HCCallHandle call,
+    _Out_ size_t* bufferSizeInBytes
+    ) noexcept;
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallResponse Get APIs

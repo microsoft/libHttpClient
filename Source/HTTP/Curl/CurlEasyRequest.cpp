@@ -135,6 +135,14 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     RETURN_IF_FAILED(HCHttpCallRequestGetTimeout(hcCall, &timeoutSeconds));
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_TIMEOUT_MS, timeoutSeconds * 1000));
 
+    // receive buffer size
+    size_t maxReceiveBufferSize{ 0 };
+    RETURN_IF_FAILED(HCHttpCallRequestGetMaxReceiveBufferSize(hcCall, &maxReceiveBufferSize));
+    if (maxReceiveBufferSize > 0)
+    {
+        RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_BUFFERSIZE, static_cast<long>(maxReceiveBufferSize)));
+    }
+
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_VERBOSE, 0)); // verbose logging (0 off, 1 on)
     RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_HEADER, 0)); // do not write headers to the write callback
     RETURN_IF_FAILED(easyRequest->SetOpt<char*>(CURLOPT_ERRORBUFFER, easyRequest->m_errorBuffer));

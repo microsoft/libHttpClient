@@ -121,3 +121,6 @@ EXPORTS
     HCHttpCallRequestSetProgressReportFunction
     HCWebSocketGetPingInterval
     HCWebSocketSetPingInterval
+    HCHttpCallRequestGetMaxReceiveBufferSize
+    HCHttpCallRequestSetMaxReceiveBufferSize
+    

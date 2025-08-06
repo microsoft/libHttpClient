@@ -893,3 +893,49 @@ try
 }
 CATCH_RETURN()
 #endif
+
+STDAPI
+HCHttpCallRequestSetMaxReceiveBufferSize(
+    _In_ HCCallHandle call,
+    _In_ size_t bufferSizeInBytes
+    ) noexcept
+try
+{
+    if (call == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+    RETURN_IF_PERFORM_CALLED(call);
+
+    auto httpSingleton = get_http_singleton();
+    if (nullptr == httpSingleton)
+    {
+        return E_HC_NOT_INITIALISED;
+    }
+
+    call->maxReceiveBufferSize = bufferSizeInBytes;
+    if (call->traceCall) 
+    { 
+        HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallRequestSetMaxReceiveBufferSize [ID %llu]: bufferSize=%zu", TO_ULL(call->id), bufferSizeInBytes); 
+    }
+
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCHttpCallRequestGetMaxReceiveBufferSize(
+    _In_ HCCallHandle call,
+    _Out_ size_t* bufferSizeInBytes
+    ) noexcept
+try
+{
+    if (call == nullptr || bufferSizeInBytes == nullptr)
+    {
+        return E_INVALIDARG;
+    }
+
+    *bufferSizeInBytes = call->maxReceiveBufferSize;
+    return S_OK;
+}
+CATCH_RETURN()
