@@ -140,5 +140,5 @@ EXPORTS
     XTaskQueueUnregisterWaiter
     HCHttpCallResponseSetGzipCompressed
     HCHttpCallRequestSetProgressReportFunction
-    HCHttpCallRequestGetMaxReceiveBufferSize
-    HCHttpCallRequestSetMaxReceiveBufferSize
+    HCWebSocketGetPingInterval
+    HCWebSocketSetPingInterval

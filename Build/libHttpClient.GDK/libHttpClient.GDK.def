@@ -119,5 +119,5 @@ EXPORTS
     HCWinHttpSuspend
     HCHttpCallResponseSetGzipCompressed
     HCHttpCallRequestSetProgressReportFunction
-    HCHttpCallRequestGetMaxReceiveBufferSize
-    HCHttpCallRequestSetMaxReceiveBufferSize
+    HCWebSocketGetPingInterval
+    HCWebSocketSetPingInterval
