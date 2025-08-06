@@ -1030,7 +1030,7 @@ void WinHttpConnection::callback_status_data_available(
     // Read new data into buffer
     if (newBytesAvailable > 0)
     {
-        // Stage 1 performance optimization: For requests with known Content-Length,
+        // For requests with known Content-Length,
         // use maxReceiveBufferSize instead of WinHttpQueryDataAvailable result
         DWORD bytesToRead = newBytesAvailable;
         
@@ -1044,12 +1044,12 @@ void WinHttpConnection::callback_status_data_available(
                 // Use the larger of the two, but cap at remaining bytes to read
                 size_t remainingBytes = pRequestContext->m_responseBodyRemainingToRead;
                 bytesToRead = static_cast<DWORD>(std::min({
-                    static_cast<size_t>(maxReceiveBufferSize),
+                    maxReceiveBufferSize,
                     remainingBytes,
                     static_cast<size_t>(MAXDWORD)
                 }));
                 
-                HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] Using maxReceiveBufferSize=%zu for known content-length, reading %d bytes", 
+                HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection [ID %llu] Using maxReceiveBufferSize=%zu for known content-length, reading %d bytes", 
                     TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), maxReceiveBufferSize, bytesToRead);
             }
         }
