@@ -4,9 +4,6 @@
   <!-- This file is a replacement for Microsoft.Cpp.Default.Props and Microsoft.Cpp.props for Cpp projects targeting GDK -->
 
   <Import Condition="'$(HCPathsImported)' != 'true'" Project="libHttpClient.paths.props" />
-  
-  <!-- Import the main libHttpClient props to get include paths -->
-  <Import Condition="'$(LibHttpClientImported)' != 'true'" Project="..\libHttpClient.props" />
 
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Gaming.Desktop.x64">
