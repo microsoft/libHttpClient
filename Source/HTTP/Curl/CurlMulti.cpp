@@ -247,7 +247,9 @@ HRESULT CurlMulti::Perform() noexcept
     {
         // Reschedule Perform if there are still running requests
         int workAvailable{ 0 };
-#if HC_PLATFORM == HC_PLATFORM_GDK || CURL_AT_LEAST_VERSION(7,66,0)
+#if defined(HC_PLATFORM) && (HC_PLATFORM == HC_PLATFORM_GDK)
+        result = curl_multi_poll(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
+#elif CURL_AT_LEAST_VERSION(7, 66, 0)
         result = curl_multi_poll(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #else
         result = curl_multi_wait(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);

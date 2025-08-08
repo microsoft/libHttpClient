@@ -4,6 +4,7 @@
     <ProjectGuid>{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}</ProjectGuid>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
+    <GDKExtLibNames>Xbox.XCurl.API</GDKExtLibNames>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.GDK.props))" />
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
