@@ -10,7 +10,7 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,-z,now,--version-script=${PATH_TO_ROOT}/Build/libHttpClient.CMake/libHttpClientExports.txt")
-
+add_definitions("-DHC_TRACE_INFORMATION_ENABLE -DHC_TRACE_VERBOSE_ENABLE -DHC_TRACE_ENABLE")
 ###########################################
 ### Set up paths for source and include ###
 ###########################################

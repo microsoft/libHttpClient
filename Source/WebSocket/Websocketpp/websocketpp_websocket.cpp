@@ -55,6 +55,46 @@ using namespace xbox::httpclient;
 namespace
 {
 
+static
+void
+LibHttpClientTraceCallback(
+    _In_z_ const char* areaName,
+    _In_ enum HCTraceLevel level,
+    _In_ uint64_t threadId,
+    _In_ uint64_t timeStamp,
+    _In_z_ const char* message
+) noexcept
+{
+    UNREFERENCED_PARAMETER(threadId);
+    UNREFERENCED_PARAMETER(timeStamp);
+
+    switch (level)
+    {
+    case HCTraceLevel::Error:
+    {
+        HC_TRACE_INFORMATION(WEBSOCKET, "%s %s", areaName, message);
+        break;
+    }
+    case HCTraceLevel::Warning:
+    case HCTraceLevel::Important:
+    case HCTraceLevel::Information:
+    {
+        HC_TRACE_INFORMATION(WEBSOCKET, "%s %s", areaName, message);
+        break;
+    }
+    case HCTraceLevel::Verbose:
+    {
+        HC_TRACE_INFORMATION(WEBSOCKET, "%s %s", areaName, message);
+        break;
+    }
+    case HCTraceLevel::Off:
+    default:
+    {
+        break;
+    }
+    }
+}
+
 struct alevel_logger : websocketpp::log::stub
 {
     using websocketpp::log::stub::stub;
@@ -186,10 +226,15 @@ public:
         m_uri{ uri },
         m_subprotocol{ subprotocol }
     {
+        HCTraceInit();
+        HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
+        HCTraceSetTraceToDebugger(true);
+        HCTraceSetClientCallback(LibHttpClientTraceCallback);
     }
 
     ~wspp_websocket_impl()
     {
+        HCTraceCleanup();
         // Because we pass shared pointers to wspp_client handlers we should never blow up while we are connected
         ASSERT(m_state == DISCONNECTED);
 
