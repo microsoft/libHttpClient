@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlDynamicLoader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlEasyRequest.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlMulti.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.cpp" />
@@ -25,6 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlDynamicLoader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlEasyRequest.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlMulti.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.h" />
