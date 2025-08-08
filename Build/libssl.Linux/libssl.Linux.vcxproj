@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9345d86a-ef4a-4f0f-b01d-a9eac6978d87}</ProjectGuid>
+    <Keyword>Linux</Keyword>
+    <RootNamespace>libssl_Linux</RootNamespace>
+    <ApplicationType>Linux</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <TargetLinuxPlatform>Generic</TargetLinuxPlatform>
+    <LinuxProjectType>{2238F9CD-F817-4ECC-BD14-2524D2669B35}</LinuxProjectType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <PlatformToolset>WSL_Clang_1_0</PlatformToolset>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), openssl.props))\openssl.props" />
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), libHttpClient.paths.props))\libHttpClient.paths.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        $(opensslSourceRoot);
+        $(opensslSourceRoot)ssl\record\;
+        $(opensslSourceRoot)ssl\statem\;
+        $(opensslSourceRoot)..\opensslGeneratedHeaders\linux;
+        $(opensslSourceRoot)..\opensslGeneratedHeaders\linux\internal;
+        %(AdditionalIncludeDirectories);
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions> -fPIC -Wno-shorten-64-to-32 -Wno-implicit-int-conversion -Wno-sign-conversion %(AdditionalOptions)</AdditionalOptions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>
+        LINUX;
+        UNIX;
+        L_ENDIAN;
+        _LIB;
+        OPENSSLDIR="THIS_SHOULD_NOT_BE_USED";
+        ENGINESDIR="THIS_SHOULD_NOT_BE_USED";
+        OPENSSL_THREADS;
+        OPENSSL_NO_DYNAMIC_ENGINE;
+        OPENSSL_PIC;
+        UNICODE;
+        _UNICODE;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <RemoteCCompileToolExe>clang++-11</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>clang++-11</RemoteCppCompileToolExe>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="$(opensslSourceRoot)ssl\bio_ssl.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\d1_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\d1_msg.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\d1_srtp.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\methods.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\packet.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\pqueue.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\dtls1_bitmap.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_d1.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\rec_layer_s3.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_buffer.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\record\ssl3_record_tls13.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_cbc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\s3_msg.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_asn1.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_cert.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_ciph.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_conf.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_err.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_init.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_mcnf.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_rsa.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_sess.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_stat.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_txt.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\ssl_utst.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_clnt.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_cust.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\extensions_srvr.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_clnt.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_dtls.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\statem\statem_srvr.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_lib.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\t1_trce.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\tls13_enc.c" />
+    <ClCompile Include="$(opensslSourceRoot)ssl\tls_srp.c" />
+  </ItemGroup>
+  <ItemDefinitionGroup />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>
