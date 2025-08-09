@@ -74,12 +74,12 @@
     <RemoteCppCompileToolExe>clang++-11</RemoteCppCompileToolExe>
     <OutDir>$(ProjectDir)\..\..\Out\$(Platform)\$(Configuration)\$(ProjectName)</OutDir>
     <IntDir>$(ProjectDir)\..\..\\obj\Out\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <TargetName>$(ProjectName)</TargetName>
+    <TargetName>LibHttpClient.Linux</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)\..\..\Out\$(Platform)\$(Configuration)\$(ProjectName)</OutDir>
     <IntDir>$(ProjectDir)\..\..\\obj\Out\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <TargetName>$(ProjectName)</TargetName>
+    <TargetName>LibHttpClient.Linux</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
