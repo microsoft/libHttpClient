@@ -84,6 +84,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <RemoteCCompileToolExe>clang++-11</RemoteCCompileToolExe>
     <RemoteCppCompileToolExe>clang++-11</RemoteCppCompileToolExe>
+    <OutDir>$(ProjectDir)\..\..\Out\$(Platform)\$(Configuration)\$(ProjectName)</OutDir>
+    <IntDir>$(ProjectDir)\..\..\\obj\Out\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)\..\..\Out\$(Platform)\$(Configuration)\$(ProjectName)</OutDir>
+    <IntDir>$(ProjectDir)\..\..\\obj\Out\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="$(opensslSourceRoot)ssl\bio_ssl.c" />
