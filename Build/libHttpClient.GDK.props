@@ -14,6 +14,15 @@
       <Configuration>Release</Configuration>
       <Platform>Gaming.Desktop.x64</Platform>
     </ProjectConfiguration>
+    <!-- Added plain x64 configurations to allow migration toward standard naming while retaining GDK semantics -->
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
@@ -24,8 +33,8 @@
     <TargetRuntime>Native</TargetRuntime>
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>false</GenerateManifest>
-    <WindowsTargetPlatformVersion Condition="'$(Platform)' != 'Gaming.Xbox.Scarlett.x64'">10.0.19041.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformVersion Condition="'$(Platform)' == 'Gaming.Xbox.Scarlett.x64'">10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(Platform)' != 'Gaming.Xbox.Scarlett.x64'">10.0.19041.0</WindowsTargetPlatformVersion>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
 
@@ -51,9 +60,23 @@
   <!-- Include the main MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 
+  <!-- When using plain x64 platform name, emulate the dependent console SDK vars if not already defined -->
+  <PropertyGroup Condition="'$(Platform)'=='x64' and '$(_GdkLikePlatform)'=='true'">
+    <Console_SdkLibPath Condition="'$(Console_SdkLibPath)'==''">$(GameDKLatest)windows\lib\x64</Console_SdkLibPath>
+    <Console_SdkIncludeRoot Condition="'$(Console_SdkIncludeRoot)'==''">$(GameDKLatest)windows\include</Console_SdkIncludeRoot>
+  </PropertyGroup>
+
   <PropertyGroup>
-    <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
-    <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
+    <!-- Support both legacy Gaming.Desktop.x64 and new x64 naming by mapping to console SDK paths when Platform == x64 -->
+    <_GdkLikePlatform Condition="'$(Platform)'=='Gaming.Desktop.x64' or '$(Platform)'=='x64'">true</_GdkLikePlatform>
+    <LibraryPath Condition="'$(_GdkLikePlatform)'=='true'">$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(_GdkLikePlatform)'=='true'">$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
+    
+    <!-- XCurl header path (only add if exists) -->
+    <_XCurlIncludeRoot Condition="Exists('$(GameDKLatest)windows\\include\\XCurl.h')">$(GameDKLatest)windows\include</_XCurlIncludeRoot>
+    <_XCurlLibRoot Condition="Exists('$(GameDKLatest)windows\\lib\\x64\\XCurl.lib')">$(GameDKLatest)windows\lib\x64</_XCurlLibRoot>
+    <IncludePath Condition="'$(_GdkLikePlatform)'=='true' and '$(_XCurlIncludeRoot)'!=''">$(_XCurlIncludeRoot);$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(_GdkLikePlatform)'=='true' and '$(_XCurlLibRoot)'!=''">$(_XCurlLibRoot);$(LibraryPath) </LibraryPath>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
@@ -64,7 +87,8 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <SupportJustMyCode>false</SupportJustMyCode>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>__WRL_NO_DEFAULT_LIB__;_LIB;$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__WRL_NO_DEFAULT_LIB__;_LIB;HC_PLATFORM=HC_PLATFORM_GDK;$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Platform)'=='x64' or '$(Platform)'=='Gaming.Desktop.x64'">HC_DATAMODEL=HC_DATAMODEL_LLP64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -73,7 +97,7 @@
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
-      <AdditionalDependencies>$(Console_Libs);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(Console_Libs);XCurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
       <AdditionalOptions>/ignore:4099 /ignore:4264 %(AdditionalOptions)</AdditionalOptions>
