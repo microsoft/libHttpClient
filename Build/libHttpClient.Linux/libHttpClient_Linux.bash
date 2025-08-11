@@ -81,10 +81,10 @@ fi
 
 if [ "$BUILD_STATIC" = false ]; then
     # make libHttpClient static
-    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D BUILD_SHARED_LIBS=YES
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D BUILD_SHARED_LIBS=YES -D CMAKE_CXX_COMPILER=clang++-11 -D CMAKE_C_COMPILER=clang-11
     sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 else
     # make libHttpClient shared
-    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_CXX_COMPILER=clang++-11 -D CMAKE_C_COMPILER=clang-11
     sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 fi
