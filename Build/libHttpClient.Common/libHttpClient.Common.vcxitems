@@ -12,7 +12,7 @@
   <Import Project="$(HCSettingsFile)" Condition="Exists($(HCSettingsFile))" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCIncludeDir);$(HCSourceDir);$(HCSourceDir)\Common</AdditionalIncludeDirectories>
+  <AdditionalIncludeDirectories>$(HCIncludeDir);$(HCSourceDir);$(HCSourceDir)\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

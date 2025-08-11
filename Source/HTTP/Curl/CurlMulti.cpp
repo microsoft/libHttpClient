@@ -1,4 +1,14 @@
 #include "pch.h"
+#include <httpClient/httpClient.h>
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include <XCurl.h>
+#else
+#include <curl/curlver.h> // Needed for CURL_AT_LEAST_VERSION macro used in preprocessor conditions
+#endif
+// Define a safe default when curl headers are not available (e.g., on GDK using XCurl)
+#ifndef CURL_AT_LEAST_VERSION
+#define CURL_AT_LEAST_VERSION(major, minor, patch) 0
+#endif
 #include "CurlMulti.h"
 #include "CurlProvider.h"
 
