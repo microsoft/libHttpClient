@@ -16,19 +16,31 @@
   <ItemDefinitionGroup>
     <Link>
       <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
-      <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
+  <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+  <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib;xgameruntime.lib;xgameplatform.lib</AdditionalDependencies>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ClCompile>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+  <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+  <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+  <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+  <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile>
+      <PreprocessorDefinitions>HC_PLATFORM=HC_PLATFORM_WIN32;HC_WINHTTP_WIN32_NOXASYNC;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Platform)'=='x64'">HC_DATAMODEL=HC_DATAMODEL_LLP64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+  <PreprocessorDefinitions Condition="'$(Platform)'=='Gaming.Desktop.x64'">HC_DATAMODEL=HC_DATAMODEL_LLP64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Platform)'=='x86'">HC_DATAMODEL=HC_DATAMODEL_ILP32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    
   </ItemDefinitionGroup>
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
-  <Import Project="$(HCBuildRoot)\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems" Label="Shared" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.Win32.Shared\libHttpClient.Win32.Shared.vcxitems" Label="Shared" />
   <Import Condition="'$(HCNoZlib)' != 'true'" Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

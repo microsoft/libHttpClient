@@ -6,6 +6,14 @@
   <Import Condition="'$(HCPathsImported)' != 'true'" Project="libHttpClient.paths.props" />
 
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Gaming.Desktop.x64">
       <Configuration>Debug</Configuration>
       <Platform>Gaming.Desktop.x64</Platform>
@@ -51,10 +59,36 @@
   <!-- Include the main MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 
+  <!-- If available, import Gamecore props to access GDK path variables (GrdkLibDir, GxdkLibDir, etc.) -->
+  <Import Condition="Exists('$(XboxBumblelionRoot)\build\props\CommonProperties.props')" Project="$(XboxBumblelionRoot)\build\props\CommonProperties.props" />
+  <Import Condition="Exists('$(XboxBumblelionRoot)\build\props\platform\GamecoreCommonProperties.props')" Project="$(XboxBumblelionRoot)\build\props\platform\GamecoreCommonProperties.props" />
+
   <PropertyGroup>
     <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
     <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
   </PropertyGroup>
+
+  <!-- Fallback: synthesize common GDK lib directories when not provided by platform toolset -->
+  <PropertyGroup>
+    <_GrdkGameKitLibDir Condition="'$(_GrdkGameKitLibDir)'=='' and Exists('$(GameDK)\$(XdkEditionTarget)\GRDK\GameKit\Lib\amd64')">$(GameDK)\$(XdkEditionTarget)\GRDK\GameKit\Lib\amd64</_GrdkGameKitLibDir>
+    <_GxdkGameKitLibDir Condition="'$(_GxdkGameKitLibDir)'=='' and Exists('$(GameDK)\$(XdkEditionTarget)\GXDK\GameKit\Lib\amd64')">$(GameDK)\$(XdkEditionTarget)\GXDK\GameKit\Lib\amd64</_GxdkGameKitLibDir>
+    <_WindowsLibX64 Condition="'$(_WindowsLibX64)'=='' and Exists('$(GameDK)\$(XdkEditionTarget)\windows\lib\x64')">$(GameDK)\$(XdkEditionTarget)\windows\lib\x64</_WindowsLibX64>
+    <_XboxGen9LibX64 Condition="'$(_XboxGen9LibX64)'=='' and Exists('$(GameDK)\$(XdkEditionTarget)\xbox_gen9\lib\x64')">$(GameDK)\$(XdkEditionTarget)\xbox_gen9\lib\x64</_XboxGen9LibX64>
+    <_XboxGen8LibX64 Condition="'$(_XboxGen8LibX64)'=='' and Exists('$(GameDK)\$(XdkEditionTarget)\xbox_gen8\lib\x64')">$(GameDK)\$(XdkEditionTarget)\xbox_gen8\lib\x64</_XboxGen8LibX64>
+  <!-- Also try absolute paths from GameDKLatest for modern installs -->
+  <_GdkWindowsLibX64Latest Condition="'$(_GdkWindowsLibX64Latest)'=='' and '$(GameDKLatest)'!='' and Exists('$(GameDKLatest)windows\lib\x64')">$(GameDKLatest)windows\lib\x64</_GdkWindowsLibX64Latest>
+  <_GrdkGameKitLibDirLatest Condition="'$(_GrdkGameKitLibDirLatest)'=='' and '$(GameDKLatest)'!='' and Exists('$(GameDKLatest)GRDK\GameKit\Lib\amd64')">$(GameDKLatest)GRDK\GameKit\Lib\amd64</_GrdkGameKitLibDirLatest>
+  <_GxdkGameKitLibDirLatest Condition="'$(_GxdkGameKitLibDirLatest)'=='' and '$(GameDKLatest)'!='' and Exists('$(GameDKLatest)GXDK\GameKit\Lib\amd64')">$(GameDKLatest)GXDK\GameKit\Lib\amd64</_GxdkGameKitLibDirLatest>
+  <_XboxGen9LibX64Latest Condition="'$(_XboxGen9LibX64Latest)'=='' and '$(GameDKLatest)'!='' and Exists('$(GameDKLatest)xbox_gen9\lib\x64')">$(GameDKLatest)xbox_gen9\lib\x64</_XboxGen9LibX64Latest>
+  <_XboxGen8LibX64Latest Condition="'$(_XboxGen8LibX64Latest)'=='' and '$(GameDKLatest)'!='' and Exists('$(GameDKLatest)xbox_gen8\lib\x64')">$(GameDKLatest)xbox_gen8\lib\x64</_XboxGen8LibX64Latest>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <Link>
+      <!-- Prefer provided Console_SdkLibPath/GrdkLibDir/GxdkLibDir; fall back to synthesized dirs -->
+  <AdditionalLibraryDirectories>$(Console_SdkLibPath);$(GrdkLibDir);$(GxdkLibDir);$(_GrdkGameKitLibDir);$(_GxdkGameKitLibDir);$(_WindowsLibX64);$(_XboxGen9LibX64);$(_XboxGen8LibX64);$(_GdkWindowsLibX64Latest);$(_GrdkGameKitLibDirLatest);$(_GxdkGameKitLibDirLatest);$(_XboxGen9LibX64Latest);$(_XboxGen8LibX64Latest);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
