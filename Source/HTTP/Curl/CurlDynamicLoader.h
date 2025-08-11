@@ -1,5 +1,11 @@
 #pragma once
 
+//
+// This header is always includable across platforms. On non-GDK platforms,
+// the macros are defined as direct calls and the dynamic loader class is absent.
+// On GDK, the dynamic loader class is available and macros route through it.
+//
+
 #if HC_PLATFORM == HC_PLATFORM_GDK
 
 #include <windows.h>
@@ -61,6 +67,8 @@ public:
     curl_multi_wait_ptr curl_multi_wait_fn = nullptr;
 
     static CurlDynamicLoader& GetInstance();
+    // Frees the singleton instance and unloads XCurl.dll (via destructor -> Cleanup)
+    static void DestroyInstance();
     ~CurlDynamicLoader();
     
     bool Initialize();
@@ -81,5 +89,22 @@ private:
 
 } // httpclient
 } // xbox
+
+// GDK macro variants: route through dynamic loader and provide default returns when not loaded
+#define CURL_CALL(func_name) ::xbox::httpclient::CurlDynamicLoader::GetInstance().func_name##_fn
+#define CURL_INVOKE_OR(defaultRet, func, ...) \
+    ((::xbox::httpclient::CurlDynamicLoader::GetInstance().IsLoaded()) ? \
+        (::xbox::httpclient::CurlDynamicLoader::GetInstance().func##_fn(__VA_ARGS__)) : \
+        (defaultRet))
+// Convenience when defaultRet == 0 (common for void-calls or zero-initialized return types)
+#define CURL_INVOKE(func, ...) CURL_INVOKE_OR(0, func, __VA_ARGS__)
+
+#else // non-GDK
+
+// Non-GDK macro variants: call directly
+#define CURL_CALL(func_name) func_name
+#define CURL_INVOKE_OR(defaultRet, func, ...) func(__VA_ARGS__)
+// Convenience when defaultRet == 0
+#define CURL_INVOKE(func, ...) func(__VA_ARGS__)
 
 #endif // HC_PLATFORM == HC_PLATFORM_GDK

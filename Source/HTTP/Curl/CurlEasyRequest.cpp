@@ -18,16 +18,8 @@ CurlEasyRequest::CurlEasyRequest(CURL* curlEasyHandle, HCCallHandle hcCall, XAsy
 
 CurlEasyRequest::~CurlEasyRequest()
 {
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    if (CurlDynamicLoader::GetInstance().IsLoaded())
-    {
-        CURL_CALL(curl_easy_cleanup)(m_curlEasyHandle);
-        CURL_CALL(curl_slist_free_all)(m_headers);
-    }
-#else
-    curl_easy_cleanup(m_curlEasyHandle);
-    curl_slist_free_all(m_headers);
-#endif
+    (void)CURL_INVOKE(curl_easy_cleanup, m_curlEasyHandle);
+    (void)CURL_INVOKE(curl_slist_free_all, m_headers);
 }
 
 Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle hcCall, XAsyncBlock* async)
@@ -39,11 +31,8 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
         HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::Initialize: XCurl.dll not available");
         return E_HC_XCURL_REQUIRED;
     }
-    
-    CURL* curlEasyHandle{ CURL_CALL(curl_easy_init)() };
-#else
-    CURL* curlEasyHandle{ curl_easy_init() };
 #endif
+    CURL* curlEasyHandle{ CURL_CALL(curl_easy_init)() };
     if (!curlEasyHandle)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "CurlEasyRequest::Initialize:: curl_easy_init failed");
@@ -194,11 +183,7 @@ void CurlEasyRequest::Complete(CURLcode result)
         HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::m_errorBuffer='%s'", m_errorBuffer);
 
         long platformError = 0;
-#if HC_PLATFORM == HC_PLATFORM_GDK
-        auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_OS_ERRNO, &platformError);
-#else
-        auto curle = curl_easy_getinfo(m_curlEasyHandle, CURLINFO_OS_ERRNO, &platformError);
-#endif
+    auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_OS_ERRNO, &platformError);
         if (curle != CURLE_OK)
         {
             return Fail(HrFromCurle(curle));
@@ -207,21 +192,13 @@ void CurlEasyRequest::Complete(CURLcode result)
         HRESULT hr = HCHttpCallResponseSetNetworkErrorCode(m_hcCallHandle, E_FAIL, static_cast<uint32_t>(platformError));
         assert(SUCCEEDED(hr));
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
-        hr = HCHttpCallResponseSetPlatformNetworkErrorMessage(m_hcCallHandle, CURL_CALL(curl_easy_strerror)(result));
-#else
-        hr = HCHttpCallResponseSetPlatformNetworkErrorMessage(m_hcCallHandle, curl_easy_strerror(result));
-#endif
+    hr = HCHttpCallResponseSetPlatformNetworkErrorMessage(m_hcCallHandle, CURL_CALL(curl_easy_strerror)(result));
         assert(SUCCEEDED(hr));
     }
     else
     {
         long httpStatus = 0;
-#if HC_PLATFORM == HC_PLATFORM_GDK
-        auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
-#else
-        auto curle = curl_easy_getinfo(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
-#endif
+    auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
         if (curle != CURLE_OK)
         {
             return Fail(HrFromCurle(curle));
@@ -255,11 +232,7 @@ HRESULT CurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
     assert(written == required);
     (void)written;
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
     m_headers = CURL_CALL(curl_slist_append)(m_headers, header.c_str());
-#else
-    m_headers = curl_slist_append(m_headers, header.c_str());
-#endif
 
     return S_OK;
 }
@@ -403,11 +376,7 @@ size_t CurlEasyRequest::WriteHeaderCallback(char* buffer, size_t size, size_t ni
 size_t CurlEasyRequest::GetResponseContentLength(CURL* curlHandle)
 {
     curl_off_t contentLength = 0;
-#if HC_PLATFORM == HC_PLATFORM_GDK
     CURL_CALL(curl_easy_getinfo)(curlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
-#else
-    curl_easy_getinfo(curlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
-#endif
     return contentLength;
 }
 

@@ -20,9 +20,22 @@ CurlDynamicLoader& CurlDynamicLoader::GetInstance()
     if (!s_instance)
     {
         HC_TRACE_VERBOSE(HTTPCLIENT, "Creating CurlDynamicLoader instance");
-        s_instance = HC_UNIQUE_PTR<CurlDynamicLoader>(new CurlDynamicLoader());
+        
+        // Use libHttpClient custom allocator hooks while staying within class access to private ctor
+        http_stl_allocator<CurlDynamicLoader> a{};
+        s_instance = HC_UNIQUE_PTR<CurlDynamicLoader>{ new (a.allocate(1)) CurlDynamicLoader };
     }
     return *s_instance;
+}
+
+void CurlDynamicLoader::DestroyInstance()
+{
+    std::lock_guard<std::mutex> lock(s_initMutex);
+    if (s_instance)
+    {
+        // Unique ptr with http_alloc_deleter ensures custom free hooks are used
+        s_instance.reset();
+    }
 }
 
 CurlDynamicLoader::~CurlDynamicLoader()

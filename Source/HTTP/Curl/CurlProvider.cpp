@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CurlProvider.h"
 #include "CurlEasyRequest.h"
+#include "CurlDynamicLoader.h"
 
 namespace xbox
 {
@@ -39,14 +40,23 @@ Result<HC_UNIQUE_PTR<CurlProvider>> CurlProvider::Initialize()
     if (!loader.Initialize())
     {
         HC_TRACE_ERROR(HTTPCLIENT, "CurlProvider::Initialize: Failed to load XCurl.dll");
+        // Ensure the loader is cleaned up if initialization fails
+        CurlDynamicLoader::DestroyInstance();
         return E_FAIL;
     }
 
     CURLcode initRes = CURL_CALL(curl_global_init)(CURL_GLOBAL_ALL);
+    HRESULT initHr = HrFromCurle(initRes);
+    if (FAILED(initHr))
+    {
+        // If curl init fails, unload XCurl and free the loader singleton
+        CurlDynamicLoader::DestroyInstance();
+        return initHr;
+    }
 #else
-    CURLcode initRes = curl_global_init(CURL_GLOBAL_ALL);
-#endif
+    CURLcode initRes = CURL_CALL(curl_global_init)(CURL_GLOBAL_ALL);
     RETURN_IF_FAILED(HrFromCurle(initRes));
+#endif
 
     http_stl_allocator<CurlProvider> a{};
     auto provider = HC_UNIQUE_PTR<CurlProvider>{ new (a.allocate(1)) CurlProvider };
@@ -72,8 +82,10 @@ CurlProvider::~CurlProvider()
     {
         CURL_CALL(curl_global_cleanup)();
     }
+    // Free the dynamic loader singleton (unloads XCurl.dll via its destructor)
+    CurlDynamicLoader::DestroyInstance();
 #else
-    curl_global_cleanup();
+    CURL_CALL(curl_global_cleanup)();
 #endif
 }
 
