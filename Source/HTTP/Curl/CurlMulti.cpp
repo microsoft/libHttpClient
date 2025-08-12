@@ -55,7 +55,7 @@ CurlMulti::~CurlMulti()
 
     if (m_curlMultiHandle)
     {
-    (void)CURL_INVOKE(curl_multi_cleanup, m_curlMultiHandle);
+        (void)CURL_INVOKE(curl_multi_cleanup, m_curlMultiHandle);
     }
 }
 

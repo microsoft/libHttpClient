@@ -183,7 +183,7 @@ void CurlEasyRequest::Complete(CURLcode result)
         HC_TRACE_INFORMATION(HTTPCLIENT, "CurlEasyRequest::m_errorBuffer='%s'", m_errorBuffer);
 
         long platformError = 0;
-    auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_OS_ERRNO, &platformError);
+        auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_OS_ERRNO, &platformError);
         if (curle != CURLE_OK)
         {
             return Fail(HrFromCurle(curle));
@@ -192,13 +192,13 @@ void CurlEasyRequest::Complete(CURLcode result)
         HRESULT hr = HCHttpCallResponseSetNetworkErrorCode(m_hcCallHandle, E_FAIL, static_cast<uint32_t>(platformError));
         assert(SUCCEEDED(hr));
 
-    hr = HCHttpCallResponseSetPlatformNetworkErrorMessage(m_hcCallHandle, CURL_CALL(curl_easy_strerror)(result));
+        hr = HCHttpCallResponseSetPlatformNetworkErrorMessage(m_hcCallHandle, CURL_CALL(curl_easy_strerror)(result));
         assert(SUCCEEDED(hr));
     }
     else
     {
         long httpStatus = 0;
-    auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
+        auto curle = CURL_CALL(curl_easy_getinfo)(m_curlEasyHandle, CURLINFO_RESPONSE_CODE, &httpStatus);
         if (curle != CURLE_OK)
         {
             return Fail(HrFromCurle(curle));
