@@ -92,6 +92,8 @@
     <OutDir>$(ProjectDir)\..\..\Out\$(Platform)\$(Configuration)\$(ProjectName)</OutDir>
     <IntDir>$(ProjectDir)\..\..\\obj\Out\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <TargetName>libssl</TargetName>
+    <RemoteCCompileToolExe>clang++-11</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>clang++-11</RemoteCppCompileToolExe>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="$(opensslSourceRoot)ssl\bio_ssl.c" />
