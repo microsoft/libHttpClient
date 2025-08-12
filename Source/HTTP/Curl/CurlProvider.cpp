@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <curl/curlver.h> // Needed for CURL_AT_LEAST_VERSION macro used in preprocessor conditions
 #include "CurlProvider.h"
 #include "CurlEasyRequest.h"
 
