@@ -14,6 +14,16 @@
       <Configuration>Release</Configuration>
       <Platform>Gaming.Desktop.x64</Platform>
     </ProjectConfiguration>
+    
+    <!-- Plain x64 configurations enable migration toward standard platform naming while retaining GDK libraries -->
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
@@ -51,9 +61,17 @@
   <!-- Include the main MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 
-  <PropertyGroup>
+  <!-- When using plain x64 platform name, set paths manually -->
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <GDKLibPath Condition="'$(GDKLibPath)'==''">$(GameDKLatest)windows\lib\x64</GDKLibPath>
+    <GDKIncludeRoot Condition="'$(GDKIncludeRoot)'==''">$(GameDKLatest)windows\include</GDKIncludeRoot>
+    <LibraryPath>$(GDKLibPath);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(GDKIncludeRoot);$(IncludePath)</IncludePath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'!='x64'">
     <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
-    <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
+    <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>  
   </PropertyGroup>
 
   <ItemDefinitionGroup>
@@ -65,8 +83,9 @@
       <SupportJustMyCode>false</SupportJustMyCode>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>__WRL_NO_DEFAULT_LIB__;_LIB;$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(GameDKLatest)GRDK\ExtensionLibraries\Xbox.XCurl.API\Include</AdditionalIncludeDirectories>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories Condition="'$(Platform)'!='x64'">%(AdditionalIncludeDirectories);$(GameDKLatest)GRDK\ExtensionLibraries\Xbox.XCurl.API\Include</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj /Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions Condition="'$(Platform)'=='x64'">HC_PLATFORM=HC_PLATFORM_GDK;HC_DATAMODEL=HC_DATAMODEL_LLP64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -75,6 +94,7 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
       <AdditionalDependencies>$(Console_Libs);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='x64'">xgameruntime.lib;XCurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
       <AdditionalOptions>/ignore:4099 /ignore:4264 %(AdditionalOptions)</AdditionalOptions>

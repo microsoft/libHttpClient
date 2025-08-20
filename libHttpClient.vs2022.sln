@@ -114,7 +114,8 @@ Global
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
-		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x64.ActiveCfg = Debug|x64
+		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x64.Build.0 = Debug|x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
@@ -346,7 +347,8 @@ Global
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|ARM64.Build.0 = Debug|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
-		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.ActiveCfg = Debug|x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.Build.0 = Debug|x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.Build.0 = Release|Gaming.Desktop.x64

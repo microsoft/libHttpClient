@@ -57,6 +57,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp">
       <Filter>Source\Platform\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlDynamicLoader.cpp">
+      <Filter>Source\HTTP\Curl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
@@ -76,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h">
       <Filter>Source\WebSocket\WinHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlDynamicLoader.h">
+      <Filter>Source\HTTP\Curl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
