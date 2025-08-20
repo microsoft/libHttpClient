@@ -12,6 +12,9 @@ CONFIGURATION="Release"
 BUILD_CURL=true
 BUILD_SSL=true
 BUILD_STATIC=false
+BUILD_UNREAL_ENGINE_4=false
+C_COMPILER="clang"
+CXX_COMPILER="clang++"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -26,6 +29,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ns|--nossl)
       BUILD_SSL=false
+      shift
+      ;;
+    -ue4|--unreal-engine-4)
+      BUILD_UNREAL_ENGINE_4=true
       shift
       ;;
     -sg|--skipaptget)
@@ -66,6 +73,14 @@ log "BUILD CURL     = ${BUILD_CURL}"
 log "CMakeLists.txt = ${SCRIPT_DIR}"
 log "CMake output   = ${SCRIPT_DIR}/../../Int/CMake/libHttpClient.Linux"
 
+if [ "$BUILD_UNREAL_ENGINE_4" = true ]; then
+    log "Unreal Compatibility Enabled"
+    C_COMPILER="clang-11"
+    CXX_COMPILER="clang++-11"
+else
+    log "Unreal Compatibility Disabled"
+fi
+
 # make libcrypto and libssl
 if [ "$BUILD_SSL" = true ]; then
     log "Building SSL"
@@ -81,10 +96,10 @@ fi
 
 if [ "$BUILD_STATIC" = false ]; then
     # make libHttpClient static
-    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D BUILD_SHARED_LIBS=YES -D CMAKE_CXX_COMPILER=clang++-11 -D CMAKE_C_COMPILER=clang-11
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D CMAKE_C_COMPILER=clang
     sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 else
     # make libHttpClient shared
-    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_CXX_COMPILER=clang++-11 -D CMAKE_C_COMPILER=clang-11
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER
     sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 fi
