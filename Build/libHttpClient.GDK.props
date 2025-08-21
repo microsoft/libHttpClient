@@ -68,6 +68,14 @@
     <GDKCrossPlatformPath Condition="'$(GDKCrossPlatformPath)'==''">$(GameDKLatest)</GDKCrossPlatformPath>
   </PropertyGroup>
 
+  <!-- GDK path validation -->
+  <Target Name="GDKEditionCheck" BeforeTargets="PrepareForBuild" Condition="'$(Platform)'=='x64'">
+    <Error Condition="'$(GDKCrossPlatformPath)'==''" Text="GameDKCoreLatest or GameDKXboxLatest or GameDKLatest environment variable is required" />
+    <Error Condition="!HasTrailingSlash('$(GDKCrossPlatformPath)')" Text="GDKCrossPlatformPath property must have trailing slash" />
+    <Error Condition="!Exists('$(GDKCrossPlatformPath)windows')" Text="GDKCrossPlatformPath needs to point to the October 2025 GDK or later" />
+    <Message Importance="high" Text="Using $(GDKCrossPlatformPath)" />
+  </Target>
+
   <!-- When using plain x64 platform name, set paths manually -->
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <GDKLibPath Condition="'$(GDKLibPath)'==''">$(GDKCrossPlatformPath)windows\lib\x64</GDKLibPath>
