@@ -142,6 +142,59 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     XAsyncComplete(sourceRequest->GetAsyncBlock(), S_OK, 0);
 }
 
+JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress(
+        JNIEnv* env,
+        jobject /* instance */,
+        jlong call,
+        jlong current,
+        jlong total,
+        jboolean isUpload
+)
+{
+    auto sourceCall = reinterpret_cast<HCCallHandle>(call);
+    size_t minimumInterval = 0;
+    std::chrono::steady_clock::time_point* lastProgressReport;
+
+    if (isUpload) {
+        minimumInterval = sourceCall->uploadMinimumProgressReportInterval;
+        lastProgressReport = &sourceCall->uploadLastProgressReport;
+    }
+    else {
+        minimumInterval = sourceCall->downloadMinimumProgressReportInterval;
+        lastProgressReport = &sourceCall->downloadLastProgressReport;
+    }
+
+    size_t minimumProgressInterval;
+    void* progressReportCallbackContext{};
+    HCHttpCallProgressReportFunction progressReportFunction = nullptr;
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(sourceCall, isUpload, &progressReportFunction, &minimumProgressInterval, &progressReportCallbackContext);
+    if (FAILED(hr)) {
+        const char* functionStr = isUpload ? "upload function" : "download function";
+        std::string msg = "Java_com_xbox_httpclient_HttpClientRequest_ReportProgress: failed getting Progress Report ";
+        msg.append(functionStr);
+        HC_TRACE_ERROR_HR(HTTPCLIENT, hr, msg.c_str());
+    }
+
+    if (progressReportFunction != nullptr)
+    {
+        long minimumProgressReportIntervalInMs = static_cast<long>(minimumInterval * 1000);
+
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - *lastProgressReport).count();
+
+        if (elapsed >= minimumProgressReportIntervalInMs)
+        {
+            HRESULT hr = progressReportFunction(sourceCall, (int)current, (int)total, progressReportCallbackContext);
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Java_com_xbox_httpclient_HttpClientRequest_ReportProgress: something went wrong after invoking the progress callback function.");
+            }
+
+            *lastProgressReport = now;
+        }
+    }
+}
+
 jint ThrowIOException(JNIEnv* env, char const* message) {
     if (jclass exClass = env->FindClass("java/io/IOException")) {
         return env->ThrowNew(exClass, message);

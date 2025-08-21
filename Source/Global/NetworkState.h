@@ -2,7 +2,7 @@
 
 #include "HTTP/httpcall.h"
 #include "Platform/IHttpProvider.h"
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 #include "WebSocket/hcwebsocket.h"
 #include "Platform/IWebSocketProvider.h"
 #endif
@@ -22,7 +22,7 @@ public:
     ~NetworkState() = default;
 
     // Lifecycle management
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     static Result<UniquePtr<NetworkState>> Initialize(
         UniquePtr<IHttpProvider> httpProvider,
         UniquePtr<IWebSocketProvider> webSocketProvider
@@ -48,7 +48,7 @@ public: // Http
         XAsyncBlock* async
     ) noexcept;
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 public: // WebSocket
     IWebSocketProvider& WebSocketProvider() noexcept;
 
@@ -63,7 +63,7 @@ public: // WebSocket
 #endif
 
 private:
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     NetworkState(UniquePtr<IHttpProvider> httpProvider, UniquePtr<IWebSocketProvider> webSocketProvider) noexcept;
 #else
     NetworkState(UniquePtr<IHttpProvider> httpProvider) noexcept;
@@ -85,7 +85,7 @@ private:
     Set<XAsyncBlock*> m_activeHttpRequests;
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     static HRESULT CALLBACK WebSocketConnectAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK WebSocketConnectComplete(XAsyncBlock* async);
     static void CALLBACK WebSocketClosed(HCWebsocketHandle websocket, HCWebSocketCloseStatus closeStatus, void* context);

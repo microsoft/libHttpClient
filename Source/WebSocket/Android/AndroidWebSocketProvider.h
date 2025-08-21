@@ -4,7 +4,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 class PlatformComponents_Android;
 
 class AndroidWebSocketProvider : public IWebSocketProvider

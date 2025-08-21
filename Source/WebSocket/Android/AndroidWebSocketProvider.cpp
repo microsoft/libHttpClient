@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 #include "jni.h"
 #include "AndroidWebSocketProvider.h"
@@ -48,6 +48,7 @@ struct HttpClientWebSocket
 
     HttpClientWebSocket(JavaVM* vm, jclass webSocketClass, okhttp_websocket_impl* owner)
         : m_vm(vm)
+        , m_setPingInterval(GetSetPingIntervalMethod(GetEnv(vm), webSocketClass))
         , m_addHeader(GetAddHeaderMethod(GetEnv(vm), webSocketClass))
         , m_connect(GetConnectMethod(GetEnv(vm), webSocketClass))
         , m_sendMessage(GetSendMessageMethod(GetEnv(vm), webSocketClass))
@@ -61,6 +62,23 @@ struct HttpClientWebSocket
         {
             env->DeleteGlobalRef(m_webSocket);
         }
+    }
+
+    HRESULT SetPingInterval(uint32_t pingInterval) const
+    {
+        JNIEnv* env = GetEnv(m_vm);
+        if (!env || !m_webSocket || !m_setPingInterval)
+        {
+            return E_UNEXPECTED;
+        }
+
+        env->CallVoidMethod(m_webSocket, m_setPingInterval, static_cast<jlong>(pingInterval));
+        if (HadException(env))
+        {
+            return E_UNEXPECTED;
+        }
+
+        return S_OK;
     }
 
     HRESULT AddHeader(const char* name, const char* value) const
@@ -252,6 +270,22 @@ private:
         return static_cast<JNIEnv*>(env);
     }
 
+    static jmethodID GetSetPingIntervalMethod(JNIEnv* env, jclass webSocketClass)
+    {
+        if (!env || !webSocketClass)
+        {
+            return nullptr;
+        }
+
+        const jmethodID setPingInterval = env->GetMethodID(webSocketClass, "setPingInterval", "(J)V");
+        if (HadException(env) || !setPingInterval)
+        {
+            return nullptr;
+        }
+
+        return setPingInterval;
+    }
+
     static jmethodID GetAddHeaderMethod(JNIEnv* env, jclass webSocketClass)
     {
         if (!env || !webSocketClass)
@@ -389,6 +423,7 @@ private:
 
 private:
     JavaVM* const m_vm;
+    const jmethodID m_setPingInterval;
     const jmethodID m_addHeader;
     const jmethodID m_connect;
     const jmethodID m_sendMessage;
@@ -722,8 +757,21 @@ private:
             return E_HC_CONNECT_ALREADY_CALLED;
         }
 
+        uint32_t pingInterval = 0;
+        HRESULT hr = HCWebSocketGetPingInterval(m_handle, &pingInterval);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        hr = m_javaWebSocket.SetPingInterval(pingInterval);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
         uint32_t headerCount = 0;
-        HRESULT hr = HCWebSocketGetNumHeaders(m_handle, &headerCount);
+        hr = HCWebSocketGetNumHeaders(m_handle, &headerCount);
         if (FAILED(hr))
         {
             return hr;

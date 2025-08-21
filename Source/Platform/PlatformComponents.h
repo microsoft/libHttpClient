@@ -11,7 +11,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 struct PlatformComponents
 {
     UniquePtr<IHttpProvider> HttpProvider;
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     UniquePtr<IWebSocketProvider> WebSocketProvider;
 #endif
 };

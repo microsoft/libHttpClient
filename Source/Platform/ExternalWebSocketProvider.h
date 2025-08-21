@@ -3,7 +3,7 @@
 #include <httpClient/httpProvider.h>
 #include "IWebSocketProvider.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 

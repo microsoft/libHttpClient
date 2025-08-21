@@ -9,7 +9,7 @@
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #endif
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 #include "WebSocket/hcwebsocket.h"
 #endif
 
@@ -137,7 +137,7 @@ enum class ConnectionState : uint32_t
 using ConnectionClosedCallback = std::function<void()>;
 
 class WinHttpConnection : public std::enable_shared_from_this<WinHttpConnection>
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     , public hc_websocket_impl
 #endif
 {
@@ -149,7 +149,7 @@ public:
         XPlatSecurityInformation&& securityInformation
     );
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     static Result<std::shared_ptr<WinHttpConnection>> Initialize(
         HINTERNET hSession,
         HCWebsocketHandle webSocket,
@@ -169,7 +169,7 @@ public:
     // Client API entry points
     HRESULT HttpCallPerformAsync(XAsyncBlock* async);
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     HRESULT WebSocketConnectAsync(XAsyncBlock* async);
     HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const char* message);
     HRESULT WebSocketSendMessageAsync(XAsyncBlock* async, const uint8_t* payloadBytes, size_t payloadSize, WINHTTP_WEB_SOCKET_BUFFER_TYPE payloadType = WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE);
@@ -297,6 +297,13 @@ private:
     http_internal_vector<uint8_t> m_responseBuffer;
     proxy_type m_proxyType = proxy_type::default_proxy;
     win32_cs m_lock;
+
+    // Progress Report properties
+    size_t m_responseBodySize = 0;
+    size_t m_responseBodyRemainingToRead = 0;
+    static void ReportProgress(_In_ WinHttpConnection* pRequestContext, _In_ size_t bodySize, _In_ bool isUpload);
+    static size_t GetResponseContentLength(_In_ WinHttpConnection* pRequestContext);
+
 
     struct WebSocketSendContext
     {

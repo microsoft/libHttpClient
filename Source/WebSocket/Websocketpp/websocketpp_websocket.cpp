@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 #include "websocketpp_websocket.h"
 #include "uri.h"
@@ -407,6 +407,9 @@ private:
 
         auto &client = m_client->impl<WebsocketConfigType>();
 
+        const long pingIntervalMs = m_hcWebsocketHandle->websocket->PingInterval() * 1000;
+        client.set_pong_timeout(pingIntervalMs); // default ping interval is 0, which disables the timeout
+
         client.init_asio();
         client.start_perpetual();
 
@@ -479,6 +482,11 @@ private:
                         closeFunc(sharedThis->m_hcWebsocketHandle, static_cast<HCWebSocketCloseStatus>(sharedThis->m_closeCode), context);
                     }
                 });
+        });
+
+        client.set_pong_timeout_handler([sharedThis](websocketpp::connection_hdl, std::string)
+        {
+            sharedThis->close(HCWebSocketCloseStatus::PolicyViolation);
         });
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
@@ -841,6 +849,11 @@ private:
         // is terminated (i.e. by disconnecting the network cable). Sending periodic ping
         // allows us to detect this situation. See https://github.com/zaphoyd/websocketpp/issues/695.
 
+        // Preserving behavior: if client did not specify a ping interval, default to WSPP_PING_INTERVAL
+        const uint64_t pingDelayInMs = m_hcWebsocketHandle->websocket->PingInterval()
+            ? m_hcWebsocketHandle->websocket->PingInterval() * 1000
+            : WSPP_PING_INTERVAL_MS;
+
         RunAsync(
             [
                 weakThis = std::weak_ptr<wspp_websocket_impl>{ shared_from_this() }
@@ -874,7 +887,7 @@ private:
             }
         },
             m_backgroundQueue,
-            WSPP_PING_INTERVAL_MS
+            pingDelayInMs
         );
     }
 

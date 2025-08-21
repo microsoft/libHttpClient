@@ -139,7 +139,7 @@ HRESULT WinHttpProvider::SetGlobalProxy(_In_ String const& proxyUri) noexcept
     return S_OK;
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 HRESULT WinHttpProvider::ConnectAsync(
     String const& uri,
     String const& subprotocol,
@@ -387,6 +387,18 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags)
         return hr;
     }
 
+    BOOL enableFallback = TRUE;
+    result = WinHttpSetOption(
+        hSession,
+        WINHTTP_OPTION_IPV6_FAST_FALLBACK,
+        &enableFallback,
+        sizeof(enableFallback));
+    if (!result)
+    {
+        HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+        HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption");
+    }
+
     if (!m_globalProxy.empty())
     {
         (void)SetGlobalProxyForHSession(hSession, m_globalProxy.c_str());
@@ -603,7 +615,7 @@ HRESULT WinHttp_HttpProvider::PerformAsync(HCCallHandle callHandle, XAsyncBlock*
     return WinHttpProvider->PerformAsync(callHandle, async);
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 WinHttp_WebSocketProvider::WinHttp_WebSocketProvider(std::shared_ptr<xbox::httpclient::WinHttpProvider> provider) : WinHttpProvider{ std::move(provider) }
 {
 }

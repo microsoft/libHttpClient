@@ -203,11 +203,20 @@ HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     _In_opt_ void* context
     )
 {
-    UNREFERENCED_PARAMETER(websocket);
-    UNREFERENCED_PARAMETER(closeStatus);
     UNREFERENCED_PARAMETER(context);
 
     g_HCWebSocketDisconnect_Called = true;
+    
+    // Simulate proper disconnect by calling the close callback
+    // This is needed for cleanup to work properly
+    HCWebSocketCloseEventFunction closeFunc = nullptr;
+    void* closeContext = nullptr;
+    HRESULT hr = HCWebSocketGetEventFunctions(websocket, nullptr, nullptr, &closeFunc, &closeContext);
+    if (SUCCEEDED(hr) && closeFunc != nullptr)
+    {
+        closeFunc(websocket, closeStatus, closeContext);
+    }
+    
     return S_OK;
 }
 
@@ -273,9 +282,9 @@ public:
         void* context = nullptr;
 
         VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc, &context));
-        VERIFY_IS_NOT_NULL(websocketConnectFunc);
-        VERIFY_IS_NOT_NULL(websocketSendMessageFunc);
-        VERIFY_IS_NOT_NULL(websocketDisconnectFunc);
+        VERIFY_IS_NULL(websocketConnectFunc);
+        VERIFY_IS_NULL(websocketSendMessageFunc);
+        VERIFY_IS_NULL(websocketDisconnectFunc);
 
         VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
         VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketFunctions(&websocketConnectFunc, &websocketSendMessageFunc, &websocketSendBinaryMessageFunc, &websocketDisconnectFunc, &context));

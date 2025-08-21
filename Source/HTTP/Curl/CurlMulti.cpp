@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CurlMulti.h"
+#include "CurlDynamicLoader.h"
 #include "CurlProvider.h"
 
 namespace xbox
@@ -15,10 +16,19 @@ Result<HC_UNIQUE_PTR<CurlMulti>> CurlMulti::Initialize(XTaskQueuePortHandle work
 {
     assert(workPort);
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Ensure curl is loaded
+    if (!CurlDynamicLoader::GetInstance().IsLoaded())
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Initialize: XCurl.dll not available");
+        return E_HC_XCURL_REQUIRED;
+    }
+#endif
+
     http_stl_allocator<CurlMulti> a{};
     HC_UNIQUE_PTR<CurlMulti> multi{ new (a.allocate(1)) CurlMulti };
 
-    multi->m_curlMultiHandle = curl_multi_init();
+    multi->m_curlMultiHandle = CURL_CALL(curl_multi_init)();
     if (!multi->m_curlMultiHandle)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Initialize: curl_multi_init failed");
@@ -45,7 +55,7 @@ CurlMulti::~CurlMulti()
 
     if (m_curlMultiHandle)
     {
-        curl_multi_cleanup(m_curlMultiHandle);
+        (void)CURL_INVOKE(curl_multi_cleanup, m_curlMultiHandle);
     }
 }
 
@@ -59,7 +69,7 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest)
         return E_FAIL;
     }
 
-    auto result = curl_multi_add_handle(m_curlMultiHandle, easyRequest->Handle());
+    auto result = CURL_CALL(curl_multi_add_handle)(m_curlMultiHandle, easyRequest->Handle());
     if (result != CURLM_OK)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::AddRequest: curl_multi_add_handle failed with CURLCode=%u", result);
@@ -201,7 +211,7 @@ HRESULT CurlMulti::Perform() noexcept
     std::unique_lock<std::mutex> lock{ m_mutex };
 
     int runningRequests{ 0 };
-    CURLMcode result = curl_multi_perform(m_curlMultiHandle, &runningRequests);
+    CURLMcode result = CURL_CALL(curl_multi_perform)(m_curlMultiHandle, &runningRequests);
     if (result != CURLM_OK)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_perform failed with CURLCode=%u", result);
@@ -211,7 +221,7 @@ HRESULT CurlMulti::Perform() noexcept
     int remainingMessages{ 1 }; // assume there is at least 1 message so loop is always entered
     while (remainingMessages)
     {
-        CURLMsg* message = curl_multi_info_read(m_curlMultiHandle, &remainingMessages);
+    CURLMsg* message = CURL_CALL(curl_multi_info_read)(m_curlMultiHandle, &remainingMessages);
         if (message)
         {
             switch (message->msg)
@@ -221,7 +231,7 @@ HRESULT CurlMulti::Perform() noexcept
                 auto requestIter = m_easyRequests.find(message->easy_handle);
                 assert(requestIter != m_easyRequests.end());
 
-                result = curl_multi_remove_handle(m_curlMultiHandle, message->easy_handle);
+                result = CURL_CALL(curl_multi_remove_handle)(m_curlMultiHandle, message->easy_handle);
                 if (result != CURLM_OK)
                 {
                     HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_remove_handle failed with CURLCode=%u", result);
@@ -247,15 +257,20 @@ HRESULT CurlMulti::Perform() noexcept
     {
         // Reschedule Perform if there are still running requests
         int workAvailable{ 0 };
-#if HC_PLATFORM == HC_PLATFORM_GDK || LIBCURL_VERSION_NUM >= 0x074201
-        result = curl_multi_poll(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
-#else
-        result = curl_multi_wait(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
-#endif
+        // Try curl_multi_poll first, fall back to curl_multi_wait if not available
+        // For non-GDK, CURL_CALL expands directly to the symbol
+        if (CURL_CALL(curl_multi_poll))
+        {
+            result = CURL_CALL(curl_multi_poll)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
+        }
+        else
+        {
+            result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
+        }
 
         if (result != CURLM_OK)
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_poll failed with CURLCode=%u", result);
+            HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_poll/wait failed with CURLCode=%u", result);
             return HrFromCurlm(result);
         }
 
@@ -274,7 +289,7 @@ void CurlMulti::FailAllRequests(HRESULT hr) noexcept
     {
         for (auto& pair : m_easyRequests)
         {
-            auto result = curl_multi_remove_handle(m_curlMultiHandle, pair.first);
+            auto result = CURL_INVOKE_OR(CURLM_OK, curl_multi_remove_handle, m_curlMultiHandle, pair.first);
             if (FAILED(HrFromCurlm(result)))
             {
                 HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::FailAllRequests: curl_multi_remove_handle failed with CURLCode=%u", result);

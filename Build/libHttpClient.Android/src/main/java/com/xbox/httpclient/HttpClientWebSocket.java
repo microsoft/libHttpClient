@@ -1,6 +1,7 @@
 package com.xbox.httpclient;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
@@ -19,6 +20,11 @@ public final class HttpClientWebSocket extends WebSocketListener {
     HttpClientWebSocket(long owner) {
         this.headers = new Headers.Builder();
         this.owner = owner;
+        this.pingInterval = 0;
+    }
+
+    public void setPingInterval(long pingInterval) {
+        this.pingInterval = pingInterval;
     }
 
     public void addHeader(String name, String value) {
@@ -33,10 +39,14 @@ public final class HttpClientWebSocket extends WebSocketListener {
             .headers(headers.build())
             .build();
 
-        socket = OK_CLIENT.newWebSocket(request, this);
+        OkHttpClient clientWithPing = OK_CLIENT.newBuilder()
+                .pingInterval(pingInterval, TimeUnit.SECONDS) // default is 0, which disables pings
+                .build();
+
+        socket = clientWithPing.newWebSocket(request, this);
     }
 
-    public boolean  sendMessage(String message) {
+    public boolean sendMessage(String message) {
         return socket.send(message);
     }
 
@@ -96,6 +106,7 @@ public final class HttpClientWebSocket extends WebSocketListener {
 
     private final Headers.Builder headers;
     private final long owner;
+    private long pingInterval;
 
     private WebSocket socket;
 }

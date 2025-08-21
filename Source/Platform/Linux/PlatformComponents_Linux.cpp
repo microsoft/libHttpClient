@@ -16,7 +16,7 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 
     components.HttpProvider = initXCurlResult.ExtractPayload();
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     // Websocketpp will be used for WebSockets
     components.WebSocketProvider = http_allocate_unique<WebSocketppProvider>();
 #endif
