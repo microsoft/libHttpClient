@@ -27,6 +27,9 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
+  <Link>
+    <CETCompat>true</CETCompat>
+  </Link>
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems" Label="Shared" />
   <Import Condition="'$(HCNoZlib)' != 'true'" Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />

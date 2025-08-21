@@ -84,7 +84,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>__WRL_NO_DEFAULT_LIB__;_LIB;$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories Condition="'$(Platform)'!='x64'">%(AdditionalIncludeDirectories);$(GameDKLatest)GRDK\ExtensionLibraries\Xbox.XCurl.API\Include</AdditionalIncludeDirectories>
-      <AdditionalOptions>/bigobj /Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <AdditionalOptions>/Zc:__cplusplus /ZH:SHA_256 /bigobj /Zi %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions Condition="'$(Platform)'=='x64'">HC_PLATFORM=HC_PLATFORM_GDK;HC_DATAMODEL=HC_DATAMODEL_LLP64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
