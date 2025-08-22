@@ -14,12 +14,15 @@ static bool IsRunningOnXboxConsole()
 {
 #if HC_PLATFORM == HC_PLATFORM_GDK
     auto deviceType = XSystemGetDeviceType();
+
     // Explicitly list all Xbox console device types
     return deviceType == XSystemDeviceType::XboxOne ||
            deviceType == XSystemDeviceType::XboxOneS ||
            deviceType == XSystemDeviceType::XboxOneX ||
-           deviceType == XSystemDeviceType::XboxScarlettLockhart ||  // Xbox Series S
-           deviceType == XSystemDeviceType::XboxScarlettAnaconda;    // Xbox Series X
+           deviceType == XSystemDeviceType::XboxOneXDevkit ||
+           deviceType == XSystemDeviceType::XboxScarlettLockhart || // Xbox Series S
+           deviceType == XSystemDeviceType::XboxScarlettAnaconda || // Xbox Series X
+           deviceType == XSystemDeviceType::XboxScarlettDevkit; // Xbox Series Devkit
 #else
     return false;
 #endif
