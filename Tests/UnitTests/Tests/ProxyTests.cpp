@@ -23,23 +23,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(NamedProxyPortFormatting);
         // Reproduce logic: Port should be formatted as digits, not interpreted as a single wide char.
         xbox::httpclient::Uri uri{"http://127.0.0.1:8888"};
-        http_internal_wstring wProxyHost = utf16_from_utf8(uri.Host());
-        http_internal_wstring proxyName;
-        if (uri.IsPortDefault())
-        {
-            proxyName = wProxyHost;
-        }
-        else if (uri.Port() > 0)
-        {
-            http_internal_basic_stringstream<wchar_t> ss;
-            ss.imbue(std::locale::classic());
-            ss << wProxyHost << L":" << static_cast<unsigned int>(uri.Port());
-            proxyName = ss.str();
-        }
-        else
-        {
-            proxyName = wProxyHost;
-        }
+        auto proxyName = WinHttpProvider::BuildNamedProxyString(uri);
         VERIFY_ARE_EQUAL_STR(L"127.0.0.1:8888", proxyName.c_str());
     }
 
@@ -47,23 +31,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(NamedProxyNoPort);
         xbox::httpclient::Uri uri{"http://localhost"};
-        http_internal_wstring wProxyHost = utf16_from_utf8(uri.Host());
-        http_internal_wstring proxyName;
-        if (uri.IsPortDefault())
-        {
-            proxyName = wProxyHost;
-        }
-        else if (uri.Port() > 0)
-        {
-            http_internal_basic_stringstream<wchar_t> ss;
-            ss.imbue(std::locale::classic());
-            ss << wProxyHost << L":" << static_cast<unsigned int>(uri.Port());
-            proxyName = ss.str();
-        }
-        else
-        {
-            proxyName = wProxyHost;
-        }
+        auto proxyName = WinHttpProvider::BuildNamedProxyString(uri);
         VERIFY_ARE_EQUAL_STR(L"localhost", proxyName.c_str());
     }
 
@@ -73,29 +41,8 @@ public:
         // This test intentionally copies the (fixed) logic for building the proxy string to guarantee coverage
         // without needing to invoke broader WinHTTP setup.
         xbox::httpclient::Uri uri{"http://127.0.0.1:8888"};
+        auto formatted = WinHttpProvider::BuildNamedProxyString(uri);
         http_internal_wstring wProxyHost = utf16_from_utf8(uri.Host());
-
-        http_internal_wstring formatted;
-        if (uri.IsPortDefault())
-        {
-            formatted = wProxyHost;
-        }
-        else
-        {
-            if (uri.Port() > 0)
-            {
-                http_internal_basic_stringstream<wchar_t> ss;
-                ss.imbue(std::locale::classic());
-                // Correct (post-fix) pattern: cast to unsigned int to force numeric insertion.
-                ss << wProxyHost << L":" << static_cast<unsigned int>(uri.Port());
-                formatted = ss.str();
-            }
-            else
-            {
-                formatted = wProxyHost;
-            }
-        }
-
         VERIFY_ARE_EQUAL_STR(L"127.0.0.1:8888", formatted.c_str());
 
         // Demonstrate what the buggy pattern would have produced (length 12 vs 14 expected characters including colon?)

@@ -473,33 +473,7 @@ HRESULT WinHttpProvider::GetProxyName(
     case proxy_type::named_proxy:
     {
         pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-
-        http_internal_wstring wProxyHost = utf16_from_utf8(proxyUri.Host());
-
-        // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
-        if (proxyUri.IsPortDefault())
-        {
-            pwProxyName = wProxyHost;
-        }
-        else
-        {
-            if (proxyUri.Port() > 0)
-            {
-                // NOTE: proxyUri.Port() returns uint16_t. On Windows, uint16_t is the same underlying type
-                // as wchar_t, which previously caused the port value to be interpreted as a single wide
-                // character when inserted into the wide stringstream, producing e.g. L"\u22B8" instead of
-                // the digits "8888". Cast to an unsigned int (or use std::to_wstring) to force numeric
-                // formatting.
-                http_internal_basic_stringstream<wchar_t> ss;
-                ss.imbue(std::locale::classic());
-                ss << wProxyHost << L":" << static_cast<unsigned int>(proxyUri.Port());
-                pwProxyName = ss.str();
-            }
-            else
-            {
-                pwProxyName = wProxyHost;
-            }
-        }
+        pwProxyName = WinHttpProvider::BuildNamedProxyString(proxyUri);
         break;
     }
 
@@ -522,6 +496,7 @@ HRESULT WinHttpProvider::GetProxyName(
 
     return S_OK;
 }
+
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 
