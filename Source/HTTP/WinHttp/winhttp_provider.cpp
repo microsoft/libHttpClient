@@ -485,10 +485,15 @@ HRESULT WinHttpProvider::GetProxyName(
         {
             if (proxyUri.Port() > 0)
             {
+                // NOTE: proxyUri.Port() returns uint16_t. On Windows, uint16_t is the same underlying type
+                // as wchar_t, which previously caused the port value to be interpreted as a single wide
+                // character when inserted into the wide stringstream, producing e.g. L"\u22B8" instead of
+                // the digits "8888". Cast to an unsigned int (or use std::to_wstring) to force numeric
+                // formatting.
                 http_internal_basic_stringstream<wchar_t> ss;
                 ss.imbue(std::locale::classic());
-                ss << wProxyHost << L":" << proxyUri.Port();
-                pwProxyName = ss.str().c_str();
+                ss << wProxyHost << L":" << static_cast<unsigned int>(proxyUri.Port());
+                pwProxyName = ss.str();
             }
             else
             {
