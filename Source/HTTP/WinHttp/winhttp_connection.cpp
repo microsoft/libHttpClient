@@ -1103,13 +1103,45 @@ size_t WinHttpConnection::GetResponseContentLength(_In_ WinHttpConnection* pRequ
         }
     }
 
-    try
+    // If the Content-Length header is absent (e.g. for chunked transfer encoding) "result" will be FALSE
+    // with ERROR_WINHTTP_HEADER_NOT_FOUND. In that case (or any other failure) just return 0 which the
+    // caller treats as "unknown length" and progress reporting logic will skip total size tracking.
+    if (result && !responseHeader.empty())
     {
-        contentLength = std::stoi(responseHeader);
-    }
-    catch (const std::exception& e)
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [%d] std::stoi error in callback_status_read_complete: %s", E_FAIL, e.what());
+        // WinHttp gives a null-terminated wide string. Validate it contains only digits before converting
+        // to avoid throwing exceptions on unexpected values (empty, whitespace, etc.).
+        const wchar_t* p = responseHeader.c_str();
+        if (*p != L'\0')
+        {
+            bool allDigits = true;
+            for (; *p != L'\0'; ++p)
+            {
+                if (*p < L'0' || *p > L'9')
+                {
+                    allDigits = false;
+                    break;
+                }
+            }
+            if (allDigits)
+            {
+                // Use wcstoull for conversion without throwing
+                errno = 0;
+                wchar_t* endPtr = nullptr;
+                unsigned long long value = wcstoull(responseHeader.c_str(), &endPtr, 10);
+                if (errno == 0 && endPtr != responseHeader.c_str())
+                {
+                    contentLength = static_cast<size_t>(value);
+                }
+                else
+                {
+                    HC_TRACE_WARNING(HTTPCLIENT, "WinHttpConnection: invalid Content-Length header value encountered (conversion failure). Treating as unknown.");
+                }
+            }
+            else
+            {
+                HC_TRACE_WARNING(HTTPCLIENT, "WinHttpConnection: non-numeric Content-Length header value encountered. Treating as unknown.");
+            }
+        }
     }
 
     return contentLength;

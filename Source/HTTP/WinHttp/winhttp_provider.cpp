@@ -45,7 +45,7 @@ WinHttpProvider::~WinHttpProvider()
 
     if (m_networkConnectivityChangedToken.token)
     {
-        XNetworkingUnregisterConnectivityHintChanged(m_networkConnectivityChangedToken, true);
+        //XNetworkingUnregisterConnectivityHintChanged(m_networkConnectivityChangedToken, true);
     }
 #endif
 
