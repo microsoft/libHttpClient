@@ -21,6 +21,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_proxy_helper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\GDK\PlatformComponents_GDK.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp" />
   </ItemGroup>

@@ -473,28 +473,7 @@ HRESULT WinHttpProvider::GetProxyName(
     case proxy_type::named_proxy:
     {
         pAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-
-        http_internal_wstring wProxyHost = utf16_from_utf8(proxyUri.Host());
-
-        // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
-        if (proxyUri.IsPortDefault())
-        {
-            pwProxyName = wProxyHost;
-        }
-        else
-        {
-            if (proxyUri.Port() > 0)
-            {
-                http_internal_basic_stringstream<wchar_t> ss;
-                ss.imbue(std::locale::classic());
-                ss << wProxyHost << L":" << proxyUri.Port();
-                pwProxyName = ss.str().c_str();
-            }
-            else
-            {
-                pwProxyName = wProxyHost;
-            }
-        }
+        pwProxyName = WinHttpProvider::BuildNamedProxyString(proxyUri);
         break;
     }
 
@@ -517,6 +496,7 @@ HRESULT WinHttpProvider::GetProxyName(
 
     return S_OK;
 }
+
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 
