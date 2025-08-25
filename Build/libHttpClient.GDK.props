@@ -14,6 +14,16 @@
       <Configuration>Release</Configuration>
       <Platform>Gaming.Desktop.x64</Platform>
     </ProjectConfiguration>
+    
+    <!-- Plain x64 configurations enable migration toward standard platform naming while retaining GDK libraries -->
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
@@ -51,9 +61,32 @@
   <!-- Include the main MS props -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 
+  <!-- Unify path vars so it can build against public GDK or GDKX -->
   <PropertyGroup>
+    <GDKCrossPlatformPath Condition="'$(GDKCrossPlatformPath)'==''">$(GameDKCoreLatest)</GDKCrossPlatformPath>
+    <GDKCrossPlatformPath Condition="'$(GDKCrossPlatformPath)'==''">$(GameDKXboxLatest)</GDKCrossPlatformPath>
+    <GDKCrossPlatformPath Condition="'$(GDKCrossPlatformPath)'==''">$(GameDKLatest)</GDKCrossPlatformPath>
+  </PropertyGroup>
+
+  <!-- GDK path validation -->
+  <Target Name="GDKEditionCheck" BeforeTargets="PrepareForBuild" Condition="'$(Platform)'=='x64'">
+    <Error Condition="'$(GDKCrossPlatformPath)'==''" Text="GameDKCoreLatest or GameDKXboxLatest or GameDKLatest environment variable is required" />
+    <Error Condition="!HasTrailingSlash('$(GDKCrossPlatformPath)')" Text="GDKCrossPlatformPath property must have trailing slash" />
+    <Error Condition="!Exists('$(GDKCrossPlatformPath)windows')" Text="GDKCrossPlatformPath needs to point to the October 2025 GDK or later" />
+    <Message Importance="high" Text="Using $(GDKCrossPlatformPath)" />
+  </Target>
+
+  <!-- When using plain x64 platform name, set paths manually -->
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <GDKLibPath Condition="'$(GDKLibPath)'==''">$(GDKCrossPlatformPath)windows\lib\x64</GDKLibPath>
+    <GDKIncludeRoot Condition="'$(GDKIncludeRoot)'==''">$(GDKCrossPlatformPath)windows\include</GDKIncludeRoot>
+    <LibraryPath>$(GDKLibPath);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(GDKIncludeRoot);$(IncludePath)</IncludePath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'!='x64'">
     <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
-    <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
+    <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>  
   </PropertyGroup>
 
   <ItemDefinitionGroup>
@@ -65,8 +98,10 @@
       <SupportJustMyCode>false</SupportJustMyCode>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>__WRL_NO_DEFAULT_LIB__;_LIB;$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(GameDKLatest)GRDK\ExtensionLibraries\Xbox.XCurl.API\Include</AdditionalIncludeDirectories>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories Condition="'$(Platform)'!='x64'">%(AdditionalIncludeDirectories);$(GDKCrossPlatformPath)GRDK\ExtensionLibraries\Xbox.XCurl.API\Include</AdditionalIncludeDirectories>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <AdditionalOptions>/Zc:__cplusplus /ZH:SHA_256 /bigobj /Zi %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions Condition="'$(Platform)'=='x64'">HC_PLATFORM=HC_PLATFORM_GDK;HC_DATAMODEL=HC_DATAMODEL_LLP64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -75,6 +110,7 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
       <AdditionalDependencies>$(Console_Libs);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='x64'">xgameruntime.lib;XCurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
       <AdditionalOptions>/ignore:4099 /ignore:4264 %(AdditionalOptions)</AdditionalOptions>

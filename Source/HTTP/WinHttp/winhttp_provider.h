@@ -74,6 +74,9 @@ public: // IHttpProvider
         _In_ String const& proxyUri
     ) noexcept;
 
+    // Public helper for building a proxy name (host[:port]) used by tests and implementation.
+    static http_internal_wstring BuildNamedProxyString(_In_ const xbox::httpclient::Uri& proxyUri);
+
 #ifndef HC_NOWEBSOCKETS
 public: // IWebSocketProvider
     HRESULT ConnectAsync(
@@ -187,7 +190,4 @@ public:
     SharedPtr<WinHttpProvider> const WinHttpProvider;
 };
 #endif
-
-
-
 NAMESPACE_XBOX_HTTP_CLIENT_END

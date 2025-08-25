@@ -14,12 +14,15 @@ static bool IsRunningOnXboxConsole()
 {
 #if HC_PLATFORM == HC_PLATFORM_GDK
     auto deviceType = XSystemGetDeviceType();
+
     // Explicitly list all Xbox console device types
     return deviceType == XSystemDeviceType::XboxOne ||
            deviceType == XSystemDeviceType::XboxOneS ||
            deviceType == XSystemDeviceType::XboxOneX ||
-           deviceType == XSystemDeviceType::XboxScarlettLockhart ||  // Xbox Series S
-           deviceType == XSystemDeviceType::XboxScarlettAnaconda;    // Xbox Series X
+           deviceType == XSystemDeviceType::XboxOneXDevkit ||
+           deviceType == XSystemDeviceType::XboxScarlettLockhart || // Xbox Series S
+           deviceType == XSystemDeviceType::XboxScarlettAnaconda || // Xbox Series X
+           deviceType == XSystemDeviceType::XboxScarlettDevkit; // Xbox Series Devkit
 #else
     return false;
 #endif
@@ -52,9 +55,9 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     }
     else
     {
-        HC_TRACE_INFORMATION(HTTPCLIENT, "PlatformInitialize: Detected non-console platform (e.g., Steam Deck), using WinHTTP for HTTP");
+        HC_TRACE_INFORMATION(HTTPCLIENT, "PlatformInitialize: Detected non-console platform. Using WinHTTP for HTTP");
         
-        // Use WinHTTP for Steam Deck and other non-console platforms
+        // Use WinHTTP for non-console platforms
         auto initWinHttpResult = WinHttpProvider::Initialize();
         RETURN_IF_FAILED(initWinHttpResult.hr);
 
