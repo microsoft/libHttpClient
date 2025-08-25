@@ -62,7 +62,7 @@ public:
         if (!uri.IsPortDefault() && uri.Port() > 0)
         {
             expected.push_back(L':');
-            expected.append(std::to_wstring(static_cast<unsigned int>(uri.Port())));
+            expected.append(std::to_wstring(uri.Port()));
         }
         VERIFY_ARE_EQUAL_STR(expected.c_str(), proxyName.c_str());
     }

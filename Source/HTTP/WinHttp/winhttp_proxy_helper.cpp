@@ -12,7 +12,6 @@ http_internal_wstring WinHttpProvider::BuildNamedProxyString(_In_ const xbox::ht
     }
     if (proxyUri.Port() > 0)
     {
-        // uint16_t promotes safely; explicit cast not required
         auto portStr = std::to_wstring(proxyUri.Port());
         http_internal_wstring result = wProxyHost;
         result.push_back(L':');
