@@ -55,9 +55,9 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     }
     else
     {
-        HC_TRACE_INFORMATION(HTTPCLIENT, "PlatformInitialize: Detected non-console platform (e.g., Steam Deck), using WinHTTP for HTTP");
+        HC_TRACE_INFORMATION(HTTPCLIENT, "PlatformInitialize: Detected non-console platform. Using WinHTTP for HTTP");
         
-        // Use WinHTTP for Steam Deck and other non-console platforms
+        // Use WinHTTP for non-console platforms
         auto initWinHttpResult = WinHttpProvider::Initialize();
         RETURN_IF_FAILED(initWinHttpResult.hr);
 
