@@ -2,10 +2,10 @@ apply plugin: "com.android.library"
 
 android {
     compileSdkVersion 31
-    ndkVersion "25.1.8937393"
+    ndkVersion "27.2.12479018"
 
     defaultConfig {
-        targetSdkVersion 30
+        targetSdkVersion 34
         minSdkVersion 21
 
         externalNativeBuild {

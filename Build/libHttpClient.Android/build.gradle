@@ -2,10 +2,10 @@ apply plugin: "com.android.library"
 
 android {
     compileSdkVersion 31
-    ndkVersion "25.1.8937393"
+    ndkVersion "27.2.12479018"
 
     defaultConfig {
-        targetSdkVersion 30
+        targetSdkVersion 34
         minSdkVersion 21
 
         externalNativeBuild {
@@ -16,6 +16,10 @@ android {
                 if (project.hasProperty("BUILD_SHARED_LIBS")) {
                     arguments << "-DBUILD_SHARED_LIBS=1"
                 }
+
+                // Support 16KB page sizes on 64-bit devices
+                // https://developer.android.com/guide/practices/page-sizes#compile-16-kb-alignment
+                arguments << "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
 
                 // externalNativeBuild normally skips static
                 // lib targets. This forces it to build.
