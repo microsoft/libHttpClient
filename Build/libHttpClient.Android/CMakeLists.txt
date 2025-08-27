@@ -148,3 +148,6 @@ target_set_flags(
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
+set_property(TARGET "${PROJECT_NAME}"
+        APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,max-page-size=16384")
