@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CurlProvider.h"
 #include "CurlEasyRequest.h"
+#include "CurlDynamicLoader.h"
 
 namespace xbox
 {
@@ -22,7 +23,9 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     switch (c)
     {
     case CURLMcode::CURLM_OK: return S_OK;
-#if HC_PLATFORM == HC_PLATFORM_GDK || LIBCURL_VERSION_NUM >= 0x074201
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
+#elif defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7,69,0)
     case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
 #endif
     default: return E_FAIL;
@@ -31,8 +34,29 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
 
 Result<HC_UNIQUE_PTR<CurlProvider>> CurlProvider::Initialize()
 {
-    CURLcode initRes = curl_global_init(CURL_GLOBAL_ALL);
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Initialize dynamic curl loader first
+    auto& loader = CurlDynamicLoader::GetInstance();
+    if (!loader.Initialize())
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlProvider::Initialize: Failed to load XCurl.dll");
+        // Ensure the loader is cleaned up if initialization fails
+        CurlDynamicLoader::DestroyInstance();
+        return E_FAIL;
+    }
+
+    CURLcode initRes = CURL_CALL(curl_global_init)(CURL_GLOBAL_ALL);
+    HRESULT initHr = HrFromCurle(initRes);
+    if (FAILED(initHr))
+    {
+        // If curl init fails, unload XCurl and free the loader singleton
+        CurlDynamicLoader::DestroyInstance();
+        return initHr;
+    }
+#else
+    CURLcode initRes = CURL_CALL(curl_global_init)(CURL_GLOBAL_ALL);
     RETURN_IF_FAILED(HrFromCurle(initRes));
+#endif
 
     http_stl_allocator<CurlProvider> a{};
     auto provider = HC_UNIQUE_PTR<CurlProvider>{ new (a.allocate(1)) CurlProvider };
@@ -53,11 +77,29 @@ CurlProvider::~CurlProvider()
     // make sure XCurlMultis are cleaned up before curl_global_cleanup
     m_curlMultis.clear();
 
-    curl_global_cleanup();
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (CurlDynamicLoader::GetInstance().IsLoaded())
+    {
+        CURL_CALL(curl_global_cleanup)();
+    }
+    // Free the dynamic loader singleton (unloads XCurl.dll via its destructor)
+    CurlDynamicLoader::DestroyInstance();
+#else
+    CURL_CALL(curl_global_cleanup)();
+#endif
 }
 
 HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept
 {
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Check if curl is available before proceeding
+    if (!CurlDynamicLoader::GetInstance().IsLoaded())
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlProvider::PerformAsync: XCurl.dll not available");
+        return E_HC_XCURL_REQUIRED;
+    }
+#endif
+
     XTaskQueuePortHandle workPort{ nullptr };
     RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
 
@@ -67,7 +109,6 @@ HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noex
     RETURN_IF_FAILED(easyInitResult.hr);
 
     http_internal_map<XTaskQueuePortHandle, HC_UNIQUE_PTR<xbox::httpclient::CurlMulti>>::iterator iter;
-
     {
         // CurlProvider::PerformAsync can be called simultaneously from multiple threads so we need to lock
         // to prevent unsafe access to m_curlMultis

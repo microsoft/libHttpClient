@@ -17,7 +17,7 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     std::shared_ptr<WinHttpProvider> sharedProvider{ winHttpProvider.release(), std::move(winHttpProvider.get_deleter()), http_stl_allocator<WinHttpProvider>{} };
 
     components.HttpProvider = http_allocate_unique<WinHttp_HttpProvider>(sharedProvider);
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     components.WebSocketProvider = http_allocate_unique<WinHttp_WebSocketProvider>(sharedProvider);
 #endif
 

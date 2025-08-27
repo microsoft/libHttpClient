@@ -74,6 +74,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.GDK.Shared", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttpClient.GDK", "Build\libHttpClient.GDK\libHttpClient.GDK.vcxproj", "{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GDKHttp", "Samples\GDK-Http\GDKHttp.vcxproj", "{30B33C66-4755-4E79-A518-0E4137A58BEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -110,7 +114,8 @@ Global
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
-		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x64.ActiveCfg = Debug|x64
+		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x64.Build.0 = Debug|x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
@@ -342,7 +347,8 @@ Global
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|ARM64.Build.0 = Debug|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
-		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.ActiveCfg = Debug|x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x64.Build.0 = Debug|x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.Build.0 = Release|Gaming.Desktop.x64
@@ -352,6 +358,22 @@ Global
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|x86.ActiveCfg = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|ARM.ActiveCfg = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|ARM.Build.0 = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|ARM64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|ARM64.Build.0 = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|Gaming.Desktop.x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|Gaming.Desktop.x64.Build.0 = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|x64.ActiveCfg = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM.Build.0 = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM64.Build.0 = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
+		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|x86.ActiveCfg = Release|Gaming.Desktop.x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -379,6 +401,8 @@ Global
 		{E35BA8A1-AE7B-4FB5-8200-469B98BC1CA8} = {118840A6-8EB2-4D70-B0EE-65EE13E2FEAB}
 		{8CA3B500-0D89-4DB1-BA8B-98AEB468CA13} = {348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743} = {348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {348C2EBE-5E0D-4008-8E9C-BD2ECF40F4BC}
+		{30B33C66-4755-4E79-A518-0E4137A58BEA} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1878024A-14E8-41AD-8422-BED12651F958}

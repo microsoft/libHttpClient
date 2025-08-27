@@ -45,7 +45,11 @@ struct XPlatSecurityInformation
     http_internal_vector<uint8_t> buffer;
     XNetworkingSecurityInformation* securityInformation{ nullptr };
 #endif
-    uint32_t enabledHttpSecurityProtocolFlags;
+    uint32_t enabledHttpSecurityProtocolFlags { 0 };
+    XPlatSecurityInformation(uint32_t flags)
+    {
+        enabledHttpSecurityProtocolFlags = flags;
+    }
 };
 
 class WinHttpProvider
@@ -70,7 +74,10 @@ public: // IHttpProvider
         _In_ String const& proxyUri
     ) noexcept;
 
-#if !HC_NOWEBSOCKETS
+    // Public helper for building a proxy name (host[:port]) used by tests and implementation.
+    static http_internal_wstring BuildNamedProxyString(_In_ const xbox::httpclient::Uri& proxyUri);
+
+#ifndef HC_NOWEBSOCKETS
 public: // IWebSocketProvider
     HRESULT ConnectAsync(
         String const& uri,
@@ -149,7 +156,7 @@ public:
     SharedPtr<WinHttpProvider> const WinHttpProvider;
 };
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 class WinHttp_WebSocketProvider : public IWebSocketProvider
 {
 public:
@@ -183,7 +190,4 @@ public:
     SharedPtr<WinHttpProvider> const WinHttpProvider;
 };
 #endif
-
-
-
 NAMESPACE_XBOX_HTTP_CLIENT_END

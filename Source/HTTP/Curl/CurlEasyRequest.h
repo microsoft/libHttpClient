@@ -1,12 +1,9 @@
 #pragma once
-
-#if HC_PLATFORM == HC_PLATFORM_GDK
-// When developing titles for Xbox consoles, you must use WinHTTP or xCurl. 
-// See https://docs.microsoft.com/en-us/gaming/gdk/_content/gc/networking/overviews/web-requests/http-networking for detail
-#include <XCurl.h>
-#else
-// This path is untested, but this http provider should work with other curl implementations as well.
+// Always include CurlDynamicLoader.h for macros and (on GDK) loader type
+#include "CurlDynamicLoader.h"
+// Http provider should work with other curl implementations as well. 
 // The logic in CurlMulti::Perform is optimized for XCurl, but should work on any curl implementation.
+#if HC_PLATFORM != HC_PLATFORM_GDK
 #include <curl/curl.h>
 #endif
 #include "Result.h"
@@ -52,8 +49,15 @@ private:
     static size_t WriteHeaderCallback(char* buffer, size_t size, size_t nitems, void* context) noexcept;
     static size_t WriteDataCallback(char* buffer, size_t size, size_t nmemb, void* context) noexcept;
     static int DebugCallback(CURL* curlHandle, curl_infotype type, char* data, size_t size, void* context) noexcept;
-
+    static int ProgressReportCallback(void* context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) noexcept;
     static HRESULT MethodStringToOpt(char const* method, CURLoption& opt) noexcept;
+
+    // Progress Report properties
+    size_t m_requestBodyOffset = 0;
+    size_t m_responseBodySize = 0;
+    size_t m_responseBodyRemainingToRead = 0;
+    static size_t GetResponseContentLength(CURL* curlHandle);
+    static void ReportProgress(HCCallHandle call, HCHttpCallProgressReportFunction progressReportFunction, size_t minimumInterval, size_t current, size_t total, void* progressReportCallbackContext, std::chrono::steady_clock::time_point* lastProgressReport);
 
     CURL* m_curlEasyHandle;
     HCCallHandle m_hcCallHandle; // non-owning
@@ -72,7 +76,7 @@ private:
 template<typename T>
 HRESULT CurlEasyRequest::SetOpt(CURLoption option, typename OptType<T>::type v) noexcept
 {
-    CURLcode result = curl_easy_setopt(m_curlEasyHandle, option, v);
+    CURLcode result = CURL_CALL(curl_easy_setopt)(m_curlEasyHandle, option, v);
     if (result != CURLE_OK)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "curl_easy_setopt(request, %d, value) failed with %d", option, result);

@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "NetworkState.h"
 #include "Platform/ExternalHttpProvider.h"
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 #include "Platform/ExternalWebSocketProvider.h"
 #endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 NetworkState::NetworkState(UniquePtr<IHttpProvider> httpProvider, UniquePtr<IWebSocketProvider> webSocketProvider) noexcept :
     m_httpProvider{ std::move(httpProvider) },
     m_webSocketProvider{ std::move(webSocketProvider) }
@@ -161,7 +161,7 @@ void CALLBACK NetworkState::HttpCallPerformComplete(XAsyncBlock* async)
     XAsyncComplete(performContext->clientAsyncBlock, XAsyncGetStatus(async, false), 0);
 }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 IWebSocketProvider& NetworkState::WebSocketProvider() noexcept
 {
     // If the client configured an external provider use that. Otherwise use the m_webSocketProvider
@@ -380,14 +380,14 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         state->m_cleanupAsyncBlock = data->async;
         bool scheduleCleanup = state->ScheduleCleanup();
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
         HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", state->m_activeHttpRequests.size(), state->m_connectingWebSockets.size(), state->m_connectedWebSockets.size());
 #endif
         for (auto& activeRequest : state->m_activeHttpRequests)
         {
             XAsyncCancel(activeRequest);
         }
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
         for (auto& context : state->m_connectedWebSockets)
         {
             HRESULT hr = context->websocketObserver->websocket->Disconnect();
@@ -461,7 +461,7 @@ bool NetworkState::ScheduleCleanup()
         return false;
     }
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     HC_TRACE_VERBOSE(HTTPCLIENT, "HC_PERFORM_ENV::Cleaning up, HTTP=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", m_activeHttpRequests.size(), m_connectingWebSockets.size(), m_connectedWebSockets.size());
 #endif
     if (!m_activeHttpRequests.empty())
@@ -469,7 +469,7 @@ bool NetworkState::ScheduleCleanup()
         // Pending Http Requests
         return false;
     }
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
     else if (!m_connectingWebSockets.empty())
     {
         // Pending WebSocket Connect operations

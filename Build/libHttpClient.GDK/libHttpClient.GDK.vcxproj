@@ -3,7 +3,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}</ProjectGuid>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <GDKExtLibNames>Xbox.XCurl.API</GDKExtLibNames>
+    <GDKExtLibNames>;</GDKExtLibNames>
     <PlatformToolset Condition="$(VisualStudioVersion)==14">v140</PlatformToolset>
     <PlatformToolset Condition="$(VisualStudioVersion)==15">v141</PlatformToolset>
     <PlatformToolset Condition="$(VisualStudioVersion)==16">v142</PlatformToolset>
@@ -26,6 +26,9 @@
     <ClCompile>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <Link>
+      <CETCompat>true</CETCompat>
+    </Link>
   </ItemDefinitionGroup>
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems" Label="Shared" />

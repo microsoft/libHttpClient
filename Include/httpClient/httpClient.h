@@ -310,6 +310,18 @@ STDAPI HCHttpCallGetRequestUrl(
     _Outptr_result_z_ const char** url
     ) noexcept;
 
+/// <summary>
+/// Gets the number of times the HTTP call has been performed.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="performCount">The number of times the HTTP call has been performed.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>This should only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.</remarks>
+STDAPI HCHttpCallGetPerformCount(
+    _In_ HCCallHandle call,
+    _Out_ uint32_t* performCount
+) noexcept;
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // HttpCallRequest Set APIs
 //
@@ -327,6 +339,29 @@ STDAPI HCHttpCallRequestSetUrl(
     _In_z_ const char* method,
     _In_z_ const char* url
     ) noexcept;
+
+/// <summary>
+/// Mark the HTTP call as having a dynamic size request body for progress reporting. Report the bytes written in the custom callback using
+/// HCHttpCallRequestAddDynamicBytesWritten.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="dynamicBodySize">The length in bytes to use for reporting.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestSetDynamicSize(
+    _In_ HCCallHandle call,
+    _In_ uint64_t dynamicBodySize
+) noexcept;
+
+/// <summary>
+/// Report a custom amount of bytes written when the body size is dynamic. HCHttpCallRequestSetDynamicSize must be set.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bytesWritten">The number of bytes written.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI HCHttpCallRequestAddDynamicBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ uint64_t bytesWritten
+) noexcept;
 
 /// <summary>
 /// Set the request body bytes of the HTTP call. This API operation is mutually exclusive with
@@ -432,6 +467,23 @@ typedef HRESULT
     );
 
 /// <summary>
+/// The callback definition used by an HTTP call to get progress updates when uploading or downloading a file. This callback will be invoked
+/// on an unspecified background thread which is platform dependent.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="current">The current amount of processed bytes of the file being uploaded/downloaded.</param>
+/// <param name="total">The total size in bytes of the file being uploaded/downloaded.</param>
+/// <param name="context">Optional context pointer to data used by the callback.</param>
+/// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+typedef HRESULT
+(CALLBACK* HCHttpCallProgressReportFunction)(
+    _In_ HCCallHandle call,
+    _In_ uint64_t current,
+    _In_ uint64_t total,
+    _In_opt_ void* context
+);
+
+/// <summary>
 /// Sets a custom callback function that will be used to read the request body when the HTTP call is
 /// performed. If a custom read callback is used, any request body data previously set by
 /// HCHttpCallRequestSetRequestBodyBytes or HCHttpCallRequestSetRequestBodyString is ignored making
@@ -449,6 +501,25 @@ STDAPI HCHttpCallRequestSetRequestBodyReadFunction(
     _In_ size_t bodySize,
     _In_opt_ void* context
     ) noexcept;
+
+/// <summary>
+/// Sets a custom callback function that will be used to provide progress updates when uploading 
+/// or downloading a file.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="progressReportFunction">The progress report callback function this call should use.</param>
+/// <param name="isUploadFunction">Indicates if the function provided will get progress reports when uploading or downloading.</param>
+/// <param name="minimumProgressReportInterval">The minimum interval in seconds that needs to pass for the client to get progress reports.</param>
+/// <param name="context">Optional context pointer to data used by the callback.</param>
+/// <returns>Result code of this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+STDAPI HCHttpCallRequestSetProgressReportFunction(
+    _In_ HCCallHandle call,
+    _In_ HCHttpCallProgressReportFunction progressReportFunction,
+    _In_ bool isUploadFunction,
+    _In_ size_t minimumProgressReportInterval,
+    _In_opt_ void* context
+) noexcept;
 
 /// <summary>
 /// Set a request header for the HTTP call.
@@ -567,6 +638,33 @@ STDAPI HCHttpCallRequestSetTimeoutWindow(
     _In_ uint32_t timeoutWindowInSeconds
     ) noexcept;
 
+/// <summary>
+/// Sets the maximum receive buffer size for HTTP responses.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bufferSizeInBytes">The maximum buffer size in bytes. Pass 0 to reset to provider default.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This must be called prior to calling HCHttpCallPerformAsync.
+/// The actual buffer size used may be limited by the underlying HTTP provider.
+/// Default buffer size varies by platform but is typically 16KB.
+/// </remarks>
+STDAPI HCHttpCallRequestSetMaxReceiveBufferSize(
+    _In_ HCCallHandle call,
+    _In_ size_t bufferSizeInBytes
+    ) noexcept;
+
+/// <summary>
+/// Gets the maximum receive buffer size for HTTP responses.
+/// </summary>
+/// <param name="call">The handle of the HTTP call.</param>
+/// <param name="bufferSizeInBytes">The maximum buffer size in bytes. Returns 0 if no custom size has been set (meaning use provider default).</param>
+/// <returns>Result code for this API operation. Possible values are S_OK or E_INVALIDARG.</returns>
+STDAPI HCHttpCallRequestGetMaxReceiveBufferSize(
+    _In_ HCCallHandle call,
+    _Out_ size_t* bufferSizeInBytes
+    ) noexcept;
+
 #if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
 /// <summary>
 /// Enables or disables SSL server certificate validation for this specific HTTP call.
@@ -586,7 +684,7 @@ STDAPI HCHttpCallRequestSetSSLValidation(
 ) noexcept;
 #endif
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
+#if HC_PLATFORM == HC_PLATFORM_GDK || defined(HC_WINHTTP_WIN32_NOXASYNC)
 /// <summary>
 /// Defines the config settings value that is passed to the below API's.
 /// </summary>
@@ -797,7 +895,7 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
     _Outptr_result_z_ const char** headerValue
     ) noexcept;
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////
 // WebSocket APIs
 //
@@ -874,7 +972,7 @@ typedef void
 /// <remarks>
 /// WebSocket usage:<br />
 /// Create a WebSocket handle using HCWebSocketCreate()<br />
-/// Call HCWebSocketSetProxyUri() and HCWebSocketSetHeader() to prepare the HCWebsocketHandle<br />
+/// Call HCWebSocketSetProxyUri(), HCWebSocketSetHeader(), or HCWebSocketSetPingInterval() to prepare the HCWebsocketHandle<br />
 /// Call HCWebSocketConnectAsync() to connect the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketSendMessageAsync() to send a message to the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketDisconnect() to disconnect the WebSocket using the HCWebsocketHandle.<br />
@@ -945,6 +1043,17 @@ STDAPI HCWebSocketSetHeader(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
+    ) noexcept;
+
+/// <summary>
+/// Set the ping interval for the WebSocket.
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="pingIntervalSeconds">The interval at which this websocket should send keepalive frames, in seconds.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_UNEXPECTED.</returns>
+/// </summary>
+STDAPI HCWebSocketSetPingInterval(
+    _In_ HCWebsocketHandle websocket,
+    _In_ uint32_t pingIntervalSeconds
     ) noexcept;
 
 /// <summary>

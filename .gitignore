@@ -152,3 +152,9 @@ Tests/StressUnitTest/
 
 #Exclude build logs
 Build/**/*.log
+
+#Exclude nuget packages
+packages/
+
+#Exclude copied headers
+Samples/GDK-Http/httpClient

@@ -33,10 +33,10 @@ fi
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    ./configure --disable-shared --without-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --enable-debug
+    ./configure --disable-shared --with-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --enable-debug --without-brotli
 else
     # make libcrypto and libssl
-    ./configure --disable-shared --without-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --disable-debug
+    ./configure --disable-shared --with-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --disable-debug --without-brotli
 fi
 
 make

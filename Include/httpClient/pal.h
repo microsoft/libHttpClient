@@ -36,7 +36,7 @@
 #define HC_UWP_API (HC_PLATFORM == HC_PLATFORM_UWP)
 #endif
 
-#if HC_UNITTEST_API
+#ifdef HC_UNITTEST_API
 #undef HC_UWP_API
 #define HC_UWP_API 1
 #endif 
@@ -461,6 +461,7 @@ typedef struct _LIST_ENTRY {
 #define E_HC_NETWORK_NOT_INITIALIZED    MAKE_E_HC(0x5007) // 0x89235007
 #define E_HC_INTERNAL_STILLINUSE        MAKE_E_HC(0x5008) // 0x89235008
 #define E_HC_COMPRESSION_ENABLED        MAKE_E_HC(0x5009) // 0x89235009
+#define E_HC_XCURL_REQUIRED             MAKE_E_HC(0x500A) // 0x8923500A
 
 typedef uint32_t HCMemoryType;
 typedef struct HC_WEBSOCKET_OBSERVER* HCWebsocketHandle;

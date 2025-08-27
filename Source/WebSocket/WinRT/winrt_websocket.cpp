@@ -5,7 +5,7 @@
 #include <httpClient/httpProvider.h>
 #include "winrt_websocket.h"
 
-#if !HC_NOWEBSOCKETS
+#ifndef HC_NOWEBSOCKETS
 
 using namespace xbox::httpclient;
 using namespace ::Windows::Foundation;
