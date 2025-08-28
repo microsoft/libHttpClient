@@ -148,3 +148,8 @@ target_set_flags(
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
+# Support 16KB page sizes on 64-bit devices
+# https://developer.android.com/guide/practices/page-sizes#compile-16-kb-alignment
+set_property(TARGET "${PROJECT_NAME}"
+        APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,max-page-size=16384")
