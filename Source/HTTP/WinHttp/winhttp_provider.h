@@ -111,7 +111,7 @@ private:
     HRESULT CloseAllConnections();
 
     Result<XPlatSecurityInformation> GetSecurityInformation(const char* url);
-    Result<HINTERNET> GetHSession(uint32_t securityProtolFlags);
+    Result<HINTERNET> GetHSession(uint32_t securityProtocolFlags, const char* url);
 
     static HRESULT SetGlobalProxyForHSession(HINTERNET hSession, const char* proxyUri);
     static HRESULT GetProxyName(_In_ proxy_type proxyType, _In_ Uri proxyUri, _Out_ DWORD& pAccessType, _Out_ http_internal_wstring& pwProxyName);
