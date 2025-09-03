@@ -338,11 +338,13 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
     
     bool isHttps = uri.IsSecure();
     
-    // Log warning for insecure HTTP requests
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Log warning for insecure HTTP requests on GDK for console certification reasons
     if (!isHttps)
     {
         HC_TRACE_WARNING(HTTPCLIENT, "WARNING: Insecure HTTP request \"%s\"", url);
     }
+#endif
     
     std::lock_guard<std::mutex> lock(m_lock);
     auto iter = m_hSessions.find(securityProtocolFlags);
@@ -412,7 +414,7 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
         if (!result)
         {
             HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption");
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS");
             WinHttpCloseHandle(hSession);
             return hr;
         }
@@ -427,7 +429,7 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
     if (!result)
     {
         HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-        HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption");
+        HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_IPV6_FAST_FALLBACK");
     }
 
     if (!m_globalProxy.empty())
