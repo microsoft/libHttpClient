@@ -454,6 +454,14 @@ void Game::Update(DX::StepTimer const& /*timer*/)
         }
         break;
 
+        case 4:
+        {
+            // Test HTTP (non-HTTPS) protocol to verify WinHTTP flag handling
+            url = "http://neverssl.com/";
+            PerformHttpCall(url, "", false, "", false, false, false);
+        }
+        break;
+
         default:
         {
             // All HttpCalls complete

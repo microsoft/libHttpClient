@@ -9,6 +9,10 @@
 #include "../global/global.h"
 #include <httpClient/httpProvider.h>
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include <winhttp.h>
+#endif
+
 #pragma warning(disable:4389)
 
 using namespace xbox::httpclient;
@@ -449,6 +453,54 @@ public:
         HCHttpCallCloseHandle(call);
         HCCleanup();
     }
+
+    DEFINE_TEST_CASE(TestHttpProtocol)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestHttpProtocol);
+        
+        // Test to verify HTTP (non-HTTPS) requests work correctly
+        // 
+        // Background: This test was added to ensure HTTP protocol support remains functional
+        // after changes to provider flag configuration that could potentially affect HTTP vs HTTPS handling.
+        
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCCallHandle call = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
+
+        // Use HTTP protocol to verify it works correctly
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "GET", "http://example.com"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
+        
+        // Create a mock response for the HTTP call
+        HCMockCallHandle mockCall;
+        VERIFY_ARE_EQUAL(S_OK, HCMockCallCreate(&mockCall));
+        VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetStatusCode(mockCall, 200));
+        std::string responseBody = "HTTP test successful";
+        VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetResponseBodyBytes(mockCall, (uint8_t*)responseBody.c_str(), (uint32_t)responseBody.length()));
+        VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, "GET", "http://example.com", nullptr, 0));
+
+        XAsyncBlock asyncBlock = {};
+        asyncBlock.context = call;
+        
+        // Perform the HTTP call
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(call, &asyncBlock));
+        
+        // Wait for completion
+        HRESULT hr = XAsyncGetStatus(&asyncBlock, true);
+        
+        // Verify the HTTP request succeeded
+        VERIFY_ARE_EQUAL(S_OK, hr);
+        
+        // Verify we got a successful HTTP response
+        uint32_t statusCode = 0;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &statusCode));
+        VERIFY_ARE_EQUAL(200, statusCode);
+
+        HCHttpCallCloseHandle(call);
+        HCCleanup();
+    }
+
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

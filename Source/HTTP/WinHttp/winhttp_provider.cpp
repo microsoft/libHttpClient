@@ -2,6 +2,7 @@
 #include "HTTP/httpcall.h"
 #include "winhttp_provider.h"
 #include "winhttp_connection.h"
+#include "uri.h"
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XGameRuntimeFeature.h>
@@ -97,7 +98,7 @@ HRESULT WinHttpProvider::PerformAsync(
     RETURN_IF_FAILED(getSecurityInfoResult.hr);
 
     // Get HSession for the call
-    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
+    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags, callHandle->url.data());
     RETURN_IF_FAILED(getHSessionResult.hr);
 
     std::unique_lock<std::mutex> lock{ m_lock };
@@ -152,7 +153,7 @@ HRESULT WinHttpProvider::ConnectAsync(
     RETURN_IF_FAILED(getSecurityInfoResult.hr);
 
     // Get HSession for the call
-    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags);
+    auto getHSessionResult = GetHSession(getSecurityInfoResult.Payload().enabledHttpSecurityProtocolFlags, uri.data());
     RETURN_IF_FAILED(getHSessionResult.hr);
 
     std::unique_lock<std::mutex> lock{ m_lock };
@@ -326,8 +327,25 @@ Result<XPlatSecurityInformation> WinHttpProvider::GetSecurityInformation(const c
 #endif
 }
 
-Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags)
+Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, const char* url)
 {
+    // Parse URL to determine scheme
+    xbox::httpclient::Uri uri(url);
+    if (!uri.IsValid())
+    {
+        return E_INVALIDARG;
+    }
+    
+    bool isHttps = uri.IsSecure();
+    
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Log warning for insecure HTTP requests on GDK for console certification reasons
+    if (!isHttps)
+    {
+        HC_TRACE_WARNING(HTTPCLIENT, "WARNING: Insecure HTTP request \"%s\"", url);
+    }
+#endif
+    
     std::lock_guard<std::mutex> lock(m_lock);
     auto iter = m_hSessions.find(securityProtocolFlags);
     if (iter != m_hSessions.end())
@@ -342,31 +360,40 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags)
     m_proxyType = get_ie_proxy_info(proxy_protocol::https, proxyUri);
     GetProxyName(m_proxyType, proxyUri, accessType, wProxyName);
 
+    // Determine WinHTTP flags based on URL scheme
+    // Use WINHTTP_FLAG_SECURE_DEFAULTS for HTTPS and WINHTTP_FLAG_ASYNC for HTTP
+    DWORD openFlags;
+    if (isHttps)
+    {
+        // For HTTPS, use secure defaults which implies WINHTTP_FLAG_ASYNC
+        openFlags = WINHTTP_FLAG_SECURE_DEFAULTS;
+    }
+    else
+    {
+        // For HTTP, use async only (allow insecure connections)
+        openFlags = WINHTTP_FLAG_ASYNC;
+    }
+
     HINTERNET hSession = WinHttpOpen(
         nullptr,
         accessType,
         wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS,
-#if HC_PLATFORM == HC_PLATFORM_GDK
-        WINHTTP_FLAG_SECURE_DEFAULTS
-#else
-        WINHTTP_FLAG_ASYNC
-#endif
+        openFlags
     );
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
     DWORD error = GetLastError();
-    if (error == ERROR_INVALID_PARAMETER)
+    if (error == ERROR_INVALID_PARAMETER && isHttps)
     {
-        // This might happen on older Win10 PC versions that don't support WINHTTP_FLAG_SECURE_DEFAULTS
+        // WINHTTP_FLAG_SECURE_DEFAULTS exists only on newer Windows versions;
+        // on earlier OS releases we will receive ERROR_INVALID_PARAMETER and should continue without it.
         hSession = WinHttpOpen(
             nullptr,
-            WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
-            WINHTTP_NO_PROXY_NAME,
+            accessType,
+            wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
             WINHTTP_NO_PROXY_BYPASS,
             WINHTTP_FLAG_ASYNC);
     }
-#endif
 
     if (hSession == nullptr)
     {
@@ -375,20 +402,26 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags)
         return hr;
     }
 
-    auto result = WinHttpSetOption(
-        hSession,
-        WINHTTP_OPTION_SECURE_PROTOCOLS,
-        &securityProtocolFlags,
-        sizeof(securityProtocolFlags));
-    if (!result)
+    // Only set secure protocols for HTTPS requests
+    // For HTTP requests, ignore the security protocol settings as they don't apply
+    if (isHttps)
     {
-        HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-        HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption");
-        return hr;
+        auto result = WinHttpSetOption(
+            hSession,
+            WINHTTP_OPTION_SECURE_PROTOCOLS,
+            &securityProtocolFlags,
+            sizeof(securityProtocolFlags));
+        if (!result)
+        {
+            HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS");
+            WinHttpCloseHandle(hSession);
+            return hr;
+        }
     }
 
     BOOL enableFallback = TRUE;
-    result = WinHttpSetOption(
+    auto result = WinHttpSetOption(
         hSession,
         WINHTTP_OPTION_IPV6_FAST_FALLBACK,
         &enableFallback,
@@ -396,7 +429,7 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags)
     if (!result)
     {
         HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-        HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption");
+        HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_IPV6_FAST_FALLBACK");
     }
 
     if (!m_globalProxy.empty())
