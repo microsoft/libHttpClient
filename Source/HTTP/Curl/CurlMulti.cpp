@@ -257,6 +257,7 @@ HRESULT CurlMulti::Perform() noexcept
     {
         // Reschedule Perform if there are still running requests
         int workAvailable{ 0 };
+#if HC_PLATFORM == HC_PLATFORM_GDK || CURL_AT_LEAST_VERSION(7,66,0)
         // Try curl_multi_poll first, fall back to curl_multi_wait if not available
         // For non-GDK, CURL_CALL expands directly to the symbol
         if (CURL_CALL(curl_multi_poll))
@@ -267,12 +268,9 @@ HRESULT CurlMulti::Perform() noexcept
         {
             result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
         }
-
-        if (result != CURLM_OK)
-        {
-            HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_poll/wait failed with CURLCode=%u", result);
-            return HrFromCurlm(result);
-        }
+#else
+        result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
+#endif
 
         uint32_t delay = workAvailable ? 0 : PERFORM_DELAY_MS;
         ScheduleTaskQueueCallback(std::move(lock), delay);
