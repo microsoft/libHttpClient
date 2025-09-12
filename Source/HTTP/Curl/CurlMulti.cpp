@@ -257,7 +257,7 @@ HRESULT CurlMulti::Perform() noexcept
     {
         // Reschedule Perform if there are still running requests
         int workAvailable{ 0 };
-#if HC_PLATFORM == HC_PLATFORM_GDK || CURL_AT_LEAST_VERSION(7,66,0)
+#if HC_PLATFORM == HC_PLATFORM_GDK || (defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7,66,0))
         // Try curl_multi_poll first, fall back to curl_multi_wait if not available
         // For non-GDK, CURL_CALL expands directly to the symbol
         if (CURL_CALL(curl_multi_poll))
