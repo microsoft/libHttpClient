@@ -9,6 +9,11 @@
     <PlatformToolset Condition="$(VisualStudioVersion)==16">v142</PlatformToolset>
     <PlatformToolset Condition="$(VisualStudioVersion)==17">v143</PlatformToolset>
   </PropertyGroup>
+  
+  <!-- Configurable target naming - default to include suffix -->
+  <PropertyGroup>
+    <LibHttpClientIncludeSuffix Condition="'$(LibHttpClientIncludeSuffix)' == ''">true</LibHttpClientIncludeSuffix>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="libHttpClient.GDK.def" />
   </ItemGroup>
@@ -34,4 +39,10 @@
   <Import Project="$(HCBuildRoot)\libHttpClient.GDK.Shared\libHttpClient.GDK.Shared.vcxitems" Label="Shared" />
   <Import Condition="'$(HCNoZlib)' != 'true'" Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  
+  <!-- Apply configurable target naming after all imports -->
+  <PropertyGroup>
+    <TargetName Condition="'$(LibHttpClientIncludeSuffix)' != 'false'">libHttpClient.GDK</TargetName>
+    <TargetName Condition="'$(LibHttpClientIncludeSuffix)' == 'false'">libHttpClient</TargetName>
+  </PropertyGroup>
 </Project>
