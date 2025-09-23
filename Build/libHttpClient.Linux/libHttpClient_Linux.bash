@@ -95,11 +95,11 @@ if [ "$BUILD_CURL" = true ]; then
 fi
 
 if [ "$BUILD_STATIC" = false ]; then
-    # make libHttpClient static
-    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D CMAKE_C_COMPILER=clang
+    # make libHttpClient shared
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=ON
     sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 else
-    # make libHttpClient shared
-    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER
+    # make libHttpClient static
+    sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=OFF
     sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 fi
