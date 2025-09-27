@@ -413,10 +413,49 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
             sizeof(securityProtocolFlags));
         if (!result)
         {
-            HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS");
+            DWORD lastErr = GetLastError();
+            // Occasionally WinHttpSetOption(WINHTTP_OPTION_SECURE_PROTOCOLS) can fail on some
+            // platforms / configurations (e.g. older OS versions or when specific protocol
+            // flags are already implicitly enabled). The caller requested that we treat this
+            // as non-fatal: emit a warning and proceed with the session using WinHTTP defaults.
+            // If GetLastError() returned 0 (no extended error), fabricate a generic failure
+            // HRESULT just for logging purposes.
+            HRESULT hr = lastErr != 0 ? HRESULT_FROM_WIN32(lastErr) : E_FAIL;
+            HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS failed; retrying with WinHttpOpen WINHTTP_FLAG_ASYNC session");
+
+            // Retry strategy: Some platforms may not allow modifying secure protocols after
+            // opening the session with WINHTTP_FLAG_SECURE_DEFAULTS. Re-open a plain ASYNC
+            // session (no secure defaults) and try setting the option again.
             WinHttpCloseHandle(hSession);
-            return hr;
+            hSession = WinHttpOpen(
+                nullptr,
+                accessType,
+                wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
+                WINHTTP_NO_PROXY_BYPASS,
+                WINHTTP_FLAG_ASYNC);
+            if (hSession == nullptr)
+            {
+                HRESULT openHr = HRESULT_FROM_WIN32(GetLastError());
+                HC_TRACE_WARNING_HR(HTTPCLIENT, openHr, "WinHttpProvider fallback WinHttpOpen with WINHTTP_FLAG_ASYNC failed; continuing without explicitly setting secure protocols");
+            }
+            else
+            {
+                auto retryResult = WinHttpSetOption(
+                    hSession,
+                    WINHTTP_OPTION_SECURE_PROTOCOLS,
+                    &securityProtocolFlags,
+                    sizeof(securityProtocolFlags));
+                if (!retryResult)
+                {
+                    DWORD retryErr = GetLastError();
+                    HRESULT retryHr = retryErr != 0 ? HRESULT_FROM_WIN32(retryErr) : E_FAIL;
+                    HC_TRACE_WARNING_HR(HTTPCLIENT, retryHr, "WinHttpProvider retry WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS still failed; proceeding with WinHTTP defaults");
+                }
+                else
+                {
+                    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpProvider retry WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS succeeded after reopening session");
+                }
+            }
         }
     }
 
