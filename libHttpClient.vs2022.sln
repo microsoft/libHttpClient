@@ -119,7 +119,8 @@ Global
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x64.Build.0 = Debug|x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
-		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
+		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM64.ActiveCfg = Release|ARM64
+		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|ARM64.Build.0 = Release|ARM64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
 		{0A6D51A3-0D86-4D0E-9DAA-54BA75E1DA1C}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
@@ -353,8 +354,8 @@ Global
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Debug|x86.ActiveCfg = Debug|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM.Build.0 = Release|Gaming.Desktop.x64
-		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
-		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM64.Build.0 = Release|Gaming.Desktop.x64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM64.ActiveCfg = Release|ARM64
+		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|ARM64.Build.0 = Release|ARM64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
 		{A5A6E02A-21BA-4D55-9FB9-7B24DEDD3743}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
@@ -369,7 +370,6 @@ Global
 		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM.ActiveCfg = Release|Gaming.Desktop.x64
 		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM.Build.0 = Release|Gaming.Desktop.x64
 		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM64.ActiveCfg = Release|Gaming.Desktop.x64
-		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|ARM64.Build.0 = Release|Gaming.Desktop.x64
 		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|Gaming.Desktop.x64.ActiveCfg = Release|Gaming.Desktop.x64
 		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|Gaming.Desktop.x64.Build.0 = Release|Gaming.Desktop.x64
 		{30B33C66-4755-4E79-A518-0E4137A58BEA}.Release|x64.ActiveCfg = Release|Gaming.Desktop.x64
