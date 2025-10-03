@@ -32,7 +32,7 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/Zi /guard:cf %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <CETCompat>true</CETCompat>
+      <CETCompat Condition="'$(Platform)'=='x64'">true</CETCompat>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
