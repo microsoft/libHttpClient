@@ -15,6 +15,7 @@ android {
                 }
                 if (project.hasProperty("BUILD_SHARED_LIBS")) {
                     arguments << "-DBUILD_SHARED_LIBS=1"
+                    arguments << "-DANDROID_STL=c++_shared"
                 }
 
                 // Support 16KB page sizes on 64-bit devices
