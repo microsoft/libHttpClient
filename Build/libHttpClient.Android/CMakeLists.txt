@@ -89,9 +89,17 @@ if (NOT DEFINED HC_NOZLIB)
     "${PATH_TO_ROOT}/External/zlib/contrib/minizip"
  )
 
+ set(ZLIB_COMPILE_DEFINITIONS "HAVE_UNISTD_H")
+
+ # ftello and fseeko become available on minSdkVersion >= 24
+ if (ANDROID_PLATFORM_LEVEL LESS 24)
+    list(APPEND ZLIB_COMPILE_DEFINITIONS "USE_FILE32API")
+ endif()
+
+
  set_source_files_properties(
-     "${PATH_TO_ROOT}/External/zlib/contrib/minizip/ioapi.c"
-     PROPERTIES COMPILE_DEFINITIONS "MINIZIP_FOPEN_NO_64=1"
+    ${ZLIB_SOURCE_FILES}
+    PROPERTIES COMPILE_DEFINITIONS "${ZLIB_COMPILE_DEFINITIONS}"
  )
 endif()
 
@@ -109,12 +117,7 @@ endif()
     )
 
 set(ANDROID_INCLUDE_DIRS
-    "${PATH_TO_ROOT}/External/opensslGeneratedHeaders/android"
-    )
-
-add_compile_options(
-    $<$<COMPILE_LANGUAGE:CXX>:-Wno-error=implicit-function-declaration>
-    $<$<COMPILE_LANGUAGE:C>:-Wno-error=implicit-function-declaration>
+  "${PATH_TO_ROOT}/External/opensslGeneratedHeaders/android"
 )
 
 #########################
@@ -135,6 +138,25 @@ target_include_directories(
     "${ANDROID_INCLUDE_DIRS}"
     "${ZLIB_INCLUDE_DIRS}"
 )
+
+if (BUILD_SHARED_LIBS)
+  target_link_libraries(
+    "${PROJECT_NAME}"
+    PRIVATE
+      log
+      # Following should be moved to target_link_options when available with cmake 3.13
+      -Wl,--version-script,${CMAKE_CURRENT_SOURCE_DIR}/libHttpClient.Android.map.txt
+      # This causes the linker to emit an error when a version script names a
+      # symbol that is not found, rather than silently ignoring that line.
+      -Wl,--no-undefined-version
+  )
+
+  set_target_properties(
+      "${PROJECT_NAME}"
+      PROPERTIES
+      LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/libHttpClient.Android.map.txt
+  )
+endif()
 
 include("../libHttpClient.CMake/GetLibHCFlags.cmake")
 get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
