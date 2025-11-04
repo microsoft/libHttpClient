@@ -222,18 +222,32 @@ void CurlEasyRequest::Fail(HRESULT hr)
 HRESULT CurlEasyRequest::AddHeader(char const* name, char const* value) noexcept
 {
     int required = std::snprintf(nullptr, 0, "%s: %s", name, value);
-    assert(required > 0);
+    if (required <= 0)
+    {
+        return E_FAIL;
+    }
 
     m_headersBuffer.emplace_back();
     auto& header = m_headersBuffer.back();
 
-    header.resize(static_cast<size_t>(required), '\0');
-    int written = std::snprintf(&header[0], header.size() + 1, "%s: %s", name, value);
-    assert(written == required);
-    (void)written;
+    header.resize(static_cast<size_t>(required) + 1);
+    int written = std::snprintf(&header[0], header.size(), "%s: %s", name, value);
+    if (written != required)
+    {
+        // snprintf failed or truncated; drop this header so we never expose a corrupt entry
+        m_headersBuffer.pop_back();
+        return E_FAIL;
+    }
+    header.resize(static_cast<size_t>(written));
 
-    m_headers = CURL_CALL(curl_slist_append)(m_headers, header.c_str());
+    curl_slist* appended = CURL_CALL(curl_slist_append)(m_headers, header.c_str());
+    if (!appended)
+    {
+        m_headersBuffer.pop_back();
+        return E_OUTOFMEMORY;
+    }
 
+    m_headers = appended;
     return S_OK;
 }
 
