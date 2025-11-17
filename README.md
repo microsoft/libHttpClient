@@ -43,6 +43,28 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Repeat 4-8 for each new HTTP call
 1. Call HCCleanup() at shutdown before your memory manager set in step 1 is shutdown
 
+## WebSocket API Usage
+
+[See public header](../../tree/master/Include/httpClient/httpClient.h) and [Win32 WebSocket sample](../../tree/master/Samples/Win32WebSocket)
+
+1. Follow steps 1-3 from HTTP API setup above
+1. Call HCWebSocketCreate() to create a new HCWebsocketHandle with message/binary message/close event callbacks
+1. **For large binary messages (>20KB)**: Call HCWebSocketSetBinaryMessageFragmentEventFunction() to handle message fragments
+1. Optionally call HCWebSocketSetMaxReceiveBufferSize() to adjust the default 20KB receive buffer
+1. Call HCWebSocketConnectAsync() to connect to the WebSocket server
+1. Call HCWebSocketSendMessageAsync() or HCWebSocketSendBinaryMessageAsync() to send messages
+1. Handle incoming messages via your registered callbacks
+1. Call HCWebSocketDisconnect() when done
+1. Call HCWebSocketCloseHandle() to cleanup
+1. Call HCCleanup() at shutdown
+
+### Important WebSocket Notes
+
+- **Default buffer size**: WebSocket receive buffer defaults to 20KB (20,480 bytes)
+- **Message fragmentation**: Binary messages larger than the buffer size are automatically fragmented
+- **Fragment handling**: Without setting HCWebSocketSetBinaryMessageFragmentEventFunction(), large messages will be broken into chunks passed to your binary message handler with no indication they are fragments
+- **Best practice**: Either set a fragment handler OR increase buffer size with HCWebSocketSetMaxReceiveBufferSize() for your expected message sizes
+
 ## Behavior control
 
 * On GDK, XDK ERA, UWP, iOS, and Android, HCHttpCallPerform() will call native platform APIs
