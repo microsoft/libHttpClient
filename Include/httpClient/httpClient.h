@@ -929,14 +929,21 @@ typedef void
     );
 
 /// <summary>
-/// A callback invoked every time a WebSocket receives an incoming message that is larger than
-/// the WebSocket receive buffer (configurable using HCWebSocketSetMaxReceiveBufferSize). Large messages
-/// will be broken down and passed to clients in chunks.
+/// A callback invoked every time a WebSocket receives an incoming binary message that is larger than
+/// the WebSocket receive buffer (default 20KB, configurable using HCWebSocketSetMaxReceiveBufferSize). 
+/// Large messages are automatically fragmented and passed to clients in chunks.
+/// 
+/// IMPORTANT: You must set this callback using HCWebSocketSetBinaryMessageFragmentEventFunction() to properly 
+/// handle binary messages larger than the receive buffer. Without this callback, large messages will be 
+/// delivered as separate messages via HCWebSocketBinaryMessageFunction with no way to determine 
+/// they are fragments of a single message.
+/// 
+/// Typical usage: Accumulate fragments in a buffer until isLastFragment is true, then process the complete message.
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
-/// <param name="incomingBodyPayload">Binary message payload.</param>
-/// <param name="incomingBodyPayloadSize">Size of the payload in bytes.</param>
-/// <param name="isLastFragment">True if this is the last fragment in a message, false otherwise.</param>
+/// <param name="payloadBytes">Binary message fragment payload.</param>
+/// <param name="payloadSize">Size of this fragment in bytes.</param>
+/// <param name="isLastFragment">True if this is the last fragment in a message, false if more fragments follow.</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
 typedef void
 (CALLBACK* HCWebSocketBinaryMessageFragmentFunction)(
@@ -994,9 +1001,15 @@ STDAPI HCWebSocketCreate(
 /// <param name="binaryMessageFragmentFunc">A pointer to the binary message fragment handling callback to use, or a null pointer to remove.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 /// <remarks>
-/// If this handler is not set, messages larger than the configured buffer size may still be broken down and passed to the
-/// HCWebSocketBinaryMessageFunction, but there will be no indication that they are partial messages. If large WebSocket messages are expected,
-/// it is recommended to either set this handler OR set a receive buffer large enough to hold the entire message.
+/// IMPORTANT: Binary messages larger than the WebSocket receive buffer (default 20KB) are automatically fragmented.
+/// Without this handler, large messages are broken into chunks and passed to HCWebSocketBinaryMessageFunction with NO indication 
+/// they are fragments, making message reconstruction impossible. 
+/// 
+/// For applications expecting large binary messages, you MUST either:
+/// 1. Set this fragment handler to properly reconstruct messages, OR
+/// 2. Increase the receive buffer size with HCWebSocketSetMaxReceiveBufferSize() to accommodate your largest expected message
+/// 
+/// The fragment handler receives each chunk with an isLastFragment flag to indicate message completion.
 /// </remarks>
 STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
     _In_ HCWebsocketHandle websocket,
@@ -1196,9 +1209,17 @@ STDAPI HCWebSocketDisconnect(
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
-/// Configures how large the WebSocket receive buffer is allowed to grow before passing messages to clients. If a single message
-/// exceeds the maximum buffer size, the message will be broken down and passed to clients via multiple calls to the HCWebSocketMessageFunction.
-/// The default value is 20kb.
+/// Configures how large the WebSocket receive buffer is allowed to grow before messages are fragmented. 
+/// Binary messages exceeding this buffer size are automatically broken into fragments and delivered via 
+/// HCWebSocketBinaryMessageFragmentFunction (if set) or as separate messages via HCWebSocketBinaryMessageFunction.
+/// 
+/// The default value is 20KB (20,480 bytes).
+/// 
+/// IMPORTANT: For applications expecting large binary messages, you should either:
+/// 1. Set this buffer size large enough for your largest expected message, OR  
+/// 2. Use HCWebSocketSetBinaryMessageFragmentEventFunction() to properly handle message fragments
+/// 
+/// Text messages exceeding the buffer size are handled differently and may be passed via multiple calls to HCWebSocketMessageFunction.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="bufferSizeInBytes">Maximum size (in bytes) for the WebSocket receive buffer.</param>
