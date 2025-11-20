@@ -68,7 +68,7 @@ jobs:
   - job: Win32Vs22Build
     displayName: libHttpClient Win32/UWP VS2022 Build
     pool:
-      name: windows-2022
+      vmImage: windows-2022
     timeoutInMinutes: 240
     strategy:
       matrix:
