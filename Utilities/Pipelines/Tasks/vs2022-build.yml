@@ -19,8 +19,11 @@ steps:
   - script: |
       nuget install Microsoft.GDK.PC -Version 2510.0.6194 -OutputDirectory "$(Pipeline.Workspace)/gdk" -DirectDownload
       echo "GDK installed to $(Pipeline.Workspace)/gdk"
-      echo "GDK=$GameDK"
+      echo "GameDK=$GameDK"
       ls "$GameDK"
+    displayName: 'Install GDK via NuGet'
+    env:
+      GameDK: $(Pipeline.Workspace)/gdk
 
   # Install NuGet dependencies. The GUID below is the NuGetCommand for MSFT internal.
   - task: 333b11bd-d341-40d9-afcf-b32d5ce6f23b@2
