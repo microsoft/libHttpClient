@@ -69,6 +69,7 @@ jobs:
     displayName: libHttpClient Win32/UWP VS2022 Build
     variables:
       GameDK: $(Pipeline.Workspace)/gdk
+      GameDKCoreLatest: $(Pipeline.Workspace)\gdk\251000\
     pool:
       vmImage: windows-2022
     timeoutInMinutes: 240
