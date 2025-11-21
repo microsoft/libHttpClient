@@ -20,6 +20,15 @@ steps:
       nuget install Microsoft.GDK.Windows -Version 2510.0.6194 -OutputDirectory "%GameDK%" -DirectDownload
       echo "GDK installed to %GameDK%"
       ls "%GameDK%"
+      echo "1"
+      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194"
+      echo "2"
+      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194\native"
+      echo "3"
+      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194\native\251000"
+      echo "4"
+      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194\native\251000\windows"
+      echo "5"
       ls "%GameDKCoreLatest%"
     displayName: 'Install GDK.Windows via NuGet'
 
