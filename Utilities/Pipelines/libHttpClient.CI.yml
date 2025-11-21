@@ -103,21 +103,21 @@ jobs:
   # Android
   ####################
 
-  - job: AndroidBuild
-    displayName: libHttpClient Android Build
-    pool:
-      vmImage: windows-2019
-    timeoutInMinutes: 180
-    strategy:
-      matrix:
-        Debug:
-          Configuration: Debug
-        Release:
-          Configuration: Release
-    steps:
-      - template: Tasks/android-build.yml
-        parameters:
-          configuration: $(Configuration)
+  # - job: AndroidBuild
+  #   displayName: libHttpClient Android Build
+  #   pool:
+  #     vmImage: windows-2019
+  #   timeoutInMinutes: 180
+  #   strategy:
+  #     matrix:
+  #       Debug:
+  #         Configuration: Debug
+  #       Release:
+  #         Configuration: Release
+  #   steps:
+  #     - template: Tasks/android-build.yml
+  #       parameters:
+  #         configuration: $(Configuration)
 
   ####################
   # iOS
