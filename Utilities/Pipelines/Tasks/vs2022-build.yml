@@ -17,8 +17,8 @@ steps:
 
   # Install the GDK package explicitly into $(Pipeline.Workspace)/gdk
   - script: |
-      nuget install Microsoft.GDK.PC -Version 2510.0.6194 -OutputDirectory "$GameDK" -DirectDownload
-      echo "GDK installed to $(Pipeline.Workspace)/gdk $GameDK %GameDK%"
+      nuget install Microsoft.GDK.PC -Version 2510.0.6194 -OutputDirectory "%GameDK%" -DirectDownload
+      echo "GDK installed to $(Pipeline.Workspace)\gdk %GameDK%"
       ls "%GameDK%"
     displayName: 'Install GDK.PC via NuGet'
 
