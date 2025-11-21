@@ -91,10 +91,6 @@ jobs:
           Platform: ARM64
           Configuration: Release
     steps:
-      - checkout: git://Xbox.Services/sdk.external
-        clean: true
-        path: s/externals/gdkx
-
       - template: Tasks/vs2022-build.yml
         parameters:
           platform: $(Platform)
