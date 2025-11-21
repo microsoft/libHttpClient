@@ -68,28 +68,30 @@ jobs:
   - job: Win32Vs22Build
     displayName: libHttpClient Win32/UWP VS2022 Build
     variables:
+      GDKNugetVersion: 2510.0.6194
+      GDKVersion: 251000
       GameDK: $(Pipeline.Workspace)\gdk
-      GameDKCoreLatest: $(GameDK)\Microsoft.GDK.Windows.2510.0.6194\native\251000\
+      GameDKCoreLatest: $(GameDK)\Microsoft.GDK.Windows.$(GDKNugetVersion)\native\$(GDKVersion)\
     pool:
       vmImage: windows-2022
     timeoutInMinutes: 240
     strategy:
       matrix:
-        # x86_Debug:
-        #   Platform: x86
-        #   Configuration: Debug
-        # x64_Debug:
-        #   Platform: x64
-        #   Configuration: Debug
+        x86_Debug:
+          Platform: x86
+          Configuration: Debug
+        x64_Debug:
+          Platform: x64
+          Configuration: Debug
         ARM64_Debug:
           Platform: ARM64
           Configuration: Debug
-        # x86_Release:
-        #   Platform: x86
-        #   Configuration: Release
-        # x64_Release:
-        #   Platform: x64
-        #   Configuration: Release
+        x86_Release:
+          Platform: x86
+          Configuration: Release
+        x64_Release:
+          Platform: x64
+          Configuration: Release
         ARM64_Release:
           Platform: ARM64
           Configuration: Release

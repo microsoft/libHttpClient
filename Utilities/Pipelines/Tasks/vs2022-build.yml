@@ -17,17 +17,8 @@ steps:
 
   # Install the GDK package explicitly into $(Pipeline.Workspace)/gdk
   - script: |
-      nuget install Microsoft.GDK.Windows -Version 2510.0.6194 -OutputDirectory "%GameDK%" -DirectDownload
+      nuget install Microsoft.GDK.Windows -Version %GDKNugetVersion% -OutputDirectory "%GameDK%" -DirectDownload
       echo "GDK installed to %GameDK%"
-      ls "%GameDK%"
-      echo "* %GameDK%\Microsoft.GDK.Windows.2510.0.6194"
-      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194"
-      echo "* %GameDK%\Microsoft.GDK.Windows.2510.0.6194\native"
-      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194\native"
-      echo "* %GameDK%\Microsoft.GDK.Windows.2510.0.6194\native\251000"
-      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194\native\251000"
-      echo "* %GameDK%\Microsoft.GDK.Windows.2510.0.6194\native\251000\windows"
-      ls "%GameDK%\Microsoft.GDK.Windows.2510.0.6194\native\251000\windows"
       echo "GameDKCoreLatest=%GameDKCoreLatest%"
     displayName: 'Install GDK.Windows via NuGet'
 
