@@ -67,6 +67,11 @@ jobs:
 
   - job: Win32Vs22Build
     displayName: libHttpClient Win32/UWP VS2022 Build
+    resources:
+      repositories:
+        - repository: gdkx
+          type: git
+          name: Xbox.Services.sdk.external
     pool:
       vmImage: windows-2022
     timeoutInMinutes: 240
@@ -91,6 +96,14 @@ jobs:
           Platform: ARM64
           Configuration: Release
     steps:
+      - checkout: self
+        clean: true
+        persistedCredentials: true
+
+      - checkout: gdkx
+        clean: true
+        path: s/externals/gdkx
+
       - template: Tasks/vs2022-build.yml
         parameters:
           platform: $(Platform)
