@@ -91,19 +91,10 @@ jobs:
           Platform: ARM64
           Configuration: Release
     steps:
-      - name: Checkout libhttpclient
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Checkout GDKX SDK External
+      - checkout: gdkx
+        repository: Xbox.Services/sdk.external
         clean: true
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/Xbox.Services.sdk.external
-          ref: main
-          path: externals/gdkx
-          token: ${{ secrets.GITHUB_TOKEN }}
+        path: s/externals/gdkx
 
       - template: Tasks/vs2022-build.yml
         parameters:
