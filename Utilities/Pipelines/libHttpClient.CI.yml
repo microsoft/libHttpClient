@@ -106,7 +106,7 @@ jobs:
   - job: AndroidBuild
     displayName: libHttpClient Android Build
     pool:
-      vmImage: windows-2019
+      vmImage: windows-2022
     timeoutInMinutes: 180
     strategy:
       matrix:
