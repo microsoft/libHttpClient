@@ -7,5 +7,10 @@
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" /> 
   <Import Project="$(HCBuildRoot)\libcrypto.Win32\libcrypto.Win32.vcxitems" Label="Shared" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <DisableSpecificWarnings>4319</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /> 
 </Project>
