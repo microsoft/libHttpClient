@@ -9,7 +9,7 @@
   <Import Project="$(HCBuildRoot)\libcrypto.Win32\libcrypto.Win32.vcxitems" Label="Shared" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <DisableSpecificWarnings>4319</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4244;4267;4319</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /> 
