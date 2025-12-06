@@ -830,7 +830,9 @@ void WinHttpConnection::callback_status_sending_request(
     _In_ WinHttpConnection* pRequestContext,
     _In_ void* /*statusInfo*/)
 {
-    if (hRequestHandle != nullptr)
+    // Only verify server certificate if XNetworking security information is available
+    // (it won't be available when XNetworking feature is not present, e.g., on PC GDK builds)
+    if (hRequestHandle != nullptr && pRequestContext->m_securityInformation.securityInformation != nullptr)
     {
         HRESULT hr = XNetworkingVerifyServerCertificate(hRequestHandle, pRequestContext->m_securityInformation.securityInformation);
         if (FAILED(hr))

@@ -22,6 +22,11 @@ Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
     {
         RETURN_IF_FAILED(XNetworkingRegisterConnectivityHintChanged(provider->m_immediateQueue, provider.get(), WinHttpProvider::NetworkConnectivityChangedCallback, &provider->m_networkConnectivityChangedToken));
     }
+    else
+    {
+        // XNetworking not available (e.g., PC GDK build), assume network is ready
+        provider->m_networkInitialized = true;
+    }
 
     RETURN_IF_FAILED(RegisterAppStateChangeNotification(WinHttpProvider::AppStateChangedCallback, provider.get(), &provider->m_appStateChangedToken));
 
