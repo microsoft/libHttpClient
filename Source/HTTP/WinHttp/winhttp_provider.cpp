@@ -18,12 +18,16 @@ Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
     RETURN_IF_FAILED(XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &provider->m_immediateQueue));
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    if (!XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
+    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
     {
-        return E_HC_NO_NETWORK;
+        RETURN_IF_FAILED(XNetworkingRegisterConnectivityHintChanged(provider->m_immediateQueue, provider.get(), WinHttpProvider::NetworkConnectivityChangedCallback, &provider->m_networkConnectivityChangedToken));
+    }
+    else
+    {
+        // XNetworking not available (e.g., PC GDK build), assume network is ready
+        provider->m_networkInitialized = true;
     }
 
-    RETURN_IF_FAILED(XNetworkingRegisterConnectivityHintChanged(provider->m_immediateQueue, provider.get(), WinHttpProvider::NetworkConnectivityChangedCallback, &provider->m_networkConnectivityChangedToken));
     RETURN_IF_FAILED(RegisterAppStateChangeNotification(WinHttpProvider::AppStateChangedCallback, provider.get(), &provider->m_appStateChangedToken));
 
 #endif // HC_PLATFORM == HC_PLATFORM_GDK
@@ -44,9 +48,12 @@ WinHttpProvider::~WinHttpProvider()
         UnregisterAppStateChangeNotification(m_appStateChangedToken);
     }
 
-    if (m_networkConnectivityChangedToken.token)
+    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
     {
-        XNetworkingUnregisterConnectivityHintChanged(m_networkConnectivityChangedToken, true);
+        if (m_networkConnectivityChangedToken.token)
+        {
+            XNetworkingUnregisterConnectivityHintChanged(m_networkConnectivityChangedToken, true);
+        }
     }
 #endif
 
@@ -296,35 +303,45 @@ HRESULT WinHttpProvider::CloseAllConnections()
 
 Result<XPlatSecurityInformation> WinHttpProvider::GetSecurityInformation(const char* url)
 {
+    constexpr uint32_t defaultSecurityProtocolFlags =
+        WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
+        WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 |
+        WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
+
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    // Synchronously query SecurityInfo
-    XAsyncBlock asyncBlock{};
-    asyncBlock.queue = m_immediateQueue;
-    RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsync(url, &asyncBlock));
-    RETURN_IF_FAILED(XAsyncGetStatus(&asyncBlock, true));
+    bool useXNetworking = XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking);
+    if (useXNetworking)
+    {
+        // Synchronously query SecurityInfo
+        XAsyncBlock asyncBlock{};
+        asyncBlock.queue = m_immediateQueue;
+        RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsync(url, &asyncBlock));
+        RETURN_IF_FAILED(XAsyncGetStatus(&asyncBlock, true));
 
-    size_t securityInformationBufferByteCount{ 0 };
-    RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsyncResultSize(&asyncBlock, &securityInformationBufferByteCount));
-    assert(securityInformationBufferByteCount > 0);
+        size_t securityInformationBufferByteCount{ 0 };
+        RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsyncResultSize(&asyncBlock, &securityInformationBufferByteCount));
+        assert(securityInformationBufferByteCount > 0);
 
-    XPlatSecurityInformation securityInfo;
-    securityInfo.buffer.resize(securityInformationBufferByteCount);
-    RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsyncResult(
-        &asyncBlock,
-        securityInfo.buffer.size(),
-        nullptr,
-        securityInfo.buffer.data(),
-        &securityInfo.securityInformation));
+        XPlatSecurityInformation securityInfo;
+        securityInfo.buffer.resize(securityInformationBufferByteCount);
+        RETURN_IF_FAILED(XNetworkingQuerySecurityInformationForUrlAsyncResult(
+            &asyncBlock,
+            securityInfo.buffer.size(),
+            nullptr,
+            securityInfo.buffer.data(),
+            &securityInfo.securityInformation));
 
-    // Duplicate security protocol flags for convenience
-    securityInfo.enabledHttpSecurityProtocolFlags = securityInfo.securityInformation->enabledHttpSecurityProtocolFlags;
+        // Duplicate security protocol flags for convenience
+        securityInfo.enabledHttpSecurityProtocolFlags = securityInfo.securityInformation->enabledHttpSecurityProtocolFlags;
 
-    return std::move(securityInfo);
+        return std::move(securityInfo);
+    }
 #else
-    // Use default security protocol flags independent of URL
     UNREFERENCED_PARAMETER(url);
-    return XPlatSecurityInformation{ WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2 };
 #endif
+
+    // Fallback to default security protocol flags
+    return XPlatSecurityInformation{ defaultSecurityProtocolFlags };
 }
 
 Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, const char* url)
@@ -626,18 +643,26 @@ void WinHttpProvider::NetworkConnectivityChangedCallback(void* context, const XN
     // Ignore network connectivity changes if we are suspended
     if (!provider->m_isSuspended)
     {
-        // Always requery the latest network connectivity hint rather than relying on the passed parameter in case this is a stale notification
-        XNetworkingConnectivityHint hint{};
-        HRESULT hr = XNetworkingGetConnectivityHint(&hint);
-        if (SUCCEEDED(hr))
+        if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
         {
-            HC_TRACE_INFORMATION(HTTPCLIENT, "NetworkConnectivityChangedCallback, hint.networkInitialized=%d", hint.networkInitialized);
-            provider->m_networkInitialized = hint.networkInitialized;
+            // Always requery the latest network connectivity hint rather than relying on the passed parameter in case this is a stale notification
+            XNetworkingConnectivityHint hint{};
+            HRESULT hr = XNetworkingGetConnectivityHint(&hint);
+            if (SUCCEEDED(hr))
+            {
+                HC_TRACE_INFORMATION(HTTPCLIENT, "NetworkConnectivityChangedCallback, hint.networkInitialized=%d", hint.networkInitialized);
+                provider->m_networkInitialized = hint.networkInitialized;
+            }
+            else
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "Unable to get NetworkConnectivityHint, setting m_networkInitialized=false");
+                provider->m_networkInitialized = false;
+            }
         }
         else
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "Unable to get NetworkConnectivityHint, setting m_networkInitialized=false");
-            provider->m_networkInitialized = false;
+            // Fallback to default network state if XNetworking is not available
+            provider->m_networkInitialized = true;
         }
     }
 }
