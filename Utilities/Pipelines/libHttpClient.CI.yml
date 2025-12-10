@@ -33,35 +33,6 @@ name: $(Build.DefinitionName)_$(date:yyMM).$(date:dd)$(rev:rrr)
 
 jobs:
   ####################
-  # Visual Studio 2019
-  ####################
-
-  - job: Win32Vs19Build
-    displayName: libHttpClient Win32/UWP VS2019 Build
-    pool:
-      name: xbl-1es-vs2019-pool
-    timeoutInMinutes: 180
-    strategy:
-      matrix:
-        x86_Debug:
-          Platform: x86
-          Configuration: Debug
-        x64_Debug:
-          Platform: x64
-          Configuration: Debug
-        x86_Release:
-          Platform: x86
-          Configuration: Release
-        x64_Release:
-          Platform: x64
-          Configuration: Release
-    steps:
-      - template: Tasks/vs2019-build.yml
-        parameters:
-          platform: $(Platform)
-          configuration: $(Configuration)
-
-  ####################
   # Visual Studio 2022
   ####################
 
