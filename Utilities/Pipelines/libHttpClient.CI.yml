@@ -99,7 +99,7 @@ jobs:
   - job: iOSBuild
     displayName: libHttpClient iOS Build
     pool:
-      vmImage: macOS-13
+      vmImage: macOS-15
     timeoutInMinutes: 180
     strategy:
       matrix:
