@@ -119,7 +119,7 @@
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
       <AdditionalDependencies>$(Console_Libs);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Platform)'=='x64'">xgameruntime.lib;XCurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Platform)'=='ARM64'">xgameruntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='ARM64'">$(GDKLibPath)\xgameruntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
 	</Link>
     <Lib>
       <AdditionalOptions>/ignore:4099 /ignore:4264 %(AdditionalOptions)</AdditionalOptions>
