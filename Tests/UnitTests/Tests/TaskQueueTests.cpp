@@ -121,10 +121,7 @@ public:
         // this may also fail, as those tests could have leaked.
         //
         uint32_t gr = ApiDiag::g_globalApiRefs;
-        // Only fail if we have a significant leak (more than a few references)
-        // Global persistent objects (like the default process queue) may legitimately
-        // remain allocated between test runs
-        VERIFY_IS_TRUE(gr <= 10);
+        VERIFY_ARE_EQUAL(0u, gr);
         return true;
     }
 
@@ -134,10 +131,7 @@ public:
     TEST_CLASS_CLEANUP(ClassCleanup)
     {
         uint32_t gr = ApiDiag::g_globalApiRefs;
-        // Only fail if we have a significant leak (more than a few references)
-        // Global persistent objects (like the default process queue) may legitimately
-        // remain allocated between test runs
-        VERIFY_IS_TRUE(gr <= 10);
+        VERIFY_ARE_EQUAL(0u, gr);
     }
 
 #endif

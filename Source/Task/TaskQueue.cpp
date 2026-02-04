@@ -1891,13 +1891,14 @@ STDAPI_(bool) XTaskQueueIsEmpty(
 // is not in use by a task or is empty.  If not true, the queue
 // will be marked for closure and closed when it can. 
 //
-STDAPI_(void) XTaskQueueCloseHandle(
-    _In_ XTaskQueueHandle queue
+static void XTaskQueueCloseHandle(
+    _In_ XTaskQueueHandle queue,
+    _In_ bool force
     ) noexcept
 {
     ITaskQueue* aq = GetQueue(queue);
 
-    if (aq != nullptr && aq->CanClose())
+    if (aq != nullptr && (force || aq->CanClose()))
     {
         if (USE_UNIQUE_HANDLES() && queue != aq->GetHandle())
         {
@@ -1910,6 +1911,18 @@ STDAPI_(void) XTaskQueueCloseHandle(
 
         aq->Release();
     }
+}
+
+//
+// Closes the task queue.  A queue can only be closed if it
+// is not in use by a task or is empty.  If not true, the queue
+// will be marked for closure and closed when it can. 
+//
+STDAPI_(void) XTaskQueueCloseHandle(
+    _In_ XTaskQueueHandle queue
+    ) noexcept
+{
+    XTaskQueueCloseHandle(queue, false);
 }
 
 //
@@ -2126,13 +2139,6 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
 
             defaultProcessQueue = ProcessGlobals::g_defaultProcessQueue;
         }
-        else
-        {
-            // The default process task queue never terminates and survives
-            // a re-init of the runtime. Ensure the handle's runtime iteration
-            // matches the current iteration.
-            defaultProcessQueue->m_runtimeIteration = GetCurrentRuntimeIteration();
-        }
 
         processQueue = defaultProcessQueue;
     }
@@ -2237,7 +2243,8 @@ STDAPI_(void) XTaskQueueResumeTermination(
 //    is empty).
 //
 #ifdef SUSPEND_API
-STDAPI_(void) XTaskQueueGlobalSuspend()
+STDAPI_(void) XTaskQueueGlobalSuspend(
+    ) noexcept
 {
     ProcessGlobals::g_suspendState.Suspend();
     ProcessGlobals::g_suspendState.WaitForQueuesToSuspend();
@@ -2252,8 +2259,34 @@ STDAPI_(void) XTaskQueueGlobalSuspend()
 // 2. The dispatcher will start returing items again.
 //
 #ifdef SUSPEND_API
-STDAPI_(void) XTaskQueueGlobalResume()
+STDAPI_(void) XTaskQueueGlobalResume(
+    ) noexcept
 {
     ProcessGlobals::g_suspendState.Resume();
 }
 #endif
+
+//
+// Uninitializes global task queue state. This closes handles to per-process
+// task queues and resets state back to defaults. If there is a per-process
+// task queue, it will be closed but not terminated.  Queue termination is
+// up to the caller.
+//
+STDAPI_(void) XTaskQueueUninitialize(
+) noexcept
+{
+    std::atomic<XTaskQueueHandle>* globals[] =
+    {
+        &ProcessGlobals::g_defaultProcessQueue,
+        &ProcessGlobals::g_processQueue
+    };
+
+    for (auto queue : globals)
+    {
+        auto handle = queue->exchange(ProcessGlobals::g_invalidQueueHandle);
+        if (handle != nullptr && handle != ProcessGlobals::g_invalidQueueHandle)
+        {
+            XTaskQueueCloseHandle(handle, true);
+        }
+    }
+}

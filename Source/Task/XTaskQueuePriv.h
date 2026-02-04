@@ -54,7 +54,8 @@ STDAPI_(void) XTaskQueueResumeTermination(
 /// 2. It will not return items from the dispatcher (it acts like it
 ///    is empty).
 /// </summary>
-STDAPI_(void) XTaskQueueGlobalSuspend();
+STDAPI_(void) XTaskQueueGlobalSuspend(
+    ) noexcept;
 
 /// <summary>
 /// Resumes the activity of all task queues in the process. When
@@ -63,7 +64,8 @@ STDAPI_(void) XTaskQueueGlobalSuspend();
 /// 1. Queues that are not empty will signal they have items.
 /// 2. The dispatcher will start returing items again.
 /// </summary>
-STDAPI_(void) XTaskQueueGlobalResume();
+STDAPI_(void) XTaskQueueGlobalResume(
+    ) noexcept;
 
 /// <summary>
 /// Options when duplicating a task queue handle.
@@ -104,4 +106,13 @@ STDAPI XTaskQueueDuplicateHandleWithOptions(
 STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
     _In_ XTaskQueueDuplicateOptions options,
     _Out_ XTaskQueueHandle *queue
+    ) noexcept;
+
+/// <summary>
+/// Uninitializes global task queue state. This closes handles to per-process
+/// task queues and resets state back to defaults. If there is a per-process
+/// task queue, it will be closed but not terminated.  Queue termination is
+/// up to the caller.
+/// </summary>
+STDAPI_(void) XTaskQueueUninitialize(
     ) noexcept;
