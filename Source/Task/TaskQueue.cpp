@@ -7,12 +7,14 @@
 #include "XTaskQueuePriv.h"
 
 //
-// Note:  ApiDiag is only used for reference count validation during
-//        unit tests.  Otherwise, g_globalApiRefs is unused.
+// ApiRefs tracks global refcounts for all APIs. It is used to idenfity memory leaks
+// in tests and can be called to wait for all refs to be released.
 //
-namespace ApiDiag
+namespace ApiRefs
 {
-    std::atomic<uint32_t> g_globalApiRefs { 0 };
+    std::atomic<uint32_t> g_globalApiRefs{ 0 };
+    std::mutex g_waitMutex;
+    std::condition_variable g_waitCv;
     
     void GlobalAddRef()
     {
@@ -21,7 +23,18 @@ namespace ApiDiag
     
     void GlobalRelease()
     {
-        g_globalApiRefs--;
+        auto priorRefs = g_globalApiRefs.fetch_sub(1);
+        if (priorRefs == 1)
+        {
+            g_waitCv.notify_all();
+        }
+    }
+
+    bool WaitZeroRefs(_In_ uint32_t timeoutMilliseconds)
+    {
+        std::unique_lock<std::mutex> lock(g_waitMutex);
+        g_waitCv.wait_for(lock, std::chrono::milliseconds(timeoutMilliseconds));
+        return g_globalApiRefs == 0;
     }
 }
 
@@ -1462,14 +1475,6 @@ HRESULT TaskQueueImpl::Initialize(
     RETURN_IF_FAILED(m_work.Port->Attach(&m_work));
     RETURN_IF_FAILED(m_completion.Port->Attach(&m_completion));
 
-    if (!allowClose)
-    {
-        // This queue will never be closed.  Subtract off the
-        // global api refs so tests don't think there's a leak.  We
-        // need to subtract off our own ref and the refs of each of our ports.
-        ApiDiag::g_globalApiRefs -= 3;
-    }
-
 #ifdef SUSPEND_API
     RETURN_IF_FAILED(m_suspendHandler.Initialize(ProcessGlobals::g_suspendState, this));
 #endif
@@ -1891,13 +1896,14 @@ STDAPI_(bool) XTaskQueueIsEmpty(
 // is not in use by a task or is empty.  If not true, the queue
 // will be marked for closure and closed when it can. 
 //
-STDAPI_(void) XTaskQueueCloseHandle(
-    _In_ XTaskQueueHandle queue
+static void XTaskQueueCloseHandle(
+    _In_ XTaskQueueHandle queue,
+    _In_ bool force
     ) noexcept
 {
     ITaskQueue* aq = GetQueue(queue);
 
-    if (aq != nullptr && aq->CanClose())
+    if (aq != nullptr && (force || aq->CanClose()))
     {
         if (USE_UNIQUE_HANDLES() && queue != aq->GetHandle())
         {
@@ -1910,6 +1916,18 @@ STDAPI_(void) XTaskQueueCloseHandle(
 
         aq->Release();
     }
+}
+
+//
+// Closes the task queue.  A queue can only be closed if it
+// is not in use by a task or is empty.  If not true, the queue
+// will be marked for closure and closed when it can. 
+//
+STDAPI_(void) XTaskQueueCloseHandle(
+    _In_ XTaskQueueHandle queue
+    ) noexcept
+{
+    XTaskQueueCloseHandle(queue, false);
 }
 
 //
@@ -2126,13 +2144,6 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
 
             defaultProcessQueue = ProcessGlobals::g_defaultProcessQueue;
         }
-        else
-        {
-            // The default process task queue never terminates and survives
-            // a re-init of the runtime. Ensure the handle's runtime iteration
-            // matches the current iteration.
-            defaultProcessQueue->m_runtimeIteration = GetCurrentRuntimeIteration();
-        }
 
         processQueue = defaultProcessQueue;
     }
@@ -2237,7 +2248,8 @@ STDAPI_(void) XTaskQueueResumeTermination(
 //    is empty).
 //
 #ifdef SUSPEND_API
-STDAPI_(void) XTaskQueueGlobalSuspend()
+STDAPI_(void) XTaskQueueGlobalSuspend(
+    ) noexcept
 {
     ProcessGlobals::g_suspendState.Suspend();
     ProcessGlobals::g_suspendState.WaitForQueuesToSuspend();
@@ -2252,8 +2264,37 @@ STDAPI_(void) XTaskQueueGlobalSuspend()
 // 2. The dispatcher will start returing items again.
 //
 #ifdef SUSPEND_API
-STDAPI_(void) XTaskQueueGlobalResume()
+STDAPI_(void) XTaskQueueGlobalResume(
+    ) noexcept
 {
     ProcessGlobals::g_suspendState.Resume();
 }
 #endif
+
+//
+// Uninitializes global task queue state. This closes handles to per-process
+// task queues and resets state back to defaults. If there is a per-process
+// task queue, it will be closed but not terminated.  Queue termination is
+// up to the caller.
+//
+STDAPI_(bool) XTaskQueueUninitialize(
+    _In_ uint32_t timeoutMilliseconds
+    ) noexcept
+{
+    std::atomic<XTaskQueueHandle>* globals[] =
+    {
+        &ProcessGlobals::g_defaultProcessQueue,
+        &ProcessGlobals::g_processQueue
+    };
+
+    for (auto queue : globals)
+    {
+        auto handle = queue->exchange(ProcessGlobals::g_invalidQueueHandle);
+        if (handle != nullptr && handle != ProcessGlobals::g_invalidQueueHandle)
+        {
+            XTaskQueueCloseHandle(handle, true);
+        }
+    }
+
+    return ApiRefs::WaitZeroRefs(timeoutMilliseconds);
+}

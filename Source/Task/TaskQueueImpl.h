@@ -15,7 +15,7 @@
 
 SYSTEM_HANDLE_DEFINE_HELPERS(XTaskQueueHandle, XSystemHandleType::TaskQueue);
 
-namespace ApiDiag
+namespace ApiRefs
 {
     void GlobalAddRef();
     void GlobalRelease();
@@ -32,13 +32,12 @@ public:
     
     uint32_t __stdcall AddRef()
     {
-        ApiDiag::GlobalAddRef();
+        ApiRefs::GlobalAddRef();
         return m_refs++;
     }
 
     uint32_t __stdcall Release()
     {
-        ApiDiag::GlobalRelease();
         uint32_t refs = --m_refs;
 
         // Note: rundown may addref/release as it
@@ -50,6 +49,7 @@ public:
             RundownObject();
             delete this;
         }
+        ApiRefs::GlobalRelease();
         return refs;
     }
 

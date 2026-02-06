@@ -9,11 +9,6 @@
 
 #define TEST_CLASS_OWNER L"brianpe"
 
-namespace ApiDiag
-{
-    extern std::atomic<uint32_t> g_globalApiRefs;
-}
-
 template <class H, class C>
 class AutoHandleWrapper
 {
@@ -120,11 +115,7 @@ public:
         // leaks in the task queue.  If any other tests fail
         // this may also fail, as those tests could have leaked.
         //
-        uint32_t gr = ApiDiag::g_globalApiRefs;
-        // Only fail if we have a significant leak (more than a few references)
-        // Global persistent objects (like the default process queue) may legitimately
-        // remain allocated between test runs
-        VERIFY_IS_TRUE(gr <= 10);
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
         return true;
     }
 
@@ -133,11 +124,7 @@ public:
 
     TEST_CLASS_CLEANUP(ClassCleanup)
     {
-        uint32_t gr = ApiDiag::g_globalApiRefs;
-        // Only fail if we have a significant leak (more than a few references)
-        // Global persistent objects (like the default process queue) may legitimately
-        // remain allocated between test runs
-        VERIFY_IS_TRUE(gr <= 10);
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
     }
 
 #endif
@@ -1347,6 +1334,30 @@ public:
         XTaskQueueResumeTermination(queue);
 
         VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(waitHandle, 2000));
+    }
+
+    DEFINE_TEST_CASE(VerifyUninitialize)
+    {
+        // Verify the process task queue can be created and does not prevent uninit.
+        AutoQueueHandle globalQueue;
+        VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
+        globalQueue.Close();
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
+
+        // Verify that uninit waits for a queue with active callbacks.
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &queue));
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, 500, nullptr, [](void*, bool) {}));
+        queue.Close();
+
+        // Uninitialize should return false because there are outstanding items.
+        VERIFY_IS_FALSE(XTaskQueueUninitialize(0));
+
+        // The queue should be cleaned up shortly after the 500ms item runs.
+        UINT64 start = GetTickCount64();
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(1000));
+        LOG_COMMENT(L"Uninit took %I64u ms", GetTickCount64() - start);
     }
 
 #ifdef SUSPEND_API
