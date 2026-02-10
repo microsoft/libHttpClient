@@ -2083,7 +2083,7 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
         if (defaultProcessQueue == ProcessGlobals::g_invalidQueueHandle)
         {
             // The default process queue hasn't been created yet. Create it locally
-            //then swap it into the atomic.
+            // then swap it into the atomic.
 
             referenced_ptr<TaskQueueImpl> aq(new (std::nothrow) TaskQueueImpl);
             if (aq != nullptr && SUCCEEDED(aq->Initialize(
