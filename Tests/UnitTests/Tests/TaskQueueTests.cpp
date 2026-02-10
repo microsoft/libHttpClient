@@ -115,7 +115,7 @@ public:
         // leaks in the task queue.  If any other tests fail
         // this may also fail, as those tests could have leaked.
         //
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
         return true;
     }
 
@@ -124,7 +124,7 @@ public:
 
     TEST_METHOD_CLEANUP(TestCleanup)
     {
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
     }
 
 #endif
