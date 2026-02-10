@@ -108,7 +108,7 @@ public:
     BEGIN_TEST_CLASS(TaskQueueTests)
     END_TEST_CLASS()
 
-    TEST_CLASS_CLEANUP(ClassCleanup)
+    TEST_METHOD_CLEANUP(TestCleanup)
     {
         //
         // Note: this is a global refcount for tracking
@@ -122,7 +122,7 @@ public:
 #else
     DEFINE_TEST_CLASS_PROPS(TaskQueueTests);
 
-    TEST_CLASS_CLEANUP(ClassCleanup)
+    TEST_METHOD_CLEANUP(TestCleanup)
     {
         VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
     }
@@ -899,7 +899,7 @@ public:
             };
 
             VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, evt, termCb));
-            VERIFY_ARE_NOT_EQUAL((DWORD)WAIT_TIMEOUT, WaitForSingleObject(evt, 5000));
+            VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(evt, 5000));
             CloseHandle(evt);
         }
 
@@ -925,31 +925,19 @@ public:
     {
         AutoQueueHandle queue;
         VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&queue));
-        XTaskQueueHandle globalQueue = queue;
         VERIFY_IS_NOT_NULL(queue);
 
         auto cb = [](void*, bool) {};
 
         VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Work, nullptr, cb));
 
-        // The global queue should not be closable or terminatable.
-        XTaskQueueCloseHandle(queue);
-        XTaskQueueCloseHandle(queue);
-        XTaskQueueCloseHandle(queue);
-        XTaskQueueCloseHandle(queue);
-        XTaskQueueCloseHandle(queue);
-
-        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Work, nullptr, cb));
-
-        VERIFY_ARE_EQUAL(E_ACCESSDENIED, XTaskQueueTerminate(queue, false, nullptr, nullptr));
-
         // Now replace the global with our own.
+        AutoQueueHandle globalQueue(queue.Release());
         AutoQueueHandle ourQueue;
         VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &ourQueue));
 
         XTaskQueueSetCurrentProcessTaskQueue(ourQueue);
 
-        queue.Close();
         VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&queue));
         VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Work, nullptr, cb));
         VERIFY_IS_FALSE(XTaskQueueIsEmpty(ourQueue, XTaskQueuePort::Work));
@@ -970,8 +958,20 @@ public:
         AutoQueueHandle globalQueue;
         VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
         VERIFY_IS_NOT_NULL(globalQueue);
-        
-        VERIFY_ARE_EQUAL(E_ACCESSDENIED, XTaskQueueTerminate(globalQueue, true, nullptr, nullptr));
+
+        auto cbEmpty = [](void*, bool) {};
+
+        // Verify the default task queue can be terminated, but can come back if the
+        // runtime is re-initialized.
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(globalQueue, false, nullptr, nullptr));
+        VERIFY_ARE_EQUAL(E_ABORT, XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, nullptr, cbEmpty));
+
+        globalQueue.Close();
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
+        VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
+        VERIFY_IS_NOT_NULL(globalQueue);
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, nullptr, cbEmpty));
         
         // We should be able to create a composite off of this queue and
         // terminate the composite safely.

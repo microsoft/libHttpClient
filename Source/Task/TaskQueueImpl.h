@@ -254,6 +254,7 @@ private:
     XTaskQueuePortObject m_header = { };
     XTaskQueueDispatchMode m_dispatchMode = XTaskQueueDispatchMode::Manual;
     AtomicVector<ITaskQueuePortContext*> m_attachedContexts;
+    std::atomic<uint32_t> m_processingSerializedTbCallback{ 0 };
     std::atomic<uint32_t> m_processingCallback{ 0 };
     std::condition_variable m_processingCallbackCv;
     std::mutex m_lock;
@@ -392,9 +393,7 @@ public:
 
     HRESULT Initialize(
         _In_ XTaskQueueDispatchMode workMode,
-        _In_ XTaskQueueDispatchMode completionMode,
-        _In_ bool allowTermination,
-        _In_ bool allowClose);
+        _In_ XTaskQueueDispatchMode completionMode);
 
     HRESULT Initialize(
         _In_ XTaskQueuePortHandle workPort,
@@ -423,9 +422,6 @@ public:
 
     void __stdcall UnregisterSubmitCallback(
         _In_ XTaskQueueRegistrationToken token) override;
-
-    bool __stdcall CanTerminate() override;
-    bool __stdcall CanClose() override;
 
     HRESULT __stdcall Terminate(
         _In_ bool wait, 
@@ -464,7 +460,6 @@ private:
 
     struct TerminationData
     {
-        bool allowed;
         bool terminated;
         std::mutex lock;
         std::condition_variable cv;
@@ -476,7 +471,6 @@ private:
     TerminationData m_termination;
     TaskQueuePortContextImpl m_work;
     TaskQueuePortContextImpl m_completion;
-    bool m_allowClose;
 
 #ifdef SUSPEND_API
     SuspendResumeHandler m_suspendHandler;

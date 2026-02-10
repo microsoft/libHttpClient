@@ -148,9 +148,6 @@ struct ITaskQueue : IApi
     virtual void __stdcall UnregisterSubmitCallback(
         _In_ XTaskQueueRegistrationToken token) = 0;
 
-    virtual bool __stdcall CanTerminate() = 0;
-    virtual bool __stdcall CanClose() = 0;
-
     virtual HRESULT __stdcall Terminate(
         _In_ bool wait, 
         _In_opt_ void* callbackContext, 

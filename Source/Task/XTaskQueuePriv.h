@@ -112,11 +112,10 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
 /// Uninitializes global task queue state. This closes handles to per-process
 /// task queues and resets state back to defaults. If there is a per-process
 /// task queue, it will be closed but not terminated.  Queue termination is
-/// up to the caller. If a timeout is provided this API will wait for all
-/// outstanding task queues to delete and is only necessary if you intend to
-/// unload the task queue DLL while the process remains running.
-/// Returns true if all outstanding queues were deleted or false if there
-/// are still references.
+/// up to the caller. This API returns true if all task queues have been
+/// cleaned up and deleted, or false if there are still outstanding references.
+/// A timeout may be provided to wait for outstanding queues to be cleaned up.
+/// The default is not to wait. The maximum timeout capped to 5000ms.
 /// </summary>
 STDAPI_(bool) XTaskQueueUninitialize(
     _In_ uint32_t timeoutMilliseconds = 0
