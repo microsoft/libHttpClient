@@ -116,6 +116,8 @@ private:
     static HRESULT CALLBACK FactorialWorkerSimple(XAsyncOp opCode, const XAsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
+        HRESULT hr = S_OK;
+        d->AddRef();
 
         d->opCodes.push_back(opCode);
 
@@ -159,12 +161,15 @@ private:
             break;
         }
 
-        return S_OK;
+        d->Release();
+        return hr;
     }
 
     static HRESULT CALLBACK FactorialWorkerDistributed(XAsyncOp opCode, const XAsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
+        HRESULT hr = S_OK;
+        d->AddRef();
 
         d->opCodes.push_back(opCode);
 
@@ -196,20 +201,21 @@ private:
                 if (d->canceled)
                 {
                     d->inWork--;
-                    return E_ABORT;
+                    hr = E_ABORT;
+                    break;
                 }
 
                 d->result *= d->value;
                 d->value--;
 
-                HRESULT hr = XAsyncSchedule(data->async, d->iterationWait);
+                hr = XAsyncSchedule(data->async, d->iterationWait);
                 d->inWork--;
 
                 if (SUCCEEDED(hr))
                 {
                     hr = E_PENDING;
                 }
-                return hr;
+                break;
             }
 
             d->inWork--;
@@ -217,7 +223,8 @@ private:
             break;
         }
 
-        return S_OK;
+        d->Release();
+        return hr;
     }
 
     static HRESULT CALLBACK FactorialWorkerDistributedWithSchedule(XAsyncOp opCode, const XAsyncProviderData* data)
@@ -391,7 +398,20 @@ public:
         ops.push_back(XAsyncOp::GetResult);
         ops.push_back(XAsyncOp::Cleanup);
 
+        UINT64 opTicks = GetTickCount64();
+        while (data.Ref->opCodes.size() < ops.size() && GetTickCount64() - opTicks < 2000)
+        {
+            Sleep(10);
+        }
+
         VerifyOps(data.Ref->opCodes, ops);
+
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
 
         VERIFY_QUEUE_EMPTY(queue);
     }
@@ -457,6 +477,7 @@ public:
 
         data.Ref->iterationWait = 100;
         data.Ref->value = 5;
+        const DWORD initialValue = data.Ref->value;
 
         UINT64 ticks = GetTickCount64();
         VERIFY_SUCCEEDED(FactorialDistributedAsync(data.Ref, &async));
@@ -467,8 +488,9 @@ public:
         VERIFY_ARE_EQUAL(data.Ref->result, result);
         VERIFY_ARE_EQUAL(data.Ref->result, (DWORD)120);
 
-        // Iteration wait should have paused 100ms between each iteration.
-        VERIFY_IS_GREATER_THAN_OR_EQUAL(ticks, (UINT64)500);
+        // Iteration wait should have paused between each iteration (allow one interval of timer slack).
+        const UINT64 expectedMinTicks = (static_cast<UINT64>(data.Ref->iterationWait) * initialValue) - data.Ref->iterationWait;
+        VERIFY_IS_GREATER_THAN_OR_EQUAL(ticks, expectedMinTicks);
 
         ops.push_back(XAsyncOp::Begin);
         ops.push_back(XAsyncOp::DoWork);
@@ -480,7 +502,21 @@ public:
         ops.push_back(XAsyncOp::GetResult);
         ops.push_back(XAsyncOp::Cleanup);
 
+        UINT64 opTicks = GetTickCount64();
+        while (data.Ref->opCodes.size() < ops.size() && GetTickCount64() - opTicks < 2000)
+        {
+            Sleep(10);
+        }
+
         VerifyOps(data.Ref->opCodes, ops);
+
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
+
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -709,11 +745,14 @@ public:
         XAsyncBlock async = {};
         auto data = AutoRef<FactorialCallData>(new FactorialCallData {});
         DWORD result = 0;
+        HANDLE completionEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        VERIFY_IS_NOT_NULL(completionEvent);
 
         CompletionThunk cb([&](XAsyncBlock* async)
         {
             Sleep(2000);
             VERIFY_SUCCEEDED(FactorialResult(async, &result));
+            SetEvent(completionEvent);
         });
 
         async.context = &cb;
@@ -724,6 +763,15 @@ public:
 
         VERIFY_SUCCEEDED(FactorialAsync(data.Ref, &async));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(completionEvent, 5000));
+        CloseHandle(completionEvent);
+
+        UINT64 ticks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - ticks < 2000)
+        {
+            Sleep(10);
+        }
 
         VERIFY_ARE_EQUAL(data.Ref->result, result);
         VERIFY_ARE_EQUAL(data.Ref->result, (DWORD)120);

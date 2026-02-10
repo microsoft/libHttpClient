@@ -917,6 +917,15 @@ public:
         }
 
         uint32_t expectedCount = normalCount + futureCount + eventCount;
+        if (!wait)
+        {
+            UINT64 ticks = GetTickCount64();
+            while ((data.workCount.load() != expectedCount || data.completionCount.load() != expectedCount)
+                && GetTickCount64() - ticks < 5000)
+            {
+                Sleep(10);
+            }
+        }
         VERIFY_ARE_EQUAL(expectedCount, data.workCount.load());
         VERIFY_ARE_EQUAL(expectedCount, data.completionCount.load());
     }
