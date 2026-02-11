@@ -548,13 +548,8 @@ private:
             {
                 Block* d = block;
                 block = block->next;
-
-                for (uint32_t idx = 0; idx < m_blockSize; idx++)
-                {
-                    d->nodes[idx].~Node();
-                }
-
-                ::operator delete(d, std::align_val_t(8));
+                delete[] d->nodes;
+                delete d;
             }
         }
 
@@ -648,19 +643,23 @@ private:
                 return false;
             }
 
-            size_t size = sizeof(Node) * m_blockSize + sizeof(Block);
-            void* mem = ::operator new(size, std::align_val_t(8), std::nothrow);
-
-            if (mem == nullptr)
+            // Note: allocate nodes and block separately because alignment
+            // may not be the same.
+            Block* block = new (std::nothrow) Block;
+            if (block == nullptr)
             {
                 return false;
             }
 
-            Block* block = new (mem) Block;
+            block->nodes = new (std::nothrow) Node[m_blockSize];
+            if (block->nodes == nullptr)
+            {
+                delete block;
+                return false;
+            }
 
             block->id = blockId;        
             block->next = nullptr;
-            block->nodes = new (block + 1) Node[m_blockSize];
 
             // Connect all the nodes in the new block. Element zero is
             // the "tail" of this block.
