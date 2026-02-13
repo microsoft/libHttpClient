@@ -216,7 +216,8 @@ public:
             XTaskQueueCloseHandle(dups[idx]);
         }
 
-        VERIFY_FAILED(XTaskQueueDuplicateHandle(dups[0], &dups[1]));
+        alignas(void*) uint8_t fakeHandleStorage[64] = {};
+        VERIFY_FAILED(XTaskQueueDuplicateHandle(reinterpret_cast<XTaskQueueHandle>(fakeHandleStorage), &dups[1]));
         XTaskQueueCloseHandle(queue);
     }
 
