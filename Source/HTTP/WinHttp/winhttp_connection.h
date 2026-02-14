@@ -283,7 +283,7 @@ private:
     HINTERNET m_hConnection = nullptr;
     HINTERNET m_hRequest = nullptr;
 
-    HCCallHandle m_call; // non-owning
+    HCCallHandle m_call; // ref-counted, released in destructor
     Uri m_uri;
     XAsyncBlock* m_asyncBlock = nullptr; // non-owning
     XPlatSecurityInformation const m_securityInformation{};

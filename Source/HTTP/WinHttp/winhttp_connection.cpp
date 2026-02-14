@@ -35,7 +35,7 @@ WinHttpConnection::WinHttpConnection(
     XPlatSecurityInformation&& securityInformation
 ) :
     m_hSession{ hSession },
-    m_call{ call },
+    m_call{ HCHttpCallDuplicateHandle(call) },
     m_proxyType{ proxyType },
     m_securityInformation{ std::move(securityInformation) },
     m_winHttpWebSocketExports{ WinHttpProvider::GetWinHttpWebSocketExports() }
@@ -70,6 +70,8 @@ WinHttpConnection::~WinHttpConnection()
     {
         WinHttpCloseHandle(m_hConnection);
     }
+
+    HCHttpCallCloseHandle(m_call);
 }
 
 Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
