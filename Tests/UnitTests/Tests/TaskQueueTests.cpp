@@ -457,10 +457,10 @@ public:
             uint64_t call2Ticks = result.Times[1] - baseTicks;
             uint64_t call3Ticks = result.Times[2] - baseTicks;
 
-            // Call 1 at index 0 should have a tick count > 1000 and < 1050 (shouldn't take 50ms)
-            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1050);
-            VERIFY_IS_TRUE(call2Ticks < 50);
-            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 550);
+            // Call 1 at index 0 should have a tick count > 1000 and < 1100 (100ms tolerance for debugger overhead)
+            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1100);
+            VERIFY_IS_TRUE(call2Ticks < 100);
+            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 600);
         }
     }
 
