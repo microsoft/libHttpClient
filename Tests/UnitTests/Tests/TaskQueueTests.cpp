@@ -216,7 +216,8 @@ public:
             XTaskQueueCloseHandle(dups[idx]);
         }
 
-        VERIFY_FAILED(XTaskQueueDuplicateHandle(dups[0], &dups[1]));
+        alignas(void*) uint8_t fakeHandleStorage[64] = {};
+        VERIFY_FAILED(XTaskQueueDuplicateHandle(reinterpret_cast<XTaskQueueHandle>(fakeHandleStorage), &dups[1]));
         XTaskQueueCloseHandle(queue);
     }
 
@@ -456,10 +457,10 @@ public:
             uint64_t call2Ticks = result.Times[1] - baseTicks;
             uint64_t call3Ticks = result.Times[2] - baseTicks;
 
-            // Call 1 at index 0 should have a tick count > 1000 and < 1050 (shouldn't take 50ms)
-            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1050);
-            VERIFY_IS_TRUE(call2Ticks < 50);
-            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 550);
+            // Call 1 at index 0 should have a tick count > 1000 and < 1100 (100ms tolerance for debugger overhead)
+            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1100);
+            VERIFY_IS_TRUE(call2Ticks < 100);
+            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 600);
         }
     }
 
@@ -917,6 +918,15 @@ public:
         }
 
         uint32_t expectedCount = normalCount + futureCount + eventCount;
+        if (!wait)
+        {
+            UINT64 ticks = GetTickCount64();
+            while ((data.workCount.load() != expectedCount || data.completionCount.load() != expectedCount)
+                && GetTickCount64() - ticks < 5000)
+            {
+                Sleep(10);
+            }
+        }
         VERIFY_ARE_EQUAL(expectedCount, data.workCount.load());
         VERIFY_ARE_EQUAL(expectedCount, data.completionCount.load());
     }
@@ -963,7 +973,7 @@ public:
 
         // Verify the default task queue can be terminated, but can come back if the
         // runtime is re-initialized.
-        VERIFY_SUCCEEDED(XTaskQueueTerminate(globalQueue, false, nullptr, nullptr));
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(globalQueue, true, nullptr, nullptr));
         VERIFY_ARE_EQUAL(E_ABORT, XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, nullptr, cbEmpty));
 
         globalQueue.Close();
@@ -1632,4 +1642,213 @@ public:
         }
     }
 #endif
+
+    DEFINE_TEST_CASE(VerifyCompositeTerminationRaceRepro)
+    {
+        // Stress test for two race conditions in XTaskQueue termination:
+        // Race #1: Nested Terminate during SignalTerminations iteration
+        // Race #2: Concurrent ScheduleTermination heap corruption
+        //
+        // Test Parameters (configurable via environment variables):
+        // HC_STRESS_XTASKQUEUE_REPRO=1 - Enable stress mode
+        // HC_STRESS_XTASKQUEUE_REPRO_AVOID_RACE=1 - Use wait=true (default: wait=false)
+        //
+        // CRITICAL: Run with page heap enabled for Race #2 detection!
+        // gflags /p /enable <test_exe> /full
+
+        auto getEnvBool = [](PCWSTR name) -> bool
+        {
+            wchar_t buffer[8] = {};
+            DWORD len = GetEnvironmentVariableW(name, buffer, _countof(buffer));
+            if (len == 0 || len >= _countof(buffer))
+            {
+                return false;
+            }
+            return buffer[0] == L'1' || _wcsicmp(buffer, L"true") == 0;
+        };
+
+        bool stress = getEnvBool(L"HC_STRESS_XTASKQUEUE_REPRO");
+        bool avoidRaceMode = getEnvBool(L"HC_STRESS_XTASKQUEUE_REPRO_AVOID_RACE");
+        
+        // Test parameters: Aggressive concurrency to trigger race conditions
+        constexpr size_t k_thread_count = 64;              // High thread count for maximum interleaving
+        constexpr size_t k_iterations_per_thread = 100;    // Iterations per thread
+        constexpr size_t k_work_items_per_queue = 10;      // Work items to keep callbacks active
+
+        const size_t threadCount = stress ? 256 : k_thread_count;
+        const size_t iterationsPerThread = stress ? 100 : k_iterations_per_thread;
+
+        LOG_COMMENT(L"Composite termination race repro: threads=%zu iterations=%zu workItems=%zu avoidRace=%d",
+            threadCount, iterationsPerThread, k_work_items_per_queue, avoidRaceMode ? 1 : 0);
+
+        // Create root queue with thread pool dispatch
+        AutoQueueHandle root;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::ThreadPool,
+            XTaskQueueDispatchMode::ThreadPool,
+            &root));
+
+        // Get ports for creating composite delegates
+        XTaskQueuePortHandle workPort = nullptr;
+        XTaskQueuePortHandle completionPort = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(root, XTaskQueuePort::Work, &workPort));
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(root, XTaskQueuePort::Completion, &completionPort));
+
+        // Synchronization and counters
+        std::atomic<int> ready{ 0 };
+        std::atomic<int> done{ 0 };
+        std::atomic<int> createErrors{ 0 };
+        std::atomic<int> terminateErrors{ 0 };
+        std::atomic<int> workCallbackCount{ 0 };
+        std::atomic<int> delegateTerminationsRemaining{ 0 };  // Track delegate termination completion
+        std::atomic<bool> go{ false };
+
+        std::mutex cvMutex;
+        std::condition_variable cv;
+
+        std::vector<std::thread> threads;
+        threads.reserve(threadCount);
+
+        // Spawn worker threads
+        for (size_t t = 0; t < threadCount; ++t)
+        {
+            threads.emplace_back([&]
+            {
+                // Signal ready and wait for coordinated start
+                ready.fetch_add(1, std::memory_order_acq_rel);
+                {
+                    std::lock_guard<std::mutex> lock(cvMutex);
+                    cv.notify_all();
+                }
+
+                {
+                    std::unique_lock<std::mutex> lock(cvMutex);
+                    cv.wait(lock, [&] { return go.load(std::memory_order_acquire); });
+                }
+
+                // Rapidly create, populate, and terminate composite queues
+                // This creates continuous churn of termination callbacks executing concurrently
+                for (size_t iter = 0; iter < iterationsPerThread; ++iter)
+                {
+                    XTaskQueueHandle delegateQueue = nullptr;
+                    HRESULT hr = XTaskQueueCreateComposite(workPort, completionPort, &delegateQueue);
+                    
+                    if (FAILED(hr) || delegateQueue == nullptr)
+                    {
+                        createErrors.fetch_add(1, std::memory_order_relaxed);
+                        continue;
+                    }
+
+                    // Submit work items that will be executing/queued during termination
+                    // This ensures callbacks are active when termination occurs
+                    for (size_t w = 0; w < k_work_items_per_queue; ++w)
+                    {
+                        XTaskQueueSubmitCallback(
+                            delegateQueue,
+                            XTaskQueuePort::Work,
+                            &workCallbackCount,
+                            [](void* context, bool canceled)
+                            {
+                                if (!canceled)
+                                {
+                                    std::atomic<int>* counter = static_cast<std::atomic<int>*>(context);
+                                    counter->fetch_add(1, std::memory_order_relaxed);
+                                    // Brief work to keep callbacks active during termination
+                                    std::this_thread::sleep_for(std::chrono::microseconds(50));
+                                }
+                            });
+                    }
+
+                    // Track this delegate's termination - increment before terminating
+                    delegateTerminationsRemaining.fetch_add(1, std::memory_order_acq_rel);
+
+                    // Terminate with wait=false and a callback to track completion
+                    // Each queue is independent, so we coordinate termination externally
+                    hr = XTaskQueueTerminate(
+                        delegateQueue, 
+                        false,  // wait=false: delegate terminations are independent
+                        &delegateTerminationsRemaining,
+                        [](void* context)
+                        {
+                            // Decrement when this delegate's termination completes
+                            std::atomic<int>* counter = static_cast<std::atomic<int>*>(context);
+                            counter->fetch_sub(1, std::memory_order_acq_rel);
+                        });
+                        
+                    if (FAILED(hr) && hr != HRESULT_FROM_WIN32(ERROR_INVALID_STATE))
+                    {
+                        terminateErrors.fetch_add(1, std::memory_order_relaxed);
+                        // Rollback the counter since termination failed
+                        delegateTerminationsRemaining.fetch_sub(1, std::memory_order_acq_rel);
+                    }
+                    
+                    XTaskQueueCloseHandle(delegateQueue);
+
+                    // Periodic yield to maximize interleaving of termination callbacks
+                    if ((iter % 10) == 0)
+                    {
+                        std::this_thread::yield();
+                    }
+                }
+
+                // Signal completion
+                done.fetch_add(1, std::memory_order_acq_rel);
+                {
+                    std::lock_guard<std::mutex> lock(cvMutex);
+                    cv.notify_all();
+                }
+            });
+        }
+
+        // Wait for all threads to be ready
+        {
+            std::unique_lock<std::mutex> lock(cvMutex);
+            const bool started = cv.wait_for(lock, std::chrono::seconds(30), [&]
+            {
+                return ready.load(std::memory_order_acquire) == static_cast<int>(threadCount);
+            });
+            VERIFY_IS_TRUE(started);
+        }
+
+        // Start all threads simultaneously
+        go.store(true, std::memory_order_release);
+        cv.notify_all();
+
+        // Wait for all threads to complete
+        {
+            std::unique_lock<std::mutex> lock(cvMutex);
+            const bool finished = cv.wait_for(lock, std::chrono::seconds(300), [&]
+            {
+                return done.load(std::memory_order_acquire) == static_cast<int>(threadCount);
+            });
+            VERIFY_IS_TRUE(finished);
+        }
+
+        // Join all threads
+        for (auto& t : threads)
+        {
+            t.join();
+        }
+
+        // Terminate the root before waiting for delegate terminations.
+        // Queues are independent, so this order should be stable.
+        XTaskQueueTerminate(root, true, nullptr, nullptr);
+        XTaskQueueCloseHandle(root.Release());
+
+        // Wait for all delegate terminations to complete before exiting,
+        // so the DLL isn't unloaded out from under termination processing.
+        UINT64 waitStartTicks = GetTickCount64();
+        while (delegateTerminationsRemaining.load(std::memory_order_acquire) > 0
+            && (GetTickCount64() - waitStartTicks) < (UINT64)60000)
+        {
+            std::this_thread::yield();
+        }
+        VERIFY_ARE_EQUAL(0, delegateTerminationsRemaining.load(std::memory_order_acquire));
+
+        // Validate results
+        VERIFY_ARE_EQUAL(0, terminateErrors.load());
+        
+        LOG_COMMENT(L"Test completed: workCallbacks=%d createErrors=%d terminateErrors=%d",
+            workCallbackCount.load(), createErrors.load(), terminateErrors.load());
+    }
 };

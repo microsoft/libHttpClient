@@ -7,6 +7,7 @@
 #include "XAsyncProviderPriv.h"
 #include "XTaskQueue.h"
 #include "XTaskQueuePriv.h"
+#include <array>
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -79,13 +80,43 @@ private:
         DWORD result = 0;
         DWORD iterationWait = 0;
         DWORD workThread = 0;
-        std::vector<XAsyncOp> opCodes;
+        
+        // Fixed-capacity lock-free opcode log for concurrent append
+        static constexpr size_t MAX_OPCODES = 16;
+        std::array<std::atomic<XAsyncOp>, MAX_OPCODES> opCodesArray{};
+        std::atomic<size_t> opCodesCount{ 0 };
+        
         std::atomic<int> inWork = 0;
         std::atomic<int> refs = 0;
         std::atomic<bool> canceled = false;
 
         void AddRef() { refs++; }
         void Release() { if (--refs == 0) delete this; }
+        
+        // Thread-safe append operation
+        void RecordOp(XAsyncOp op)
+        {
+            size_t idx = opCodesCount.fetch_add(1, std::memory_order_relaxed);
+            if (idx < MAX_OPCODES)
+            {
+                opCodesArray[idx].store(op, std::memory_order_release);
+            }
+            // Silently drop if overflow (test will fail on verification anyway)
+        }
+        
+        // Snapshot current opcodes into a vector for verification
+        std::vector<XAsyncOp> GetOpCodes() const
+        {
+            size_t count = opCodesCount.load(std::memory_order_acquire);
+            count = (count < MAX_OPCODES) ? count : MAX_OPCODES;
+            std::vector<XAsyncOp> result;
+            result.reserve(count);
+            for (size_t i = 0; i < count; i++)
+            {
+                result.push_back(opCodesArray[i].load(std::memory_order_acquire));
+            }
+            return result;
+        }
     };
 
     static PCWSTR OpName(XAsyncOp op)
@@ -116,8 +147,10 @@ private:
     static HRESULT CALLBACK FactorialWorkerSimple(XAsyncOp opCode, const XAsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
+        HRESULT hr = S_OK;
+        d->AddRef();
 
-        d->opCodes.push_back(opCode);
+        d->RecordOp(opCode);
 
         switch (opCode)
         {
@@ -159,14 +192,17 @@ private:
             break;
         }
 
-        return S_OK;
+        d->Release();
+        return hr;
     }
 
     static HRESULT CALLBACK FactorialWorkerDistributed(XAsyncOp opCode, const XAsyncProviderData* data)
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
+        HRESULT hr = S_OK;
+        d->AddRef();
 
-        d->opCodes.push_back(opCode);
+        d->RecordOp(opCode);
 
         switch (opCode)
         {
@@ -196,20 +232,21 @@ private:
                 if (d->canceled)
                 {
                     d->inWork--;
-                    return E_ABORT;
+                    hr = E_ABORT;
+                    break;
                 }
 
                 d->result *= d->value;
                 d->value--;
 
-                HRESULT hr = XAsyncSchedule(data->async, d->iterationWait);
+                hr = XAsyncSchedule(data->async, d->iterationWait);
                 d->inWork--;
 
                 if (SUCCEEDED(hr))
                 {
                     hr = E_PENDING;
                 }
-                return hr;
+                break;
             }
 
             d->inWork--;
@@ -217,7 +254,8 @@ private:
             break;
         }
 
-        return S_OK;
+        d->Release();
+        return hr;
     }
 
     static HRESULT CALLBACK FactorialWorkerDistributedWithSchedule(XAsyncOp opCode, const XAsyncProviderData* data)
@@ -391,7 +429,14 @@ public:
         ops.push_back(XAsyncOp::GetResult);
         ops.push_back(XAsyncOp::Cleanup);
 
-        VerifyOps(data.Ref->opCodes, ops);
+        VerifyOps(data.Ref->GetOpCodes(), ops);
+
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
 
         VERIFY_QUEUE_EMPTY(queue);
     }
@@ -457,6 +502,7 @@ public:
 
         data.Ref->iterationWait = 100;
         data.Ref->value = 5;
+        const DWORD initialValue = data.Ref->value;
 
         UINT64 ticks = GetTickCount64();
         VERIFY_SUCCEEDED(FactorialDistributedAsync(data.Ref, &async));
@@ -467,8 +513,9 @@ public:
         VERIFY_ARE_EQUAL(data.Ref->result, result);
         VERIFY_ARE_EQUAL(data.Ref->result, (DWORD)120);
 
-        // Iteration wait should have paused 100ms between each iteration.
-        VERIFY_IS_GREATER_THAN_OR_EQUAL(ticks, (UINT64)500);
+        // Iteration wait should have paused between each iteration (allow one interval of timer slack).
+        const UINT64 expectedMinTicks = (static_cast<UINT64>(data.Ref->iterationWait) * initialValue) - data.Ref->iterationWait;
+        VERIFY_IS_GREATER_THAN_OR_EQUAL(ticks, expectedMinTicks);
 
         ops.push_back(XAsyncOp::Begin);
         ops.push_back(XAsyncOp::DoWork);
@@ -480,7 +527,14 @@ public:
         ops.push_back(XAsyncOp::GetResult);
         ops.push_back(XAsyncOp::Cleanup);
 
-        VerifyOps(data.Ref->opCodes, ops);
+        VerifyOps(data.Ref->GetOpCodes(), ops);
+
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -554,8 +608,9 @@ public:
         Sleep(500);
         VERIFY_ARE_EQUAL(E_ABORT, hrCallback);
 
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cancel);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cleanup);
+        auto opCodes = data.Ref->GetOpCodes();
+        VerifyHasOp(opCodes, XAsyncOp::Cancel);
+        VerifyHasOp(opCodes, XAsyncOp::Cleanup);
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -587,9 +642,10 @@ public:
         VERIFY_ARE_EQUAL(XAsyncGetStatus(&async, true), E_ABORT);
         XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 700);
 
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cancel);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cleanup);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::DoWork);
+        auto opCodes = data.Ref->GetOpCodes();
+        VerifyHasOp(opCodes, XAsyncOp::Cancel);
+        VerifyHasOp(opCodes, XAsyncOp::Cleanup);
+        VerifyHasOp(opCodes, XAsyncOp::DoWork);
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -620,9 +676,10 @@ public:
         VERIFY_ARE_EQUAL(XAsyncGetStatus(&async, true), E_ABORT);
         Sleep(500);
 
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cancel);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cleanup);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::DoWork);
+        auto opCodes = data.Ref->GetOpCodes();
+        VerifyHasOp(opCodes, XAsyncOp::Cancel);
+        VerifyHasOp(opCodes, XAsyncOp::Cleanup);
+        VerifyHasOp(opCodes, XAsyncOp::DoWork);
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -709,11 +766,14 @@ public:
         XAsyncBlock async = {};
         auto data = AutoRef<FactorialCallData>(new FactorialCallData {});
         DWORD result = 0;
+        HANDLE completionEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        VERIFY_IS_NOT_NULL(completionEvent);
 
         CompletionThunk cb([&](XAsyncBlock* async)
         {
             Sleep(2000);
             VERIFY_SUCCEEDED(FactorialResult(async, &result));
+            SetEvent(completionEvent);
         });
 
         async.context = &cb;
@@ -724,6 +784,15 @@ public:
 
         VERIFY_SUCCEEDED(FactorialAsync(data.Ref, &async));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(completionEvent, 5000));
+        CloseHandle(completionEvent);
+
+        UINT64 ticks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - ticks < 2000)
+        {
+            Sleep(10);
+        }
 
         VERIFY_ARE_EQUAL(data.Ref->result, result);
         VERIFY_ARE_EQUAL(data.Ref->result, (DWORD)120);

@@ -185,6 +185,27 @@ STDAPI_(void) XTaskQueueCloseHandle(
 /// preventing new items from being queued.  Once a queue is terminated
 /// its handle can be closed. New items cannot be enqueued to a task
 /// queue that has been terminated.
+///
+/// Each task queue terminates independently. For composite queues created
+/// with XTaskQueueCreateComposite, terminating a composite queue does NOT
+/// automatically terminate other queues sharing the same ports.
+///
+/// When wait=true:
+/// - Blocks until this queue's termination callback completes
+/// - Does NOT wait for other independent queues (including composite delegates)
+/// - Ensures this queue's termination callback has finished executing
+/// - Safe to unload code/modules after this returns
+///
+/// When wait=false:
+/// - Returns immediately after initiating termination
+/// - The termination callback will be invoked asynchronously when termination completes
+///
+/// The termination callback is invoked after all work and completion callbacks
+/// have been canceled or completed. After the termination callback returns, the
+/// implementation will no longer access the queue's internal state.
+///
+/// For coordinated shutdown of multiple queues sharing ports, use termination
+/// callbacks to track completion of each queue before performing final cleanup.
 /// </summary>
 /// <param name='queue'>The queue to terminate.</param>
 /// <param name='wait'>True to wait for the termination to complete.</param>

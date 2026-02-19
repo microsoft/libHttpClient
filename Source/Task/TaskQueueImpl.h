@@ -262,6 +262,7 @@ private:
     std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
     std::unique_ptr<LocklessQueue<TerminationEntry*>> m_terminationList;
     std::unique_ptr<LocklessQueue<TerminationEntry*>> m_pendingTerminationList;
+    std::mutex m_terminationLock;
     OS::WaitTimer m_timer;
     OS::ThreadPool m_threadPool;
     std::atomic<uint64_t> m_timerDue = { UINT64_MAX };
@@ -312,6 +313,7 @@ private:
 
     void SignalTerminations();
     void ScheduleTermination(_In_ TerminationEntry* term);
+    bool TerminationListEmpty();
 
     void SignalQueue();
     void NotifyItemQueued();
