@@ -376,9 +376,9 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
     {
     case XAsyncOp::Begin:
     {
-        std::vector<XAsyncBlock*> activeRequests;
+        xbox::httpclient::Vector<XAsyncBlock*> activeRequests;
 #ifndef HC_NOWEBSOCKETS
-        std::vector<ActiveWebSocketContext*> connectedWebSockets;
+        xbox::httpclient::Vector<ActiveWebSocketContext*> connectedWebSockets;
 #endif
         bool scheduleCleanup = false;
         {
