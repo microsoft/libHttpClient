@@ -90,59 +90,50 @@ while ($true) {
 	if (Test-Path $dumpPath) { Remove-Item $dumpPath -Force -ErrorAction SilentlyContinue }
 
 	$dumpPathCdb = $dumpPath -replace '\\','/'
-	$dumpOnBreakpoint = 'sxd ibp'
-	$dumpSymbols = @(
-		'TE_Common!WEX::TestExecution::Verify::VerificationFailed<tagVARIANT,tagVARIANT,WEX::TestExecution::Verify::VerifyMessageFunctor>',
-		'TE_Common!WEX::TestExecution::Verify::VerificationFailed<tagVARIANT,tagVARIANT,WEX::TestExecution::Private::VerifyMessageFunctor>',
-		'TE_Common!WEX::TestExecution::ComVerify::AreEqual',
-		'libHttpClient_UnitTest_TAEF!WEX::TestExecution::Private::MacroVerify::VerificationFailed',
-		'libHttpClient_UnitTest_TAEF!WEX::TestExecution::Private::MacroVerify::AreEqualImpl<unsigned int>',
-		'libHttpClient_UnitTest_TAEF!WEX::TestExecution::Private::MacroVerify::IsTrueImpl<char>',
-		'ucrtbased!abort',
-		'ucrtbase!abort',
-		'ucrtbased!issue_debug_notification',
-		'ucrtbase!issue_debug_notification',
-		'vcruntime140d!__fastfail',
-		'vcruntime140_1d!__fastfail',
-		'vcruntime140d!_invoke_watson',
-		'vcruntime140_1d!_invoke_watson',
-		'ucrtbased!_CrtDbgReportW',
-		'ucrtbased!_raiseabort',
-		'ucrtbase!_raiseabort'
-	)
-	$dumpBreakpoints = $dumpSymbols | ForEach-Object { New-DumpOnSymbol -Symbol $_ -DumpPath $dumpPathCdb }
+	$stackTraceFile = Join-Path $LogDir ("stack_{0:D6}_{1}_{2}.txt" -f $iteration, $stamp, $nonce)
+	$stackPathCdb = $stackTraceFile -replace '\\','/'
 
+	# Helper function to generate diagnostic commands (log stacks, dump, exit)
+	function Get-DiagnosticCommand {
+		param(
+			[string]$StackFile,
+			[string]$DumpFile,
+			[switch]$IncludeAnalyze
+		)
+		$analyze = if ($IncludeAnalyze) { '!analyze -v; ' } else { '' }
+		return ".logopen $StackFile; ${analyze}~*k; .logclose; .dump /ma /o $DumpFile; q"
+	}
+
+	$diagCmd = Get-DiagnosticCommand -StackFile $stackPathCdb -DumpFile $dumpPathCdb -IncludeAnalyze
+	$diagCmdNoAnalyze = Get-DiagnosticCommand -StackFile $stackPathCdb -DumpFile $dumpPathCdb
+
+	# Ctrl+C handler: capture all thread stacks and dump before quitting
+	$ctrlCHandler = 'sxe -c "' + $diagCmd + '" 0x40010005'
+	# Access violation handler: capture stacks and dump
+	$avHandler = 'sxe -c "' + $diagCmd + '" av'
+	# Stack overflow handler: capture stacks and dump
+	$stackOverflowHandler = 'sxe -c "' + $diagCmd + '" 0xc0000409'
+
+	# Common debugger setup
+	$cmdLines = @(
+		'.childdbg 1'
+		'sxd ibp'
+		'.logopen ' + $logPath
+		('bp ucrtbased!abort "' + $diagCmd + '"')
+		('bp ucrtbase!abort "' + $diagCmd + '"')
+		('bp vcruntime140d!_invoke_watson "' + $diagCmd + '"')
+		$stackOverflowHandler
+		$avHandler
+		'sxd c0000374'
+		$ctrlCHandler
+		'g'
+	)
+
+	# Append mode-specific exit behavior
 	if ($ManualDebug) {
-		$cmdLines = @(
-			'.childdbg 1',
-			$dumpOnBreakpoint
-		) + $dumpBreakpoints + @(
-			'sxd eh',
-			'sxi 0xe06d7363',
-			'sxe 0x40000015',
-			'sxe 0xc0000409',
-			'sxe 0xc000013a',
-			'sxe av',
-			'sxe c0000374',
-			'g',
-			'g'
-		)
+		$cmdLines += 'g'
 	} else {
-		$cmdLines = @(
-			'.childdbg 1',
-			$dumpOnBreakpoint
-		) + $dumpBreakpoints + @(
-			'sxd eh',
-			'sxi 0xe06d7363',
-			('sxe -c "!analyze -v; ~*k; .dump /ma /o ' + $dumpPathCdb + '; .kill; q" 0xc000013a'),
-			('sxe -c "!analyze -v; ~*k; .dump /ma /o ' + $dumpPathCdb + '; .kill; q" 0x40000015'),
-			('sxe -c "!analyze -v; ~*k; .dump /ma /o ' + $dumpPathCdb + '; .kill; q" 0xc0000409'),
-			('sxd -c "!analyze -v; ~*k; .dump /ma /o ' + $dumpPathCdb + '; .kill; q" av'),
-			('sxd -c "!analyze -v; ~*k; .dump /ma /o ' + $dumpPathCdb + '; .kill; q" c0000374'),
-			'g',
-			'g', # resume on TE's initial breakpoint
-			'q'
-		)
+		$cmdLines += 'q'
 	}
 	$cmdLines | Set-Content -Path $cmdFile -Encoding ASCII
 
@@ -152,6 +143,7 @@ while ($true) {
     if (Test-Path -Path $dumpPath -PathType Leaf ) {
 		Write-Host "Crash dump detected; stopping" -ForegroundColor Red
 		Write-Host "Log: $logPath"
+		Write-Host "Stack trace: $stackTraceFile"
 		Write-Host "Dump: $dumpPath"
 		break
 
@@ -160,13 +152,13 @@ while ($true) {
 	if ($exitCode -ne 0) {
 		Write-Host "Non-zero exit code: $exitCode" -ForegroundColor Red
 		Write-Host "Log: $logPath"
+		Write-Host "Stack trace: $stackTraceFile"
 		Write-Host "Dump: $dumpPath"
 		break
 	}
 
-	# Successful run: clean up log/dump/cmd to avoid accumulation
+	# Successful run: clean up log/cmd to avoid accumulation (keep dumps/stacks for retention)
 	if (Test-Path $logPath) { Remove-Item $logPath -Force -ErrorAction SilentlyContinue }
-	if (Test-Path $dumpPath) { Remove-Item $dumpPath -Force -ErrorAction SilentlyContinue }
 	if (Test-Path $cmdFile) { Remove-Item $cmdFile -Force -ErrorAction SilentlyContinue }
 }
 
