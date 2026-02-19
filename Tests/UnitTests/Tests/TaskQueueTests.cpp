@@ -963,7 +963,7 @@ public:
 
         // Verify the default task queue can be terminated, but can come back if the
         // runtime is re-initialized.
-        VERIFY_SUCCEEDED(XTaskQueueTerminate(globalQueue, false, nullptr, nullptr));
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(globalQueue, true, nullptr, nullptr));
         VERIFY_ARE_EQUAL(E_ABORT, XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, nullptr, cbEmpty));
 
         globalQueue.Close();
