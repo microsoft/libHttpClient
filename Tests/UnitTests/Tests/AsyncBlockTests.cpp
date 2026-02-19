@@ -7,6 +7,7 @@
 #include "XAsyncProviderPriv.h"
 #include "XTaskQueue.h"
 #include "XTaskQueuePriv.h"
+#include <array>
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -79,13 +80,43 @@ private:
         DWORD result = 0;
         DWORD iterationWait = 0;
         DWORD workThread = 0;
-        std::vector<XAsyncOp> opCodes;
+        
+        // Fixed-capacity lock-free opcode log for concurrent append
+        static constexpr size_t MAX_OPCODES = 16;
+        std::array<std::atomic<XAsyncOp>, MAX_OPCODES> opCodesArray{};
+        std::atomic<size_t> opCodesCount{ 0 };
+        
         std::atomic<int> inWork = 0;
         std::atomic<int> refs = 0;
         std::atomic<bool> canceled = false;
 
         void AddRef() { refs++; }
         void Release() { if (--refs == 0) delete this; }
+        
+        // Thread-safe append operation
+        void RecordOp(XAsyncOp op)
+        {
+            size_t idx = opCodesCount.fetch_add(1, std::memory_order_relaxed);
+            if (idx < MAX_OPCODES)
+            {
+                opCodesArray[idx].store(op, std::memory_order_release);
+            }
+            // Silently drop if overflow (test will fail on verification anyway)
+        }
+        
+        // Snapshot current opcodes into a vector for verification
+        std::vector<XAsyncOp> GetOpCodes() const
+        {
+            size_t count = opCodesCount.load(std::memory_order_acquire);
+            count = (count < MAX_OPCODES) ? count : MAX_OPCODES;
+            std::vector<XAsyncOp> result;
+            result.reserve(count);
+            for (size_t i = 0; i < count; i++)
+            {
+                result.push_back(opCodesArray[i].load(std::memory_order_acquire));
+            }
+            return result;
+        }
     };
 
     static PCWSTR OpName(XAsyncOp op)
@@ -117,7 +148,7 @@ private:
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
 
-        d->opCodes.push_back(opCode);
+        d->RecordOp(opCode);
 
         switch (opCode)
         {
@@ -166,7 +197,7 @@ private:
     {
         FactorialCallData* d = (FactorialCallData*)data->context;
 
-        d->opCodes.push_back(opCode);
+        d->RecordOp(opCode);
 
         switch (opCode)
         {
@@ -391,7 +422,7 @@ public:
         ops.push_back(XAsyncOp::GetResult);
         ops.push_back(XAsyncOp::Cleanup);
 
-        VerifyOps(data.Ref->opCodes, ops);
+        VerifyOps(data.Ref->GetOpCodes(), ops);
 
         VERIFY_QUEUE_EMPTY(queue);
     }
@@ -480,7 +511,7 @@ public:
         ops.push_back(XAsyncOp::GetResult);
         ops.push_back(XAsyncOp::Cleanup);
 
-        VerifyOps(data.Ref->opCodes, ops);
+        VerifyOps(data.Ref->GetOpCodes(), ops);
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -554,8 +585,9 @@ public:
         Sleep(500);
         VERIFY_ARE_EQUAL(E_ABORT, hrCallback);
 
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cancel);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cleanup);
+        auto opCodes = data.Ref->GetOpCodes();
+        VerifyHasOp(opCodes, XAsyncOp::Cancel);
+        VerifyHasOp(opCodes, XAsyncOp::Cleanup);
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -587,9 +619,10 @@ public:
         VERIFY_ARE_EQUAL(XAsyncGetStatus(&async, true), E_ABORT);
         XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 700);
 
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cancel);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cleanup);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::DoWork);
+        auto opCodes = data.Ref->GetOpCodes();
+        VerifyHasOp(opCodes, XAsyncOp::Cancel);
+        VerifyHasOp(opCodes, XAsyncOp::Cleanup);
+        VerifyHasOp(opCodes, XAsyncOp::DoWork);
         VERIFY_QUEUE_EMPTY(queue);
     }
 
@@ -620,9 +653,10 @@ public:
         VERIFY_ARE_EQUAL(XAsyncGetStatus(&async, true), E_ABORT);
         Sleep(500);
 
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cancel);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::Cleanup);
-        VerifyHasOp(data.Ref->opCodes, XAsyncOp::DoWork);
+        auto opCodes = data.Ref->GetOpCodes();
+        VerifyHasOp(opCodes, XAsyncOp::Cancel);
+        VerifyHasOp(opCodes, XAsyncOp::Cleanup);
+        VerifyHasOp(opCodes, XAsyncOp::DoWork);
         VERIFY_QUEUE_EMPTY(queue);
     }
 
