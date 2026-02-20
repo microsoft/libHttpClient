@@ -480,6 +480,14 @@ public:
 
         VERIFY_ARE_EQUAL(count, completionCount);
 
+        // Drain the queue before verifying it's empty to ensure all cleanup has been recorded
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
+
         // Note: FactorialCallData array elements were cleaned up by FactorialResult.
         VERIFY_QUEUE_EMPTY(queue);
     }
@@ -648,7 +656,14 @@ public:
         XAsyncCancel(&async);
 
         VERIFY_ARE_EQUAL(XAsyncGetStatus(&async, true), E_ABORT);
-        XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 700);
+        
+        // Drain the queue before verifying opcodes to ensure cleanup has been recorded
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
 
         auto opCodes = data.Ref->GetOpCodes();
         VerifyHasOp(opCodes, XAsyncOp::Cancel);
@@ -682,7 +697,14 @@ public:
         XAsyncCancel(&async);
 
         VERIFY_ARE_EQUAL(XAsyncGetStatus(&async, true), E_ABORT);
-        Sleep(500);
+        
+        // Drain the queue before verifying opcodes to ensure cleanup has been recorded
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
 
         auto opCodes = data.Ref->GetOpCodes();
         VerifyHasOp(opCodes, XAsyncOp::Cancel);
@@ -709,7 +731,14 @@ public:
         VERIFY_SUCCEEDED(XAsyncRun(&async, WorkThunk::Callback));
         
         result = XAsyncGetStatus(&async, true);
-        Sleep(500);
+        
+        // Drain the queue before verifying it's empty to ensure cleanup has been recorded
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
 
         VERIFY_ARE_EQUAL(result, expected);
         VERIFY_QUEUE_EMPTY(queue);
@@ -823,7 +852,14 @@ public:
 
         VERIFY_SUCCEEDED(FactorialAllocateAsync(5, &async));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&async, true));
-        Sleep(500);
+        
+        // Drain the queue before verifying it's empty to ensure cleanup has been recorded
+        UINT64 drainTicks = GetTickCount64();
+        while ((!XTaskQueueIsEmpty(queue, XTaskQueuePort::Completion) || !XTaskQueueIsEmpty(queue, XTaskQueuePort::Work))
+            && GetTickCount64() - drainTicks < 2000)
+        {
+            Sleep(10);
+        }
 
         VERIFY_ARE_EQUAL(result, (DWORD)120);
         VERIFY_QUEUE_EMPTY(queue);
