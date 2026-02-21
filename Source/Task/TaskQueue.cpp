@@ -1225,7 +1225,7 @@ void TaskQueuePortImpl::SignalTerminations()
 
     {
         std::lock_guard<std::mutex> lock(m_terminationLock);
-        m_terminationList->remove_if([this, &entries_to_process](auto& entry, auto address)
+        m_terminationList->remove_if([&entries_to_process](auto& entry, auto address)
         {
             if (entry->portContext->GetStatus() >= TaskQueuePortStatus::Terminating)
             {
