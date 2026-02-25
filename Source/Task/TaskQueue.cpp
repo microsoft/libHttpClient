@@ -7,8 +7,12 @@
 #include "TaskQueueImpl.h"
 #include "XTaskQueuePriv.h"
 
+#ifdef HC_UNITTEST_API
+TestBarrier* g_testBarrier = nullptr;
+#endif
+
 //
-// ApiRefs tracks global refcounts for all APIs. It is used to idenfity memory leaks
+// ApiRefs tracks global refcounts for all APIs. It is used to identify memory leaks
 // in tests and can be called to wait for all refs to be released.
 //
 namespace ApiRefs
@@ -1107,7 +1111,32 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
         uint64_t noDueTime = UINT64_MAX;
         if (m_timerDue.compare_exchange_strong(dueTime, noDueTime))
         {
-            m_timer.Cancel();
+#ifdef HC_UNITTEST_API
+            // Test hook: two-phase barrier reproduces the timer race
+            // that results in lost delayed task wakes.
+            if (g_testBarrier != nullptr)
+            {
+                {
+                    std::lock_guard<std::mutex> lk(g_testBarrier->mtx);
+                    g_testBarrier->phase1_ready = true;
+                }
+                g_testBarrier->cv.notify_all();
+
+                std::unique_lock<std::mutex> lk(g_testBarrier->mtx);
+                g_testBarrier->cv.wait_for(lk, std::chrono::seconds(5),
+                    [&] { return g_testBarrier->phase2_ready; });
+            }
+#endif
+            // Bug fix: ScheduleNextPendingCallback timer race results
+            // in lost delayed task wakes.
+            //
+            // The CAS above is sufficient: the timer has already fired
+            // (call site 1: SubmitPendingCallback) or was already
+            // canceled (call site 2: CancelPendingEntries).  A Cancel()
+            // here raced with concurrent QueueItem/Start calls on other
+            // threads, permanently stranding entries in m_pendingList.
+            // See VerifyDelayedCallbackTimerRaceOnManualQueue for full
+            // analysis.
         }
     }
 
