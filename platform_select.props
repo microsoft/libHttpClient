@@ -19,7 +19,7 @@
         <HCPlatform>XDK</HCPlatform>
       </PropertyGroup>
     </When>
-    <When Condition="'$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64'">
+    <When Condition="'$(Platform)'=='Gaming.Desktop.x64' OR '$(Platform)'=='Gaming.Xbox.XboxOne.x64' OR '$(Platform)'=='Gaming.Xbox.Scarlett.x64' OR '$(Platform)' == 'x64' OR '$(Platform)' == 'ARM64'">
       <PropertyGroup>
         <HCPlatform>GDK</HCPlatform>
       </PropertyGroup>
