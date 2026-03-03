@@ -97,7 +97,8 @@ public:
 
         if (dataByteCount > m_bufferByteCapacity)
         {
-            newBuffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount));
+            // Allocate +1 for possible null terminator on text WebSocket messages
+            newBuffer = static_cast<uint8_t*>(http_memory::mem_alloc(dataByteCount + 1));
             if (newBuffer != nullptr)
             {
                 if (m_buffer != nullptr)

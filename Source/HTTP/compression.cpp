@@ -29,7 +29,11 @@ void Compression::CompressToGzip(uint8_t* inData, size_t inDataSize, HCCompressi
     stream.opaque = Z_NULL;
 
     // deflateInit will use zlib (deflate) compression, so deflateInit2 with these flags is required for GZIP Compression
-    deflateInit2(&stream, compressionLevelValue, Z_DEFLATED, WINDOWBITS | GZIP_ENCODING, 8, Z_DEFAULT_STRATEGY);
+    int initResult = deflateInit2(&stream, compressionLevelValue, Z_DEFLATED, WINDOWBITS | GZIP_ENCODING, 8, Z_DEFAULT_STRATEGY);
+    if (initResult != Z_OK)
+    {
+        return;
+    }
 
     stream.next_in = inData;
     stream.avail_in = static_cast<uInt>(inDataSize);
@@ -75,7 +79,11 @@ void Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_in
     stream.opaque = Z_NULL;
 
     // WINDOWBITS | GZIP_ENCODING - add 16 to decode only the gzip format 
-    inflateInit2(&stream, WINDOWBITS | GZIP_ENCODING);
+    int initResult = inflateInit2(&stream, WINDOWBITS | GZIP_ENCODING);
+    if (initResult != Z_OK)
+    {
+        return;
+    }
 
     stream.next_in = inData; 
     stream.avail_in = static_cast<uInt>(inDataSize); 

@@ -1083,7 +1083,7 @@ STDAPI HCWebSocketGetEventFunctions(
     _Out_opt_ HCWebSocketMessageFunction* messageFunc,
     _Out_opt_ HCWebSocketBinaryMessageFunction* binaryMessageFunc,
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc,
-    _Out_ void** functionContext
+    _Out_opt_ void** functionContext
     ) noexcept;
 
 #if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK

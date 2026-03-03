@@ -289,15 +289,15 @@ String Uri::ToString() const
         break;
         case '%':
         {
-            if (chunkEnd > urlPart.size() - 3) // a % encoding is 3 characters long
+            if (chunkEnd + 3 > urlPart.size()) // a % encoding is 3 characters long
             {
-                //THROW(E_INVALIDARG, "Invalid % encode in url encoded string");
+                return http_internal_string();
             }
 
             uint8_t value = 0;
             if (!HexDecodePair(urlPart[chunkEnd + 1], urlPart[chunkEnd + 2], value))
             {
-                //THROW(E_INVALIDARG, "Invalid value for % encode in url encoded string");
+                return http_internal_string();
             }
 
             decoded.push_back(value);
@@ -616,6 +616,12 @@ bool Uri::ParsePort(String const& uri, String::const_iterator& it)
     if (!StringToUint4(port, port + portLen, portV, 0))
     {
         HC_TRACE_WARNING(HTTPCLIENT, "Cannot parse port in URI."); // no tracing uris they could contain PII
+        return false;
+    }
+
+    if (portV > 65535)
+    {
+        HC_TRACE_WARNING(HTTPCLIENT, "Port out of range in URI.");
         return false;
     }
 
