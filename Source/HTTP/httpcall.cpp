@@ -77,7 +77,11 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
     case XAsyncOp::Begin:
     {
-        call->performCalled = true;
+        bool expected = false;
+        if (!call->performCalled.compare_exchange_strong(expected, true))
+        {
+            return E_HC_PERFORM_ALREADY_CALLED;
+        }
         call->m_performStartTime = chrono_clock_t::now();
 
         // Initialize work queues
@@ -184,11 +188,19 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
     if (FAILED(hr) || !clientRequestBodyReadCallback)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::CompressRequestBody: Unable to get client's RequestBodyRead callback");
+        XAsyncComplete(context->asyncBlock, FAILED(hr) ? hr : E_UNEXPECTED, 0);
+        return;
+    }
+
+    if (requestBodySize == 0)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::CompressRequestBody: Request body is empty");
+        XAsyncComplete(context->asyncBlock, E_INVALIDARG, 0);
         return;
     }
 
     http_internal_vector<uint8_t> uncompressedRequestyBodyBuffer(requestBodySize);
-    uint8_t* bufferPtr = &uncompressedRequestyBodyBuffer.front();
+    uint8_t* bufferPtr = uncompressedRequestyBodyBuffer.data();
     size_t bytesWritten = 0;
 
     try
@@ -198,6 +210,7 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
         if (FAILED(hr))
         {
             HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "HC_CALL::CompressRequestBody: client RequestBodyRead callback failed");
+            XAsyncComplete(context->asyncBlock, hr, 0);
             return;
         }
 
@@ -205,11 +218,13 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
         if (bytesWritten < requestBodySize)
         {
             HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::CompressRequestBody: Expected more data written by the client based on initial request body size provided.");
+            XAsyncComplete(context->asyncBlock, E_FAIL, 0);
             return;
         }
     }
     catch (...)
     {
+        XAsyncComplete(context->asyncBlock, E_FAIL, 0);
         return;
     }
 
@@ -223,7 +238,13 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
     call->requestBodyReadFunctionContext = nullptr;
 
     // Directly setting compressed body bytes to HCCall
-    call->requestBodySize = (uint32_t)compressedRequestBodyBuffer.size();
+    if (compressedRequestBodyBuffer.size() > UINT32_MAX)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::CompressRequestBody: Compressed body size exceeds uint32_t max");
+        XAsyncComplete(context->asyncBlock, E_FAIL, 0);
+        return;
+    }
+    call->requestBodySize = static_cast<uint32_t>(compressedRequestBodyBuffer.size());
     call->requestBodyBytes = std::move(compressedRequestBodyBuffer);
     call->requestBodyString.clear();
 

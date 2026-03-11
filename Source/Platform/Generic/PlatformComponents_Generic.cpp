@@ -61,7 +61,9 @@ public:
 HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* /*initArgs*/)
 {
     components.HttpProvider = http_allocate_unique<GenericHttpProvider>();
+#ifndef HC_NOWEBSOCKETS
     components.WebSocketProvider = http_allocate_unique<GenericWebSocketProvider>();
+#endif
 
     return S_OK;
 }

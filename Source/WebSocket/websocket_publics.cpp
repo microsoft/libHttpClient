@@ -310,7 +310,7 @@ STDAPI HCWebSocketGetEventFunctions(
     _Out_opt_ HCWebSocketMessageFunction* messageFunc,
     _Out_opt_ HCWebSocketBinaryMessageFunction* binaryMessageFunc,
     _Out_opt_ HCWebSocketCloseEventFunction* closeFunc,
-    _Out_ void** context
+    _Out_opt_ void** context
 ) noexcept
 try
 {

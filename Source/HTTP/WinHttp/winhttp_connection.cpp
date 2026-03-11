@@ -1068,7 +1068,7 @@ void WinHttpConnection::callback_status_data_available(
             nullptr))
         {
             DWORD dwError = GetLastError();
-            HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpReadData errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), GetLastError());
+            HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpReadData errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
             pRequestContext->m_lock.unlock();
             pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
             return;
