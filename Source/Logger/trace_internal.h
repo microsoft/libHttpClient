@@ -28,8 +28,8 @@ private:
     {
         std::chrono::high_resolution_clock::time_point{}
     };
-    bool m_traceToDebugger = false;
-    bool m_etwEnabled = false;
+    std::atomic<bool> m_traceToDebugger{ false };
+    std::atomic<bool> m_etwEnabled{ false };
 };
 
 TraceState& GetTraceState() noexcept;

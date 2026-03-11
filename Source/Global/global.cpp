@@ -232,7 +232,8 @@ void http_singleton::set_retry_state(
 
 http_retry_after_api_state http_singleton::get_retry_state(_In_ uint32_t retryAfterCacheId)
 {
-    auto it = m_retryAfterCache.find(retryAfterCacheId); // STL is multithread read safe
+    std::lock_guard<std::recursive_mutex> lock(m_retryAfterCacheLock);
+    auto it = m_retryAfterCache.find(retryAfterCacheId);
     if (it != m_retryAfterCache.end())
     {
         return it->second; // returning a copy of state struct

@@ -79,7 +79,7 @@ public:
     bool compressedResponse{ false };
 
     // Request metadata
-    bool performCalled{ false };
+    std::atomic<bool> performCalled{ false };
     bool retryAllowed{ false };
     uint32_t retryAfterCacheId{ 0 };
     uint32_t timeoutWindowInSeconds{ 0 };

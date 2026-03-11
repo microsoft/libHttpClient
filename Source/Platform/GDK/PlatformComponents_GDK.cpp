@@ -83,15 +83,31 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 STDAPI_(void) HCWinHttpSuspend()
 {
     auto httpSingleton = get_http_singleton();
-    auto& winHttpProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider())->WinHttpProvider;
-    winHttpProvider->Suspend();
+    if (!httpSingleton)
+    {
+        return;
+    }
+    auto* winHttpWebSocketProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider());
+    if (!winHttpWebSocketProvider)
+    {
+        return;
+    }
+    winHttpWebSocketProvider->WinHttpProvider->Suspend();
 }
 
 STDAPI_(void) HCWinHttpResume()
 {
     auto httpSingleton = get_http_singleton();
-    auto& winHttpProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider())->WinHttpProvider;
-    winHttpProvider->Resume();
+    if (!httpSingleton)
+    {
+        return;
+    }
+    auto* winHttpWebSocketProvider = dynamic_cast<WinHttp_WebSocketProvider*>(&httpSingleton->m_networkState->WebSocketProvider());
+    if (!winHttpWebSocketProvider)
+    {
+        return;
+    }
+    winHttpWebSocketProvider->WinHttpProvider->Resume();
 }
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

@@ -284,7 +284,7 @@ STDAPI HCHttpCallRequestGetTimeout(
 /// </remarks>
 STDAPI HCHttpCallRequestGetRetryDelay(
     _In_opt_ HCCallHandle call,
-    _In_ uint32_t* retryDelayInSeconds
+    _Out_ uint32_t* retryDelayInSeconds
     ) noexcept;
 
 /// <summary>

@@ -26,7 +26,7 @@ xmlhttp_http_task::xmlhttp_http_task(
 xmlhttp_http_task::~xmlhttp_http_task()
 {
     m_hRequest = nullptr;
-    if (SUCCEEDED(m_hrCoInit))
+    if (m_hrCoInit == S_OK)
     {
         CoUninitialize();
     }

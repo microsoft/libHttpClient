@@ -38,6 +38,11 @@ http_internal_string utf8_from_utf16(_In_reads_(size) PCWSTR utf16, size_t size)
         return "";
     }
 
+    if (size > INT_MAX)
+    {
+        throw std::exception("utf8_from_utf16 failed: input too large");
+    }
+
     // query for the buffer size
     auto queryResult = WideCharToMultiByte(
         CP_UTF8, WC_ERR_INVALID_CHARS,
@@ -49,13 +54,13 @@ http_internal_string utf8_from_utf16(_In_reads_(size) PCWSTR utf16, size_t size)
     {
 #if HC_TRACE_ERROR_ENABLE // to avoid unused variable warnings
         auto err = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during buffer size query with error: %u", err);
+        HC_TRACE_ERROR(HTTPCLIENT, "utf8_from_utf16 failed during buffer size query with error: %u", err);
 #endif
-        throw std::exception("utf16_from_utf8 failed");
+        throw std::exception("utf8_from_utf16 failed");
     }
 
     // allocate the output buffer, queryResult is the required size
-    http_internal_string utf8(static_cast<size_t>(queryResult), L'\0');
+    http_internal_string utf8(static_cast<size_t>(queryResult), '\0');
     auto conversionResult = WideCharToMultiByte(
         CP_UTF8, WC_ERR_INVALID_CHARS,
         utf16, static_cast<int>(size),
@@ -66,9 +71,9 @@ http_internal_string utf8_from_utf16(_In_reads_(size) PCWSTR utf16, size_t size)
     {
 #if HC_TRACE_ERROR_ENABLE // to avoid unused variable warnings
         auto err = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during conversion: %u", err);
+        HC_TRACE_ERROR(HTTPCLIENT, "utf8_from_utf16 failed during conversion: %u", err);
 #endif
-        throw std::exception("utf16_from_utf8 failed");
+        throw std::exception("utf8_from_utf16 failed");
     }
 
     return utf8;
@@ -82,6 +87,11 @@ http_internal_wstring utf16_from_utf8(_In_reads_(size) const char* utf8, size_t 
         return L"";
     }
 
+    if (size > INT_MAX)
+    {
+        throw std::exception("utf16_from_utf8 failed: input too large");
+    }
+
     // query for the buffer size
     auto queryResult = MultiByteToWideChar(
         CP_UTF8, MB_ERR_INVALID_CHARS,
@@ -92,7 +102,7 @@ http_internal_wstring utf16_from_utf8(_In_reads_(size) const char* utf8, size_t 
     {
 #if HC_TRACE_ERROR_ENABLE // to avoid unused variable warnings
         auto err = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during buffer size query with error: %u", err);
+        HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_utf8 failed during buffer size query with error: %u", err);
 #endif
         throw std::exception("utf16_from_utf8 failed");
     }
@@ -108,7 +118,7 @@ http_internal_wstring utf16_from_utf8(_In_reads_(size) const char* utf8, size_t 
     {
 #if HC_TRACE_ERROR_ENABLE // to avoid unused variable warnings
         auto err = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_uft8 failed during conversion: %u", err);
+        HC_TRACE_ERROR(HTTPCLIENT, "utf16_from_utf8 failed during conversion: %u", err);
 #endif
         throw std::exception("utf16_from_utf8 failed");
     }
