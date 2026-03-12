@@ -5,6 +5,11 @@
 
 #include "XTaskQueue.h"
 
+#ifdef HC_UNITTEST_API
+#include <mutex>
+#include <condition_variable>
+#endif
+
 //----------------------------------------------------------------//
 //
 // These APIs should be reserved for driving unit test harnesses.
@@ -120,3 +125,20 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
 STDAPI_(bool) XTaskQueueUninitialize(
     _In_ uint32_t timeoutMilliseconds = 0
     ) noexcept;
+
+#ifdef HC_UNITTEST_API
+
+// Two-phase barrier for deterministic reproduction of the
+// ScheduleNextPendingCallback timer race that results in lost delayed
+// task wakes. See VerifyDelayedCallbackTimerRaceOnManualQueue.
+struct TestBarrier
+{
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool phase1_ready = false;  // threadpool -> test: "CAS done"
+    bool phase2_ready = false;  // test -> threadpool: "Start done"
+};
+
+extern TestBarrier* g_testBarrier;
+
+#endif
