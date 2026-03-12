@@ -1698,6 +1698,7 @@ public:
         std::atomic<int> ready{ 0 };
         std::atomic<int> done{ 0 };
         std::atomic<int> createErrors{ 0 };
+        std::atomic<int> submitErrors{ 0 };
         std::atomic<int> terminateErrors{ 0 };
         std::atomic<int> workCallbackCount{ 0 };
         std::atomic<int> delegateTerminationsRemaining{ 0 };  // Track delegate termination completion
@@ -1743,7 +1744,7 @@ public:
                     // This ensures callbacks are active when termination occurs
                     for (size_t w = 0; w < k_work_items_per_queue; ++w)
                     {
-                        XTaskQueueSubmitCallback(
+                        HRESULT submitHr = XTaskQueueSubmitCallback(
                             delegateQueue,
                             XTaskQueuePort::Work,
                             &workCallbackCount,
@@ -1757,6 +1758,11 @@ public:
                                     std::this_thread::sleep_for(std::chrono::microseconds(50));
                                 }
                             });
+
+                        if (FAILED(submitHr))
+                        {
+                            submitErrors.fetch_add(1, std::memory_order_relaxed);
+                        }
                     }
 
                     // Track this delegate's termination - increment before terminating
@@ -1766,7 +1772,7 @@ public:
                     // Each queue is independent, so we coordinate termination externally
                     hr = XTaskQueueTerminate(
                         delegateQueue, 
-                        false,  // wait=false: delegate terminations are independent
+                        avoidRaceMode,  // default is wait=false: delegate terminations are independent
                         &delegateTerminationsRemaining,
                         [](void* context)
                         {
@@ -1846,160 +1852,207 @@ public:
         VERIFY_ARE_EQUAL(0, delegateTerminationsRemaining.load(std::memory_order_acquire));
 
         // Validate results
-        VERIFY_ARE_EQUAL(0, terminateErrors.load());
-        
-        LOG_COMMENT(L"Test completed: workCallbacks=%d createErrors=%d terminateErrors=%d",
-            workCallbackCount.load(), createErrors.load(), terminateErrors.load());
+        VERIFY_ARE_EQUAL(0, submitErrors.load());
+
+        LOG_COMMENT(L"Test completed: workCallbacks=%d createErrors=%d terminateErrors=%d submitErrors=%d",
+            workCallbackCount.load(), createErrors.load(), terminateErrors.load(), submitErrors.load());
     }
-#ifdef HC_UNITTEST_API
-    DEFINE_TEST_CASE(VerifyDelayedCallbackTimerRaceOnManualQueue) {
-      // Regression: ScheduleNextPendingCallback timer race results in
-      // lost delayed task wakes.
-      //
-      // We use a barrier to isolate the race. PTP_TIMER callbacks are
-      // not serialized, so a concurrent QueueItem that calls Start()
-      // will have its timer fire on another threadpool thread DURING
-      // the Sleep, self-healing the state before Cancel() runs. In
-      // production the gap is nanoseconds -- the timer can't fire in
-      // time.
-      //
-      // Instead we use a two-phase cv barrier (TestBarrier, compiled under
-      // HC_UNITTEST_API) that forces the exact interleaving that causes the
-      // the permanent stall:
-      //
-      //   Threadpool thread              Test dispatch thread
-      //   -----------------              --------------------
-      //   CAS m_timerDue -> UINT64_MAX
-      //   signal(phase1)  ----------->   (unblocked)
-      //   wait(phase2)                   QueueItem -> push + CAS + Start(T)
-      //                   <-----------   signal(phase2)
-      //   [Cancel() would kill T's timer here -- removed by the fix]
-      //   ... timer never fires ...
-      //   ... m_timerDue stuck at T ...
-      //   ... PERMANENT STALL ...
-      //
-      // The dispatch thread's QueueItem calls Start(T) with a delay of
-      // N ms. Cancel() runs immediately after phase2 -- well within
-      // the N ms window -- so the timer hasn't fired yet. This exactly
-      // reproduces the production race.
 
-      TestBarrier barrier;
-      barrier.phase1_ready = false;
-      barrier.phase2_ready = false;
-      g_testBarrier = &barrier;
+    DEFINE_TEST_CASE(VerifyDelayedCallbackTimerRaceOnManualQueue)
+    {
+        // Regression: ScheduleNextPendingCallback timer race results in
+        // lost delayed task wakes.
+        //
+        // We use a barrier to isolate the race. PTP_TIMER callbacks are
+        // not serialized, so a concurrent QueueItem that calls Start()
+        // will have its timer fire on another threadpool thread DURING
+        // the Sleep, self-healing the state before Cancel() runs. In
+        // production the gap is nanoseconds -- the timer can't fire in
+        // time.
+        //
+        // Instead we use a two-phase cv barrier that forces the exact
+        // interleaving that causes the the permanent stall:
+        //
+        //   Threadpool thread              Test dispatch thread
+        //   -----------------              --------------------
+        //   CAS m_timerDue -> UINT64_MAX
+        //   signal(phase1)  ----------->   (unblocked)
+        //   wait(phase2)                   QueueItem -> push + CAS + Start(T)
+        //                   <-----------   signal(phase2)
+        //   [Cancel() would kill T's timer here -- removed by the fix]
+        //   ... timer never fires ...
+        //   ... m_timerDue stuck at T ...
+        //   ... PERMANENT STALL ...
+        //
+        // The dispatch thread's QueueItem calls Start(T) with a delay of
+        // N ms. Cancel() runs immediately after phase2 -- well within
+        // the N ms window -- so the timer hasn't fired yet. This exactly
+        // reproduces the production race.
 
-      AutoQueueHandle queue;
-      VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual,
-                                        XTaskQueueDispatchMode::Immediate,
-                                        &queue));
-
-      // Self-cycling delayed callback. As the sole pending entry,
-      // every timer fire hits the "no next item" branch.
-      std::atomic<uint32_t> cycleCount{0};
-      std::atomic<bool> running{true};
-
-      struct CycleContext {
-        XTaskQueueHandle queue;
-        std::atomic<uint32_t> *counter;
-        std::atomic<bool> *running;
-
-        static void CALLBACK Invoke(void *ctx, bool cancel) {
-          if (cancel)
-            return;
-          auto *self = static_cast<CycleContext *>(ctx);
-          self->counter->fetch_add(1);
-          if (self->running->load()) {
-            // 500 ms: long enough that Cancel() reliably beats it.
-            XTaskQueueSubmitDelayedCallback(self->queue, XTaskQueuePort::Work,
-                                            500, ctx,
-                                            &CycleContext::Invoke);
-          }
-        }
-      };
-
-      CycleContext ctx{queue.Handle(), &cycleCount, &running};
-      VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
-          queue, XTaskQueuePort::Work, 1, &ctx,
-          &CycleContext::Invoke));
-
-      // Wait for the threadpool to CAS m_timerDue -> UINT64_MAX
-      // and hit the barrier (phase1).
-      {
-        std::unique_lock<std::mutex> lk(barrier.mtx);
-        bool ok = barrier.cv.wait_for(lk, std::chrono::seconds(5),
-            [&] { return barrier.phase1_ready; });
-        VERIFY_IS_TRUE(ok);
-      }
-
-      // The threadpool is blocked inside ScheduleNextPendingCallback,
-      // so the cycling callback's entry hasn't reached the ready queue
-      // yet (AppendEntry hasn't run).  We can't dispatch it directly.
-      //
-      // Instead, submit a delay=0 "trigger" that bypasses the pending
-      // list, lands directly in the ready queue, and when dispatched
-      // calls QueueItem (racing with Cancel) then signals phase2.
-      struct TriggerContext {
-        XTaskQueueHandle queue;
-        TestBarrier* barrier;
-      };
-      TriggerContext trigCtx{queue.Handle(), &barrier};
-
-      auto triggerCallback = [](void *ctx, bool cancel) {
-        if (cancel)
-          return;
-        auto *tc = static_cast<TriggerContext *>(ctx);
-        // delay=1 ms: T_new expires quickly, so m_timerDue becomes a
-        // stale past value -- the condition for a permanent stall.
-        static auto dummyCb = [](void*, bool) {};
-        XTaskQueueSubmitDelayedCallback(
-            tc->queue, XTaskQueuePort::Work, 1, nullptr, dummyCb);
+        // Two-phase barrier for deterministic reproduction of the
+        // ScheduleNextPendingCallback timer race that results in lost delayed
+        // task wakes. See VerifyDelayedCallbackTimerRaceOnManualQueue.
+        struct TestBarrier
         {
-          std::lock_guard<std::mutex> lk(tc->barrier->mtx);
-          tc->barrier->phase2_ready = true;
+            std::mutex mtx;
+            std::condition_variable cv;
+            bool phase1_ready = false;  // threadpool -> test: "CAS done"
+            bool phase2_ready = false;  // test -> threadpool: "Start done"
+        };
+
+        // Test hooks that drive the test barrier state.
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            TestHooks(_In_ TestBarrier* barrier) : m_testBarrier(barrier) {}
+
+            void NextPendingCallbackScheduled(XTaskQueuePort port, uint64_t lastDueTime, uint64_t nextDueTime) override
+            {
+                UNREFERENCED_PARAMETER(port);
+                UNREFERENCED_PARAMETER(lastDueTime);
+                UNREFERENCED_PARAMETER(nextDueTime);
+
+                // Test hook: two-phase barrier reproduces the timer race
+                // that results in lost delayed task wakes.
+                {
+                    std::lock_guard<std::mutex> lk(m_testBarrier->mtx);
+                    m_testBarrier->phase1_ready = true;
+                }
+                m_testBarrier->cv.notify_all();
+
+                std::unique_lock<std::mutex> lk(m_testBarrier->mtx);
+                m_testBarrier->cv.wait_for(lk, std::chrono::seconds(5),
+                    [&] { return m_testBarrier->phase2_ready; });
+            }
+
+        private:
+            TestBarrier* m_testBarrier = nullptr;
+        };
+
+        TestBarrier barrier;
+        TestHooks hooks(&barrier);
+        barrier.phase1_ready = false;
+        barrier.phase2_ready = false;
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Immediate,
+            &queue));
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, &hooks));
+
+        // Self-cycling delayed callback. As the sole pending entry,
+        // every timer fire hits the "no next item" branch.
+        std::atomic<uint32_t> cycleCount{ 0 };
+        std::atomic<bool> running{ true };
+
+        struct CycleContext {
+            XTaskQueueHandle queue;
+            std::atomic<uint32_t>* counter;
+            std::atomic<bool>* running;
+
+            static void CALLBACK Invoke(void* ctx, bool cancel)
+            {
+                if (cancel)
+                    return;
+                auto* self = static_cast<CycleContext*>(ctx);
+                self->counter->fetch_add(1);
+                if (self->running->load())
+                {
+                    // 500 ms: long enough that Cancel() reliably beats it.
+                    XTaskQueueSubmitDelayedCallback(self->queue, XTaskQueuePort::Work,
+                                                    500, ctx,
+                                                    &CycleContext::Invoke);
+                }
+            }
+        };
+
+        CycleContext ctx{ queue.Handle(), &cycleCount, &running };
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            queue, XTaskQueuePort::Work, 1, &ctx,
+            &CycleContext::Invoke));
+
+        // Wait for the threadpool to CAS m_timerDue -> UINT64_MAX
+        // and hit the barrier (phase1).
+        {
+            std::unique_lock<std::mutex> lk(barrier.mtx);
+            bool ok = barrier.cv.wait_for(lk, std::chrono::seconds(5),
+                [&] { return barrier.phase1_ready; });
+            VERIFY_IS_TRUE(ok);
         }
-        tc->barrier->cv.notify_all();
-      };
 
-      VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(
-          queue, XTaskQueuePort::Work, &trigCtx, triggerCallback));
+        // The threadpool is blocked inside ScheduleNextPendingCallback,
+        // so the cycling callback's entry hasn't reached the ready queue
+        // yet (AppendEntry hasn't run).  We can't dispatch it directly.
+        //
+        // Instead, submit a delay=0 "trigger" that bypasses the pending
+        // list, lands directly in the ready queue, and when dispatched
+        // calls QueueItem (racing with Cancel) then signals phase2.
+        struct TriggerContext {
+            XTaskQueueHandle queue;
+            TestBarrier* barrier;
+        };
+        TriggerContext trigCtx{ queue.Handle(), &barrier };
 
-      // Dispatch trigger on this thread: QueueItem -> Start(1ms),
-      // signal(phase2) -> threadpool wakes -> [Cancel() removed].
-      VERIFY_IS_TRUE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 1000));
+        auto triggerCallback = [](void* ctx, bool cancel)
+        {
+            if (cancel)
+                return;
+            auto* tc = static_cast<TriggerContext*>(ctx);
+            // delay=1 ms: T_new expires quickly, so m_timerDue becomes a
+            // stale past value -- the condition for a permanent stall.
+            static auto dummyCb = [](void*, bool) {};
+            XTaskQueueSubmitDelayedCallback(
+                tc->queue, XTaskQueuePort::Work, 1, nullptr, dummyCb);
+            {
+                std::lock_guard<std::mutex> lk(tc->barrier->mtx);
+                tc->barrier->phase2_ready = true;
+            }
+            tc->barrier->cv.notify_all();
+        };
 
-      // Race has fired.  Disable barrier.
-      g_testBarrier = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(
+            queue, XTaskQueuePort::Work, &trigCtx, triggerCallback));
 
-      // Stop cycling callback and drain ready queue.
-      running.store(false);
-      while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 200)) {
-      }
+        // Dispatch trigger on this thread: QueueItem -> Start(1ms),
+        // signal(phase2) -> threadpool wakes -> [Cancel() removed].
+        VERIFY_IS_TRUE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 1000));
 
-      // A delayed callback that should fire promptly (canary).
-      // With the bug, it's stranded in pendingList forever.
-      std::atomic<bool> canaryFired{false};
-      auto canaryCallback = [](void *ctx, bool cancel) {
-        if (!cancel)
-          static_cast<std::atomic<bool> *>(ctx)->store(true);
-      };
-      VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
-          queue, XTaskQueuePort::Work, 10, &canaryFired, canaryCallback));
+        // Race has fired.  Disable barrier.
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, nullptr));
 
-      const uint64_t canaryStart = GetTickCount64();
-      while (!canaryFired.load() &&
-             GetTickCount64() - canaryStart < 2000) {
-        XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
-      }
+        // Stop cycling callback and drain ready queue.
+        running.store(false);
+        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 200))
+        {
+        }
 
-      LOG_COMMENT(L"Cycle count: %u", cycleCount.load());
-      LOG_COMMENT(L"Canary fired: %s",
-                  canaryFired.load() ? L"yes" : L"NO -- timer stalled");
+        // A delayed callback that should fire promptly (canary).
+        // With the bug, it's stranded in pendingList forever.
+        std::atomic<bool> canaryFired{ false };
+        auto canaryCallback = [](void* ctx, bool cancel)
+        {
+            if (!cancel)
+                static_cast<std::atomic<bool>*>(ctx)->store(true);
+        };
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            queue, XTaskQueuePort::Work, 10, &canaryFired, canaryCallback));
 
-      XTaskQueueTerminate(queue, false, nullptr, nullptr);
-      while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) {
-      }
+        const uint64_t canaryStart = GetTickCount64();
+        while (!canaryFired.load() &&
+               GetTickCount64() - canaryStart < 2000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+        }
 
-      VERIFY_IS_TRUE(canaryFired.load());
+        LOG_COMMENT(L"Cycle count: %u", cycleCount.load());
+        LOG_COMMENT(L"Canary fired: %s",
+                    canaryFired.load() ? L"yes" : L"NO -- timer stalled");
+
+        XTaskQueueTerminate(queue, false, nullptr, nullptr);
+        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
+        {
+        }
+
+        VERIFY_IS_TRUE(canaryFired.load());
     }
-#endif // HC_UNITTEST_API
 };

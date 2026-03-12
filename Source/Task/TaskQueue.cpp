@@ -3,13 +3,9 @@
 
 #include "pch.h"
 #include "referenced_ptr.h"
+#include "XTaskQueuePriv.h"
 #include "TaskQueueP.h"
 #include "TaskQueueImpl.h"
-#include "XTaskQueuePriv.h"
-
-#ifdef HC_UNITTEST_API
-TestBarrier* g_testBarrier = nullptr;
-#endif
 
 //
 // ApiRefs tracks global refcounts for all APIs. It is used to identify memory leaks
@@ -1111,32 +1107,27 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
         uint64_t noDueTime = UINT64_MAX;
         if (m_timerDue.compare_exchange_strong(dueTime, noDueTime))
         {
-#ifdef HC_UNITTEST_API
-            // Test hook: two-phase barrier reproduces the timer race
-            // that results in lost delayed task wakes.
-            if (g_testBarrier != nullptr)
-            {
-                {
-                    std::lock_guard<std::mutex> lk(g_testBarrier->mtx);
-                    g_testBarrier->phase1_ready = true;
-                }
-                g_testBarrier->cv.notify_all();
-
-                std::unique_lock<std::mutex> lk(g_testBarrier->mtx);
-                g_testBarrier->cv.wait_for(lk, std::chrono::seconds(5),
-                    [&] { return g_testBarrier->phase2_ready; });
-            }
-#endif
             // Bug fix: ScheduleNextPendingCallback timer race results
-            // in lost delayed task wakes.
-            //
+            // in lost delayed task wakes. Don't cancel the timer here
+            // as another scheduled callback could have been added.
             // The CAS above is sufficient: the timer has already fired
             // (call site 1: SubmitPendingCallback) or was already
             // canceled (call site 2: CancelPendingEntries).  A Cancel()
             // here raced with concurrent QueueItem/Start calls on other
             // threads, permanently stranding entries in m_pendingList.
             // See VerifyDelayedCallbackTimerRaceOnManualQueue for full
-            // analysis.
+            // analysis. The test hook here allows unit tests to verify
+            // there is no race.
+            m_attachedContexts.Visit([&](ITaskQueuePortContext* portContext)
+            {
+                auto hooks = portContext->GetQueue()->GetTestHooks();
+                if (hooks != nullptr)                {
+                    hooks->NextPendingCallbackScheduled(
+                        portContext->GetType(),
+                        dueTime,
+                        noDueTime);
+                }
+            });
         }
     }
 
@@ -1277,14 +1268,14 @@ void TaskQueuePortImpl::SignalTerminations()
         entry->portContext->AddRef();
         
         entry->callback(entry->callbackContext);
-        
-        // Release portContext after callback completes
-        entry->portContext->Release();
-        
+                
         {
             std::lock_guard<std::mutex> lock(m_terminationLock);
             m_terminationList->free_node(address);
         }
+
+        // Release portContext after callback completes
+        entry->portContext->Release();
         delete entry;
     }
 }
@@ -2348,4 +2339,18 @@ STDAPI_(bool) XTaskQueueUninitialize(
     }
 
     return ApiRefs::WaitZeroRefs(timeoutMilliseconds);
+}
+
+/// <summary>
+/// Sets or clears test hooks on a task queue.
+/// </summary>
+STDAPI XTaskQueueSetTestHooks(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueueTestHooks* hooks
+    ) noexcept
+{
+    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
+    aq->SetTestHooks(hooks);
+    return S_OK;
 }
