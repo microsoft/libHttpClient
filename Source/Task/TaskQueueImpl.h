@@ -403,7 +403,7 @@ public:
     
     XTaskQueueHandle __stdcall GetHandle() override { return &m_header; }
     XTaskQueueTestHooks* __stdcall GetTestHooks() override { return m_testHooks; }
-    void __stdcall SetTestHooks(_In_ XTaskQueueTestHooks* testHooks) { m_testHooks = testHooks; }
+    void __stdcall SetTestHooks(_In_ XTaskQueueTestHooks* testHooks) override { m_testHooks = testHooks; }
 
     HRESULT __stdcall GetPortContext(
         _In_ XTaskQueuePort port,
