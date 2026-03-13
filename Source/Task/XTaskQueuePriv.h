@@ -5,11 +5,6 @@
 
 #include "XTaskQueue.h"
 
-#ifdef HC_UNITTEST_API
-#include <mutex>
-#include <condition_variable>
-#endif
-
 //----------------------------------------------------------------//
 //
 // These APIs should be reserved for driving unit test harnesses.
@@ -43,6 +38,34 @@ STDAPI XTaskQueueSuspendTermination(
 /// <param name='queue'>The queue resume terminations.</param>
 STDAPI_(void) XTaskQueueResumeTermination(
     _In_ XTaskQueueHandle queue
+    ) noexcept;
+
+/// <summary>
+/// This structure can be passed as a pointer to the task queue so unit tests
+/// can hook into its behavior. Some race conditions are very difficult to get
+/// to happen naturally so sometimes a hook is needed. A pointer to this
+/// structure will be stored on the task queue. It is up to the test to ensure
+/// the structure lifetime exceeds that of the task queue under test. 
+/// </summary>
+struct XTaskQueueTestHooks
+{
+    virtual void NextPendingCallbackScheduled(
+        XTaskQueuePort port,
+        uint64_t lastDueTime,
+        uint64_t nextDueTime)
+    {
+        UNREFERENCED_PARAMETER(port);
+        UNREFERENCED_PARAMETER(lastDueTime);
+        UNREFERENCED_PARAMETER(nextDueTime);
+    }
+};
+
+/// <summary>
+/// Sets or clears test hooks on a task queue.
+/// </summary>
+STDAPI XTaskQueueSetTestHooks(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueueTestHooks* hooks
     ) noexcept;
 
 //----------------------------------------------------------------//
@@ -125,20 +148,3 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
 STDAPI_(bool) XTaskQueueUninitialize(
     _In_ uint32_t timeoutMilliseconds = 0
     ) noexcept;
-
-#ifdef HC_UNITTEST_API
-
-// Two-phase barrier for deterministic reproduction of the
-// ScheduleNextPendingCallback timer race that results in lost delayed
-// task wakes. See VerifyDelayedCallbackTimerRaceOnManualQueue.
-struct TestBarrier
-{
-    std::mutex mtx;
-    std::condition_variable cv;
-    bool phase1_ready = false;  // threadpool -> test: "CAS done"
-    bool phase2_ready = false;  // test -> threadpool: "Start done"
-};
-
-extern TestBarrier* g_testBarrier;
-
-#endif
