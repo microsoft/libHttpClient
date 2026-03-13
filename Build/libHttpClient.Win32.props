@@ -44,6 +44,7 @@
     <Keyword>Win32Proj</Keyword>
     <PlatformToolset Condition="'$(PlatformToolset)' == '' and $(VisualStudioVersion)==16">v142</PlatformToolset>
     <PlatformToolset Condition="'$(PlatformToolset)' == '' and $(VisualStudioVersion)==17">v143</PlatformToolset>
+    <PlatformToolset Condition="'$(PlatformToolset)' == '' and $(VisualStudioVersion)==18">v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <DefaultLanguage>en-US</DefaultLanguage>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>

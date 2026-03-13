@@ -39,6 +39,7 @@
     <Keyword>Win32Proj</Keyword>
     <PlatformToolset Condition="'$(PlatformToolset)' == '' and $(VisualStudioVersion)==16">v142</PlatformToolset>
     <PlatformToolset Condition="'$(PlatformToolset)' == '' and $(VisualStudioVersion)==17">v143</PlatformToolset>
+    <PlatformToolset Condition="'$(PlatformToolset)' == '' and $(VisualStudioVersion)==18">v143</PlatformToolset>
     <TargetRuntime>Native</TargetRuntime>
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>false</GenerateManifest>
