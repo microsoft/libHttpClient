@@ -114,7 +114,7 @@ private:
     };
 
     std::atomic<uint64_t> m_nextToken{ 0 };
-    DefaultUnnamedMutex m_lock;
+    Mutex m_lock;
     CallbackRegistration m_buffer1[SUBMIT_CALLBACK_MAX];
     CallbackRegistration m_buffer2[SUBMIT_CALLBACK_MAX];
     CallbackRegistration* m_buffers[2]= { m_buffer1, m_buffer2 };
@@ -149,7 +149,7 @@ private:
 
     std::atomic<uint64_t> m_nextToken{ 0 };
     StaticArray<WaitRegistration, QUEUE_WAIT_MAX> m_callbacks;
-    DefaultUnnamedMutex m_lock;
+    Mutex m_lock;
 };
 
 class TaskQueuePortImpl: public Api<ApiId::TaskQueuePort, ITaskQueuePort>
@@ -257,12 +257,12 @@ private:
     std::atomic<uint32_t> m_processingSerializedTbCallback{ 0 };
     std::atomic<uint32_t> m_processingCallback{ 0 };
     std::condition_variable m_processingCallbackCv;
-    DefaultUnnamedMutex m_lock;
+    Mutex m_lock;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_queueList;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
     std::unique_ptr<LocklessQueue<TerminationEntry*>> m_terminationList;
     std::unique_ptr<LocklessQueue<TerminationEntry*>> m_pendingTerminationList;
-    DefaultUnnamedMutex m_terminationLock;
+    Mutex m_terminationLock;
     OS::WaitTimer m_timer;
     OS::ThreadPool m_threadPool;
     std::atomic<uint64_t> m_timerDue = { UINT64_MAX };
@@ -465,7 +465,7 @@ private:
     struct TerminationData
     {
         bool terminated;
-        DefaultUnnamedMutex lock;
+        Mutex lock;
         std::condition_variable cv;
     };
 

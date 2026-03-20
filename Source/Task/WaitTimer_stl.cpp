@@ -53,7 +53,7 @@ namespace OS
         TimerEntry const& Peek() const noexcept;
         TimerEntry Pop() noexcept;
 
-        DefaultUnnamedMutex m_mutex;
+        Mutex m_mutex;
         std::condition_variable m_cv;
         std::vector<TimerEntry> m_queue; // used as a heap
         std::thread m_t;
@@ -64,7 +64,7 @@ namespace OS
     namespace
     {
         std::shared_ptr<TimerQueue> g_timerQueue;
-        DefaultUnnamedMutex g_timerQueueMutex;
+        Mutex g_timerQueueMutex;
     }
 
     TimerQueue::~TimerQueue()
