@@ -497,20 +497,20 @@ enum class HCWebSocketCloseStatus : uint32_t
 }
 
 // On some platforms, std::mutex default construction creates named mutexes which have a low
-// system-wide limit. Mutex forces unnamed mutex construction on affected platforms.
+// system-wide limit. DefaultUnnamedMutex forces unnamed mutex construction on affected platforms.
 #if HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5
-class Mutex : public std::mutex
+class DefaultUnnamedMutex : public std::mutex
 {
 public:
-    Mutex() noexcept : std::mutex(nullptr) {}
-    ~Mutex() noexcept = default;
-    Mutex(Mutex const&) = delete;
-    Mutex& operator=(Mutex const&) = delete;
+    DefaultUnnamedMutex() noexcept : std::mutex(nullptr) {}
+    ~DefaultUnnamedMutex() noexcept = default;
+    DefaultUnnamedMutex(DefaultUnnamedMutex const&) = delete;
+    DefaultUnnamedMutex& operator=(DefaultUnnamedMutex const&) = delete;
     void lock() { std::mutex::lock(); }
     bool try_lock() { return std::mutex::try_lock(); }
     void unlock() { std::mutex::unlock(); }
     native_handle_type native_handle() { return std::mutex::native_handle(); }
 };
 #else
-using Mutex = std::mutex;
+using DefaultUnnamedMutex = std::mutex;
 #endif

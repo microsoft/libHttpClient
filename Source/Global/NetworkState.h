@@ -76,7 +76,7 @@ private:
     static void CALLBACK HttpProviderCleanupComplete(XAsyncBlock* async);
     bool ScheduleCleanup();
 
-    Mutex m_mutex;
+    DefaultUnnamedMutex m_mutex;
 
     UniquePtr<IHttpProvider> m_httpProvider;
 

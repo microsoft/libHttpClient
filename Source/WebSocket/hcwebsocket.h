@@ -181,7 +181,7 @@ private:
         void* context{ nullptr };
     };
 
-    Mutex m_stateMutex;
+    DefaultUnnamedMutex m_stateMutex;
     enum class State
     {
         Initial,

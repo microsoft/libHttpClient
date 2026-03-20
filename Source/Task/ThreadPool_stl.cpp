@@ -220,12 +220,12 @@ namespace OS
 
         std::atomic<uint32_t> m_refs{ 1 };
 
-        Mutex m_wakeLock;
+        DefaultUnnamedMutex m_wakeLock;
         std::condition_variable m_wake;
         uint32_t m_calls{ 0 };
         bool m_terminate{ false };
 
-        Mutex m_activeLock;
+        DefaultUnnamedMutex m_activeLock;
         std::condition_variable m_active;
         uint32_t m_activeCalls{ 0 };
 
