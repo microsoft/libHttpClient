@@ -25,11 +25,11 @@ HRESULT http_singleton::singleton_access(
     _Out_ std::shared_ptr<http_singleton>& singleton
 ) noexcept
 {
-    static std::mutex s_mutex;
+    static DefaultUnnamedMutex s_mutex;
     static std::shared_ptr<http_singleton> s_singleton{ nullptr };
     static uint8_t s_useCount{ 0 };
 
-    std::lock_guard<std::mutex> lock{ s_mutex };
+    std::lock_guard<DefaultUnnamedMutex> lock{ s_mutex };
     switch (mode)
     {
     case singleton_access_mode::create:

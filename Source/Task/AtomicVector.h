@@ -94,7 +94,7 @@ public:
 
 private:
 
-    std::mutex m_lock;
+    DefaultUnnamedMutex m_lock;
     std::vector<TElement> m_buffers[2];
     std::atomic<uint32_t> m_indexAndRef { 0 };
 };

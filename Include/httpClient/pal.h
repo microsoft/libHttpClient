@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <mutex>
 
 #include <httpClient/config.h>
 
@@ -494,3 +495,21 @@ enum class HCWebSocketCloseStatus : uint32_t
 };
 
 }
+
+// Sony PS5 STL library defect: std::mutex without a name parameter creates named mutexes,
+// which have a low limit. Use DefaultUnnamedMutex as a workaround so that mutexes are unnamed
+// by default.
+class DefaultUnnamedMutex : public std::mutex
+{
+public:
+#if __PROSPERO__
+    DefaultUnnamedMutex() noexcept : std::mutex(nullptr) {}
+    ~DefaultUnnamedMutex() noexcept = default;
+    DefaultUnnamedMutex(DefaultUnnamedMutex const&) = delete;
+    DefaultUnnamedMutex& operator=(DefaultUnnamedMutex const&) = delete;
+    void lock() { std::mutex::lock(); }
+    bool try_lock() { return std::mutex::try_lock(); }
+    void unlock() { std::mutex::unlock(); }
+    native_handle_type native_handle() { return std::mutex::native_handle(); }
+#endif
+};

@@ -45,7 +45,7 @@ struct AsyncState
     XAsyncBlock providerAsyncBlock { };
     XAsyncBlock* userAsyncBlock = nullptr;
     XTaskQueueHandle queue = nullptr;
-    std::mutex waitMutex;
+    DefaultUnnamedMutex waitMutex;
     std::condition_variable waitCondition;
     bool waitSatisfied = false;
 
