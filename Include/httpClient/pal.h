@@ -498,7 +498,8 @@ enum class HCWebSocketCloseStatus : uint32_t
 
 // On some platforms, std::mutex default construction creates named mutexes which have a low
 // system-wide limit. DefaultUnnamedMutex forces unnamed mutex construction on affected platforms.
-#if HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5
+// Define HC_USE_UNNAMED_MUTEX in your platform build props to enable the workaround.
+#if defined(HC_USE_UNNAMED_MUTEX)
 class DefaultUnnamedMutex : public std::mutex
 {
 public:
