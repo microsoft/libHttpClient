@@ -18,6 +18,16 @@
     <None Include="libHttpClient.GDK.def" />
   </ItemGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.GDK.props))" />
+  <!-- Separate IntDir when building without suffix to avoid PDB conflicts with the default suffixed build -->
+  <PropertyGroup Condition="'$(LibHttpClientIncludeSuffix)' == 'false'">
+    <IntDir>$(HCIntRoot)\$(Platform)\$(Configuration)\$(MSBuildProjectName).nosuffix\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <!-- Allow concurrent PDB writes when solution and ProjectReference builds overlap -->
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <Link>
       <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
