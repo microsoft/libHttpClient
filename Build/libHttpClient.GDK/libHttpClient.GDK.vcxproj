@@ -18,9 +18,10 @@
     <None Include="libHttpClient.GDK.def" />
   </ItemGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.GDK.props))" />
-  <!-- Separate IntDir when building without suffix to avoid PDB conflicts with the default suffixed build -->
+  <!-- Separate IntDir/OutDir when building without suffix to avoid conflicts with the default suffixed build -->
   <PropertyGroup Condition="'$(LibHttpClientIncludeSuffix)' == 'false'">
     <IntDir>$(HCIntRoot)\$(Platform)\$(Configuration)\$(MSBuildProjectName).nosuffix\</IntDir>
+    <OutDir>$(HCOutRoot)\$(Platform)\$(Configuration)\$(MSBuildProjectName).nosuffix\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
