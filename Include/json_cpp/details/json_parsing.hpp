@@ -11,8 +11,11 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
+#include <cctype>
 #include <cstdlib>
 #include <array>
+#include <cwctype>
+#include <type_traits>
 #include "../json.h"
 
 #if defined(_MSC_VER)
@@ -199,6 +202,17 @@ typename std::char_traits<CharType>::int_type eof()
 }
 
 template <typename CharType>
+bool is_whitespace_character(typename std::char_traits<CharType>::int_type ch)
+{
+    if constexpr (std::is_same<CharType, wchar_t>::value)
+    {
+        return std::iswspace(static_cast<wint_t>(ch)) != 0;
+    }
+
+    return std::isspace(static_cast<unsigned char>(ch)) != 0;
+}
+
+template <typename CharType>
 class JSON_StreamParser : public JSON_Parser<CharType>
     {
 public:
@@ -305,7 +319,7 @@ typename JSON_Parser<CharType>::int_type JSON_Parser<CharType>::EatWhitespace()
 {
    auto ch = NextCharacter();
 
-   while ( ch != eof<CharType>() && iswspace(static_cast<wint_t>(ch)))
+    while ( ch != eof<CharType>() && is_whitespace_character<CharType>(ch))
    {
        ch = NextCharacter();
    }
