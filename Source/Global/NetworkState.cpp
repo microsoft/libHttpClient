@@ -101,6 +101,21 @@ HRESULT NetworkState::HttpCallPerformAsync(HCCallHandle call, XAsyncBlock* async
     return S_OK;
 }
 
+#ifdef HC_UNITTEST_API
+bool NetworkState::CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept
+{
+    std::unique_lock<std::mutex> lock{ m_mutex };
+    for (auto activeRequest : m_activeHttpRequests)
+    {
+        if (activeRequest == async)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+#endif
+
 HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
 {
     HttpPerformContext* performContext{ static_cast<HttpPerformContext*>(data->context) };

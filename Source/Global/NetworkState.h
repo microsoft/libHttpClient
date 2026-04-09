@@ -48,6 +48,10 @@ public: // Http
         XAsyncBlock* async
     ) noexcept;
 
+    #ifdef HC_UNITTEST_API
+        bool CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept;
+    #endif
+
 #ifndef HC_NOWEBSOCKETS
 public: // WebSocket
     IWebSocketProvider& WebSocketProvider() noexcept;
