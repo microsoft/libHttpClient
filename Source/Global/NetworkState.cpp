@@ -68,6 +68,17 @@ Result<UniquePtr<HC_CALL>> NetworkState::HttpCallCreate() noexcept
     return call;
 }
 
+// Coordinates handoff of the client-owned XAsyncBlock between cleanup and completion.
+// This prevents CleanupAsyncProvider from canceling a request while HttpCallPerformComplete is
+// handing that same XAsyncBlock to XAsyncComplete, after which the client callback may delete it.
+// Once CallbackStarted is published, cleanup must never touch clientAsyncBlock again.
+enum class HttpPerformClientBlockState : uint8_t
+{
+    CleanupMayCancel,
+    CleanupCancelInFlight,
+    CallbackStarted
+};
+
 struct NetworkState::HttpPerformContext
 {
     HttpPerformContext(NetworkState& _state, HCCallHandle _callHandle, XAsyncBlock* _clientAsyncBlock) :
@@ -89,6 +100,7 @@ struct NetworkState::HttpPerformContext
     NetworkState& state;
     HCCallHandle const callHandle;
     XAsyncBlock* const clientAsyncBlock;
+    std::atomic<HttpPerformClientBlockState> clientBlockState{ HttpPerformClientBlockState::CleanupMayCancel };
     XAsyncBlock internalAsyncBlock;
 };
 
@@ -105,9 +117,9 @@ HRESULT NetworkState::HttpCallPerformAsync(HCCallHandle call, XAsyncBlock* async
 bool NetworkState::CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
-    for (auto activeRequest : m_activeHttpRequests)
+    for (auto context : m_activeHttpRequests)
     {
-        if (activeRequest == async)
+        if (context->clientAsyncBlock == async && context->clientBlockState.load(std::memory_order_acquire) != HttpPerformClientBlockState::CallbackStarted)
         {
             return true;
         }
@@ -131,7 +143,7 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &performContext->internalAsyncBlock.queue));
 
         std::unique_lock<std::mutex> lock{ state.m_mutex };
-        state.m_activeHttpRequests.insert(performContext->clientAsyncBlock);
+        state.m_activeHttpRequests.insert(performContext);
         lock.unlock();
 
         return performContext->callHandle->PerformAsync(&performContext->internalAsyncBlock);
@@ -144,7 +156,7 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
     case XAsyncOp::Cleanup:
     {
         std::unique_lock<std::mutex> lock{ state.m_mutex };
-        state.m_activeHttpRequests.erase(performContext->clientAsyncBlock);
+        state.m_activeHttpRequests.erase(performContext);
         bool scheduleCleanup = state.ScheduleCleanup();
         lock.unlock();
 
@@ -173,6 +185,47 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
 void CALLBACK NetworkState::HttpCallPerformComplete(XAsyncBlock* async)
 {
     HttpPerformContext* performContext{ static_cast<HttpPerformContext*>(async->context) };
+
+    // Cleanup snapshots requests under m_mutex and then issues XAsyncCancel outside the lock.
+    // A snapshotted request publishes CleanupCancelInFlight before that lock is released, so
+    // the completion path waits here until cancel propagation finishes or until it wins the race
+    // and publishes CallbackStarted itself.
+    bool clientCallbackMayRun{ false };
+    while (!clientCallbackMayRun)
+    {
+        switch (performContext->clientBlockState.load(std::memory_order_acquire))
+        {
+        case HttpPerformClientBlockState::CallbackStarted:
+        {
+            clientCallbackMayRun = true;
+            break;
+        }
+
+        case HttpPerformClientBlockState::CleanupMayCancel:
+        {
+            auto expectedState = HttpPerformClientBlockState::CleanupMayCancel;
+            if (performContext->clientBlockState.compare_exchange_weak(
+                expectedState,
+                HttpPerformClientBlockState::CallbackStarted,
+                std::memory_order_acq_rel,
+                std::memory_order_acquire))
+            {
+                clientCallbackMayRun = true;
+            }
+            break;
+        }
+
+        case HttpPerformClientBlockState::CleanupCancelInFlight:
+        {
+            // Expected transient state while CleanupAsyncProvider is synchronously issuing
+            // XAsyncCancel for this snapshotted request outside m_mutex. That path restores
+            // CleanupMayCancel before it leaves, at which point this loop can retry the handoff.
+            std::this_thread::yield();
+            break;
+        }
+        }
+    }
+
     XAsyncComplete(performContext->clientAsyncBlock, XAsyncGetStatus(async, false), 0);
 }
 
@@ -391,7 +444,7 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
     {
     case XAsyncOp::Begin:
     {
-        xbox::httpclient::Vector<XAsyncBlock*> activeRequests;
+        xbox::httpclient::Vector<HttpPerformContext*> activeRequestsToCancel;
 #ifndef HC_NOWEBSOCKETS
         xbox::httpclient::Vector<ActiveWebSocketContext*> connectedWebSockets;
 #endif
@@ -404,15 +457,40 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
 #ifndef HC_NOWEBSOCKETS 
             HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", state->m_activeHttpRequests.size(), state->m_connectingWebSockets.size(), state->m_connectedWebSockets.size());
 #endif
-            activeRequests.assign(state->m_activeHttpRequests.begin(), state->m_activeHttpRequests.end());
+            // No new HTTP performs can enter m_activeHttpRequests after cleanup begins because
+            // http_singleton::singleton_access(cleanup) detaches the singleton before
+            // NetworkState::CleanupAsync runs. Snapshot requests here, then cancel them after
+            // releasing m_mutex. This prevents a race between holding the global cleanup mutex
+            // across XAsyncCancel and allowing completion to advance a request that cleanup has
+            // already decided to cancel.
+            for (auto activeRequest : state->m_activeHttpRequests)
+            {
+                auto expectedState = HttpPerformClientBlockState::CleanupMayCancel;
+                if (activeRequest->clientBlockState.compare_exchange_strong(
+                    expectedState,
+                    HttpPerformClientBlockState::CleanupCancelInFlight,
+                    std::memory_order_acq_rel,
+                    std::memory_order_acquire))
+                {
+                    activeRequestsToCancel.push_back(activeRequest);
+                }
+            }
 #ifndef HC_NOWEBSOCKETS
             connectedWebSockets.assign(state->m_connectedWebSockets.begin(), state->m_connectedWebSockets.end());
 #endif
         }
 
-        for (auto& activeRequest : activeRequests)
+        // The snapshot remains valid outside m_mutex because a request in CleanupCancelInFlight
+        // cannot publish CallbackStarted, and the active-set entry is only removed during the
+        // client async cleanup that follows that callback.
+        for (auto activeRequest : activeRequestsToCancel)
         {
-            XAsyncCancel(activeRequest);
+            XAsyncCancel(activeRequest->clientAsyncBlock);
+
+            // XAsyncCancel synchronously propagated the cancel request to the provider. If the
+            // request is still alive after that, the completion path may resume and enter the
+            // client callback.
+            activeRequest->clientBlockState.store(HttpPerformClientBlockState::CleanupMayCancel, std::memory_order_release);
         }
 #ifndef HC_NOWEBSOCKETS
         for (auto& context : connectedWebSockets)

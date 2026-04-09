@@ -48,9 +48,9 @@ public: // Http
         XAsyncBlock* async
     ) noexcept;
 
-    #ifdef HC_UNITTEST_API
-        bool CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept;
-    #endif
+#ifdef HC_UNITTEST_API
+    bool CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept;
+#endif
 
 #ifndef HC_NOWEBSOCKETS
 public: // WebSocket
@@ -86,7 +86,7 @@ private:
 
     struct HttpPerformContext;
 
-    Set<XAsyncBlock*> m_activeHttpRequests;
+    Set<HttpPerformContext*> m_activeHttpRequests;
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
 
 #ifndef HC_NOWEBSOCKETS
