@@ -996,6 +996,8 @@ enum class HCWebSocketOptions : uint32_t
     CompressionClientNoContextTakeover = 0x00000004
 };
 
+DEFINE_ENUM_FLAG_OPERATORS(HCWebSocketOptions)
+
 /// <summary>
 /// Creates an WebSocket handle.
 /// </summary>

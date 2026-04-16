@@ -1019,7 +1019,7 @@ public:
 
         const CHAR* headerName = "sentinel";
         headerValue = "sentinel";
-        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeaderAtIndex(call, 0, &headerName, &headerValue));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketGetResponseHeaderAtIndex(call, 0, &headerName, &headerValue));
         VERIFY_IS_NULL(headerName);
         VERIFY_IS_NULL(headerValue);
 

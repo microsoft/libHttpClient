@@ -433,7 +433,7 @@ HRESULT WebSocket::GetResponseHeaderAtIndex(
 
     *headerName = nullptr;
     *headerValue = nullptr;
-    return S_OK;
+    return E_INVALIDARG;
 }
 
 const http_internal_string& WebSocket::ProxyUri() const noexcept
@@ -535,6 +535,9 @@ HRESULT WebSocket::SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noe
 
 HRESULT WebSocket::SetPingInterval(uint32_t pingInterval) noexcept
 {
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
+
     m_pingInterval = pingInterval;
     return S_OK;
 }
@@ -549,6 +552,8 @@ HRESULT WebSocket::SetOptions(HCWebSocketOptions options) noexcept
     RETURN_HR_IF(
         E_INVALIDARG,
         HasNoContextTakeoverWebSocketOptions(options) && !RequestsWebSocketCompression(options));
+
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
     RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
     if (RequestsLegacyWebSocketSemantics(options))
     {
