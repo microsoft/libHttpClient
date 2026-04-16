@@ -67,15 +67,6 @@ enum class CompressionExpectation
     Unsupported
 };
 
-constexpr HCWebSocketOptions CombineCompressionOptions(
-    HCWebSocketOptions lhs,
-    HCWebSocketOptions rhs) noexcept
-{
-    return static_cast<HCWebSocketOptions>(
-        static_cast<uint32_t>(lhs) |
-        static_cast<uint32_t>(rhs));
-}
-
 constexpr size_t ReceiveBufferSize = 4096;
 
 void PrintHr(char const* operation, HRESULT hr)
@@ -1914,9 +1905,8 @@ int main()
             server,
             queue,
             "RequestCompression|CompressionServerNoContextTakeover",
-            CombineCompressionOptions(
-                HCWebSocketOptions::RequestCompression,
-                HCWebSocketOptions::CompressionServerNoContextTakeover),
+            HCWebSocketOptions::RequestCompression |
+                HCWebSocketOptions::CompressionServerNoContextTakeover,
             true,
             false))
         {
@@ -1927,9 +1917,8 @@ int main()
             server,
             queue,
             "RequestCompression|CompressionClientNoContextTakeover",
-            CombineCompressionOptions(
-                HCWebSocketOptions::RequestCompression,
-                HCWebSocketOptions::CompressionClientNoContextTakeover),
+            HCWebSocketOptions::RequestCompression |
+                HCWebSocketOptions::CompressionClientNoContextTakeover,
             false,
             true))
         {
@@ -1940,11 +1929,9 @@ int main()
             server,
             queue,
             "RequestCompression|CompressionServerNoContextTakeover|CompressionClientNoContextTakeover",
-            CombineCompressionOptions(
-                CombineCompressionOptions(
-                    HCWebSocketOptions::RequestCompression,
-                    HCWebSocketOptions::CompressionServerNoContextTakeover),
-                HCWebSocketOptions::CompressionClientNoContextTakeover),
+            HCWebSocketOptions::RequestCompression |
+                HCWebSocketOptions::CompressionServerNoContextTakeover |
+                HCWebSocketOptions::CompressionClientNoContextTakeover,
             true,
             true))
         {

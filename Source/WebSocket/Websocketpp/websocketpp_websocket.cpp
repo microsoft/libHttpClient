@@ -85,9 +85,9 @@ static_assert(
     WsppConfiguredMaxMessageSize <= WebSocketCallbackPayloadSizeLimit,
     "websocketpp max message size must fit in websocket callback size fields");
 
-constexpr uint32_t RequestCompressionOptionMask = static_cast<uint32_t>(HCWebSocketOptions::RequestCompression);
-constexpr uint32_t ServerNoContextTakeoverOptionMask = static_cast<uint32_t>(HCWebSocketOptions::CompressionServerNoContextTakeover);
-constexpr uint32_t ClientNoContextTakeoverOptionMask = static_cast<uint32_t>(HCWebSocketOptions::CompressionClientNoContextTakeover);
+constexpr HCWebSocketOptions RequestCompressionOptionMask = HCWebSocketOptions::RequestCompression;
+constexpr HCWebSocketOptions ServerNoContextTakeoverOptionMask = HCWebSocketOptions::CompressionServerNoContextTakeover;
+constexpr HCWebSocketOptions ClientNoContextTakeoverOptionMask = HCWebSocketOptions::CompressionClientNoContextTakeover;
 
 enum class CompressionClientPolicy
 {
@@ -97,9 +97,9 @@ enum class CompressionClientPolicy
     ServerAndClientNoContextTakeover
 };
 
-bool HasCompressionOption(HCWebSocketOptions options, uint32_t optionMask) noexcept
+bool HasCompressionOption(HCWebSocketOptions options, HCWebSocketOptions optionMask) noexcept
 {
-    return (static_cast<uint32_t>(options) & optionMask) != 0;
+    return (options & optionMask) != HCWebSocketOptions::None;
 }
 
 bool ShouldUseCompression(HCWebsocketHandle websocketHandle) noexcept

@@ -548,7 +548,7 @@ HRESULT WebSocket::SetOptions(HCWebSocketOptions options) noexcept
     RETURN_HR_IF(
         E_INVALIDARG,
         RequestsLegacyWebSocketSemantics(options) &&
-            RawWebSocketOptions(options) != static_cast<uint32_t>(HCWebSocketOptions::LegacySemantics));
+            options != HCWebSocketOptions::LegacySemantics);
     RETURN_HR_IF(
         E_INVALIDARG,
         HasNoContextTakeoverWebSocketOptions(options) && !RequestsWebSocketCompression(options));

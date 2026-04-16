@@ -404,15 +404,6 @@ HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     return S_OK;
 }
 
-constexpr HCWebSocketOptions CombineCompressionOptions(
-    HCWebSocketOptions lhs,
-    HCWebSocketOptions rhs) noexcept
-{
-    return static_cast<HCWebSocketOptions>(
-        static_cast<uint32_t>(lhs) |
-        static_cast<uint32_t>(rhs));
-}
-
 class UnsupportedOptionsTestProvider final : public IWebSocketProvider
 {
 public:
@@ -520,24 +511,22 @@ public:
 
     HRESULT OptionsResult(HCWebSocketOptions options) const noexcept override
     {
-        constexpr uint32_t requestCompression = static_cast<uint32_t>(HCWebSocketOptions::RequestCompression);
-        constexpr uint32_t noContextTakeoverMask =
-            static_cast<uint32_t>(HCWebSocketOptions::CompressionServerNoContextTakeover) |
-            static_cast<uint32_t>(HCWebSocketOptions::CompressionClientNoContextTakeover);
-        constexpr uint32_t legacySemantics = static_cast<uint32_t>(HCWebSocketOptions::LegacySemantics);
-        auto const rawOptions = static_cast<uint32_t>(options);
+        auto const noContextTakeoverMask =
+            HCWebSocketOptions::CompressionServerNoContextTakeover |
+            HCWebSocketOptions::CompressionClientNoContextTakeover;
 
-        if ((rawOptions & legacySemantics) != 0)
+        if ((options & HCWebSocketOptions::LegacySemantics) != HCWebSocketOptions::None)
         {
             return S_OK;
         }
 
-        if ((rawOptions & ~(requestCompression | noContextTakeoverMask)) != 0)
+        if ((options & ~(HCWebSocketOptions::RequestCompression | noContextTakeoverMask)) != HCWebSocketOptions::None)
         {
             return E_NOT_SUPPORTED;
         }
 
-        if ((rawOptions & noContextTakeoverMask) != 0 && (rawOptions & requestCompression) == 0)
+        if ((options & noContextTakeoverMask) != HCWebSocketOptions::None &&
+            (options & HCWebSocketOptions::RequestCompression) == HCWebSocketOptions::None)
         {
             return E_NOT_SUPPORTED;
         }
@@ -738,9 +727,9 @@ public:
         auto const requestCompression = HCWebSocketOptions::RequestCompression;
         auto const serverNoContextTakeover = HCWebSocketOptions::CompressionServerNoContextTakeover;
         auto const clientNoContextTakeover = HCWebSocketOptions::CompressionClientNoContextTakeover;
-        auto const requestWithServerNoContextTakeover = CombineCompressionOptions(requestCompression, serverNoContextTakeover);
-        auto const requestWithClientNoContextTakeover = CombineCompressionOptions(requestCompression, clientNoContextTakeover);
-        auto const requestWithBothNoContextTakeover = CombineCompressionOptions(requestWithServerNoContextTakeover, clientNoContextTakeover);
+        auto const requestWithServerNoContextTakeover = requestCompression | serverNoContextTakeover;
+        auto const requestWithClientNoContextTakeover = requestCompression | clientNoContextTakeover;
+        auto const requestWithBothNoContextTakeover = requestWithServerNoContextTakeover | clientNoContextTakeover;
 
         VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
@@ -753,10 +742,10 @@ public:
 
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(nullptr, HCWebSocketOptions::None));
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, static_cast<HCWebSocketOptions>(0x8)));
-        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, CombineCompressionOptions(legacySemantics, requestCompression)));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, legacySemantics | requestCompression));
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, serverNoContextTakeover));
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, clientNoContextTakeover));
-        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, CombineCompressionOptions(serverNoContextTakeover, clientNoContextTakeover)));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, serverNoContextTakeover | clientNoContextTakeover));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, legacySemantics));
         VERIFY_ARE_EQUAL(static_cast<uint32_t>(legacySemantics), static_cast<uint32_t>(websocket->websocket->Options()));
         VERIFY_IS_TRUE(websocket->websocket->UsesLegacySemantics());
@@ -812,9 +801,9 @@ public:
     {
         auto const legacySemantics = HCWebSocketOptions::LegacySemantics;
         auto const requestCompression = HCWebSocketOptions::RequestCompression;
-        auto const requestWithServerNoContextTakeover = CombineCompressionOptions(requestCompression, HCWebSocketOptions::CompressionServerNoContextTakeover);
-        auto const requestWithClientNoContextTakeover = CombineCompressionOptions(requestCompression, HCWebSocketOptions::CompressionClientNoContextTakeover);
-        auto const requestWithBothNoContextTakeover = CombineCompressionOptions(requestWithServerNoContextTakeover, HCWebSocketOptions::CompressionClientNoContextTakeover);
+        auto const requestWithServerNoContextTakeover = requestCompression | HCWebSocketOptions::CompressionServerNoContextTakeover;
+        auto const requestWithClientNoContextTakeover = requestCompression | HCWebSocketOptions::CompressionClientNoContextTakeover;
+        auto const requestWithBothNoContextTakeover = requestWithServerNoContextTakeover | HCWebSocketOptions::CompressionClientNoContextTakeover;
 
         ConfigurableCompressionTestProvider provider;
         auto observer = HC_WEBSOCKET_OBSERVER::Initialize(
