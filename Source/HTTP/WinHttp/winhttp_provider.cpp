@@ -733,6 +733,20 @@ HRESULT WinHttp_WebSocketProvider::Disconnect(
 {
     return WinHttpProvider->Disconnect(websocketHandle, closeStatus);
 }
+
+void WinHttp_WebSocketProvider::OnSuspending() noexcept
+{
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    WinHttpProvider->Suspend();
+#endif
+}
+
+void WinHttp_WebSocketProvider::OnResuming() noexcept
+{
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    WinHttpProvider->Resume();
+#endif
+}
 #endif // !HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

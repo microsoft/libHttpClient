@@ -191,6 +191,7 @@ private:
     HRESULT Initialize();
 
     static HRESULT query_header_length(_In_ HCCallHandle call, _In_ HINTERNET hRequestHandle, _In_ DWORD header, _Out_ DWORD* pLength);
+    static HRESULT query_and_parse_headers(_In_ HCCallHandle call, _In_ HINTERNET hRequestHandle);
     static uint32_t parse_status_code(
         _In_ HCCallHandle call,
         _In_ HINTERNET hRequestHandle,

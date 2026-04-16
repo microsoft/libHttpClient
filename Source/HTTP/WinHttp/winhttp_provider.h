@@ -157,7 +157,7 @@ public:
 };
 
 #ifndef HC_NOWEBSOCKETS
-class WinHttp_WebSocketProvider : public IWebSocketProvider
+class WinHttp_WebSocketProvider : public IWebSocketProvider, public IProviderLifecycle
 {
 public:
     WinHttp_WebSocketProvider(std::shared_ptr<WinHttpProvider> provider);
@@ -186,6 +186,9 @@ public:
         HCWebsocketHandle websocketHandle,
         HCWebSocketCloseStatus closeStatus
     ) noexcept override;
+
+    void OnSuspending() noexcept override;
+    void OnResuming() noexcept override;
 
     SharedPtr<WinHttpProvider> const WinHttpProvider;
 };

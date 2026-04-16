@@ -8,10 +8,35 @@
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 #ifndef HC_NOWEBSOCKETS
-NetworkState::NetworkState(UniquePtr<IHttpProvider> httpProvider, UniquePtr<IWebSocketProvider> webSocketProvider) noexcept :
+namespace
+{
+
+void NotifyProviderSuspending(IWebSocketProvider* provider) noexcept
+{
+    if (auto lifecycle = GetProviderLifecycle(provider))
+    {
+        lifecycle->OnSuspending();
+    }
+}
+
+void NotifyProviderResuming(IWebSocketProvider* provider) noexcept
+{
+    if (auto lifecycle = GetProviderLifecycle(provider))
+    {
+        lifecycle->OnResuming();
+    }
+}
+
+}
+
+NetworkState::NetworkState(
+    UniquePtr<IHttpProvider> httpProvider,
+    UniquePtr<IWebSocketProvider> webSocketProvider
+) noexcept :
     m_httpProvider{ std::move(httpProvider) },
     m_webSocketProvider{ std::move(webSocketProvider) }
 {
+    assert(m_webSocketProvider);
 }
 
 Result<UniquePtr<NetworkState>> NetworkState::Initialize(
@@ -240,6 +265,20 @@ IWebSocketProvider& NetworkState::WebSocketProvider() noexcept
     }
     assert(m_webSocketProvider);
     return *m_webSocketProvider;
+}
+
+void NetworkState::NotifyWebSocketSuspending() noexcept
+{
+    // Lifecycle notifications are scoped to the built-in provider path.
+    // External websocket callback overrides are app-owned and are not treated as lifecycle-capable providers.
+    assert(m_webSocketProvider);
+    NotifyProviderSuspending(m_webSocketProvider.get());
+}
+
+void NetworkState::NotifyWebSocketResuming() noexcept
+{
+    assert(m_webSocketProvider);
+    NotifyProviderResuming(m_webSocketProvider.get());
 }
 
 Result<SharedPtr<WebSocket>> NetworkState::WebSocketCreate() noexcept
