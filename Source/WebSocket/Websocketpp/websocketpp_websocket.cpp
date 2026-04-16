@@ -168,6 +168,8 @@ size_t ResolveWsppMaxMessageSize(HCWebsocketHandle websocketHandle) noexcept
     return websocket->DeterministicMaxReceiveBufferSize();
 }
 
+// Note: this logic is intentionally duplicated from TryParseWebSocketProxyUri in
+// winhttp_connection.cpp to keep compilation units independent.
 bool TryParseProxyUri(
     http_internal_string const& rawProxyUri,
     Uri& proxyUri
@@ -1649,6 +1651,10 @@ private:
 
                         try
                         {
+                            // Intentional: the detached thread will block on join() until the
+                            // ASIO thread exits, then complete shutdown asynchronously. If the
+                            // ASIO thread is genuinely hung, this leaks the impl rather than
+                            // deadlocking the caller — that is the intended tradeoff.
                             std::thread(
                                 [
                                     shutdownContext

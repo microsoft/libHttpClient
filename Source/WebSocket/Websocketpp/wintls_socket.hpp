@@ -118,6 +118,9 @@ protected:
             return socket::make_error_code(socket::error::invalid_tls_context);
         }
 
+        // Uses raw new because websocketpp's transport layer manages this via
+        // lib::shared_ptr (std::shared_ptr), which cannot use the project's
+        // custom allocator.
         m_socket.reset(new socket_type(lib::asio::ip::tcp::socket(*service), *m_context));
 
         if (m_socket_init_handler)

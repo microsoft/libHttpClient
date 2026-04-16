@@ -32,6 +32,8 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 namespace
 {
 
+// Note: this logic is intentionally duplicated from TryParseProxyUri in
+// websocketpp_websocket.cpp to keep compilation units independent.
 bool TryParseWebSocketProxyUri(
     http_internal_string const& rawProxyUri,
     Uri& proxyUri
