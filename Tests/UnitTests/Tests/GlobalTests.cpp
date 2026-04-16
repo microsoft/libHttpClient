@@ -159,6 +159,43 @@ public:
         VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(cleanupCompleteEvent, INFINITE));
         CloseHandle(cleanupCompleteEvent);
     }
+
+    DEFINE_TEST_CASE(TestHttpCallCompletionCallbackIsNotCleanupCancelable)
+    {
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+        PumpedTaskQueue pumpedQueue;
+
+        constexpr char mockUrl[]{ "www.bing.com" };
+
+        HCMockCallHandle mock{ nullptr };
+        VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
+        VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 200));
+        VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+
+        HCCallHandle call{ nullptr };
+        VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
+        VERIFY_SUCCEEDED(HCHttpCallRequestSetUrl(call, "GET", mockUrl));
+
+        bool callbackSawCleanupCancelableRequest{ false };
+        HANDLE httpCallCompleteEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+        XAsyncThunk httpPerformThunk{ [&](XAsyncBlock* async)
+        {
+            auto httpSingleton = get_http_singleton();
+            VERIFY_IS_NOT_NULL(httpSingleton.get());
+            callbackSawCleanupCancelableRequest = httpSingleton->m_networkState->CanCleanupCancelHttpRequest(async);
+            SetEvent(httpCallCompleteEvent);
+        }, pumpedQueue.queue };
+
+        VERIFY_SUCCEEDED(HCHttpCallPerformAsync(call, &httpPerformThunk.asyncBlock));
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(httpCallCompleteEvent, INFINITE));
+
+        VERIFY_IS_FALSE(callbackSawCleanupCancelableRequest);
+
+        CloseHandle(httpCallCompleteEvent);
+        VERIFY_SUCCEEDED(HCHttpCallCloseHandle(call));
+        HCCleanup();
+    }
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
