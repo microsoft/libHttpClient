@@ -647,6 +647,49 @@ HCWebSocketGetHeaderAtIndex(
 ) noexcept;
 
 /// <summary>
+/// Get a response header from the WebSocket upgrade response.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerName">UTF-8 encoded header name from the upgrade response.</param>
+/// <param name="headerValue">UTF-8 encoded header value from the upgrade response.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+STDAPI
+HCWebSocketGetResponseHeader(
+    _In_ HCWebsocketHandle websocket,
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
+    ) noexcept;
+
+/// <summary>
+/// Gets the number of headers in the WebSocket upgrade response.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="numHeaders">The number of upgrade response headers on the WebSocket.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+STDAPI
+HCWebSocketGetNumResponseHeaders(
+    _In_ HCWebsocketHandle websocket,
+    _Out_ uint32_t* numHeaders
+    ) noexcept;
+
+/// <summary>
+/// Gets the upgrade response header at a specific zero based index in the WebSocket.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerIndex">Specific zero based index of the header.</param>
+/// <param name="headerName">UTF-8 encoded header name from the upgrade response.</param>
+/// <param name="headerValue">UTF-8 encoded header value from the upgrade response.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>Use HCWebSocketGetNumResponseHeaders() to know how many upgrade response headers there are in the WebSocket.</remarks>
+STDAPI
+HCWebSocketGetResponseHeaderAtIndex(
+    _In_ HCWebsocketHandle websocket,
+    _In_ uint32_t headerIndex,
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
+) noexcept;
+
+/// <summary>
 /// Gets the ping interval for this WebSocket.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket.</param>

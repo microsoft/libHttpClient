@@ -140,6 +140,7 @@ typedef void* HANDLE;
 #define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? ((HRESULT)(x)) : ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 
 #define S_OK                                    ((HRESULT)0L)
+#define S_FALSE                                 ((HRESULT)1L)
 #define E_NOTIMPL                               _HRESULTYPEDEF_(0x80004001L)
 #define E_OUTOFMEMORY                           _HRESULTYPEDEF_(0x8007000EL)
 #define E_INVALIDARG                            _HRESULTYPEDEF_(0x80070057L)
