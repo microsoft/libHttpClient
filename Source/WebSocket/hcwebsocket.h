@@ -88,6 +88,8 @@ void ObserverDeleter::operator()(HC_WEBSOCKET_OBSERVER* ptr) noexcept
     ptr->Release();
 }
 
+constexpr size_t WEBSOCKET_RECVBUFFER_MAXSIZE_DETERMINISTIC_DEFAULT = 32000000;
+
 class WebSocket : public std::enable_shared_from_this<WebSocket>
 {
 public:
@@ -136,6 +138,7 @@ public:
     const http_internal_string& ProxyUri() const noexcept;
     const bool ProxyDecryptsHttps() const noexcept;
     size_t MaxReceiveBufferSize() const noexcept;
+    size_t DeterministicMaxReceiveBufferSize() const noexcept;
     bool MaxReceiveBufferSizeExplicitlySet() const noexcept;
     uint32_t PingInterval() const noexcept;
     HCWebSocketOptions Options() const noexcept;

@@ -1642,6 +1642,49 @@ void WinHttpConnection::StartWinHttpClose()
     // Flow continues from this point via WinHttp calling completion_callback
 }
 
+HRESULT WinHttpConnection::StartWebSocketClose(HCWebSocketCloseStatus closeStatus) noexcept
+{
+#ifndef HC_NOWEBSOCKETS
+    assert(m_winHttpWebSocketExports.close);
+
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+
+        if (m_state == ConnectionState::WebSocketClosing || m_state == ConnectionState::WinHttpClosing || m_state == ConnectionState::Closed)
+        {
+            return S_OK;
+        }
+
+        m_state = ConnectionState::WebSocketClosing;
+    }
+
+    DWORD dwError = m_winHttpWebSocketExports.close(m_hRequest, static_cast<USHORT>(closeStatus), nullptr, 0);
+    return HRESULT_FROM_WIN32(dwError);
+#else
+    UNREFERENCED_PARAMETER(closeStatus);
+    assert(false);
+    return E_FAIL;
+#endif
+}
+
+size_t WinHttpConnection::EffectiveReceiveBufferLimit() const noexcept
+{
+#ifndef HC_NOWEBSOCKETS
+    if (!m_websocketHandle || !m_websocketHandle->websocket)
+    {
+        return 0;
+    }
+
+    auto const& websocket = m_websocketHandle->websocket;
+    return websocket->UsesDeterministicSemantics() ?
+        websocket->DeterministicMaxReceiveBufferSize() :
+        websocket->MaxReceiveBufferSize();
+#else
+    assert(false);
+    return 0;
+#endif
+}
+
 void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendContext)
 {
 #ifndef HC_NOWEBSOCKETS
@@ -1763,16 +1806,30 @@ void WinHttpConnection::callback_websocket_status_read_complete(
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE || wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE)
     {
         bool readBufferFull{ false };
+        bool deterministicOverflow{ false };
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
             pRequestContext->m_websocketReceiveBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
 
             // If the receive buffer is full & at max size, invoke client fragment handler with partial message
-            readBufferFull = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->websocket->MaxReceiveBufferSize();
+            auto const receiveBufferLimit = pRequestContext->EffectiveReceiveBufferLimit();
+            readBufferFull = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= receiveBufferLimit;
+            deterministicOverflow = readBufferFull && pRequestContext->m_websocketHandle->websocket->UsesDeterministicSemantics();
         }
 
         if (readBufferFull)
         {
+            if (deterministicOverflow)
+            {
+                HRESULT closeHr = pRequestContext->StartWebSocketClose(HCWebSocketCloseStatus::TooLarge);
+                if (FAILED(closeHr))
+                {
+                    HC_TRACE_ERROR(WEBSOCKET, "[WinHttp] failed to close oversized deterministic message with TooLarge: hr=0x%0.8x", closeHr);
+                    pRequestContext->StartWinHttpClose();
+                }
+                return;
+            }
+
             // Treat all message fragments as binary as they may not be null terminated
             pRequestContext->WebSocketReadComplete(true, false);
         }
@@ -1796,19 +1853,26 @@ HRESULT WinHttpConnection::WebSocketReadAsync()
 {
 #ifndef HC_NOWEBSOCKETS
     win32_cs_autolock autoCriticalSection(&m_lock);
+    auto const receiveBufferLimit = EffectiveReceiveBufferLimit();
 
     if (m_websocketReceiveBuffer.GetBuffer() == nullptr)
     {
         // Initialize buffer with default size of WINHTTP_WEBSOCKET_RECVBUFFER_SIZE
-        RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize(WINHTTP_WEBSOCKET_RECVBUFFER_INITIAL_SIZE));
+        size_t initialSize = (std::min<size_t>)(WINHTTP_WEBSOCKET_RECVBUFFER_INITIAL_SIZE, receiveBufferLimit);
+        if (initialSize == 0)
+        {
+            initialSize = 1;
+        }
+
+        RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)initialSize));
     }
     else if (m_websocketReceiveBuffer.GetRemainingCapacity() == 0)
     {
         // Expand buffer
         size_t newSize = (size_t)m_websocketReceiveBuffer.GetBufferByteCount() * 2;
-        if (newSize > m_websocketHandle->websocket->MaxReceiveBufferSize())
+        if (newSize > receiveBufferLimit)
         {
-            newSize = m_websocketHandle->websocket->MaxReceiveBufferSize();
+            newSize = receiveBufferLimit;
         }
 
         RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)newSize));

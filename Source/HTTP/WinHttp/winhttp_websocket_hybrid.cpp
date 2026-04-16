@@ -70,7 +70,12 @@ HRESULT WinHttpHybrid_WebSocketProvider::OptionsResult(HCWebSocketOptions option
         return S_OK;
     }
 
-    return m_wsppProvider->OptionsResult(options);
+    if (RequestsWebSocketCompression(options))
+    {
+        return m_wsppProvider->OptionsResult(options);
+    }
+
+    return S_OK;
 }
 
 void WinHttpHybrid_WebSocketProvider::OnSuspending() noexcept
@@ -101,7 +106,7 @@ void WinHttpHybrid_WebSocketProvider::OnResuming() noexcept
 
 IWebSocketProvider& WinHttpHybrid_WebSocketProvider::ConnectProvider(HCWebsocketHandle websocketHandle) noexcept
 {
-    if (websocketHandle->websocket->UsesDeterministicSemantics())
+    if (RequestsWebSocketCompression(websocketHandle->websocket->Options()))
     {
         return *m_wsppProvider;
     }

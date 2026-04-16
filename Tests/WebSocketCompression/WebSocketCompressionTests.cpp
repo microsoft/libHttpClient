@@ -1323,6 +1323,177 @@ bool ValidateDefaultCompressionOptionsBehavior()
     return true;
 }
 
+bool ValidateDeterministicReceiveLimit(
+    CompressionEchoServer& server,
+    XTaskQueueHandle queue)
+{
+    ClientState state;
+    HCWebsocketHandle websocket{ nullptr };
+    ScopeGuard cleanup([&]()
+    {
+        if (websocket != nullptr)
+        {
+            HCWebSocketCloseHandle(websocket);
+        }
+    });
+
+    HRESULT hr = HCWebSocketCreate(&websocket, OnTextMessage, nullptr, OnClose, &state);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] HCWebSocketCreate(deterministic receive limit)", hr);
+        return false;
+    }
+
+    hr = ConfigureTestWebSocket(websocket, state);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] ConfigureTestWebSocket(deterministic receive limit)", hr);
+        return false;
+    }
+
+    hr = HCWebSocketSetMaxReceiveBufferSize(websocket, ReceiveBufferSize);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] HCWebSocketSetMaxReceiveBufferSize(deterministic receive limit)", hr);
+        return false;
+    }
+
+    hr = HCWebSocketSetOptions(websocket, HCWebSocketOptions::None);
+    if (hr == E_NOT_SUPPORTED)
+    {
+        PrintHr("[INFO] HCWebSocketSetOptions(None)", hr);
+        return true;
+    }
+
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] HCWebSocketSetOptions(None)", hr);
+        return false;
+    }
+
+    server.ResetObservedConnection();
+
+    XAsyncBlock connectAsync{};
+    connectAsync.queue = queue;
+
+    hr = HCWebSocketConnectAsync("ws://127.0.0.1:39002", "", websocket, &connectAsync);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] HCWebSocketConnectAsync(deterministic receive limit)", hr);
+        return false;
+    }
+
+    hr = XAsyncGetStatus(&connectAsync, true);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] XAsyncGetStatus(connect deterministic receive limit)", hr);
+        return false;
+    }
+
+    WebSocketCompletionResult connectResult{};
+    hr = HCGetWebSocketConnectResult(&connectAsync, &connectResult);
+    if (FAILED(hr) || FAILED(connectResult.errorCode))
+    {
+        PrintHr("[FAIL] HCGetWebSocketConnectResult(deterministic receive limit)", hr);
+        PrintHr("[FAIL] Connect result(deterministic receive limit)", connectResult.errorCode);
+        return false;
+    }
+
+    if (!server.WaitForConnection())
+    {
+        std::printf("[FAIL] Timed out waiting for deterministic receive-limit connection.\n");
+        if (!server.Error().empty())
+        {
+            std::printf("[FAIL] Server error: %s\n", server.Error().c_str());
+        }
+        return false;
+    }
+
+    if (!ValidateUpgradeResponseHeaders(
+        websocket,
+        CompressionExpectation::Unsupported,
+        "DeterministicReceiveLimit"))
+    {
+        return false;
+    }
+
+    XAsyncBlock sendAsync{};
+    sendAsync.queue = queue;
+
+    hr = HCWebSocketSendMessageAsync(websocket, "hello", &sendAsync);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] HCWebSocketSendMessageAsync(deterministic receive limit)", hr);
+        return false;
+    }
+
+    hr = XAsyncGetStatus(&sendAsync, true);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] XAsyncGetStatus(send deterministic receive limit)", hr);
+        return false;
+    }
+
+    WebSocketCompletionResult sendResult{};
+    hr = HCGetWebSocketSendMessageResult(&sendAsync, &sendResult);
+    if (FAILED(hr) || FAILED(sendResult.errorCode))
+    {
+        PrintHr("[FAIL] HCGetWebSocketSendMessageResult(deterministic receive limit)", hr);
+        PrintHr("[FAIL] Send result(deterministic receive limit)", sendResult.errorCode);
+        return false;
+    }
+
+    if (!WaitForEcho(state, 1, "hello"))
+    {
+        std::printf("[FAIL] Timed out waiting for deterministic receive-limit baseline echo.\n");
+        return false;
+    }
+
+    std::string const largePayload = BuildLargePayload();
+    sendAsync = {};
+    sendAsync.queue = queue;
+
+    hr = HCWebSocketSendMessageAsync(websocket, largePayload.c_str(), &sendAsync);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] HCWebSocketSendMessageAsync(large deterministic receive limit)", hr);
+        return false;
+    }
+
+    hr = XAsyncGetStatus(&sendAsync, true);
+    if (FAILED(hr))
+    {
+        PrintHr("[FAIL] XAsyncGetStatus(send large deterministic receive limit)", hr);
+        return false;
+    }
+
+    sendResult = {};
+    hr = HCGetWebSocketSendMessageResult(&sendAsync, &sendResult);
+    if (FAILED(hr) || FAILED(sendResult.errorCode))
+    {
+        PrintHr("[FAIL] HCGetWebSocketSendMessageResult(large deterministic receive limit)", hr);
+        PrintHr("[FAIL] Send large result(deterministic receive limit)", sendResult.errorCode);
+        return false;
+    }
+
+    if (!WaitForClose(state, 1, HCWebSocketCloseStatus::TooLarge))
+    {
+        std::printf("[FAIL] Timed out waiting for deterministic receive-limit close.\n");
+        return false;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(state.mutex);
+        if (state.textMessagesReceived != 1)
+        {
+            std::printf("[FAIL] Oversized deterministic receive unexpectedly surfaced a full-message callback.\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool ValidateCompressionNegotiationScenario(
     CompressionEchoServer& server,
     XTaskQueueHandle queue,
@@ -1569,6 +1740,11 @@ int main()
     {
         server.Stop();
     });
+
+    if (!ValidateDeterministicReceiveLimit(server, queue))
+    {
+        return 1;
+    }
 
     char const* uri = "ws://127.0.0.1:39002";
     XAsyncBlock connectAsync{};

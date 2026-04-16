@@ -75,6 +75,10 @@ constexpr size_t WsppMaxZlibInputSize = static_cast<size_t>((std::numeric_limits
 constexpr size_t WebSocketCallbackPayloadSizeLimit = static_cast<size_t>((std::numeric_limits<uint32_t>::max)());
 
 static_assert(
+    WsppConfiguredMaxMessageSize == WEBSOCKET_RECVBUFFER_MAXSIZE_DETERMINISTIC_DEFAULT,
+    "deterministic default max message size must stay aligned with websocketpp's configured default");
+
+static_assert(
     WsppConfiguredMaxMessageSize <= WsppMaxZlibInputSize,
     "websocketpp max message size must fit in zlib's uInt input width");
 static_assert(
@@ -161,9 +165,7 @@ size_t ResolveWsppMaxMessageSize(HCWebsocketHandle websocketHandle) noexcept
         return WsppConfiguredMaxMessageSize;
     }
 
-    return websocket->MaxReceiveBufferSizeExplicitlySet() ?
-        websocket->MaxReceiveBufferSize() :
-        WsppConfiguredMaxMessageSize;
+    return websocket->DeterministicMaxReceiveBufferSize();
 }
 
 bool TryParseProxyUri(

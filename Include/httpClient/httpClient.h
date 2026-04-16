@@ -929,10 +929,10 @@ typedef void
     );
 
 /// <summary>
-/// A callback invoked on Win32 and GDK when the built-in WebSocket transport surfaces an oversized
-/// incoming payload as raw fragments to honor the configured receive buffer size.
+/// A callback invoked on Win32 and GDK legacy behavior when an oversized incoming payload is surfaced
+/// as raw fragments to honor the configured receive buffer size.
 ///
-/// The callback receives raw bytes. On current Win32 / GDK behavior, oversized UTF-8 payloads use
+/// The callback receives raw bytes. In legacy Win32 / GDK behavior, oversized UTF-8 payloads use
 /// this same fragment path.
 ///
 /// IMPORTANT: If you expect incoming payloads larger than the receive buffer, set this callback or
@@ -1030,7 +1030,7 @@ STDAPI HCWebSocketCreate(
 /// <param name="binaryMessageFragmentFunc">A pointer to the binary message fragment handling callback to use, or a null pointer to remove.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_NOT_SUPPORTED, or E_FAIL.</returns>
 /// <remarks>
-/// On Win32 and GDK, the built-in transport uses this callback when an incoming payload exceeds the
+/// On Win32 and GDK legacy behavior, this callback is used when an incoming payload exceeds the
 /// configured receive buffer (default 20KB). Current oversized UTF-8 overflow behavior also uses
 /// this raw-byte fragment path.
 ///
@@ -1069,7 +1069,7 @@ STDAPI HCWebSocketSetProxyUri(
 /// This must be called after calling HCWebSocketSetProxyUri.
 /// This must be called prior to calling HCWebSocketConnectAsync.
 /// Available on Win32 and GDK. On GDK console, TLS validation is always enforced
-/// regardless of this setting, matching the built-in WinHTTP WebSocket path.
+/// regardless of this setting.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
 /// <param name="allowProxyToDecryptHttps">true to disable TLS server certificate validation, false to keep validation enabled</param>
@@ -1119,9 +1119,10 @@ STDAPI HCWebSocketSetPingInterval(
 /// Calling HCWebSocketSetOptions(HCWebSocketOptions::LegacySemantics) explicitly preserves that same legacy behavior.
 /// Calling HCWebSocketSetOptions(HCWebSocketOptions::None) or any non-legacy compression flag selects deterministic behavior.
 ///
-/// In deterministic behavior, fragment callbacks are not supported. On websocketpp-backed paths, the inbound
-/// message-size limit becomes a hard cap: the value passed to HCWebSocketSetMaxReceiveBufferSize() if set before connect,
-/// otherwise the provider default of 32,000,000 bytes.
+/// In deterministic behavior, fragment callbacks are not supported. The inbound message-size limit becomes a hard cap:
+/// the value passed to HCWebSocketSetMaxReceiveBufferSize() if set before connect, otherwise the default
+/// deterministic limit of 32,000,000 bytes. When an incoming message exceeds that cap, the socket closes with
+/// HCWebSocketCloseStatus::TooLarge.
 ///
 /// RequestCompression alone reuses compression context in both directions by default.</remarks>
 #if HC_PLATFORM != HC_PLATFORM_ANDROID
@@ -1188,9 +1189,9 @@ typedef struct WebSocketCompletionResult
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 /// <remarks>
 /// To get the result, first call HCGetWebSocketConnectResult inside the AsyncBlock callback or after the AsyncBlock is complete.
-/// On GDK and Win32 (Win 8+) the background work is scheduled to threads owned by WinHttp run in async mode.
-/// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket.
-/// On Win32 (Win 7+), iOS, and Android, all background work (including initial connection process) will be added to the queue
+/// On GDK and on Win32 running on Windows 8 or later, some background work is scheduled to OS-owned async threads.
+/// On UWP and XDK, the connection thread is owned and controlled by the platform WebSocket implementation.
+/// On Win32 running on Windows 7, iOS, and Android, all background work (including initial connection process) will be added to the queue
 /// in the provided XAsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
 /// caller to dispatch that queue for as long as the websocket connection is active. Note that work for
 /// HCWebSocketSendMessageAsync calls can be assigned to a separate queue if desired.
@@ -1287,7 +1288,7 @@ STDAPI HCWebSocketDisconnectWithStatus(
 /// <summary>
 /// Configures the pre-connect inbound message-size limit behavior for built-in WebSocket transports.
 ///
-/// In deterministic websocketpp-backed behavior, this becomes the hard inbound message-size cap.
+/// In deterministic behavior, this becomes the hard inbound message-size cap.
 /// If you do not call this API before connect, that deterministic cap defaults to 32,000,000 bytes.
 ///
 /// In legacy Win32 / GDK behavior, the configured receive buffer still controls when oversized incoming

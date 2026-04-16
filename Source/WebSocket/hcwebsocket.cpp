@@ -456,6 +456,13 @@ size_t WebSocket::MaxReceiveBufferSize() const noexcept
     return m_maxReceiveBufferSize;
 }
 
+size_t WebSocket::DeterministicMaxReceiveBufferSize() const noexcept
+{
+    return m_maxReceiveBufferSizeExplicitlySet ?
+        m_maxReceiveBufferSize :
+        WEBSOCKET_RECVBUFFER_MAXSIZE_DETERMINISTIC_DEFAULT;
+}
+
 bool WebSocket::MaxReceiveBufferSizeExplicitlySet() const noexcept
 {
     return m_maxReceiveBufferSizeExplicitlySet;

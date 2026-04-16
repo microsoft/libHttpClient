@@ -274,6 +274,8 @@ private:
 
     void SendRequest();
     void StartWinHttpClose();
+    HRESULT StartWebSocketClose(HCWebSocketCloseStatus closeStatus) noexcept;
+    size_t EffectiveReceiveBufferLimit() const noexcept;
 
 #if HC_PLATFORM != HC_PLATFORM_GDK
     HRESULT set_autodiscover_proxy();
