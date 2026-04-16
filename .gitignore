@@ -158,3 +158,6 @@ packages/
 
 #Exclude copied headers
 Samples/GDK-Http/httpClient
+
+# Keep working planning / handoff docs out of commits
+.github/working/

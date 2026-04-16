@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "../global/global.h"
 #include "WebSocket/hcwebsocket.h"
+#include "../../Source/WebSocket/Websocketpp/websocketpp_websocket.h"
 #include <httpClient/httpProvider.h>
 
 #pragma warning(disable:4389)
@@ -84,6 +85,21 @@ void CALLBACK Internal_HCWebSocketBinaryMessage(
     UNREFERENCED_PARAMETER(websocket);
     UNREFERENCED_PARAMETER(payloadBytes);
     UNREFERENCED_PARAMETER(payloadSize);
+    UNREFERENCED_PARAMETER(context);
+}
+
+void CALLBACK Internal_HCWebSocketBinaryMessageFragment(
+    _In_ HCWebsocketHandle websocket,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ bool isLastFragment,
+    _In_ void* context
+    )
+{
+    UNREFERENCED_PARAMETER(websocket);
+    UNREFERENCED_PARAMETER(payloadBytes);
+    UNREFERENCED_PARAMETER(payloadSize);
+    UNREFERENCED_PARAMETER(isLastFragment);
     UNREFERENCED_PARAMETER(context);
 }
 
@@ -363,6 +379,7 @@ HRESULT CALLBACK Test_Internal_HCWebSocketSendBinaryMessageAsync(
 }
 
 bool g_HCWebSocketDisconnect_Called = false;
+HCWebSocketCloseStatus g_HCWebSocketDisconnect_CloseStatus = HCWebSocketCloseStatus::Normal;
 HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus,
@@ -372,6 +389,7 @@ HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     UNREFERENCED_PARAMETER(context);
 
     g_HCWebSocketDisconnect_Called = true;
+    g_HCWebSocketDisconnect_CloseStatus = closeStatus;
     
     // Simulate proper disconnect by calling the close callback
     // This is needed for cleanup to work properly
@@ -385,6 +403,148 @@ HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     
     return S_OK;
 }
+
+constexpr HCWebSocketOptions CombineCompressionOptions(
+    HCWebSocketOptions lhs,
+    HCWebSocketOptions rhs) noexcept
+{
+    return static_cast<HCWebSocketOptions>(
+        static_cast<uint32_t>(lhs) |
+        static_cast<uint32_t>(rhs));
+}
+
+class UnsupportedOptionsTestProvider final : public IWebSocketProvider
+{
+public:
+    HRESULT ConnectAsync(
+        xbox::httpclient::String const& uri,
+        xbox::httpclient::String const& subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async) noexcept override
+    {
+        UNREFERENCED_PARAMETER(uri);
+        UNREFERENCED_PARAMETER(subprotocol);
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(async);
+        return E_NOTIMPL;
+    }
+
+    HRESULT SendAsync(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(message);
+        UNREFERENCED_PARAMETER(async);
+        return E_NOTIMPL;
+    }
+
+    HRESULT SendBinaryAsync(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* async) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(payloadBytes);
+        UNREFERENCED_PARAMETER(payloadSize);
+        UNREFERENCED_PARAMETER(async);
+        return E_NOTIMPL;
+    }
+
+    HRESULT Disconnect(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(closeStatus);
+        return E_NOTIMPL;
+    }
+
+    HRESULT OptionsResult(HCWebSocketOptions options) const noexcept override
+    {
+        UNREFERENCED_PARAMETER(options);
+        return E_NOT_SUPPORTED;
+    }
+};
+
+class ConfigurableCompressionTestProvider final : public IWebSocketProvider
+{
+public:
+    HRESULT ConnectAsync(
+        xbox::httpclient::String const& uri,
+        xbox::httpclient::String const& subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async) noexcept override
+    {
+        UNREFERENCED_PARAMETER(uri);
+        UNREFERENCED_PARAMETER(subprotocol);
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(async);
+        return E_NOTIMPL;
+    }
+
+    HRESULT SendAsync(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(message);
+        UNREFERENCED_PARAMETER(async);
+        return E_NOTIMPL;
+    }
+
+    HRESULT SendBinaryAsync(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* async) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(payloadBytes);
+        UNREFERENCED_PARAMETER(payloadSize);
+        UNREFERENCED_PARAMETER(async);
+        return E_NOTIMPL;
+    }
+
+    HRESULT Disconnect(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(closeStatus);
+        return E_NOTIMPL;
+    }
+
+    HRESULT OptionsResult(HCWebSocketOptions options) const noexcept override
+    {
+        constexpr uint32_t requestCompression = static_cast<uint32_t>(HCWebSocketOptions::RequestCompression);
+        constexpr uint32_t noContextTakeoverMask =
+            static_cast<uint32_t>(HCWebSocketOptions::CompressionServerNoContextTakeover) |
+            static_cast<uint32_t>(HCWebSocketOptions::CompressionClientNoContextTakeover);
+        constexpr uint32_t legacySemantics = static_cast<uint32_t>(HCWebSocketOptions::LegacySemantics);
+        auto const rawOptions = static_cast<uint32_t>(options);
+
+        if ((rawOptions & legacySemantics) != 0)
+        {
+            return S_OK;
+        }
+
+        if ((rawOptions & ~(requestCompression | noContextTakeoverMask)) != 0)
+        {
+            return E_NOT_SUPPORTED;
+        }
+
+        if ((rawOptions & noContextTakeoverMask) != 0 && (rawOptions & requestCompression) == 0)
+        {
+            return E_NOT_SUPPORTED;
+        }
+
+        return S_OK;
+    }
+};
 
 DEFINE_TEST_CLASS(WebsocketTests)
 {
@@ -484,8 +644,10 @@ public:
         VERIFY_ARE_EQUAL(true, g_HCWebSocketSendMessage_Called);
 
         VERIFY_ARE_EQUAL(false, g_HCWebSocketDisconnect_Called);
+        g_HCWebSocketDisconnect_CloseStatus = HCWebSocketCloseStatus::UnknownError;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
         VERIFY_ARE_EQUAL(true, g_HCWebSocketDisconnect_Called);
+        VERIFY_ARE_EQUAL(static_cast<uint32_t>(HCWebSocketCloseStatus::Normal), static_cast<uint32_t>(g_HCWebSocketDisconnect_CloseStatus));
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
         HCCleanup();
@@ -547,6 +709,251 @@ public:
 #endif
     }
 
+    DEFINE_TEST_CASE(TestDisconnectWithStatus)
+    {
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCWebsocketHandle websocket = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+        VERIFY_IS_NOT_NULL(websocket);
+
+        XAsyncBlock asyncBlock{};
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+
+        g_HCWebSocketDisconnect_Called = false;
+        g_HCWebSocketDisconnect_CloseStatus = HCWebSocketCloseStatus::Normal;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnectWithStatus(websocket, HCWebSocketCloseStatus::GoingAway));
+        VERIFY_ARE_EQUAL(true, g_HCWebSocketDisconnect_Called);
+        VERIFY_ARE_EQUAL(static_cast<uint32_t>(HCWebSocketCloseStatus::GoingAway), static_cast<uint32_t>(g_HCWebSocketDisconnect_CloseStatus));
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+        HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(TestCompressionOptions)
+    {
+        auto const legacySemantics = HCWebSocketOptions::LegacySemantics;
+        auto const requestCompression = HCWebSocketOptions::RequestCompression;
+        auto const serverNoContextTakeover = HCWebSocketOptions::CompressionServerNoContextTakeover;
+        auto const clientNoContextTakeover = HCWebSocketOptions::CompressionClientNoContextTakeover;
+        auto const requestWithServerNoContextTakeover = CombineCompressionOptions(requestCompression, serverNoContextTakeover);
+        auto const requestWithClientNoContextTakeover = CombineCompressionOptions(requestCompression, clientNoContextTakeover);
+        auto const requestWithBothNoContextTakeover = CombineCompressionOptions(requestWithServerNoContextTakeover, clientNoContextTakeover);
+
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCWebsocketHandle websocket = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+        VERIFY_IS_NOT_NULL(websocket);
+        VERIFY_IS_TRUE(websocket->websocket->UsesLegacySemantics());
+        VERIFY_IS_FALSE(websocket->websocket->OptionsExplicitlySet());
+
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(nullptr, HCWebSocketOptions::None));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, static_cast<HCWebSocketOptions>(0x8)));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, CombineCompressionOptions(legacySemantics, requestCompression)));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, serverNoContextTakeover));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, clientNoContextTakeover));
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetOptions(websocket, CombineCompressionOptions(serverNoContextTakeover, clientNoContextTakeover)));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, legacySemantics));
+        VERIFY_ARE_EQUAL(static_cast<uint32_t>(legacySemantics), static_cast<uint32_t>(websocket->websocket->Options()));
+        VERIFY_IS_TRUE(websocket->websocket->UsesLegacySemantics());
+        VERIFY_IS_TRUE(websocket->websocket->OptionsExplicitlySet());
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetOptions(websocket, HCWebSocketOptions::None));
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetOptions(websocket, requestCompression));
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetOptions(websocket, requestWithServerNoContextTakeover));
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetOptions(websocket, requestWithClientNoContextTakeover));
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetOptions(websocket, requestWithBothNoContextTakeover));
+
+        XAsyncBlock asyncBlock{};
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+        VERIFY_ARE_EQUAL(E_HC_CONNECT_ALREADY_CALLED, HCWebSocketSetOptions(websocket, requestWithBothNoContextTakeover));
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+        HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(TestLegacySemanticsNoOp)
+    {
+        auto const requestCompression = HCWebSocketOptions::RequestCompression;
+        auto const legacySemantics = HCWebSocketOptions::LegacySemantics;
+
+        UnsupportedOptionsTestProvider provider;
+        auto observer = HC_WEBSOCKET_OBSERVER::Initialize(
+            std::make_shared<WebSocket>(1, provider),
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        HCWebsocketHandle websocket = observer.get();
+
+        VERIFY_IS_TRUE(websocket->websocket->UsesLegacySemantics());
+        VERIFY_IS_FALSE(websocket->websocket->OptionsExplicitlySet());
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, legacySemantics));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(legacySemantics),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+        VERIFY_IS_TRUE(websocket->websocket->UsesLegacySemantics());
+        VERIFY_IS_TRUE(websocket->websocket->OptionsExplicitlySet());
+
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetOptions(websocket, requestCompression));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(legacySemantics),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+    }
+
+    DEFINE_TEST_CASE(TestCompressionOptionsConfigurableProvider)
+    {
+        auto const legacySemantics = HCWebSocketOptions::LegacySemantics;
+        auto const requestCompression = HCWebSocketOptions::RequestCompression;
+        auto const requestWithServerNoContextTakeover = CombineCompressionOptions(requestCompression, HCWebSocketOptions::CompressionServerNoContextTakeover);
+        auto const requestWithClientNoContextTakeover = CombineCompressionOptions(requestCompression, HCWebSocketOptions::CompressionClientNoContextTakeover);
+        auto const requestWithBothNoContextTakeover = CombineCompressionOptions(requestWithServerNoContextTakeover, HCWebSocketOptions::CompressionClientNoContextTakeover);
+
+        ConfigurableCompressionTestProvider provider;
+        auto observer = HC_WEBSOCKET_OBSERVER::Initialize(
+            std::make_shared<WebSocket>(1, provider),
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        HCWebsocketHandle websocket = observer.get();
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, legacySemantics));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(legacySemantics),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, HCWebSocketOptions::None));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(HCWebSocketOptions::None),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, requestCompression));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(requestCompression),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, requestWithServerNoContextTakeover));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(requestWithServerNoContextTakeover),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, requestWithClientNoContextTakeover));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(requestWithClientNoContextTakeover),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, requestWithBothNoContextTakeover));
+        VERIFY_ARE_EQUAL(
+            static_cast<uint32_t>(requestWithBothNoContextTakeover),
+            static_cast<uint32_t>(websocket->websocket->Options()));
+        VERIFY_IS_TRUE(websocket->websocket->OptionsExplicitlySet());
+    }
+
+    DEFINE_TEST_CASE(TestWebSocketppGdkProxyDecryptsHttpsPolicyHelpers)
+    {
+        VERIFY_IS_TRUE(ShouldForceTlsValidationForGdkSandbox(E_FAIL, "CERT"));
+        VERIFY_IS_TRUE(ShouldForceTlsValidationForGdkSandbox(S_OK, "RETAIL"));
+        VERIFY_IS_FALSE(ShouldForceTlsValidationForGdkSandbox(S_OK, "CERT"));
+
+        VERIFY_IS_TRUE(ApplyTlsValidationBackstopForGdkConsole(true, true));
+        VERIFY_IS_FALSE(ApplyTlsValidationBackstopForGdkConsole(false, true));
+        VERIFY_IS_FALSE(ApplyTlsValidationBackstopForGdkConsole(true, false));
+        VERIFY_IS_FALSE(ApplyTlsValidationBackstopForGdkConsole(false, false));
+    }
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+    DEFINE_TEST_CASE(TestDeterministicOptionsRejectFragmentHandlers)
+    {
+        ConfigurableCompressionTestProvider provider;
+
+        auto observer = HC_WEBSOCKET_OBSERVER::Initialize(
+            std::make_shared<WebSocket>(1, provider),
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        HCWebsocketHandle websocket = observer.get();
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, HCWebSocketOptions::None));
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetBinaryMessageFragmentEventFunction(websocket, Internal_HCWebSocketBinaryMessageFragment));
+
+        auto observerWithFragment = HC_WEBSOCKET_OBSERVER::Initialize(
+            std::make_shared<WebSocket>(2, provider),
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        HCWebsocketHandle websocketWithFragment = observerWithFragment.get();
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetBinaryMessageFragmentEventFunction(websocketWithFragment, Internal_HCWebSocketBinaryMessageFragment));
+        VERIFY_ARE_EQUAL(E_NOT_SUPPORTED, HCWebSocketSetOptions(websocketWithFragment, HCWebSocketOptions::None));
+    }
+
+    DEFINE_TEST_CASE(TestMaxReceiveBufferSizePreservedAcrossSetOptions)
+    {
+        ConfigurableCompressionTestProvider provider;
+        auto observer = HC_WEBSOCKET_OBSERVER::Initialize(
+            std::make_shared<WebSocket>(1, provider),
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        HCWebsocketHandle websocket = observer.get();
+
+        constexpr size_t configuredReceiveBufferSize{ 4096 };
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetMaxReceiveBufferSize(websocket, configuredReceiveBufferSize));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetOptions(websocket, HCWebSocketOptions::None));
+        VERIFY_ARE_EQUAL(configuredReceiveBufferSize, websocket->websocket->MaxReceiveBufferSize());
+        VERIFY_IS_TRUE(websocket->websocket->MaxReceiveBufferSizeExplicitlySet());
+    }
+
+    DEFINE_TEST_CASE(TestMaxReceiveBufferSizeValidation)
+    {
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCWebsocketHandle websocket = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+        VERIFY_IS_NOT_NULL(websocket);
+
+        constexpr size_t initialReceiveBufferSize{ 4096 };
+        constexpr size_t updatedReceiveBufferSize{ 8192 };
+
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetMaxReceiveBufferSize(nullptr, initialReceiveBufferSize));
+
+        if (sizeof(size_t) > sizeof(uint32_t))
+        {
+            size_t const oversizedReceiveBufferSize = static_cast<size_t>(UINT32_MAX) + 1u;
+            VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetMaxReceiveBufferSize(websocket, oversizedReceiveBufferSize));
+        }
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetMaxReceiveBufferSize(websocket, initialReceiveBufferSize));
+        VERIFY_ARE_EQUAL(initialReceiveBufferSize, websocket->websocket->MaxReceiveBufferSize());
+
+        XAsyncBlock asyncBlock{};
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+
+        VERIFY_ARE_EQUAL(E_HC_CONNECT_ALREADY_CALLED, HCWebSocketSetMaxReceiveBufferSize(websocket, updatedReceiveBufferSize));
+        VERIFY_ARE_EQUAL(initialReceiveBufferSize, websocket->websocket->MaxReceiveBufferSize());
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+        HCCleanup();
+    }
+#endif
 
     DEFINE_TEST_CASE(TestRequestHeaders)
     {
@@ -590,6 +997,75 @@ public:
         VERIFY_ARE_EQUAL_STR("testValue", hv0);
         VERIFY_ARE_EQUAL_STR("testHeader2", hn1);
         VERIFY_ARE_EQUAL_STR("testValue2", hv1);
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(call));
+        HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(TestResponseHeaders)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+        HCWebsocketHandle call = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&call, nullptr, nullptr, nullptr, nullptr));
+
+        uint32_t numHeaders = 1;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumResponseHeaders(call, &numHeaders));
+        VERIFY_ARE_EQUAL(0, numHeaders);
+
+        const CHAR* headerValue = "sentinel";
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeader(call, "testHeader", &headerValue));
+        VERIFY_IS_NULL(headerValue);
+
+        const CHAR* headerName = "sentinel";
+        headerValue = "sentinel";
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeaderAtIndex(call, 0, &headerName, &headerValue));
+        VERIFY_IS_NULL(headerName);
+        VERIFY_IS_NULL(headerValue);
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(call));
+        HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(TestResponseHeadersAccessors)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestResponseHeadersAccessors);
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+        HCWebsocketHandle call = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&call, nullptr, nullptr, nullptr, nullptr));
+
+        HttpHeaders responseHeaders;
+        responseHeaders["aHeader"] = "aValue";
+        responseHeaders["bHeader"] = "bValue";
+        VERIFY_ARE_EQUAL(S_OK, call->websocket->SetResponseHeaders(std::move(responseHeaders)));
+
+        uint32_t numHeaders = 0;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumResponseHeaders(call, &numHeaders));
+        VERIFY_ARE_EQUAL(2, numHeaders);
+
+        const CHAR* headerValue = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeader(call, "aHeader", &headerValue));
+        VERIFY_ARE_EQUAL_STR("aValue", headerValue);
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeader(call, "bHeader", &headerValue));
+        VERIFY_ARE_EQUAL_STR("bValue", headerValue);
+
+        const CHAR* headerName = nullptr;
+        const CHAR* indexedHeaderValue = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeaderAtIndex(call, 0, &headerName, &indexedHeaderValue));
+        VERIFY_ARE_EQUAL_STR("aHeader", headerName);
+        VERIFY_ARE_EQUAL_STR("aValue", indexedHeaderValue);
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeaderAtIndex(call, 1, &headerName, &indexedHeaderValue));
+        VERIFY_ARE_EQUAL_STR("bHeader", headerName);
+        VERIFY_ARE_EQUAL_STR("bValue", indexedHeaderValue);
+
+        call->websocket->ClearResponseHeaders();
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumResponseHeaders(call, &numHeaders));
+        VERIFY_ARE_EQUAL(0, numHeaders);
+
+        headerValue = "sentinel";
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeader(call, "aHeader", &headerValue));
+        VERIFY_IS_NULL(headerValue);
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(call));
         HCCleanup();
