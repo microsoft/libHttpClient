@@ -31,6 +31,9 @@
     <Filter Include="Source\Platform\Windows">
       <UniqueIdentifier>{e917aa51-b574-4f8d-a4e6-01c61d3592a5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\WebSocket\Websocketpp">
+      <UniqueIdentifier>{3bb5d493-f184-4f6b-82fc-846f0170b41b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
@@ -61,6 +64,9 @@
       <Filter>Source\HTTP\Curl</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_proxy_helper.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
@@ -83,6 +89,12 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlDynamicLoader.h">
       <Filter>Source\HTTP\Curl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\wintls_socket.hpp">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

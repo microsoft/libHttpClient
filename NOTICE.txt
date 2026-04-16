@@ -148,7 +148,7 @@ BSD-2-Clause AND BSD-3-Clause
 
 ---------------------------------------------------------
 
-zaphoyd/websocketpp c6d7e295bf5a0ab9b5f896720cc1a0e0fdc397a7 - BSD-3-Clause
+zaphoyd/websocketpp 56123c87598f8b1dd471be83ca841ceae07f95ba - BSD-3-Clause
 
 
 Copyright (c) 2011, Peter Thorson.

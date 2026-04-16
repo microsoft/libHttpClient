@@ -1828,6 +1828,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
@@ -1835,6 +1836,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -1860,6 +1862,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
@@ -1867,6 +1870,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -2005,6 +2009,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
@@ -2013,6 +2018,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -2040,6 +2046,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
@@ -2048,6 +2055,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",

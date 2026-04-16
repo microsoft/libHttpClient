@@ -16,3 +16,6 @@
 [submodule "External/zlib"]
 	path = External/zlib
 	url = https://github.com/madler/zlib
+[submodule "External/boost-wintls"]
+	path = External/boost-wintls
+	url = https://github.com/laudrup/boost-wintls.git
