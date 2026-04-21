@@ -29,15 +29,15 @@ sudo mkdir /usr/local/ssl/lib
 sudo mkdir /usr/local/ssl/include
 sudo mkdir /usr/local/ssl/include/openssl
 
-if [ ! -d /usr/local/ssl ] ; then
+if [ ! -d /usr/local/ssl ] ; then 
     echo "Directory /usr/local/ssl does not exist"
     exit 1
 fi
-if [ ! -d /usr/local/ssl/lib ] ; then
+if [ ! -d /usr/local/ssl/lib ] ; then 
     echo "Directory /usr/local/ssl/lib does not exist"
     exit 1
 fi
-if [ ! -d /usr/local/ssl/include/openssl ] ; then
+if [ ! -d /usr/local/ssl/include/openssl ] ; then 
     echo "Directory /usr/local/ssl/include/openssl does not exist"
     exit 1
 fi
@@ -61,9 +61,7 @@ else
     ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw
 fi
 
-# run Make in parallel to speed up the build process
-MAKE_PARALLELISM="-j$(nproc)"
-make $MAKE_PARALLELISM CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
+make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
 sudo make install
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
