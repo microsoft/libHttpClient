@@ -29,15 +29,15 @@ sudo mkdir /usr/local/ssl/lib
 sudo mkdir /usr/local/ssl/include
 sudo mkdir /usr/local/ssl/include/openssl
 
-if [ ! -d /usr/local/ssl ] ; then 
+if [ ! -d /usr/local/ssl ] ; then
     echo "Directory /usr/local/ssl does not exist"
     exit 1
 fi
-if [ ! -d /usr/local/ssl/lib ] ; then 
+if [ ! -d /usr/local/ssl/lib ] ; then
     echo "Directory /usr/local/ssl/lib does not exist"
     exit 1
 fi
-if [ ! -d /usr/local/ssl/include/openssl ] ; then 
+if [ ! -d /usr/local/ssl/include/openssl ] ; then
     echo "Directory /usr/local/ssl/include/openssl does not exist"
     exit 1
 fi
@@ -55,10 +55,10 @@ sed -i -e 's/\r$//' Configure
 
 if [ "$CONFIGURATION" = "Debug" ]; then
     # make libcrypto and libssl
-    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw -d
+    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-tests -d
 else
     # make libcrypto and libssl
-    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw
+    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-tests
 fi
 
 make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
