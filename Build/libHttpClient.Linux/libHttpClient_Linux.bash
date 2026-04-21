@@ -94,12 +94,13 @@ if [ "$BUILD_CURL" = true ]; then
     bash "$SCRIPT_DIR"/curl_Linux.bash -c "$CONFIGURATION"
 fi
 
+MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 if [ "$BUILD_STATIC" = false ]; then
     # make libHttpClient shared
     sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=ON
-    sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+    sudo make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 else
     # make libHttpClient static
     sudo cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=OFF
-    sudo make -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+    sudo make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 fi

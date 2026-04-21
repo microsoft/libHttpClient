@@ -61,8 +61,7 @@ else
     ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-tests
 fi
 
-# run Make in parallel to speed up the build process
-MAKE_PARALLELISM="-j$(nproc)"
+MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 make $MAKE_PARALLELISM CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
 sudo make install
 # copies binaries to final directory
