@@ -61,7 +61,9 @@ else
     ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-tests
 fi
 
-make CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
+# run Make in parallel to speed up the build process
+MAKE_PARALLELISM="-j$(nproc)"
+make $MAKE_PARALLELISM CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
 sudo make install
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
