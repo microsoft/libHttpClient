@@ -39,7 +39,8 @@ else
     ./configure --disable-shared --with-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --disable-debug --without-brotli
 fi
 
-make
+MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
+make $MAKE_PARALLELISM
 
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux
