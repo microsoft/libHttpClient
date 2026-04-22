@@ -205,12 +205,13 @@ HRESULT WebSocket::ConnectAsync(
 HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data)
 {
     ConnectContext* context{ static_cast<ConnectContext*>(data->context) };
-    auto& ws{ context->observer->websocket };
 
     switch (op)
     {
     case XAsyncOp::Begin:
     {
+        assert(context->observer);
+        auto& ws{ context->observer->websocket };
         std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
 
         RETURN_HR_IF(E_UNEXPECTED, ws->m_state != State::Initial);
@@ -255,11 +256,19 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     ConnectContext* context{ static_cast<ConnectContext*>(async->context) };
     auto& ws{ context->observer->websocket };
 
-    assert(ws->m_state == State::Connecting);
-
+    // We can be put into the Disconnected state if a spontaneous error occurs between the connection process completing and this callback being invoked.
+    // We need to be able to handle that scenario here.
     HRESULT hr = HCGetWebSocketConnectResult(&context->internalAsyncBlock, &context->result);
-
     std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
+    const bool bIsDisconnected = (ws->m_state == State::Disconnected);
+    if (bIsDisconnected && !FAILED(hr))
+    {
+        HC_TRACE_WARNING(WEBSOCKET, "WebSocket::ConnectComplete [%p] encountered a spontaneous disconnection.  This implies the connection process was successful, but we otherwise had to close the connection (handle=%p)", ws.get(), context->observer.get());
+        hr = E_FAIL;
+    }
+
+    assert(ws->m_state == State::Connecting || bIsDisconnected);
+    assert(context->observer.get() == context->result.websocket || FAILED(hr) || bIsDisconnected);
     if (SUCCEEDED(hr) && SUCCEEDED(context->result.errorCode))
     {
         // Connect was sucessful. Allocate ProviderContext to ensure WebSocket lifetime until it is reclaimed in WebSocket::CloseFunc
@@ -528,7 +537,10 @@ void CALLBACK WebSocket::CloseFunc(
     std::unique_lock<std::mutex> stateLock{ websocket->m_stateMutex };
     if (!websocket->m_providerContext)
     {
-        HC_TRACE_ERROR(WEBSOCKET, "Unexpected call to WebSocket::CloseFunc will be ignored!");
+        // It's possible for our websocket to get closed before we finish connecting. m_providerContext only gets populated when the connection process is 100% completed.
+        // If we're still in the process of connecting, mark as disconnected and let ConnectComplete handle the cleanup.
+        HC_TRACE_WARNING(WEBSOCKET, "Call to WebSocket::CloseFunc without providerContext.  This means that we're aborting the connection process unexpectedly.");
+        websocket->m_state = State::Disconnected;
         return;
     }
 

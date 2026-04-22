@@ -7,6 +7,7 @@
 #include "DefineTestMacros.h"
 #include "Utils.h"
 #include "../global/global.h"
+#include "WebSocket/hcwebsocket.h"
 #include <httpClient/httpProvider.h>
 
 #pragma warning(disable:4389)
@@ -134,6 +135,171 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
             }
         });
 }
+
+bool g_HCWebSocketConnectAndClose_Called = false;
+HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsyncAndClose(
+    _In_z_ PCSTR uri,
+    _In_z_ PCSTR subProtocol,
+    _In_ HCWebsocketHandle websocket,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ HCPerformEnv env
+    )
+{
+    UNREFERENCED_PARAMETER(uri);
+    UNREFERENCED_PARAMETER(subProtocol);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
+    return XAsyncBegin(asyncBlock, websocket, nullptr, __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            auto websocket = static_cast<HCWebsocketHandle>(data->context);
+
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+            {
+                g_HCWebSocketConnectAndClose_Called = true;
+                RETURN_IF_FAILED(XTaskQueueSubmitCallback(data->async->queue, XTaskQueuePort::Work, websocket,
+                    [](void* context, bool canceled)
+                    {
+                        if (canceled)
+                        {
+                            return;
+                        }
+
+                        auto websocket = static_cast<HCWebsocketHandle>(context);
+                        HCWebSocketCloseEventFunction closeFunc = nullptr;
+                        void* closeContext = nullptr;
+                        HRESULT hr = HCWebSocketGetEventFunctions(websocket, nullptr, nullptr, &closeFunc, &closeContext);
+                        if (SUCCEEDED(hr) && closeFunc != nullptr)
+                        {
+                            closeFunc(websocket, HCWebSocketCloseStatus::AbnormalClose, closeContext);
+                        }
+                    }));
+
+                XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                return S_OK;
+            }
+            case XAsyncOp::GetResult:
+            {
+                RETURN_HR_IF(E_NOT_SUFFICIENT_BUFFER, data->bufferSize < sizeof(WebSocketCompletionResult));
+
+                auto result = static_cast<WebSocketCompletionResult*>(data->buffer);
+                ZeroMemory(result, sizeof(WebSocketCompletionResult));
+                result->errorCode = S_OK;
+                result->websocket = websocket;
+                return S_OK;
+            }
+            default:
+                return S_OK;
+            }
+        });
+}
+
+class TestWebSocketConnectAndCloseProvider : public IWebSocketProvider
+{
+public:
+    HRESULT ConnectAsync(
+        String const& uri,
+        String const& subprotocol,
+        HCWebsocketHandle websocketHandle,
+        XAsyncBlock* async
+    ) noexcept override
+    {
+        UNREFERENCED_PARAMETER(uri);
+        UNREFERENCED_PARAMETER(subprotocol);
+
+        m_websocket = websocketHandle;
+        return XAsyncBegin(async, this, nullptr, __FUNCTION__,
+            [](XAsyncOp op, const XAsyncProviderData* data)
+            {
+                auto provider = static_cast<TestWebSocketConnectAndCloseProvider*>(data->context);
+
+                switch (op)
+                {
+                case XAsyncOp::Begin:
+                {
+                    provider->m_connectCalled = true;
+                    RETURN_IF_FAILED(XTaskQueueSubmitCallback(data->async->queue, XTaskQueuePort::Work, provider->m_websocket,
+                        [](void* context, bool canceled)
+                        {
+                            if (canceled)
+                            {
+                                return;
+                            }
+
+                            auto websocket = static_cast<HCWebsocketHandle>(context);
+                            HCWebSocketCloseEventFunction closeFunc = nullptr;
+                            void* closeContext = nullptr;
+                            HRESULT hr = HCWebSocketGetEventFunctions(websocket, nullptr, nullptr, &closeFunc, &closeContext);
+                            if (SUCCEEDED(hr) && closeFunc != nullptr)
+                            {
+                                closeFunc(websocket, HCWebSocketCloseStatus::AbnormalClose, closeContext);
+                            }
+                        }));
+
+                    XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                    return S_OK;
+                }
+                case XAsyncOp::GetResult:
+                {
+                    RETURN_HR_IF(E_NOT_SUFFICIENT_BUFFER, data->bufferSize < sizeof(WebSocketCompletionResult));
+
+                    auto result = static_cast<WebSocketCompletionResult*>(data->buffer);
+                    ZeroMemory(result, sizeof(WebSocketCompletionResult));
+                    result->errorCode = S_OK;
+                    result->websocket = provider->m_websocket;
+                    return S_OK;
+                }
+                default:
+                    return S_OK;
+                }
+            });
+    }
+
+    HRESULT SendAsync(
+        HCWebsocketHandle websocketHandle,
+        const char* message,
+        XAsyncBlock* async
+    ) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(message);
+        UNREFERENCED_PARAMETER(async);
+        return E_UNEXPECTED;
+    }
+
+    HRESULT SendBinaryAsync(
+        HCWebsocketHandle websocketHandle,
+        const uint8_t* payloadBytes,
+        uint32_t payloadSize,
+        XAsyncBlock* async
+    ) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(payloadBytes);
+        UNREFERENCED_PARAMETER(payloadSize);
+        UNREFERENCED_PARAMETER(async);
+        return E_UNEXPECTED;
+    }
+
+    HRESULT Disconnect(
+        HCWebsocketHandle websocketHandle,
+        HCWebSocketCloseStatus closeStatus
+    ) noexcept override
+    {
+        UNREFERENCED_PARAMETER(websocketHandle);
+        UNREFERENCED_PARAMETER(closeStatus);
+        return E_UNEXPECTED;
+    }
+
+    bool m_connectCalled{ false };
+
+private:
+    HCWebsocketHandle m_websocket{ nullptr };
+};
 
 bool g_HCWebSocketSendMessage_Called = false;
 HRESULT CALLBACK Test_Internal_HCWebSocketSendMessageAsync(
@@ -323,6 +489,62 @@ public:
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
         HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(TestConnectFailsWhenDisconnectedDuringCompletion)
+    {
+#ifdef UNITTEST_TE
+        return;
+#else
+        TestWebSocketConnectAndCloseProvider provider;
+        auto websocket = std::make_shared<WebSocket>(1, provider);
+
+        XAsyncBlock asyncBlock{};
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &asyncBlock.queue));
+
+        VERIFY_ARE_EQUAL(S_OK, websocket->ConnectAsync(http_internal_string{ "test" }, http_internal_string{ "subProtoTest" }, &asyncBlock));
+        WebSocketCompletionResult connectResult{};
+        XAsyncBlock sendAsyncBlock{};
+        HRESULT connectStatus = E_PENDING;
+        HRESULT getConnectResultHr = E_PENDING;
+        HRESULT sendHr = S_OK;
+        HRESULT disconnectHr = S_OK;
+
+        for (uint32_t attempt = 0; attempt < 8 && connectStatus == E_PENDING; ++attempt)
+        {
+            auto timeout = attempt == 0 ? 100u : 0u;
+            while (XTaskQueueDispatch(asyncBlock.queue, XTaskQueuePort::Work, timeout)) {}
+            while (XTaskQueueDispatch(asyncBlock.queue, XTaskQueuePort::Completion, timeout)) {}
+            connectStatus = XAsyncGetStatus(&asyncBlock, false);
+        }
+
+        if (connectStatus == E_FAIL)
+        {
+            getConnectResultHr = HCGetWebSocketConnectResult(&asyncBlock, &connectResult);
+        }
+        else if (connectStatus == E_PENDING)
+        {
+            XAsyncCancel(&asyncBlock);
+            while (XTaskQueueDispatch(asyncBlock.queue, XTaskQueuePort::Work, 0)) {}
+            while (XTaskQueueDispatch(asyncBlock.queue, XTaskQueuePort::Completion, 0)) {}
+            connectStatus = XAsyncGetStatus(&asyncBlock, false);
+        }
+
+        getConnectResultHr = HCGetWebSocketConnectResult(&asyncBlock, &connectResult);
+        sendHr = websocket->SendAsync("test", &sendAsyncBlock);
+        disconnectHr = websocket->Disconnect();
+
+        while (XTaskQueueDispatch(asyncBlock.queue, XTaskQueuePort::Work, 0)) {}
+        while (XTaskQueueDispatch(asyncBlock.queue, XTaskQueuePort::Completion, 0)) {}
+        XTaskQueueCloseHandle(asyncBlock.queue);
+        websocket.reset();
+
+        VERIFY_ARE_EQUAL(true, provider.m_connectCalled);
+        VERIFY_IS_TRUE(FAILED(connectStatus));
+        VERIFY_IS_TRUE(FAILED(getConnectResultHr));
+        VERIFY_ARE_EQUAL(E_UNEXPECTED, sendHr);
+        VERIFY_ARE_EQUAL(E_UNEXPECTED, disconnectHr);
+#endif
     }
 
 
