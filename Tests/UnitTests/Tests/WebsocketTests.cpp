@@ -202,8 +202,8 @@ class TestWebSocketConnectAndCloseProvider : public IWebSocketProvider
 {
 public:
     HRESULT ConnectAsync(
-        String const& uri,
-        String const& subprotocol,
+        xbox::httpclient::String const& uri,
+        xbox::httpclient::String const& subprotocol,
         HCWebsocketHandle websocketHandle,
         XAsyncBlock* async
     ) noexcept override
