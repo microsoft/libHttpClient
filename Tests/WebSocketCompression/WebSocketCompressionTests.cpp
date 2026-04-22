@@ -829,10 +829,26 @@ bool WaitForEcho(ClientState& state, size_t expectedTextMessagesReceived, std::s
 bool WaitForClose(ClientState& state, size_t expectedCloseEventsReceived, HCWebSocketCloseStatus expectedStatus)
 {
     std::unique_lock<std::mutex> lock(state.mutex);
-    return state.cv.wait_for(lock, Timeout, [&state, expectedCloseEventsReceived, expectedStatus]()
+    bool const signaled = state.cv.wait_for(lock, Timeout, [&state, expectedCloseEventsReceived]()
     {
-        return state.closeEventsReceived >= expectedCloseEventsReceived && state.lastCloseStatus == expectedStatus;
+        return state.closeEventsReceived >= expectedCloseEventsReceived;
     });
+
+    if (!signaled)
+    {
+        return false;
+    }
+
+    if (state.lastCloseStatus != expectedStatus)
+    {
+        std::printf(
+            "[INFO] Observed close status %u but expected %u.\n",
+            static_cast<unsigned int>(state.lastCloseStatus),
+            static_cast<unsigned int>(expectedStatus));
+        return false;
+    }
+
+    return true;
 }
 
 HRESULT ConfigureTestWebSocket(HCWebsocketHandle websocket, ClientState& state)

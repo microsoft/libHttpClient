@@ -47,6 +47,7 @@
 #include <websocketpp/client.hpp>
 #include <websocketpp/logger/levels.hpp>
 #include <websocketpp/logger/stub.hpp>
+#include <websocketpp/processors/base.hpp>
 #if HC_PLATFORM == HC_PLATFORM_ANDROID
 #include "../HTTP/Android/android_platform_context.h"
 #endif
@@ -189,6 +190,25 @@ bool TryParseProxyUri(
     return proxyUri.IsValid();
 }
 
+websocketpp::close::status::value ResolveObservedCloseCode(
+    websocketpp::close::status::value localCloseCode,
+    websocketpp::close::status::value remoteCloseCode,
+    websocketpp::lib::error_code const& ec) noexcept
+{
+    auto closeCode = localCloseCode != websocketpp::close::status::blank ? localCloseCode : remoteCloseCode;
+    if (closeCode == websocketpp::close::status::blank ||
+        closeCode == websocketpp::close::status::abnormal_close)
+    {
+        auto const mappedCloseCode = websocketpp::processor::error::to_ws(ec);
+        if (mappedCloseCode != websocketpp::close::status::blank)
+        {
+            closeCode = mappedCloseCode;
+        }
+    }
+
+    return closeCode;
+}
+
 http_internal_string BuildProxyEndpointUri(Uri const& proxyUri)
 {
     http_internal_string proxyEndpointUri{ proxyUri.Scheme() };
@@ -207,7 +227,6 @@ bool TryPercentDecodeUserInfo(http_internal_string const& value, http_internal_s
 {
     decoded.clear();
     decoded.reserve(value.size());
-
     for (size_t i = 0; i < value.size(); ++i)
     {
         if (value[i] == '%')
@@ -1048,6 +1067,23 @@ private:
         client.set_close_handler([sharedThis](websocketpp::connection_hdl)
         {
             ASSERT(sharedThis->m_state == CONNECTED || sharedThis->m_state == DISCONNECTING);
+            {
+                std::lock_guard<std::recursive_mutex> lock{ sharedThis->m_wsppClientLock };
+                if (sharedThis->m_client != nullptr)
+                {
+                    auto& closeClient = sharedThis->m_client->impl<WebsocketConfigType>();
+                    websocketpp::lib::error_code connectionEc{};
+                    auto connection = closeClient.get_con_from_hdl(sharedThis->m_con, connectionEc);
+                    if (!connectionEc && connection)
+                    {
+                        sharedThis->m_closeCode = ResolveObservedCloseCode(
+                            connection->get_local_close_code(),
+                            connection->get_remote_close_code(),
+                            connection->get_ec());
+                    }
+                }
+            }
+
             sharedThis->shutdown_wspp_impl<WebsocketConfigType>([sharedThis]()
                 {
                     HCWebSocketCloseEventFunction closeFunc{ nullptr };
@@ -1591,7 +1627,7 @@ private:
         const auto &connection = client.get_con_from_hdl(m_con);
         auto const localCloseCode = connection->get_local_close_code();
         auto const remoteCloseCode = connection->get_remote_close_code();
-        m_closeCode = localCloseCode != websocketpp::close::status::blank ? localCloseCode : remoteCloseCode;
+        m_closeCode = ResolveObservedCloseCode(localCloseCode, remoteCloseCode, connection->get_ec());
         client.stop_perpetual();
 
         // Yield and wait for background thread to finish
