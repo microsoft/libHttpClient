@@ -60,9 +60,7 @@ private:
 
     std::mutex m_connectionsMutex;
     std::vector<std::weak_ptr<hc_websocket_impl>> m_connections;
-#if HC_PLATFORM == HC_PLATFORM_GDK
     std::atomic<bool> m_isSuspended{ false };
-#endif
 };
 #endif
 

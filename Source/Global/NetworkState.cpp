@@ -360,10 +360,10 @@ HRESULT CALLBACK NetworkState::WebSocketConnectAsyncProvider(XAsyncOp op, const 
     {
     case XAsyncOp::Begin:
     {
-        XTaskQueuePortHandle workPort{};
         assert(data->async->queue); // Queue should never be null here
-        RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
-        RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue));
+        RETURN_IF_FAILED(XTaskQueueDuplicateHandle(
+            data->async->queue,
+            &context->internalAsyncBlock.queue));
 
         std::unique_lock<std::mutex> lock{ state.m_mutex };
         state.m_connectingWebSockets.insert(context->clientAsyncBlock);

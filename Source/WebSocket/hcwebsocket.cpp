@@ -225,9 +225,9 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
         RETURN_HR_IF(E_UNEXPECTED, ws->m_state != State::Initial);
         ws->ClearResponseHeadersLockHeld();
 
-        XTaskQueuePortHandle workPort{ nullptr };
-        XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort);
-        XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue);
+        RETURN_IF_FAILED(XTaskQueueDuplicateHandle(
+            data->async->queue,
+            &context->internalAsyncBlock.queue));
 
         ws->m_state = State::Connecting;
         lock.unlock();
