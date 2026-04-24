@@ -29,9 +29,9 @@ using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+#ifndef HC_NOWEBSOCKETS
 namespace
 {
-
 // Note: this logic is intentionally duplicated from TryParseProxyUri in
 // websocketpp_websocket.cpp to keep compilation units independent.
 bool TryParseWebSocketProxyUri(
@@ -53,7 +53,6 @@ bool TryParseWebSocketProxyUri(
     return proxyUri.IsValid();
 }
 
-#ifndef HC_NOWEBSOCKETS
 HRESULT ApplyExplicitWebSocketProxy(
     HINTERNET hRequest,
     HCWebsocketHandle websocketHandle,
@@ -92,9 +91,9 @@ HRESULT ApplyExplicitWebSocketProxy(
 
     return S_OK;
 }
-#endif
 
 }
+#endif
 
 WinHttpConnection::WinHttpConnection(
     HINTERNET hSession,

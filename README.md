@@ -51,7 +51,8 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 1. Call HCWebSocketCreate() to create a new HCWebsocketHandle with message/binary message/close event callbacks
 1. Optionally call HCWebSocketSetOptions() before connect to explicitly preserve legacy behavior or select deterministic behavior and compression requests
 1. **On Win32 and GDK legacy behavior, for payloads that may exceed the receive buffer (>20KB by default)**: Call HCWebSocketSetBinaryMessageFragmentEventFunction() to handle oversized incoming payloads
-1. Optionally call HCWebSocketSetMaxReceiveBufferSize() and HCWebSocketSetPingInterval() to adjust receive buffering and keepalive behavior
+1. Optionally call HCWebSocketSetMaxReceiveBufferSize() before connect to adjust the deterministic inbound message-size limit, or on Win32 / GDK legacy behavior the fragment threshold
+1. Optionally call HCWebSocketSetPingInterval() to adjust keepalive behavior
 1. Call HCWebSocketConnectAsync() to connect to the WebSocket server
 1. Call HCWebSocketSendMessageAsync() or HCWebSocketSendBinaryMessageAsync() to send messages
 1. Handle incoming messages via your registered callbacks
@@ -66,6 +67,7 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 - **Legacy Win32 / GDK oversized payload path**: When an incoming payload exceeds the configured receive buffer, it is surfaced through HCWebSocketSetBinaryMessageFragmentEventFunction() as raw bytes.
 - **Legacy Win32 / GDK text overflow behavior**: Oversized UTF-8 payloads use that same raw-byte fragment callback path.
 - **Legacy Win32 / GDK without a fragment handler**: Oversized incoming payloads are not surfaced through the public whole-message callbacks unless a fragment handler is installed.
+- **Legacy macOS / iOS and Linux max**: On macOS / iOS and Linux legacy behavior, the provider continues using its configured `32,000,000`-byte maximum; `HCWebSocketSetMaxReceiveBufferSize()` does not become a caller-controlled hard cap there.
 - **Deterministic behavior**: Calling HCWebSocketSetOptions(HCWebSocketOptions::None) or any non-legacy compression flag selects deterministic behavior on supported built-in implementations. Fragment callbacks are not supported there.
 - **Deterministic inbound limit**: HCWebSocketSetMaxReceiveBufferSize() becomes a hard inbound message-size cap for deterministic behavior. If not set before connect, the deterministic default is `32,000,000` bytes, and oversized messages close the socket with `HCWebSocketCloseStatus::TooLarge`.
 
@@ -84,7 +86,7 @@ Compression for GDK Console can be enabled with the `HC_ENABLE_GDK_XBOX_WEBSOCKE
 
 Call `HCWebSocketSetOptions()` on a handle before `HCWebSocketConnectAsync()` to control the built-in WebSocket behavior for that connection. `LegacySemantics` explicitly preserves the existing legacy behavior. `None` selects deterministic behavior without requesting compression. `RequestCompression` selects deterministic behavior and requests `permessage-deflate` compression. Combine `RequestCompression` with `CompressionServerNoContextTakeover` and/or `CompressionClientNoContextTakeover` to request fresh zlib state per message in the corresponding direction. These flags require `RequestCompression`; setting them alone returns `E_INVALIDARG`.
 
-In deterministic behavior, fragment callbacks are not supported and the inbound message-size limit becomes a hard cap. `HCWebSocketSetMaxReceiveBufferSize()` overrides that cap if called before connect; otherwise the deterministic default is `32,000,000` bytes. Legacy Win32 and GDK behavior, including oversized-payload fragment callbacks, remains the default when `HCWebSocketSetOptions()` is not called.
+In deterministic behavior, fragment callbacks are not supported and the inbound message-size limit becomes a hard cap. `HCWebSocketSetMaxReceiveBufferSize()` overrides that cap if called before connect; otherwise the deterministic default is `32,000,000` bytes. When `HCWebSocketSetOptions()` is not called, Win32 and GDK remain on legacy fragment-callback behavior, while macOS, iOS, and Linux remain on the provider's configured `32,000,000`-byte maximum.
 
 #### Windows proxy and TLS notes
 

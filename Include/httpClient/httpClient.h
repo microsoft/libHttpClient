@@ -975,11 +975,26 @@ typedef void
 /// </summary>
 enum class HCWebSocketOptions : uint32_t
 {
+    /// <summary>
+    /// Select deterministic WebSocket behavior without requesting compression.
+    /// </summary>
+    /// <remarks>
+    /// Deterministic behavior includes no fragment callbacks and a hard cap on
+    /// inbound message size which can be set with HCWebSocketSetMaxReceiveBufferSize()
+    /// or defaults to 32,000,000 bytes.
+    /// </remarks>
     None = 0x00000000,
     /// <summary>
     /// Explicitly preserve the platform's existing legacy WebSocket semantics.
     /// This flag is mutually exclusive with every other option.
     /// </summary>
+    /// <remarks>
+    /// Legacy behavior preserves the platform's existing defaults. On Win32 and GDK,
+    /// that includes oversized-payload fragment callbacks rather than the deterministic
+    /// hard inbound message-size cap. On macOS / iOS and Linux, legacy behavior continues
+    /// using the provider's configured 32,000,000-byte maximum instead of honoring
+    /// HCWebSocketSetMaxReceiveBufferSize() as a hard cap.
+    /// </remarks>
     LegacySemantics = 0x80000000,
     /// <summary>
     /// Request permessage-deflate. Without no-context-takeover flags, compression
@@ -1010,7 +1025,10 @@ DEFINE_ENUM_FLAG_OPERATORS(HCWebSocketOptions)
 /// <remarks>
 /// WebSocket usage:<br />
 /// Create a WebSocket handle using HCWebSocketCreate()<br />
+/// Optionally call HCWebSocketSetOptions() to select deterministic behavior and/or request compression<br />
+/// Optionally call HCWebSocketSetMaxReceiveBufferSize() to configure the deterministic inbound message-size limit before connect, or the Win32 / GDK legacy fragment threshold<br />
 /// Call HCWebSocketSetProxyUri(), HCWebSocketSetHeader(), or HCWebSocketSetPingInterval() to prepare the HCWebsocketHandle<br />
+/// On Win32 / GDK legacy behavior, call HCWebSocketSetBinaryMessageFragmentEventFunction() if oversized incoming payloads must be reconstructed from fragments<br />
 /// Call HCWebSocketConnectAsync() to connect the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketSendMessageAsync() to send a message to the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketDisconnect() or HCWebSocketDisconnectWithStatus() to disconnect the WebSocket using the HCWebsocketHandle.<br />
@@ -1024,30 +1042,59 @@ STDAPI HCWebSocketCreate(
     _In_opt_ void* functionContext
     ) noexcept;
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
-/// Set the binary message fragment handler. The client functionContext passed to HCWebSocketCreate will also be passed to this handler.
+/// Set pre-connect WebSocket behavior options.
 /// </summary>
-/// <param name="websocket">The handle of the websocket.</param>
-/// <param name="binaryMessageFragmentFunc">A pointer to the binary message fragment handling callback to use, or a null pointer to remove.</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_NOT_SUPPORTED, or E_FAIL.</returns>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="options">Options to apply. Reserved bits must be zero.
+/// LegacySemantics is mutually exclusive with every other flag. CompressionServerNoContextTakeover
+/// and CompressionClientNoContextTakeover require RequestCompression.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, E_HC_CONNECT_ALREADY_CALLED, or E_NOT_SUPPORTED.</returns>
 /// <remarks>
-/// On Win32 and GDK legacy behavior, this callback is used when an incoming payload exceeds the
-/// configured receive buffer (default 20KB). Current oversized UTF-8 overflow behavior also uses
-/// this raw-byte fragment path.
+/// This must be called prior to calling HCWebSocketConnectAsync.
 ///
-/// For applications expecting oversized incoming payloads, you MUST either:
-/// 1. Set this fragment handler to properly reconstruct messages, OR
-/// 2. Increase the receive buffer size with HCWebSocketSetMaxReceiveBufferSize() to accommodate your largest expected message
+/// If this API is never called, the socket uses the platform's legacy behavior.
+/// On macOS / iOS and Linux legacy behavior, HCWebSocketSetMaxReceiveBufferSize() does not override
+/// the provider's configured 32,000,000-byte maximum.
+/// Calling HCWebSocketSetOptions(HCWebSocketOptions::LegacySemantics) explicitly preserves that same legacy behavior.
+/// Calling HCWebSocketSetOptions(HCWebSocketOptions::None) or any non-legacy compression flag selects deterministic behavior.
 ///
-/// Without this handler, oversized incoming payloads are not delivered through HCWebSocketMessageFunction
-/// or HCWebSocketBinaryMessageFunction.
+/// In deterministic behavior, fragment callbacks are not supported. The inbound message-size limit becomes a hard cap:
+/// the value passed to HCWebSocketSetMaxReceiveBufferSize() if set before connect, otherwise the default
+/// deterministic limit of 32,000,000 bytes. When an incoming message exceeds that cap, the socket closes with
+/// HCWebSocketCloseStatus::TooLarge.
 ///
-/// Fragment callbacks are not supported after selecting deterministic behavior with HCWebSocketSetOptions().
+/// RequestCompression alone reuses compression context in both directions by default.
 /// </remarks>
-STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
+#if HC_PLATFORM != HC_PLATFORM_ANDROID
+STDAPI HCWebSocketSetOptions(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc
+    _In_ HCWebSocketOptions options
+    ) noexcept;
+#endif
+
+#if HC_PLATFORM != HC_PLATFORM_ANDROID
+/// <summary>
+/// Configures the pre-connect inbound message-size limit behavior for built-in WebSocket transports.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="bufferSizeInBytes">Maximum size (in bytes) for the WebSocket receive buffer. Values larger than UINT32_MAX are rejected with E_INVALIDARG.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_HC_CONNECT_ALREADY_CALLED.</returns>
+/// <remarks>
+/// This must be called prior to calling HCWebSocketConnectAsync.
+///
+/// In deterministic behavior, this becomes the hard inbound message-size cap.
+/// If you do not call this API before connect, that deterministic cap defaults to 32,000,000 bytes.
+///
+/// In legacy Win32 / GDK behavior, the configured receive buffer still controls when oversized incoming
+/// payloads are routed through HCWebSocketSetBinaryMessageFragmentEventFunction(). The legacy default value
+/// remains 20KB (20,480 bytes).
+/// On macOS / iOS and Linux legacy behavior, this API does not change the provider's configured
+/// 32,000,000-byte maximum.
+/// </remarks>
+STDAPI HCWebSocketSetMaxReceiveBufferSize(
+    _In_ HCWebsocketHandle websocket,
+    _In_ size_t bufferSizeInBytes
 ) noexcept;
 #endif
 
@@ -1108,33 +1155,6 @@ STDAPI HCWebSocketSetPingInterval(
     ) noexcept;
 
 /// <summary>
-/// Set pre-connect WebSocket behavior options.
-/// </summary>
-/// <param name="websocket">The handle of the WebSocket.</param>
-/// <param name="options">Options to apply. Reserved bits must be zero.
-/// LegacySemantics is mutually exclusive with every other flag. CompressionServerNoContextTakeover
-/// and CompressionClientNoContextTakeover require RequestCompression.</param>
-/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, E_HC_CONNECT_ALREADY_CALLED, or E_NOT_SUPPORTED.</returns>
-/// <remarks>This must be called prior to calling HCWebSocketConnectAsync.
-///
-/// If this API is never called, the socket uses the platform's legacy behavior.
-/// Calling HCWebSocketSetOptions(HCWebSocketOptions::LegacySemantics) explicitly preserves that same legacy behavior.
-/// Calling HCWebSocketSetOptions(HCWebSocketOptions::None) or any non-legacy compression flag selects deterministic behavior.
-///
-/// In deterministic behavior, fragment callbacks are not supported. The inbound message-size limit becomes a hard cap:
-/// the value passed to HCWebSocketSetMaxReceiveBufferSize() if set before connect, otherwise the default
-/// deterministic limit of 32,000,000 bytes. When an incoming message exceeds that cap, the socket closes with
-/// HCWebSocketCloseStatus::TooLarge.
-///
-/// RequestCompression alone reuses compression context in both directions by default.</remarks>
-#if HC_PLATFORM != HC_PLATFORM_ANDROID
-STDAPI HCWebSocketSetOptions(
-    _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketOptions options
-    ) noexcept;
-#endif
-
-/// <summary>
 /// Gets the WebSocket functions to allow callers to respond to incoming messages and WebSocket close events.
 /// </summary>
 /// <param name="websocket">The handle of the websocket.</param>
@@ -1163,6 +1183,31 @@ STDAPI HCWebSocketGetBinaryMessageFragmentEventFunction(
     _In_ HCWebsocketHandle websocket,
     _Out_ HCWebSocketBinaryMessageFragmentFunction* binaryMessageFragmentFunc,
     _Out_ void** functionContext
+) noexcept;
+
+/// <summary>
+/// Set the binary message fragment handler. The client functionContext passed to HCWebSocketCreate will also be passed to this handler.
+/// </summary>
+/// <param name="websocket">The handle of the websocket.</param>
+/// <param name="binaryMessageFragmentFunc">A pointer to the binary message fragment handling callback to use, or a null pointer to remove.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_NOT_SUPPORTED, or E_FAIL.</returns>
+/// <remarks>
+/// On Win32 and GDK legacy behavior, this callback is used when an incoming payload exceeds the
+/// configured receive buffer (default 20KB). Current oversized UTF-8 overflow behavior also uses
+/// this raw-byte fragment path.
+///
+/// For applications expecting oversized incoming payloads, you MUST either:
+/// 1. Set this fragment handler to properly reconstruct messages, OR
+/// 2. Increase the receive buffer size with HCWebSocketSetMaxReceiveBufferSize() to accommodate your largest expected message
+///
+/// Without this handler, oversized incoming payloads are not delivered through HCWebSocketMessageFunction
+/// or HCWebSocketBinaryMessageFunction.
+///
+/// Fragment callbacks are only supported when using HCWebSocketOptions::LegacySemantics.
+/// </remarks>
+STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
+    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc
 ) noexcept;
 #endif
 
@@ -1285,27 +1330,6 @@ STDAPI HCWebSocketDisconnectWithStatus(
     _In_ HCWebsocketHandle websocket,
     _In_ HCWebSocketCloseStatus closeStatus
     ) noexcept;
-
-#if HC_PLATFORM != HC_PLATFORM_ANDROID
-/// <summary>
-/// Configures the pre-connect inbound message-size limit behavior for built-in WebSocket transports.
-///
-/// In deterministic behavior, this becomes the hard inbound message-size cap.
-/// If you do not call this API before connect, that deterministic cap defaults to 32,000,000 bytes.
-///
-/// In legacy Win32 / GDK behavior, the configured receive buffer still controls when oversized incoming
-/// payloads are routed through HCWebSocketSetBinaryMessageFragmentEventFunction(). The legacy default value
-/// remains 20KB (20,480 bytes).
-/// </summary>
-/// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="bufferSizeInBytes">Maximum size (in bytes) for the WebSocket receive buffer. Values larger than UINT32_MAX are rejected with E_INVALIDARG.</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_HC_CONNECT_ALREADY_CALLED.</returns>
-/// <remarks>This must be called prior to calling HCWebSocketConnectAsync.</remarks>
-STDAPI HCWebSocketSetMaxReceiveBufferSize(
-    _In_ HCWebsocketHandle websocket,
-    _In_ size_t bufferSizeInBytes
-) noexcept;
-#endif
 
 /// <summary>
 /// Increments the reference count on the call object.
