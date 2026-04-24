@@ -268,8 +268,8 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     // We can be put into the Disconnected state if a spontaneous error occurs between the connection process completing and this callback being invoked.
     // We need to be able to handle that scenario here.
     HRESULT hr = HCGetWebSocketConnectResult(&context->internalAsyncBlock, &context->result);
-<<<<<<< HEAD
-    std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
+
+    std::unique_lock<DefaultUnnamedMutex> lock{ ws->m_stateMutex };
     const bool bIsDisconnected = (ws->m_state == State::Disconnected);
     if (bIsDisconnected && !FAILED(hr))
     {
@@ -279,10 +279,6 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
 
     assert(ws->m_state == State::Connecting || bIsDisconnected);
     assert(context->observer.get() == context->result.websocket || FAILED(hr) || bIsDisconnected);
-=======
-
-    std::unique_lock<DefaultUnnamedMutex> lock{ ws->m_stateMutex };
->>>>>>> c7283d7 (Replace compression flags with explicit WebSocket options)
     if (SUCCEEDED(hr) && SUCCEEDED(context->result.errorCode))
     {
         // Connect was sucessful. Allocate ProviderContext to ensure WebSocket lifetime until it is reclaimed in WebSocket::CloseFunc
