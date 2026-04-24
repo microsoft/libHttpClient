@@ -7,6 +7,7 @@ project("libHttpClient.Linux")
 include(CTest)
 enable_testing()
 
+option(HC_NOWEBSOCKETS "Disable WebSocket support" OFF)
 option(HC_ENABLE_WEBSOCKET_COMPRESSION "Enable compression-capable WebSocket provider support" ON)
 
 set(CMAKE_C_COMPILER clang)
@@ -190,7 +191,7 @@ target_set_flags(
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
-if (HC_ENABLE_WEBSOCKET_COMPRESSION)
+if (HC_ENABLE_WEBSOCKET_COMPRESSION AND NOT HC_NOWEBSOCKETS)
     if (DEFINED HC_NOZLIB)
         message(FATAL_ERROR "HC_ENABLE_WEBSOCKET_COMPRESSION requires zlib support")
     endif()

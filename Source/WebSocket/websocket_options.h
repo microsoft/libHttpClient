@@ -7,6 +7,8 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+#ifndef HC_NOWEBSOCKETS
+
 constexpr uint32_t WebSocketLegacySemanticsMask() noexcept
 {
     return static_cast<uint32_t>(HCWebSocketOptions::LegacySemantics);
@@ -53,5 +55,7 @@ constexpr bool HasNoContextTakeoverWebSocketOptions(HCWebSocketOptions options) 
 {
     return (RawWebSocketOptions(options) & WebSocketCompressionNoContextTakeoverMask()) != 0;
 }
+
+#endif // !HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
