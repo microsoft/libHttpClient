@@ -104,7 +104,7 @@ void WinHttpHybrid_WebSocketProvider::OnResuming() noexcept
     }
 }
 
-IWebSocketProvider& WinHttpHybrid_WebSocketProvider::ConnectProvider(HCWebsocketHandle websocketHandle) noexcept
+IWebSocketProvider& WinHttpHybrid_WebSocketProvider::ConnectProvider(HCWebsocketHandle websocketHandle) const noexcept
 {
     if (RequestsWebSocketCompression(websocketHandle->websocket->Options()))
     {
@@ -114,7 +114,7 @@ IWebSocketProvider& WinHttpHybrid_WebSocketProvider::ConnectProvider(HCWebsocket
     return *m_winHttpProvider;
 }
 
-IWebSocketProvider* WinHttpHybrid_WebSocketProvider::ActiveProvider(HCWebsocketHandle websocketHandle) noexcept
+IWebSocketProvider* WinHttpHybrid_WebSocketProvider::ActiveProvider(HCWebsocketHandle websocketHandle) const noexcept
 {
     if (websocketHandle == nullptr || !websocketHandle->websocket)
     {

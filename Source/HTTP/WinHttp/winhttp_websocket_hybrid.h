@@ -41,8 +41,8 @@ public:
     void OnResuming() noexcept override;
 
 private:
-    IWebSocketProvider& ConnectProvider(HCWebsocketHandle websocketHandle) noexcept;
-    IWebSocketProvider* ActiveProvider(HCWebsocketHandle websocketHandle) noexcept;
+    IWebSocketProvider& ConnectProvider(HCWebsocketHandle websocketHandle) const noexcept;
+    IWebSocketProvider* ActiveProvider(HCWebsocketHandle websocketHandle) const noexcept;
 
     UniquePtr<IWebSocketProvider> m_winHttpProvider;
     UniquePtr<IWebSocketProvider> m_wsppProvider;
