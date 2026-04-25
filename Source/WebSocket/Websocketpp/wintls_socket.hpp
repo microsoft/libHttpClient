@@ -11,6 +11,7 @@
 
 #include <wintls.hpp>
 
+#include <websocketpp/transport/asio/base.hpp>
 #include <websocketpp/transport/asio/security/base.hpp>
 #include <websocketpp/uri.hpp>
 
@@ -217,7 +218,8 @@ public:
     template <typename ErrorCodeType>
     static lib::error_code translate_ec(ErrorCodeType)
     {
-        return make_error_code(transport::error::pass_through);
+        return websocketpp::transport::asio::error::make_error_code(
+            websocketpp::transport::asio::error::pass_through);
     }
 
     static lib::error_code translate_ec(lib::error_code ec)
