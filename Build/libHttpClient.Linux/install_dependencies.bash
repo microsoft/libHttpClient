@@ -52,6 +52,5 @@ echo "Installing dependencies..."
 echo "Build dependencies: ${build_dependencies[*]}"
 echo "Library dependencies: ${library_dependencies[*]}"
 
-sudo hwclock --hctosys
 sudo apt-get update
 sudo apt-get -y install "${build_dependencies[@]}" "${library_dependencies[@]}"
