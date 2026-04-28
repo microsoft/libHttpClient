@@ -19,6 +19,7 @@ BUILD_UNREAL_ENGINE_4=false
 C_COMPILER="clang"
 CXX_COMPILER="clang++"
 INSTALL_DEPENDENCIES=false
+REQUIRE_VERIFIED_DEPENDENCIES=true
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -47,6 +48,10 @@ while [[ $# -gt 0 ]]; do
       # NOOP. allow user to specify old --skipaptget args before that became the default
       shift
       ;;
+    -sd|--skip-dependency-check)
+      REQUIRE_VERIFIED_DEPENDENCIES=false
+      shift
+      ;;
     -st|--static)
       BUILD_STATIC=true
       shift
@@ -65,20 +70,30 @@ done
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 if [ "$INSTALL_DEPENDENCIES" = "true" ]; then
-  bash "$SCRIPT_DIR"/install_dependencies.bash
-  if [ $? -ne 0 ]; then
-    echo ""
-    echo "Failed to install dependencies."
-    exit 1
-  fi
+    bash "$SCRIPT_DIR"/install_dependencies.bash
+    if [ $? -ne 0 ]; then
+      echo ""
+      echo "Failed to install dependencies."
+      exit 1
+    fi
 else
-  bash "$SCRIPT_DIR"/install_dependencies.bash --check
-  if [ $? -ne 0 ]; then
-    echo ""
-    echo "Some dependencies are missing."
-    echo "Please run with --install-dependencies to install them or run $SCRIPT_DIR/install_dependencies.bash directly"
-    exit 1
-  fi
+    set +e
+    bash "$SCRIPT_DIR"/install_dependencies.bash --check
+    DEP_CHECK_RESULT=$?
+    set -e
+    if [ $DEP_CHECK_RESULT -ne 0 ]; then
+        if [ "$REQUIRE_VERIFIED_DEPENDENCIES" = true ]; then
+            echo ""
+            echo "Some dependencies are missing."
+            echo "Please run with --install-dependencies to install them or run $SCRIPT_DIR/install_dependencies.bash directly"
+            exit 1
+        else
+            echo ""
+            echo "Some dependencies are missing."
+            echo "--skip-dependency-check specified, ignoring and continuing."
+            echo ""
+        fi
+    fi
 fi
 
 log "CONFIGURATION  = ${CONFIGURATION}"
