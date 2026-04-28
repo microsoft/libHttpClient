@@ -7,6 +7,7 @@
 #if defined(__clang__)
 // Keep this third-party warning suppression local to the wrapper instead of patching the submodule.
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
 #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
 #include <websocketpp/extensions/permessage_deflate/enabled.hpp>
