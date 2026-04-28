@@ -42,6 +42,7 @@ CONFIGURE_ARGS=(
     --with-openssl=$OPENSSL_INSTALL_DIR
     --enable-symbol-hiding
     --without-brotli
+    --without-zstd
 )
 if [ "$CONFIGURATION" = "Debug" ]; then
     CONFIGURE_ARGS+=(--enable-debug)
