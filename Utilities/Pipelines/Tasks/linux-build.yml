@@ -6,6 +6,11 @@ steps:
   - template: checkout.yml
 
   - task: Bash@3
+    displayName: 'Ensure libHttpClient dependencies installed'
+    inputs:
+      filePath: './Build/libHttpClient.Linux/install_dependencies.bash'
+
+  - task: Bash@3
     displayName: 'Build and install OpenSSL'
     inputs:
       filePath: './Build/libHttpClient.Linux/openssl_Linux.bash'
