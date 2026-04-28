@@ -519,6 +519,7 @@ HRESULT WebSocket::SetProxyDecryptsHttps(
 
 HRESULT WebSocket::SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept
 {
+    RETURN_HR_IF(E_INVALIDARG, maxReceiveBufferSizeBytes == 0);
     RETURN_HR_IF(E_INVALIDARG, maxReceiveBufferSizeBytes > static_cast<size_t>((std::numeric_limits<uint32_t>::max)()));
 
     std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
