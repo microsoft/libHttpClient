@@ -33,7 +33,6 @@ fi
 
 OPENSSL_INSTALL_DIR="$SCRIPT_DIR/../../Int/x64/$CONFIGURATION/openssl.Linux/"
 
-rm -rf "$OPENSSL_INSTALL_DIR"
 mkdir -p "$OPENSSL_INSTALL_DIR"
 mkdir -p "$OPENSSL_INSTALL_DIR/lib"
 mkdir -p "$OPENSSL_INSTALL_DIR/include"
@@ -76,7 +75,7 @@ fi
 
 MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 make $MAKE_PARALLELISM CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
-make install
+make install_sw
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
 cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
