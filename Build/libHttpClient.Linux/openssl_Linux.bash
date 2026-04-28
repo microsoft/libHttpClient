@@ -53,7 +53,7 @@ if [ ! -d "$OPENSSL_INSTALL_DIR/include/openssl" ] ; then
 fi
 
 pushd $OPENSSL_SRC
-if [-f Makefile ]; then
+if [ -f Makefile ]; then
     echo "Cleaning previous OpenSSL build"
     make clean
 fi

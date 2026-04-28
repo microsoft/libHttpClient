@@ -69,6 +69,7 @@ done
 
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
+set +e # temporarily disable exit-on-error to provide more graceful handling of dependency installation failures
 if [ "$INSTALL_DEPENDENCIES" = "true" ]; then
     bash "$SCRIPT_DIR"/install_dependencies.bash
     if [ $? -ne 0 ]; then
@@ -77,11 +78,8 @@ if [ "$INSTALL_DEPENDENCIES" = "true" ]; then
       exit 1
     fi
 else
-    set +e
     bash "$SCRIPT_DIR"/install_dependencies.bash --check
-    DEP_CHECK_RESULT=$?
-    set -e
-    if [ $DEP_CHECK_RESULT -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         if [ "$REQUIRE_VERIFIED_DEPENDENCIES" = true ]; then
             echo ""
             echo "Some dependencies are missing."
@@ -95,6 +93,7 @@ else
         fi
     fi
 fi
+set -e # re-enable exit-on-error after dependency installation check
 
 log "CONFIGURATION  = ${CONFIGURATION}"
 log "BUILD SSL      = ${BUILD_SSL}"
