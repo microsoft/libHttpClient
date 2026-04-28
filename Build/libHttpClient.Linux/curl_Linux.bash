@@ -33,8 +33,7 @@ else
   echo "No previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a - performing build"
 fi
 
-# FIXME: OPENSSL_INSTALL_DIR="$SCRIPT_DIR/../../Int/x64/$CONFIGURATION/openssl.Linux/"
-OPENSSL_INSTALL_DIR=/usr/local/ssl
+OPENSSL_INSTALL_DIR="$SCRIPT_DIR/../../Int/x64/$CONFIGURATION/openssl.Linux/"
 
 CONFIGURE_ARGS=(
     --disable-shared
