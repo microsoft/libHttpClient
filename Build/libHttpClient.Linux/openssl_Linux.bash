@@ -24,6 +24,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [ -f "$SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a" ]; then
+  echo "Previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a - skipping build"
+  exit 0
+else
+  echo "No previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a - performing build"
+fi
+
 OPENSSL_INSTALL_DIR="$SCRIPT_DIR/../../Int/x64/$CONFIGURATION/openssl.Linux/"
 
 rm -rf "$OPENSSL_INSTALL_DIR"
@@ -43,13 +50,6 @@ fi
 if [ ! -d "$OPENSSL_INSTALL_DIR/include/openssl" ] ; then
     echo "Directory $OPENSSL_INSTALL_DIR/include/openssl does not exist"
     exit 1
-fi
-
-if [ -f "$SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a" ]; then
-  echo "Previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a - skipping build"
-  exit 0
-else
-  echo "No previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcrypto.Linux/libcrypto.a - performing build"
 fi
 
 pushd $OPENSSL_SRC
