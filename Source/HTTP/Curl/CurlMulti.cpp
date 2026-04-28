@@ -268,16 +268,7 @@ HRESULT CurlMulti::Perform() noexcept
             result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
         }
 #elif defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7,69,0)
-        // Try curl_multi_poll first, fall back to curl_multi_wait if not available
-        // For non-GDK, CURL_CALL expands directly to the symbol
-        if (CURL_CALL(curl_multi_poll))
-        {
-            result = CURL_CALL(curl_multi_poll)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
-        }
-        else
-        {
-            result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
-        }
+        result = CURL_CALL(curl_multi_poll)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #else
         result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #endif
