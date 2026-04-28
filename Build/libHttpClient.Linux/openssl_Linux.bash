@@ -53,7 +53,10 @@ if [ ! -d "$OPENSSL_INSTALL_DIR/include/openssl" ] ; then
 fi
 
 pushd $OPENSSL_SRC
-make clean
+if [-f Makefile ]; then
+    echo "Cleaning previous OpenSSL build"
+    make clean
+fi
 sed -i -e 's/\r$//' Configure
 
 CONFIGURE_ARGS=(
