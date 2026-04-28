@@ -22,23 +22,24 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-sudo hwclock --hctosys
-sudo rm -rf /usr/local/ssl
-sudo mkdir /usr/local/ssl
-sudo mkdir /usr/local/ssl/lib
-sudo mkdir /usr/local/ssl/include
-sudo mkdir /usr/local/ssl/include/openssl
+OPENSSL_INSTALL_DIR="$SCRIPT_DIR/../../Int/x64/$CONFIGURATION/openssl.Linux/"
 
-if [ ! -d /usr/local/ssl ] ; then
-    echo "Directory /usr/local/ssl does not exist"
+rm -rf "$OPENSSL_INSTALL_DIR"
+mkdir -p "$OPENSSL_INSTALL_DIR"
+mkdir -p "$OPENSSL_INSTALL_DIR/lib"
+mkdir -p "$OPENSSL_INSTALL_DIR/include"
+mkdir -p "$OPENSSL_INSTALL_DIR/include/openssl"
+
+if [ ! -d "$OPENSSL_INSTALL_DIR" ] ; then
+    echo "Directory $OPENSSL_INSTALL_DIR does not exist"
     exit 1
 fi
-if [ ! -d /usr/local/ssl/lib ] ; then
-    echo "Directory /usr/local/ssl/lib does not exist"
+if [ ! -d "$OPENSSL_INSTALL_DIR/lib" ] ; then
+    echo "Directory $OPENSSL_INSTALL_DIR/lib does not exist"
     exit 1
 fi
-if [ ! -d /usr/local/ssl/include/openssl ] ; then
-    echo "Directory /usr/local/ssl/include/openssl does not exist"
+if [ ! -d "$OPENSSL_INSTALL_DIR/include/openssl" ] ; then
+    echo "Directory $OPENSSL_INSTALL_DIR/include/openssl does not exist"
     exit 1
 fi
 
@@ -53,17 +54,24 @@ pushd $OPENSSL_SRC
 make clean
 sed -i -e 's/\r$//' Configure
 
+CONFIGURE_ARGS=(
+  --prefix=$OPENSSL_INSTALL_DIR
+  --openssldir=$OPENSSL_INSTALL_DIR
+  linux-x86_64-clang
+  no-shared
+  no-hw
+  no-tests
+  )
 if [ "$CONFIGURATION" = "Debug" ]; then
-    # make libcrypto and libssl
-    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-tests -d
-else
-    # make libcrypto and libssl
-    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl linux-x86_64-clang no-shared no-hw no-tests
+    CONFIGURE_ARGS+=(-d)
 fi
+
+# make libcrypto and libssl
+./Configure "${CONFIGURE_ARGS[@]}"
 
 MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 make $MAKE_PARALLELISM CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
-sudo make install
+make install
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
 cp -R "$PWD"/libcrypto.a "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcrypto.Linux
