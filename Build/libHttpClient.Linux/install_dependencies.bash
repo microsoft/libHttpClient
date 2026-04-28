@@ -1,7 +1,10 @@
 #!/bin/bash
 
+set -e
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+POSITIONAL_ARGS=()
 DO_INSTALL=true
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -19,6 +22,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 build_dependencies=(clang make autoconf automake libtool)
 library_dependencies=(zlib1g zlib1g-dev)
@@ -49,4 +54,4 @@ echo "Library dependencies: ${library_dependencies[*]}"
 
 sudo hwclock --hctosys
 sudo apt-get update
-sudo apt-get install "${build_dependencies[@]}" "${library_dependencies[@]}"
+sudo apt-get -y install "${build_dependencies[@]}" "${library_dependencies[@]}"

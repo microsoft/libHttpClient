@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 OPENSSL_SRC="$SCRIPT_DIR/../../External/openssl"
 CONFIGURATION="Release"
