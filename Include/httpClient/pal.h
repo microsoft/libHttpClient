@@ -133,9 +133,7 @@ typedef void* HANDLE;
 #define FACILITY_INTERNET                12
 #define FACILITY_HTTP                    25
 
-#ifndef _HRESULT_TYPEDEF_
 #define _HRESULT_TYPEDEF_(_sc) ((HRESULT)_sc)
-#endif
 #define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? ((HRESULT)(x)) : ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 
 #define S_OK                                    _HRESULT_TYPEDEF_(0x00000000L)
