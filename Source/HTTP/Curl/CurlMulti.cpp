@@ -269,9 +269,11 @@ HRESULT CurlMulti::Perform() noexcept
         }
 #elif defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7,69,0)
         // On supported non-GDK platforms with libcurl >= 7.69.0, we can call curl_multi_poll directly.
+        static_assert(CURL_CALL(curl_multi_poll) != nullptr, "curl_multi_poll must be unconditionally available");
         result = CURL_CALL(curl_multi_poll)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #else
         // On supported non-GDK platforms with libcurl < 7.69.0, we must fall back to curl_multi_wait.
+        static_assert(CURL_CALL(curl_multi_wait) != nullptr, "curl_multi_wait must be unconditionally available");
         result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #endif
 

@@ -175,6 +175,8 @@ target_include_directories(
 target_compile_options("${PROJECT_NAME}" PRIVATE -Werror)
 set_source_files_properties(${ZLIB_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-Wno-implicit-function-declaration")
 
+# allow tautological comparisons for static_assert statements verifying CURL_CALL availability
+target_compile_options("${PROJECT_NAME}" PRIVATE -Wno-tautological-compare)
 
 include("../libHttpClient.CMake/GetLibHCFlags.cmake")
 get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
