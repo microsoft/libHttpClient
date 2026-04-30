@@ -40,9 +40,7 @@
 #ifdef HC_UNITTEST_API
 #undef HC_UWP_API
 #define HC_UWP_API 1
-#endif 
-
-#define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
+#endif
 
 // Windows defines these as an inline function so they cannot be
 // used in a switch statement. (It would work if we required c++17 support)
@@ -72,7 +70,7 @@
 #endif
 
 #ifndef HTTP_E_STATUS_429_TOO_MANY_REQUESTS
-#define HTTP_E_STATUS_429_TOO_MANY_REQUESTS     _HRESULTYPEDEF_(0x801901ADL) 
+#define HTTP_E_STATUS_429_TOO_MANY_REQUESTS     _HRESULT_TYPEDEF_(0x801901ADL)
 #endif
 
 
@@ -88,14 +86,14 @@ typedef int32_t HRESULT;
 #define CALLBACK
 
 #ifndef __cdecl
-#define __cdecl 
+#define __cdecl
 #endif
 
 #ifndef __stdcal
 #define __stdcall
 #endif
 
-#ifndef __forceinline 
+#ifndef __forceinline
 #define __forceinline inline
 #endif
 
@@ -136,64 +134,63 @@ typedef void* HANDLE;
 #define FACILITY_HTTP                    25
 
 #define _HRESULT_TYPEDEF_(_sc) ((HRESULT)_sc)
-#define _HRESULTYPEDEF_(_sc) ((HRESULT)_sc)
 #define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? ((HRESULT)(x)) : ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 
-#define S_OK                                    ((HRESULT)0L)
-#define E_NOTIMPL                               _HRESULTYPEDEF_(0x80004001L)
-#define E_OUTOFMEMORY                           _HRESULTYPEDEF_(0x8007000EL)
-#define E_INVALIDARG                            _HRESULTYPEDEF_(0x80070057L)
-#define E_ABORT                                 _HRESULTYPEDEF_(0x80004004L)
-#define E_FAIL                                  _HRESULTYPEDEF_(0x80004005L)
-#define E_ACCESSDENIED                          _HRESULTYPEDEF_(0x80070005L)
-#define E_HANDLE                                _HRESULTYPEDEF_(0x80070006L)
-#define E_PENDING                               _HRESULTYPEDEF_(0x8000000AL)
-#define E_UNEXPECTED                            _HRESULTYPEDEF_(0x8000FFFFL)
-#define E_POINTER                               _HRESULTYPEDEF_(0x80004003L)
-#define E_TIME_CRITICAL_THREAD                  _HRESULTYPEDEF_(0x800701A0L)
-#define E_NO_TASK_QUEUE                         _HRESULTYPEDEF_(0x800701ABL)
-#define E_NOT_SUPPORTED                         _HRESULTYPEDEF_(0x80070032L)
-#define E_NOT_SUFFICIENT_BUFFER                 _HRESULTYPEDEF_(0x8007007AL)
-#define E_NOINTERFACE                           _HRESULTYPEDEF_(0x80004002L)
-#define E_BOUNDS                                _HRESULTYPEDEF_(0x8000000BL)
-#define E_ILLEGAL_METHOD_CALL                   _HRESULTYPEDEF_(0x8000000EL)
-#define HTTP_E_STATUS_AMBIGUOUS                 _HRESULTYPEDEF_(0x8019012CL)
-#define HTTP_E_STATUS_BAD_GATEWAY               _HRESULTYPEDEF_(0x801901F6L)
-#define HTTP_E_STATUS_BAD_METHOD                _HRESULTYPEDEF_(0x80190195L)
-#define HTTP_E_STATUS_BAD_REQUEST               _HRESULTYPEDEF_(0x80190190L)
-#define HTTP_E_STATUS_CONFLICT                  _HRESULTYPEDEF_(0x80190199L)
-#define HTTP_E_STATUS_DENIED                    _HRESULTYPEDEF_(0x80190191L)
-#define HTTP_E_STATUS_EXPECTATION_FAILED        _HRESULTYPEDEF_(0x801901A1L)
-#define HTTP_E_STATUS_429_TOO_MANY_REQUESTS     _HRESULTYPEDEF_(0x801901ADL)
-#define HTTP_E_STATUS_FORBIDDEN                 _HRESULTYPEDEF_(0x80190193L)
-#define HTTP_E_STATUS_GATEWAY_TIMEOUT           _HRESULTYPEDEF_(0x801901F8L)
-#define HTTP_E_STATUS_GONE                      _HRESULTYPEDEF_(0x8019019AL)
-#define HTTP_E_STATUS_LENGTH_REQUIRED           _HRESULTYPEDEF_(0x8019019BL)
-#define HTTP_E_STATUS_MOVED                     _HRESULTYPEDEF_(0x8019012DL)
-#define HTTP_E_STATUS_NONE_ACCEPTABLE           _HRESULTYPEDEF_(0x80190196L)
-#define HTTP_E_STATUS_NOT_FOUND                 _HRESULTYPEDEF_(0x80190194L)
-#define HTTP_E_STATUS_NOT_MODIFIED              _HRESULTYPEDEF_(0x80190130L)
-#define HTTP_E_STATUS_NOT_SUPPORTED             _HRESULTYPEDEF_(0x801901F5L)
-#define HTTP_E_STATUS_PAYMENT_REQ               _HRESULTYPEDEF_(0x80190192L)
-#define HTTP_E_STATUS_PRECOND_FAILED            _HRESULTYPEDEF_(0x8019019CL)
-#define HTTP_E_STATUS_PROXY_AUTH_REQ            _HRESULTYPEDEF_(0x80190197L)
-#define HTTP_E_STATUS_RANGE_NOT_SATISFIABLE     _HRESULTYPEDEF_(0x801901A0L)
-#define HTTP_E_STATUS_REDIRECT                  _HRESULTYPEDEF_(0x8019012EL)
-#define HTTP_E_STATUS_REDIRECT_KEEP_VERB        _HRESULTYPEDEF_(0x80190133L)
-#define HTTP_E_STATUS_REDIRECT_METHOD           _HRESULTYPEDEF_(0x8019012FL)
-#define HTTP_E_STATUS_REQUEST_TIMEOUT           _HRESULTYPEDEF_(0x80190198L)
-#define HTTP_E_STATUS_REQUEST_TOO_LARGE         _HRESULTYPEDEF_(0x8019019DL)
-#define HTTP_E_STATUS_SERVER_ERROR              _HRESULTYPEDEF_(0x801901F4L)
-#define HTTP_E_STATUS_SERVICE_UNAVAIL           _HRESULTYPEDEF_(0x801901F7L)
-#define HTTP_E_STATUS_UNEXPECTED                _HRESULTYPEDEF_(0x80190001L)
-#define HTTP_E_STATUS_UNEXPECTED_SERVER_ERROR   _HRESULTYPEDEF_(0x80190005L)
-#define HTTP_E_STATUS_UNSUPPORTED_MEDIA         _HRESULTYPEDEF_(0x8019019FL)
-#define HTTP_E_STATUS_URI_TOO_LONG              _HRESULTYPEDEF_(0x8019019EL)
-#define HTTP_E_STATUS_USE_PROXY                 _HRESULTYPEDEF_(0x80190131L)
-#define HTTP_E_STATUS_VERSION_NOT_SUP           _HRESULTYPEDEF_(0x801901F9L)
-#define ONL_E_ACTION_REQUIRED                   _HRESULTYPEDEF_(0x8086000CL)
-#define WEB_E_INVALID_JSON_STRING               _HRESULTYPEDEF_(0x83750007L)
-#define WEB_E_UNEXPECTED_CONTENT                _HRESULTYPEDEF_(0x83750005L)
+#define S_OK                                    _HRESULT_TYPEDEF_(0x00000000L)
+#define E_NOTIMPL                               _HRESULT_TYPEDEF_(0x80004001L)
+#define E_OUTOFMEMORY                           _HRESULT_TYPEDEF_(0x8007000EL)
+#define E_INVALIDARG                            _HRESULT_TYPEDEF_(0x80070057L)
+#define E_ABORT                                 _HRESULT_TYPEDEF_(0x80004004L)
+#define E_FAIL                                  _HRESULT_TYPEDEF_(0x80004005L)
+#define E_ACCESSDENIED                          _HRESULT_TYPEDEF_(0x80070005L)
+#define E_HANDLE                                _HRESULT_TYPEDEF_(0x80070006L)
+#define E_PENDING                               _HRESULT_TYPEDEF_(0x8000000AL)
+#define E_UNEXPECTED                            _HRESULT_TYPEDEF_(0x8000FFFFL)
+#define E_POINTER                               _HRESULT_TYPEDEF_(0x80004003L)
+#define E_TIME_CRITICAL_THREAD                  _HRESULT_TYPEDEF_(0x800701A0L)
+#define E_NO_TASK_QUEUE                         _HRESULT_TYPEDEF_(0x800701ABL)
+#define E_NOT_SUPPORTED                         _HRESULT_TYPEDEF_(0x80070032L)
+#define E_NOT_SUFFICIENT_BUFFER                 _HRESULT_TYPEDEF_(0x8007007AL)
+#define E_NOINTERFACE                           _HRESULT_TYPEDEF_(0x80004002L)
+#define E_BOUNDS                                _HRESULT_TYPEDEF_(0x8000000BL)
+#define E_ILLEGAL_METHOD_CALL                   _HRESULT_TYPEDEF_(0x8000000EL)
+#define HTTP_E_STATUS_AMBIGUOUS                 _HRESULT_TYPEDEF_(0x8019012CL)
+#define HTTP_E_STATUS_BAD_GATEWAY               _HRESULT_TYPEDEF_(0x801901F6L)
+#define HTTP_E_STATUS_BAD_METHOD                _HRESULT_TYPEDEF_(0x80190195L)
+#define HTTP_E_STATUS_BAD_REQUEST               _HRESULT_TYPEDEF_(0x80190190L)
+#define HTTP_E_STATUS_CONFLICT                  _HRESULT_TYPEDEF_(0x80190199L)
+#define HTTP_E_STATUS_DENIED                    _HRESULT_TYPEDEF_(0x80190191L)
+#define HTTP_E_STATUS_EXPECTATION_FAILED        _HRESULT_TYPEDEF_(0x801901A1L)
+#define HTTP_E_STATUS_429_TOO_MANY_REQUESTS     _HRESULT_TYPEDEF_(0x801901ADL)
+#define HTTP_E_STATUS_FORBIDDEN                 _HRESULT_TYPEDEF_(0x80190193L)
+#define HTTP_E_STATUS_GATEWAY_TIMEOUT           _HRESULT_TYPEDEF_(0x801901F8L)
+#define HTTP_E_STATUS_GONE                      _HRESULT_TYPEDEF_(0x8019019AL)
+#define HTTP_E_STATUS_LENGTH_REQUIRED           _HRESULT_TYPEDEF_(0x8019019BL)
+#define HTTP_E_STATUS_MOVED                     _HRESULT_TYPEDEF_(0x8019012DL)
+#define HTTP_E_STATUS_NONE_ACCEPTABLE           _HRESULT_TYPEDEF_(0x80190196L)
+#define HTTP_E_STATUS_NOT_FOUND                 _HRESULT_TYPEDEF_(0x80190194L)
+#define HTTP_E_STATUS_NOT_MODIFIED              _HRESULT_TYPEDEF_(0x80190130L)
+#define HTTP_E_STATUS_NOT_SUPPORTED             _HRESULT_TYPEDEF_(0x801901F5L)
+#define HTTP_E_STATUS_PAYMENT_REQ               _HRESULT_TYPEDEF_(0x80190192L)
+#define HTTP_E_STATUS_PRECOND_FAILED            _HRESULT_TYPEDEF_(0x8019019CL)
+#define HTTP_E_STATUS_PROXY_AUTH_REQ            _HRESULT_TYPEDEF_(0x80190197L)
+#define HTTP_E_STATUS_RANGE_NOT_SATISFIABLE     _HRESULT_TYPEDEF_(0x801901A0L)
+#define HTTP_E_STATUS_REDIRECT                  _HRESULT_TYPEDEF_(0x8019012EL)
+#define HTTP_E_STATUS_REDIRECT_KEEP_VERB        _HRESULT_TYPEDEF_(0x80190133L)
+#define HTTP_E_STATUS_REDIRECT_METHOD           _HRESULT_TYPEDEF_(0x8019012FL)
+#define HTTP_E_STATUS_REQUEST_TIMEOUT           _HRESULT_TYPEDEF_(0x80190198L)
+#define HTTP_E_STATUS_REQUEST_TOO_LARGE         _HRESULT_TYPEDEF_(0x8019019DL)
+#define HTTP_E_STATUS_SERVER_ERROR              _HRESULT_TYPEDEF_(0x801901F4L)
+#define HTTP_E_STATUS_SERVICE_UNAVAIL           _HRESULT_TYPEDEF_(0x801901F7L)
+#define HTTP_E_STATUS_UNEXPECTED                _HRESULT_TYPEDEF_(0x80190001L)
+#define HTTP_E_STATUS_UNEXPECTED_SERVER_ERROR   _HRESULT_TYPEDEF_(0x80190005L)
+#define HTTP_E_STATUS_UNSUPPORTED_MEDIA         _HRESULT_TYPEDEF_(0x8019019FL)
+#define HTTP_E_STATUS_URI_TOO_LONG              _HRESULT_TYPEDEF_(0x8019019EL)
+#define HTTP_E_STATUS_USE_PROXY                 _HRESULT_TYPEDEF_(0x80190131L)
+#define HTTP_E_STATUS_VERSION_NOT_SUP           _HRESULT_TYPEDEF_(0x801901F9L)
+#define ONL_E_ACTION_REQUIRED                   _HRESULT_TYPEDEF_(0x8086000CL)
+#define WEB_E_INVALID_JSON_STRING               _HRESULT_TYPEDEF_(0x83750007L)
+#define WEB_E_UNEXPECTED_CONTENT                _HRESULT_TYPEDEF_(0x83750005L)
 
 #define ERROR_ARITHMETIC_OVERFLOW               534L
 #define ERROR_BAD_CONFIGURATION                 1610L
@@ -218,15 +215,15 @@ typedef struct _LIST_ENTRY {
         ((type *)((char*)(address) - (uintptr_t)(&((type *)0)->field)))
 
 #ifndef _Field_size_
-#define _Field_size_(bytes) 
+#define _Field_size_(bytes)
 #endif
 
 #ifndef _Field_size_bytes_
-#define _Field_size_bytes_(bytes) 
+#define _Field_size_bytes_(bytes)
 #endif
 
 #ifndef _Field_size_bytes_opt_
-#define _Field_size_bytes_opt_(bytes) 
+#define _Field_size_bytes_opt_(bytes)
 #endif
 
 #ifndef _Field_size_opt_
@@ -234,7 +231,7 @@ typedef struct _LIST_ENTRY {
 #endif
 
 #ifndef _Field_z_
-#define _Field_z_ 
+#define _Field_z_
 #endif
 
 #ifndef _In_
@@ -242,39 +239,39 @@ typedef struct _LIST_ENTRY {
 #endif
 
 #ifndef _In_opt_
-#define _In_opt_ 
+#define _In_opt_
 #endif
 
 #ifndef _In_opt_z_
-#define _In_opt_z_ 
+#define _In_opt_z_
 #endif
 
 #ifndef _In_reads_
-#define _In_reads_(size) 
+#define _In_reads_(size)
 #endif
 
 #ifndef _In_reads_opt_
-#define _In_reads_opt_(size) 
+#define _In_reads_opt_(size)
 #endif
 
 #ifndef _In_reads_bytes_
-#define _In_reads_bytes_(size) 
+#define _In_reads_bytes_(size)
 #endif
 
 #ifndef _In_reads_bytes_opt_
-#define _In_reads_bytes_opt_(size) 
+#define _In_reads_bytes_opt_(size)
 #endif
 
 #ifndef _In_reads_z_
-#define _In_reads_z_(size) 
+#define _In_reads_z_(size)
 #endif
 
 #ifndef _In_z_
-#define _In_z_ 
+#define _In_z_
 #endif
 
 #ifndef _Inout_
-#define _Inout_ 
+#define _Inout_
 #endif
 
 #ifndef _Inout_updates_bytes_
@@ -282,19 +279,19 @@ typedef struct _LIST_ENTRY {
 #endif
 
 #ifndef _Null_terminated_
-#define _Null_terminated_ 
+#define _Null_terminated_
 #endif
 
 #ifndef _Out_
-#define _Out_ 
+#define _Out_
 #endif
 
 #ifndef _Out_opt_
-#define _Out_opt_ 
+#define _Out_opt_
 #endif
 
 #ifndef _Out_range_
-#define _Out_range_(x, y)  
+#define _Out_range_(x, y)
 #endif
 
 #ifndef _Out_writes_
@@ -350,7 +347,7 @@ typedef struct _LIST_ENTRY {
 #endif
 
 #ifndef _Post_invalid_
-#define _Post_invalid_ 
+#define _Post_invalid_
 #endif
 
 #ifndef _Post_writable_byte_size_
@@ -358,7 +355,7 @@ typedef struct _LIST_ENTRY {
 #endif
 
 #ifndef _Printf_format_string_
-#define _Printf_format_string_ 
+#define _Printf_format_string_
 #endif
 
 #ifndef _Ret_maybenull_
