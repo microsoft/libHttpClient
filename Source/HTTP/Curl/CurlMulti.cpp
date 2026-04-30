@@ -259,7 +259,7 @@ HRESULT CurlMulti::Perform() noexcept
         int workAvailable{ 0 };
 #if HC_PLATFORM == HC_PLATFORM_GDK
         // Try curl_multi_poll first, fall back to curl_multi_wait if not available
-        if (CURL_CALL(curl_multi_poll) != nullptr)
+        if (CURL_CALL(curl_multi_poll))
         {
             result = CURL_CALL(curl_multi_poll)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
         }
