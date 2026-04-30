@@ -215,6 +215,12 @@ protected:
     }
 
 public:
+    // Overload resolution note: wintls::error_code is a typedef for std::error_code
+    // (via WINTLS_USE_STANDALONE_ASIO), which is the same type as lib::error_code.
+    // TLS handshake failures therefore resolve to the identity overload below, preserving
+    // the original SECURITY_STATUS value in system_category through to HResultFromConnectError.
+    // The generic template only fires for non-std::error_code types (e.g. boost error codes
+    // in non-standalone configurations).
     template <typename ErrorCodeType>
     static lib::error_code translate_ec(ErrorCodeType)
     {

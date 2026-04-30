@@ -550,6 +550,11 @@ HRESULT WebSocket::SetOptions(HCWebSocketOptions options) noexcept
         E_INVALIDARG,
         HasNoContextTakeoverWebSocketOptions(options) && !RequestsWebSocketCompression(options));
 
+    // Check fragment handlers before acquiring m_stateMutex to avoid nesting
+    // m_stateMutex -> m_eventCallbacksMutex (which HasBinaryMessageFragmentHandlers acquires).
+    // Safe because SetOptions is only valid in State::Initial, before callbacks can fire.
+    bool const hasBinaryFragmentHandlers = HasBinaryMessageFragmentHandlers();
+
     std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
     RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
     if (RequestsLegacyWebSocketSemantics(options))
@@ -559,7 +564,7 @@ HRESULT WebSocket::SetOptions(HCWebSocketOptions options) noexcept
         return S_OK;
     }
 
-    RETURN_HR_IF(E_NOT_SUPPORTED, HasBinaryMessageFragmentHandlers());
+    RETURN_HR_IF(E_NOT_SUPPORTED, hasBinaryFragmentHandlers);
 
     HRESULT hr = m_provider.OptionsResult(options);
     RETURN_IF_FAILED(hr);

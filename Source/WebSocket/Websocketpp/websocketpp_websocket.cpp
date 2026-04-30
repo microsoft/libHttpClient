@@ -1790,17 +1790,27 @@ private:
         template <typename WebsocketConfig>
         websocketpp::client<WebsocketConfig>& impl()
         {
+            ASSERT(m_typeTag == typeid(websocketpp::client<WebsocketConfig>).hash_code()
+                && "Config type mismatch in wspp client type erasure");
             return *reinterpret_cast<websocketpp::client<WebsocketConfig>*>(client_storage());
         }
 
         virtual void* client_storage() noexcept = 0;
         virtual bool is_tls_client() const = 0;
         virtual bool uses_compression() const = 0;
+
+    protected:
+        size_t m_typeTag{ 0 };
     };
 
     template<typename WebsocketConfig, bool IsTlsClient, bool UsesCompression>
     struct websocketpp_client_impl : websocketpp_client_base
     {
+        websocketpp_client_impl()
+        {
+            m_typeTag = typeid(websocketpp::client<WebsocketConfig>).hash_code();
+        }
+
         void* client_storage() noexcept override
         {
             return &m_client;
