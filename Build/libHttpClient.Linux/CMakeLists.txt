@@ -168,6 +168,13 @@ target_include_directories(
     "${ZLIB_INCLUDE_DIRS}"
 )
 
+# Turn on compiler warnings for all source files.
+# For zlib, which is external, mask some of the unimportant warnings. This keeps our build output clean without
+# adding friction to taking zlib updates. If new warnings show up in updates, they should be assessed for impact and
+# disabled if not considered problematic.
+target_compile_options("${PROJECT_NAME}" PRIVATE -Werror)
+set_source_files_properties(${ZLIB_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-Wno-implicit-function-declaration")
+
 include("../libHttpClient.CMake/GetLibHCFlags.cmake")
 get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
