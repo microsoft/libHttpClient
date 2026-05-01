@@ -23,11 +23,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHt
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Out/x64/Debug/libHttpClient.Linux)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHttpClient.Linux)
 
-# BINARY_DIR is a temp folder used by cmake itself.
-# Binary folder can be remove freely.
-# See more details: https://cmake.org/cmake/help/v3.4/command/add_subdirectory.html
-set(BINARY_DIR ${PATH_TO_ROOT}/Int/CMake/libHttpClient.Linux)
-
 set(LIBCRYPTO_BINARY_PATH
     ${PATH_TO_ROOT}/Out/x64/${CMAKE_BUILD_TYPE}/libcrypto.Linux/libcrypto.a
 )
