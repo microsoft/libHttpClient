@@ -99,7 +99,7 @@ log "CONFIGURATION  = ${CONFIGURATION}"
 log "BUILD SSL      = ${BUILD_SSL}"
 log "BUILD CURL     = ${BUILD_CURL}"
 log "CMakeLists.txt = ${SCRIPT_DIR}"
-log "CMake output   = ${SCRIPT_DIR}/../../Int/CMake/libHttpClient.Linux"
+log "CMake output   = ${SCRIPT_DIR}/../../Int/x64/$CONFIGURATION/libHttpClient.Linux"
 
 if [ "$BUILD_UNREAL_ENGINE_4" = true ]; then
     log "Unreal Compatibility Enabled"
@@ -125,10 +125,10 @@ fi
 MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 if [ "$BUILD_STATIC" = false ]; then
     # make libHttpClient shared
-    cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=ON
-    make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+    cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/x64/$CONFIGURATION/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=ON
+    make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/x64/$CONFIGURATION/libHttpClient.Linux
 else
     # make libHttpClient static
-    cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=OFF
-    make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+    cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/x64/$CONFIGURATION/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=OFF
+    make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/x64/$CONFIGURATION/libHttpClient.Linux
 fi
