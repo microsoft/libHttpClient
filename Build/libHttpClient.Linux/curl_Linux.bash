@@ -23,15 +23,15 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-pushd "$SCRIPT_DIR"/../../External/curl
-autoreconf -fi "$SCRIPT_DIR"/../../External/curl
-
 if [ -f "$SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a" ]; then
   echo "Previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a - skipping build"
   exit 0
 else
   echo "No previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a - performing build"
 fi
+
+pushd "$SCRIPT_DIR"/../../External/curl
+autoreconf -fi "$SCRIPT_DIR"/../../External/curl
 
 OPENSSL_INSTALL_DIR="$SCRIPT_DIR/../../Int/x64/$CONFIGURATION/openssl.Linux/"
 
