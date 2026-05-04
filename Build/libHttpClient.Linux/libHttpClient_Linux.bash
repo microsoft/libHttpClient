@@ -21,6 +21,7 @@ C_COMPILER="clang"
 CXX_COMPILER="clang++"
 INSTALL_DEPENDENCIES=false
 REQUIRE_VERIFIED_DEPENDENCIES=true
+BUILD_DIR="$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -109,7 +110,7 @@ log "BUILD SSL      = ${BUILD_SSL}"
 log "BUILD CURL     = ${BUILD_CURL}"
 log "WS COMPRESSION = ${ENABLE_WEBSOCKET_COMPRESSION}"
 log "CMakeLists.txt = ${SCRIPT_DIR}"
-log "CMake output   = ${SCRIPT_DIR}/../../Int/CMake/libHttpClient.Linux"
+log "CMake output   = ${BUILD_DIR}"
 
 if [ "$BUILD_UNREAL_ENGINE_4" = true ]; then
     log "Unreal Compatibility Enabled"
@@ -137,13 +138,22 @@ if [ "$ENABLE_WEBSOCKET_COMPRESSION" != true ]; then
   WEBSOCKET_COMPRESSION_CMAKE_ARG="-DHC_ENABLE_WEBSOCKET_COMPRESSION=OFF"
 fi
 
+if [ -f "$BUILD_DIR/CMakeCache.txt" ]; then
+  CACHED_BUILD_DIR=$(sed -n 's/^CMAKE_CACHEFILE_DIR:INTERNAL=//p' "$BUILD_DIR/CMakeCache.txt" | head -n 1)
+  CACHED_SOURCE_DIR=$(sed -n 's/^CMAKE_HOME_DIRECTORY:INTERNAL=//p' "$BUILD_DIR/CMakeCache.txt" | head -n 1)
+  if [ "$CACHED_BUILD_DIR" != "$BUILD_DIR" ] || [ "$CACHED_SOURCE_DIR" != "$SCRIPT_DIR" ]; then
+    log "Removing stale CMake cache from ${BUILD_DIR}"
+    rm -rf "$BUILD_DIR"
+  fi
+fi
+
 MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 if [ "$BUILD_STATIC" = false ]; then
     # make libHttpClient shared
-    cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=ON $WEBSOCKET_COMPRESSION_CMAKE_ARG
-    make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+    cmake -S "$SCRIPT_DIR" -B "$BUILD_DIR" -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=ON $WEBSOCKET_COMPRESSION_CMAKE_ARG
+    make $MAKE_PARALLELISM -C "$BUILD_DIR"
 else
     # make libHttpClient static
-    cmake -S "$SCRIPT_DIR" -B "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=OFF $WEBSOCKET_COMPRESSION_CMAKE_ARG
-    make $MAKE_PARALLELISM -C "$SCRIPT_DIR"/../../Int/CMake/libHttpClient.Linux
+    cmake -S "$SCRIPT_DIR" -B "$BUILD_DIR" -D CMAKE_BUILD_TYPE=$CONFIGURATION -D CMAKE_C_COMPILER=$C_COMPILER -D CMAKE_CXX_COMPILER=$CXX_COMPILER -D BUILD_SHARED_LIBS=OFF $WEBSOCKET_COMPRESSION_CMAKE_ARG
+    make $MAKE_PARALLELISM -C "$BUILD_DIR"
 fi

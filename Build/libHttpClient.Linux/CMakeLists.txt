@@ -29,11 +29,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHt
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Out/x64/Debug/libHttpClient.Linux)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHttpClient.Linux)
 
-# BINARY_DIR is a temp folder used by cmake itself.
-# Binary folder can be remove freely.
-# See more details: https://cmake.org/cmake/help/v3.4/command/add_subdirectory.html
-set(BINARY_DIR ${PATH_TO_ROOT}/Int/CMake/libHttpClient.Linux)
-
 set(LIBCRYPTO_BINARY_PATH
     ${PATH_TO_ROOT}/Out/x64/${CMAKE_BUILD_TYPE}/libcrypto.Linux/libcrypto.a
 )
@@ -177,6 +172,13 @@ target_include_directories(
 if (NOT DEFINED HC_NOZLIB)
     target_compile_definitions("${PROJECT_NAME}" PRIVATE Z_HAVE_UNISTD_H=1)
 endif()
+
+# Turn on compiler warnings for all source files.
+# For zlib, which is external, mask some of the unimportant warnings. This keeps our build output clean without
+# adding friction to taking zlib updates. If new warnings show up in updates, they should be assessed for impact and
+# disabled if not considered problematic.
+target_compile_options("${PROJECT_NAME}" PRIVATE -Werror)
+set_source_files_properties(${ZLIB_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-Wno-implicit-function-declaration")
 
 include("../libHttpClient.CMake/GetLibHCFlags.cmake")
 get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
