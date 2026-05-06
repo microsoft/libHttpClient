@@ -2055,4 +2055,140 @@ public:
 
         VERIFY_IS_TRUE(canaryFired.load());
     }
+
+    DEFINE_TEST_CASE(VerifyTerminationDoesNotEarlyPromoteSiblingDelayedCallback)
+    {
+        struct TestBarrier
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            bool phase1_ready = false;  // terminate thread -> test thread
+            bool phase2_ready = false;  // test thread -> terminate thread
+        };
+
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            explicit TestHooks(_In_ TestBarrier* barrier) : m_testBarrier(barrier) {}
+
+            void PendingEntriesRemovedDuringTermination(XTaskQueuePort port) override
+            {
+                UNREFERENCED_PARAMETER(port);
+
+                {
+                    std::lock_guard<std::mutex> lk(m_testBarrier->mtx);
+                    m_testBarrier->phase1_ready = true;
+                }
+                m_testBarrier->cv.notify_all();
+
+                std::unique_lock<std::mutex> lk(m_testBarrier->mtx);
+                m_testBarrier->cv.wait_for(lk, std::chrono::seconds(5),
+                    [&] { return m_testBarrier->phase2_ready; });
+            }
+
+        private:
+            TestBarrier* m_testBarrier = nullptr;
+        };
+
+        struct CallbackState
+        {
+            std::atomic<bool> invoked{ false };
+            std::atomic<bool> canceled{ false };
+            std::atomic<uint64_t> firedAtTicks{ 0 };
+
+            static void CALLBACK Invoke(void* ctx, bool canceled)
+            {
+                auto* self = static_cast<CallbackState*>(ctx);
+                self->canceled.store(canceled, std::memory_order_release);
+                self->firedAtTicks.store(GetTickCount64(), std::memory_order_release);
+                self->invoked.store(true, std::memory_order_release);
+            }
+        };
+
+        AutoQueueHandle root;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Manual,
+            &root));
+
+        XTaskQueuePortHandle rootPort;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(root, XTaskQueuePort::Work, &rootPort));
+
+        AutoQueueHandle terminatingQueue;
+        AutoQueueHandle siblingQueue;
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(rootPort, rootPort, &terminatingQueue));
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(rootPort, rootPort, &siblingQueue));
+
+        TestBarrier barrier;
+        TestHooks hooks(&barrier);
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(terminatingQueue, &hooks));
+
+        CallbackState terminatingState;
+        CallbackState siblingState;
+
+        // Arm the shared timer with a deadline owned by the queue that will be
+        // terminated. The sibling callback is submitted while termination is
+        // blocked in the hook above.
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            terminatingQueue,
+            XTaskQueuePort::Work,
+            150,
+            &terminatingState,
+            &CallbackState::Invoke));
+
+        HRESULT terminateHr = S_OK;
+        std::thread terminator([&]
+        {
+            terminateHr = XTaskQueueTerminate(terminatingQueue, false, nullptr, nullptr);
+        });
+
+        {
+            std::unique_lock<std::mutex> lk(barrier.mtx);
+            bool ok = barrier.cv.wait_for(lk, std::chrono::seconds(5),
+                [&] { return barrier.phase1_ready; });
+            VERIFY_IS_TRUE(ok);
+        }
+
+        const uint64_t siblingSubmittedAt = GetTickCount64();
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            siblingQueue,
+            XTaskQueuePort::Work,
+            300,
+            &siblingState,
+            &CallbackState::Invoke));
+
+        {
+            std::lock_guard<std::mutex> lk(barrier.mtx);
+            barrier.phase2_ready = true;
+        }
+        barrier.cv.notify_all();
+
+        terminator.join();
+        VERIFY_SUCCEEDED(terminateHr);
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(terminatingQueue, nullptr));
+
+        // The terminating queue's delayed callback is expected to surface as
+        // canceled. The sibling delayed callback must stay pending until its
+        // own deadline instead of being promoted immediately.
+        while (XTaskQueueDispatch(root, XTaskQueuePort::Work, 0))
+        {
+        }
+
+        VERIFY_IS_TRUE(terminatingState.invoked.load(std::memory_order_acquire));
+        VERIFY_IS_TRUE(terminatingState.canceled.load(std::memory_order_acquire));
+        VERIFY_IS_FALSE(siblingState.invoked.load(std::memory_order_acquire));
+
+        VERIFY_IS_FALSE(XTaskQueueDispatch(root, XTaskQueuePort::Work, 150));
+        VERIFY_IS_TRUE(XTaskQueueDispatch(root, XTaskQueuePort::Work, 2000));
+
+        VERIFY_IS_TRUE(siblingState.invoked.load(std::memory_order_acquire));
+        VERIFY_IS_FALSE(siblingState.canceled.load(std::memory_order_acquire));
+        VERIFY_IS_GREATER_THAN_OR_EQUAL(
+            siblingState.firedAtTicks.load(std::memory_order_acquire) - siblingSubmittedAt,
+            static_cast<uint64_t>(200));
+
+        XTaskQueueTerminate(siblingQueue, false, nullptr, nullptr);
+        while (XTaskQueueDispatch(root, XTaskQueuePort::Work, 0))
+        {
+        }
+    }
 };

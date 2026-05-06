@@ -50,6 +50,12 @@ STDAPI_(void) XTaskQueueResumeTermination(
 /// </summary>
 struct XTaskQueueTestHooks
 {
+    virtual void PendingEntriesRemovedDuringTermination(
+        XTaskQueuePort port)
+    {
+        UNREFERENCED_PARAMETER(port);
+    }
+
     virtual void NextPendingCallbackScheduled(
         XTaskQueuePort port,
         uint64_t lastDueTime,
