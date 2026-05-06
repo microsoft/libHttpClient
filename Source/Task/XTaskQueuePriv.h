@@ -40,12 +40,13 @@ STDAPI_(void) XTaskQueueResumeTermination(
     _In_ XTaskQueueHandle queue
     ) noexcept;
 
+#ifdef HC_UNITTEST_API
 /// <summary>
 /// This structure can be passed as a pointer to the task queue so unit tests
 /// can hook into its behavior. Some race conditions are very difficult to get
 /// to happen naturally so sometimes a hook is needed. A pointer to this
 /// structure will be stored on the task queue. It is up to the test to ensure
-/// the structure lifetime exceeds that of the task queue under test. 
+/// the structure lifetime exceeds that of the task queue under test.
 /// </summary>
 struct XTaskQueueTestHooks
 {
@@ -67,6 +68,7 @@ STDAPI XTaskQueueSetTestHooks(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueueTestHooks* hooks
     ) noexcept;
+#endif
 
 //----------------------------------------------------------------//
 //

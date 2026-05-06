@@ -1118,6 +1118,7 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
             // See VerifyDelayedCallbackTimerRaceOnManualQueue for full
             // analysis. The test hook here allows unit tests to verify
             // there is no race.
+#ifdef HC_UNITTEST_API
             m_attachedContexts.Visit([&](ITaskQueuePortContext* portContext)
             {
                 auto hooks = portContext->GetQueue()->GetTestHooks();
@@ -1128,6 +1129,7 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
                         noDueTime);
                 }
             });
+#endif
         }
     }
 
@@ -2341,6 +2343,7 @@ STDAPI_(bool) XTaskQueueUninitialize(
     return ApiRefs::WaitZeroRefs(timeoutMilliseconds);
 }
 
+#ifdef HC_UNITTEST_API
 /// <summary>
 /// Sets or clears test hooks on a task queue.
 /// </summary>
@@ -2354,3 +2357,4 @@ STDAPI XTaskQueueSetTestHooks(
     aq->SetTestHooks(hooks);
     return S_OK;
 }
+#endif
