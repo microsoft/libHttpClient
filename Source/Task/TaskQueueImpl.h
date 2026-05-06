@@ -402,8 +402,10 @@ public:
         _In_ XTaskQueuePortHandle completionPort);
     
     XTaskQueueHandle __stdcall GetHandle() override { return &m_header; }
+#ifdef HC_UNITTEST_API
     XTaskQueueTestHooks* __stdcall GetTestHooks() override { return m_testHooks; }
     void __stdcall SetTestHooks(_In_ XTaskQueueTestHooks* testHooks) override { m_testHooks = testHooks; }
+#endif
 
     HRESULT __stdcall GetPortContext(
         _In_ XTaskQueuePort port,
@@ -475,7 +477,9 @@ private:
     TerminationData m_termination;
     TaskQueuePortContextImpl m_work;
     TaskQueuePortContextImpl m_completion;
+#ifdef HC_UNITTEST_API
     XTaskQueueTestHooks* m_testHooks = nullptr;
+#endif
 
 #ifdef SUSPEND_API
     SuspendResumeHandler m_suspendHandler;

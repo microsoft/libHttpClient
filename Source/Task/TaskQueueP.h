@@ -125,8 +125,10 @@ struct ITaskQueuePortContext : IApi
 struct ITaskQueue : IApi
 {
     virtual XTaskQueueHandle __stdcall GetHandle() = 0;
+#ifdef HC_UNITTEST_API
     virtual XTaskQueueTestHooks* __stdcall GetTestHooks() = 0;
     virtual void __stdcall SetTestHooks(_In_ XTaskQueueTestHooks* testHooks) = 0;
+#endif
     
     virtual HRESULT __stdcall GetPortContext(
         _In_ XTaskQueuePort port,
