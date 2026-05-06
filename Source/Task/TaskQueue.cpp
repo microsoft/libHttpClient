@@ -955,22 +955,10 @@ void TaskQueuePortImpl::CancelPendingEntries(
     _In_ ITaskQueuePortContext* portContext,
     _In_ bool appendToQueue)
 {
-    // Stop wait timer and promote pending callbacks that are used
-    // by the queue that invoked this termination. Other callbacks
-    // are placed back on the pending list.
-    
-    m_timer.Cancel();
-    m_timerDue = UINT64_MAX;
-
-    #ifdef HC_UNITTEST_API
-        // Test hook: let unit tests enqueue a sibling delayed callback after the
-        // due time has been reset but before the old SubmitPendingCallback()
-        // rescan treats the sibling entry as immediately due.
-        if (auto hooks = portContext->GetQueue()->GetTestHooks(); hooks != nullptr)
-        {
-            hooks->PendingEntriesRemovedDuringTermination(portContext->GetType());
-        }
-    #endif
+    // Only move entries owned by the terminating queue. Sibling delegates
+    // share this port's delayed-callback timer state, so leave m_timer and
+    // m_timerDue alone; if we removed the armed earliest entry, the existing
+    // timer simply takes one blank fire and re-arms for the next real item.
 
     m_pendingList->remove_if([&](auto& entry, auto address)
     {
@@ -988,7 +976,15 @@ void TaskQueuePortImpl::CancelPendingEntries(
         return false;
     });
 
-    SubmitPendingCallback();
+#ifdef HC_UNITTEST_API
+    // Test hook: let unit tests enqueue a sibling delayed callback while this
+    // termination path still owns the interleaving window that used to race
+    // with SubmitPendingCallback().
+    if (auto hooks = portContext->GetQueue()->GetTestHooks(); hooks != nullptr)
+    {
+        hooks->PendingEntriesRemovedDuringTermination(portContext->GetType());
+    }
+#endif
     
 #ifdef _WIN32
     
