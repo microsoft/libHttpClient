@@ -962,6 +962,16 @@ void TaskQueuePortImpl::CancelPendingEntries(
     m_timer.Cancel();
     m_timerDue = UINT64_MAX;
 
+    #ifdef HC_UNITTEST_API
+        // Test hook: let unit tests enqueue a sibling delayed callback after the
+        // due time has been reset but before the old SubmitPendingCallback()
+        // rescan treats the sibling entry as immediately due.
+        if (auto hooks = portContext->GetQueue()->GetTestHooks(); hooks != nullptr)
+        {
+            hooks->PendingEntriesRemovedDuringTermination(portContext->GetType());
+        }
+    #endif
+
     m_pendingList->remove_if([&](auto& entry, auto address)
     {
         if (entry.portContext == portContext)
