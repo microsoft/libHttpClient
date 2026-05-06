@@ -215,6 +215,13 @@ public:
     void __stdcall SuspendPort();
     void __stdcall ResumePort();
 
+#ifdef HC_UNITTEST_API
+    void __stdcall SubmitPendingCallbackForTests()
+    {
+        SubmitPendingCallback();
+    }
+#endif
+
 private:
 
     struct WaitRegistration;
