@@ -17,7 +17,7 @@ public:
     WaitTimerImpl();
     ~WaitTimerImpl();
     HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback);
-    void Start(_In_ uint64_t absoluteTime);
+    void Start(_In_ uint64_t dueTime);
     void Cancel();
     void TimerFired();
     

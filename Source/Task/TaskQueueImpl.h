@@ -311,10 +311,9 @@ private:
     static void EraseQueue(
         _In_opt_ LocklessQueue<QueueEntry>* queue);
 
-    bool ScheduleNextPendingCallback(
+    void PromoteReadyPendingCallbacks(
         _In_ uint64_t dueTime,
-        _Out_ QueueEntry& dueEntry,
-        _Out_ uint64_t& dueEntryNode);
+        _In_ uint64_t now);
 
     void SubmitPendingCallback();
 

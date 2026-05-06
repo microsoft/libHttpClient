@@ -1,7 +1,26 @@
 #include "pch.h"
 #include "WaitTimer.h"
 
-using Deadline = std::chrono::high_resolution_clock::time_point;
+using Clock = std::chrono::steady_clock;
+using Deadline = Clock::time_point;
+using TimerDuration = std::chrono::nanoseconds;
+
+namespace
+{
+    // Keep the public WaitTimer surface on a plain integer so TaskQueue can use
+    // atomics without dragging chrono types through its state. The integer still
+    // represents steady-clock time, not wall-clock time.
+    Deadline DeadlineFromDueTime(uint64_t dueTime) noexcept
+    {
+        return Deadline(std::chrono::duration_cast<Clock::duration>(TimerDuration(dueTime)));
+    }
+
+    uint64_t DueTimeFromDeadline(Deadline deadline) noexcept
+    {
+        return static_cast<uint64_t>(
+            std::chrono::duration_cast<TimerDuration>(deadline.time_since_epoch()).count());
+    }
+}
 
 namespace OS
 {
@@ -12,7 +31,7 @@ namespace OS
     public:
         ~WaitTimerImpl();
         HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback);
-        void Start(_In_ uint64_t absoluteTime);
+        void Start(_In_ uint64_t dueTime);
         void Cancel();
         void InvokeCallback();
 
@@ -144,7 +163,7 @@ namespace OS
             while (!m_queue.empty())
             {
                 Deadline next = Peek().When;
-                if (std::chrono::high_resolution_clock::now() < next)
+                if (Clock::now() < next)
                 {
                     break;
                 }
@@ -235,9 +254,9 @@ namespace OS
         return S_OK;
     }
 
-    void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
+    void WaitTimerImpl::Start(_In_ uint64_t dueTime)
     {
-        m_timerQueue->Set(this, Deadline(Deadline::duration(absoluteTime)));
+        m_timerQueue->Set(this, DeadlineFromDueTime(dueTime));
     }
 
     void WaitTimerImpl::Cancel()
@@ -285,9 +304,9 @@ namespace OS
         }
     }
 
-    void WaitTimer::Start(_In_ uint64_t absoluteTime) noexcept
+    void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
     {
-        m_impl.load()->Start(absoluteTime);
+        m_impl.load()->Start(dueTime);
     }
 
     void WaitTimer::Cancel() noexcept
@@ -295,9 +314,14 @@ namespace OS
         m_impl.load()->Cancel();
     }
 
-    uint64_t WaitTimer::GetAbsoluteTime(_In_ uint32_t msFromNow) noexcept
+    uint64_t WaitTimer::GetCurrentTime() noexcept
     {
-        Deadline d = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(msFromNow);
-        return d.time_since_epoch().count();
+        return DueTimeFromDeadline(Clock::now());
+    }
+
+    uint64_t WaitTimer::GetDueTime(_In_ uint32_t msFromNow) noexcept
+    {
+        Deadline deadline = Clock::now() + std::chrono::milliseconds(msFromNow);
+        return DueTimeFromDeadline(deadline);
     }
 } // Namespace
