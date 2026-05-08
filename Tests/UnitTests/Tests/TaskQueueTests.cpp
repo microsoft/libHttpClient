@@ -2182,9 +2182,10 @@ public:
 
         VERIFY_IS_TRUE(siblingState.invoked.load(std::memory_order_acquire));
         VERIFY_IS_FALSE(siblingState.canceled.load(std::memory_order_acquire));
+        // The sibling delay is 300 ms; allow up to 50 ms of scheduling jitter.
         VERIFY_IS_GREATER_THAN_OR_EQUAL(
             siblingState.firedAtTicks.load(std::memory_order_acquire) - siblingSubmittedAt,
-            static_cast<uint64_t>(200));
+            static_cast<uint64_t>(250));
 
         XTaskQueueTerminate(siblingQueue, false, nullptr, nullptr);
         while (XTaskQueueDispatch(root, XTaskQueuePort::Work, 0))
@@ -2229,6 +2230,7 @@ public:
             &firstState,
             &CallbackState::Invoke));
 
+        const uint64_t secondSubmittedAt = GetTickCount64();
         VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
             queue,
             XTaskQueuePort::Work,
@@ -2257,8 +2259,9 @@ public:
         VERIFY_IS_TRUE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 2000));
         VERIFY_IS_TRUE(secondState.invoked.load(std::memory_order_acquire));
         VERIFY_IS_FALSE(secondState.canceled.load(std::memory_order_acquire));
+        // The second delay is 1000 ms; allow up to 100 ms of scheduling jitter.
         VERIFY_IS_GREATER_THAN_OR_EQUAL(
-            secondState.firedAtTicks.load(std::memory_order_acquire) - submittedAt,
-            static_cast<uint64_t>(600));
+            secondState.firedAtTicks.load(std::memory_order_acquire) - secondSubmittedAt,
+            static_cast<uint64_t>(900));
     }
 };
