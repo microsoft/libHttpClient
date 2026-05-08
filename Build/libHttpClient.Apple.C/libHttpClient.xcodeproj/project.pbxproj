@@ -1757,6 +1757,7 @@
 				OTHER_CFLAGS = "-fembed-bitcode-marker";
 				PRODUCT_NAME = HttpClient;
 				SDKROOT = macosx;
+				MARKETING_VERSION = 1.0;
 			};
 			name = Debug;
 		};
@@ -1815,6 +1816,7 @@
 				OTHER_CFLAGS = "-fembed-bitcode";
 				PRODUCT_NAME = HttpClient;
 				SDKROOT = macosx;
+				MARKETING_VERSION = 1.0;
 			};
 			name = Release;
 		};
