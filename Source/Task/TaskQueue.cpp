@@ -2363,4 +2363,21 @@ STDAPI XTaskQueueSetTestHooks(
     aq->SetTestHooks(hooks);
     return S_OK;
 }
+
+STDAPI XTaskQueueSubmitPendingCallbackForTests(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port
+    ) noexcept
+{
+    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
+
+    referenced_ptr<ITaskQueuePortContext> portContext;
+    RETURN_IF_FAILED(aq->GetPortContext(port, portContext.address_of()));
+
+    auto* portImpl = static_cast<TaskQueuePortImpl*>(portContext->GetPort());
+    portImpl->SubmitPendingCallbackForTests();
+    return S_OK;
+}
 #endif
+

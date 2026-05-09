@@ -74,6 +74,16 @@ STDAPI XTaskQueueSetTestHooks(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueueTestHooks* hooks
     ) noexcept;
+
+/// <summary>
+/// Directly invokes the delayed-callback notification path for unit tests.
+/// This is used to model stale threadpool timer callbacks that were already
+/// queued before the timer was retargeted.
+/// </summary>
+STDAPI XTaskQueueSubmitPendingCallbackForTests(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port
+    ) noexcept;
 #endif
 
 //----------------------------------------------------------------//

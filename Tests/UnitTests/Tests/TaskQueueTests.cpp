@@ -2200,4 +2200,85 @@ public:
         {
         }
     }
+
+    DEFINE_TEST_CASE(VerifyStaleDelayedCallbackDoesNotEarlyPromoteNextPendingEntry)
+    {
+        using TestClock = std::chrono::steady_clock;
+
+        struct CallbackState
+        {
+            std::atomic<bool> invoked{ false };
+            std::atomic<bool> canceled{ false };
+            std::atomic<int64_t> firedAtNs{ 0 };
+
+            static int64_t NowNs()
+            {
+                return std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    TestClock::now().time_since_epoch()).count();
+            }
+
+            static void CALLBACK Invoke(void* ctx, bool canceled)
+            {
+                auto* self = static_cast<CallbackState*>(ctx);
+                self->canceled.store(canceled, std::memory_order_release);
+                self->firedAtNs.store(NowNs(), std::memory_order_release);
+                self->invoked.store(true, std::memory_order_release);
+            }
+        };
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Manual,
+            &queue));
+
+        CallbackState firstState;
+        CallbackState secondState;
+
+        constexpr uint32_t firstDelayMs = 10;
+        constexpr uint32_t secondDelayMs = 1000;
+        constexpr int64_t firstDispatchUpperBoundNs = 500LL * 1000LL * 1000LL;
+        constexpr int64_t secondDelayNs = 1000LL * 1000LL * 1000LL;
+        const int64_t submittedAtNs = CallbackState::NowNs();
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            queue,
+            XTaskQueuePort::Work,
+            firstDelayMs,
+            &firstState,
+            &CallbackState::Invoke));
+
+        const int64_t secondSubmittedAtNs = CallbackState::NowNs();
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            queue,
+            XTaskQueuePort::Work,
+            secondDelayMs,
+            &secondState,
+            &CallbackState::Invoke));
+
+        // Dispatch the first callback. The timer callback that promoted it has
+        // already re-armed the shared delayed-callback timer for secondState.
+        VERIFY_IS_TRUE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 5000));
+
+        VERIFY_IS_TRUE(firstState.invoked.load(std::memory_order_acquire));
+        VERIFY_IS_FALSE(firstState.canceled.load(std::memory_order_acquire));
+        VERIFY_IS_FALSE(secondState.invoked.load(std::memory_order_acquire));
+        VERIFY_IS_LESS_THAN(CallbackState::NowNs() - submittedAtNs, firstDispatchUpperBoundNs);
+
+        // Simulate a stale delayed-callback notification that was already
+        // queued before the timer was re-armed for secondState. This must not
+        // promote the later pending entry before its own deadline.
+        VERIFY_SUCCEEDED(XTaskQueueSubmitPendingCallbackForTests(queue, XTaskQueuePort::Work));
+
+        VERIFY_IS_FALSE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0));
+        VERIFY_IS_FALSE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 200));
+        VERIFY_IS_FALSE(secondState.invoked.load(std::memory_order_acquire));
+
+        VERIFY_IS_TRUE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 2000));
+        VERIFY_IS_TRUE(secondState.invoked.load(std::memory_order_acquire));
+        VERIFY_IS_FALSE(secondState.canceled.load(std::memory_order_acquire));
+        VERIFY_IS_GREATER_THAN_OR_EQUAL(
+            secondState.firedAtNs.load(std::memory_order_acquire) - secondSubmittedAtNs,
+            secondDelayNs);
+    }
 };
