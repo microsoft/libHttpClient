@@ -55,9 +55,13 @@ void WaitTimerImpl::Start(_In_ uint64_t dueTime)
     Cancel();
 
     // NSTimer consumes a relative interval, so convert the stored steady-clock
-    // deadline back into a relative delay right before arming it.
-    auto timePoint = DeadlineFromDueTime(dueTime) - Clock::now();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(timePoint);
+    // deadline back into a relative delay right before arming it. Use ceiling
+    // rounding so that a sub-millisecond remainder is rounded up rather than
+    // truncated to zero, and clamp to zero so a past deadline never produces a
+    // negative interval that would cause a tight re-arm loop.
+    auto remaining = DeadlineFromDueTime(dueTime) - Clock::now();
+    auto ms = std::max(std::chrono::milliseconds(0),
+                       std::chrono::ceil<std::chrono::milliseconds>(remaining));
 
     m_timer = [NSTimer scheduledTimerWithTimeInterval:ms.count() / 1000.0
                                                 target:m_target
@@ -88,10 +92,7 @@ WaitTimer::WaitTimer() noexcept
 
 WaitTimer::~WaitTimer() noexcept
 {
-    if (m_impl != nullptr)
-    {
-        delete m_impl;
-    }
+    Terminate();
 }
 
 HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
@@ -109,6 +110,16 @@ HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* ca
     m_impl = timer.release();
     
     return S_OK;
+}
+
+void WaitTimer::Terminate() noexcept
+{
+    WaitTimerImpl* timer = m_impl.exchange(nullptr);
+    if (timer != nullptr)
+    {
+        timer->Cancel();
+        delete timer;
+    }
 }
 
 void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
