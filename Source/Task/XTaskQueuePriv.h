@@ -56,6 +56,14 @@ struct XTaskQueueTestHooks
         UNREFERENCED_PARAMETER(port);
     }
 
+    virtual void NoNextPendingCallbackFound(
+        XTaskQueuePort port,
+        uint64_t dueTime)
+    {
+        UNREFERENCED_PARAMETER(port);
+        UNREFERENCED_PARAMETER(dueTime);
+    }
+
     virtual void NextPendingCallbackScheduled(
         XTaskQueuePort port,
         uint64_t lastDueTime,

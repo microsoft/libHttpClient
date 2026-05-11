@@ -9,7 +9,23 @@
 
 #include "ios_WaitTimerImpl.h"
 
-using Deadline = std::chrono::high_resolution_clock::time_point;
+using Clock = std::chrono::steady_clock;
+using Deadline = Clock::time_point;
+using TimerDuration = std::chrono::nanoseconds;
+
+namespace
+{
+    Deadline DeadlineFromDueTime(uint64_t dueTime) noexcept
+    {
+        return Deadline(std::chrono::duration_cast<Clock::duration>(TimerDuration(dueTime)));
+    }
+
+    uint64_t DueTimeFromDeadline(Deadline deadline) noexcept
+    {
+        return static_cast<uint64_t>(
+            std::chrono::duration_cast<TimerDuration>(deadline.time_since_epoch()).count());
+    }
+}
 
 WaitTimerImpl::WaitTimerImpl()
 : m_context(nullptr),
@@ -34,12 +50,13 @@ HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback
     return S_OK;
 }
 
-void WaitTimerImpl::Start(_In_ uint64_t absoluteTime)
+void WaitTimerImpl::Start(_In_ uint64_t dueTime)
 {
     Cancel();
-    
-    auto duration = Deadline::duration(absoluteTime);
-    auto timePoint = Deadline(duration) - std::chrono::high_resolution_clock::now();
+
+    // NSTimer consumes a relative interval, so convert the stored steady-clock
+    // deadline back into a relative delay right before arming it.
+    auto timePoint = DeadlineFromDueTime(dueTime) - Clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(timePoint);
 
     m_timer = [NSTimer scheduledTimerWithTimeInterval:ms.count() / 1000.0
@@ -77,7 +94,7 @@ WaitTimer::~WaitTimer() noexcept
     }
 }
 
-HRESULT WaitTimer::Initialize(void *context, WaitTimerCallback *callback) noexcept
+HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
 {
     if (m_impl != nullptr || callback == nullptr)
     {
@@ -94,9 +111,9 @@ HRESULT WaitTimer::Initialize(void *context, WaitTimerCallback *callback) noexce
     return S_OK;
 }
 
-void WaitTimer::Start(uint64_t absoluteTime) noexcept
+void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
 {
-    m_impl->Start(absoluteTime);
+    m_impl->Start(dueTime);
 }
 
 void WaitTimer::Cancel() noexcept
@@ -104,8 +121,13 @@ void WaitTimer::Cancel() noexcept
     m_impl->Cancel();
 }
 
-uint64_t WaitTimer::GetAbsoluteTime(uint32_t msFromNow) noexcept
+uint64_t WaitTimer::GetCurrentTime() noexcept
 {
-    auto deadline = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(msFromNow);
-    return deadline.time_since_epoch().count();    
+    return DueTimeFromDeadline(Clock::now());
+}
+
+uint64_t WaitTimer::GetDueTime(_In_ uint32_t msFromNow) noexcept
+{
+    auto deadline = Clock::now() + std::chrono::milliseconds(msFromNow);
+    return DueTimeFromDeadline(deadline);
 }

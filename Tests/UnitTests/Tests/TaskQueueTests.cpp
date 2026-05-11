@@ -2056,6 +2056,128 @@ public:
         VERIFY_IS_TRUE(canaryFired.load());
     }
 
+    DEFINE_TEST_CASE(VerifyFutureDelayedCallbackQueuedDuringEmptySweepDoesNotStall)
+    {
+        // Regression: a future delayed callback can be queued on the same port
+        // after the ready sweep has concluded there is no next item, but before
+        // m_timerDue is reset to UINT64_MAX. In that interleaving the publisher
+        // still sees the stale prior due time, does not retarget the timer, and
+        // the empty-sweep path can strand the new callback with no armed wake.
+
+        struct TestBarrier
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            bool phase1_ready = false;  // timer callback -> test thread
+            bool phase2_ready = false;  // test thread -> timer callback
+        };
+
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            explicit TestHooks(_In_ TestBarrier* barrier) : m_testBarrier(barrier) {}
+
+            void NoNextPendingCallbackFound(XTaskQueuePort port, uint64_t dueTime) override
+            {
+                UNREFERENCED_PARAMETER(port);
+                UNREFERENCED_PARAMETER(dueTime);
+
+                std::unique_lock<std::mutex> lk(m_testBarrier->mtx);
+                if (!m_hookArmed)
+                {
+                    return;
+                }
+
+                m_hookArmed = false;
+                m_testBarrier->phase1_ready = true;
+                lk.unlock();
+                m_testBarrier->cv.notify_all();
+
+                lk.lock();
+                m_testBarrier->cv.wait_for(
+                    lk,
+                    std::chrono::seconds(5),
+                    [&] { return m_testBarrier->phase2_ready; });
+            }
+
+        private:
+            TestBarrier* m_testBarrier = nullptr;
+            bool m_hookArmed = true;
+        };
+
+        TestBarrier barrier;
+        TestHooks hooks(&barrier);
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Immediate,
+            &queue));
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, &hooks));
+
+        std::atomic<bool> firstFired{ false };
+        std::atomic<bool> secondFired{ false };
+
+        auto markFired = [](void* ctx, bool cancel)
+        {
+            if (!cancel)
+            {
+                static_cast<std::atomic<bool>*>(ctx)->store(true);
+            }
+        };
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            queue,
+            XTaskQueuePort::Work,
+            1,
+            &firstFired,
+            markFired));
+
+        {
+            std::unique_lock<std::mutex> lk(barrier.mtx);
+            bool ok = barrier.cv.wait_for(
+                lk,
+                std::chrono::seconds(5),
+                [&] { return barrier.phase1_ready; });
+            VERIFY_IS_TRUE(ok);
+        }
+
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            queue,
+            XTaskQueuePort::Work,
+            10,
+            &secondFired,
+            markFired));
+
+        {
+            std::lock_guard<std::mutex> lk(barrier.mtx);
+            barrier.phase2_ready = true;
+        }
+        barrier.cv.notify_all();
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, nullptr));
+
+        const uint64_t start = GetTickCount64();
+        while ((!firstFired.load() || !secondFired.load()) &&
+               GetTickCount64() - start < 2000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+        }
+
+        LOG_COMMENT(L"First callback fired: %s",
+            firstFired.load() ? L"yes" : L"no");
+        LOG_COMMENT(L"Second callback fired: %s",
+            secondFired.load() ? L"yes" : L"NO -- callback stranded during empty sweep");
+
+        XTaskQueueTerminate(queue, false, nullptr, nullptr);
+        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
+        {
+        }
+
+        VERIFY_IS_TRUE(firstFired.load());
+        VERIFY_IS_TRUE(secondFired.load());
+    }
+
     DEFINE_TEST_CASE(VerifyTerminationDoesNotEarlyPromoteSiblingDelayedCallback)
     {
         using TestClock = std::chrono::steady_clock;
