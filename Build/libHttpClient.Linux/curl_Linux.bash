@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 CONFIGURATION="Release"
 
@@ -21,9 +23,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-pushd "$SCRIPT_DIR"/../../External/curl
-autoreconf -fi "$SCRIPT_DIR"/../../External/curl
-
 if [ -f "$SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a" ]; then
   echo "Previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a - skipping build"
   exit 0
@@ -31,13 +30,27 @@ else
   echo "No previously-built library present at $SCRIPT_DIR/../../Out/x64/$CONFIGURATION/libcurl.Linux/libcurl.a - performing build"
 fi
 
+pushd "$SCRIPT_DIR"/../../External/curl
+autoreconf -fi "$SCRIPT_DIR"/../../External/curl
+
+OPENSSL_INSTALL_DIR="$SCRIPT_DIR/../../Int/x64/$CONFIGURATION/openssl.Linux/"
+
+CONFIGURE_ARGS=(
+    --disable-shared
+    --with-zlib
+    --disable-dependency-tracking
+    --with-openssl=$OPENSSL_INSTALL_DIR
+    --enable-symbol-hiding
+    --without-brotli
+)
 if [ "$CONFIGURATION" = "Debug" ]; then
-    # make libcrypto and libssl
-    ./configure --disable-shared --with-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --enable-debug --without-brotli
+    CONFIGURE_ARGS+=(--enable-debug)
 else
-    # make libcrypto and libssl
-    ./configure --disable-shared --with-zlib --disable-dependency-tracking -with-openssl=/usr/local/ssl --enable-symbol-hiding --disable-debug --without-brotli
+    CONFIGURE_ARGS+=(--disable-debug)
 fi
+
+# make libcrypto and libssl
+./configure "${CONFIGURE_ARGS[@]}"
 
 MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 make $MAKE_PARALLELISM
