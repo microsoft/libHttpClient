@@ -182,8 +182,10 @@ namespace OS
                 m_calls++;
             }
 
-            // Release lock before notify_all to optimize immediate awakes
-            m_wake.notify_all();
+            // Release lock before notifying one waiting worker. Additional
+            // queued calls will issue additional wakes if more parallelism is
+            // needed.
+            m_wake.notify_one();
         }
 
     private:

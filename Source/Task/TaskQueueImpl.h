@@ -215,6 +215,13 @@ public:
     void __stdcall SuspendPort();
     void __stdcall ResumePort();
 
+#ifdef HC_UNITTEST_API
+    void __stdcall SubmitPendingCallbackForTests()
+    {
+        SubmitPendingCallback();
+    }
+#endif
+
 private:
 
     struct WaitRegistration;
@@ -304,10 +311,9 @@ private:
     static void EraseQueue(
         _In_opt_ LocklessQueue<QueueEntry>* queue);
 
-    bool ScheduleNextPendingCallback(
+    void PromoteReadyPendingCallbacks(
         _In_ uint64_t dueTime,
-        _Out_ QueueEntry& dueEntry,
-        _Out_ uint64_t& dueEntryNode);
+        _In_ uint64_t now);
 
     void SubmitPendingCallback();
 
@@ -402,8 +408,10 @@ public:
         _In_ XTaskQueuePortHandle completionPort);
     
     XTaskQueueHandle __stdcall GetHandle() override { return &m_header; }
+#ifdef HC_UNITTEST_API
     XTaskQueueTestHooks* __stdcall GetTestHooks() override { return m_testHooks; }
     void __stdcall SetTestHooks(_In_ XTaskQueueTestHooks* testHooks) override { m_testHooks = testHooks; }
+#endif
 
     HRESULT __stdcall GetPortContext(
         _In_ XTaskQueuePort port,
@@ -475,7 +483,9 @@ private:
     TerminationData m_termination;
     TaskQueuePortContextImpl m_work;
     TaskQueuePortContextImpl m_completion;
+#ifdef HC_UNITTEST_API
     XTaskQueueTestHooks* m_testHooks = nullptr;
+#endif
 
 #ifdef SUSPEND_API
     SuspendResumeHandler m_suspendHandler;
