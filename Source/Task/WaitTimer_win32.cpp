@@ -1,6 +1,24 @@
 #include "pch.h"
 #include "WaitTimer.h"
 
+using Clock = std::chrono::steady_clock;
+using Deadline = Clock::time_point;
+using TimerDuration = std::chrono::nanoseconds;
+
+namespace
+{
+    Deadline DeadlineFromDueTime(uint64_t dueTime) noexcept
+    {
+        return Deadline(std::chrono::duration_cast<Clock::duration>(TimerDuration(dueTime)));
+    }
+
+    uint64_t DueTimeFromDeadline(Deadline deadline) noexcept
+    {
+        return static_cast<uint64_t>(
+            std::chrono::duration_cast<TimerDuration>(deadline.time_since_epoch()).count());
+    }
+}
+
 namespace OS
 {
     class WaitTimerImpl
@@ -37,12 +55,36 @@ namespace OS
             }
         }
 
-        void Start(_In_ uint64_t absoluteTime)
+        void Start(_In_ uint64_t dueTime)
         {
             LARGE_INTEGER li;
             FILETIME ft;
-            ASSERT((absoluteTime & 0x8000000000000000) == 0);
-            li.QuadPart = static_cast<LONGLONG>(absoluteTime);
+
+            // The threadpool timer can run on its existing one-shot mechanism,
+            // but the due time we store in TaskQueue is now a steady-clock
+            // deadline. Convert that deadline back into a relative wait here so
+            // queue correctness no longer depends on wall-clock precision.
+            Deadline now = Clock::now();
+            Deadline dueDeadline = DeadlineFromDueTime(dueTime);
+            TimerDuration remaining = dueDeadline > now
+                ? std::chrono::duration_cast<TimerDuration>(dueDeadline - now)
+                : TimerDuration::zero();
+
+            constexpr int64_t nanosPerTick = 100;
+            int64_t relativeTicks =
+                (static_cast<int64_t>(remaining.count()) + nanosPerTick - 1) /
+                nanosPerTick;
+
+            // SetThreadpoolTimer expects negative values for relative waits.
+            // Clamp zero-or-past deadlines to the smallest relative delay so an
+            // already-due timer is queued immediately without switching back to
+            // absolute wall-clock FILETIME semantics.
+            if (relativeTicks <= 0)
+            {
+                relativeTicks = 1;
+            }
+
+            li.QuadPart = -relativeTicks;
             ft.dwHighDateTime = li.HighPart;
             ft.dwLowDateTime = li.LowPart;
 
@@ -108,9 +150,9 @@ namespace OS
         }
     }
 
-    void WaitTimer::Start(_In_ uint64_t absoluteTime) noexcept
+    void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
     {
-        m_impl.load()->Start(absoluteTime);
+        m_impl.load()->Start(dueTime);
     }
 
     void WaitTimer::Cancel() noexcept
@@ -118,20 +160,14 @@ namespace OS
         m_impl.load()->Cancel();
     }
 
-    uint64_t WaitTimer::GetAbsoluteTime(_In_ uint32_t msFromNow) noexcept
+    uint64_t WaitTimer::GetCurrentTime() noexcept
     {
-        FILETIME ft;
-        ULARGE_INTEGER li;
-        GetSystemTimeAsFileTime(&ft);
-        ASSERT((ft.dwHighDateTime & 0x80000000) == 0);
+        return DueTimeFromDeadline(Clock::now());
+    }
 
-        uint64_t hundredNanosFromNow = msFromNow;
-        hundredNanosFromNow *= 10000ULL;
-
-        li.HighPart = ft.dwHighDateTime;
-        li.LowPart = ft.dwLowDateTime;
-        li.QuadPart += hundredNanosFromNow;
-
-        return li.QuadPart;
+    uint64_t WaitTimer::GetDueTime(_In_ uint32_t msFromNow) noexcept
+    {
+        Deadline deadline = Clock::now() + std::chrono::milliseconds(msFromNow);
+        return DueTimeFromDeadline(deadline);
     }
 } // Namespace

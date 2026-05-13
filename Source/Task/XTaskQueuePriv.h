@@ -40,15 +40,30 @@ STDAPI_(void) XTaskQueueResumeTermination(
     _In_ XTaskQueueHandle queue
     ) noexcept;
 
+#ifdef HC_UNITTEST_API
 /// <summary>
 /// This structure can be passed as a pointer to the task queue so unit tests
 /// can hook into its behavior. Some race conditions are very difficult to get
 /// to happen naturally so sometimes a hook is needed. A pointer to this
 /// structure will be stored on the task queue. It is up to the test to ensure
-/// the structure lifetime exceeds that of the task queue under test. 
+/// the structure lifetime exceeds that of the task queue under test.
 /// </summary>
 struct XTaskQueueTestHooks
 {
+    virtual void PendingEntriesRemovedDuringTermination(
+        XTaskQueuePort port)
+    {
+        UNREFERENCED_PARAMETER(port);
+    }
+
+    virtual void NoNextPendingCallbackFound(
+        XTaskQueuePort port,
+        uint64_t dueTime)
+    {
+        UNREFERENCED_PARAMETER(port);
+        UNREFERENCED_PARAMETER(dueTime);
+    }
+
     virtual void NextPendingCallbackScheduled(
         XTaskQueuePort port,
         uint64_t lastDueTime,
@@ -67,6 +82,17 @@ STDAPI XTaskQueueSetTestHooks(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueueTestHooks* hooks
     ) noexcept;
+
+/// <summary>
+/// Directly invokes the delayed-callback notification path for unit tests.
+/// This is used to model stale threadpool timer callbacks that were already
+/// queued before the timer was retargeted.
+/// </summary>
+STDAPI XTaskQueueSubmitPendingCallbackForTests(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port
+    ) noexcept;
+#endif
 
 //----------------------------------------------------------------//
 //
