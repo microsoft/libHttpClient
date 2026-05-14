@@ -27,6 +27,9 @@ namespace
     }
 }
 
+namespace OS
+{
+
 WaitTimerImpl::WaitTimerImpl()
 : m_context(nullptr),
   m_callback(nullptr),
@@ -43,7 +46,7 @@ WaitTimerImpl::~WaitTimerImpl()
     }
 }
 
-HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ OS::WaitTimerCallback* callback){
+HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback){
     m_context = context;
     m_callback = callback;
     m_target = [ios_WaitTimer_target new];
@@ -95,7 +98,7 @@ WaitTimer::~WaitTimer() noexcept
     Terminate();
 }
 
-HRESULT OS::WaitTimer::Initialize(_In_opt_ void* context, _In_ OS::WaitTimerCallback* callback) noexcept
+HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
 {
     if (m_impl != nullptr || callback == nullptr)
     {
@@ -142,3 +145,5 @@ uint64_t WaitTimer::GetDueTime(_In_ uint32_t msFromNow) noexcept
     auto deadline = Clock::now() + std::chrono::milliseconds(msFromNow);
     return DueTimeFromDeadline(deadline);
 }
+
+} // namespace OS
