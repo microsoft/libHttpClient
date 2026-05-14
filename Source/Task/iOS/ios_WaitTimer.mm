@@ -43,7 +43,7 @@ WaitTimerImpl::~WaitTimerImpl()
     }
 }
 
-HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback){
+HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ OS::WaitTimerCallback* callback){
     m_context = context;
     m_callback = callback;
     m_target = [ios_WaitTimer_target new];
@@ -95,7 +95,7 @@ WaitTimer::~WaitTimer() noexcept
     Terminate();
 }
 
-HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
+HRESULT OS::WaitTimer::Initialize(_In_opt_ void* context, _In_ OS::WaitTimerCallback* callback) noexcept
 {
     if (m_impl != nullptr || callback == nullptr)
     {

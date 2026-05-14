@@ -16,14 +16,14 @@ class WaitTimerImpl
 public:
     WaitTimerImpl();
     ~WaitTimerImpl();
-    HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback);
+    HRESULT Initialize(_In_opt_ void* context, _In_ OS::WaitTimerCallback* callback);
     void Start(_In_ uint64_t dueTime);
     void Cancel();
     void TimerFired();
     
 private:
     void* m_context;
-    WaitTimerCallback* m_callback;
+    OS::WaitTimerCallback* m_callback;
     ios_WaitTimer_target* m_target;
     NSTimer* m_timer;
 };
