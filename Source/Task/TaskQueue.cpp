@@ -306,7 +306,7 @@ HRESULT TaskQueuePortImpl::Initialize(
     RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
     {
         TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
-        pthis->SubmitPendingCallback();
+        pthis->SubmitPendingCallbacks();
     }));
 
 #ifdef _WIN32
@@ -1000,15 +1000,13 @@ void TaskQueuePortImpl::CancelPendingEntries(
         }
     }
 
-#ifdef HC_UNITTEST_API
     // Test hook: let unit tests enqueue a sibling delayed callback while this
     // termination path still owns the interleaving window that used to race
-    // with SubmitPendingCallback().
+    // with SubmitPendingCallbacks().
     if (auto hooks = portContext->GetQueue()->GetTestHooks(); hooks != nullptr)
     {
         hooks->PendingEntriesRemovedDuringTermination(portContext->GetType());
     }
-#endif
     
 #ifdef _WIN32
     
@@ -1169,7 +1167,6 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
         // No future entries remain in the pending list.
         uint64_t noDueTime = UINT64_MAX;
 
-#ifdef HC_UNITTEST_API
         m_attachedContexts.Visit([&](ITaskQueuePortContext* portContext)
         {
             auto hooks = portContext->GetQueue()->GetTestHooks();
@@ -1180,7 +1177,6 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
                     dueTime);
             }
         });
-#endif
 
         if (m_timerDue.compare_exchange_strong(dueTime, noDueTime))
         {
@@ -1188,14 +1184,13 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
             // in lost delayed task wakes. Don't cancel the timer here
             // as another scheduled callback could have been added.
             // The CAS above is sufficient: the timer has already fired
-            // (call site 1: SubmitPendingCallback) or was already
+            // (call site 1: SubmitPendingCallbacks) or was already
             // canceled (call site 2: CancelPendingEntries).  A Cancel()
             // here raced with concurrent QueueItem/Start calls on other
             // threads, permanently stranding entries in m_pendingList.
             // See VerifyDelayedCallbackTimerRaceOnManualQueue for full
             // analysis. The test hook here allows unit tests to verify
             // there is no race.
-#ifdef HC_UNITTEST_API
             m_attachedContexts.Visit([&](ITaskQueuePortContext* portContext)
             {
                 auto hooks = portContext->GetQueue()->GetTestHooks();
@@ -1206,7 +1201,6 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
                         noDueTime);
                 }
             });
-#endif
 
             // A concurrent QueueItem can append a future entry after our
             // sweep has already concluded there is no next item, but before
@@ -1226,7 +1220,7 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
     }
 }
 
-void TaskQueuePortImpl::SubmitPendingCallback()
+void TaskQueuePortImpl::SubmitPendingCallbacks()
 {
     while (true)
     {
@@ -2464,7 +2458,6 @@ STDAPI_(bool) XTaskQueueUninitialize(
     return ApiRefs::WaitZeroRefs(timeoutMilliseconds);
 }
 
-#ifdef HC_UNITTEST_API
 /// <summary>
 /// Sets or clears test hooks on a task queue.
 /// </summary>
@@ -2479,7 +2472,11 @@ STDAPI XTaskQueueSetTestHooks(
     return S_OK;
 }
 
-STDAPI XTaskQueueSubmitPendingCallbackForTests(
+/// <summary>
+/// Submits any pending delayed callbacks that are due to run. This is
+/// intended for use in unit tests.
+/// </summary>
+STDAPI XTaskQueueSubmitPendingCallbacks(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort port
     ) noexcept
@@ -2490,9 +2487,7 @@ STDAPI XTaskQueueSubmitPendingCallbackForTests(
     referenced_ptr<ITaskQueuePortContext> portContext;
     RETURN_IF_FAILED(aq->GetPortContext(port, portContext.address_of()));
 
-    auto* portImpl = static_cast<TaskQueuePortImpl*>(portContext->GetPort());
-    portImpl->SubmitPendingCallbackForTests();
+    portContext->GetPort()->SubmitPendingCallbacks();
     return S_OK;
 }
-#endif
 
