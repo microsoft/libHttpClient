@@ -100,7 +100,7 @@ WaitTimer::~WaitTimer() noexcept
 
 HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
 {
-    if (m_impl != nullptr || callback == nullptr)
+    if (m_impl.load() != nullptr || callback == nullptr)
     {
         ASSERT(false);
         return E_UNEXPECTED;
@@ -127,12 +127,12 @@ void WaitTimer::Terminate() noexcept
 
 void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
 {
-    m_impl->Start(dueTime);
+    m_impl.load()->Start(dueTime);
 }
 
 void WaitTimer::Cancel() noexcept
 {
-    m_impl->Cancel();
+    m_impl.load()->Cancel();
 }
 
 uint64_t WaitTimer::GetCurrentTime() noexcept
