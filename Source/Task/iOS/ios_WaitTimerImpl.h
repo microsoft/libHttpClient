@@ -11,9 +11,6 @@
 #include "../WaitTimer.h"
 #include "ios_WaitTimer_target.h"
 
-namespace OS
-{
-
 class WaitTimerImpl
 {
 public:
@@ -30,9 +27,6 @@ private:
     ios_WaitTimer_target* m_target;
     NSTimer* m_timer;
 };
-
-} // namespace OS
-
 
 
 #endif /* ios_WaitTimerImpl_h */
