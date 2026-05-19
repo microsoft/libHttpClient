@@ -4,8 +4,8 @@ parameters:
 
 steps:
   - template: checkout.yml
-  
-  # Build the CMake version, which is different from libhttpClient.Apple.C
+
+  # Build the CMake static lib
   - script: |
       cmake -B Build/libHttpClient.iOS.CMake/build \
             -S Build/libHttpClient.iOS.CMake \
@@ -15,6 +15,7 @@ steps:
       cmake --build Build/libHttpClient.iOS.CMake/build --config ${{ parameters.configuration }}
     displayName: 'Clean build iOS CMake static lib'
 
+  # Build libHttpClient.Apple.C configurations
   - task: Xcode@5
     displayName: 'Clean build iOS static lib'
     inputs:
