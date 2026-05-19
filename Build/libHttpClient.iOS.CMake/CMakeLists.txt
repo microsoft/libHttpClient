@@ -48,6 +48,7 @@ set(COMMON_SOURCE_FILES
 set(IOS_SOURCE_FILES
     # Task
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
+    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
     "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer.mm"
     "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer_target.mm"
     "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer_target.h"

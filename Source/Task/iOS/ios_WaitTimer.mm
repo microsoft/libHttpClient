@@ -27,6 +27,9 @@ namespace
     }
 }
 
+namespace OS
+{
+
 WaitTimerImpl::WaitTimerImpl()
 : m_context(nullptr),
   m_callback(nullptr),
@@ -142,3 +145,5 @@ uint64_t WaitTimer::GetDueTime(_In_ uint32_t msFromNow) noexcept
     auto deadline = Clock::now() + std::chrono::milliseconds(msFromNow);
     return DueTimeFromDeadline(deadline);
 }
+
+} // namespace OS
