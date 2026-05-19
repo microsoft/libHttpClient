@@ -1255,7 +1255,14 @@ void TaskQueuePortImpl::SubmitPendingCallbacks()
             if (m_timerDue.compare_exchange_weak(expectedDueTime, dueTime))
             {
                 m_timer.Start(dueTime);
-                return;
+
+                // It's possible someone snuck a change into m_timerDue after the CAS
+                // but before the start call, so we've just written the wrong value to
+                // the timer. Verify dueTime again before returning.
+                if (m_timerDue.load() == dueTime)
+                {
+                    return;
+                }
             }
 
             continue;
