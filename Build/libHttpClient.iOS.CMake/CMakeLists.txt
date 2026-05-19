@@ -6,7 +6,7 @@ project("libHttpClient.iOS")
 
 set(HC_WEBSOCKETS FALSE)
 
-add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD)
+add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD -DHC_LINK_STATIC=1)
 
 if(HC_WEBSOCKETS)
     message(STATUS "websockets usage is on")
