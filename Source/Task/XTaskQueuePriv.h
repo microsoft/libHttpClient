@@ -40,7 +40,6 @@ STDAPI_(void) XTaskQueueResumeTermination(
     _In_ XTaskQueueHandle queue
     ) noexcept;
 
-#ifdef HC_UNITTEST_API
 /// <summary>
 /// This structure can be passed as a pointer to the task queue so unit tests
 /// can hook into its behavior. Some race conditions are very difficult to get
@@ -84,15 +83,13 @@ STDAPI XTaskQueueSetTestHooks(
     ) noexcept;
 
 /// <summary>
-/// Directly invokes the delayed-callback notification path for unit tests.
-/// This is used to model stale threadpool timer callbacks that were already
-/// queued before the timer was retargeted.
+/// Submits any pending delayed callbacks that are due to run. This is
+/// intended for use in unit tests.
 /// </summary>
-STDAPI XTaskQueueSubmitPendingCallbackForTests(
+STDAPI XTaskQueueSubmitPendingCallbacks(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueuePort port
     ) noexcept;
-#endif
 
 //----------------------------------------------------------------//
 //

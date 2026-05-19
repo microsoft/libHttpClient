@@ -2390,7 +2390,7 @@ public:
         // Simulate a stale delayed-callback notification that was already
         // queued before the timer was re-armed for secondState. This must not
         // promote the later pending entry before its own deadline.
-        VERIFY_SUCCEEDED(XTaskQueueSubmitPendingCallbackForTests(queue, XTaskQueuePort::Work));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitPendingCallbacks(queue, XTaskQueuePort::Work));
 
         VERIFY_IS_FALSE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0));
         VERIFY_IS_FALSE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 200));

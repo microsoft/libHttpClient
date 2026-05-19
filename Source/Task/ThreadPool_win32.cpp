@@ -3,6 +3,37 @@
 
 namespace OS
 {
+    // This API is documented but not defined in the headers. Load it dynamcially
+    // so the world doesn't have to add linkage to ntdll.  Ntdll is not unloadable,
+    // so safe to leak the module ref here.
+    static inline BOOLEAN __stdcall RtlDllShutdownInProgress() noexcept
+    {
+        static decltype(RtlDllShutdownInProgress)* s_pfnRtlDllShutdownInProgress = nullptr;
+        static HMODULE s_ntdllModuleHandle = nullptr;
+
+        // No locking needed -- if these race the threads race to copy
+        // the same values, and worst case is we get an addl ref on
+        // a dll we'll never unload anyway. GetModuleHandle is not defined
+        // for UWP apps, so don't do this safety check for them.
+
+#ifdef GetModuleHandle
+        if (s_pfnRtlDllShutdownInProgress == nullptr)
+        {
+            if (s_ntdllModuleHandle == nullptr)
+            {
+                s_ntdllModuleHandle = GetModuleHandleW(L"ntdll.dll");
+            }
+
+            if (s_ntdllModuleHandle != nullptr)
+            {
+                s_pfnRtlDllShutdownInProgress = reinterpret_cast<decltype(RtlDllShutdownInProgress)*>(GetProcAddress(s_ntdllModuleHandle, "RtlDllShutdownInProgress"));
+            }
+        }
+#endif
+
+        return s_pfnRtlDllShutdownInProgress ? s_pfnRtlDllShutdownInProgress() : FALSE;
+    }
+
     class ThreadPoolImpl
     {
     public:
@@ -52,7 +83,10 @@ namespace OS
 
         void Submit() noexcept
         {
-            SubmitThreadpoolWork(m_work);
+            if (!RtlDllShutdownInProgress())
+            {
+                SubmitThreadpoolWork(m_work);
+            }
         }
 
     private:
