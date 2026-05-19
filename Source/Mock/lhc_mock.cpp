@@ -149,21 +149,6 @@ bool Mock_Internal_HCHttpCallPerformAsync(
         HCHttpCallResponseSetHeader(originalCall, str1, str2);
     }
 
-    // If this is not the only mock that matches, remove it from the list of mocks so that multiple can be used
-    // in sequence
-    auto countMatching = std::count_if(
-        mocks.begin(),
-        mocks.end(),
-        [originalCall](auto m)
-        {
-            return DoesMockCallMatch(m, originalCall);
-        });
-
-    if (countMatching > 1)
-    {
-        HCMockRemoveMock(mock);
-    }
-
     return true;
 }
 
