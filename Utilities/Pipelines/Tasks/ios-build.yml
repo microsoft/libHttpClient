@@ -5,6 +5,16 @@ parameters:
 steps:
   - template: checkout.yml
   
+  # Build the CMake version, which is different from libhttpClient.Apple.C
+  - script: |
+      cmake -B Build/libHttpClient.iOS.CMake/build \
+            -S Build/libHttpClient.iOS.CMake \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_BUILD_TYPE=${{ parameters.configuration }}
+      cmake --build Build/libHttpClient.iOS.CMake/build --config ${{ parameters.configuration }}
+    displayName: 'Clean build iOS CMake static lib'
+
   - task: Xcode@2
     displayName: 'Clean build iOS static lib'
     inputs:
@@ -93,12 +103,3 @@ steps:
       packageApp: false
       useXctool: false
 
-  # Build the CMake version, which is different from libhttpClient.Apple.C
-  - script: |
-      cmake -B Build/libHttpClient.iOS.CMake/build \
-            -S Build/libHttpClient.iOS.CMake \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_BUILD_TYPE=${{ parameters.configuration }}
-      cmake --build Build/libHttpClient.iOS.CMake/build --config ${{ parameters.configuration }}
-    displayName: 'Clean build iOS CMake static lib'
