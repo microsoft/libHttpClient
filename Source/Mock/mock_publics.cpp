@@ -115,6 +115,7 @@ try
         {
             mocks.erase(iter);
             HCHttpCallCloseHandle(call);
+            httpSingleton->m_mockCycleIndex.clear();
             return S_OK;
         }
     }
@@ -139,6 +140,7 @@ try
     }
 
     httpSingleton->m_mocks.clear();
+    httpSingleton->m_mockCycleIndex.clear();
     return S_OK;
 }
 CATCH_RETURN()
