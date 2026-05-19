@@ -95,5 +95,20 @@ target_include_directories(
     "${COMMON_INCLUDE_DIRS}"
     )
 
+set_target_properties(
+    "${PROJECT_NAME}"
+    PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    )
+
+set(IOS_MM_SOURCE_FILES
+    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer.mm"
+    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer_target.mm"
+    "${PATH_TO_ROOT}/Source/HTTP/Apple/http_apple.mm"
+    "${PATH_TO_ROOT}/Source/Common/Apple/utils_apple.mm"
+    )
+set_source_files_properties(${IOS_MM_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-fobjc-arc")
+
 message(STATUS "CMAKE_SYSTEM_VERSION='${CMAKE_SYSTEM_VERSION}'")
 message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")
