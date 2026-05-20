@@ -306,6 +306,14 @@ private:
     static void EraseQueue(
         _In_opt_ LocklessQueue<QueueEntry>* queue);
 
+    bool ArmTimerIfEarlier(_In_ uint64_t dueTime);
+
+    bool ArmTimerForNextPendingDueTime(
+        _In_ uint64_t previousDueTime,
+        _In_ uint64_t nextDueTime);
+
+    bool RearmTimerIfDueTimeUnchanged(_In_ uint64_t dueTime);
+
     void PromoteReadyPendingCallbacks(
         _In_ uint64_t dueTime,
         _In_ uint64_t now);
