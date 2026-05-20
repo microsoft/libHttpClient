@@ -113,22 +113,32 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsync(
 {
     UNREFERENCED_PARAMETER(uri);
     UNREFERENCED_PARAMETER(subProtocol);
-    UNREFERENCED_PARAMETER(websocket);
-    UNREFERENCED_PARAMETER(asyncBlock);
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(env);
 
     // TODO bug - inconsistent behavior for websocket providers: Connect calls XAsyncBegin before
     // invoke the client handler, Send does not.
-    return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__,
+    return XAsyncBegin(asyncBlock, websocket, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto websocket = static_cast<HCWebsocketHandle>(data->context);
+
             switch (op)
             {
             case XAsyncOp::Begin:
             {
                 g_HCWebSocketConnect_Called = true;
-                XAsyncComplete(data->async, S_OK, 0);
+                XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                return S_OK;
+            }
+            case XAsyncOp::GetResult:
+            {
+                RETURN_HR_IF(E_NOT_SUFFICIENT_BUFFER, data->bufferSize < sizeof(WebSocketCompletionResult));
+
+                auto result = static_cast<WebSocketCompletionResult*>(data->buffer);
+                ZeroMemory(result, sizeof(WebSocketCompletionResult));
+                result->errorCode = S_OK;
+                result->websocket = websocket;
                 return S_OK;
             }
             default: return S_OK;
@@ -151,7 +161,7 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsyncAndClose(
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(env);
 
-    return XAsyncBegin(asyncBlock, websocket, nullptr, __FUNCTION__,
+    return XAsyncBegin(asyncBlock, websocket, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
         [](XAsyncOp op, const XAsyncProviderData* data)
         {
             auto websocket = static_cast<HCWebsocketHandle>(data->context);
@@ -212,7 +222,7 @@ public:
         UNREFERENCED_PARAMETER(subprotocol);
 
         m_websocket = websocketHandle;
-        return XAsyncBegin(async, this, nullptr, __FUNCTION__,
+        return XAsyncBegin(async, this, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
             {
                 auto provider = static_cast<TestWebSocketConnectAndCloseProvider*>(data->context);
