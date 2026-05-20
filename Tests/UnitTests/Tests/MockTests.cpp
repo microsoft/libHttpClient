@@ -270,12 +270,12 @@ public:
             VERIFY_ARE_EQUAL(E_OUTOFMEMORY, errCode);
             VERIFY_ARE_EQUAL(300, platErrCode);
             VERIFY_ARE_EQUAL(400, statusCode);
-            VERIFY_ARE_EQUAL_STR("Mock2", responseStr);
+            VERIFY_ARE_EQUAL_STR("Mock1", responseStr);
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
 
         {
-            // Call 3 should repeat mock 2
+            // Once multiple mocks are registered, matching calls cycle in registration order.
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "1", "2"));
