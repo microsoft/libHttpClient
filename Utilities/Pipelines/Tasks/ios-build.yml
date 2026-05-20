@@ -4,8 +4,19 @@ parameters:
 
 steps:
   - template: checkout.yml
-  
-  - task: Xcode@2
+
+  # Build the CMake static lib
+  - script: |
+      cmake -B Build/libHttpClient.iOS.CMake/build \
+            -S Build/libHttpClient.iOS.CMake \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_BUILD_TYPE=${{ parameters.configuration }}
+      cmake --build Build/libHttpClient.iOS.CMake/build --config ${{ parameters.configuration }}
+    displayName: 'Clean build iOS CMake static lib'
+
+  # Build libHttpClient.Apple.C configurations
+  - task: Xcode@5
     displayName: 'Clean build iOS static lib'
     inputs:
       actions: 'clean build'
@@ -14,9 +25,8 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClient_iOS'
       packageApp: false
-      useXctool: false
 
-  - task: Xcode@2
+  - task: Xcode@5
     displayName: 'Clean build iOS framework'
     inputs:
       actions: 'clean build'
@@ -25,9 +35,8 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClientFramework_iOS'
       packageApp: false
-      useXctool: false
 
-  - task: Xcode@2
+  - task: Xcode@5
     displayName: 'Clean build iOS_NOWEBSOCKETS static lib'
     inputs:
       actions: 'clean build'
@@ -36,9 +45,8 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClient_NOWEBSOCKETS_iOS'
       packageApp: false
-      useXctool: false
 
-  - task: Xcode@2
+  - task: Xcode@5
     displayName: 'Clean build iOS_NOWEBSOCKETS framework'
     inputs:
       actions: 'clean build'
@@ -47,9 +55,8 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClientFramework_NOWEBSOCKETS_iOS'
       packageApp: false
-      useXctool: false
 
-  - task: Xcode@2
+  - task: Xcode@5
     displayName: 'Clean build macOS static lib'
     inputs:
       actions: 'clean build'
@@ -58,9 +65,8 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClient_macOS'
       packageApp: false
-      useXctool: false
 
-  - task: Xcode@2
+  - task: Xcode@5
     displayName: 'Clean build macOS framework'
     inputs:
       actions: 'clean build'
@@ -69,9 +75,8 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClientFramework_macOS'
       packageApp: false
-      useXctool: false
 
-  - task: Xcode@2
+  - task: Xcode@5
     displayName: 'Clean build macOS_NOWEBSOCKETS static lib'
     inputs:
       actions: 'clean build'
@@ -80,9 +85,8 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClient_NOWEBSOCKETS_macOS'
       packageApp: false
-      useXctool: false
 
-  - task: Xcode@2
+  - task: Xcode@5
     displayName: 'Clean build macOS_NOWEBSOCKETS framework'
     inputs:
       actions: 'clean build'
@@ -91,4 +95,4 @@ steps:
       xcWorkspacePath: Build/libHttpClient.Apple.C/libHttpClient.xcworkspace
       scheme: 'libHttpClientFramework_NOWEBSOCKETS_macOS'
       packageApp: false
-      useXctool: false
+
