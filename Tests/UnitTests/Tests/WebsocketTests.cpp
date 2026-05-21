@@ -485,6 +485,10 @@ public:
         XAsyncBlock asyncBlock{};
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+        WebSocketCompletionResult connectResult{};
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketConnectResult(&asyncBlock, &connectResult));
+        VERIFY_ARE_EQUAL(S_OK, connectResult.errorCode);
+        VERIFY_IS_TRUE(connectResult.websocket == websocket);
         VERIFY_ARE_EQUAL(true, g_HCWebSocketConnect_Called);
 
         ZeroMemory(&asyncBlock, sizeof(XAsyncBlock));
