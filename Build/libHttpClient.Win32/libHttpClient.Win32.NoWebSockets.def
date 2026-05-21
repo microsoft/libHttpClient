@@ -1,13 +1,9 @@
 EXPORTS
     HCAddCallRoutedHandler
-    HCAddWebSocketRoutedHandler
     HCCleanup
     HCCleanupAsync
     HCGetHttpCallPerformFunction
     HCGetLibVersion
-    HCGetWebSocketConnectResult
-    HCGetWebSocketFunctions
-    HCGetWebSocketSendMessageResult
     HCHttpCallCloseHandle
     HCHttpCallCreate
     HCHttpCallDuplicateHandle
@@ -66,7 +62,6 @@ EXPORTS
     HCHttpCallResponseGetDynamicBytesWritten
     HCHttpCallSetContext
     HCHttpCallSetTracing
-    HCHttpDisableAssertsForSSLValidationInDevSandboxes
     HCInitialize
     HCIsInitialized
     HCMemGetFunctions
@@ -83,10 +78,8 @@ EXPORTS
     HCMockResponseSetStatusCode
     HCMockSetMockMatchedCallback
     HCRemoveCallRoutedHandler
-    HCRemoveWebSocketRoutedHandler
     HCSetGlobalProxy
     HCSetHttpCallPerformFunction
-    HCSetWebSocketFunctions
     HCSettingsGetTraceLevel
     HCSettingsSetTraceLevel
     HCTraceCleanup
@@ -98,34 +91,30 @@ EXPORTS
     HCTraceSetEtwEnabled
     HCTraceSetPlatformCallbacks
     HCTraceSetTraceToDebugger
-    HCWebSocketCloseHandle
-    HCWebSocketConnectAsync
-    HCWebSocketCreate
-    HCWebSocketDisconnect
-    HCWebSocketDisconnectWithStatus
-    HCWebSocketDuplicateHandle
-    HCWebSocketGetBinaryMessageFragmentEventFunction
-    HCWebSocketGetEventFunctions
-    HCWebSocketGetHeader
-    HCWebSocketGetHeaderAtIndex
-    HCWebSocketGetNumHeaders
-    HCWebSocketGetProxyUri
-    HCWebSocketGetResponseHeader
-    HCWebSocketGetResponseHeaderAtIndex
-    HCWebSocketGetNumResponseHeaders
-    HCWebSocketSendBinaryMessageAsync
-    HCWebSocketSendMessageAsync
-    HCWebSocketSetBinaryMessageFragmentEventFunction
-    HCWebSocketSetOptions
-    HCWebSocketSetHeader
-    HCWebSocketSetMaxReceiveBufferSize
-    HCWebSocketSetProxyUri
-    HCWinHttpResume
-    HCWinHttpSuspend
+    XAsyncBegin
+    XAsyncCancel
+    XAsyncComplete
+    XAsyncGetResult
+    XAsyncGetResultSize
+    XAsyncGetStatus
+    XAsyncRun
+    XAsyncSchedule
+    XTaskQueueCloseHandle
+    XTaskQueueCreate
+    XTaskQueueCreateComposite
+    XTaskQueueDispatch
+    XTaskQueueDuplicateHandle
+    XTaskQueueGetCurrentProcessTaskQueue
+    XTaskQueueGetPort
+    XTaskQueueRegisterMonitor
+    XTaskQueueRegisterWaiter
+    XTaskQueueSetCurrentProcessTaskQueue
+    XTaskQueueSubmitCallback
+    XTaskQueueSubmitDelayedCallback
+    XTaskQueueTerminate
+    XTaskQueueUnregisterMonitor
+    XTaskQueueUnregisterWaiter
     HCHttpCallResponseSetGzipCompressed
     HCHttpCallRequestSetProgressReportFunction
-    HCWebSocketGetPingInterval
-    HCWebSocketSetPingInterval
     HCHttpCallRequestGetMaxReceiveBufferSize
     HCHttpCallRequestSetMaxReceiveBufferSize
-    

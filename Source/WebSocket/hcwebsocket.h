@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <httpClient/httpClient.h>
 #include "HTTP/httpcall.h"
 #include "Platform/IWebSocketProvider.h"
@@ -52,7 +54,8 @@ public:
         _In_opt_ void* callbackContext = nullptr
     );
 
-    void SetBinaryMessageFragmentEventFunction(HCWebSocketBinaryMessageFragmentFunction binaryFragmentFunc);
+    HRESULT SetBinaryMessageFragmentEventFunction(HCWebSocketBinaryMessageFragmentFunction binaryFragmentFunc) noexcept;
+    bool HasBinaryMessageFragmentEventFunction() const noexcept;
 
     std::shared_ptr<xbox::httpclient::WebSocket> const websocket;
 
@@ -84,6 +87,8 @@ void ObserverDeleter::operator()(HC_WEBSOCKET_OBSERVER* ptr) noexcept
 {
     ptr->Release();
 }
+
+constexpr size_t WEBSOCKET_RECVBUFFER_MAXSIZE_DETERMINISTIC_DEFAULT = 32000000;
 
 class WebSocket : public std::enable_shared_from_this<WebSocket>
 {
@@ -122,6 +127,7 @@ public:
     ) noexcept;
 
     HRESULT Disconnect();
+    HRESULT Disconnect(HCWebSocketCloseStatus closeStatus);
 
     // Unique ID for logging
     uint64_t const id;
@@ -132,13 +138,25 @@ public:
     const http_internal_string& ProxyUri() const noexcept;
     const bool ProxyDecryptsHttps() const noexcept;
     size_t MaxReceiveBufferSize() const noexcept;
+    size_t DeterministicMaxReceiveBufferSize() const noexcept;
+    bool MaxReceiveBufferSizeExplicitlySet() const noexcept;
     uint32_t PingInterval() const noexcept;
+    HCWebSocketOptions Options() const noexcept;
+    bool OptionsExplicitlySet() const noexcept;
+    bool UsesLegacySemantics() const noexcept;
+    bool UsesDeterministicSemantics() const noexcept;
+    HRESULT GetResponseHeader(_In_z_ const char* headerName, _Out_ const char** headerValue) const noexcept;
+    uint32_t GetNumResponseHeaders() const noexcept;
+    HRESULT GetResponseHeaderAtIndex(_In_ uint32_t headerIndex, _Out_ const char** headerName, _Out_ const char** headerValue) const noexcept;
 
     HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
     HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
     HRESULT SetProxyDecryptsHttps(bool allowProxyToDecryptHttps) noexcept;  
     HRESULT SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept;
     HRESULT SetPingInterval(uint32_t pingInterval) noexcept;
+    HRESULT SetOptions(HCWebSocketOptions options) noexcept;
+    void ClearResponseHeaders() noexcept;
+    HRESULT SetResponseHeaders(xbox::httpclient::HttpHeaders&& headers) noexcept;
 
     // Event functions
     static void CALLBACK MessageFunc(HCWebsocketHandle handle, const char* message, void* context);
@@ -152,6 +170,8 @@ public:
 private:
     static HRESULT CALLBACK ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
     static void CALLBACK ConnectComplete(XAsyncBlock* async);
+    void ClearResponseHeadersLockHeld() noexcept;
+    bool HasBinaryMessageFragmentHandlers() const noexcept;
 
     static void NotifyWebSocketRoutedHandlers(
         _In_ HCWebsocketHandle websocket,
@@ -162,6 +182,7 @@ private:
     );
 
     xbox::httpclient::HttpHeaders m_connectHeaders;
+    xbox::httpclient::HttpHeaders m_connectResponseHeaders;
     bool m_allowProxyToDecryptHttps{ false };
     http_internal_string m_proxyUri;
     http_internal_string m_uri;
@@ -181,7 +202,7 @@ private:
         void* context{ nullptr };
     };
 
-    DefaultUnnamedMutex m_stateMutex;
+    mutable DefaultUnnamedMutex m_stateMutex;
     enum class State
     {
         Initial,
@@ -191,13 +212,18 @@ private:
         Disconnected
     } m_state{ State::Initial };
 
-    std::recursive_mutex m_eventCallbacksMutex;
+    mutable std::recursive_mutex m_eventCallbacksMutex;
     http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
     uint32_t m_nextToken{ 1 };
 
     ProviderContext* m_providerContext{ nullptr };
 
+    // Stable routing provider for this WebSocket. Hybrid providers may delegate internally,
+    // but the WebSocket does not keep per-connection active-provider state.
     IWebSocketProvider& m_provider;
+    HCWebSocketOptions m_options{ HCWebSocketOptions::None };
+    bool m_optionsExplicitlySet{ false };
+    bool m_maxReceiveBufferSizeExplicitlySet{ false };
 };
 
 } // namespace httpclient

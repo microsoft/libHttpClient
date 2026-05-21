@@ -42,6 +42,7 @@ CONFIGURE_ARGS=(
     --with-openssl=$OPENSSL_INSTALL_DIR
     --enable-symbol-hiding
     --without-brotli
+    --without-zstd
 )
 if [ "$CONFIGURATION" = "Debug" ]; then
     CONFIGURE_ARGS+=(--enable-debug)
@@ -57,7 +58,10 @@ make $MAKE_PARALLELISM
 
 # copies binaries to final directory
 mkdir -p "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux
-cp -R "$PWD"/lib/.libs/* "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux
+rm -f "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux/libcurl.a
+rm -f "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux/libcurl.la
+rm -f "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux/libcurl.lai
+cp "$PWD"/lib/.libs/libcurl.a "$SCRIPT_DIR"/../../Out/x64/"$CONFIGURATION"/libcurl.Linux/libcurl.a
 
 make clean
 popd

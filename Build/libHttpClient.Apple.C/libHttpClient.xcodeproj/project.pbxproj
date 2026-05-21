@@ -141,11 +141,15 @@
 		828CED582AFC484D00CA08B1 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED252AFC484D00CA08B1 /* gzread.c */; settings = {COMPILER_FLAGS = "-Wno-error=implicit-int-conversion -Wno-error=shorten-64-to-32"; }; };
 		828CED5C2AFC484D00CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; settings = {COMPILER_FLAGS = "-Wno-error=macro-redefined"; }; };
 		828CED602AFC484D00CA08B1 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED272AFC484D00CA08B1 /* trees.c */; settings = {COMPILER_FLAGS = "-Wno-error=comma -Wno-error=macro-redefined"; }; };
+		828CED612AFC486100CA08B1 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED632AFC486100CA08B1 /* ioapi.c */; };
 		828CED652AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
 		828CED662AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
 		828CED672AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
 		828CED682AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
+		828CED692AFC486100CA08B1 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED632AFC486100CA08B1 /* ioapi.c */; };
 		828CED6C2AFD885100CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; settings = {COMPILER_FLAGS = "-Wno-error=macro-redefined"; }; };
+		828CED6A2AFC486100CA08B1 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED632AFC486100CA08B1 /* ioapi.c */; };
+		828CED6B2AFC486100CA08B1 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED632AFC486100CA08B1 /* ioapi.c */; };
 		828CED6D2AFD885100CA08B1 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1E2AFC484D00CA08B1 /* crc32.c */; settings = {COMPILER_FLAGS = "-Wno-error=implicit-int-conversion -Wno-error=shorten-64-to-32 -Wno-error=macro-redefined"; }; };
 		828CED6E2AFD885100CA08B1 /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1D2AFC484D00CA08B1 /* deflate.c */; settings = {COMPILER_FLAGS = "-Wno-error=implicit-int-conversion -Wno-error=shorten-64-to-32 -Wno-error=comma -Wno-error=macro-redefined"; }; };
 		828CED6F2AFD885100CA08B1 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED252AFC484D00CA08B1 /* gzread.c */; settings = {COMPILER_FLAGS = "-Wno-error=implicit-int-conversion -Wno-error=shorten-64-to-32"; }; };
@@ -446,6 +450,7 @@
 		828CED252AFC484D00CA08B1 /* gzread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gzread.c; path = ../External/zlib/gzread.c; sourceTree = "<group>"; };
 		828CED262AFC484D00CA08B1 /* adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = adler32.c; path = ../External/zlib/adler32.c; sourceTree = "<group>"; };
 		828CED272AFC484D00CA08B1 /* trees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = trees.c; path = ../External/zlib/trees.c; sourceTree = "<group>"; };
+		828CED632AFC486100CA08B1 /* ioapi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ioapi.c; path = ../External/zlib/contrib/minizip/ioapi.c; sourceTree = "<group>"; };
 		828CED642AFC486000CA08B1 /* unzip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = unzip.c; path = ../External/zlib/contrib/minizip/unzip.c; sourceTree = "<group>"; };
 		9C3B253E212F29CF0080AEC6 /* websocketpp_websocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = websocketpp_websocket.cpp; sourceTree = "<group>"; };
 		9C3B253F212F29CF0080AEC6 /* x509_cert_utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = x509_cert_utilities.hpp; sourceTree = "<group>"; };
@@ -868,6 +873,7 @@
 		828CED182AFC47DD00CA08B1 /* Zlib */ = {
 			isa = PBXGroup;
 			children = (
+				828CED632AFC486100CA08B1 /* ioapi.c */,
 				828CED642AFC486000CA08B1 /* unzip.c */,
 				828CED262AFC484D00CA08B1 /* adler32.c */,
 				828CED1B2AFC484D00CA08B1 /* compress.c */,
@@ -1345,6 +1351,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				58A7E9ED209ADEB100CC6774 /* global_publics.cpp in Sources */,
+				828CED612AFC486100CA08B1 /* ioapi.c in Sources */,
 				828CED652AFC486000CA08B1 /* unzip.c in Sources */,
 				58A7E9EF209ADEB100CC6774 /* global.cpp in Sources */,
 				A23D0BA62B925EC900624E90 /* utils_apple.mm in Sources */,
@@ -1426,6 +1433,7 @@
 				828CED752AFD885100CA08B1 /* trees.c in Sources */,
 				828CED762AFD885100CA08B1 /* zutil.c in Sources */,
 				7DB100DE2119F91B00AE22F5 /* pch.cpp in Sources */,
+				828CED692AFC486100CA08B1 /* ioapi.c in Sources */,
 				828CED662AFC486000CA08B1 /* unzip.c in Sources */,
 				7DB100D1211927DF00AE22F5 /* uri.cpp in Sources */,
 				7DB100D2211927DF00AE22F5 /* utils.cpp in Sources */,
@@ -1489,6 +1497,7 @@
 				828CED802AFD886600CA08B1 /* trees.c in Sources */,
 				828CED812AFD886600CA08B1 /* zutil.c in Sources */,
 				D9EF882725A522BC005C4BDF /* global_publics.cpp in Sources */,
+				828CED6A2AFC486100CA08B1 /* ioapi.c in Sources */,
 				828CED672AFC486000CA08B1 /* unzip.c in Sources */,
 				D9EF882925A522BC005C4BDF /* global.cpp in Sources */,
 				727979122A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
@@ -1550,6 +1559,7 @@
 				828CED8B2AFD887000CA08B1 /* trees.c in Sources */,
 				828CED8C2AFD887000CA08B1 /* zutil.c in Sources */,
 				D9FF0A5E25A5366A0061B717 /* global_publics.cpp in Sources */,
+				828CED6B2AFC486100CA08B1 /* ioapi.c in Sources */,
 				828CED682AFC486000CA08B1 /* unzip.c in Sources */,
 				D9FF0A6025A5366A0061B717 /* global.cpp in Sources */,
 				727979132A4E32A800EB7079 /* ExternalWebSocketProvider.cpp in Sources */,
@@ -1828,6 +1838,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
@@ -1835,6 +1846,8 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
+					"$(SRCROOT)/../../External/zlib/contrib/minizip",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -1860,6 +1873,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
@@ -1867,6 +1881,8 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
+					"$(SRCROOT)/../../External/zlib/contrib/minizip",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -2005,6 +2021,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE",
 				);
@@ -2013,6 +2030,8 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
+					"$(SRCROOT)/../../External/zlib/contrib/minizip",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",
@@ -2040,6 +2059,7 @@
 				GCC_PREFIX_HEADER = "$(SRCROOT)/../../Source/Common/pch.h";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					"HC_ENABLE_WEBSOCKET_COMPRESSION=1",
 					"HC_LINK_STATIC=1",
 					"HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT",
 				);
@@ -2048,6 +2068,8 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../Include",
 					"$(SRCROOT)/../../Source/Common",
+					"$(SRCROOT)/../../External/zlib",
+					"$(SRCROOT)/../../External/zlib/contrib/minizip",
 					"$(SRCROOT)/../../External/websocketpp",
 					"$(SRCROOT)/../../External/asio/asio/include",
 					"$(BUILT_PRODUCTS_DIR)/openssl/include",

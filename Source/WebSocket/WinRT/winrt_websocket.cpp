@@ -176,6 +176,42 @@ http_internal_vector<http_internal_wstring> parse_subprotocols(const http_intern
     return values;
 }
 
+void TrySetWinRTResponseHeaders(
+    _In_ std::shared_ptr<WebSocket> const& websocket,
+    _In_ MessageWebSocket^ messageWebSocket
+)
+{
+    if (!websocket || messageWebSocket == nullptr)
+    {
+        return;
+    }
+
+    try
+    {
+        HttpHeaders responseHeaders;
+        auto information = messageWebSocket->Information;
+        if (information != nullptr && information->Protocol != nullptr && information->Protocol->Length() > 0)
+        {
+            responseHeaders[http_internal_string{ "Sec-WebSocket-Protocol" }] =
+                utf8_from_utf16(http_internal_wstring{ information->Protocol->Data() });
+        }
+
+        auto hr = websocket->SetResponseHeaders(std::move(responseHeaders));
+        if (FAILED(hr))
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Websocket [ID %llu]: failed to cache WinRT upgrade response headers 0x%0.8x", TO_ULL(websocket->id), hr);
+        }
+    }
+    catch (Platform::Exception^ e)
+    {
+        HC_TRACE_WARNING(WEBSOCKET, "Websocket [ID %llu]: failed to read WinRT upgrade response info 0x%0.8x", TO_ULL(websocket->id), e->HResult);
+    }
+    catch (...)
+    {
+        HC_TRACE_WARNING(WEBSOCKET, "Websocket [ID %llu]: failed to read WinRT upgrade response info", TO_ULL(websocket->id));
+    }
+}
+
 HRESULT WebsocketConnectDoWork(
     _Inout_ XAsyncBlock* asyncBlock,
     _In_opt_ void* executionRoutineContext
@@ -196,6 +232,7 @@ try
         HCWebSocketGetNumHeaders(websocketHandle, &numHeaders);
 
         http_internal_string protocolHeader("Sec-WebSocket-Protocol");
+        http_internal_string requestedProtocolHeaderValue;
         for (uint32_t i = 0; i < numHeaders; i++)
         {
             const char* headerName;
@@ -203,8 +240,16 @@ try
             HCWebSocketGetHeaderAtIndex(websocketHandle, i, &headerName, &headerValue);
 
             // The MessageWebSocket API throws a COMException if you try to set the
-            // 'Sec-WebSocket-Protocol' header here. It requires you to go through their API instead.
+            // 'Sec-WebSocket-Protocol' header through SetRequestHeader. Capture the
+            // requested value here and route it through SupportedProtocols below instead.
             if (headerName != nullptr && headerValue != nullptr && !str_icmp(headerName, protocolHeader.c_str()))
+            {
+                requestedProtocolHeaderValue = headerValue;
+                HC_TRACE_INFORMATION(WEBSOCKET, "Websocket [ID %llu]: Deferring [%s: %s] to SupportedProtocols", TO_ULL(websocket->id), headerName, headerValue);
+                continue;
+            }
+
+            if (headerName != nullptr && headerValue != nullptr)
             {
                 http_internal_wstring wHeaderName = utf16_from_utf8(headerName);
                 http_internal_wstring wHeaderValue = utf16_from_utf8(headerValue);
@@ -215,7 +260,17 @@ try
             }
         }
 
-        auto protocols = parse_subprotocols(websocket->SubProtocol());
+        auto requestedProtocols = websocket->SubProtocol();
+        if (requestedProtocols.empty())
+        {
+            requestedProtocols = requestedProtocolHeaderValue;
+        }
+        else if (!requestedProtocolHeaderValue.empty() && str_icmp(requestedProtocols.c_str(), requestedProtocolHeaderValue.c_str()) != 0)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Websocket [ID %llu]: Ignoring duplicate Sec-WebSocket-Protocol header because the connect subprotocol parameter is already set", TO_ULL(websocket->id));
+        }
+
+        auto protocols = parse_subprotocols(requestedProtocols);
         for (const auto& value : protocols)
         {
             websocketTask->m_messageWebSocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
@@ -251,6 +306,7 @@ try
                 else
                 {
                     websocketTask->m_connectAsyncOpResult = S_OK;
+                    TrySetWinRTResponseHeaders(websocket, websocketTask->m_messageWebSocket);
                 }
             }
             catch (Platform::Exception^ e)

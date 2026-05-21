@@ -54,6 +54,7 @@ _HCWebSocketCreate
 _HCWebSocketSetPingInterval
 _HCWebSocketSetProxyUri
 _HCWebSocketSetHeader
+_HCWebSocketSetOptions
 _HCWebSocketGetEventFunctions
 _HCWebSocketGetPingInterval
 _HCWebSocketConnectAsync
@@ -61,7 +62,11 @@ _HCGetWebSocketConnectResult
 _HCWebSocketSendMessageAsync
 _HCWebSocketSendBinaryMessageAsync
 _HCGetWebSocketSendMessageResult
+_HCWebSocketGetResponseHeader
+_HCWebSocketGetResponseHeaderAtIndex
+_HCWebSocketGetNumResponseHeaders
 _HCWebSocketDisconnect
+_HCWebSocketDisconnectWithStatus
 _HCWebSocketDuplicateHandle
 _HCWebSocketCloseHandle
 

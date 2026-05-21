@@ -903,6 +903,14 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
 /// <summary>
 /// A callback invoked every time a WebSocket receives an incoming message
 /// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked on a
+/// provider-managed or otherwise implementation-defined thread.
+///
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="incomingBodyString">UTF-8 encoded body of the incoming message as a string value, only if the message type is UTF-8.</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
@@ -916,6 +924,14 @@ typedef void
 /// <summary>
 /// A callback invoked every time a WebSocket receives an incoming binary message
 /// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked on a
+/// provider-managed or otherwise implementation-defined thread.
+///
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="incomingBodyPayload">Binary message payload.</param>
 /// <param name="incomingBodyPayloadSize">Size of the payload in bytes.</param>
@@ -929,17 +945,27 @@ typedef void
     );
 
 /// <summary>
-/// A callback invoked every time a WebSocket receives an incoming binary message that is larger than
-/// the WebSocket receive buffer (default 20KB, configurable using HCWebSocketSetMaxReceiveBufferSize). 
-/// Large messages are automatically fragmented and passed to clients in chunks.
-/// 
-/// IMPORTANT: You must set this callback using HCWebSocketSetBinaryMessageFragmentEventFunction() to properly 
-/// handle binary messages larger than the receive buffer. Without this callback, large messages will be 
-/// delivered as separate messages via HCWebSocketBinaryMessageFunction with no way to determine 
-/// they are fragments of a single message.
-/// 
-/// Typical usage: Accumulate fragments in a buffer until isLastFragment is true, then process the complete message.
+/// A callback invoked on Win32 and GDK legacy behavior when an oversized incoming payload is surfaced
+/// as raw fragments to honor the configured receive buffer size.
+///
+/// The callback receives raw bytes. In legacy Win32 / GDK behavior, oversized UTF-8 payloads use
+/// this same fragment path.
 /// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked on a
+/// provider-managed or otherwise implementation-defined thread.
+///
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+///
+/// If you expect incoming payloads larger than the receive buffer, set this callback or raise the
+/// receive buffer with HCWebSocketSetMaxReceiveBufferSize(). Without this callback, oversized
+/// payloads are not surfaced through the public whole-message callbacks.
+///
+/// Typical usage: Accumulate fragments in a buffer until isLastFragment is true, then process the
+/// complete payload.
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="payloadBytes">Binary message fragment payload.</param>
 /// <param name="payloadSize">Size of this fragment in bytes.</param>
@@ -957,6 +983,14 @@ typedef void
 /// <summary>
 /// A callback invoked when a WebSocket is closed
 /// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked when the close
+/// event is observed on a provider-managed or otherwise implementation-defined thread.
+///
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="closeStatus">The status of why the WebSocket was closed</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
@@ -966,6 +1000,50 @@ typedef void
     _In_ HCWebSocketCloseStatus closeStatus,
     _In_ void* functionContext
     );
+
+/// <summary>
+/// Options controlling pre-connect WebSocket behavior.
+/// Reserved bits must be zero.
+/// </summary>
+enum class HCWebSocketOptions : uint32_t
+{
+    /// <summary>
+    /// Select deterministic WebSocket behavior without requesting compression.
+    /// </summary>
+    /// <remarks>
+    /// Deterministic behavior includes no fragment callbacks and a hard cap on
+    /// inbound message size which can be set with HCWebSocketSetMaxReceiveBufferSize()
+    /// or defaults to 32,000,000 bytes.
+    /// </remarks>
+    None = 0x00000000,
+    /// <summary>
+    /// Explicitly preserve the platform's existing legacy WebSocket semantics.
+    /// This flag is mutually exclusive with every other option.
+    /// </summary>
+    /// <remarks>
+    /// Legacy behavior preserves the platform's existing defaults. On Win32 and GDK,
+    /// that includes oversized-payload fragment callbacks rather than the deterministic
+    /// hard inbound message-size cap. On macOS / iOS and Linux, legacy behavior continues
+    /// using the provider's configured 32,000,000-byte maximum instead of honoring
+    /// HCWebSocketSetMaxReceiveBufferSize() as a hard cap.
+    /// </remarks>
+    LegacySemantics = 0x80000000,
+    /// <summary>
+    /// Request permessage-deflate. Without no-context-takeover flags, compression
+    /// context is reused in both directions.
+    /// </summary>
+    RequestCompression = 0x00000001,
+    /// <summary>
+    /// Request that server-to-client compressed messages disable context reuse.
+    /// </summary>
+    CompressionServerNoContextTakeover = 0x00000002,
+    /// <summary>
+    /// Request that client-to-server compressed messages disable context reuse.
+    /// </summary>
+    CompressionClientNoContextTakeover = 0x00000004
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(HCWebSocketOptions)
 
 /// <summary>
 /// Creates an WebSocket handle.
@@ -979,10 +1057,13 @@ typedef void
 /// <remarks>
 /// WebSocket usage:<br />
 /// Create a WebSocket handle using HCWebSocketCreate()<br />
+/// Optionally call HCWebSocketSetOptions() to select deterministic behavior and/or request compression<br />
+/// Optionally call HCWebSocketSetMaxReceiveBufferSize() to configure the deterministic inbound message-size limit before connect, or the Win32 / GDK legacy fragment threshold<br />
 /// Call HCWebSocketSetProxyUri(), HCWebSocketSetHeader(), or HCWebSocketSetPingInterval() to prepare the HCWebsocketHandle<br />
+/// On Win32 / GDK legacy behavior, call HCWebSocketSetBinaryMessageFragmentEventFunction() if oversized incoming payloads must be reconstructed from fragments<br />
 /// Call HCWebSocketConnectAsync() to connect the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketSendMessageAsync() to send a message to the WebSocket using the HCWebsocketHandle.<br />
-/// Call HCWebSocketDisconnect() to disconnect the WebSocket using the HCWebsocketHandle.<br />
+/// Call HCWebSocketDisconnect() or HCWebSocketDisconnectWithStatus() to disconnect the WebSocket using the HCWebsocketHandle.<br />
 /// Call HCWebSocketCloseHandle() when done with the HCWebsocketHandle to free the associated memory<br />
 /// </remarks>
 STDAPI HCWebSocketCreate(
@@ -993,27 +1074,59 @@ STDAPI HCWebSocketCreate(
     _In_opt_ void* functionContext
     ) noexcept;
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
-/// Set the binary message fragment handler. The client functionContext passed to HCWebSocketCreate will also be passed to this handler.
+/// Set pre-connect WebSocket behavior options.
 /// </summary>
-/// <param name="websocket">The handle of the websocket.</param>
-/// <param name="binaryMessageFragmentFunc">A pointer to the binary message fragment handling callback to use, or a null pointer to remove.</param>
-/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="options">Options to apply. Reserved bits must be zero.
+/// LegacySemantics is mutually exclusive with every other flag. CompressionServerNoContextTakeover
+/// and CompressionClientNoContextTakeover require RequestCompression.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, E_HC_CONNECT_ALREADY_CALLED, or E_NOT_SUPPORTED.</returns>
 /// <remarks>
-/// IMPORTANT: Binary messages larger than the WebSocket receive buffer (default 20KB) are automatically fragmented.
-/// Without this handler, large messages are broken into chunks and passed to HCWebSocketBinaryMessageFunction with NO indication 
-/// they are fragments, making message reconstruction impossible. 
-/// 
-/// For applications expecting large binary messages, you MUST either:
-/// 1. Set this fragment handler to properly reconstruct messages, OR
-/// 2. Increase the receive buffer size with HCWebSocketSetMaxReceiveBufferSize() to accommodate your largest expected message
-/// 
-/// The fragment handler receives each chunk with an isLastFragment flag to indicate message completion.
+/// This must be called prior to calling HCWebSocketConnectAsync.
+///
+/// If this API is never called, the socket uses the platform's legacy behavior.
+/// On macOS / iOS and Linux legacy behavior, HCWebSocketSetMaxReceiveBufferSize() does not override
+/// the provider's configured 32,000,000-byte maximum.
+/// Calling HCWebSocketSetOptions(HCWebSocketOptions::LegacySemantics) explicitly preserves that same legacy behavior.
+/// Calling HCWebSocketSetOptions(HCWebSocketOptions::None) or any non-legacy compression flag selects deterministic behavior.
+///
+/// In deterministic behavior, fragment callbacks are not supported. The inbound message-size limit becomes a hard cap:
+/// the value passed to HCWebSocketSetMaxReceiveBufferSize() if set before connect, otherwise the default
+/// deterministic limit of 32,000,000 bytes. When an incoming message exceeds that cap, the socket closes with
+/// HCWebSocketCloseStatus::TooLarge.
+///
+/// RequestCompression alone reuses compression context in both directions by default.
 /// </remarks>
-STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
+#if HC_PLATFORM != HC_PLATFORM_ANDROID
+STDAPI HCWebSocketSetOptions(
     _In_ HCWebsocketHandle websocket,
-    _In_ HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc
+    _In_ HCWebSocketOptions options
+    ) noexcept;
+#endif
+
+#if HC_PLATFORM != HC_PLATFORM_ANDROID
+/// <summary>
+/// Configures the pre-connect inbound message-size limit behavior for built-in WebSocket transports.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket</param>
+/// <param name="bufferSizeInBytes">Maximum size (in bytes) for the WebSocket receive buffer. Values larger than UINT32_MAX are rejected with E_INVALIDARG.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_HC_CONNECT_ALREADY_CALLED.</returns>
+/// <remarks>
+/// This must be called prior to calling HCWebSocketConnectAsync.
+///
+/// In deterministic behavior, this becomes the hard inbound message-size cap.
+/// If you do not call this API before connect, that deterministic cap defaults to 32,000,000 bytes.
+///
+/// In legacy Win32 / GDK behavior, the configured receive buffer still controls when oversized incoming
+/// payloads are routed through HCWebSocketSetBinaryMessageFragmentEventFunction(). The legacy default value
+/// remains 20KB (20,480 bytes).
+/// On macOS / iOS and Linux legacy behavior, this API does not change the provider's configured
+/// 32,000,000-byte maximum.
+/// </remarks>
+STDAPI HCWebSocketSetMaxReceiveBufferSize(
+    _In_ HCWebsocketHandle websocket,
+    _In_ size_t bufferSizeInBytes
 ) noexcept;
 #endif
 
@@ -1029,14 +1142,18 @@ STDAPI HCWebSocketSetProxyUri(
     _In_z_ const char* proxyUri
     ) noexcept;
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 && !HC_WINHTTP_WEBSOCKETS
+#if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
 /// <summary>
-/// Allows proxy server to decrypt and inspect traffic; should be used only for debugging purposes
+/// Disables TLS server certificate validation for this WebSocket connection.
+/// This is a debugging-only setting for use with HTTPS-intercepting proxies (Fiddler, Charles, etc.)
+/// and should never be enabled in production.
 /// This must be called after calling HCWebSocketSetProxyUri.
-/// Only applies to Win32 non-GDK builds
+/// This must be called prior to calling HCWebSocketConnectAsync.
+/// Available on Win32 and GDK. On GDK console, TLS validation is always enforced
+/// regardless of this setting.
 /// </summary>
 /// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="allowProxyToDecryptHttps">true is proxy can decrypt, false is not allowed to decrypt</param>
+/// <param name="allowProxyToDecryptHttps">true to disable TLS server certificate validation, false to keep validation enabled</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCWebSocketSetProxyDecryptsHttps(
     _In_ HCWebsocketHandle websocket,
@@ -1056,6 +1173,65 @@ STDAPI HCWebSocketSetHeader(
     _In_ HCWebsocketHandle websocket,
     _In_z_ const char* headerName,
     _In_z_ const char* headerValue
+    ) noexcept;
+
+/// <summary>
+/// Get a response header for the completed WebSocket connect operation for a given header name.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerName">UTF-8 encoded response header name for the completed WebSocket connect operation.</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the completed WebSocket connect operation.
+/// Returns nullptr if the header doesn't exist.
+/// The memory for the returned string pointer remains valid for the life of the HCWebsocketHandle object until HCWebSocketCloseHandle() is called on it.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This can only be called after the WebSocket connect operation has completed.
+/// If the provider captured response headers for a refused or otherwise failed connection attempt,
+/// those headers remain queryable until HCWebSocketCloseHandle() is called.
+/// </remarks>
+STDAPI HCWebSocketGetResponseHeader(
+    _In_ HCWebsocketHandle websocket,
+    _In_z_ const char* headerName,
+    _Outptr_result_z_ const char** headerValue
+    ) noexcept;
+
+/// <summary>
+/// Gets the number of response headers cached for the completed WebSocket connect operation.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="numHeaders">The number of response headers cached for the completed WebSocket connect operation.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This can only be called after the WebSocket connect operation has completed.
+/// If the provider captured response headers for a refused or otherwise failed connection attempt,
+/// those headers remain queryable until HCWebSocketCloseHandle() is called.
+/// </remarks>
+STDAPI HCWebSocketGetNumResponseHeaders(
+    _In_ HCWebsocketHandle websocket,
+    _Out_ uint32_t* numHeaders
+    ) noexcept;
+
+/// <summary>
+/// Gets the response header at a specific zero based index for the completed WebSocket connect operation.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerIndex">Specific zero based index of the response header.</param>
+/// <param name="headerName">UTF-8 encoded response header name for the completed WebSocket connect operation.
+/// The memory for the returned string pointer remains valid for the life of the HCWebsocketHandle object until HCWebSocketCloseHandle() is called on it.</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the completed WebSocket connect operation.
+/// The memory for the returned string pointer remains valid for the life of the HCWebsocketHandle object until HCWebSocketCloseHandle() is called on it.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// Use HCWebSocketGetNumResponseHeaders() to know how many response headers there are.
+/// This can only be called after the WebSocket connect operation has completed.
+/// If the provider captured response headers for a refused or otherwise failed connection attempt,
+/// those headers remain queryable until HCWebSocketCloseHandle() is called.
+/// </remarks>
+STDAPI HCWebSocketGetResponseHeaderAtIndex(
+    _In_ HCWebsocketHandle websocket,
+    _In_ uint32_t headerIndex,
+    _Outptr_result_z_ const char** headerName,
+    _Outptr_result_z_ const char** headerValue
     ) noexcept;
 
 /// <summary>
@@ -1099,20 +1275,50 @@ STDAPI HCWebSocketGetBinaryMessageFragmentEventFunction(
     _Out_ HCWebSocketBinaryMessageFragmentFunction* binaryMessageFragmentFunc,
     _Out_ void** functionContext
 ) noexcept;
+
+/// <summary>
+/// Set the binary message fragment handler. The client functionContext passed to HCWebSocketCreate will also be passed to this handler.
+/// </summary>
+/// <param name="websocket">The handle of the websocket.</param>
+/// <param name="binaryMessageFragmentFunc">A pointer to the binary message fragment handling callback to use, or a null pointer to remove.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_NOT_SUPPORTED, or E_FAIL.</returns>
+/// <remarks>
+/// On Win32 and GDK legacy behavior, this callback is used when an incoming payload exceeds the
+/// configured receive buffer (default 20KB). Current oversized UTF-8 overflow behavior also uses
+/// this raw-byte fragment path.
+///
+/// For applications expecting oversized incoming payloads, you MUST either:
+/// 1. Set this fragment handler to properly reconstruct messages, OR
+/// 2. Increase the receive buffer size with HCWebSocketSetMaxReceiveBufferSize() to accommodate your largest expected message
+///
+/// Without this handler, oversized incoming payloads are not delivered through HCWebSocketMessageFunction
+/// or HCWebSocketBinaryMessageFunction.
+///
+/// Fragment callbacks are only supported when using HCWebSocketOptions::LegacySemantics.
+/// </remarks>
+STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
+    _In_ HCWebsocketHandle websocket,
+    _In_ HCWebSocketBinaryMessageFragmentFunction binaryMessageFragmentFunc
+) noexcept;
 #endif
 
 /// <summary>
-/// Used by HCWebSocketConnectAsync() and HCWebSocketSendMessageAsync().
+/// Used by HCWebSocketConnectAsync(), HCWebSocketSendMessageAsync(), and HCWebSocketSendBinaryMessageAsync().
 /// </summary>
 typedef struct WebSocketCompletionResult
 {
-    /// <summary>The handle of the HTTP call.</summary>
+    /// <summary>
+    /// The websocket handle associated with the operation.
+    /// Retrieving this result structure does not duplicate the handle or add a reference.
+    /// The caller remains responsible for closing the handle exactly once with HCWebSocketCloseHandle()
+    /// when finished with all operations related to this websocket.
+    /// </summary>
     HCWebsocketHandle websocket;
 
-    /// <summary>The error code of the call. Possible values are S_OK, or E_FAIL.</summary>
+    /// <summary>The result of the operation. S_OK indicates success; failures return a descriptive HRESULT.</summary>
     HRESULT errorCode;
 
-    /// <summary>The platform specific network error code of the call to be used for tracing / debugging.</summary>
+    /// <summary>The platform specific network error code of the operation to be used for tracing / debugging.</summary>
     uint32_t platformErrorCode;
 } WebSocketCompletionResult;
 
@@ -1126,9 +1332,9 @@ typedef struct WebSocketCompletionResult
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 /// <remarks>
 /// To get the result, first call HCGetWebSocketConnectResult inside the AsyncBlock callback or after the AsyncBlock is complete.
-/// On GDK and Win32 (Win 8+) the background work is scheduled to threads owned by WinHttp run in async mode.
-/// On UWP and XDK, the connection thread is owned and controlled by Windows::Networking::Sockets::MessageWebSocket.
-/// On Win32 (Win 7+), iOS, and Android, all background work (including initial connection process) will be added to the queue
+/// On GDK and on Win32 running on Windows 8 or later, some background work is scheduled to OS-owned async threads.
+/// On UWP and XDK, the connection thread is owned and controlled by the platform WebSocket implementation.
+/// On Win32 running on Windows 7, iOS, and Android, all background work (including initial connection process) will be added to the queue
 /// in the provided XAsyncBlock. LibHttpClient will create a reference to that queue but it is the responsibility of the
 /// caller to dispatch that queue for as long as the websocket connection is active. Note that work for
 /// HCWebSocketSendMessageAsync calls can be assigned to a separate queue if desired.
@@ -1146,9 +1352,13 @@ STDAPI HCWebSocketConnectAsync(
 /// <param name="asyncBlock">The XAsyncBlock that defines the async operation.</param>
 /// <param name="result">Pointer to the result payload.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+/// <remarks>
+/// This result does not duplicate result->websocket or transfer ownership.
+/// Close that handle exactly once with HCWebSocketCloseHandle(), regardless of whether result->errorCode indicates success or failure.
+/// </remarks>
 STDAPI HCGetWebSocketConnectResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
     ) noexcept;
 
 /// <summary>
@@ -1161,6 +1371,9 @@ STDAPI HCGetWebSocketConnectResult(
 /// <remarks>
 /// To get the result, first call HCGetWebSocketSendMessageResult
 /// inside the AsyncBlock callback or after the AsyncBlock is complete.
+///
+/// When built-in WebSocket compression is enabled, messages larger than UINT32_MAX bytes
+/// are rejected with E_INVALIDARG.
 /// </remarks>
 STDAPI HCWebSocketSendMessageAsync(
     _In_ HCWebsocketHandle websocket,
@@ -1173,7 +1386,7 @@ STDAPI HCWebSocketSendMessageAsync(
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket.</param>
 /// <param name="payloadBytes">Binary data to send in byte buffer.</param>
-/// <param name="payloadSize">Size of byte buffer.</param>
+/// <param name="payloadSize">Size of byte buffer. Maximum supported value is UINT32_MAX bytes.</param>
 /// <param name="asyncBlock">The AsyncBlock that defines the async operation.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 /// <remarks>
@@ -1192,14 +1405,14 @@ STDAPI HCWebSocketSendBinaryMessageAsync(
 /// </summary>
 /// <param name="asyncBlock">The XAsyncBlock that defines the async operation.</param>
 /// <param name="result">Pointer to the result payload.</param>
-/// <returns>Returns the duplicated handle.</returns>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCGetWebSocketSendMessageResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
     ) noexcept;
 
 /// <summary>
-/// Disconnects / closes the WebSocket.
+/// Disconnects / closes the WebSocket with the Normal (1000) close status.
 /// </summary>
 /// <param name="websocket">Handle to the WebSocket.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
@@ -1207,28 +1420,16 @@ STDAPI HCWebSocketDisconnect(
     _In_ HCWebsocketHandle websocket
     ) noexcept;
 
-#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
-/// Configures how large the WebSocket receive buffer is allowed to grow before messages are fragmented. 
-/// Binary messages exceeding this buffer size are automatically broken into fragments and delivered via 
-/// HCWebSocketBinaryMessageFragmentFunction (if set) or as separate messages via HCWebSocketBinaryMessageFunction.
-/// 
-/// The default value is 20KB (20,480 bytes).
-/// 
-/// IMPORTANT: For applications expecting large binary messages, you should either:
-/// 1. Set this buffer size large enough for your largest expected message, OR  
-/// 2. Use HCWebSocketSetBinaryMessageFragmentEventFunction() to properly handle message fragments
-/// 
-/// Text messages exceeding the buffer size are handled differently and may be passed via multiple calls to HCWebSocketMessageFunction.
+/// Disconnects / closes the WebSocket using an explicit close status such as GoingAway (1001).
 /// </summary>
-/// <param name="websocket">The handle of the WebSocket</param>
-/// <param name="bufferSizeInBytes">Maximum size (in bytes) for the WebSocket receive buffer.</param>
+/// <param name="websocket">Handle to the WebSocket.</param>
+/// <param name="closeStatus">The close status to send to the peer.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-STDAPI HCWebSocketSetMaxReceiveBufferSize(
+STDAPI HCWebSocketDisconnectWithStatus(
     _In_ HCWebsocketHandle websocket,
-    _In_ size_t bufferSizeInBytes
-) noexcept;
-#endif
+    _In_ HCWebSocketCloseStatus closeStatus
+    ) noexcept;
 
 /// <summary>
 /// Increments the reference count on the call object.

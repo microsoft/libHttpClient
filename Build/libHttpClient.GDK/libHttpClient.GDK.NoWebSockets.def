@@ -1,24 +1,24 @@
 EXPORTS
     HCAddCallRoutedHandler
-    HCAddWebSocketRoutedHandler
     HCCleanup
     HCCleanupAsync
+    HCDisableAssertsForSSLValidationInDevSandboxes
     HCGetHttpCallPerformFunction
     HCGetLibVersion
-    HCGetWebSocketConnectResult
-    HCGetWebSocketFunctions
-    HCGetWebSocketSendMessageResult
     HCHttpCallCloseHandle
     HCHttpCallCreate
     HCHttpCallDuplicateHandle
     HCHttpCallGetContext
     HCHttpCallGetId
-    HCHttpCallGetRequestUrl
     HCHttpCallGetPerformCount
+    HCHttpCallGetRequestUrl
     HCHttpCallPerformAsync
+    HCHttpCallRequestAddDynamicBytesWritten
     HCHttpCallRequestEnableGzipCompression
+    HCHttpCallRequestGetDynamicBytesWritten
     HCHttpCallRequestGetHeader
     HCHttpCallRequestGetHeaderAtIndex
+    HCHttpCallRequestGetMaxReceiveBufferSize
     HCHttpCallRequestGetNumHeaders
     HCHttpCallRequestGetRequestBodyBytes
     HCHttpCallRequestGetRequestBodyReadFunction
@@ -29,7 +29,10 @@ EXPORTS
     HCHttpCallRequestGetTimeout
     HCHttpCallRequestGetTimeoutWindow
     HCHttpCallRequestGetUrl
+    HCHttpCallRequestSetDynamicSize
     HCHttpCallRequestSetHeader
+    HCHttpCallRequestSetMaxReceiveBufferSize
+    HCHttpCallRequestSetProgressReportFunction
     HCHttpCallRequestSetRequestBodyBytes
     HCHttpCallRequestSetRequestBodyReadFunction
     HCHttpCallRequestSetRequestBodyString
@@ -40,7 +43,9 @@ EXPORTS
     HCHttpCallRequestSetTimeout
     HCHttpCallRequestSetTimeoutWindow
     HCHttpCallRequestSetUrl
+    HCHttpCallResponseAddDynamicBytesWritten
     HCHttpCallResponseAppendResponseBodyBytes
+    HCHttpCallResponseGetDynamicBytesWritten
     HCHttpCallResponseGetHeader
     HCHttpCallResponseGetHeaderAtIndex
     HCHttpCallResponseGetNetworkErrorCode
@@ -51,6 +56,8 @@ EXPORTS
     HCHttpCallResponseGetResponseBodyWriteFunction
     HCHttpCallResponseGetResponseString
     HCHttpCallResponseGetStatusCode
+    HCHttpCallResponseSetDynamicSize
+    HCHttpCallResponseSetGzipCompressed
     HCHttpCallResponseSetHeader
     HCHttpCallResponseSetHeaderWithLength
     HCHttpCallResponseSetNetworkErrorCode
@@ -58,15 +65,8 @@ EXPORTS
     HCHttpCallResponseSetResponseBodyBytes
     HCHttpCallResponseSetResponseBodyWriteFunction
     HCHttpCallResponseSetStatusCode
-    HCHttpCallRequestSetDynamicSize
-    HCHttpCallRequestAddDynamicBytesWritten
-    HCHttpCallRequestGetDynamicBytesWritten
-    HCHttpCallResponseSetDynamicSize
-    HCHttpCallResponseAddDynamicBytesWritten
-    HCHttpCallResponseGetDynamicBytesWritten
     HCHttpCallSetContext
     HCHttpCallSetTracing
-    HCHttpDisableAssertsForSSLValidationInDevSandboxes
     HCInitialize
     HCIsInitialized
     HCMemGetFunctions
@@ -83,10 +83,8 @@ EXPORTS
     HCMockResponseSetStatusCode
     HCMockSetMockMatchedCallback
     HCRemoveCallRoutedHandler
-    HCRemoveWebSocketRoutedHandler
     HCSetGlobalProxy
     HCSetHttpCallPerformFunction
-    HCSetWebSocketFunctions
     HCSettingsGetTraceLevel
     HCSettingsSetTraceLevel
     HCTraceCleanup
@@ -98,34 +96,5 @@ EXPORTS
     HCTraceSetEtwEnabled
     HCTraceSetPlatformCallbacks
     HCTraceSetTraceToDebugger
-    HCWebSocketCloseHandle
-    HCWebSocketConnectAsync
-    HCWebSocketCreate
-    HCWebSocketDisconnect
-    HCWebSocketDisconnectWithStatus
-    HCWebSocketDuplicateHandle
-    HCWebSocketGetBinaryMessageFragmentEventFunction
-    HCWebSocketGetEventFunctions
-    HCWebSocketGetHeader
-    HCWebSocketGetHeaderAtIndex
-    HCWebSocketGetNumHeaders
-    HCWebSocketGetProxyUri
-    HCWebSocketGetResponseHeader
-    HCWebSocketGetResponseHeaderAtIndex
-    HCWebSocketGetNumResponseHeaders
-    HCWebSocketSendBinaryMessageAsync
-    HCWebSocketSendMessageAsync
-    HCWebSocketSetBinaryMessageFragmentEventFunction
-    HCWebSocketSetOptions
-    HCWebSocketSetHeader
-    HCWebSocketSetMaxReceiveBufferSize
-    HCWebSocketSetProxyUri
     HCWinHttpResume
     HCWinHttpSuspend
-    HCHttpCallResponseSetGzipCompressed
-    HCHttpCallRequestSetProgressReportFunction
-    HCWebSocketGetPingInterval
-    HCWebSocketSetPingInterval
-    HCHttpCallRequestGetMaxReceiveBufferSize
-    HCHttpCallRequestSetMaxReceiveBufferSize
-    

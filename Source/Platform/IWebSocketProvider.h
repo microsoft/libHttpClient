@@ -39,7 +39,30 @@ public:
         HCWebsocketHandle websocketHandle,
         HCWebSocketCloseStatus closeStatus
     ) noexcept = 0;
+
+    virtual HRESULT OptionsResult(HCWebSocketOptions options) const noexcept
+    {
+        UNREFERENCED_PARAMETER(options);
+        return E_NOT_SUPPORTED;
+    }
 };
+
+class IProviderLifecycle
+{
+public:
+    IProviderLifecycle() = default;
+    IProviderLifecycle(IProviderLifecycle const&) = delete;
+    IProviderLifecycle& operator=(IProviderLifecycle const&) = delete;
+    virtual ~IProviderLifecycle() = default;
+
+    virtual void OnSuspending() noexcept = 0;
+    virtual void OnResuming() noexcept = 0;
+};
+
+inline IProviderLifecycle* GetProviderLifecycle(IWebSocketProvider* provider) noexcept
+{
+    return dynamic_cast<IProviderLifecycle*>(provider);
+}
 #endif // !HC_NOWEBSOCKETS
 
 NAMESPACE_XBOX_HTTP_CLIENT_END

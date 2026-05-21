@@ -39,8 +39,7 @@ STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
 try
 {
     RETURN_HR_IF(E_INVALIDARG, !handle);
-    handle->SetBinaryMessageFragmentEventFunction(binaryMessageFragmentFunc);
-    return S_OK;
+    return handle->SetBinaryMessageFragmentEventFunction(binaryMessageFragmentFunc);
 }
 CATCH_RETURN()
 
@@ -88,6 +87,19 @@ try
     return handle->websocket->SetPingInterval(pingIntervalSeconds);
 }
 CATCH_RETURN()
+
+#if HC_PLATFORM != HC_PLATFORM_ANDROID
+STDAPI HCWebSocketSetOptions(
+    _In_ HCWebsocketHandle handle,
+    _In_ HCWebSocketOptions options
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle);
+    return handle->websocket->SetOptions(options);
+}
+CATCH_RETURN()
+#endif
 
 STDAPI HCWebSocketConnectAsync(
     _In_z_ const char* uri,
@@ -141,6 +153,18 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCWebSocketDisconnectWithStatus(
+    _In_ HCWebsocketHandle handle,
+    _In_ HCWebSocketCloseStatus closeStatus
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle);
+    return handle->websocket->Disconnect(closeStatus);
+}
+CATCH_RETURN()
+
+#if HC_PLATFORM != HC_PLATFORM_ANDROID
 STDAPI HCWebSocketSetMaxReceiveBufferSize(
     _In_ HCWebsocketHandle handle,
     _In_ size_t bufferSizeInBytes
@@ -151,6 +175,7 @@ try
     return handle->websocket->SetMaxReceiveBufferSize(bufferSizeInBytes);
 }
 CATCH_RETURN()
+#endif
 
 STDAPI_(HCWebsocketHandle) HCWebSocketDuplicateHandle(
     _In_ HCWebsocketHandle handle
@@ -292,6 +317,43 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCWebSocketGetResponseHeader(
+    _In_ HCWebsocketHandle handle,
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle || !headerName || !headerValue);
+    return handle->websocket->GetResponseHeader(headerName, headerValue);
+}
+CATCH_RETURN()
+
+STDAPI HCWebSocketGetNumResponseHeaders(
+    _In_ HCWebsocketHandle handle,
+    _Out_ uint32_t* numHeaders
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle || !numHeaders);
+    *numHeaders = handle->websocket->GetNumResponseHeaders();
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI HCWebSocketGetResponseHeaderAtIndex(
+    _In_ HCWebsocketHandle handle,
+    _In_ uint32_t headerIndex,
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle || !headerName || !headerValue);
+    return handle->websocket->GetResponseHeaderAtIndex(headerIndex, headerName, headerValue);
+}
+CATCH_RETURN()
+
 STDAPI HCWebSocketGetPingInterval(
     _In_ HCWebsocketHandle handle,
     _Out_ uint32_t* pingIntervalSeconds
@@ -361,7 +423,7 @@ CATCH_RETURN()
 
 STDAPI HCGetWebSocketConnectResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
 ) noexcept
 try
 {
@@ -377,7 +439,7 @@ CATCH_RETURN()
 
 STDAPI HCGetWebSocketSendMessageResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
 ) noexcept
 try
 {

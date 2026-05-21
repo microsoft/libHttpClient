@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}</ProjectGuid>
+    <ProjectGuid>{F5D76018-3E61-4C5E-9C26-6A49A9C24E73}</ProjectGuid>
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -21,8 +21,8 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;ASIO_STANDALONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp;$(HCRoot)\External\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;ASIO_STANDALONE;HC_ENABLE_WSS_CERT_STORE_TESTS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp;$(HCRoot)\External\boost-wintls\include;$(HCRoot)\External\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -37,11 +37,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
     </ClCompile>
+    <Link>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <OptimizeReferences>false</OptimizeReferences>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="WebSocketEchoServer.cpp" />
+    <ClCompile Include="WebSocketCompressionTests.cpp" />
     <ClCompile Include="$(HCRoot)\External\zlib\adler32.c">
       <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
@@ -69,3 +72,4 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
+

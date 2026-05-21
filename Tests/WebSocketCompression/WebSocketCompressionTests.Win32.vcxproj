@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{267629EF-20A2-4FFB-8DC8-A8534E98FCEB}</ProjectGuid>
+    <ProjectGuid>{4F1D3BB2-0D96-4B1C-9E0D-8E3E20D856B1}</ProjectGuid>
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -37,11 +37,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
     </ClCompile>
+    <Link>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <OptimizeReferences>false</OptimizeReferences>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="WebSocketEchoServer.cpp" />
+    <ClCompile Include="WebSocketCompressionTests.cpp" />
     <ClCompile Include="$(HCRoot)\External\zlib\adler32.c">
       <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>

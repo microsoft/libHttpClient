@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "hcwebsocket.h"
+#include "websocket_options.h"
 
 #ifndef HC_NOWEBSOCKETS
 
@@ -64,9 +65,16 @@ xbox::httpclient::ObserverPtr HC_WEBSOCKET_OBSERVER::Initialize(
     return observer;
 }
 
-void HC_WEBSOCKET_OBSERVER::SetBinaryMessageFragmentEventFunction(HCWebSocketBinaryMessageFragmentFunction binaryFragmentFunc)
+HRESULT HC_WEBSOCKET_OBSERVER::SetBinaryMessageFragmentEventFunction(HCWebSocketBinaryMessageFragmentFunction binaryFragmentFunc) noexcept
 {
+    RETURN_HR_IF(E_NOT_SUPPORTED, binaryFragmentFunc != nullptr && websocket->UsesDeterministicSemantics());
     m_binaryFragmentFunc = binaryFragmentFunc;
+    return S_OK;
+}
+
+bool HC_WEBSOCKET_OBSERVER::HasBinaryMessageFragmentEventFunction() const noexcept
+{
+    return m_binaryFragmentFunc != nullptr;
 }
 
 void CALLBACK HC_WEBSOCKET_OBSERVER::MessageFunc(HCWebsocketHandle internalHandle, const char* message, void* context)
@@ -212,13 +220,14 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
     {
         assert(context->observer);
         auto& ws{ context->observer->websocket };
-        std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
+        std::unique_lock<DefaultUnnamedMutex> lock{ ws->m_stateMutex };
 
         RETURN_HR_IF(E_UNEXPECTED, ws->m_state != State::Initial);
+        ws->ClearResponseHeadersLockHeld();
 
-        XTaskQueuePortHandle workPort{ nullptr };
-        XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort);
-        XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue);
+        RETURN_IF_FAILED(XTaskQueueDuplicateHandle(
+            data->async->queue,
+            &context->internalAsyncBlock.queue));
 
         ws->m_state = State::Connecting;
         lock.unlock();
@@ -259,7 +268,8 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     // We can be put into the Disconnected state if a spontaneous error occurs between the connection process completing and this callback being invoked.
     // We need to be able to handle that scenario here.
     HRESULT hr = HCGetWebSocketConnectResult(&context->internalAsyncBlock, &context->result);
-    std::unique_lock<std::mutex> lock{ ws->m_stateMutex };
+
+    std::unique_lock<DefaultUnnamedMutex> lock{ ws->m_stateMutex };
     const bool bIsDisconnected = (ws->m_state == State::Disconnected);
     if (bIsDisconnected && !FAILED(hr))
     {
@@ -279,6 +289,7 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     }
     else
     {
+        // Preserve cached response headers until handle close so failed upgrade diagnostics remain queryable.
         ws->m_state = State::Disconnected;
     }
     lock.unlock();
@@ -329,9 +340,14 @@ HRESULT WebSocket::SendBinaryAsync(
 
 HRESULT WebSocket::Disconnect()
 {
+    return Disconnect(HCWebSocketCloseStatus::Normal);
+}
+
+HRESULT WebSocket::Disconnect(HCWebSocketCloseStatus closeStatus)
+{
     RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
 
-    std::unique_lock<std::mutex> lock{ m_stateMutex };
+    std::unique_lock<DefaultUnnamedMutex> lock{ m_stateMutex };
     RETURN_HR_IF(S_OK, m_state == State::Disconnecting);
     RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
     
@@ -340,7 +356,7 @@ HRESULT WebSocket::Disconnect()
 
     try
     {
-        return m_provider.Disconnect(m_providerContext->observer.get(), HCWebSocketCloseStatus::Normal);
+        return m_provider.Disconnect(m_providerContext->observer.get(), closeStatus);
     }
     catch (...)
     {
@@ -364,6 +380,58 @@ const HttpHeaders& WebSocket::Headers() const noexcept
     return m_connectHeaders;
 }
 
+HRESULT WebSocket::GetResponseHeader(
+    _In_z_ const char* headerName,
+    _Out_ const char** headerValue
+) const noexcept
+{
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+
+    auto it = m_connectResponseHeaders.find(headerName);
+    if (it != m_connectResponseHeaders.end())
+    {
+        *headerValue = it->second.c_str();
+    }
+    else
+    {
+        *headerValue = nullptr;
+    }
+
+    return S_OK;
+}
+
+uint32_t WebSocket::GetNumResponseHeaders() const noexcept
+{
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    return static_cast<uint32_t>(m_connectResponseHeaders.size());
+}
+
+HRESULT WebSocket::GetResponseHeaderAtIndex(
+    _In_ uint32_t headerIndex,
+    _Out_ const char** headerName,
+    _Out_ const char** headerValue
+) const noexcept
+{
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+
+    uint32_t index = 0;
+    for (auto it = m_connectResponseHeaders.cbegin(); it != m_connectResponseHeaders.cend(); ++it)
+    {
+        if (index == headerIndex)
+        {
+            *headerName = it->first.c_str();
+            *headerValue = it->second.c_str();
+            return S_OK;
+        }
+
+        ++index;
+    }
+
+    *headerName = nullptr;
+    *headerValue = nullptr;
+    return E_INVALIDARG;
+}
+
 const http_internal_string& WebSocket::ProxyUri() const noexcept
 {
     return m_proxyUri;
@@ -374,14 +442,46 @@ const bool WebSocket::ProxyDecryptsHttps() const noexcept
     return m_allowProxyToDecryptHttps;
 }
 
+HCWebSocketOptions WebSocket::Options() const noexcept
+{
+    return m_options;
+}
+
 size_t WebSocket::MaxReceiveBufferSize() const noexcept
 {
     return m_maxReceiveBufferSize;
 }
 
+size_t WebSocket::DeterministicMaxReceiveBufferSize() const noexcept
+{
+    return m_maxReceiveBufferSizeExplicitlySet ?
+        m_maxReceiveBufferSize :
+        WEBSOCKET_RECVBUFFER_MAXSIZE_DETERMINISTIC_DEFAULT;
+}
+
+bool WebSocket::MaxReceiveBufferSizeExplicitlySet() const noexcept
+{
+    return m_maxReceiveBufferSizeExplicitlySet;
+}
+
 uint32_t WebSocket::PingInterval() const noexcept
 {
     return m_pingInterval;
+}
+
+bool WebSocket::OptionsExplicitlySet() const noexcept
+{
+    return m_optionsExplicitlySet;
+}
+
+bool WebSocket::UsesLegacySemantics() const noexcept
+{
+    return !m_optionsExplicitlySet || RequestsLegacyWebSocketSemantics(m_options);
+}
+
+bool WebSocket::UsesDeterministicSemantics() const noexcept
+{
+    return m_optionsExplicitlySet && !RequestsLegacyWebSocketSemantics(m_options);
 }
 
 HRESULT WebSocket::SetHeader(
@@ -412,21 +512,102 @@ HRESULT WebSocket::SetProxyDecryptsHttps(
     {
         return E_UNEXPECTED;
     }
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
     m_allowProxyToDecryptHttps = allowProxyToDecryptHttps;
     return S_OK;
 }
 
 HRESULT WebSocket::SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept
 {
+    RETURN_HR_IF(E_INVALIDARG, maxReceiveBufferSizeBytes == 0);
+    RETURN_HR_IF(E_INVALIDARG, maxReceiveBufferSizeBytes > static_cast<size_t>((std::numeric_limits<uint32_t>::max)()));
+
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
+
     m_maxReceiveBufferSize = maxReceiveBufferSizeBytes;
+    m_maxReceiveBufferSizeExplicitlySet = true;
     return S_OK;
 }
 
 HRESULT WebSocket::SetPingInterval(uint32_t pingInterval) noexcept
 {
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
+
     m_pingInterval = pingInterval;
     return S_OK;
 }
+
+HRESULT WebSocket::SetOptions(HCWebSocketOptions options) noexcept
+{
+    RETURN_HR_IF(E_INVALIDARG, HasUnsupportedWebSocketOptions(options));
+    RETURN_HR_IF(
+        E_INVALIDARG,
+        RequestsLegacyWebSocketSemantics(options) &&
+            options != HCWebSocketOptions::LegacySemantics);
+    RETURN_HR_IF(
+        E_INVALIDARG,
+        HasNoContextTakeoverWebSocketOptions(options) && !RequestsWebSocketCompression(options));
+
+    // Check fragment handlers before acquiring m_stateMutex to avoid nesting
+    // m_stateMutex -> m_eventCallbacksMutex (which HasBinaryMessageFragmentHandlers acquires).
+    // Safe because SetOptions is only valid in State::Initial, before callbacks can fire.
+    bool const hasBinaryFragmentHandlers = HasBinaryMessageFragmentHandlers();
+
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
+    if (RequestsLegacyWebSocketSemantics(options))
+    {
+        m_options = options;
+        m_optionsExplicitlySet = true;
+        return S_OK;
+    }
+
+    RETURN_HR_IF(E_NOT_SUPPORTED, hasBinaryFragmentHandlers);
+
+    HRESULT hr = m_provider.OptionsResult(options);
+    RETURN_IF_FAILED(hr);
+
+    m_options = options;
+    m_optionsExplicitlySet = true;
+    return hr;
+}
+
+bool WebSocket::HasBinaryMessageFragmentHandlers() const noexcept
+{
+    std::lock_guard<std::recursive_mutex> lock{ m_eventCallbacksMutex };
+    for (auto const& pair : m_eventCallbacks)
+    {
+        auto observer = static_cast<HC_WEBSOCKET_OBSERVER*>(pair.second.context);
+        if (observer != nullptr && observer->HasBinaryMessageFragmentEventFunction())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void WebSocket::ClearResponseHeadersLockHeld() noexcept
+{
+    m_connectResponseHeaders.clear();
+}
+
+void WebSocket::ClearResponseHeaders() noexcept
+{
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    ClearResponseHeadersLockHeld();
+}
+
+HRESULT WebSocket::SetResponseHeaders(HttpHeaders&& headers) noexcept
+try
+{
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    m_connectResponseHeaders = std::move(headers);
+    return S_OK;
+}
+CATCH_RETURN()
 
 void CALLBACK WebSocket::MessageFunc(
     HCWebsocketHandle handle,
@@ -534,7 +715,7 @@ void CALLBACK WebSocket::CloseFunc(
 
     auto websocket{ handle->websocket };
 
-    std::unique_lock<std::mutex> stateLock{ websocket->m_stateMutex };
+    std::unique_lock<DefaultUnnamedMutex> stateLock{ websocket->m_stateMutex };
     if (!websocket->m_providerContext)
     {
         // It's possible for our websocket to get closed before we finish connecting. m_providerContext only gets populated when the connection process is 100% completed.
