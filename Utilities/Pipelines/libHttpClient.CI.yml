@@ -96,6 +96,22 @@ jobs:
   # iOS
   ####################
 
+  - job: iOSCMakeBuild
+    displayName: libHttpClient iOS CMake Build
+    pool:
+      vmImage: macOS-15
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        Debug:
+          Configuration: Debug
+        Release:
+          Configuration: Release
+    steps:
+      - template: Tasks/ios-cmake-build.yml
+        parameters:
+          configuration: $(Configuration)
+
   - job: iOSBuild
     displayName: libHttpClient iOS Build
     pool:
@@ -109,6 +125,22 @@ jobs:
           Configuration: Release
     steps:
       - template: Tasks/ios-build.yml
+        parameters:
+          configuration: $(Configuration)
+
+  - job: macOSBuild
+    displayName: libHttpClient macOS Build
+    pool:
+      vmImage: macOS-15
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        Debug:
+          Configuration: Debug
+        Release:
+          Configuration: Release
+    steps:
+      - template: Tasks/macos-build.yml
         parameters:
           configuration: $(Configuration)
 
