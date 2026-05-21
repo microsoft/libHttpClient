@@ -13,7 +13,7 @@
 - (void)timerFireMethod:(NSTimer*)timer
 {
     auto value = (NSValue*)timer.userInfo;
-    auto impl = static_cast<WaitTimerImpl*>(value.pointerValue);
+    auto impl = static_cast<OS::WaitTimerImpl*>(value.pointerValue);
     impl->TimerFired();
 }
 
