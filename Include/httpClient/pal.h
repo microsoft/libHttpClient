@@ -375,6 +375,10 @@ typedef struct _LIST_ENTRY {
 #define _Deref_out_opt_
 #endif
 
+#ifndef _Writable_elements_
+#define _Writable_elements_(size)
+#endif
+
 #ifndef __analysis_assume
 #define __analysis_assume(condition)
 #endif

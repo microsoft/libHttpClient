@@ -83,6 +83,7 @@ struct ITaskQueuePort: IApi
     virtual void __stdcall SuspendPort() = 0;
     virtual void __stdcall ResumePort() = 0;
 
+    virtual void __stdcall SubmitPendingCallbacks() = 0;
 };
 
 // The status of a port on the queue. This status is used in

@@ -45,10 +45,24 @@ STDAPI_(void) XTaskQueueResumeTermination(
 /// can hook into its behavior. Some race conditions are very difficult to get
 /// to happen naturally so sometimes a hook is needed. A pointer to this
 /// structure will be stored on the task queue. It is up to the test to ensure
-/// the structure lifetime exceeds that of the task queue under test. 
+/// the structure lifetime exceeds that of the task queue under test.
 /// </summary>
 struct XTaskQueueTestHooks
 {
+    virtual void PendingEntriesRemovedDuringTermination(
+        XTaskQueuePort port)
+    {
+        UNREFERENCED_PARAMETER(port);
+    }
+
+    virtual void NoNextPendingCallbackFound(
+        XTaskQueuePort port,
+        uint64_t dueTime)
+    {
+        UNREFERENCED_PARAMETER(port);
+        UNREFERENCED_PARAMETER(dueTime);
+    }
+
     virtual void NextPendingCallbackScheduled(
         XTaskQueuePort port,
         uint64_t lastDueTime,
@@ -66,6 +80,15 @@ struct XTaskQueueTestHooks
 STDAPI XTaskQueueSetTestHooks(
     _In_ XTaskQueueHandle queue,
     _In_ XTaskQueueTestHooks* hooks
+    ) noexcept;
+
+/// <summary>
+/// Submits any pending delayed callbacks that are due to run. This is
+/// intended for use in unit tests.
+/// </summary>
+STDAPI XTaskQueueSubmitPendingCallbacks(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port
     ) noexcept;
 
 //----------------------------------------------------------------//
