@@ -903,6 +903,14 @@ STDAPI HCHttpCallResponseGetHeaderAtIndex(
 /// <summary>
 /// A callback invoked every time a WebSocket receives an incoming message
 /// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked on a
+/// provider-managed or otherwise implementation-defined thread.
+///
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="incomingBodyString">UTF-8 encoded body of the incoming message as a string value, only if the message type is UTF-8.</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
@@ -916,6 +924,14 @@ typedef void
 /// <summary>
 /// A callback invoked every time a WebSocket receives an incoming binary message
 /// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked on a
+/// provider-managed or otherwise implementation-defined thread.
+///
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="incomingBodyPayload">Binary message payload.</param>
 /// <param name="incomingBodyPayloadSize">Size of the payload in bytes.</param>
@@ -934,14 +950,22 @@ typedef void
 ///
 /// The callback receives raw bytes. In legacy Win32 / GDK behavior, oversized UTF-8 payloads use
 /// this same fragment path.
+/// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked on a
+/// provider-managed or otherwise implementation-defined thread.
 ///
-/// IMPORTANT: If you expect incoming payloads larger than the receive buffer, set this callback or
-/// raise the receive buffer with HCWebSocketSetMaxReceiveBufferSize(). Without this callback,
-/// oversized payloads are not surfaced through the public whole-message callbacks.
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+///
+/// If you expect incoming payloads larger than the receive buffer, set this callback or raise the
+/// receive buffer with HCWebSocketSetMaxReceiveBufferSize(). Without this callback, oversized
+/// payloads are not surfaced through the public whole-message callbacks.
 ///
 /// Typical usage: Accumulate fragments in a buffer until isLastFragment is true, then process the
 /// complete payload.
-/// </summary>
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket that this message was sent to</param>
 /// <param name="payloadBytes">Binary message fragment payload.</param>
 /// <param name="payloadSize">Size of this fragment in bytes.</param>
@@ -959,6 +983,14 @@ typedef void
 /// <summary>
 /// A callback invoked when a WebSocket is closed
 /// </summary>
+/// <remarks>
+/// This callback is not guaranteed to be dispatched through the XTaskQueue associated with
+/// HCWebSocketConnectAsync() or any XTaskQueue completion port. It may be invoked when the close
+/// event is observed on a provider-managed or otherwise implementation-defined thread.
+///
+/// Handlers are responsible for any required thread safety or marshalling to an execution context
+/// of their choosing.
+/// </remarks>
 /// <param name="websocket">Handle to the WebSocket</param>
 /// <param name="closeStatus">The status of why the WebSocket was closed</param>
 /// <param name="functionContext">Client context to pass to callback function.</param>
