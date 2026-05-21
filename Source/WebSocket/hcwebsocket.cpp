@@ -289,7 +289,7 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     }
     else
     {
-        ws->ClearResponseHeadersLockHeld();
+        // Preserve cached response headers until handle close so failed upgrade diagnostics remain queryable.
         ws->m_state = State::Disconnected;
     }
     lock.unlock();

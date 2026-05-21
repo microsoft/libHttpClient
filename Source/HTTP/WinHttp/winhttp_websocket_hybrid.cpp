@@ -7,6 +7,36 @@
 #include "WebSocket/websocket_options.h"
 #include "WebSocket/Websocketpp/websocketpp_websocket.h"
 
+namespace
+{
+
+void TraceUnexpectedActiveProvider(char const* operation, HCWebsocketHandle websocketHandle) noexcept
+{
+    if (websocketHandle == nullptr)
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "[Hybrid] %s called with null websocket handle", operation);
+        return;
+    }
+
+    if (!websocketHandle->websocket)
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "[Hybrid] %s called with handle missing WebSocket state", operation);
+        return;
+    }
+
+    auto const id = TO_ULL(websocketHandle->websocket->id);
+    auto const& impl = websocketHandle->websocket->impl;
+    if (!impl)
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "[Hybrid] %s [ID %llu] called before an active provider implementation was attached", operation, id);
+        return;
+    }
+
+    HC_TRACE_ERROR(WEBSOCKET, "[Hybrid] %s [ID %llu] encountered unknown active provider implementation", operation, id);
+}
+
+}
+
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 WinHttpHybrid_WebSocketProvider::WinHttpHybrid_WebSocketProvider(std::shared_ptr<xbox::httpclient::WinHttpProvider> provider) :
@@ -32,7 +62,11 @@ HRESULT WinHttpHybrid_WebSocketProvider::SendAsync(
 ) noexcept
 {
     auto provider = ActiveProvider(websocketHandle);
-    RETURN_HR_IF(E_UNEXPECTED, !provider);
+    if (!provider)
+    {
+        TraceUnexpectedActiveProvider("SendAsync", websocketHandle);
+        return E_UNEXPECTED;
+    }
     return provider->SendAsync(websocketHandle, message, async);
 }
 
@@ -44,7 +78,11 @@ HRESULT WinHttpHybrid_WebSocketProvider::SendBinaryAsync(
 ) noexcept
 {
     auto provider = ActiveProvider(websocketHandle);
-    RETURN_HR_IF(E_UNEXPECTED, !provider);
+    if (!provider)
+    {
+        TraceUnexpectedActiveProvider("SendBinaryAsync", websocketHandle);
+        return E_UNEXPECTED;
+    }
     return provider->SendBinaryAsync(websocketHandle, payloadBytes, payloadSize, asyncBlock);
 }
 
@@ -54,7 +92,11 @@ HRESULT WinHttpHybrid_WebSocketProvider::Disconnect(
 ) noexcept
 {
     auto provider = ActiveProvider(websocketHandle);
-    RETURN_HR_IF(E_UNEXPECTED, !provider);
+    if (!provider)
+    {
+        TraceUnexpectedActiveProvider("Disconnect", websocketHandle);
+        return E_UNEXPECTED;
+    }
     return provider->Disconnect(websocketHandle, closeStatus);
 }
 

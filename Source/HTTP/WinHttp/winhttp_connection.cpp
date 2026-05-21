@@ -1853,43 +1853,65 @@ void WinHttpConnection::callback_websocket_status_read_complete(
 HRESULT WinHttpConnection::WebSocketReadAsync()
 {
 #ifndef HC_NOWEBSOCKETS
-    win32_cs_autolock autoCriticalSection(&m_lock);
-    auto const receiveBufferLimit = EffectiveReceiveBufferLimit();
-
-    if (m_websocketReceiveBuffer.GetBuffer() == nullptr)
+    uint8_t* bufferPtr = nullptr;
+    uint64_t bufferSize = 0;
+    size_t receiveBufferLimit = 0;
+    size_t bufferByteCount = 0;
     {
-        // Initialize buffer with default size of WINHTTP_WEBSOCKET_RECVBUFFER_SIZE
-        size_t initialSize = (std::min<size_t>)(WINHTTP_WEBSOCKET_RECVBUFFER_INITIAL_SIZE, receiveBufferLimit);
-        if (initialSize == 0)
+        win32_cs_autolock autoCriticalSection(&m_lock);
+        receiveBufferLimit = EffectiveReceiveBufferLimit();
+
+        if (m_websocketReceiveBuffer.GetBuffer() == nullptr)
         {
-            initialSize = 1;
+            // Initialize buffer with default size of WINHTTP_WEBSOCKET_RECVBUFFER_SIZE
+            size_t initialSize = (std::min<size_t>)(WINHTTP_WEBSOCKET_RECVBUFFER_INITIAL_SIZE, receiveBufferLimit);
+            if (initialSize == 0)
+            {
+                initialSize = 1;
+            }
+
+            RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)initialSize));
+        }
+        else if (m_websocketReceiveBuffer.GetRemainingCapacity() == 0)
+        {
+            // Expand buffer
+            size_t newSize = (size_t)m_websocketReceiveBuffer.GetBufferByteCount() * 2;
+            if (newSize > receiveBufferLimit)
+            {
+                newSize = receiveBufferLimit;
+            }
+
+            RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)newSize));
         }
 
-        RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)initialSize));
-    }
-    else if (m_websocketReceiveBuffer.GetRemainingCapacity() == 0)
-    {
-        // Expand buffer
-        size_t newSize = (size_t)m_websocketReceiveBuffer.GetBufferByteCount() * 2;
-        if (newSize > receiveBufferLimit)
+        assert(m_winHttpWebSocketExports.receive);
+
+        bufferPtr = m_websocketReceiveBuffer.GetNextWriteLocation();
+        bufferSize = m_websocketReceiveBuffer.GetRemainingCapacity();
+        bufferByteCount = m_websocketReceiveBuffer.GetBufferByteCount();
+        if (bufferSize != 0)
         {
-            newSize = receiveBufferLimit;
+            DWORD dwError = ERROR_SUCCESS;
+            DWORD bytesRead{ 0 }; // not used but required.  bytes read comes from FinishWriteData(wsStatus->dwBytesTransferred)
+            UINT bufType{};
+            dwError = m_winHttpWebSocketExports.receive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
+            if (dwError)
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
+            }
         }
-
-        RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)newSize));
     }
 
-    assert(m_winHttpWebSocketExports.receive);
-
-    uint8_t* bufferPtr = m_websocketReceiveBuffer.GetNextWriteLocation();
-    uint64_t bufferSize = m_websocketReceiveBuffer.GetRemainingCapacity();
-    DWORD dwError = ERROR_SUCCESS;
-    DWORD bytesRead{ 0 }; // not used but required.  bytes read comes from FinishWriteData(wsStatus->dwBytesTransferred)
-    UINT bufType{};
-    dwError = m_winHttpWebSocketExports.receive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
-    if (dwError)
+    if (bufferSize == 0)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(
+            WEBSOCKET,
+            "[WinHttp] websocket_read_message [ID %llu] refusing zero-capacity receive buffer (bufferBytes=%llu, receiveLimit=%llu)",
+            TO_ULL(HCHttpCallGetId(m_call)),
+            TO_ULL(bufferByteCount),
+            TO_ULL(receiveBufferLimit));
+        StartWinHttpClose();
+        return E_UNEXPECTED;
     }
 
     return S_OK;

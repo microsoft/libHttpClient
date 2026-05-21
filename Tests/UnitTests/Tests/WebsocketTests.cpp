@@ -9,6 +9,7 @@
 #include "../global/global.h"
 #include "WebSocket/hcwebsocket.h"
 #include "../../Source/WebSocket/Websocketpp/websocketpp_websocket.h"
+#include <httpClient/httpClient.h>
 #include <httpClient/httpProvider.h>
 
 #pragma warning(disable:4389)
@@ -206,6 +207,56 @@ HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsyncAndClose(
                 ZeroMemory(result, sizeof(WebSocketCompletionResult));
                 result->errorCode = S_OK;
                 result->websocket = websocket;
+                return S_OK;
+            }
+            default:
+                return S_OK;
+            }
+        });
+}
+
+bool g_HCWebSocketConnectWithFailureHeaders_Called = false;
+HRESULT CALLBACK Test_Internal_HCWebSocketConnectAsyncFailsWithResponseHeaders(
+    _In_z_ PCSTR uri,
+    _In_z_ PCSTR subProtocol,
+    _In_ HCWebsocketHandle websocket,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* context,
+    _In_ HCPerformEnv env
+    )
+{
+    UNREFERENCED_PARAMETER(uri);
+    UNREFERENCED_PARAMETER(subProtocol);
+    UNREFERENCED_PARAMETER(context);
+    UNREFERENCED_PARAMETER(env);
+
+    return XAsyncBegin(asyncBlock, websocket, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            auto websocket = static_cast<HCWebsocketHandle>(data->context);
+
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+            {
+                g_HCWebSocketConnectWithFailureHeaders_Called = true;
+
+                HttpHeaders responseHeaders;
+                responseHeaders["failureHeader"] = "failureValue";
+                RETURN_IF_FAILED(websocket->websocket->SetResponseHeaders(std::move(responseHeaders)));
+
+                XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                return S_OK;
+            }
+            case XAsyncOp::GetResult:
+            {
+                RETURN_HR_IF(E_NOT_SUFFICIENT_BUFFER, data->bufferSize < sizeof(WebSocketCompletionResult));
+
+                auto result = static_cast<WebSocketCompletionResult*>(data->buffer);
+                ZeroMemory(result, sizeof(WebSocketCompletionResult));
+                result->websocket = websocket;
+                result->errorCode = E_ACCESSDENIED;
+                result->platformErrorCode = 1234;
                 return S_OK;
             }
             default:
@@ -696,6 +747,45 @@ public:
         VERIFY_ARE_EQUAL(E_UNEXPECTED, sendHr);
         VERIFY_ARE_EQUAL(E_UNEXPECTED, disconnectHr);
 #endif
+    }
+
+    DEFINE_TEST_CASE(TestFailedConnectPreservesResponseHeadersAndHandle)
+    {
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(Test_Internal_HCWebSocketConnectAsyncFailsWithResponseHeaders, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCWebsocketHandle websocket = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+        VERIFY_IS_NOT_NULL(websocket);
+
+        g_HCWebSocketConnectWithFailureHeaders_Called = false;
+        XAsyncBlock asyncBlock{};
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+        VERIFY_ARE_EQUAL(true, g_HCWebSocketConnectWithFailureHeaders_Called);
+
+        WebSocketCompletionResult firstResult{};
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketConnectResult(&asyncBlock, &firstResult));
+
+        VERIFY_IS_TRUE(websocket == firstResult.websocket);
+        VERIFY_ARE_EQUAL(E_ACCESSDENIED, firstResult.errorCode);
+        VERIFY_ARE_EQUAL(static_cast<uint32_t>(1234), firstResult.platformErrorCode);
+
+        uint32_t numHeaders = 0;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetNumResponseHeaders(firstResult.websocket, &numHeaders));
+        VERIFY_ARE_EQUAL(1u, numHeaders);
+
+        const CHAR* headerValue = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeader(firstResult.websocket, "failureHeader", &headerValue));
+        VERIFY_ARE_EQUAL_STR("failureValue", headerValue);
+
+        const CHAR* headerName = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetResponseHeaderAtIndex(websocket, 0, &headerName, &headerValue));
+        VERIFY_ARE_EQUAL_STR("failureHeader", headerName);
+        VERIFY_ARE_EQUAL_STR("failureValue", headerValue);
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+        HCCleanup();
     }
 
     DEFINE_TEST_CASE(TestDisconnectWithStatus)
