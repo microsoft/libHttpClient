@@ -1144,6 +1144,65 @@ STDAPI HCWebSocketSetHeader(
     ) noexcept;
 
 /// <summary>
+/// Get a response header for the completed WebSocket connect operation for a given header name.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerName">UTF-8 encoded response header name for the completed WebSocket connect operation.</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the completed WebSocket connect operation.
+/// Returns nullptr if the header doesn't exist.
+/// The memory for the returned string pointer remains valid for the life of the HCWebsocketHandle object until HCWebSocketCloseHandle() is called on it.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This can only be called after the WebSocket connect operation has completed.
+/// If the provider captured response headers for a refused or otherwise failed connection attempt,
+/// those headers remain queryable until HCWebSocketCloseHandle() is called.
+/// </remarks>
+STDAPI HCWebSocketGetResponseHeader(
+    _In_ HCWebsocketHandle websocket,
+    _In_z_ const char* headerName,
+    _Outptr_result_z_ const char** headerValue
+    ) noexcept;
+
+/// <summary>
+/// Gets the number of response headers cached for the completed WebSocket connect operation.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="numHeaders">The number of response headers cached for the completed WebSocket connect operation.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This can only be called after the WebSocket connect operation has completed.
+/// If the provider captured response headers for a refused or otherwise failed connection attempt,
+/// those headers remain queryable until HCWebSocketCloseHandle() is called.
+/// </remarks>
+STDAPI HCWebSocketGetNumResponseHeaders(
+    _In_ HCWebsocketHandle websocket,
+    _Out_ uint32_t* numHeaders
+    ) noexcept;
+
+/// <summary>
+/// Gets the response header at a specific zero based index for the completed WebSocket connect operation.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="headerIndex">Specific zero based index of the response header.</param>
+/// <param name="headerName">UTF-8 encoded response header name for the completed WebSocket connect operation.
+/// The memory for the returned string pointer remains valid for the life of the HCWebsocketHandle object until HCWebSocketCloseHandle() is called on it.</param>
+/// <param name="headerValue">UTF-8 encoded response header value for the completed WebSocket connect operation.
+/// The memory for the returned string pointer remains valid for the life of the HCWebsocketHandle object until HCWebSocketCloseHandle() is called on it.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// Use HCWebSocketGetNumResponseHeaders() to know how many response headers there are.
+/// This can only be called after the WebSocket connect operation has completed.
+/// If the provider captured response headers for a refused or otherwise failed connection attempt,
+/// those headers remain queryable until HCWebSocketCloseHandle() is called.
+/// </remarks>
+STDAPI HCWebSocketGetResponseHeaderAtIndex(
+    _In_ HCWebsocketHandle websocket,
+    _In_ uint32_t headerIndex,
+    _Outptr_result_z_ const char** headerName,
+    _Outptr_result_z_ const char** headerValue
+    ) noexcept;
+
+/// <summary>
 /// Set the ping interval for the WebSocket.
 /// <param name="websocket">The handle of the WebSocket.</param>
 /// <param name="pingIntervalSeconds">The interval at which this websocket should send keepalive frames, in seconds.</param>
@@ -1212,17 +1271,22 @@ STDAPI HCWebSocketSetBinaryMessageFragmentEventFunction(
 #endif
 
 /// <summary>
-/// Used by HCWebSocketConnectAsync() and HCWebSocketSendMessageAsync().
+/// Used by HCWebSocketConnectAsync(), HCWebSocketSendMessageAsync(), and HCWebSocketSendBinaryMessageAsync().
 /// </summary>
 typedef struct WebSocketCompletionResult
 {
-    /// <summary>The handle of the HTTP call.</summary>
+    /// <summary>
+    /// The websocket handle associated with the operation.
+    /// Retrieving this result structure does not duplicate the handle or add a reference.
+    /// The caller remains responsible for closing the handle exactly once with HCWebSocketCloseHandle()
+    /// when finished with all operations related to this websocket.
+    /// </summary>
     HCWebsocketHandle websocket;
 
-    /// <summary>The result of the call. S_OK indicates success; failures return a descriptive HRESULT.</summary>
+    /// <summary>The result of the operation. S_OK indicates success; failures return a descriptive HRESULT.</summary>
     HRESULT errorCode;
 
-    /// <summary>The platform specific network error code of the call to be used for tracing / debugging.</summary>
+    /// <summary>The platform specific network error code of the operation to be used for tracing / debugging.</summary>
     uint32_t platformErrorCode;
 } WebSocketCompletionResult;
 
@@ -1256,9 +1320,13 @@ STDAPI HCWebSocketConnectAsync(
 /// <param name="asyncBlock">The XAsyncBlock that defines the async operation.</param>
 /// <param name="result">Pointer to the result payload.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
+/// <remarks>
+/// This result does not duplicate result->websocket or transfer ownership.
+/// Close that handle exactly once with HCWebSocketCloseHandle(), regardless of whether result->errorCode indicates success or failure.
+/// </remarks>
 STDAPI HCGetWebSocketConnectResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
     ) noexcept;
 
 /// <summary>
@@ -1305,10 +1373,10 @@ STDAPI HCWebSocketSendBinaryMessageAsync(
 /// </summary>
 /// <param name="asyncBlock">The XAsyncBlock that defines the async operation.</param>
 /// <param name="result">Pointer to the result payload.</param>
-/// <returns>Returns the duplicated handle.</returns>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 STDAPI HCGetWebSocketSendMessageResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
     ) noexcept;
 
 /// <summary>

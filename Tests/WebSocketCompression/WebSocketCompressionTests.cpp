@@ -15,7 +15,6 @@
 
 #include <httpClient/async.h>
 #include <httpClient/httpClient.h>
-#include <httpClient/httpProvider.h>
 #include <httpClient/trace.h>
 
 #include <cerrno>

@@ -423,7 +423,7 @@ CATCH_RETURN()
 
 STDAPI HCGetWebSocketConnectResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
 ) noexcept
 try
 {
@@ -439,7 +439,7 @@ CATCH_RETURN()
 
 STDAPI HCGetWebSocketSendMessageResult(
     _Inout_ XAsyncBlock* asyncBlock,
-    _In_ WebSocketCompletionResult* result
+    _Out_ WebSocketCompletionResult* result
 ) noexcept
 try
 {
