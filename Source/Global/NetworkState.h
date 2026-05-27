@@ -55,6 +55,8 @@ public: // Http
 #ifndef HC_NOWEBSOCKETS
 public: // WebSocket
     IWebSocketProvider& WebSocketProvider() noexcept;
+    void NotifyWebSocketSuspending() noexcept;
+    void NotifyWebSocketResuming() noexcept;
 
     Result<SharedPtr<WebSocket>> WebSocketCreate() noexcept;
 
@@ -68,7 +70,10 @@ public: // WebSocket
 
 private:
 #ifndef HC_NOWEBSOCKETS
-    NetworkState(UniquePtr<IHttpProvider> httpProvider, UniquePtr<IWebSocketProvider> webSocketProvider) noexcept;
+    NetworkState(
+        UniquePtr<IHttpProvider> httpProvider,
+        UniquePtr<IWebSocketProvider> webSocketProvider
+    ) noexcept;
 #else
     NetworkState(UniquePtr<IHttpProvider> httpProvider) noexcept;
 #endif

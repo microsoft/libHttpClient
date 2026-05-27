@@ -11,6 +11,7 @@
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XNetworking.h>
 #include <XGameRuntimeFeature.h>
+#include "XSystem.h"
 #include <winsock2.h>
 #include <iphlpapi.h>
 #endif
@@ -27,6 +28,72 @@ using namespace xbox::httpclient;
 #define SUB_PROTOCOL_HEADER "Sec-WebSocket-Protocol"
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+#ifndef HC_NOWEBSOCKETS
+namespace
+{
+// Note: this logic is intentionally duplicated from TryParseProxyUri in
+// websocketpp_websocket.cpp to keep compilation units independent.
+bool TryParseWebSocketProxyUri(
+    http_internal_string const& rawProxyUri,
+    Uri& proxyUri
+)
+{
+    proxyUri = Uri{ rawProxyUri };
+    if (proxyUri.IsValid())
+    {
+        return true;
+    }
+
+    if (rawProxyUri.find("://") == http_internal_string::npos)
+    {
+        proxyUri = Uri{ "http://" + rawProxyUri };
+    }
+
+    return proxyUri.IsValid();
+}
+
+HRESULT ApplyExplicitWebSocketProxy(
+    HINTERNET hRequest,
+    HCWebsocketHandle websocketHandle,
+    uint64_t callId
+)
+{
+    if (!websocketHandle || websocketHandle->websocket->ProxyUri().empty())
+    {
+        return S_OK;
+    }
+
+    Uri explicitProxyUri;
+    if (!TryParseWebSocketProxyUri(websocketHandle->websocket->ProxyUri(), explicitProxyUri))
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "Websocket [ID %llu]: explicit proxy URI was invalid", TO_ULL(websocketHandle->websocket->id));
+        return E_INVALIDARG;
+    }
+
+    if (!explicitProxyUri.UserInfo().empty())
+    {
+        HC_TRACE_WARNING(WEBSOCKET, "Websocket [ID %llu]: WinHTTP WebSocket proxy credentials are not pre-authenticated; continuing with the explicit proxy endpoint only", TO_ULL(websocketHandle->websocket->id));
+    }
+
+    auto proxyName = WinHttpProvider::BuildNamedProxyString(explicitProxyUri);
+    WINHTTP_PROXY_INFO proxyInfo{};
+    proxyInfo.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+    proxyInfo.lpszProxy = const_cast<LPWSTR>(proxyName.c_str());
+    proxyInfo.lpszProxyBypass = WINHTTP_NO_PROXY_BYPASS;
+
+    if (!WinHttpSetOption(hRequest, WINHTTP_OPTION_PROXY, &proxyInfo, sizeof(proxyInfo)))
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption(WINHTTP_OPTION_PROXY) errorcode %d", TO_ULL(callId), GetCurrentThreadId(), dwError);
+        return HRESULT_FROM_WIN32(dwError);
+    }
+
+    return S_OK;
+}
+
+}
+#endif
 
 WinHttpConnection::WinHttpConnection(
     HINTERNET hSession,
@@ -107,6 +174,16 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     HCCallHandle webSocketCall{};
     RETURN_IF_FAILED(HCHttpCallCreate(&webSocketCall));
     RETURN_IF_FAILED(HCHttpCallRequestSetUrl(webSocketCall, "GET", uri));
+
+    if (webSocket->websocket->ProxyDecryptsHttps())
+    {
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        if (XSystemGetDeviceType() == XSystemDeviceType::Pc)
+#endif
+        {
+            RETURN_IF_FAILED(HCHttpCallRequestSetSSLValidation(webSocketCall, false));
+        }
+    }
 
     auto initResult = WinHttpConnection::Initialize(hSession, webSocketCall, proxyType, std::move(securityInformation));
     if (FAILED(initResult.hr))
@@ -233,11 +310,21 @@ HRESULT WinHttpConnection::Initialize()
         }
 #endif
 
+#ifndef HC_NOWEBSOCKETS
+        bool const hasExplicitWebSocketProxy = m_websocketHandle && !m_websocketHandle->websocket->ProxyUri().empty();
+        if (hasExplicitWebSocketProxy)
+        {
+            RETURN_IF_FAILED(ApplyExplicitWebSocketProxy(m_hRequest, m_websocketHandle, HCHttpCallGetId(m_call)));
+        }
+#else
+        bool const hasExplicitWebSocketProxy = false;
+#endif
+
         // Note: maxReceiveBufferSize will be used later during WinHttpReadData calls
         // The deprecated WINHTTP_OPTION_READ_BUFFER_SIZE option has no effect and should not be used
 
 #if HC_PLATFORM != HC_PLATFORM_GDK
-        if (m_proxyType == proxy_type::autodiscover_proxy)
+        if (!hasExplicitWebSocketProxy && m_proxyType == proxy_type::autodiscover_proxy)
         {
             RETURN_IF_FAILED(set_autodiscover_proxy());
         }
@@ -943,6 +1030,34 @@ uint32_t WinHttpConnection::parse_status_code(
     return statusCode;
 }
 
+HRESULT WinHttpConnection::query_and_parse_headers(
+    _In_ HCCallHandle call,
+    _In_ HINTERNET hRequestHandle)
+{
+    DWORD headerBufferLength = 0;
+    RETURN_IF_FAILED(query_header_length(call, hRequestHandle, WINHTTP_QUERY_RAW_HEADERS_CRLF, &headerBufferLength));
+
+    http_internal_vector<unsigned char> headerRawBuffer;
+    headerRawBuffer.resize(headerBufferLength);
+    auto headerBuffer = reinterpret_cast<wchar_t*>(headerRawBuffer.data());
+    if (!WinHttpQueryHeaders(
+        hRequestHandle,
+        WINHTTP_QUERY_RAW_HEADERS_CRLF,
+        WINHTTP_HEADER_NAME_BY_INDEX,
+        headerBuffer,
+        &headerBufferLength,
+        WINHTTP_NO_HEADER_INDEX))
+    {
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", TO_ULL(HCHttpCallGetId(call)), GetCurrentThreadId(), dwError);
+        return HRESULT_FROM_WIN32(dwError);
+    }
+
+    call->responseHeaders.clear();
+    parse_headers_string(call, headerBuffer);
+    return S_OK;
+}
+
 
 void WinHttpConnection::parse_headers_string(
     _In_ HCCallHandle call,
@@ -976,35 +1091,14 @@ void WinHttpConnection::callback_status_headers_available(
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId() );
 
-    // First need to query to see what the headers size is.
-    DWORD headerBufferLength = 0;
-    HRESULT hr = query_header_length(pRequestContext->m_call, hRequestHandle, WINHTTP_QUERY_RAW_HEADERS_CRLF, &headerBufferLength);
+    HRESULT hr = query_and_parse_headers(pRequestContext->m_call, hRequestHandle);
     if (FAILED(hr))
     {
         pRequestContext->complete_task(E_FAIL, hr);
         return;
     }
 
-    // Now allocate buffer for headers and query for them.
-    http_internal_vector<unsigned char> header_raw_buffer;
-    header_raw_buffer.resize(headerBufferLength);
-    wchar_t* headerBuffer = reinterpret_cast<wchar_t*>(&header_raw_buffer[0]);
-    if (!WinHttpQueryHeaders(
-        hRequestHandle,
-        WINHTTP_QUERY_RAW_HEADERS_CRLF,
-        WINHTTP_HEADER_NAME_BY_INDEX,
-        headerBuffer,
-        &headerBufferLength,
-        WINHTTP_NO_HEADER_INDEX))
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpQueryHeaders errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
-        pRequestContext->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
-        return;
-    }
-
     parse_status_code(pRequestContext->m_call, hRequestHandle, pRequestContext);
-    parse_headers_string(pRequestContext->m_call, headerBuffer);
     read_next_response_chunk(pRequestContext, 0);
 }
 
@@ -1549,6 +1643,49 @@ void WinHttpConnection::StartWinHttpClose()
     // Flow continues from this point via WinHttp calling completion_callback
 }
 
+HRESULT WinHttpConnection::StartWebSocketClose(HCWebSocketCloseStatus closeStatus) noexcept
+{
+#ifndef HC_NOWEBSOCKETS
+    assert(m_winHttpWebSocketExports.close);
+
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+
+        if (m_state == ConnectionState::WebSocketClosing || m_state == ConnectionState::WinHttpClosing || m_state == ConnectionState::Closed)
+        {
+            return S_OK;
+        }
+
+        m_state = ConnectionState::WebSocketClosing;
+    }
+
+    DWORD dwError = m_winHttpWebSocketExports.close(m_hRequest, static_cast<USHORT>(closeStatus), nullptr, 0);
+    return HRESULT_FROM_WIN32(dwError);
+#else
+    UNREFERENCED_PARAMETER(closeStatus);
+    assert(false);
+    return E_FAIL;
+#endif
+}
+
+size_t WinHttpConnection::EffectiveReceiveBufferLimit() const noexcept
+{
+#ifndef HC_NOWEBSOCKETS
+    if (!m_websocketHandle || !m_websocketHandle->websocket)
+    {
+        return 0;
+    }
+
+    auto const& websocket = m_websocketHandle->websocket;
+    return websocket->UsesDeterministicSemantics() ?
+        websocket->DeterministicMaxReceiveBufferSize() :
+        websocket->MaxReceiveBufferSize();
+#else
+    assert(false);
+    return 0;
+#endif
+}
+
 void WinHttpConnection::WebSocketSendMessage(const WebSocketSendContext& sendContext)
 {
 #ifndef HC_NOWEBSOCKETS
@@ -1604,14 +1741,17 @@ void WinHttpConnection::on_websocket_disconnected(_In_ USHORT closeReason)
     void* functionContext = nullptr;
     HCWebSocketGetEventFunctions(m_websocketHandle, nullptr, nullptr, &disconnectFunc, &functionContext);
 
-    try
+    if (disconnectFunc)
     {
-        HCWebSocketCloseStatus closeStatus = static_cast<HCWebSocketCloseStatus>(closeReason);
-        disconnectFunc(m_websocketHandle, closeStatus, functionContext);
-    }
-    catch (...)
-    {
-        HC_TRACE_WARNING(HTTPCLIENT, "WinHttpConnection: Caught unhandled exception in client disconnect handler.");
+        try
+        {
+            HCWebSocketCloseStatus closeStatus = static_cast<HCWebSocketCloseStatus>(closeReason);
+            disconnectFunc(m_websocketHandle, closeStatus, functionContext);
+        }
+        catch (...)
+        {
+            HC_TRACE_WARNING(HTTPCLIENT, "WinHttpConnection: Caught unhandled exception in client disconnect handler.");
+        }
     }
 
     StartWinHttpClose();
@@ -1667,16 +1807,30 @@ void WinHttpConnection::callback_websocket_status_read_complete(
     else if (wsStatus->eBufferType == WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE || wsStatus->eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE)
     {
         bool readBufferFull{ false };
+        bool deterministicOverflow{ false };
         {
             win32_cs_autolock autoCriticalSection(&pRequestContext->m_lock);
             pRequestContext->m_websocketReceiveBuffer.FinishWriteData(wsStatus->dwBytesTransferred);
 
             // If the receive buffer is full & at max size, invoke client fragment handler with partial message
-            readBufferFull = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= pRequestContext->m_websocketHandle->websocket->MaxReceiveBufferSize();
+            auto const receiveBufferLimit = pRequestContext->EffectiveReceiveBufferLimit();
+            readBufferFull = pRequestContext->m_websocketReceiveBuffer.GetBufferByteCount() >= receiveBufferLimit;
+            deterministicOverflow = readBufferFull && pRequestContext->m_websocketHandle->websocket->UsesDeterministicSemantics();
         }
 
         if (readBufferFull)
         {
+            if (deterministicOverflow)
+            {
+                HRESULT closeHr = pRequestContext->StartWebSocketClose(HCWebSocketCloseStatus::TooLarge);
+                if (FAILED(closeHr))
+                {
+                    HC_TRACE_ERROR(WEBSOCKET, "[WinHttp] failed to close oversized deterministic message with TooLarge: hr=0x%0.8x", closeHr);
+                    pRequestContext->StartWinHttpClose();
+                }
+                return;
+            }
+
             // Treat all message fragments as binary as they may not be null terminated
             pRequestContext->WebSocketReadComplete(true, false);
         }
@@ -1699,36 +1853,65 @@ void WinHttpConnection::callback_websocket_status_read_complete(
 HRESULT WinHttpConnection::WebSocketReadAsync()
 {
 #ifndef HC_NOWEBSOCKETS
-    win32_cs_autolock autoCriticalSection(&m_lock);
+    uint8_t* bufferPtr = nullptr;
+    uint64_t bufferSize = 0;
+    size_t receiveBufferLimit = 0;
+    size_t bufferByteCount = 0;
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+        receiveBufferLimit = EffectiveReceiveBufferLimit();
 
-    if (m_websocketReceiveBuffer.GetBuffer() == nullptr)
-    {
-        // Initialize buffer with default size of WINHTTP_WEBSOCKET_RECVBUFFER_SIZE
-        RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize(WINHTTP_WEBSOCKET_RECVBUFFER_INITIAL_SIZE));
-    }
-    else if (m_websocketReceiveBuffer.GetRemainingCapacity() == 0)
-    {
-        // Expand buffer
-        size_t newSize = (size_t)m_websocketReceiveBuffer.GetBufferByteCount() * 2;
-        if (newSize > m_websocketHandle->websocket->MaxReceiveBufferSize())
+        if (m_websocketReceiveBuffer.GetBuffer() == nullptr)
         {
-            newSize = m_websocketHandle->websocket->MaxReceiveBufferSize();
+            // Initialize buffer with default size of WINHTTP_WEBSOCKET_RECVBUFFER_SIZE
+            size_t initialSize = (std::min<size_t>)(WINHTTP_WEBSOCKET_RECVBUFFER_INITIAL_SIZE, receiveBufferLimit);
+            if (initialSize == 0)
+            {
+                initialSize = 1;
+            }
+
+            RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)initialSize));
+        }
+        else if (m_websocketReceiveBuffer.GetRemainingCapacity() == 0)
+        {
+            // Expand buffer
+            size_t newSize = (size_t)m_websocketReceiveBuffer.GetBufferByteCount() * 2;
+            if (newSize > receiveBufferLimit)
+            {
+                newSize = receiveBufferLimit;
+            }
+
+            RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)newSize));
         }
 
-        RETURN_IF_FAILED(m_websocketReceiveBuffer.Resize((uint32_t)newSize));
+        assert(m_winHttpWebSocketExports.receive);
+
+        bufferPtr = m_websocketReceiveBuffer.GetNextWriteLocation();
+        bufferSize = m_websocketReceiveBuffer.GetRemainingCapacity();
+        bufferByteCount = m_websocketReceiveBuffer.GetBufferByteCount();
+        if (bufferSize != 0)
+        {
+            DWORD dwError = ERROR_SUCCESS;
+            DWORD bytesRead{ 0 }; // not used but required.  bytes read comes from FinishWriteData(wsStatus->dwBytesTransferred)
+            UINT bufType{};
+            dwError = m_winHttpWebSocketExports.receive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
+            if (dwError)
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
+            }
+        }
     }
 
-    assert(m_winHttpWebSocketExports.receive);
-
-    uint8_t* bufferPtr = m_websocketReceiveBuffer.GetNextWriteLocation();
-    uint64_t bufferSize = m_websocketReceiveBuffer.GetRemainingCapacity();
-    DWORD dwError = ERROR_SUCCESS;
-    DWORD bytesRead{ 0 }; // not used but required.  bytes read comes from FinishWriteData(wsStatus->dwBytesTransferred)
-    UINT bufType{};
-    dwError = m_winHttpWebSocketExports.receive(m_hRequest, bufferPtr, (DWORD)bufferSize, &bytesRead, &bufType);
-    if (dwError)
+    if (bufferSize == 0)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "[WinHttp] websocket_read_message [ID %llu] [TID %ul] errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
+        HC_TRACE_ERROR(
+            WEBSOCKET,
+            "[WinHttp] websocket_read_message [ID %llu] refusing zero-capacity receive buffer (bufferBytes=%llu, receiveLimit=%llu)",
+            TO_ULL(HCHttpCallGetId(m_call)),
+            TO_ULL(bufferByteCount),
+            TO_ULL(receiveBufferLimit));
+        StartWinHttpClose();
+        return E_UNEXPECTED;
     }
 
     return S_OK;
@@ -1800,57 +1983,94 @@ void WinHttpConnection::callback_websocket_status_headers_available(
 {
 #ifndef HC_NOWEBSOCKETS
     auto winHttpConnection = winHttpContext->winHttpConnection;
-    winHttpConnection->m_lock.lock();
+    HRESULT completionHr{ S_OK };
+    uint32_t completionPlatformError{ S_OK };
+    bool shouldCompleteTask{ false };
 
-    HC_TRACE_INFORMATION(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId());
-
-    // Check HTTP status code returned by the server and behave accordingly.
-    const uint32_t statusCode = parse_status_code(winHttpConnection->m_call, hRequestHandle, winHttpConnection.get());
-
-    if (statusCode == 0) // parse_statusCode failed and already called WinHttpConnection::complete_task, simply return
     {
+        win32_cs_autolock autoCriticalSection(&winHttpConnection->m_lock);
+
+        HC_TRACE_INFORMATION(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] Websocket WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId());
+
+        // Check HTTP status code returned by the server and behave accordingly.
+        // Note: parse_status_code may call complete_task internally on failure (returning 0).
+        // That call happens while m_lock is held, which is safe because m_lock is a recursive
+        // CRITICAL_SECTION. The RAII autolock ensures the lock is released on early return.
+        const uint32_t statusCode = parse_status_code(winHttpConnection->m_call, hRequestHandle, winHttpConnection.get());
+
+        if (statusCode == 0)
+        {
+            return;
+        }
+
+        auto headersHr = query_and_parse_headers(winHttpConnection->m_call, hRequestHandle);
+        if (FAILED(headersHr))
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "WinHttpConnection [ID %llu] [TID %ul] Failed to query websocket upgrade response headers 0x%0.8x", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), headersHr);
+        }
+        else
+        {
+            auto copyHr = winHttpConnection->m_websocketHandle->websocket->SetResponseHeaders(HttpHeaders{ winHttpConnection->m_call->responseHeaders });
+            if (FAILED(copyHr))
+            {
+                HC_TRACE_WARNING(WEBSOCKET, "WinHttpConnection [ID %llu] [TID %ul] Failed to cache websocket upgrade response headers 0x%0.8x", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), copyHr);
+            }
+        }
+
+        if (statusCode != HTTP_STATUS_SWITCH_PROTOCOLS)
+        {
+            HC_TRACE_ERROR(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] Upgrade request status code %ul", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), statusCode);
+            completionHr = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_HTTP, statusCode);
+            shouldCompleteTask = true;
+        }
+        else
+        {
+            assert(winHttpConnection->m_winHttpWebSocketExports.completeUpgrade);
+
+            winHttpConnection->m_hRequest = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, (DWORD_PTR)(winHttpContext));
+            if (winHttpConnection->m_hRequest == NULL)
+            {
+                DWORD dwError = GetLastError();
+                HC_TRACE_ERROR(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
+                completionHr = E_FAIL;
+                completionPlatformError = HRESULT_FROM_WIN32(dwError);
+                shouldCompleteTask = true;
+            }
+            else
+            {
+                const uint32_t pingIntervalSeconds = winHttpConnection->m_websocketHandle->websocket->PingInterval();
+                if (pingIntervalSeconds > 0)
+                {
+                    const uint64_t keepAliveMsValue = std::max<uint64_t>(static_cast<uint64_t>(pingIntervalSeconds) * 1000, WINHTTP_WEB_SOCKET_MIN_KEEPALIVE_VALUE);
+                    const DWORD keepAliveMs = keepAliveMsValue > MAXDWORD ? MAXDWORD : static_cast<DWORD>(keepAliveMsValue);
+                    bool status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_KEEPALIVE_INTERVAL, (LPVOID)&keepAliveMs, sizeof(DWORD));
+                    if (!status)
+                    {
+                        DWORD dwError = GetLastError();
+                        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errrocode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
+                    }
+                }
+
+                constexpr DWORD closeTimeoutMs = 1000;
+                bool status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_CLOSE_TIMEOUT, (LPVOID)&closeTimeoutMs, sizeof(DWORD));
+                if (!status)
+                {
+                    DWORD dwError = GetLastError();
+                    HC_TRACE_ERROR(WEBSOCKET, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
+                }
+
+                winHttpConnection->m_state = ConnectionState::WebSocketConnected;
+
+                WinHttpCloseHandle(hRequestHandle); // The old request handle is not needed anymore.  We're using pRequestContext->m_hRequest now
+            }
+        }
+    }
+
+    if (shouldCompleteTask)
+    {
+        winHttpConnection->complete_task(completionHr, completionPlatformError);
         return;
     }
-    else if (statusCode != HTTP_STATUS_SWITCH_PROTOCOLS)
-    {
-        HC_TRACE_ERROR(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] Upgrade request status code %ul", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), statusCode);
-        winHttpConnection->m_lock.unlock();
-        winHttpConnection->complete_task(MAKE_HRESULT(SEVERITY_ERROR, FACILITY_HTTP, statusCode), S_OK);
-        return;
-    }
-
-    assert(winHttpConnection->m_winHttpWebSocketExports.completeUpgrade);
-
-    winHttpConnection->m_hRequest = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, (DWORD_PTR)(winHttpContext));
-    if (winHttpConnection->m_hRequest == NULL)
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
-        winHttpConnection->m_lock.unlock();
-        winHttpConnection->complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
-        return;
-    }
-
-    DWORD keepAliveMs = std::min<DWORD>(winHttpConnection->m_websocketHandle->websocket->PingInterval() * 1000, WINHTTP_WEB_SOCKET_MIN_KEEPALIVE_VALUE);
-    bool status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_KEEPALIVE_INTERVAL, (LPVOID)&keepAliveMs, sizeof(DWORD));
-    if (!status)
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errrocode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
-    }
-
-    constexpr DWORD closeTimeoutMs = 1000;
-    status = WinHttpSetOption(winHttpConnection->m_hRequest, WINHTTP_OPTION_WEB_SOCKET_CLOSE_TIMEOUT, (LPVOID)&closeTimeoutMs, sizeof(DWORD));
-    if (!status)
-    {
-        DWORD dwError = GetLastError();
-        HC_TRACE_ERROR(WEBSOCKET, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetOption errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
-    }
-
-    winHttpConnection->m_state = ConnectionState::WebSocketConnected;
-
-    WinHttpCloseHandle(hRequestHandle); // The old request handle is not needed anymore.  We're using pRequestContext->m_hRequest now
-    winHttpConnection->m_lock.unlock();
 
     // This will now complete the WebSocket Connect operation
     winHttpConnection->complete_task(S_OK, S_OK);

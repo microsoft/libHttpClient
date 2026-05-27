@@ -17,7 +17,7 @@
         "Type": "git",
         "git": {
           "RepositoryUrl": "https://github.com/zaphoyd/websocketpp",
-          "CommitHash": "c6d7e295bf5a0ab9b5f896720cc1a0e0fdc397a7"
+          "CommitHash": "56123c87598f8b1dd471be83ca841ceae07f95ba"
         }
       },
       "DevelopmentDependency": false
@@ -27,7 +27,17 @@
         "Type": "git",
         "git": {
           "RepositoryUrl": "https://github.com/chriskohlhoff/asio",
-          "CommitHash": "22afb86087a77037cd296d27134756c9b0d2cb75"
+          "CommitHash": "03ae834edbace31a96157b89bf50e5ee464e5ef9"
+        }
+      },
+      "DevelopmentDependency": false
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "git": {
+          "RepositoryUrl": "https://github.com/laudrup/boost-wintls",
+          "CommitHash": "5a16a857e03b8d75d0aed8a5ad918bca442dbe27"
         }
       },
       "DevelopmentDependency": false

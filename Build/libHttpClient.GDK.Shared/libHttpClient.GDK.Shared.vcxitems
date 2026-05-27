@@ -5,6 +5,10 @@
     <HasSharedItems>true</HasSharedItems>
     <ItemsProjectGuid>{8ca3b500-0d89-4db1-ba8b-98aeb468ca13}</ItemsProjectGuid>
   </PropertyGroup>
+  <PropertyGroup>
+    <HCEnableWebSocketCompression Condition="'$(HCEnableWebSocketCompression)' == ''">true</HCEnableWebSocketCompression>
+    <HCEnableGDKXboxWebSocketCompression Condition="'$(HCEnableGDKXboxWebSocketCompression)' == ''">false</HCEnableGDKXboxWebSocketCompression>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
@@ -21,9 +25,21 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_websocket_hybrid.cpp" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp') and '$(HCEnableWebSocketCompression)' == 'true'">
+      <PreprocessorDefinitions>HC_ENABLE_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_proxy_helper.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\GDK\PlatformComponents_GDK.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\GDK\PlatformComponents_GDK.cpp">
+      <PreprocessorDefinitions Condition="'$(HCEnableWebSocketCompression)' == 'true' and Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp') and '$(HCEnableGDKXboxWebSocketCompression)' == 'true'">HC_ENABLE_WEBSOCKET_COMPRESSION=1;HC_ENABLE_GDK_XBOX_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(HCEnableWebSocketCompression)' == 'true' and Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp') and '$(HCEnableGDKXboxWebSocketCompression)' != 'true'">HC_ENABLE_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp') and '$(HCEnableWebSocketCompression)' == 'true'">
+      <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp;$(HCRoot)\External\boost-wintls\include;$(HCRoot)\External\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_WEBSOCKETPP_CPP11_STL_;_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;HC_ENABLE_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/std:c++17 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
@@ -33,5 +49,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp')" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\wintls_socket.hpp" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp')" />
   </ItemGroup>
 </Project>

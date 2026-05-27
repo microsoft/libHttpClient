@@ -5,6 +5,10 @@
     <HCNoZlib>true</HCNoZlib> 
     <!-- Exclude WebSocket APIs from libHttpClient lib, prevents pulling in 3rd party WebSocket dependencies -->
     <HCNoWebSockets>true</HCNoWebSockets>
+    <!-- Enable or disable the optional compression-capable WebSocket provider on Win32/GDK MSBuild builds -->
+    <!-- <HCEnableWebSocketCompression>true</HCEnableWebSocketCompression> -->
+    <!-- Enable the optional websocketpp + WinTLS provider on GDK Xbox console builds. Defaults to false. -->
+    <!-- <HCEnableGDKXboxWebSocketCompression>false</HCEnableGDKXboxWebSocketCompression> -->
     <!-- Prevents adding references to libHttpClient's private OpenSSL projects. Be sure to include your own OpenSSL binaries when linking -->
     <HCExternalOpenSSL>true</HCExternalOpenSSL>
   </PropertyGroup>
