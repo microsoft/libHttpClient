@@ -22,12 +22,14 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="libHttpClient.Win32.def" />
+    <None Include="libHttpClient.Win32.NoWebSockets.def" />
   </ItemGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.Win32.props))" />
   <ItemDefinitionGroup>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
+      <ModuleDefinitionFile Condition="'$(HCNoWebSockets)'=='true'">$(HCBuildRoot)\$(ProjectName)\$(ProjectName).NoWebSockets.def</ModuleDefinitionFile>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>

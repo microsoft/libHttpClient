@@ -8,10 +8,35 @@
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 #ifndef HC_NOWEBSOCKETS
-NetworkState::NetworkState(UniquePtr<IHttpProvider> httpProvider, UniquePtr<IWebSocketProvider> webSocketProvider) noexcept :
+namespace
+{
+
+void NotifyProviderSuspending(IWebSocketProvider* provider) noexcept
+{
+    if (auto lifecycle = GetProviderLifecycle(provider))
+    {
+        lifecycle->OnSuspending();
+    }
+}
+
+void NotifyProviderResuming(IWebSocketProvider* provider) noexcept
+{
+    if (auto lifecycle = GetProviderLifecycle(provider))
+    {
+        lifecycle->OnResuming();
+    }
+}
+
+}
+
+NetworkState::NetworkState(
+    UniquePtr<IHttpProvider> httpProvider,
+    UniquePtr<IWebSocketProvider> webSocketProvider
+) noexcept :
     m_httpProvider{ std::move(httpProvider) },
     m_webSocketProvider{ std::move(webSocketProvider) }
 {
+    assert(m_webSocketProvider);
 }
 
 Result<UniquePtr<NetworkState>> NetworkState::Initialize(
@@ -242,6 +267,20 @@ IWebSocketProvider& NetworkState::WebSocketProvider() noexcept
     return *m_webSocketProvider;
 }
 
+void NetworkState::NotifyWebSocketSuspending() noexcept
+{
+    // Lifecycle notifications are scoped to the built-in provider path.
+    // External websocket callback overrides are app-owned and are not treated as lifecycle-capable providers.
+    assert(m_webSocketProvider);
+    NotifyProviderSuspending(m_webSocketProvider.get());
+}
+
+void NetworkState::NotifyWebSocketResuming() noexcept
+{
+    assert(m_webSocketProvider);
+    NotifyProviderResuming(m_webSocketProvider.get());
+}
+
 Result<SharedPtr<WebSocket>> NetworkState::WebSocketCreate() noexcept
 {
     auto httpSingleton = get_http_singleton();
@@ -321,10 +360,10 @@ HRESULT CALLBACK NetworkState::WebSocketConnectAsyncProvider(XAsyncOp op, const 
     {
     case XAsyncOp::Begin:
     {
-        XTaskQueuePortHandle workPort{};
         assert(data->async->queue); // Queue should never be null here
-        RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
-        RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue));
+        RETURN_IF_FAILED(XTaskQueueDuplicateHandle(
+            data->async->queue,
+            &context->internalAsyncBlock.queue));
 
         std::unique_lock<std::mutex> lock{ state.m_mutex };
         state.m_connectingWebSockets.insert(context->clientAsyncBlock);

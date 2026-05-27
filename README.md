@@ -49,27 +49,57 @@ libHttpClient provides a platform abstraction layer for HTTP and WebSocket, and 
 
 1. Follow steps 1-3 from HTTP API setup above
 1. Call HCWebSocketCreate() to create a new HCWebsocketHandle with message/binary message/close event callbacks
-1. **For large binary messages (>20KB)**: Call HCWebSocketSetBinaryMessageFragmentEventFunction() to handle message fragments
-1. Optionally call HCWebSocketSetMaxReceiveBufferSize() to adjust the default 20KB receive buffer
+1. Optionally call HCWebSocketSetOptions() before connect to explicitly preserve legacy behavior or select deterministic behavior and compression requests
+1. **On Win32 and GDK legacy behavior, for payloads that may exceed the receive buffer (>20KB by default)**: Call HCWebSocketSetBinaryMessageFragmentEventFunction() to handle oversized incoming payloads
+1. Optionally call HCWebSocketSetMaxReceiveBufferSize() before connect to adjust the deterministic inbound message-size limit, or on Win32 / GDK legacy behavior the fragment threshold
+1. Optionally call HCWebSocketSetPingInterval() to adjust keepalive behavior
 1. Call HCWebSocketConnectAsync() to connect to the WebSocket server
 1. Call HCWebSocketSendMessageAsync() or HCWebSocketSendBinaryMessageAsync() to send messages
 1. Handle incoming messages via your registered callbacks
-1. Call HCWebSocketDisconnect() when done
+1. Call HCWebSocketDisconnect() or HCWebSocketDisconnectWithStatus() when done
 1. Call HCWebSocketCloseHandle() to cleanup
 1. Call HCCleanup() at shutdown
 
 ### Important WebSocket Notes
 
-- **Default buffer size**: WebSocket receive buffer defaults to 20KB (20,480 bytes)
-- **Message fragmentation**: Binary messages larger than the buffer size are automatically fragmented
-- **Fragment handling**: Without setting HCWebSocketSetBinaryMessageFragmentEventFunction(), large messages will be broken into chunks passed to your binary message handler with no indication they are fragments
-- **Best practice**: Either set a fragment handler OR increase buffer size with HCWebSocketSetMaxReceiveBufferSize() for your expected message sizes
+- **No call to HCWebSocketSetOptions()**: The socket uses the platform's legacy behavior.
+- **Legacy Win32 / GDK default buffer**: The legacy receive buffer defaults to 20KB (20,480 bytes).
+- **Legacy Win32 / GDK oversized payload path**: When an incoming payload exceeds the configured receive buffer, it is surfaced through HCWebSocketSetBinaryMessageFragmentEventFunction() as raw bytes.
+- **Legacy Win32 / GDK text overflow behavior**: Oversized UTF-8 payloads use that same raw-byte fragment callback path.
+- **Legacy Win32 / GDK without a fragment handler**: Oversized incoming payloads are not surfaced through the public whole-message callbacks unless a fragment handler is installed.
+- **Legacy macOS / iOS and Linux max**: On macOS / iOS and Linux legacy behavior, the provider continues using its configured `32,000,000`-byte maximum; `HCWebSocketSetMaxReceiveBufferSize()` does not become a caller-controlled hard cap there.
+- **Deterministic behavior**: Calling HCWebSocketSetOptions(HCWebSocketOptions::None) or any non-legacy compression flag selects deterministic behavior on supported built-in implementations. Fragment callbacks are not supported there.
+- **Deterministic inbound limit**: HCWebSocketSetMaxReceiveBufferSize() becomes a hard inbound message-size cap for deterministic behavior. If not set before connect, the deterministic default is `32,000,000` bytes, and oversized messages close the socket with `HCWebSocketCloseStatus::TooLarge`.
+
+To replace the built-in WebSocket implementation entirely, call `HCSetWebSocketFunctions()`.
+
+#### Compression
+
+When compression is requested, built-in compression support is available on Linux, macOS, iOS, Win32, GDK PC, and optionally GDK console when enabled with `HC_ENABLE_GDK_XBOX_WEBSOCKET_COMPRESSION`.
+
+Android manages compression internally and does not expose `HCWebSocketSetOptions()`.
+
+UWP / WinRT does not support built-in compression negotiation.
+
+Compression support can be compiled out entirely by omitting the `HC_ENABLE_WEBSOCKET_COMPRESSION` build flag.
+Compression for GDK Console can be enabled with the `HC_ENABLE_GDK_XBOX_WEBSOCKET_COMPRESSION` build flag.
+
+Call `HCWebSocketSetOptions()` on a handle before `HCWebSocketConnectAsync()` to control the built-in WebSocket behavior for that connection. `LegacySemantics` explicitly preserves the existing legacy behavior. `None` selects deterministic behavior without requesting compression. `RequestCompression` selects deterministic behavior and requests `permessage-deflate` compression. Combine `RequestCompression` with `CompressionServerNoContextTakeover` and/or `CompressionClientNoContextTakeover` to request fresh zlib state per message in the corresponding direction. These flags require `RequestCompression`; setting them alone returns `E_INVALIDARG`.
+
+In deterministic behavior, fragment callbacks are not supported and the inbound message-size limit becomes a hard cap. `HCWebSocketSetMaxReceiveBufferSize()` overrides that cap if called before connect; otherwise the deterministic default is `32,000,000` bytes. When `HCWebSocketSetOptions()` is not called, Win32 and GDK remain on legacy fragment-callback behavior, while macOS, iOS, and Linux remain on the provider's configured `32,000,000`-byte maximum.
+
+#### Windows proxy and TLS notes
+
+On Win32 and GDK, `HCWebSocketSetProxyUri()` applies the explicit proxy URI to built-in WebSocket requests. Embedded proxy credentials are passed through but not pre-authenticated.
+
+`HCWebSocketSetProxyDecryptsHttps()` disables TLS server certificate validation for a WebSocket connection. It is a debugging-only setting for use with HTTPS-intercepting proxies (Fiddler, Charles, etc.) and should never be enabled in production. Available on Win32 and GDK. On GDK console, TLS validation is always enforced regardless of this setting.
 
 ## Behavior control
 
 * On GDK, XDK ERA, UWP, iOS, and Android, HCHttpCallPerform() will call native platform APIs
 * Optionally call HCSetHttpCallPerformFunction() to do your own HTTP handling using HCHttpCallRequestGet*(), HCHttpCallResponseSet*(), and HCSettingsGet*()
 * See sample CustomHttpImplWithCurl for an example of how to use this callback to make your own HTTP implementation.
+* Optionally call HCSetWebSocketFunctions() to replace the built-in WebSocket implementation with your own connect / send / disconnect callbacks.
 
 ## Build customization
 
@@ -77,6 +107,13 @@ If you are building libHttpClient from source, you can provide an hc_settings.pr
 * Defining HCNoWebSockets will exclude WebSocket APIs (and all their dependencies) from the libHttpClient library
 * Defining HCNoZlib will exclude compression APIs and prevent libHttpClient from defining Zlib symbols within libHttpClient
 * Defining HCExternalOpenSSL will prevent libHttpClient from referencing our private OpenSSL projects. If this is defined, you will need to manually include your own (compatible) version of OpenSSL when linking.
+* Setting `HCEnableWebSocketCompression` to `true` or `false` controls whether optional built-in WebSocket compression support is compiled into the Win32 and GDK MSBuild builds. When enabled and the required WinTLS dependency is present, the build defines `HC_ENABLE_WEBSOCKET_COMPRESSION`. This property defaults to `true`.
+* Setting `HCEnableGDKXboxWebSocketCompression` to `true` enables that same built-in compression support on GDK Xbox console builds. This property defaults to `false`.
+* The Win32 certificate-validation integration tests are compiled only in `Tests\WebSocketCompression\WebSocketCompressionIntegrationTests.Win32.vcxproj`, which defines `HC_ENABLE_WSS_CERT_STORE_TESTS=1`. Running that integration binary may prompt for Windows confirmation when it adds or removes the temporary test certificate from `CurrentUser\Root`, so it is intended for manual/integration use rather than CI. The default `Tests\WebSocketCompression\WebSocketCompressionTests.Win32.vcxproj` intentionally omits that define and remains popup-free.
+
+For Linux CMake builds, `HC_ENABLE_WEBSOCKET_COMPRESSION` is enabled by default. The helper script in `Build\libHttpClient.Linux\libHttpClient_Linux.bash` keeps that default and exposes `-nwc|--no-websocket-compression` as an opt-out, while still accepting `-wc|--websocket-compression` for explicit enablement.
+
+For Apple Xcode builds, the websocket-enabled `libHttpClient_iOS` and `libHttpClient_macOS` targets define `HC_ENABLE_WEBSOCKET_COMPRESSION` and include the vendored `External/zlib` headers by default, so built-in compression support is enabled on iOS and macOS as well.
 
 An example customization file hc_settings.props.example can be found at the root of the repository.
 

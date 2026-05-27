@@ -101,6 +101,7 @@ EXPORTS
     HCWebSocketConnectAsync
     HCWebSocketCreate
     HCWebSocketDisconnect
+    HCWebSocketDisconnectWithStatus
     HCWebSocketDuplicateHandle
     HCWebSocketGetBinaryMessageFragmentEventFunction
     HCWebSocketGetEventFunctions
@@ -108,9 +109,13 @@ EXPORTS
     HCWebSocketGetHeaderAtIndex
     HCWebSocketGetNumHeaders
     HCWebSocketGetProxyUri
+    HCWebSocketGetResponseHeader
+    HCWebSocketGetResponseHeaderAtIndex
+    HCWebSocketGetNumResponseHeaders
     HCWebSocketSendBinaryMessageAsync
     HCWebSocketSendMessageAsync
     HCWebSocketSetBinaryMessageFragmentEventFunction
+    HCWebSocketSetOptions
     HCWebSocketSetHeader
     HCWebSocketSetMaxReceiveBufferSize
     HCWebSocketSetProxyDecryptsHttps

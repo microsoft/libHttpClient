@@ -23,7 +23,7 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-bool getSystemProxyForUri(const Uri& uri, Uri* outUri, std::string* outUsername, std::string* outPassword)
+bool getSystemProxyForUri(const Uri& uri, Uri* outUri, String* outUsername, String* outPassword)
 {
     NSURL* url = [NSURL URLWithString:[NSString stringWithCString:uri.FullPath().c_str() encoding:NSUTF8StringEncoding]];
     ProxyResolver* resolver = [ProxyResolver withTargetUrl:url];
@@ -42,12 +42,12 @@ bool getSystemProxyForUri(const Uri& uri, Uri* outUri, std::string* outUsername,
 
         if (outUsername && proxyUsername)
         {
-            *outUsername = [proxyUsername UTF8String];
+            *outUsername = String{ [proxyUsername UTF8String] };
         }
 
         if (outPassword && proxyPassword)
         {
-            *outPassword = [proxyPassword UTF8String];
+            *outPassword = String{ [proxyPassword UTF8String] };
         }
         return true;
     }
