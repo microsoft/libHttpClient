@@ -226,6 +226,7 @@ if (HC_ENABLE_WEBSOCKET_COMPRESSION AND NOT HC_NOWEBSOCKETS)
         PRIVATE
         "${PROJECT_NAME}"
         Threads::Threads
+        ${CMAKE_DL_LIBS} # Required for dlopen/dlsym referenced by linked libcrypto in some configurations
     )
 
     if (NOT BUILD_SHARED_LIBS)
