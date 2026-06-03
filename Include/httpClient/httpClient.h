@@ -1043,7 +1043,13 @@ enum class HCWebSocketOptions : uint32_t
     CompressionClientNoContextTakeover = 0x00000004
 };
 
+// DEFINE_ENUM_FLAG_OPERATORS expands to C++ inline operators returning
+// HCWebSocketOptions&, which is not legal inside the surrounding extern "C"
+// block. Re-enter C++ linkage just for the macro expansion so callers can
+// still combine flags with |, &, ^, etc.
+extern "C++" {
 DEFINE_ENUM_FLAG_OPERATORS(HCWebSocketOptions)
+} // extern "C++"
 
 /// <summary>
 /// Creates an WebSocket handle.
