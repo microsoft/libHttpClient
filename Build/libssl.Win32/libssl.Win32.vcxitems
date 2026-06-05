@@ -52,7 +52,6 @@
     <ClCompile Include="$(HCRoot)\External\openssl\ssl\d1_msg.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\ssl\d1_srtp.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\ssl\methods.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\ssl\packet.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\ssl\pqueue.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\dtls1_bitmap.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\ssl\record\rec_layer_d1.c" />
