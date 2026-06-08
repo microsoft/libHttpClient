@@ -83,7 +83,7 @@ set(LINUX_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
     )
 
-if (NOT DEFINED HC_NOWEBSOCKETS)
+if (NOT HC_NOWEBSOCKETS)
     list(APPEND LINUX_SOURCE_FILES
         "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
         "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.h"
