@@ -29,7 +29,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp') and '$(HCEnableWebSocketCompression)' == 'true'">
       <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp;$(HCRoot)\External\boost-wintls\include;$(HCRoot)\External\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_WEBSOCKETPP_CPP11_STL_;_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;HC_ENABLE_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <!--
+        ASIO_DISABLE_SERIAL_PORT must be set per-file here: %(PreprocessorDefinitions)
+        does not inherit ItemDefinitionGroup defaults across shared-items imports, so
+        the GDK.props-level define is dropped for this TU on GDK builds.
+        Safe to define unconditionally - asio serial-port transport is unused by websocketpp.
+      -->
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_WEBSOCKETPP_CPP11_STL_;_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;HC_ENABLE_WEBSOCKET_COMPRESSION=1;ASIO_DISABLE_SERIAL_PORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++17 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
