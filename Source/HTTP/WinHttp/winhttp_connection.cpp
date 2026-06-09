@@ -1946,15 +1946,18 @@ HRESULT WinHttpConnection::WebSocketReadComplete(bool binaryMessage, bool endOfM
 
     try
     {
-        if (isFragment && binaryMessageFragmentFunc)
+        if (binaryMessage)
         {
-            binaryMessageFragmentFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), endOfMessage, functionContext);
+            if (isFragment && binaryMessageFragmentFunc)
+            {
+                binaryMessageFragmentFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), endOfMessage, functionContext);
+            }
+            else if (binaryMessageFragmentFunc)
+            {
+                binaryMessageFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), functionContext);
+            }
         }
-        else if (binaryMessage && binaryMessageFunc)
-        {
-            binaryMessageFunc(m_websocketHandle, messageBuffer.GetBuffer(), messageBuffer.GetBufferByteCount(), functionContext);
-        }
-        else if (!binaryMessage && messageFunc)
+        else if (messageFunc)
         {
             char* buffer = reinterpret_cast<char*>(messageBuffer.GetBuffer());
             uint32_t bufferLength = messageBuffer.GetBufferByteCount();
