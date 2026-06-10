@@ -225,9 +225,12 @@ HRESULT CALLBACK WebSocket::ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData
         RETURN_HR_IF(E_UNEXPECTED, ws->m_state != State::Initial);
         ws->ClearResponseHeadersLockHeld();
 
-        RETURN_IF_FAILED(XTaskQueueDuplicateHandle(
-            data->async->queue,
-            &context->internalAsyncBlock.queue));
+        // Run the internal connect completion on the caller's Work port so it is not stranded when the
+        // Completion port is dispatched asymmetrically. The client completion still fires on the
+        // Completion port via the outer async block.
+        XTaskQueuePortHandle workPort{ nullptr };
+        RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
+        RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue));
 
         ws->m_state = State::Connecting;
         lock.unlock();
