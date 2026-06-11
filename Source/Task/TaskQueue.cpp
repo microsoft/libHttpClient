@@ -306,7 +306,7 @@ HRESULT TaskQueuePortImpl::Initialize(
     RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
     {
         TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
-        pthis->SubmitPendingCallback();
+        pthis->SubmitPendingCallbacks();
     }));
 
 #ifdef _WIN32
@@ -362,27 +362,13 @@ HRESULT __stdcall TaskQueuePortImpl::QueueItem(
     }
     else
     {
-        entry.enqueueTime = m_timer.GetAbsoluteTime(waitMs);
+        // Delayed callbacks are ordered by a monotonic due time so stale timer
+        // callbacks and wall-clock adjustments cannot make one pending entry
+        // masquerade as another.
+        entry.enqueueTime = m_timer.GetDueTime(waitMs);
         RETURN_HR_IF(E_OUTOFMEMORY, !m_pendingList->push_back(entry));
 
-        // If the entry's enqueue time is < our current time,
-        // update the timer.
-        while (true)
-        {
-            uint64_t due = m_timerDue;
-            if (entry.enqueueTime < due)
-            {
-                if (m_timerDue.compare_exchange_weak(due, entry.enqueueTime))
-                {
-                    m_timer.Start(entry.enqueueTime);
-                    break;
-                }
-            }
-            else if (m_timerDue.compare_exchange_weak(due, due))
-            {
-                break;
-            }
-        }
+        ArmTimerIfEarlier(entry.enqueueTime);
     }
 
     // QueueEntry now owns the ref.
@@ -955,18 +941,21 @@ void TaskQueuePortImpl::CancelPendingEntries(
     _In_ ITaskQueuePortContext* portContext,
     _In_ bool appendToQueue)
 {
-    // Stop wait timer and promote pending callbacks that are used
-    // by the queue that invoked this termination. Other callbacks
-    // are placed back on the pending list.
-    
-    m_timer.Cancel();
-    m_timerDue = UINT64_MAX;
+    // Only move entries owned by the terminating queue. Sibling delegates
+    // share this port's delayed-callback timer state, so leave m_timer and
+    // m_timerDue alone; if we removed the armed earliest entry, the existing
+    // timer simply takes one blank fire and re-arms for the next real item.
+    LocklessQueue<QueueEntry> entriesToAppend(*m_queueList.get());
 
     m_pendingList->remove_if([&](auto& entry, auto address)
     {
         if (entry.portContext == portContext)
         {
-            if (!appendToQueue || !AppendEntry(entry, address))
+            if (appendToQueue)
+            {
+                entriesToAppend.push_back(std::move(entry), address);
+            }
+            else
             {
                 entry.portContext->Release();
                 m_pendingList->free_node(address);
@@ -978,7 +967,29 @@ void TaskQueuePortImpl::CancelPendingEntries(
         return false;
     });
 
-    SubmitPendingCallback();
+    while (appendToQueue)
+    {
+        QueueEntry entry = {};
+        uint64_t address = 0;
+        if (!entriesToAppend.pop_front(entry, address))
+        {
+            break;
+        }
+
+        if (!AppendEntry(entry, address))
+        {
+            entry.portContext->Release();
+            m_queueList->free_node(address);
+        }
+    }
+
+    // Test hook: let unit tests enqueue a sibling delayed callback while this
+    // termination path still owns the interleaving window that used to race
+    // with SubmitPendingCallbacks().
+    if (auto hooks = portContext->GetQueue()->GetTestHooks(); hooks != nullptr)
+    {
+        hooks->PendingEntriesRemovedDuringTermination(portContext->GetType());
+    }
     
 #ifdef _WIN32
     
@@ -1028,90 +1039,264 @@ void TaskQueuePortImpl::EraseQueue(
     }
 }
 
-// Examines the pending callback list, optionally popping the entry off the
-// list that matches m_timerDue, and schedules the timer for the next entry.
-bool TaskQueuePortImpl::ScheduleNextPendingCallback(
-    _In_ uint64_t dueTime,
-    _Out_ QueueEntry& dueEntry,
-    _Out_ uint64_t& dueEntryNode)
+// Arms the OS timer for dueTime using min-wins CAS with post-Start
+// verification. If another thread publishes an earlier deadline between
+// our CAS and Start, we detect the overwrite and re-arm. This closes the
+// TOCTOU window that could strand a pending entry.
+//
+// Uses <= so callers needing to re-arm for an already-published deadline
+// (e.g. SubmitPendingCallbacks on an early timer fire) go through the
+// same verified path.
+//
+// Returns true when the timer is stable (armed at or before dueTime, or
+// dueTime is UINT64_MAX). Returns false if m_timerDue moved later (entry
+// was promoted), signaling the caller to re-evaluate.
+bool TaskQueuePortImpl::ArmTimerIfEarlier(uint64_t dueTime)
 {
-    QueueEntry nextItem = {};
-    bool hasDueEntry = false;
-    bool hasNextItem = false;
-
-    dueEntryNode = 0;
-
-    m_pendingList->remove_if([&](auto& entry, auto address)
+    while (true)
     {
-        if (!hasDueEntry && entry.enqueueTime == dueTime)
+        uint64_t currentDue = m_timerDue.load();
+
+        if (dueTime <= currentDue)
         {
-            dueEntry = entry;
-            dueEntryNode = address;
-            hasDueEntry = true;
+            if (dueTime == UINT64_MAX)
+            {
+                return true; // Nothing to arm.
+            }
+
+            if (m_timerDue.compare_exchange_weak(currentDue, dueTime))
+            {
+                m_timer.Start(dueTime);
+
+                // Post-Start verification: did m_timerDue change between
+                // our CAS and Start? If not, the timer is correctly armed.
+                uint64_t afterDue = m_timerDue.load();
+                if (afterDue == dueTime)
+                {
+                    return true; // Unchanged — timer correctly armed.
+                }
+
+                if (afterDue < dueTime)
+                {
+                    // An earlier deadline was published. Our Start may
+                    // have overwritten a concurrent arm. Fix it.
+                    dueTime = afterDue;
+                    continue;
+                }
+
+                // m_timerDue moved later (e.g. UINT64_MAX from promotion).
+                // Our entry was already handled. Caller should re-evaluate.
+                return false;
+            }
+            // CAS failed (concurrent modification). Retry with fresh read.
+            continue;
+        }
+
+        // An earlier deadline is already published; the timer is already
+        // armed for it or another thread is in the process of arming it
+        // (with their own post-Start verification).
+        return true;
+    }
+}
+
+// Replaces the due time that just fired with the next surviving future
+// deadline. Unlike ArmTimerIfEarlier, this helper is allowed to move the
+// published due time later, but only while the caller's observed due time is
+// still current. If another thread already published an earlier/equal
+// deadline, leave it alone. Returns false when the published due time moved
+// later after Start(), signaling the caller to rescan the pending list.
+bool TaskQueuePortImpl::ArmTimerForNextPendingDueTime(
+    uint64_t previousDueTime,
+    uint64_t nextDueTime)
+{
+    while (true)
+    {
+        if (m_timerDue.compare_exchange_strong(previousDueTime, nextDueTime))
+        {
+            m_timer.Start(nextDueTime);
+
+            uint64_t afterDue = m_timerDue.load();
+            if (afterDue == nextDueTime)
+            {
+                return true;
+            }
+
+            if (afterDue < nextDueTime)
+            {
+                // Another thread published an earlier deadline and is
+                // responsible for its own Start+verify cycle. The timer
+                // is already covered.
+                return true;
+            }
+
+            return false;
+        }
+
+        // CAS failed: compare_exchange loaded the current m_timerDue into
+        // previousDueTime. If that value is already <= nextDueTime, the
+        // timer is armed for an earlier-or-equal deadline and we're done.
+        if (previousDueTime <= nextDueTime)
+        {
             return true;
         }
-        else if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
-        {
-            // remove_if works by removing items from the list and
-            // re-adding them if this callback returns false. If we
-            // are going to keep an item beyond this callback we need
-            // to make sure fields we're using stay valid. Only the
-            // port context is a risk.
-
-            if (hasNextItem)
-            {
-                nextItem.portContext->Release();
-            }
-
-            nextItem = entry;
-            nextItem.portContext->AddRef();
-            hasNextItem = true;
-        }
-
-        return false;
-    });
-
-    if (hasNextItem)
-    {
-        if (nextItem.portContext->GetStatus() == TaskQueuePortStatus::Active)
-        {
-            while (true)
-            {
-                if (m_timerDue.compare_exchange_weak(dueTime, nextItem.enqueueTime))
-                {
-                    m_timer.Start(nextItem.enqueueTime);
-                    break;
-                }
-
-                dueTime = m_timerDue.load();
-
-                if (dueTime <= nextItem.enqueueTime)
-                {
-                    break;
-                }
-            }
-        }
-        else
-        {
-            // The port is no longer active. Pending entries are canceled
-            // when the port is terminated, but if we were iterating above
-            // it's possible that we removed an item while the termination was
-            // being processed and it got missed.
-            CancelPendingEntries(nextItem.portContext, true);
-        }
-
-        nextItem.portContext->Release();
     }
-    else
+}
+
+// Re-arms the exact due time observed by an early/stale timer callback.
+// If another thread has already consumed that due time and moved m_timerDue
+// later (including to UINT64_MAX), the observed due is stale and the caller
+// must re-evaluate instead of resurrecting it.
+bool TaskQueuePortImpl::RearmTimerIfDueTimeUnchanged(uint64_t dueTime)
+{
+    while (true)
     {
+        uint64_t currentDue = m_timerDue.load();
+
+        if (currentDue < dueTime)
+        {
+            return true;
+        }
+
+        if (currentDue > dueTime)
+        {
+            return false;
+        }
+
+        if (m_timerDue.compare_exchange_weak(currentDue, dueTime))
+        {
+            m_timer.Start(dueTime);
+
+            uint64_t afterDue = m_timerDue.load();
+            if (afterDue == dueTime)
+            {
+                return true;
+            }
+
+            if (afterDue < dueTime)
+            {
+                dueTime = afterDue;
+                continue;
+            }
+
+            return false;
+        }
+    }
+}
+
+// Promote every pending callback whose deadline has arrived, then arm the
+// timer for the earliest remaining future deadline. Sweeping all
+// enqueueTime <= now avoids treating timestamps as unique identities, so
+// equal-deadline siblings and stale timer callbacks follow the same rule.
+void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
+    _In_ uint64_t dueTime,
+    _In_ uint64_t now)
+{
+    for (;;)
+    {
+        // Collect due entries locally first and only touch the active queue
+        // after remove_if completes. Keeping the sweep phase and the publish
+        // phase separate preserves the "promote all ready entries" behavior
+        // without asking remove_if to coexist with queue wakeups and
+        // cross-queue node reuse at the same time.
+        LocklessQueue<QueueEntry> readyEntries(*m_queueList.get());
+
+        QueueEntry nextItem = {};
+        bool hasNextItem = false;
+
+        m_pendingList->remove_if([&](auto& entry, auto address)
+        {
+            // Any entry whose deadline has passed is ready right now,
+            // regardless of whether its timestamp aliases another entry or
+            // whether this timer fire is the original notification or a
+            // stale callback that arrived late.
+            if (entry.enqueueTime <= now)
+            {
+                readyEntries.push_back(std::move(entry), address);
+
+                return true;
+            }
+
+            if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
+            {
+                // remove_if works by removing items from the list and
+                // re-adding them if this callback returns false. If we
+                // are going to keep an item beyond this callback we need
+                // to make sure fields we're using stay valid. Only the
+                // port context is a risk.
+
+                if (hasNextItem)
+                {
+                    nextItem.portContext->Release();
+                }
+
+                nextItem = entry;
+                nextItem.portContext->AddRef();
+                hasNextItem = true;
+            }
+
+            return false;
+        });
+
+        // Publish the ready entries after the pending-list walk finishes.
+        QueueEntry readyEntry = {};
+        uint64_t readyEntryNode = 0;
+        while (readyEntries.pop_front(readyEntry, readyEntryNode))
+        {
+            if (!AppendEntry(readyEntry, readyEntryNode))
+            {
+                readyEntry.portContext->Release();
+                m_queueList->free_node(readyEntryNode);
+            }
+        }
+
+        if (hasNextItem)
+        {
+            if (nextItem.portContext->GetStatus() == TaskQueuePortStatus::Active)
+            {
+                // Replace the due time that just fired with the earliest
+                // future deadline that survived the ready sweep.
+                if (!ArmTimerForNextPendingDueTime(dueTime, nextItem.enqueueTime))
+                {
+                    nextItem.portContext->Release();
+                    now = m_timer.GetCurrentTime();
+                    dueTime = m_timerDue.load();
+                    continue;
+                }
+            }
+            else
+            {
+                // The port is no longer active. Pending entries are canceled
+                // when the port is terminated, but if we were iterating above
+                // it's possible that we removed an item while the termination
+                // was being processed and it got missed.
+                CancelPendingEntries(nextItem.portContext, true);
+            }
+
+            nextItem.portContext->Release();
+            return;
+        }
+
+        // No future entries remain in the pending list.
         uint64_t noDueTime = UINT64_MAX;
+
+        m_attachedContexts.Visit([&](ITaskQueuePortContext* portContext)
+        {
+            auto hooks = portContext->GetQueue()->GetTestHooks();
+            if (hooks != nullptr)
+            {
+                hooks->NoNextPendingCallbackFound(
+                    portContext->GetType(),
+                    dueTime);
+            }
+        });
+
         if (m_timerDue.compare_exchange_strong(dueTime, noDueTime))
         {
             // Bug fix: ScheduleNextPendingCallback timer race results
             // in lost delayed task wakes. Don't cancel the timer here
             // as another scheduled callback could have been added.
             // The CAS above is sufficient: the timer has already fired
-            // (call site 1: SubmitPendingCallback) or was already
+            // (call site 1: SubmitPendingCallbacks) or was already
             // canceled (call site 2: CancelPendingEntries).  A Cancel()
             // here raced with concurrent QueueItem/Start calls on other
             // threads, permanently stranding entries in m_pendingList.
@@ -1128,24 +1313,48 @@ bool TaskQueuePortImpl::ScheduleNextPendingCallback(
                         noDueTime);
                 }
             });
-        }
-    }
 
-    return hasDueEntry;
+            // A concurrent QueueItem can append a future entry after our
+            // sweep has already concluded there is no next item, but before
+            // we publish UINT64_MAX here. Instead of recursing (which has
+            // no tail-call guarantee and risks stack growth under sustained
+            // contention), loop back for a rescue sweep. If nothing landed,
+            // the second pass is a cheap no-op.
+            if (dueTime != noDueTime)
+            {
+                now = m_timer.GetCurrentTime();
+                dueTime = noDueTime;
+                continue;
+            }
+        }
+
+        return;
+    }
 }
 
-void TaskQueuePortImpl::SubmitPendingCallback()
+void TaskQueuePortImpl::SubmitPendingCallbacks()
 {
-    QueueEntry dueEntry;
-    uint64_t dueEntryNode;
-    
-    if (ScheduleNextPendingCallback(m_timerDue.load(), dueEntry, dueEntryNode))
+    while (true)
     {
-        if (!AppendEntry(dueEntry, dueEntryNode))
+        uint64_t dueTime = m_timerDue.load();
+
+        // Timer callbacks are advisory: a threadpool fire can arrive after
+        // retargeting, or slightly before the steady-clock deadline due to
+        // clock-source differences on Win32. If the deadline hasn't arrived,
+        // re-arm the same published due time rather than silently dropping the
+        // callback (which would strand the pending entry).
+        const uint64_t now = m_timer.GetCurrentTime();
+        if (now < dueTime)
         {
-            dueEntry.portContext->Release();
-            m_queueList->free_node(dueEntryNode);
+            if (RearmTimerIfDueTimeUnchanged(dueTime))
+            {
+                return;
+            }
+            continue;
         }
+
+        PromoteReadyPendingCallbacks(dueTime, now);
+        return;
     }
 }
 
@@ -2354,3 +2563,23 @@ STDAPI XTaskQueueSetTestHooks(
     aq->SetTestHooks(hooks);
     return S_OK;
 }
+
+/// <summary>
+/// Submits any pending delayed callbacks that are due to run. This is
+/// intended for use in unit tests.
+/// </summary>
+STDAPI XTaskQueueSubmitPendingCallbacks(
+    _In_ XTaskQueueHandle queue,
+    _In_ XTaskQueuePort port
+    ) noexcept
+{
+    referenced_ptr<ITaskQueue> aq(GetQueue(queue));
+    RETURN_HR_IF(E_GAMERUNTIME_INVALID_HANDLE, aq == nullptr);
+
+    referenced_ptr<ITaskQueuePortContext> portContext;
+    RETURN_IF_FAILED(aq->GetPortContext(port, portContext.address_of()));
+
+    portContext->GetPort()->SubmitPendingCallbacks();
+    return S_OK;
+}
+

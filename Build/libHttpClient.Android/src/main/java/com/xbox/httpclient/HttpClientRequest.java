@@ -66,20 +66,18 @@ public class HttpClientRequest {
     public void setHttpMethodAndBody(String method, long call, String contentType, long contentLength) {
         RequestBody requestBody = null;
         if (contentLength == 0) {
-            if ("POST".equals(method) || "PUT".equals(method)) {
+            if ("POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method)) {
                 MediaType mediaType = (contentType != null ? MediaType.parse(contentType) : null);
                 requestBody = RequestBody.create(NO_BODY, mediaType);
-
-                this.requestBuilder.method(method, requestBody);
             }
         } else {
             requestBody = new HttpClientRequestBody(call, contentType, contentLength);
 
             // Decorate the request body to keep track of the upload progress
             CountingRequestBody countingBody = new CountingRequestBody(requestBody, uploadProgressListener, call);
-
-            this.requestBuilder.method(method, countingBody);
+            requestBody = countingBody;
         }
+        this.requestBuilder.method(method, requestBody);
     }
 
     @SuppressWarnings("unused")

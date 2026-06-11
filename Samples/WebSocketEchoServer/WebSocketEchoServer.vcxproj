@@ -22,7 +22,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;_CONSOLE;ASIO_STANDALONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp;$(HCRoot)\External\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -42,6 +42,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="WebSocketEchoServer.cpp" />
+    <ClCompile Include="$(HCRoot)\External\zlib\adler32.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\zlib\crc32.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\zlib\deflate.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\zlib\inffast.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\zlib\inflate.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\zlib\inftrees.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\zlib\trees.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <ClCompile Include="$(HCRoot)\External\zlib\zutil.c">
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

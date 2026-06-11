@@ -16,6 +16,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="libHttpClient.GDK.def" />
+    <None Include="libHttpClient.GDK.NoWebSockets.def" />
   </ItemGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.GDK.props))" />
   <!-- Separate IntDir/OutDir when building without suffix to avoid conflicts with the default suffixed build -->
@@ -32,6 +33,7 @@
   <ItemDefinitionGroup>
     <Link>
       <ModuleDefinitionFile>$(HCBuildRoot)\$(ProjectName)\$(ProjectName).def</ModuleDefinitionFile>
+      <ModuleDefinitionFile Condition="'$(HCNoWebSockets)'=='true'">$(HCBuildRoot)\$(ProjectName)\$(ProjectName).NoWebSockets.def</ModuleDefinitionFile>
       <AdditionalDependencies>%(AdditionalDependencies);Appnotify.lib;winhttp.lib;crypt32.lib</AdditionalDependencies>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">/profile /opt:ref /opt:icf /guard:cf /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>

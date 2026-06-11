@@ -187,8 +187,8 @@ void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool can
         if (--multi->m_taskQueueCallbacksPending == 0 && multi->m_cleanupAsyncBlock)
         {
             // If CurlMulti::CleanupAsync was called and there are no remaining task queue callbacks, schedule cleanup now.
-            // We *MUST* schedule the cleanup outside of holding the lock though. Scheduling cleanup may free the CurlMulti 
-            // object memory before we're done using it here and we don't want that to happen while we're holding the lock 
+            // We *MUST* schedule the cleanup outside of holding the lock though. Scheduling cleanup may free the CurlMulti
+            // object memory before we're done using it here and we don't want that to happen while we're holding the lock
             // or still otherwise referencing the CurlMulti object memory
             cleanupAsyncBlock = multi->m_cleanupAsyncBlock;
         }
@@ -268,17 +268,12 @@ HRESULT CurlMulti::Perform() noexcept
             result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
         }
 #elif defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7,69,0)
-        // Try curl_multi_poll first, fall back to curl_multi_wait if not available
-        // For non-GDK, CURL_CALL expands directly to the symbol
-        if (CURL_CALL(curl_multi_poll))
-        {
-            result = CURL_CALL(curl_multi_poll)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
-        }
-        else
-        {
-            result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
-        }
+        // On supported non-GDK platforms with libcurl >= 7.69.0, we can call curl_multi_poll directly.
+        static_assert(CURL_CALL(curl_multi_poll) == curl_multi_poll, "curl_multi_poll must be unconditionally available");
+        result = CURL_CALL(curl_multi_poll)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #else
+        // On supported non-GDK platforms with libcurl < 7.69.0, we must fall back to curl_multi_wait.
+        static_assert(CURL_CALL(curl_multi_wait) == curl_multi_wait, "curl_multi_wait must be unconditionally available");
         result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #endif
 

@@ -10,8 +10,8 @@
 
 extern "C"
 {
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject);
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint);
+    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject, jobjectArray, jobjectArray);
+    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint, jobjectArray, jobjectArray);
     void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv*, jobject, jint);
     void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv*, jobject, jstring);
     void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv*, jobject, jobject);
@@ -111,6 +111,7 @@ struct HttpClientWebSocket
             {
                 env->DeleteLocalRef(headerValue);
             }
+            env->DeleteLocalRef(headerName);
             return E_UNEXPECTED;
         }
 
@@ -124,6 +125,90 @@ struct HttpClientWebSocket
         }
 
         return S_OK;
+    }
+
+    static HttpHeaders ReadHeaders(JNIEnv* env, jobjectArray headerNames, jobjectArray headerValues)
+    {
+        HttpHeaders headers;
+        if (!env || !headerNames || !headerValues)
+        {
+            return headers;
+        }
+
+        const jsize nameCount = env->GetArrayLength(headerNames);
+        if (HadException(env))
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Android websocket response-header read failed while reading names.");
+            return headers;
+        }
+
+        const jsize valueCount = env->GetArrayLength(headerValues);
+        if (HadException(env))
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Android websocket response-header read failed while reading values.");
+            return headers;
+        }
+
+        if (nameCount != valueCount)
+        {
+            HC_TRACE_WARNING(WEBSOCKET, "Android websocket response-header read saw mismatched header array sizes (%d vs %d).", static_cast<int>(nameCount), static_cast<int>(valueCount));
+        }
+
+        const jsize count = std::min(nameCount, valueCount);
+        for (jsize i = 0; i < count; ++i)
+        {
+            auto name = static_cast<jstring>(env->GetObjectArrayElement(headerNames, i));
+            if (HadException(env) || !name)
+            {
+                if (name)
+                {
+                    env->DeleteLocalRef(name);
+                }
+                HC_TRACE_WARNING(WEBSOCKET, "Android websocket response-header read failed to get header name.");
+                return headers;
+            }
+
+            auto value = static_cast<jstring>(env->GetObjectArrayElement(headerValues, i));
+            if (HadException(env) || !value)
+            {
+                env->DeleteLocalRef(name);
+                if (value)
+                {
+                    env->DeleteLocalRef(value);
+                }
+                HC_TRACE_WARNING(WEBSOCKET, "Android websocket response-header read failed to get header value.");
+                return headers;
+            }
+
+            const char* rawName = env->GetStringUTFChars(name, 0);
+            const char* rawValue = env->GetStringUTFChars(value, 0);
+            if (HadException(env) || !rawName || !rawValue)
+            {
+                if (rawName)
+                {
+                    env->ReleaseStringUTFChars(name, rawName);
+                }
+                if (rawValue)
+                {
+                    env->ReleaseStringUTFChars(value, rawValue);
+                }
+                env->DeleteLocalRef(name);
+                env->DeleteLocalRef(value);
+                HC_TRACE_WARNING(WEBSOCKET, "Android websocket response-header read failed to marshal UTF-8 strings.");
+                return headers;
+            }
+
+            http_internal_string headerName{ rawName };
+            http_internal_string headerValue{ rawValue };
+            headers[std::move(headerName)] = std::move(headerValue);
+
+            env->ReleaseStringUTFChars(name, rawName);
+            env->ReleaseStringUTFChars(value, rawValue);
+            env->DeleteLocalRef(name);
+            env->DeleteLocalRef(value);
+        }
+
+        return headers;
     }
 
     HRESULT Connect(const std::string& uri, const std::string subProtocol) const
@@ -434,8 +519,8 @@ private:
 
 struct okhttp_websocket_impl : hc_websocket_impl, std::enable_shared_from_this<okhttp_websocket_impl>
 {
-    friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject);
-    friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint);
+    friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject, jobjectArray, jobjectArray);
+    friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint, jobjectArray, jobjectArray);
     friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv*, jobject, jint);
     friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv*, jobject, jstring);
     friend void JNICALL ::Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv*, jobject, jobject);
@@ -1020,7 +1105,7 @@ extern "C"
 {
 
 JNIEXPORT void JNICALL
-Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv *env, jobject thiz)
+Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv *env, jobject thiz, jobjectArray headerNames, jobjectArray headerValues)
 {
     using namespace xbox::httpclient;
 
@@ -1030,11 +1115,12 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv *env, jobject thiz)
         return;
     }
 
+    owner->GetHandle()->websocket->SetResponseHeaders(HttpClientWebSocket::ReadHeaders(env, headerNames, headerValues));
     owner->OnOpen(owner->Lock());
 }
 
 JNIEXPORT void JNICALL
-Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz, jint statusCode)
+Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz, jint statusCode, jobjectArray headerNames, jobjectArray headerValues)
 {
     using namespace xbox::httpclient;
 
@@ -1044,6 +1130,7 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz
         return;
     }
 
+    owner->GetHandle()->websocket->SetResponseHeaders(HttpClientWebSocket::ReadHeaders(env, headerNames, headerValues));
     owner->OnFailure(owner->Lock(), statusCode);
 }
 

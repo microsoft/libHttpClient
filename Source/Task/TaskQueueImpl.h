@@ -215,6 +215,8 @@ public:
     void __stdcall SuspendPort();
     void __stdcall ResumePort();
 
+    void __stdcall SubmitPendingCallbacks();
+
 private:
 
     struct WaitRegistration;
@@ -304,12 +306,17 @@ private:
     static void EraseQueue(
         _In_opt_ LocklessQueue<QueueEntry>* queue);
 
-    bool ScheduleNextPendingCallback(
-        _In_ uint64_t dueTime,
-        _Out_ QueueEntry& dueEntry,
-        _Out_ uint64_t& dueEntryNode);
+    bool ArmTimerIfEarlier(_In_ uint64_t dueTime);
 
-    void SubmitPendingCallback();
+    bool ArmTimerForNextPendingDueTime(
+        _In_ uint64_t previousDueTime,
+        _In_ uint64_t nextDueTime);
+
+    bool RearmTimerIfDueTimeUnchanged(_In_ uint64_t dueTime);
+
+    void PromoteReadyPendingCallbacks(
+        _In_ uint64_t dueTime,
+        _In_ uint64_t now);
 
     void SignalTerminations();
     void ScheduleTermination(_In_ TerminationEntry* term);

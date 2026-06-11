@@ -78,6 +78,7 @@ public:
     // Mock state
     std::recursive_mutex m_mocksLock;
     http_internal_vector<HC_MOCK_CALL*> m_mocks;
+    http_internal_map<http_internal_string, size_t> m_mockCycleIndex;
 
     std::recursive_mutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;

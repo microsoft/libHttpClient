@@ -1,0 +1,15 @@
+parameters:
+  - name: configuration
+    type: string
+
+steps:
+  - template: checkout.yml
+
+  - script: |
+      cmake -B Build/libHttpClient.iOS.CMake/build \
+            -S Build/libHttpClient.iOS.CMake \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_BUILD_TYPE=${{ parameters.configuration }}
+      cmake --build Build/libHttpClient.iOS.CMake/build --config ${{ parameters.configuration }}
+    displayName: 'Build iOS CMake static lib'

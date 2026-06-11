@@ -6,8 +6,8 @@ namespace OS
 
     class WaitTimerImpl;
 
-    // A wait timer holds a single timeout in absolute
-    // time.  Calling Start will reset any pending timeout.
+    // A wait timer holds a single timeout expressed as a monotonic due time.
+    // Calling Start will reset any pending timeout.
     class WaitTimer
     {
     public:
@@ -17,10 +17,16 @@ namespace OS
         HRESULT Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept;
         void Terminate() noexcept;
 
-        void Start(_In_ uint64_t absoluteTime) noexcept;
+        // Arms the one-shot timer for the provided monotonic due time.
+        void Start(_In_ uint64_t dueTime) noexcept;
         void Cancel() noexcept;
 
-        uint64_t GetAbsoluteTime(_In_ uint32_t msFromNow) noexcept;
+        // Returns the current monotonic time used for delayed-callback
+        // ordering and stale-timer validation.
+        uint64_t GetCurrentTime() noexcept;
+
+        // Returns a monotonic due time msFromNow milliseconds in the future.
+        uint64_t GetDueTime(_In_ uint32_t msFromNow) noexcept;
 
     private:
         std::atomic<WaitTimerImpl*> m_impl;

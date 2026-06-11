@@ -60,14 +60,35 @@ bool Mock_Internal_HCHttpCallPerformAsync(
     auto& mocks{ httpSingleton->m_mocks };
     HC_MOCK_CALL* mock{ nullptr };
 
-    // Use the most recently added mock that matches (similar to a stack).
-    for (auto iter = mocks.rbegin(); iter != mocks.rend(); ++iter)
+    // Collect all matching mocks in insertion order
+    http_internal_vector<HC_MOCK_CALL*> matchingMocks;
+    for (auto& m : mocks)
     {
-        if (DoesMockCallMatch(*iter, originalCall))
+        if (DoesMockCallMatch(m, originalCall))
         {
-            mock = *iter;
-            break;
+            matchingMocks.push_back(m);
         }
+    }
+
+    if (matchingMocks.empty())
+    {
+        return false;
+    }
+
+    if (matchingMocks.size() == 1)
+    {
+        mock = matchingMocks[0];
+    }
+    else
+    {
+        // Build a key from method+url to track cycling position
+        http_internal_string key{ originalCall->method };
+        key += "|";
+        key += originalCall->url;
+
+        auto& idx = httpSingleton->m_mockCycleIndex[key];
+        mock = matchingMocks[idx % matchingMocks.size()];
+        ++idx;
     }
 
     if (!mock)

@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Platform/PlatformComponents.h"
 #include "HTTP/WinHttp/winhttp_provider.h"
+#if !defined(HC_NOWEBSOCKETS) && defined(HC_ENABLE_WEBSOCKET_COMPRESSION)
+#include "HTTP/WinHttp/winhttp_websocket_hybrid.h"
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
@@ -18,7 +21,11 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
 
     components.HttpProvider = http_allocate_unique<WinHttp_HttpProvider>(sharedProvider);
 #ifndef HC_NOWEBSOCKETS
+#if defined(HC_ENABLE_WEBSOCKET_COMPRESSION)
+    components.WebSocketProvider = http_allocate_unique<WinHttpHybrid_WebSocketProvider>(sharedProvider);
+#else
     components.WebSocketProvider = http_allocate_unique<WinHttp_WebSocketProvider>(sharedProvider);
+#endif
 #endif
 
     return S_OK;

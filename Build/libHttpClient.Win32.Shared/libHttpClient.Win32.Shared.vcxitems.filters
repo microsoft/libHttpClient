@@ -28,6 +28,12 @@
     <Filter Include="Source\Platform\Windows">
       <UniqueIdentifier>{a33dcb7f-3435-401d-8b9c-4c30fd992feb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\WebSocket\Websocketpp">
+      <UniqueIdentifier>{7e1a42c8-f2b0-4d1a-9c3e-5f8a6b7d0e12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HTTP\WinHttp\Hybrid">
+      <UniqueIdentifier>{8d2b53f9-a1c0-4e7f-b6d4-3f9e5c8a1b23}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
@@ -52,6 +58,12 @@
       <Filter>Source\Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_proxy_helper.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_websocket_hybrid.cpp">
+      <Filter>Source\HTTP\WinHttp\Hybrid</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
@@ -62,6 +74,15 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h">
       <Filter>Source\HTTP\WinHttp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_websocket_hybrid.h">
+      <Filter>Source\HTTP\WinHttp\Hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\wintls_socket.hpp">
+      <Filter>Source\WebSocket\Websocketpp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

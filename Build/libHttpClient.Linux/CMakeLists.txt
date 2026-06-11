@@ -4,6 +4,12 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.Linux")
 
+include(CTest)
+enable_testing()
+
+option(HC_NOWEBSOCKETS "Disable WebSocket support" OFF)
+option(HC_ENABLE_WEBSOCKET_COMPRESSION "Enable compression-capable WebSocket provider support" ON)
+
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
@@ -22,11 +28,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Out/x64/Debug/libHttpCl
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHttpClient.Linux)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PATH_TO_ROOT}/Out/x64/Debug/libHttpClient.Linux)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PATH_TO_ROOT}/Out/x64/Release/libHttpClient.Linux)
-
-# BINARY_DIR is a temp folder used by cmake itself.
-# Binary folder can be remove freely.
-# See more details: https://cmake.org/cmake/help/v3.4/command/add_subdirectory.html
-set(BINARY_DIR ${PATH_TO_ROOT}/Int/CMake/libHttpClient.Linux)
 
 set(LIBCRYPTO_BINARY_PATH
     ${PATH_TO_ROOT}/Out/x64/${CMAKE_BUILD_TYPE}/libcrypto.Linux/libcrypto.a
@@ -80,10 +81,15 @@ set(LINUX_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Platform/Linux/PlatformComponents_Linux.cpp"
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.h"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/x509_cert_utilities.hpp"
     )
+
+if (NOT HC_NOWEBSOCKETS)
+    list(APPEND LINUX_SOURCE_FILES
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.h"
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/x509_cert_utilities.hpp"
+    )
+endif()
 
 if (NOT DEFINED HC_NOZLIB)
     set(ZLIB_SOURCE_FILES
@@ -168,6 +174,17 @@ target_include_directories(
     "${ZLIB_INCLUDE_DIRS}"
 )
 
+if (NOT DEFINED HC_NOZLIB)
+    target_compile_definitions("${PROJECT_NAME}" PRIVATE Z_HAVE_UNISTD_H=1)
+endif()
+
+# Turn on compiler warnings for all source files.
+# For zlib, which is external, mask some of the unimportant warnings. This keeps our build output clean without
+# adding friction to taking zlib updates. If new warnings show up in updates, they should be assessed for impact and
+# disabled if not considered problematic.
+target_compile_options("${PROJECT_NAME}" PRIVATE -Werror)
+set_source_files_properties(${ZLIB_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-Wno-implicit-function-declaration")
+
 include("../libHttpClient.CMake/GetLibHCFlags.cmake")
 get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
@@ -180,5 +197,69 @@ target_set_flags(
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
+if (HC_ENABLE_WEBSOCKET_COMPRESSION AND NOT HC_NOWEBSOCKETS)
+    if (DEFINED HC_NOZLIB)
+        message(FATAL_ERROR "HC_ENABLE_WEBSOCKET_COMPRESSION requires zlib support")
+    endif()
+
+    find_package(Threads REQUIRED)
+
+    add_executable(
+        "WebSocketCompressionTests.Linux"
+        "${PATH_TO_ROOT}/Tests/WebSocketCompression/WebSocketCompressionTests.cpp"
+        "${ZLIB_SOURCE_FILES}"
+    )
+
+    target_include_directories(
+        "WebSocketCompressionTests.Linux"
+        PRIVATE
+        "${COMMON_INCLUDE_DIRS}"
+        "${LINUX_INCLUDE_DIRS}"
+        "${ZLIB_INCLUDE_DIRS}"
+    )
+
+    target_compile_definitions(
+        "WebSocketCompressionTests.Linux"
+        PRIVATE
+        ASIO_STANDALONE
+        Z_HAVE_UNISTD_H=1
+    )
+
+    target_link_libraries(
+        "WebSocketCompressionTests.Linux"
+        PRIVATE
+        "${PROJECT_NAME}"
+        Threads::Threads
+        ${CMAKE_DL_LIBS} # Required for dlopen/dlsym referenced by linked libcrypto in some configurations
+    )
+
+    if (NOT BUILD_SHARED_LIBS)
+        target_link_libraries(
+            "WebSocketCompressionTests.Linux"
+            PRIVATE
+            "${LIBCURL_BINARY_PATH}"
+            "${LIBSSL_BINARY_PATH}"
+            "${LIBCRYPTO_BINARY_PATH}"
+        )
+    endif()
+
+    target_set_flags(
+        "WebSocketCompressionTests.Linux"
+        "${FLAGS}"
+        "${FLAGS_DEBUG}"
+        "${FLAGS_RELEASE}"
+    )
+
+    add_test(
+        NAME websocket-compression-linux
+        COMMAND "WebSocketCompressionTests.Linux"
+    )
+    set_tests_properties(
+        websocket-compression-linux
+        PROPERTIES
+        SKIP_RETURN_CODE 125
+    )
+endif()
 
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)

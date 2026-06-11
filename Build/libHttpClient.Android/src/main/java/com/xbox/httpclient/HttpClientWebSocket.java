@@ -60,12 +60,17 @@ public final class HttpClientWebSocket extends WebSocketListener {
 
     @Override
     public void onOpen(WebSocket webSocket, Response response) {
-        onOpen();
+        Headers responseHeaders = response != null ? response.headers() : null;
+        onOpen(getHeaderNames(responseHeaders), getHeaderValues(responseHeaders));
     }
 
     @Override
     public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-        onFailure(response != null ? response.code() : -1);
+        Headers responseHeaders = response != null ? response.headers() : null;
+        onFailure(
+            response != null ? response.code() : -1,
+            getHeaderNames(responseHeaders),
+            getHeaderValues(responseHeaders));
     }
 
     @Override
@@ -93,8 +98,8 @@ public final class HttpClientWebSocket extends WebSocketListener {
         onBinaryMessage(buffer);
     }
 
-    public native void onOpen();
-    public native void onFailure(int statusCode);
+    public native void onOpen(String[] headerNames, String[] headerValues);
+    public native void onFailure(int statusCode, String[] headerNames, String[] headerValues);
     public native void onClose(int code);
     public native void onMessage(String text);
     public native void onBinaryMessage(ByteBuffer data);
@@ -109,4 +114,28 @@ public final class HttpClientWebSocket extends WebSocketListener {
     private long pingInterval;
 
     private WebSocket socket;
+
+    private static String[] getHeaderNames(Headers headers) {
+        if (headers == null) {
+            return null;
+        }
+
+        String[] names = new String[headers.size()];
+        for (int i = 0; i < headers.size(); ++i) {
+            names[i] = headers.name(i);
+        }
+        return names;
+    }
+
+    private static String[] getHeaderValues(Headers headers) {
+        if (headers == null) {
+            return null;
+        }
+
+        String[] values = new String[headers.size()];
+        for (int i = 0; i < headers.size(); ++i) {
+            values[i] = headers.value(i);
+        }
+        return values;
+    }
 }

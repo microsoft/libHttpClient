@@ -40,6 +40,25 @@ Running the build script with the `-nc|--nocurl` will **not** generate a binary 
 
 Running the build script with the `-ns|--nossl` will **not** generate a binary of `libssl.a` and `libcrypto.a`. Use this flag if you wish to bring your own version of OpenSSL.
 
+```
+./libHttpClient_Linux.bash [<-wc|--websocket-compression>] [<-nwc|--no-websocket-compression>]
+```
+
+Linux builds enable `HC_ENABLE_WEBSOCKET_COMPRESSION` by default. This compiles in the
+compression-capable `websocketpp` provider path and enables the local Linux WebSocket compression
+integration test target. Compression is still only negotiated at runtime when the caller explicitly
+requests it via `HCWebSocketSetOptions()`.
+
+Use `-nwc|--no-websocket-compression` to compile the Linux build without websocket compression
+support. `-wc|--websocket-compression` remains available for explicit enablement.
+
+After configuring/building with `HC_ENABLE_WEBSOCKET_COMPRESSION=ON`, you can run it from the CMake
+build directory with:
+
+```
+ctest --output-on-failure -R websocket-compression-linux
+```
+
 If the bash script fails to run and produces the error:
 ```
 /bin/bash^M: bad interpreter
