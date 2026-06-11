@@ -42,6 +42,12 @@ CONFIGURE_ARGS=(
     --with-openssl=$OPENSSL_INSTALL_DIR
     --enable-symbol-hiding
     --without-brotli
+    # Without --enable-threaded-resolver, curl uses a synchronous getaddrinfo call that
+    # CURLOPT_NOSIGNAL cannot interrupt. Under VPN, slow DNS blocks curl_multi_perform
+    # indefinitely, making CURLOPT_CONNECTTIMEOUT and CURLOPT_TIMEOUT completely
+    # ineffective. The threaded resolver spawns a background pthread for each DNS lookup,
+    # keeping curl_multi_perform non-blocking and allowing timeouts to fire reliably.
+    --enable-threaded-resolver
 )
 if [ "$CONFIGURATION" = "Debug" ]; then
     CONFIGURE_ARGS+=(--enable-debug)
