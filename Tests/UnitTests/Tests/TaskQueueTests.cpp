@@ -6,7 +6,7 @@
 #include "CallbackThunk.h"
 #include "PumpedTaskQueue.h"
 #include "XTaskQueuePriv.h"
-#include "../../Shared/CompositeQueueStarvationScenario.h"
+#include "CompositeQueueStarvationScenario.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 

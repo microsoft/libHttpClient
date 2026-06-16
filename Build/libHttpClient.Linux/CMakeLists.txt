@@ -281,6 +281,7 @@ target_include_directories(
     PRIVATE
     "${COMMON_INCLUDE_DIRS}"
     "${LINUX_INCLUDE_DIRS}"
+    "${PATH_TO_ROOT}/Tests/Shared"
 )
 
 target_link_libraries(

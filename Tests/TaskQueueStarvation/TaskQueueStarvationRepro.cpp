@@ -13,7 +13,7 @@
 // Built as the CTest target "taskqueue-starvation-linux" in
 // Build/libHttpClient.Linux/CMakeLists.txt and run by the Linux CI lane.
 
-#include "../Shared/CompositeQueueStarvationScenario.h"
+#include "CompositeQueueStarvationScenario.h"
 
 #include <cstdio>
 
