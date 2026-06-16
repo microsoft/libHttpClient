@@ -314,6 +314,11 @@ private:
 
     bool RearmTimerIfDueTimeUnchanged(_In_ uint64_t dueTime);
 
+    // After cancellation removed pending entries, re-point the shared timer at
+    // the earliest surviving pending entry instead of leaving it armed for a
+    // deadline that no longer has an owner.
+    void RearmTimerForEarliestPending();
+
     void PromoteReadyPendingCallbacks(
         _In_ uint64_t dueTime,
         _In_ uint64_t now);

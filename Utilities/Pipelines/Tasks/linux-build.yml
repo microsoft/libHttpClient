@@ -29,6 +29,15 @@ steps:
       arguments: '-c ${{ parameters.configuration }} -nc -ns -st'
 
   - task: Bash@3
+    displayName: 'Run libHttpClient Linux tests (ctest)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        set -e
+        cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
+        ctest --output-on-failure -R taskqueue-starvation-linux
+
+  - task: Bash@3
     displayName: 'Build libHttpClient Shared'
     inputs:
       filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
