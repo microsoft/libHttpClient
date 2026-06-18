@@ -990,6 +990,13 @@ void TaskQueuePortImpl::CancelPendingEntries(
     {
         hooks->PendingEntriesRemovedDuringTermination(portContext->GetType());
     }
+
+    // We may have just removed the pending entry that the shared delayed-callback
+    // timer was armed for (a composite that shares this port can terminate while
+    // it still owns the armed-earliest entry). Relying on a "blank fire" of the
+    // now-orphaned deadline to re-arm is fragile under the STL timer backend, so
+    // re-point the timer at the earliest surviving pending entry directly.
+    RearmTimerForEarliestPending();
     
 #ifdef _WIN32
     
@@ -1023,6 +1030,63 @@ void TaskQueuePortImpl::CancelPendingEntries(
     }
 
 #endif
+}
+
+// After cancellation removed pending entries, re-point the shared timer at the
+// earliest surviving pending entry instead of leaving it armed for a deadline
+// whose entry was just removed. Without this, a composite that shares this
+// port's timer can terminate while owning the armed-earliest entry, leaving the
+// timer pointed at an orphaned deadline; if the orphaned fire is lost (STL timer
+// backend), the remaining delayed callbacks never run and the queue starves.
+void TaskQueuePortImpl::RearmTimerForEarliestPending()
+{
+    QueueEntry nextItem = {};
+    bool hasNextItem = false;
+
+    // Read-only scan: keep every entry (return false), tracking the earliest.
+    m_pendingList->remove_if([&](auto& entry, auto /*address*/)
+    {
+        if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
+        {
+            if (hasNextItem)
+            {
+                nextItem.portContext->Release();
+            }
+
+            nextItem = entry;
+            nextItem.portContext->AddRef();
+            hasNextItem = true;
+        }
+
+        return false;
+    });
+
+    uint64_t currentDue = m_timerDue.load();
+
+    if (hasNextItem)
+    {
+        if (nextItem.enqueueTime < currentDue)
+        {
+            // Surviving entry is earlier than the armed deadline: min-wins arm.
+            ArmTimerIfEarlier(nextItem.enqueueTime);
+        }
+        else if (nextItem.enqueueTime > currentDue)
+        {
+            // The armed deadline belonged to a removed entry; advance the timer
+            // to the earliest surviving deadline using the same verified helper
+            // the fire path uses (handles a concurrent earlier publish safely).
+            ArmTimerForNextPendingDueTime(currentDue, nextItem.enqueueTime);
+        }
+
+        nextItem.portContext->Release();
+    }
+    else if (currentDue != UINT64_MAX)
+    {
+        // No pending entries remain on any attached context; let the timer go
+        // idle. Mirrors the no-next-item branch of PromoteReadyPendingCallbacks
+        // (CAS only, never Cancel(), to avoid racing concurrent Start calls).
+        m_timerDue.compare_exchange_strong(currentDue, UINT64_MAX);
+    }
 }
 
 void TaskQueuePortImpl::EraseQueue(

@@ -6,6 +6,7 @@
 #include "CallbackThunk.h"
 #include "PumpedTaskQueue.h"
 #include "XTaskQueuePriv.h"
+#include "CompositeQueueStarvationScenario.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -98,6 +99,11 @@ struct HandleCloser
 };
 
 typedef AutoHandleWrapper<HANDLE, HandleCloser> AutoHandle;
+
+// The composite-queue delayed-callback starvation scenario lives in
+// Tests/Shared/CompositeQueueStarvationScenario.h so the exact same scenario is
+// exercised here (Win32 WaitTimer backend) and by the standalone Linux repro
+// binary (STL WaitTimer backend, where the regression manifests).
 
 DEFINE_TEST_CLASS(TaskQueueTests)
 {
@@ -195,6 +201,38 @@ public:
             VERIFY_IS_LESS_THAN(GetTickCount64() - ticks, (UINT64)1000);
             Sleep(100);
         }      
+    }
+
+    DEFINE_TEST_CASE(VerifyCompositeQueueDelayedCallbackStarvation)
+    {
+        // Regression guard for delayed-callback timer arming under composite
+        // teardown. Many concurrent submitter threads each create a composite
+        // over one shared Work port and drive a self-resubmitting delayed-poll
+        // loop (tiny 1-2ms delays). A canceller thread terminates a subset of
+        // the composites WHILE they still have a delayed callback pending, while
+        // pump threads dispatch the shared Work port. This races new delayed
+        // submits against the timer worker promoting/arming due entries and
+        // against terminate removing the armed-earliest entry. If the shared
+        // timer fails to re-arm in any of those windows, the remaining delayed
+        // callbacks stop firing and the queue starves; every request must still
+        // complete.
+        //
+        // The scenario itself lives in the shared header so the exact same code
+        // runs here on the Win32 WaitTimer backend and in the standalone Linux
+        // repro binary on the STL WaitTimer backend (where the bug manifests).
+
+        int failedIteration = -1;
+        int completedAtFailure = -1;
+        bool ok = hc_test::RunCompositeQueueStarvationScenario(
+            hc_test::CompositeStarvationConfig{},
+            &failedIteration,
+            &completedAtFailure);
+
+        if (!ok)
+        {
+            LOG_COMMENT(L"STARVATION at iteration %d: completed %d", failedIteration, completedAtFailure);
+        }
+        VERIFY_IS_TRUE(ok);
     }
 
     DEFINE_TEST_CASE(VerifyDuplicateQueueHandle)

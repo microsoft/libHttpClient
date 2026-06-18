@@ -262,4 +262,56 @@ if (HC_ENABLE_WEBSOCKET_COMPRESSION AND NOT HC_NOWEBSOCKETS)
     )
 endif()
 
+##################################################
+### TaskQueue delayed-callback starvation test ###
+##################################################
+# Standalone regression guard for the composite-queue delayed-callback
+# starvation bug. Exercises the STL WaitTimer backend that the Windows test
+# lanes cannot reach. Uses only the public XTaskQueue API + the standard
+# library, so it just links the libHttpClient.Linux target.
+find_package(Threads REQUIRED)
+
+add_executable(
+    "TaskQueueStarvationTests.Linux"
+    "${PATH_TO_ROOT}/Tests/TaskQueueStarvation/TaskQueueStarvationRepro.cpp"
+)
+
+target_include_directories(
+    "TaskQueueStarvationTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+    "${PATH_TO_ROOT}/Tests/Shared"
+)
+
+target_link_libraries(
+    "TaskQueueStarvationTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "TaskQueueStarvationTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "TaskQueueStarvationTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME taskqueue-starvation-linux
+    COMMAND "TaskQueueStarvationTests.Linux"
+)
+
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)

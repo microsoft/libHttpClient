@@ -8,7 +8,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>HC_UNITTEST_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCRoot)\Tests\UnitTests\Support;$(HCRoot)\Tests\UnitTests;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCRoot)\Tests\UnitTests\Support;$(HCRoot)\Tests\UnitTests;$(HCRoot)\Tests\Shared;</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
