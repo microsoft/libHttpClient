@@ -223,12 +223,12 @@ namespace OS
         std::atomic<uint32_t> m_refs{ 1 };
 
         DefaultUnnamedMutex m_wakeLock;
-        std::condition_variable m_wake;
+        DefaultUnnamedConditionVariable m_wake;
         uint32_t m_calls{ 0 };
         bool m_terminate{ false };
 
         DefaultUnnamedMutex m_activeLock;
-        std::condition_variable m_active;
+        DefaultUnnamedConditionVariable m_active;
         uint32_t m_activeCalls{ 0 };
 
         std::vector<std::thread> m_pool;
