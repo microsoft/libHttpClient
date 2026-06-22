@@ -33,21 +33,24 @@ bool getSystemProxyForUri(const Uri& uri, Uri* outUri, String* outUsername, Stri
     NSString* proxyPassword = nil;
     if ([resolver getProxy:&proxyUrl withUsername:&proxyUsername andPassword:&proxyPassword])
     {
-        if (!outUri)
+        const char* proxyUrlUtf8 = [proxyUrl.absoluteString UTF8String];
+        if (!outUri || !proxyUrlUtf8)
         {
             return false;
         }
 
-        *outUri = Uri(String([proxyUrl.absoluteString UTF8String]));
-
-        if (outUsername && proxyUsername)
+        *outUri = Uri(String(proxyUrlUtf8));
+        
+        const char* proxyUsernameUtf8 = [proxyUsername UTF8String];
+        if (outUsername && proxyUsernameUtf8)
         {
-            *outUsername = String{ [proxyUsername UTF8String] };
+            *outUsername = String{ proxyUsernameUtf8 };
         }
-
-        if (outPassword && proxyPassword)
+        
+        const char* proxyPasswordUtf8 = [proxyPassword UTF8String];
+        if (outPassword && proxyPasswordUtf8)
         {
-            *outPassword = String{ [proxyPassword UTF8String] };
+            *outPassword = String{ proxyPasswordUtf8 };
         }
         return true;
     }
