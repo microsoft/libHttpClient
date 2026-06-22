@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <condition_variable>
 #include <mutex>
 
 #include <httpClient/config.h>
@@ -514,6 +515,26 @@ public:
     void unlock() { std::mutex::unlock(); }
     native_handle_type native_handle() { return std::mutex::native_handle(); }
 };
+
+class DefaultUnnamedConditionVariable : public std::condition_variable
+{
+public:
+    DefaultUnnamedConditionVariable() noexcept : std::condition_variable(nullptr) {}
+    ~DefaultUnnamedConditionVariable() noexcept = default;
+    DefaultUnnamedConditionVariable(DefaultUnnamedConditionVariable const&) = delete;
+    DefaultUnnamedConditionVariable& operator=(DefaultUnnamedConditionVariable const&) = delete;
+};
+
+class DefaultUnnamedConditionVariableAny : public std::condition_variable_any
+{
+public:
+    DefaultUnnamedConditionVariableAny() noexcept : std::condition_variable_any(nullptr) {}
+    ~DefaultUnnamedConditionVariableAny() noexcept = default;
+    DefaultUnnamedConditionVariableAny(DefaultUnnamedConditionVariableAny const&) = delete;
+    DefaultUnnamedConditionVariableAny& operator=(DefaultUnnamedConditionVariableAny const&) = delete;
+};
 #else
 using DefaultUnnamedMutex = std::mutex;
+using DefaultUnnamedConditionVariable = std::condition_variable;
+using DefaultUnnamedConditionVariableAny = std::condition_variable_any;
 #endif

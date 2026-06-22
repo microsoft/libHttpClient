@@ -102,7 +102,7 @@ namespace OS
         std::atomic<uint64_t> m_generation{ 0 };
         std::atomic<bool> m_terminating{ false };
         DefaultUnnamedMutex m_lock;
-        std::condition_variable m_quiesced;
+        DefaultUnnamedConditionVariable m_quiesced;
         uint32_t m_inFlightDispatch = 0;
     };
 
@@ -161,7 +161,7 @@ namespace OS
         TimerEntry Pop() noexcept;
 
         DefaultUnnamedMutex m_mutex;
-        std::condition_variable m_cv;
+        DefaultUnnamedConditionVariable m_cv;
         std::vector<TimerEntry> m_queue; // used as a heap
         std::thread m_t;
         std::atomic<uint32_t> m_timerCount{ 0 };

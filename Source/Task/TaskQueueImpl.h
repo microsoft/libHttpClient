@@ -258,7 +258,7 @@ private:
     AtomicVector<ITaskQueuePortContext*> m_attachedContexts;
     std::atomic<uint32_t> m_processingSerializedTbCallback{ 0 };
     std::atomic<uint32_t> m_processingCallback{ 0 };
-    std::condition_variable m_processingCallbackCv;
+    DefaultUnnamedConditionVariable m_processingCallbackCv;
     DefaultUnnamedMutex m_lock;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_queueList;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
@@ -277,7 +277,7 @@ private:
     uint64_t m_nextWaitToken = 0;
 #else
     bool m_signaled = false;
-    std::condition_variable_any m_event;
+    DefaultUnnamedConditionVariableAny m_event;
 #endif
 
     HRESULT VerifyNotTerminated(_In_ ITaskQueuePortContext* portContext);
@@ -478,7 +478,7 @@ private:
     {
         bool terminated;
         DefaultUnnamedMutex lock;
-        std::condition_variable cv;
+        DefaultUnnamedConditionVariable cv;
     };
 
     XTaskQueueObject m_header = { };

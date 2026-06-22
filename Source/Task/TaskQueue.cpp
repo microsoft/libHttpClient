@@ -15,7 +15,7 @@ namespace ApiRefs
 {
     std::atomic<uint32_t> g_globalApiRefs{ 0 };
     std::mutex g_waitMutex;
-    std::condition_variable g_waitCv;
+    DefaultUnnamedConditionVariable g_waitCv;
     
     void GlobalAddRef()
     {
