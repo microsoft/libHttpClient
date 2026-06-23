@@ -35,7 +35,7 @@ steps:
       script: |
         set -e
         cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
-        ctest --output-on-failure -R taskqueue-starvation-linux
+        ctest --output-on-failure -R "taskqueue-starvation-linux|taskqueue-poll-strand-linux"
 
   - task: Bash@3
     displayName: 'Build libHttpClient Shared'
