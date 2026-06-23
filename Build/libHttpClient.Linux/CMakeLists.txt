@@ -313,6 +313,13 @@ add_test(
     NAME taskqueue-starvation-linux
     COMMAND "TaskQueueStarvationTests.Linux"
 )
+# Label so CI can run every TaskQueue regression test by label (-L taskqueue)
+# without having to opt each new test in by name.
+set_tests_properties(
+    taskqueue-starvation-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
 
 #################################################
 ### TaskQueue single-port poll strand test    ###
@@ -362,6 +369,11 @@ target_set_flags(
 add_test(
     NAME taskqueue-poll-strand-linux
     COMMAND "SingleQueuePollStrandTests.Linux"
+)
+set_tests_properties(
+    taskqueue-poll-strand-linux
+    PROPERTIES
+    LABELS "taskqueue"
 )
 
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
