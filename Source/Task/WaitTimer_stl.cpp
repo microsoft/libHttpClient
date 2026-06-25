@@ -77,7 +77,7 @@ namespace OS
         TimerEntry Pop() noexcept;
 
         DefaultUnnamedMutex m_mutex;
-        std::condition_variable m_cv;
+        DefaultUnnamedConditionVariable m_cv;
         std::vector<TimerEntry> m_queue; // used as a heap
         std::thread m_t;
         bool m_exitThread = false;
