@@ -174,6 +174,15 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &performContext->internalAsyncBlock.queue));
 
         std::unique_lock<std::mutex> lock{ state.m_mutex };
+        if (state.m_cleanupStarted)
+        {
+            // Cleanup has already begun and taken (or is taking) its snapshot of
+            // m_activeHttpRequests under this same mutex. Refuse the request instead of inserting
+            // it after the snapshot, which would orphan it (never canceled or awaited) and could
+            // run it against a torn-down provider.
+            lock.unlock();
+            return E_HC_NOT_INITIALISED;
+        }
         state.m_activeHttpRequests.insert(performContext);
         lock.unlock();
 
@@ -376,6 +385,13 @@ HRESULT CALLBACK NetworkState::WebSocketConnectAsyncProvider(XAsyncOp op, const 
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue));
 
         std::unique_lock<std::mutex> lock{ state.m_mutex };
+        if (state.m_cleanupStarted)
+        {
+            // See the equivalent guard in HttpCallPerformAsyncProvider: reject connects that arrive
+            // after cleanup has begun rather than orphaning them past the cleanup snapshot.
+            lock.unlock();
+            return E_HC_NOT_INITIALISED;
+        }
         state.m_connectingWebSockets.insert(context->clientAsyncBlock);
         lock.unlock();
 
@@ -501,17 +517,19 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         {
             std::unique_lock<std::mutex> lock{ state->m_mutex };
             state->m_cleanupAsyncBlock = data->async;
+            state->m_cleanupStarted = true;
             scheduleCleanup = state->ScheduleCleanup();
 
 #ifndef HC_NOWEBSOCKETS 
             HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", state->m_activeHttpRequests.size(), state->m_connectingWebSockets.size(), state->m_connectedWebSockets.size());
 #endif
-            // No new HTTP performs can enter m_activeHttpRequests after cleanup begins because
-            // http_singleton::singleton_access(cleanup) detaches the singleton before
-            // NetworkState::CleanupAsync runs. Snapshot requests here, then cancel them after
-            // releasing m_mutex. This prevents a race between holding the global cleanup mutex
-            // across XAsyncCancel and allowing completion to advance a request that cleanup has
-            // already decided to cancel.
+            // Setting m_cleanupStarted above (under m_mutex) closes the admission window: any HTTP
+            // perform or WebSocket connect whose Begin op acquires m_mutex after this point is
+            // refused, so nothing can be inserted into the tracking sets after the snapshot below.
+            // Requests that acquired m_mutex before us are already in m_activeHttpRequests and are
+            // captured by the snapshot here. Snapshot them under the lock and cancel them after
+            // releasing m_mutex; this prevents holding the lock across XAsyncCancel while still
+            // ensuring completion cannot advance a request cleanup has already decided to cancel.
             for (auto activeRequest : state->m_activeHttpRequests)
             {
                 auto expectedState = HttpPerformClientBlockState::CleanupMayCancel;

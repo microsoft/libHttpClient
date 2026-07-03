@@ -100,6 +100,9 @@ private:
     // Admission-control gate for new network operations. Set (under m_mutex) once cleanup has
     // begun; while set, new HTTP performs and WebSocket connects are refused so they cannot land
     // in the tracking sets after the cleanup snapshot has been taken.
+    // All reads and writes must occur under m_mutex; that is what makes a plain bool sufficient
+    // (no atomic needed) and what makes the guard atomic with the tracking-set insert/snapshot. Do
+    // not read this outside m_mutex.
     bool m_cleanupStarted{ false };
 
 #ifndef HC_NOWEBSOCKETS
