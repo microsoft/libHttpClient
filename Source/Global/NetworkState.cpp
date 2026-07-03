@@ -197,6 +197,10 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
     case XAsyncOp::Cleanup:
     {
         std::unique_lock<std::mutex> lock{ state.m_mutex };
+        // Only a perform that was actually admitted (present in m_activeHttpRequests) may drive the
+        // cleanup wakeup. A perform rejected by the m_cleanupStarted guard was never inserted, so
+        // erase() returns 0 and we must not call ScheduleCleanup()/XAsyncSchedule for it -- doing so
+        // would spuriously (re)schedule cleanup's async block for a request that was never tracked.
         bool scheduleCleanup = state.m_activeHttpRequests.erase(performContext) != 0 && state.ScheduleCleanup();
         lock.unlock();
 
