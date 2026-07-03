@@ -232,7 +232,32 @@ public:
     DEFINE_TEST_CASE(TestHttpPerformRejectedAfterCleanupStarted)
     {
         VERIFY_SUCCEEDED(HCInitialize(nullptr));
-        PumpedTaskQueue pumpedQueue;
+
+        XTaskQueueHandle queue{ nullptr };
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+
+        auto cleanupProvider = [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+            {
+                return S_OK;
+            }
+            case XAsyncOp::DoWork:
+            {
+                XAsyncComplete(data->async, S_OK, 0);
+                return E_PENDING;
+            }
+            default:
+            {
+                return S_OK;
+            }
+            }
+        };
+
+        XAsyncBlock cleanupAsyncBlock{ queue };
+        VERIFY_SUCCEEDED(XAsyncBegin(&cleanupAsyncBlock, nullptr, nullptr, nullptr, cleanupProvider));
 
         constexpr char mockUrl[]{ "www.bing.com" };
         HCMockCallHandle mock{ nullptr };
@@ -247,22 +272,29 @@ public:
         auto httpSingleton = get_http_singleton();
         VERIFY_IS_NOT_NULL(httpSingleton.get());
 
-        // Simulate cleanup having begun on NetworkState (without running the real teardown, so
-        // NetworkState stays alive and observable for the assertions below).
-        httpSingleton->m_networkState->TestSetCleanupStarted(true);
+        // Simulate cleanup having begun on NetworkState after its tracking-set snapshot. The
+        // cleanup async block is intentionally real and unscheduled so a rejected perform must not
+        // consume cleanup's one allowed schedule.
+        httpSingleton->m_networkState->TestSetCleanupStarted(true, &cleanupAsyncBlock);
 
-        XAsyncBlock performAsyncBlock{ pumpedQueue.queue };
+        XAsyncBlock performAsyncBlock{ queue };
         VERIFY_SUCCEEDED(httpSingleton->m_networkState->HttpCallPerformAsync(call, &performAsyncBlock));
 
         HRESULT performStatus = XAsyncGetStatus(&performAsyncBlock, true);
         VERIFY_ARE_EQUAL(E_HC_NOT_INITIALISED, performStatus);
         VERIFY_IS_FALSE(httpSingleton->m_networkState->CanCleanupCancelHttpRequest(&performAsyncBlock));
 
+        HRESULT cleanupScheduleHr = XAsyncSchedule(&cleanupAsyncBlock, 0);
+        VERIFY_IS_TRUE(XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&cleanupAsyncBlock, true));
+        VERIFY_SUCCEEDED(cleanupScheduleHr);
+
         httpSingleton->m_networkState->TestSetCleanupStarted(false);
         httpSingleton.reset();
 
         VERIFY_SUCCEEDED(HCHttpCallCloseHandle(call));
         HCCleanup();
+        XTaskQueueCloseHandle(queue);
     }
 };
 

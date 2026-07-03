@@ -152,10 +152,11 @@ bool NetworkState::CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept
     return false;
 }
 
-void NetworkState::TestSetCleanupStarted(bool started) noexcept
+void NetworkState::TestSetCleanupStarted(bool started, XAsyncBlock* cleanupAsyncBlock) noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
     m_cleanupStarted = started;
+    m_cleanupAsyncBlock = cleanupAsyncBlock;
 }
 #endif
 
