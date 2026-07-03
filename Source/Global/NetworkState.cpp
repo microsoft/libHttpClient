@@ -197,8 +197,7 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
     case XAsyncOp::Cleanup:
     {
         std::unique_lock<std::mutex> lock{ state.m_mutex };
-        state.m_activeHttpRequests.erase(performContext);
-        bool scheduleCleanup = state.ScheduleCleanup();
+        bool scheduleCleanup = state.m_activeHttpRequests.erase(performContext) != 0 && state.ScheduleCleanup();
         lock.unlock();
 
         // Free performContext before scheduling cleanup to ensure it happens before returing to client
