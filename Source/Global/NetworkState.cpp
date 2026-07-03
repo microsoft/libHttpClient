@@ -493,11 +493,14 @@ void CALLBACK NetworkState::WebSocketClosed(HCWebsocketHandle /*websocket*/, HCW
 }
 #endif // !HC_NOWEBSOCKETS
 
-HRESULT NetworkState::CleanupAsync(UniquePtr<NetworkState> state, XAsyncBlock* async) noexcept
+HRESULT NetworkState::CleanupAsync(NetworkState* state, XAsyncBlock* async) noexcept
 {
-    RETURN_IF_FAILED(XAsyncBegin(async, state.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
-    state.release();
-    return S_OK;
+    // NetworkState is not taken by owning pointer here: it remains owned by the http_singleton for
+    // its whole lifetime. Cleanup runs against the still-owned instance and never destroys it, so an
+    // in-flight API caller holding a singleton reference can never observe a moved-from or destroyed
+    // NetworkState (Race B). The instance is destroyed together with the singleton, once the
+    // singleton's use_count gate confirms no other references remain.
+    return XAsyncBegin(async, state, __FUNCTION__, __FUNCTION__, CleanupAsyncProvider);
 }
 
 HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
@@ -590,8 +593,7 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         {
             XAsyncBlock* cleanupAsyncBlock{ state->m_cleanupAsyncBlock };
 
-            UniquePtr<NetworkState> reclaim{ state };
-            reclaim.reset();
+            // NetworkState stays owned by the http_singleton; do not destroy it here.
             providerCleanupAsyncBlock.reset();
 
             XAsyncComplete(cleanupAsyncBlock, hr, 0);
@@ -613,14 +615,15 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
 void CALLBACK NetworkState::HttpProviderCleanupComplete(XAsyncBlock* async)
 {
     UniquePtr<XAsyncBlock> providerCleanupAsyncBlock{ async };
-    UniquePtr<NetworkState> state{ static_cast<NetworkState*>(providerCleanupAsyncBlock->context) };
+    NetworkState* state{ static_cast<NetworkState*>(providerCleanupAsyncBlock->context) };
     XAsyncBlock* stateCleanupAsyncBlock = state->m_cleanupAsyncBlock;
 
     HRESULT cleanupResult = XAsyncGetStatus(providerCleanupAsyncBlock.get(), false);
     providerCleanupAsyncBlock.reset();
-    state.reset();
 
-    // NetworkState fully cleaned up at this point
+    // NetworkState's providers are cleaned up at this point. The NetworkState instance itself stays
+    // owned by the http_singleton and is destroyed when the singleton is (after its use_count gate),
+    // so an in-flight caller holding a singleton reference never observes it freed.
     XAsyncComplete(stateCleanupAsyncBlock, cleanupResult, 0);
 }
 

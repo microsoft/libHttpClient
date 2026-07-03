@@ -34,7 +34,7 @@ public:
 #endif
 
     static HRESULT CleanupAsync(
-        UniquePtr<NetworkState> networkManager,
+        NetworkState* networkState,
         XAsyncBlock* async
     ) noexcept;
 
