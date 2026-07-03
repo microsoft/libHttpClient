@@ -50,6 +50,9 @@ public: // Http
 
 #ifdef HC_UNITTEST_API
     bool CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept;
+    // Test seam: simulate that cleanup has begun on this NetworkState without running the
+    // real cleanup flow, so admission-control behavior can be exercised deterministically.
+    void TestSetCleanupStarted(bool started) noexcept;
 #endif
 
 #ifndef HC_NOWEBSOCKETS
@@ -93,6 +96,11 @@ private:
 
     Set<HttpPerformContext*> m_activeHttpRequests;
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
+
+    // Admission-control gate for new network operations. Set (under m_mutex) once cleanup has
+    // begun; while set, new HTTP performs and WebSocket connects are refused so they cannot land
+    // in the tracking sets after the cleanup snapshot has been taken.
+    bool m_cleanupStarted{ false };
 
 #ifndef HC_NOWEBSOCKETS
     static HRESULT CALLBACK WebSocketConnectAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);

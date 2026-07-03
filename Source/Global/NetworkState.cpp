@@ -151,6 +151,12 @@ bool NetworkState::CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept
     }
     return false;
 }
+
+void NetworkState::TestSetCleanupStarted(bool started) noexcept
+{
+    std::unique_lock<std::mutex> lock{ m_mutex };
+    m_cleanupStarted = started;
+}
 #endif
 
 HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
