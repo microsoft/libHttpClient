@@ -1212,6 +1212,14 @@ bool TaskQueuePortImpl::ArmTimerForNextPendingDueTime(
 // must re-evaluate instead of resurrecting it.
 bool TaskQueuePortImpl::RearmTimerIfDueTimeUnchanged(uint64_t dueTime)
 {
+    // UINT64_MAX is the "nothing armed" sentinel and must never be programmed
+    // as a real deadline (see SubmitPendingCallbacks). Mirrors the guard in
+    // ArmTimerIfEarlier.
+    if (dueTime == UINT64_MAX)
+    {
+        return true;
+    }
+
     while (true)
     {
         uint64_t currentDue = m_timerDue.load();
@@ -1401,6 +1409,17 @@ void TaskQueuePortImpl::SubmitPendingCallbacks()
     while (true)
     {
         uint64_t dueTime = m_timerDue.load();
+
+        // UINT64_MAX is the "nothing armed" sentinel. It must never be programmed
+        // as a real deadline: WaitTimer::Start(UINT64_MAX) converts to a duration
+        // of -1 (before the steady_clock epoch), a perpetually-past deadline that
+        // fires immediately and re-arms the sentinel in an infinite loop, starving
+        // every real pending callback. If the timer is disarmed there is nothing
+        // to sweep, so return.
+        if (dueTime == UINT64_MAX)
+        {
+            return;
+        }
 
         // Timer callbacks are advisory: a threadpool fire can arrive after
         // retargeting, or slightly before the steady-clock deadline due to
