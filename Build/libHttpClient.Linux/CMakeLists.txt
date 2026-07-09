@@ -313,5 +313,67 @@ add_test(
     NAME taskqueue-starvation-linux
     COMMAND "TaskQueueStarvationTests.Linux"
 )
+# Label so CI can run every TaskQueue regression test by label (-L taskqueue)
+# without having to opt each new test in by name.
+set_tests_properties(
+    taskqueue-starvation-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
+#################################################
+### TaskQueue single-port poll strand test    ###
+#################################################
+# Standalone regression guard for the single-port delayed-callback strand bug.
+# Exercises the STL WaitTimer backend that the Windows test lanes cannot reach.
+# Uses only the public XTaskQueue API + the standard library, so it just links
+# the libHttpClient.Linux target.
+add_executable(
+    "SingleQueuePollStrandTests.Linux"
+    "${PATH_TO_ROOT}/Tests/TaskQueueStarvation/SingleQueuePollStrandRepro.cpp"
+)
+
+target_include_directories(
+    "SingleQueuePollStrandTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+    "${PATH_TO_ROOT}/Tests/Shared"
+)
+
+target_link_libraries(
+    "SingleQueuePollStrandTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "SingleQueuePollStrandTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "SingleQueuePollStrandTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME taskqueue-poll-strand-linux
+    COMMAND "SingleQueuePollStrandTests.Linux"
+)
+set_tests_properties(
+    taskqueue-poll-strand-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
 
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)

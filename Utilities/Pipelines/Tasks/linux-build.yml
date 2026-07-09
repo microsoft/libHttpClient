@@ -35,7 +35,10 @@ steps:
       script: |
         set -e
         cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
-        ctest --output-on-failure -R taskqueue-starvation-linux
+        # Run every test labelled "taskqueue" so new regression scenarios are
+        # picked up automatically just by adding the label in CMake (no pipeline
+        # change needed).
+        ctest --output-on-failure -L taskqueue
 
   - task: Bash@3
     displayName: 'Build libHttpClient Shared'
