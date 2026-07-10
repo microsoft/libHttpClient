@@ -151,6 +151,13 @@ bool NetworkState::CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept
     }
     return false;
 }
+
+void NetworkState::TestSetCleanupStarted(bool started, XAsyncBlock* cleanupAsyncBlock) noexcept
+{
+    std::unique_lock<std::mutex> lock{ m_mutex };
+    m_cleanupStarted = started;
+    m_cleanupAsyncBlock = cleanupAsyncBlock;
+}
 #endif
 
 HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
@@ -168,6 +175,15 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &performContext->internalAsyncBlock.queue));
 
         std::unique_lock<std::mutex> lock{ state.m_mutex };
+        if (state.m_cleanupStarted)
+        {
+            // Cleanup has already begun and taken (or is taking) its snapshot of
+            // m_activeHttpRequests under this same mutex. Refuse the request instead of inserting
+            // it after the snapshot, which would orphan it (never canceled or awaited) and could
+            // run it against a torn-down provider.
+            lock.unlock();
+            return E_HC_NOT_INITIALISED;
+        }
         state.m_activeHttpRequests.insert(performContext);
         lock.unlock();
 
@@ -181,8 +197,11 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
     case XAsyncOp::Cleanup:
     {
         std::unique_lock<std::mutex> lock{ state.m_mutex };
-        state.m_activeHttpRequests.erase(performContext);
-        bool scheduleCleanup = state.ScheduleCleanup();
+        // Only a perform that was actually admitted (present in m_activeHttpRequests) may drive the
+        // cleanup wakeup. A perform rejected by the m_cleanupStarted guard was never inserted, so
+        // erase() returns 0 and we must not call ScheduleCleanup()/XAsyncSchedule for it -- doing so
+        // would spuriously (re)schedule cleanup's async block for a request that was never tracked.
+        bool scheduleCleanup = state.m_activeHttpRequests.erase(performContext) != 0 && state.ScheduleCleanup();
         lock.unlock();
 
         // Free performContext before scheduling cleanup to ensure it happens before returing to client
@@ -370,6 +389,13 @@ HRESULT CALLBACK NetworkState::WebSocketConnectAsyncProvider(XAsyncOp op, const 
         RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->internalAsyncBlock.queue));
 
         std::unique_lock<std::mutex> lock{ state.m_mutex };
+        if (state.m_cleanupStarted)
+        {
+            // See the equivalent guard in HttpCallPerformAsyncProvider: reject connects that arrive
+            // after cleanup has begun rather than orphaning them past the cleanup snapshot.
+            lock.unlock();
+            return E_HC_NOT_INITIALISED;
+        }
         state.m_connectingWebSockets.insert(context->clientAsyncBlock);
         lock.unlock();
 
@@ -471,11 +497,14 @@ void CALLBACK NetworkState::WebSocketClosed(HCWebsocketHandle /*websocket*/, HCW
 }
 #endif // !HC_NOWEBSOCKETS
 
-HRESULT NetworkState::CleanupAsync(UniquePtr<NetworkState> state, XAsyncBlock* async) noexcept
+HRESULT NetworkState::CleanupAsync(NetworkState* state, XAsyncBlock* async) noexcept
 {
-    RETURN_IF_FAILED(XAsyncBegin(async, state.get(), __FUNCTION__, __FUNCTION__, CleanupAsyncProvider));
-    state.release();
-    return S_OK;
+    // NetworkState is not taken by owning pointer here: it remains owned by the http_singleton for
+    // its whole lifetime. Cleanup runs against the still-owned instance and never destroys it, so an
+    // in-flight API caller holding a singleton reference can never observe a moved-from or destroyed
+    // NetworkState (Race B). The instance is destroyed together with the singleton, once the
+    // singleton's use_count gate confirms no other references remain.
+    return XAsyncBegin(async, state, __FUNCTION__, __FUNCTION__, CleanupAsyncProvider);
 }
 
 HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
@@ -495,17 +524,19 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         {
             std::unique_lock<std::mutex> lock{ state->m_mutex };
             state->m_cleanupAsyncBlock = data->async;
+            state->m_cleanupStarted = true;
             scheduleCleanup = state->ScheduleCleanup();
 
 #ifndef HC_NOWEBSOCKETS 
             HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", state->m_activeHttpRequests.size(), state->m_connectingWebSockets.size(), state->m_connectedWebSockets.size());
 #endif
-            // No new HTTP performs can enter m_activeHttpRequests after cleanup begins because
-            // http_singleton::singleton_access(cleanup) detaches the singleton before
-            // NetworkState::CleanupAsync runs. Snapshot requests here, then cancel them after
-            // releasing m_mutex. This prevents a race between holding the global cleanup mutex
-            // across XAsyncCancel and allowing completion to advance a request that cleanup has
-            // already decided to cancel.
+            // Setting m_cleanupStarted above (under m_mutex) closes the admission window: any HTTP
+            // perform or WebSocket connect whose Begin op acquires m_mutex after this point is
+            // refused, so nothing can be inserted into the tracking sets after the snapshot below.
+            // Requests that acquired m_mutex before us are already in m_activeHttpRequests and are
+            // captured by the snapshot here. Snapshot them under the lock and cancel them after
+            // releasing m_mutex; this prevents holding the lock across XAsyncCancel while still
+            // ensuring completion cannot advance a request cleanup has already decided to cancel.
             for (auto activeRequest : state->m_activeHttpRequests)
             {
                 auto expectedState = HttpPerformClientBlockState::CleanupMayCancel;
@@ -566,8 +597,7 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
         {
             XAsyncBlock* cleanupAsyncBlock{ state->m_cleanupAsyncBlock };
 
-            UniquePtr<NetworkState> reclaim{ state };
-            reclaim.reset();
+            // NetworkState stays owned by the http_singleton; do not destroy it here.
             providerCleanupAsyncBlock.reset();
 
             XAsyncComplete(cleanupAsyncBlock, hr, 0);
@@ -589,14 +619,15 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
 void CALLBACK NetworkState::HttpProviderCleanupComplete(XAsyncBlock* async)
 {
     UniquePtr<XAsyncBlock> providerCleanupAsyncBlock{ async };
-    UniquePtr<NetworkState> state{ static_cast<NetworkState*>(providerCleanupAsyncBlock->context) };
+    NetworkState* state{ static_cast<NetworkState*>(providerCleanupAsyncBlock->context) };
     XAsyncBlock* stateCleanupAsyncBlock = state->m_cleanupAsyncBlock;
 
     HRESULT cleanupResult = XAsyncGetStatus(providerCleanupAsyncBlock.get(), false);
     providerCleanupAsyncBlock.reset();
-    state.reset();
 
-    // NetworkState fully cleaned up at this point
+    // NetworkState's providers are cleaned up at this point. The NetworkState instance itself stays
+    // owned by the http_singleton and is destroyed when the singleton is (after its use_count gate),
+    // so an in-flight caller holding a singleton reference never observes it freed.
     XAsyncComplete(stateCleanupAsyncBlock, cleanupResult, 0);
 }
 
