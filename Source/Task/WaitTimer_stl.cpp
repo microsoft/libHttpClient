@@ -88,6 +88,67 @@ namespace OS
     {
         std::shared_ptr<TimerQueue> g_timerQueue;
         DefaultUnnamedMutex g_timerQueueMutex;
+        DefaultUnnamedMutex g_testHooksMutex;
+        DefaultUnnamedConditionVariable g_testHooksChanged;
+        WaitTimerTestHooks* g_testHooks = nullptr;
+        std::atomic<bool> g_testHooksInstalled{ false };
+        uint32_t g_testHooksActive = 0;
+        bool g_testHooksReplacing = false;
+    }
+
+    class WaitTimerTestHookLease
+    {
+    public:
+        WaitTimerTestHookLease() noexcept
+        {
+            // Production fast path: when no hooks are installed, avoid the
+            // process-global hook mutex entirely on Start/Cancel/dispatch.
+            if (!g_testHooksInstalled.load(std::memory_order_acquire))
+            {
+                return;
+            }
+
+            std::unique_lock<DefaultUnnamedMutex> lock{ g_testHooksMutex };
+            g_testHooksChanged.wait(lock, []() noexcept { return !g_testHooksReplacing; });
+            m_hooks = g_testHooks;
+            if (m_hooks != nullptr)
+            {
+                ++g_testHooksActive;
+            }
+        }
+
+        ~WaitTimerTestHookLease()
+        {
+            if (m_hooks != nullptr)
+            {
+                std::lock_guard<DefaultUnnamedMutex> lock{ g_testHooksMutex };
+                ASSERT(g_testHooksActive != 0);
+                if (--g_testHooksActive == 0)
+                {
+                    g_testHooksChanged.notify_all();
+                }
+            }
+        }
+
+        WaitTimerTestHooks* Get() const noexcept
+        {
+            return m_hooks;
+        }
+
+    private:
+        WaitTimerTestHooks* m_hooks = nullptr;
+    };
+
+    void WaitTimerSetTestHooks(_In_opt_ WaitTimerTestHooks* hooks) noexcept
+    {
+        std::unique_lock<DefaultUnnamedMutex> lock{ g_testHooksMutex };
+        g_testHooksReplacing = true;
+        g_testHooksChanged.wait(lock, []() noexcept { return g_testHooksActive == 0; });
+        g_testHooks = hooks;
+        g_testHooksInstalled.store(hooks != nullptr, std::memory_order_release);
+        g_testHooksReplacing = false;
+        lock.unlock();
+        g_testHooksChanged.notify_all();
     }
 
     TimerQueue::~TimerQueue()
@@ -179,7 +240,11 @@ namespace OS
                 lock.unlock();
                 if (entry.Timer) // Timer is set to nullptr if the entry is removed
                 {
-                    entry.Timer->InvokeCallback();
+                    WaitTimerTestHookLease testHooks;
+                    if (auto hooks = testHooks.Get(); hooks == nullptr || hooks->BeforeTimerInvoke())
+                    {
+                        entry.Timer->InvokeCallback();
+                    }
                 }
                 lock.lock();
             }
@@ -213,6 +278,12 @@ namespace OS
 
     WaitTimerImpl::~WaitTimerImpl()
     {
+        WaitTimerTestHookLease testHooks;
+        if (auto hooks = testHooks.Get())
+        {
+            hooks->WaitTimerImplDestructionStarted();
+        }
+
         std::lock_guard<std::mutex> lock{ g_timerQueueMutex };
 
         // If we are the last one referencing the global timer the

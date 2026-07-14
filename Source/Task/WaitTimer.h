@@ -1,10 +1,22 @@
 #pragma once
 
+#include <atomic>
+
 namespace OS
 {
     using WaitTimerCallback = void(_In_opt_ void*);
 
     class WaitTimerImpl;
+
+    // Source-internal test seam for deterministic STL WaitTimer lifetime
+    // regressions. It is not exported as part of the public libHttpClient API.
+    struct WaitTimerTestHooks
+    {
+        virtual void WaitTimerImplDestructionStarted() noexcept {}
+        virtual bool BeforeTimerInvoke() noexcept { return true; }
+    };
+
+    void WaitTimerSetTestHooks(_In_opt_ WaitTimerTestHooks* hooks) noexcept;
 
     // A wait timer holds a single timeout expressed as a monotonic due time.
     // Calling Start will reset any pending timeout.
