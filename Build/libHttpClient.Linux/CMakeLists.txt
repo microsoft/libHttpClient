@@ -489,4 +489,56 @@ set_tests_properties(
     LABELS "taskqueue"
 )
 
+#################################################
+### WaitTimer wrapper lifetime race repro      ###
+#################################################
+add_executable(
+    "WaitTimerWrapperTerminateTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerWrapperTerminateRepro.cpp"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerTestMemory.cpp"
+    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
+)
+
+target_include_directories(
+    "WaitTimerWrapperTerminateTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+)
+
+target_link_libraries(
+    "WaitTimerWrapperTerminateTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "WaitTimerWrapperTerminateTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "WaitTimerWrapperTerminateTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME waittimer-wrapper-terminate-linux
+    COMMAND "WaitTimerWrapperTerminateTests.Linux"
+)
+set_tests_properties(
+    waittimer-wrapper-terminate-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)

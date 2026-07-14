@@ -531,12 +531,24 @@ namespace OS
 
     void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
     {
-        m_impl.load()->Start(dueTime);
+        WaitTimerImpl* timer = m_impl.load();
+        WaitTimerTestHookLease testHooks;
+        if (auto hooks = testHooks.Get(); hooks != nullptr && !hooks->WaitTimerOperationLoaded(true))
+        {
+            return;
+        }
+        timer->Start(dueTime);
     }
 
     void WaitTimer::Cancel() noexcept
     {
-        m_impl.load()->Cancel();
+        WaitTimerImpl* timer = m_impl.load();
+        WaitTimerTestHookLease testHooks;
+        if (auto hooks = testHooks.Get(); hooks != nullptr && !hooks->WaitTimerOperationLoaded(false))
+        {
+            return;
+        }
+        timer->Cancel();
     }
 
     uint64_t WaitTimer::GetCurrentTime() noexcept
