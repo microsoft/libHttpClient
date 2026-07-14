@@ -505,6 +505,7 @@ namespace OS
 
     HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
     {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
         if (m_impl.load() != nullptr || callback == nullptr)
         {
             ASSERT(false);
@@ -522,7 +523,11 @@ namespace OS
 
     void WaitTimer::Terminate() noexcept
     {
-        std::unique_ptr<WaitTimerImpl> timer(m_impl.exchange(nullptr));
+        std::unique_ptr<WaitTimerImpl> timer;
+        {
+            std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+            timer.reset(m_impl.exchange(nullptr));
+        }
         if (timer != nullptr)
         {
             timer->Cancel();
@@ -531,24 +536,32 @@ namespace OS
 
     void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
     {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
         WaitTimerImpl* timer = m_impl.load();
         WaitTimerTestHookLease testHooks;
         if (auto hooks = testHooks.Get(); hooks != nullptr && !hooks->WaitTimerOperationLoaded(true))
         {
             return;
         }
-        timer->Start(dueTime);
+        if (timer != nullptr)
+        {
+            timer->Start(dueTime);
+        }
     }
 
     void WaitTimer::Cancel() noexcept
     {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
         WaitTimerImpl* timer = m_impl.load();
         WaitTimerTestHookLease testHooks;
         if (auto hooks = testHooks.Get(); hooks != nullptr && !hooks->WaitTimerOperationLoaded(false))
         {
             return;
         }
-        timer->Cancel();
+        if (timer != nullptr)
+        {
+            timer->Cancel();
+        }
     }
 
     uint64_t WaitTimer::GetCurrentTime() noexcept

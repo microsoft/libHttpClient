@@ -43,6 +43,7 @@ namespace OS
         uint64_t GetDueTime(_In_ uint32_t msFromNow) noexcept;
 
     private:
+        DefaultUnnamedMutex m_mutex;
         std::atomic<WaitTimerImpl*> m_impl;
     };
 }
