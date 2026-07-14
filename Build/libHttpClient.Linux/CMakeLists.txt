@@ -433,4 +433,60 @@ set_tests_properties(
     LABELS "taskqueue"
 )
 
+#################################################
+### WaitTimer queue-retirement race repro      ###
+#################################################
+# White-box regression for the shared TimerQueue's last-owner retirement. It
+# compiles the private STL timer implementation so it can pause inside
+# RemoveTimer while the retiring owner holds g_timerQueueMutex, proving a
+# concurrent Initialize cannot adopt a queue that is being retired.
+add_executable(
+    "WaitTimerQueueRetirementTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerQueueRetirementRepro.cpp"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerTestMemory.cpp"
+    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
+)
+
+target_include_directories(
+    "WaitTimerQueueRetirementTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+)
+
+target_link_libraries(
+    "WaitTimerQueueRetirementTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "WaitTimerQueueRetirementTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "WaitTimerQueueRetirementTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME waittimer-queue-retirement-linux
+    COMMAND "WaitTimerQueueRetirementTests.Linux"
+)
+set_tests_properties(
+    waittimer-queue-retirement-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)

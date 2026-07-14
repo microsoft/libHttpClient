@@ -14,6 +14,7 @@ namespace OS
     {
         virtual void WaitTimerImplDestructionStarted() noexcept {}
         virtual bool BeforeTimerInvoke() noexcept { return true; }
+        virtual void BeforeTimerQueueRetirement() noexcept {}
     };
 
     void WaitTimerSetTestHooks(_In_opt_ WaitTimerTestHooks* hooks) noexcept;
