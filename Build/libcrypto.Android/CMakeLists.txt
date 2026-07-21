@@ -829,6 +829,7 @@ set(CRYPTO_INCLUDE_DIRS
     "${PATH_TO_EXTERNAL}/opensslGeneratedHeaders/android/internal"
     "${PATH_TO_OPENSSL}"
     "${PATH_TO_OPENSSL}/include"
+    "${PATH_TO_CRYPTO}"
     "${PATH_TO_CRYPTO}/include"
     "${PATH_TO_CRYPTO}/modes"
     "${PATH_TO_CRYPTO}/ec/curve448"
