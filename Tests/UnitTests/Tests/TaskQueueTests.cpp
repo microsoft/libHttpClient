@@ -6,6 +6,8 @@
 #include "CallbackThunk.h"
 #include "PumpedTaskQueue.h"
 #include "XTaskQueuePriv.h"
+#include "CompositeQueueStarvationScenario.h"
+#include "SingleQueueDelayedPollStrandScenario.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -98,6 +100,11 @@ struct HandleCloser
 };
 
 typedef AutoHandleWrapper<HANDLE, HandleCloser> AutoHandle;
+
+// The composite-queue delayed-callback starvation scenario lives in
+// Tests/Shared/CompositeQueueStarvationScenario.h so the exact same scenario is
+// exercised here (Win32 WaitTimer backend) and by the standalone Linux repro
+// binary (STL WaitTimer backend, where the regression manifests).
 
 DEFINE_TEST_CLASS(TaskQueueTests)
 {
@@ -195,6 +202,69 @@ public:
             VERIFY_IS_LESS_THAN(GetTickCount64() - ticks, (UINT64)1000);
             Sleep(100);
         }      
+    }
+
+    DEFINE_TEST_CASE(VerifyCompositeQueueDelayedCallbackStarvation)
+    {
+        // Regression guard for delayed-callback timer arming under composite
+        // teardown. Many concurrent submitter threads each create a composite
+        // over one shared Work port and drive a self-resubmitting delayed-poll
+        // loop (tiny 1-2ms delays). A canceller thread terminates a subset of
+        // the composites WHILE they still have a delayed callback pending, while
+        // pump threads dispatch the shared Work port. This races new delayed
+        // submits against the timer worker promoting/arming due entries and
+        // against terminate removing the armed-earliest entry. If the shared
+        // timer fails to re-arm in any of those windows, the remaining delayed
+        // callbacks stop firing and the queue starves; every request must still
+        // complete.
+        //
+        // The scenario itself lives in the shared header so the exact same code
+        // runs here on the Win32 WaitTimer backend and in the standalone Linux
+        // repro binary on the STL WaitTimer backend (where the bug manifests).
+
+        int failedIteration = -1;
+        int completedAtFailure = -1;
+        bool ok = hc_test::RunCompositeQueueStarvationScenario(
+            hc_test::CompositeStarvationConfig{},
+            &failedIteration,
+            &completedAtFailure);
+
+        if (!ok)
+        {
+            LOG_COMMENT(L"STARVATION at iteration %d: completed %d", failedIteration, completedAtFailure);
+        }
+        VERIFY_IS_TRUE(ok);
+    }
+
+    DEFINE_TEST_CASE(VerifySingleQueueDelayedPollStrand)
+    {
+        // Regression guard for the single-port delayed-callback strand. A single
+        // self-resubmitting delayed-poll loop runs on one manual Work port
+        // (mirroring a platform HTTP provider that re-arms its poll every few ms
+        // via XTaskQueueSubmitDelayedCallback). A short burst of unrelated
+        // one-shot delayed callbacks runs concurrently to create timer-arming
+        // contention, then stops. After the burst drains, the poll loop is the
+        // only remaining work: if a re-arm was dropped during the burst, nothing
+        // sweeps the pending list to rescue it and the loop stalls. Unlike
+        // VerifyCompositeQueueDelayedCallbackStarvation, there is no continuous
+        // rescue traffic to mask the strand once the burst ends.
+        //
+        // The scenario itself lives in the shared header so the exact same code
+        // runs here on the Win32 WaitTimer backend and in the standalone Linux
+        // repro binary on the STL WaitTimer backend (where the bug manifests).
+
+        int failedIteration = -1;
+        int pollsAtStall = -1;
+        bool ok = hc_test::RunSingleQueuePollStrandScenario(
+            hc_test::SingleQueuePollStrandConfig{},
+            &failedIteration,
+            &pollsAtStall);
+
+        if (!ok)
+        {
+            LOG_COMMENT(L"STRAND at iteration %d: poll loop stalled at %d polls", failedIteration, pollsAtStall);
+        }
+        VERIFY_IS_TRUE(ok);
     }
 
     DEFINE_TEST_CASE(VerifyDuplicateQueueHandle)

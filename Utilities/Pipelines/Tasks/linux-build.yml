@@ -29,6 +29,18 @@ steps:
       arguments: '-c ${{ parameters.configuration }} -nc -ns -st'
 
   - task: Bash@3
+    displayName: 'Run libHttpClient Linux tests (ctest)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        set -e
+        cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
+        # Run every test labelled "taskqueue" so new regression scenarios are
+        # picked up automatically just by adding the label in CMake (no pipeline
+        # change needed).
+        ctest --output-on-failure -L taskqueue
+
+  - task: Bash@3
     displayName: 'Build libHttpClient Shared'
     inputs:
       filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'

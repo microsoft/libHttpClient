@@ -29,6 +29,7 @@
 #pragma warning(pop)
 #endif
 
+#include <memory>
 #include <vector>
 
 #if HC_PLATFORM_IS_APPLE
@@ -104,8 +105,10 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
 #else
     verify_result = verify_X509_cert_chain(certChain, hostName);
 #endif
-    // The Windows Crypto APIs don't do host name checks, use Boost's implementation.
-#if HC_PLATFORM_IS_MICROSOFT
+    // The platform chain-verify routines (Windows Crypto, Linux X509_verify_cert) don't
+    // perform host name checks, so apply Boost's RFC 2818 hostname verification to match
+    // the certificate against the requested host.
+#if HC_PLATFORM_IS_MICROSOFT || (HC_PLATFORM == HC_PLATFORM_LINUX)
     if (verify_result)
     {
         asio::ssl::rfc2818_verification rfc2818(hostName.data());
@@ -306,6 +309,10 @@ static bool verify_X509_cert_chain(asio::ssl::verify_context& verifyCtx, const h
     {
         return false;
     }
+
+    X509_STORE_CTX_trusted_stack(storeContext, certStack);
+    // The cert store is owned by sslContext and freed with it; do not free it separately.
+    X509_STORE* store = SSL_CTX_get_cert_store(sslContext.get());
 
     int ret = X509_STORE_set_default_paths(store);
     if (ret != 1)

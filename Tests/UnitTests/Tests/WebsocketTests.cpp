@@ -1164,6 +1164,83 @@ public:
         HCCleanup();
     }
 
+    // Regression guard: connect must complete on the Work port without the Completion port being
+    // dispatched, while the client completion callback is still deferred to the Completion port.
+    DEFINE_TEST_CASE(VerifyWebSocketConnectCompletesOnWorkPortWithoutCompletionPump)
+    {
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(
+            Test_Internal_HCWebSocketConnectAsync,
+            Test_Internal_HCWebSocketSendMessageAsync,
+            Test_Internal_HCWebSocketSendBinaryMessageAsync,
+            Test_Internal_HCWebSocketDisconnect,
+            nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        // Manual / Manual queue: the caller controls when each port is dispatched.
+        XTaskQueueHandle queue{ nullptr };
+        VERIFY_ARE_EQUAL(S_OK, XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+
+        g_HCWebSocketConnect_Called = false;
+        g_HCWebSocketSendMessage_Called = false;
+
+        HCWebsocketHandle websocket{ nullptr };
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+        VERIFY_IS_NOT_NULL(websocket);
+
+        std::atomic<bool> clientCompleted{ false };
+        struct ConnectState { std::atomic<bool>* completed; } connectState{ &clientCompleted };
+
+        XAsyncBlock asyncBlock{};
+        asyncBlock.queue = queue;
+        asyncBlock.context = &connectState;
+        asyncBlock.callback = [](XAsyncBlock* async)
+        {
+            auto state = static_cast<ConnectState*>(async->context);
+            state->completed->store(true);
+        };
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
+
+        // Pump ONLY the Work port: the internal connect completion runs here, reaching Connected.
+        bool workDispatched = true;
+        while (workDispatched)
+        {
+            workDispatched = XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+        }
+
+        VERIFY_IS_TRUE(g_HCWebSocketConnect_Called);
+
+        // A send is accepted only once the socket is Connected (SendAsync returns E_UNEXPECTED before
+        // the connect completion allocates the provider context), so this probes that the connect
+        // completion was not stranded on the unpumped Completion port.
+        XAsyncBlock probeSendBlock{};
+        probeSendBlock.queue = queue;
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSendMessageAsync(websocket, "probe", &probeSendBlock));
+
+        // The client completion is deferred to the Completion port, so it has not fired yet.
+        VERIFY_IS_FALSE(clientCompleted.load());
+
+        // Drain both ports to deliver the client and send completions.
+        bool dispatched = true;
+        while (dispatched)
+        {
+            bool work = XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+            bool completion = XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
+            dispatched = work || completion;
+        }
+
+        VERIFY_IS_TRUE(clientCompleted.load());
+        VERIFY_IS_TRUE(g_HCWebSocketSendMessage_Called);
+
+        WebSocketCompletionResult connectResult{};
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketConnectResult(&asyncBlock, &connectResult));
+        VERIFY_ARE_EQUAL(S_OK, connectResult.errorCode);
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+        XTaskQueueCloseHandle(queue);
+        HCCleanup();
+    }
+
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
