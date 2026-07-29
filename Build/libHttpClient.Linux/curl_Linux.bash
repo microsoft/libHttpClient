@@ -51,7 +51,7 @@ else
 fi
 
 # make libcrypto and libssl
-./configure "${CONFIGURE_ARGS[@]}"
+perl configure "${CONFIGURE_ARGS[@]}"
 
 MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 make $MAKE_PARALLELISM

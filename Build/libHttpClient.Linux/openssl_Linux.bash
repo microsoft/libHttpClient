@@ -71,7 +71,7 @@ if [ "$CONFIGURATION" = "Debug" ]; then
 fi
 
 # make libcrypto and libssl
-./Configure "${CONFIGURE_ARGS[@]}"
+perl Configure "${CONFIGURE_ARGS[@]}"
 
 MAKE_PARALLELISM="-j$(nproc)" # run Make in parallel to speed up the build process
 make $MAKE_PARALLELISM CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden"
