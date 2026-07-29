@@ -310,10 +310,6 @@ static bool verify_X509_cert_chain(asio::ssl::verify_context& verifyCtx, const h
         return false;
     }
 
-    X509_STORE_CTX_trusted_stack(storeContext, certStack);
-    // The cert store is owned by sslContext and freed with it; do not free it separately.
-    X509_STORE* store = SSL_CTX_get_cert_store(sslContext.get());
-
     int ret = X509_STORE_set_default_paths(store);
     if (ret != 1)
     {
