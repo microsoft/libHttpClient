@@ -100,6 +100,7 @@ WaitTimer::~WaitTimer() noexcept
 
 HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
 {
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
     if (m_impl.load() != nullptr || callback == nullptr)
     {
         ASSERT(false);
@@ -117,7 +118,11 @@ HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* ca
 
 void WaitTimer::Terminate() noexcept
 {
-    WaitTimerImpl* timer = m_impl.exchange(nullptr);
+    WaitTimerImpl* timer;
+    {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+        timer = m_impl.exchange(nullptr);
+    }
     if (timer != nullptr)
     {
         timer->Cancel();
@@ -127,12 +132,20 @@ void WaitTimer::Terminate() noexcept
 
 void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
 {
-    m_impl.load()->Start(dueTime);
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+    if (WaitTimerImpl* timer = m_impl.load())
+    {
+        timer->Start(dueTime);
+    }
 }
 
 void WaitTimer::Cancel() noexcept
 {
-    m_impl.load()->Cancel();
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+    if (WaitTimerImpl* timer = m_impl.load())
+    {
+        timer->Cancel();
+    }
 }
 
 uint64_t WaitTimer::GetCurrentTime() noexcept
