@@ -9,11 +9,11 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
         $(HCRoot)\External\opensslGeneratedHeaders\win32\openssl;
         $(HCRoot)\External\opensslGeneratedHeaders\win32\include;
         $(HCRoot)\External\opensslGeneratedHeaders\win32\crypto;
         $(HCRoot)\External\opensslGeneratedHeaders\win32\;
-        %(AdditionalIncludeDirectories);
         $(HCRoot)\External\openssl\;
         $(HCRoot)\External\openssl\include\;
         $(HCRoot)\External\openssl\crypto\;
@@ -28,7 +28,7 @@
       </AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
-      <DisableSpecificWarnings>4005;4013;4028;4031;4033;4047;4090;4133;4164;4244;4267;4293;4334</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4013;4028;4031;4033;4047;4090;4133;4164;4244;4267;4293;4319;4334</DisableSpecificWarnings>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>
