@@ -10,9 +10,6 @@
     <ClCompile>
       <AdditionalIncludeDirectories>
         %(AdditionalIncludeDirectories);
-        $(HCRoot)\External\opensslGeneratedHeaders\win32\openssl;
-        $(HCRoot)\External\opensslGeneratedHeaders\win32\include;
-        $(HCRoot)\External\opensslGeneratedHeaders\win32\crypto;
         $(HCRoot)\External\opensslGeneratedHeaders\win32\;
         $(HCRoot)\External\openssl\;
         $(HCRoot)\External\openssl\include\;
