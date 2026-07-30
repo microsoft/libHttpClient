@@ -8,6 +8,7 @@
 #include "StepTimer.h"
 
 
+// RAII wrapper for a Win32 event handle used by the async task-queue pump.
 class win32_handle
 {
 public:
@@ -33,8 +34,8 @@ private:
 };
 
 // A basic game implementation that creates a D3D12 device and
-// provides a game loop.
-class Game final : public DX::IDeviceNotify
+// provides a render loop, plus the libHttpClient suspend-hang repro.
+class Game
 {
 public:
 
@@ -48,26 +49,19 @@ public:
     Game& operator= (Game const&) = delete;
 
     // Initialization and management
-    void Initialize(HWND window, int width, int height);
+    void Initialize(HWND window);
 
-    // Basic game loop
+    // Basic render loop
     void Tick();
 
-    // IDeviceNotify
-    void OnDeviceLost() override;
-    void OnDeviceRestored() override;
-
     // Messages
-    void OnActivated();
-    void OnDeactivated();
     void OnSuspending();
     void OnResuming();
-    void OnWindowMoved();
-    void OnDisplayChange();
-    void OnWindowSizeChanged(int width, int height);
+    void OnConstrained() {}
+    void OnUnConstrained() {}
 
     // Properties
-    void GetDefaultSize( int& width, int& height ) const noexcept;
+    bool RequestHDRMode() const noexcept { return m_deviceResources ? (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_EnableHDR) != 0 : false; }
 
 private:
 
@@ -79,32 +73,36 @@ private:
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
 
+    // libHttpClient repro helpers.
     static DWORD WINAPI BackgroundThreadEntry(LPVOID lpParam);
     static void CALLBACK HandleAsyncQueueCallback(void* context, XTaskQueueHandle queue, XTaskQueuePort type);
 
     void StartBackgroundThreads();
     void ShutdownBackgroundThreads();
-    void PerformHttpCall(std::string url, std::string requestBody, bool isJson, std::string filePath, bool enableGzipCompression, bool enableGzipResponseCompression, bool customWrite);
+    void PerformHttpCall(std::string url);
 
     // Device resources.
-    std::unique_ptr<DX::DeviceResources>    m_deviceResources;
+    std::unique_ptr<DX::DeviceResources>        m_deviceResources;
 
     // Rendering loop timer.
-    DX::StepTimer                           m_timer;
+    uint64_t                                    m_frame;
+    DX::StepTimer                               m_timer;
 
-    win32_handle                            m_stopRequestedHandle;
-    win32_handle                            m_workReadyHandle;
-    win32_handle                            m_completionReadyHandle;
-    win32_handle                            m_exampleTaskDone;
+    // Async task-queue pump (a title-owned work queue that libHttpClient's
+    // Curl provider drives via curl_multi_perform callbacks).
+    win32_handle                                m_stopRequestedHandle;
+    win32_handle                                m_workReadyHandle;
+    win32_handle                                m_completionReadyHandle;
+    win32_handle                                m_exampleTaskDone;
 
-    const DWORD                             m_targetNumThreads{ 2 };
-    HANDLE                                  m_hActiveThreads[10] = { 0 };
-    DWORD                                   m_defaultIdealProcessor = 0;
-    DWORD                                   m_numActiveThreads = 0;
+    const DWORD                                 m_targetNumThreads{ 2 };
+    HANDLE                                      m_hActiveThreads[10] = { 0 };
+    DWORD                                       m_defaultIdealProcessor = 0;
+    DWORD                                       m_numActiveThreads = 0;
 
-    XTaskQueueHandle                        m_queue{};
-    XTaskQueueRegistrationToken             m_callbackToken{};
+    XTaskQueueHandle                            m_queue{};
+    XTaskQueueRegistrationToken                 m_callbackToken{};
 
-    size_t                                  m_httpCallsCompleted{ 0 };
-    bool                                    m_httpCallPending{ false };
+    size_t                                      m_httpCallsCompleted{ 0 };
+    bool                                        m_httpCallPending{ false };
 };

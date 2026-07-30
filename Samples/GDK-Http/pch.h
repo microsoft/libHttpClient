@@ -6,9 +6,7 @@
 #pragma once
 
 #include <winsdkver.h>
-#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0A00
-#endif
 #include <sdkddkver.h>
 
 // Use the C++ standard templated min/max
@@ -28,33 +26,26 @@
 // WinHelp is deprecated
 #define NOHELP
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
 #include <Windows.h>
 
 #include <wrl/client.h>
 #include <wrl/event.h>
 
-#include <grdk.h>
+#include <gxdk.h>
 
-#if _GRDK_VER < 0x55F00C58 /* GDK Edition 220300 */
+#if _GXDK_VER < 0x55F00C58 /* GDK Edition 220300 */
 #error This project requires the March 2022 GDK or later
 #endif
 
-#ifdef USING_DIRECTX_HEADERS
-#include <directx/dxgiformat.h>
-#include <directx/d3d12.h>
-#include <directx/d3dx12.h>
-#include <dxguids/dxguids.h>
+#ifdef _GAMING_XBOX_SCARLETT
+#include <d3d12_xs.h>
+#include <d3dx12_xs.h>
 #else
-#include <d3d12.h>
-
-#include "d3dx12.h"
+#include <d3d12_x.h>
+#include <d3dx12_x.h>
 #endif
 
-#include <dxgi1_6.h>
+#include <pix3.h>
 
 #include <DirectXMath.h>
 #include <DirectXColors.h>
@@ -74,13 +65,11 @@
 #include <system_error>
 #include <tuple>
 
-#ifdef _DEBUG
-#include <dxgidebug.h>
-#endif
-
-#include <pix3.h>
-
 #include <XGameRuntime.h>
+
+#include <httpClient/httpClient.h>
+#include <XTaskQueue.h>
+#include <XAsync.h>
 
 namespace DX
 {

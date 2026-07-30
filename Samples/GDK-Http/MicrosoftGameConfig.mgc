@@ -9,9 +9,9 @@
             Version="1.0.0.0"/>
 
   <ExecutableList>
-    <Executable Name="GDKHttpSample.exe"
+    <Executable Name="GDKHttp.exe"
                 Id="Game"
-                Alias="GDKHttpSample.exe"/>
+                Alias="GDKHttp.exe"/>
     <!--        TargetDeviceFamily="PC"
                 IsDevOnly="false" | IsDevOnly specifies if is a Development only executable.
                 OverrideDisplayName="Xbox Game Override"

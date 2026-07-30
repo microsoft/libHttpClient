@@ -5,6 +5,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include <appnotify.h>
+
 using namespace DirectX;
 
 #ifdef __clang__
@@ -14,90 +16,106 @@ using namespace DirectX;
 
 #pragma warning(disable : 4061)
 
-#ifdef USING_D3D12_AGILITY_SDK
-extern "C"
-{
-    // Used to enable the "Agility SDK" components
-    __declspec(dllexport) extern const UINT D3D12SDKVersion = D3D12_SDK_VERSION;
-    __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\";
-}
-#endif
-
 namespace
 {
     std::unique_ptr<Game> g_game;
+    HANDLE g_plmSuspendComplete = nullptr;
+    HANDLE g_plmSignalResume = nullptr;
 }
 
-LPCWSTR g_szAppName = L"GDKHttpSample";
+bool g_HDRMode = false;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void SetDisplayMode() noexcept;
 void ExitGame() noexcept;
 
 // Entry point
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     if (!XMVerifyCPUSupport())
-        return 1;
-
-    // Initialize the GameRuntime
-    HRESULT hr = XGameRuntimeInitialize();
-    if (FAILED(hr))
     {
-        if (hr == E_GAMERUNTIME_DLL_NOT_FOUND || hr == E_GAMERUNTIME_VERSION_MISMATCH)
-        {
-            std::ignore = MessageBoxW(nullptr, L"Game Runtime is not installed on this system or needs updating.", g_szAppName, MB_ICONERROR | MB_OK);
-        }
+#ifdef _DEBUG
+        OutputDebugStringA("ERROR: This hardware does not support the required instruction set.\n");
+#ifdef __AVX2__
+        OutputDebugStringA("This may indicate a Gaming.Xbox.Scarlett.x64 binary is being run on an Xbox One.\n");
+#endif
+#endif
         return 1;
-
     }
 
+    if (FAILED(XGameRuntimeInitialize()))
+        return 1;
 
+    // Microsoft GDKX supports UTF-8 everywhere
+    assert(GetACP() == CP_UTF8);
 
     g_game = std::make_unique<Game>();
 
     // Register class and create window
+    PAPPSTATE_REGISTRATION hPLM = {};
+    PAPPCONSTRAIN_REGISTRATION hPLM2 = {};
+
     {
         // Register class
-        WNDCLASSEXW wcex = {};
-        wcex.cbSize = sizeof(WNDCLASSEXW);
+        WNDCLASSEXA wcex = {};
+        wcex.cbSize = sizeof(WNDCLASSEXA);
         wcex.style = CS_HREDRAW | CS_VREDRAW;
         wcex.lpfnWndProc = WndProc;
         wcex.hInstance = hInstance;
-        wcex.hIcon = LoadIconW(hInstance, L"IDI_ICON");
-        wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+        wcex.lpszClassName = u8"GDKHttpWindowClass";
         wcex.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
-        wcex.lpszClassName = L"GDKHttpSampleWindowClass";
-        wcex.hIconSm = LoadIconW(wcex.hInstance, L"IDI_ICON");
-        if (!RegisterClassExW(&wcex))
+        if (!RegisterClassExA(&wcex))
             return 1;
 
         // Create window
-        int w, h;
-        g_game->GetDefaultSize(w, h);
-
-        RECT rc = { 0, 0, static_cast<LONG>(w), static_cast<LONG>(h) };
-
-        AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-
-        HWND hwnd = CreateWindowExW(0, L"GDKHttpSampleWindowClass", g_szAppName, WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top,
+        HWND hwnd = CreateWindowExA(0, u8"GDKHttpWindowClass", u8"GDKHttp", WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,
             nullptr, nullptr, hInstance,
-            g_game.get());
-        // TODO: Change to CreateWindowExW(WS_EX_TOPMOST, L"GDKHttpSampleWindowClass", g_szAppName, WS_POPUP,
-        // to default to fullscreen.
-
+            nullptr);
         if (!hwnd)
             return 1;
 
         ShowWindow(hwnd, nCmdShow);
-        // TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
 
-        GetClientRect(hwnd, &rc);
+        SetDisplayMode();
 
-        g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()));
+
+        g_game->Initialize(hwnd);
+
+        g_plmSuspendComplete = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+        g_plmSignalResume = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+        if (!g_plmSuspendComplete || !g_plmSignalResume)
+            return 1;
+
+        if (RegisterAppStateChangeNotification([](BOOLEAN quiesced, PVOID context)
+        {
+            if (quiesced)
+            {
+                ResetEvent(g_plmSuspendComplete);
+                ResetEvent(g_plmSignalResume);
+
+                // To ensure we use the main UI thread to process the notification, we self-post a message
+                PostMessage(reinterpret_cast<HWND>(context), WM_USER, 0, 0);
+
+                // To defer suspend, you must wait to exit this callback
+                std::ignore = WaitForSingleObject(g_plmSuspendComplete, INFINITE);
+            }
+            else
+            {
+                SetEvent(g_plmSignalResume);
+            }
+        }, hwnd, &hPLM))
+            return 1;
+
+        if (RegisterAppConstrainedChangeNotification([](BOOLEAN constrained, PVOID context)
+        {
+            // To ensure we use the main UI thread to process the notification, we self-post a message
+            SendMessage(reinterpret_cast<HWND>(context), WM_USER + 1, (constrained) ? 1u : 0u, 0);
+        }, hwnd, &hPLM2))
+            return 1;
     }
 
     // Main message loop
@@ -115,9 +133,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
-    XGameRuntimeUninitialize();
-
     g_game.reset();
+
+    UnregisterAppStateChangeNotification(hPLM);
+    UnregisterAppConstrainedChangeNotification(hPLM2);
+
+    CloseHandle(g_plmSuspendComplete);
+    CloseHandle(g_plmSignalResume);
+
+    XGameRuntimeUninitialize();
 
     return static_cast<int>(msg.wParam);
 }
@@ -125,176 +149,41 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 // Windows procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static bool s_in_sizemove = false;
-    static bool s_in_suspend = false;
-    static bool s_minimized = false;
-    static bool s_fullscreen = false;
-    // TODO: Set s_fullscreen to true if defaulting to fullscreen.
-
     auto game = reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     switch (message)
     {
-    case WM_CREATE:
-        if (lParam)
-        {
-            auto params = reinterpret_cast<LPCREATESTRUCTW>(lParam);
-            SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(params->lpCreateParams));
-        }
-        break;
-
-    case WM_PAINT:
-        if (s_in_sizemove && game)
-        {
-            game->Tick();
-        }
-        else
-        {
-            PAINTSTRUCT ps;
-            std::ignore = BeginPaint(hWnd, &ps);
-            EndPaint(hWnd, &ps);
-        }
-        break;
-
-    case WM_DISPLAYCHANGE:
+    case WM_USER:
         if (game)
         {
-            game->OnDisplayChange();
+            game->OnSuspending();
+
+            // Complete deferral
+            SetEvent(g_plmSuspendComplete);
+
+            std::ignore = WaitForSingleObject(g_plmSignalResume, INFINITE);
+
+            SetDisplayMode();
+
+            game->OnResuming();
         }
         break;
 
-    case WM_MOVE:
-        if (game)
-        {
-            game->OnWindowMoved();
-        }
-        break;
-
-    case WM_SIZE:
-        if (wParam == SIZE_MINIMIZED)
-        {
-            if (!s_minimized)
-            {
-                s_minimized = true;
-                if (!s_in_suspend && game)
-                    game->OnSuspending();
-                s_in_suspend = true;
-            }
-        }
-        else if (s_minimized)
-        {
-            s_minimized = false;
-            if (s_in_suspend && game)
-                game->OnResuming();
-            s_in_suspend = false;
-        }
-        else if (!s_in_sizemove && game)
-        {
-            game->OnWindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
-        }
-        break;
-
-    case WM_ENTERSIZEMOVE:
-        s_in_sizemove = true;
-        break;
-
-    case WM_EXITSIZEMOVE:
-        s_in_sizemove = false;
-        if (game)
-        {
-            RECT rc;
-            GetClientRect(hWnd, &rc);
-
-            game->OnWindowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
-        }
-        break;
-
-    case WM_GETMINMAXINFO:
-        if (lParam)
-        {
-            auto info = reinterpret_cast<MINMAXINFO*>(lParam);
-            info->ptMinTrackSize.x = 320;
-            info->ptMinTrackSize.y = 200;
-        }
-        break;
-
-    case WM_ACTIVATEAPP:
+    case WM_USER + 1:
         if (game)
         {
             if (wParam)
             {
-                game->OnActivated();
+                game->OnConstrained();
             }
             else
             {
-                game->OnDeactivated();
+                SetDisplayMode();
+
+                game->OnUnConstrained();
             }
         }
         break;
-
-    case WM_POWERBROADCAST:
-        switch (wParam)
-        {
-        case PBT_APMQUERYSUSPEND:
-            if (!s_in_suspend && game)
-                game->OnSuspending();
-            s_in_suspend = true;
-            return TRUE;
-
-        case PBT_APMRESUMESUSPEND:
-            if (!s_minimized)
-            {
-                if (s_in_suspend && game)
-                    game->OnResuming();
-                s_in_suspend = false;
-            }
-            return TRUE;
-
-        default:
-            break;
-        }
-        break;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-
-    case WM_SYSKEYDOWN:
-        if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
-        {
-            // Implements the classic ALT+ENTER fullscreen toggle
-            if (s_fullscreen)
-            {
-                SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-                SetWindowLongPtr(hWnd, GWL_EXSTYLE, 0);
-
-                int width = 800;
-                int height = 600;
-                if (game)
-                    game->GetDefaultSize(width, height);
-
-                ShowWindow(hWnd, SW_SHOWNORMAL);
-
-                SetWindowPos(hWnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-            }
-            else
-            {
-                SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP);
-                SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-
-                SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-
-                ShowWindow(hWnd, SW_SHOWMAXIMIZED);
-            }
-
-            s_fullscreen = !s_fullscreen;
-        }
-        break;
-
-    case WM_MENUCHAR:
-        // A menu is active and the user presses a key that does not correspond
-        // to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
-        return MAKELRESULT(0, MNC_CLOSE);
 
     default:
         break;
@@ -303,8 +192,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
+// HDR helper
+void SetDisplayMode() noexcept
+{
+    if (g_game && g_game->RequestHDRMode())
+    {
+        // Request HDR mode.
+        auto result = XDisplayTryEnableHdrMode(XDisplayHdrModePreference::PreferHdr, nullptr);
+
+        g_HDRMode = (result == XDisplayHdrModeResult::Enabled);
+
+#ifdef _DEBUG
+        OutputDebugStringA((g_HDRMode) ? "INFO: Display in HDR Mode\n" : "INFO: Display in SDR Mode\n");
+#endif
+    }
+}
+
 // Exit helper
 void ExitGame() noexcept
 {
     PostQuitMessage(0);
 }
+
