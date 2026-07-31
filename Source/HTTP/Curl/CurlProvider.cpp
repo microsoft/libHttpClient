@@ -61,6 +61,21 @@ Result<HC_UNIQUE_PTR<CurlProvider>> CurlProvider::Initialize()
     http_stl_allocator<CurlProvider> a{};
     auto provider = HC_UNIQUE_PTR<CurlProvider>{ new (a.allocate(1)) CurlProvider };
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Mirror WinHttpProvider: subscribe to PLM app state so the provider can keep the curl
+    // perform loop running while the title suspends. Without this the loop only advances when
+    // the title dispatches its own task queue, and a title that parks that queue on suspend
+    // leaves xCurl blocked in WaitForActiveHandles until the watchdog kills it (bug 63050439).
+    HRESULT registerHr = RegisterAppStateChangeNotification(CurlProvider::AppStateChangedCallback, provider.get(), &provider->m_appStateChangedToken);
+    if (FAILED(registerHr))
+    {
+        // Suspend handling is a resilience feature; failing to subscribe must not stop HTTP from
+        // working, so log and continue rather than failing initialization.
+        HC_TRACE_ERROR_HR(HTTPCLIENT, registerHr, "CurlProvider::Initialize: RegisterAppStateChangeNotification failed; suspend handling disabled");
+        provider->m_appStateChangedToken = nullptr;
+    }
+#endif
+
     return std::move(provider);
 }
 
@@ -68,6 +83,14 @@ CurlProvider::~CurlProvider()
 {
     // Either CleanupAsync was never called or CurlProvider shouldn't be destroyed until it completes.
     assert(!m_cleanupTasksRemaining);
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    if (m_appStateChangedToken)
+    {
+        UnregisterAppStateChangeNotification(m_appStateChangedToken);
+        m_appStateChangedToken = nullptr;
+    }
+#endif
 
     if (m_multiCleanupQueue)
     {
@@ -224,6 +247,73 @@ void CALLBACK CurlProvider::MultiCleanupComplete(_Inout_ struct XAsyncBlock* asy
         XAsyncComplete(providerCleanupAsyncBlock, S_OK, 0);
     }
 }
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+
+// How long the provider will drive curl_multi_perform while suspending. The xCurl contract
+// requires the multi consumer to keep performing across suspend so xCurl can quiesce its
+// handles; this bounds that work so a stuck request can never hold the suspend open longer
+// than the platform's own watchdog budget.
+#define SUSPEND_DRAIN_TIMEOUT_MS 4000
+
+void CurlProvider::Suspend() noexcept
+{
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlProvider::Suspend");
+
+    // The lock is held for the whole drain so a concurrent CleanupAsync cannot move and destroy
+    // the CurlMultis while they are being performed. Completions are delivered through the
+    // async block's task queue rather than inline, so no request completion can re-enter
+    // PerformAsync on this thread while the lock is held. The drain is time-bounded, so the
+    // worst case for a blocked caller is SUSPEND_DRAIN_TIMEOUT_MS per multi.
+    std::lock_guard<std::mutex> lock{ m_mutex };
+
+    if (m_isSuspended)
+    {
+        return;
+    }
+    m_isSuspended = true;
+
+    for (auto& pair : m_curlMultis)
+    {
+        CurlMulti* multi = pair.second.get();
+        if (!multi || multi->ActiveRequestCount() == 0)
+        {
+            continue;
+        }
+
+        HRESULT hr = multi->PerformUntilDrained(SUSPEND_DRAIN_TIMEOUT_MS);
+        if (FAILED(hr))
+        {
+            HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "CurlProvider::Suspend: CurlMulti did not fully drain before suspend");
+        }
+    }
+}
+
+void CurlProvider::Resume() noexcept
+{
+    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlProvider::Resume");
+
+    std::lock_guard<std::mutex> lock{ m_mutex };
+    m_isSuspended = false;
+}
+
+void CALLBACK CurlProvider::AppStateChangedCallback(BOOLEAN isSuspended, void* context)
+{
+    assert(context);
+    auto provider = static_cast<CurlProvider*>(context);
+
+    // RegisterAppStateChangeNotification reports "quiescing" as isSuspended == TRUE.
+    if (isSuspended)
+    {
+        provider->Suspend();
+    }
+    else
+    {
+        provider->Resume();
+    }
+}
+
+#endif // HC_PLATFORM == HC_PLATFORM_GDK
 
 } // httpclient
 } // xbox
