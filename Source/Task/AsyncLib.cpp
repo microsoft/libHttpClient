@@ -118,7 +118,9 @@ struct AsyncBlockInternal
 {
     AsyncState* state = nullptr;
     HRESULT status = E_PENDING;
-    DWORD signature = ASYNC_BLOCK_SIG;
+    // Completer publishes the dead value (release) as its last write; DoLock's
+    // fast path acquire-loads it, so observing it means the block is done.
+    std::atomic<uint32_t> signature{ ASYNC_BLOCK_SIG };
     std::atomic_flag lock = ATOMIC_FLAG_INIT;
 };
 static_assert(sizeof(AsyncBlockInternal) <= sizeof(XAsyncBlock::internal),
@@ -235,6 +237,17 @@ public:
             {
                 m_userInternal->lock.clear();
             }
+
+            // Publish the dead signature LAST (after lock release) so it is our
+            // final store; a reader observing it knows the block is untouched after.
+            if (m_publishDeadSignature)
+            {
+                m_internal->signature.store(m_deadSignature, std::memory_order_release);
+                if (m_userInternal != m_internal)
+                {
+                    m_userInternal->signature.store(m_deadSignature, std::memory_order_release);
+                }
+            }
         }
     }
 
@@ -251,28 +264,16 @@ public:
         return state;
     }
 
-    AsyncStateRef ExtractState(_In_ bool resultsRetrieved = false) const noexcept
+    AsyncStateRef ExtractState(_In_ bool resultsRetrieved = false) noexcept
     {
         AsyncStateRef state{ m_internal->state };
         m_internal->state = nullptr;
         m_userInternal->state = nullptr;
 
-        // When XAsyncGetResults is called, it extracts state
-        // with resultsRetrieved set to true, which places a
-        // different signature into the async block. This is used
-        // later as a marker to prevent duplicate calls to 
-        // XAsyncGetResults.
-
-        if (resultsRetrieved)
-        {
-            m_internal->signature = ASYNC_BLOCK_RESULT_SIG;
-            m_userInternal->signature = ASYNC_BLOCK_RESULT_SIG;
-        }
-        else
-        {
-            m_internal->signature = 0;
-            m_userInternal->signature = 0;
-        }
+        // Defer the dead signature so it can't be seen while writes are pending; the
+        // destructor publishes it last. resultsRetrieved marks it to block re-get.
+        m_deadSignature = resultsRetrieved ? ASYNC_BLOCK_RESULT_SIG : 0u;
+        m_publishDeadSignature = true;
 
         if (state != nullptr && state->signature != ASYNC_STATE_SIG)
         {
@@ -290,7 +291,7 @@ public:
 
     bool GetResultsRetrieved()
     {
-        return m_internal->signature == ASYNC_BLOCK_RESULT_SIG;
+        return m_internal->signature.load(std::memory_order_acquire) == ASYNC_BLOCK_RESULT_SIG;
     }
 
     bool TrySetTerminalStatus(HRESULT status) noexcept
@@ -315,6 +316,11 @@ private:
     AsyncBlockInternal * m_userInternal;
     bool m_locked = false;
 
+    // ExtractState defers the dead signature so the destructor makes it the
+    // final store to the block (see ExtractState / ~AsyncBlockInternalGuard).
+    bool m_publishDeadSignature = false;
+    uint32_t m_deadSignature = 0;
+
     // Locks the correct async block and returns a pointer to the one
     // we locked.
     static AsyncBlockInternal* DoLock(_In_ XAsyncBlock* asyncBlock)
@@ -323,55 +329,77 @@ private:
 
         ASSERT(lockedResult);
 
-        // If the signature of this block is wrong, that means that it's not currently
-        // in play. We can't lock because the lock flag could be invalid, and we can't
-        // fix up the lock flag without introducing a race condition with other potential
-        // lock calls.  All calls further down guard against an invalid state, so all
-        // we do in this case is set the state to null.  We return null as an indicator
-        // that we didn't lock.
-
-        if (lockedResult->signature != ASYNC_BLOCK_SIG)
+        for (;;)
         {
-            lockedResult->state = nullptr;
-            return nullptr;
-        }
+            // If the signature of this block is wrong, that means that it's not currently
+            // in play. We can't lock because the lock flag could be invalid, and we can't
+            // fix up the lock flag without introducing a race condition with other potential
+            // lock calls.  All calls further down guard against an invalid state, so all
+            // we do in this case is set the state to null.  We return null as an indicator
+            // that we didn't lock.
+            //
+            // Acquire pairs with the completer's release store of the dead signature
+            // (~AsyncBlockInternalGuard): a non-live signature means it is done.
 
-        SpinLock::Lock(lockedResult->lock);
-
-        // We've locked the async block. We only ever want to keep a lock on one block
-        // to prevent deadlocks caused by lock ordering.  If the state is still valid
-        // on this block, we ensure the async block we're locking is the permanent one
-        // associated with the async state.  
-
-        if (lockedResult->state != nullptr && asyncBlock != &lockedResult->state->providerAsyncBlock)
-        {
-            // Grab a state ref here because releasing the lock can allow
-            // the state to be cleared / released.
-            AsyncStateRef state(lockedResult->state);
-            lockedResult->lock.clear();
-
-            // Now lock the async block on the state struct
-            AsyncBlockInternal* stateAsyncBlockInternal = reinterpret_cast<AsyncBlockInternal*>(state->providerAsyncBlock.internal);
-            SpinLock::Lock(stateAsyncBlockInternal->lock);
-
-            // We locked the right object, but we need to check here to see if we
-            // lost the state after clearing the lock above.  If we did, then this
-            // pointer is likely going to destruct as soon as we release
-            // our state ref.  We should throw it away and grab the user block
-            // again.
-
-            if (stateAsyncBlockInternal->state == nullptr)
+            if (lockedResult->signature.load(std::memory_order_acquire) != ASYNC_BLOCK_SIG)
             {
-                stateAsyncBlockInternal->lock.clear();
-                SpinLock::Lock(lockedResult->lock);
+                lockedResult->state = nullptr;
+                return nullptr;
             }
-            else
-            {
-                lockedResult = stateAsyncBlockInternal;
-            }
-        }
 
-        return lockedResult;
+            SpinLock::Lock(lockedResult->lock);
+
+            // We've locked the async block. We only ever want to keep a lock on one block
+            // to prevent deadlocks caused by lock ordering.  If the state is still valid
+            // on this block, we ensure the async block we're locking is the permanent one
+            // associated with the async state.  
+
+            if (lockedResult->state != nullptr && asyncBlock != &lockedResult->state->providerAsyncBlock)
+            {
+                // Grab a state ref here because releasing the lock can allow
+                // the state to be cleared / released.
+                AsyncStateRef state(lockedResult->state);
+                lockedResult->lock.clear();
+
+                // Now lock the async block on the state struct
+                AsyncBlockInternal* stateAsyncBlockInternal = reinterpret_cast<AsyncBlockInternal*>(state->providerAsyncBlock.internal);
+                SpinLock::Lock(stateAsyncBlockInternal->lock);
+
+                // We locked the right object, but we need to check here to see if we
+                // lost the state after clearing the lock above.  If we did, then this
+                // pointer is likely going to destruct as soon as we release
+                // our state ref.  We should throw it away and grab the user block
+                // again.
+
+                if (stateAsyncBlockInternal->state == nullptr)
+                {
+                    stateAsyncBlockInternal->lock.clear();
+                    SpinLock::Lock(lockedResult->lock);
+                }
+                else
+                {
+                    lockedResult = stateAsyncBlockInternal;
+                }
+            }
+
+            // Completion in flight: locked with state extracted but dead signature not
+            // yet published. Wait for it so a waiter can't free the block early, then retry.
+
+            if (lockedResult->state == nullptr)
+            {
+                lockedResult->lock.clear();
+
+                while (lockedResult->signature.load(std::memory_order_acquire) == ASYNC_BLOCK_SIG)
+                {
+                    std::this_thread::yield();
+                }
+
+                lockedResult = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
+                continue;
+            }
+
+            return lockedResult;
+        }
     }
 };
 
@@ -447,7 +475,7 @@ static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSi
     // to rely on the caller zeroing memory so we check a signature
     // DWORD. This signature is cleared when the block can be reused.
     auto internal = reinterpret_cast<AsyncBlockInternal*>(asyncBlock->internal);
-    if (internal->signature == ASYNC_BLOCK_SIG)
+    if (internal->signature.load(std::memory_order_acquire) == ASYNC_BLOCK_SIG)
     {
         RETURN_HR(E_INVALIDARG);
     }
@@ -468,7 +496,7 @@ static HRESULT AllocState(_Inout_ XAsyncBlock* asyncBlock, _In_ size_t contextSi
 
     if (FAILED(hr))
     {
-        internal->signature = 0;
+        internal->signature.store(0, std::memory_order_release);
         internal->status = hr;
     }
 
