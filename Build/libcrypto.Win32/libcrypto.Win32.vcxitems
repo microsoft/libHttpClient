@@ -11,6 +11,7 @@
       <AdditionalIncludeDirectories>
         %(AdditionalIncludeDirectories);
         $(HCRoot)\External\opensslGeneratedHeaders\win32\;
+        $(HCRoot)\External\opensslGeneratedHeaders\win32\internal\;
         $(HCRoot)\External\openssl\;
         $(HCRoot)\External\openssl\include\;
         $(HCRoot)\External\openssl\crypto\;
