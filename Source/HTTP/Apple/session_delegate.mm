@@ -5,15 +5,23 @@
 #include <httpClient/httpProvider.h>
 #import "session_delegate.h"
 
+struct TaskContext
+{
+    HCCallHandle _call; // non owning
+    long long _downloadSize;
+};
+
 @implementation SessionDelegate
 {
-    HCCallHandle _call;
-    void(^_completionHandler)(NSURLResponse* response, NSError* error);
+    void(^_completionHandler)(uint32_t sessionTimeout, NSUInteger taskIdentifier, NSURLResponse* response, NSError* error);
+    
+    std::mutex _taskContextsMutex;
+    std::unordered_map<NSUInteger, TaskContext> _taskContexts;
 }
 
-+ (SessionDelegate*) sessionDelegateWithHCCallHandle:(HCCallHandle) call andCompletionHandler:(void(^)(NSURLResponse* response, NSError* error)) completionHandler
++ (SessionDelegate*) sessionDelegateWithCompletionHandler:(void(^)(uint32_t sessionTimeout, NSUInteger taskIdentifier, NSURLResponse* response, NSError* error)) completionHandler
 {
-    return [[SessionDelegate alloc] initWithHCCallHandle: call andCompletionHandler:completionHandler];
+    return [[SessionDelegate alloc] initWithCompletionHandler:completionHandler];
 }
 
 + (void) reportProgress:(HCCallHandle)call progressReportFunction:(HCHttpCallProgressReportFunction)progressReportFunction minimumInterval:(size_t)minimumInterval current:(size_t)current total:(size_t)total progressReportCallbackContext:(void*)progressReportCallbackContext lastProgressReport:(std::chrono::steady_clock::time_point*)lastProgressReport
@@ -38,11 +46,29 @@
     }
 }
 
-- (instancetype) initWithHCCallHandle:(HCCallHandle)call andCompletionHandler:(void(^)(NSURLResponse*, NSError*)) completionHandler
+- (bool) registerContextForTask:(NSUInteger)taskIdentifier withCall:(HCCallHandle)call
+{
+    bool registered = false;
+    {
+        std::unique_lock<std::mutex> uniqueLock(_taskContextsMutex);
+        
+        if (_taskContexts.find(taskIdentifier) == _taskContexts.end())
+        {
+            _taskContexts.emplace(taskIdentifier, TaskContext{ ._call = call });
+            registered = true;
+        }
+        else
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, "Task context already exists, cannot register for identifier %lu", taskIdentifier);
+        }
+    }
+    return registered;
+}
+
+- (instancetype) initWithCompletionHandler:(void(^)(uint32_t sessionTimeout, NSUInteger taskIdentifier, NSURLResponse* response, NSError* error)) completionHandler
 {
     if (self = [super init])
     {
-        _call = call;
         _completionHandler = completionHandler;
         return self;
     }
@@ -51,14 +77,40 @@
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
-    _completionHandler([task response], error);
+    {
+        std::unique_lock<std::mutex> uniqueLock(_taskContextsMutex);
+        _taskContexts.erase([task taskIdentifier]);
+    }
+    
+    _completionHandler([[session configuration] timeoutIntervalForRequest], [task taskIdentifier], [task response], error);
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveData:(NSData *)data
 {
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
     void* context = nullptr;
-    if (FAILED(HCHttpCallResponseGetResponseBodyWriteFunction(_call, &writeFunction, &context)) ||
+    
+    TaskContext taskContext;
+    bool hasContext = false;
+    {
+        std::unique_lock<std::mutex> uniqueLock(_taskContextsMutex);
+        
+        auto existingTaskContext = _taskContexts.find([task taskIdentifier]);
+        if (existingTaskContext != _taskContexts.end())
+        {
+            hasContext = true;
+            taskContext = existingTaskContext->second;
+        }
+    }
+    
+    if (!hasContext)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Task context missing for data of identifier %lu", [task taskIdentifier]);
+        [task cancel];
+        return;
+    }
+    
+    if (FAILED(HCHttpCallResponseGetResponseBodyWriteFunction(taskContext._call, &writeFunction, &context)) ||
         writeFunction == nullptr)
     {
         [task cancel];
@@ -69,7 +121,7 @@
     {
         __block HRESULT hr = S_OK;
         [data enumerateByteRangesUsingBlock:^(const void* bytes, NSRange byteRange, BOOL* stop) {
-            hr = writeFunction(_call, static_cast<const uint8_t*>(bytes), static_cast<size_t>(byteRange.length), context);
+            hr = writeFunction(taskContext._call, static_cast<const uint8_t*>(bytes), static_cast<size_t>(byteRange.length), context);
             if (FAILED(hr))
             {
                 *stop = YES;
@@ -88,18 +140,16 @@
         return;
     }
     
-    [_dataToDownload appendData:data];
-    
     size_t downloadMinimumProgressInterval;
     void* downloadProgressReportCallbackContext{};
     HCHttpCallProgressReportFunction downloadProgressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(_call, false, &downloadProgressReportFunction, &downloadMinimumProgressInterval, &downloadProgressReportCallbackContext);
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(taskContext._call, false, &downloadProgressReportFunction, &downloadMinimumProgressInterval, &downloadProgressReportCallbackContext);
     if (FAILED(hr))
     {
         HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ProgressReportCallback: failed getting Progress Report upload function");
     }
 
-    [SessionDelegate reportProgress:_call progressReportFunction:downloadProgressReportFunction minimumInterval:_call->downloadMinimumProgressReportInterval current:[ _dataToDownload length ] total:_downloadSize progressReportCallbackContext: downloadProgressReportCallbackContext lastProgressReport:&_call->downloadLastProgressReport];
+    [SessionDelegate reportProgress:taskContext._call progressReportFunction:downloadProgressReportFunction minimumInterval:taskContext._call->downloadMinimumProgressReportInterval current:taskContext._call->responseBodyBytes.size() total:taskContext._downloadSize progressReportCallbackContext: downloadProgressReportCallbackContext lastProgressReport:&taskContext._call->downloadLastProgressReport];
 }
 
 - (void)URLSession:(NSURLSession *)session
@@ -111,21 +161,57 @@ totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend
     size_t uploadMinimumProgressInterval;
     void* uploadProgressReportCallbackContext{};
     HCHttpCallProgressReportFunction uploadProgressReportFunction = nullptr;
-    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(_call, true, &uploadProgressReportFunction, &uploadMinimumProgressInterval, &uploadProgressReportCallbackContext);
+    
+    HCCallHandle call = nullptr;
+    bool hasContext = false;
+    {
+        std::unique_lock<std::mutex> uniqueLock(_taskContextsMutex);
+        
+        auto existingTaskContext = _taskContexts.find([task taskIdentifier]);
+        if (existingTaskContext != _taskContexts.end())
+        {
+            hasContext = true;
+            call = existingTaskContext->second._call;
+        }
+    }
+    
+    if (!hasContext)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Task context missing for send report of identifier %lu", [task taskIdentifier]);
+        [task cancel];
+        return;
+    }
+    
+    HRESULT hr = HCHttpCallRequestGetProgressReportFunction(call, true, &uploadProgressReportFunction, &uploadMinimumProgressInterval, &uploadProgressReportCallbackContext);
     if (FAILED(hr))
     {
         HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ProgressReportCallback: failed getting Progress Report upload function");
     }
 
-    [SessionDelegate reportProgress:_call progressReportFunction:uploadProgressReportFunction minimumInterval:_call->uploadMinimumProgressReportInterval current:totalBytesSent total:totalBytesExpectedToSend progressReportCallbackContext:uploadProgressReportCallbackContext lastProgressReport:&_call->uploadLastProgressReport];
+    [SessionDelegate reportProgress:call progressReportFunction:uploadProgressReportFunction minimumInterval:call->uploadMinimumProgressReportInterval current:totalBytesSent total:totalBytesExpectedToSend progressReportCallbackContext:uploadProgressReportCallbackContext lastProgressReport:&call->uploadLastProgressReport];
     
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler {
     completionHandler(NSURLSessionResponseAllow);
-
-    _downloadSize=[response expectedContentLength];
-    _dataToDownload=[[NSMutableData alloc]init];
+    
+    bool hasContext = false;
+    {
+        std::unique_lock<std::mutex> uniqueLock(_taskContextsMutex);
+        
+        auto existingTaskContext = _taskContexts.find([dataTask taskIdentifier]);
+        if (existingTaskContext != _taskContexts.end())
+        {
+            hasContext = true;
+            existingTaskContext->second._downloadSize = [response expectedContentLength];
+        }
+    }
+    
+    if (!hasContext)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "Task context missing for response of identifier %lu", [dataTask taskIdentifier]);
+        [dataTask cancel];
+    }
 }
 
 @end
