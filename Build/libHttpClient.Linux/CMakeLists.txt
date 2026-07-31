@@ -81,10 +81,15 @@ set(LINUX_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Platform/Linux/PlatformComponents_Linux.cpp"
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.h"
-    "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/x509_cert_utilities.hpp"
     )
+
+if (NOT HC_NOWEBSOCKETS)
+    list(APPEND LINUX_SOURCE_FILES
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.h"
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/x509_cert_utilities.hpp"
+    )
+endif()
 
 if (NOT DEFINED HC_NOZLIB)
     set(ZLIB_SOURCE_FILES
@@ -226,6 +231,7 @@ if (HC_ENABLE_WEBSOCKET_COMPRESSION AND NOT HC_NOWEBSOCKETS)
         PRIVATE
         "${PROJECT_NAME}"
         Threads::Threads
+        ${CMAKE_DL_LIBS} # Required for dlopen/dlsym referenced by linked libcrypto in some configurations
     )
 
     if (NOT BUILD_SHARED_LIBS)
@@ -255,5 +261,284 @@ if (HC_ENABLE_WEBSOCKET_COMPRESSION AND NOT HC_NOWEBSOCKETS)
         SKIP_RETURN_CODE 125
     )
 endif()
+
+##################################################
+### TaskQueue delayed-callback starvation test ###
+##################################################
+# Standalone regression guard for the composite-queue delayed-callback
+# starvation bug. Exercises the STL WaitTimer backend that the Windows test
+# lanes cannot reach. Uses only the public XTaskQueue API + the standard
+# library, so it just links the libHttpClient.Linux target.
+find_package(Threads REQUIRED)
+
+add_executable(
+    "TaskQueueStarvationTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/TaskQueueStarvationRepro.cpp"
+)
+
+target_include_directories(
+    "TaskQueueStarvationTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+    "${PATH_TO_ROOT}/Tests/Shared"
+)
+
+target_link_libraries(
+    "TaskQueueStarvationTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "TaskQueueStarvationTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "TaskQueueStarvationTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME taskqueue-starvation-linux
+    COMMAND "TaskQueueStarvationTests.Linux"
+)
+# Label so CI can run every TaskQueue regression test by label (-L taskqueue)
+# without having to opt each new test in by name.
+set_tests_properties(
+    taskqueue-starvation-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
+#################################################
+### TaskQueue single-port poll strand test    ###
+#################################################
+# Standalone regression guard for the single-port delayed-callback strand bug.
+# Exercises the STL WaitTimer backend that the Windows test lanes cannot reach.
+# Uses only the public XTaskQueue API + the standard library, so it just links
+# the libHttpClient.Linux target.
+add_executable(
+    "SingleQueuePollStrandTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/SingleQueuePollStrandRepro.cpp"
+)
+
+target_include_directories(
+    "SingleQueuePollStrandTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+    "${PATH_TO_ROOT}/Tests/Shared"
+)
+
+target_link_libraries(
+    "SingleQueuePollStrandTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "SingleQueuePollStrandTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "SingleQueuePollStrandTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME taskqueue-poll-strand-linux
+    COMMAND "SingleQueuePollStrandTests.Linux"
+)
+set_tests_properties(
+    taskqueue-poll-strand-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
+#################################################
+### WaitTimer queue-teardown race repro       ###
+#################################################
+# This white-box repro links the normal library for its dependencies but
+# compiles the private STL timer implementation into the executable so it can
+# deterministically pause the worker after Pop(). The fix makes dispatch state
+# independent from WaitTimerImpl lifetime, so a paused worker can no longer
+# observe a destroyed timer.
+add_executable(
+    "WaitTimerQueueTeardownTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerQueueTeardownRepro.cpp"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerTestMemory.cpp"
+    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
+)
+
+target_include_directories(
+    "WaitTimerQueueTeardownTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+)
+
+target_link_libraries(
+    "WaitTimerQueueTeardownTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "WaitTimerQueueTeardownTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "WaitTimerQueueTeardownTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME waittimer-queue-teardown-linux
+    COMMAND "WaitTimerQueueTeardownTests.Linux"
+)
+set_tests_properties(
+    waittimer-queue-teardown-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
+#################################################
+### WaitTimer queue-retirement race repro      ###
+#################################################
+# White-box regression for the shared TimerQueue's last-owner retirement. It
+# compiles the private STL timer implementation so it can pause inside
+# RemoveTimer while the retiring owner holds g_timerQueueMutex, proving a
+# concurrent Initialize cannot adopt a queue that is being retired.
+add_executable(
+    "WaitTimerQueueRetirementTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerQueueRetirementRepro.cpp"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerTestMemory.cpp"
+    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
+)
+
+target_include_directories(
+    "WaitTimerQueueRetirementTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+)
+
+target_link_libraries(
+    "WaitTimerQueueRetirementTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "WaitTimerQueueRetirementTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "WaitTimerQueueRetirementTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME waittimer-queue-retirement-linux
+    COMMAND "WaitTimerQueueRetirementTests.Linux"
+)
+set_tests_properties(
+    waittimer-queue-retirement-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
+#################################################
+### WaitTimer wrapper lifetime race repro      ###
+#################################################
+add_executable(
+    "WaitTimerWrapperTerminateTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerWrapperTerminateRepro.cpp"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/WaitTimerTestMemory.cpp"
+    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
+)
+
+target_include_directories(
+    "WaitTimerWrapperTerminateTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+)
+
+target_link_libraries(
+    "WaitTimerWrapperTerminateTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "WaitTimerWrapperTerminateTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "WaitTimerWrapperTerminateTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME waittimer-wrapper-terminate-linux
+    COMMAND "WaitTimerWrapperTerminateTests.Linux"
+)
+set_tests_properties(
+    waittimer-wrapper-terminate-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
 
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)

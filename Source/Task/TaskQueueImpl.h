@@ -258,7 +258,7 @@ private:
     AtomicVector<ITaskQueuePortContext*> m_attachedContexts;
     std::atomic<uint32_t> m_processingSerializedTbCallback{ 0 };
     std::atomic<uint32_t> m_processingCallback{ 0 };
-    std::condition_variable m_processingCallbackCv;
+    DefaultUnnamedConditionVariable m_processingCallbackCv;
     DefaultUnnamedMutex m_lock;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_queueList;
     std::unique_ptr<LocklessQueue<QueueEntry>> m_pendingList;
@@ -277,7 +277,7 @@ private:
     uint64_t m_nextWaitToken = 0;
 #else
     bool m_signaled = false;
-    std::condition_variable_any m_event;
+    DefaultUnnamedConditionVariableAny m_event;
 #endif
 
     HRESULT VerifyNotTerminated(_In_ ITaskQueuePortContext* portContext);
@@ -313,6 +313,11 @@ private:
         _In_ uint64_t nextDueTime);
 
     bool RearmTimerIfDueTimeUnchanged(_In_ uint64_t dueTime);
+
+    // After cancellation removed pending entries, re-point the shared timer at
+    // the earliest surviving pending entry instead of leaving it armed for a
+    // deadline that no longer has an owner.
+    void RearmTimerForEarliestPending();
 
     void PromoteReadyPendingCallbacks(
         _In_ uint64_t dueTime,
@@ -473,7 +478,7 @@ private:
     {
         bool terminated;
         DefaultUnnamedMutex lock;
-        std::condition_variable cv;
+        DefaultUnnamedConditionVariable cv;
     };
 
     XTaskQueueObject m_header = { };

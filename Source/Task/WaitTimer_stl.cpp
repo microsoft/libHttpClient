@@ -1,50 +1,41 @@
 #include "pch.h"
 #include "WaitTimer.h"
 
+// NOTE: This is the proven pre-#975 STL wait-timer backend (libHttpClient
+// 2.3.1 / commit 0fa5f24), restored to fix a delayed-callback strand that
+// #975's rewrite introduced. The #975 backend added a per-timer "generation"
+// scheme where every Start() invalidated the previously pushed heap entry; a
+// Start() racing the worker as it was about to dispatch the due entry caused
+// the worker to discard that entry as stale and never fire it, permanently
+// stranding the callback (observed on-device as an infinite sign-in / inventory
+// hang on a single-port manual queue with no independent traffic to rescue it).
+//
+// This backend uses the original pointer-keyed cancellation and an
+// unconditional notify on every Set, which cannot drop a due callback. The
+// public WaitTimer API matches the post-#975 surface (GetCurrentTime /
+// GetDueTime / Start(dueTime)); both time helpers and the worker share a
+// single monotonic clock so the values TaskQueue compares stay consistent and
+// are immune to wall-clock adjustments.
+//
+// The pre-#975 backend keyed this clock off std::high_resolution_clock. That
+// alias is steady_clock on some standard libraries (libc++) but system_clock
+// on others (libstdc++), which is wall-clock and not monotonic. We pin it to
+// steady_clock explicitly so the ordering and "now < dueTime" comparisons in
+// TaskQueue are monotonic on every platform that compiles this backend.
+
 using Clock = std::chrono::steady_clock;
 using Deadline = Clock::time_point;
-using TimerDuration = std::chrono::nanoseconds;
-
-namespace
-{
-    // Keep the public WaitTimer surface on a plain integer so TaskQueue can use
-    // atomics without dragging chrono types through its state. The integer still
-    // represents steady-clock time, not wall-clock time.
-    Deadline DeadlineFromDueTime(uint64_t dueTime) noexcept
-    {
-        return Deadline(std::chrono::duration_cast<Clock::duration>(TimerDuration(dueTime)));
-    }
-
-    uint64_t DueTimeFromDeadline(Deadline deadline) noexcept
-    {
-        return static_cast<uint64_t>(
-            std::chrono::duration_cast<TimerDuration>(deadline.time_since_epoch()).count());
-    }
-}
 
 namespace OS
 {
     class TimerQueue;
 
-    // Keep callback payload and teardown coordination in shared state because the
-    // Worker can still hold a due heap entry after the owning WaitTimerImpl has
-    // been canceled or destroyed.
     class WaitTimerState
     {
     public:
         WaitTimerState(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
             : m_context(context), m_callback(callback)
         {}
-
-        uint64_t NextGeneration() noexcept
-        {
-            return ++m_generation;
-        }
-
-        uint64_t Generation() const noexcept
-        {
-            return m_generation.load(std::memory_order_acquire);
-        }
 
         void BeginTerminate() noexcept
         {
@@ -58,9 +49,7 @@ namespace OS
                 return false;
             }
 
-            std::lock_guard<std::mutex> lock{ m_lock };
-            // Re-check under the lock so teardown cannot race with the in-flight
-            // count increment and then wait forever for a dispatch we started.
+            std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
             if (m_terminating.load(std::memory_order_relaxed))
             {
                 return false;
@@ -72,11 +61,9 @@ namespace OS
 
         void EndDispatch() noexcept
         {
-            std::lock_guard<std::mutex> lock{ m_lock };
+            std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
             ASSERT(m_inFlightDispatch != 0);
-
-            --m_inFlightDispatch;
-            if (m_inFlightDispatch == 0)
+            if (--m_inFlightDispatch == 0)
             {
                 m_quiesced.notify_all();
             }
@@ -84,11 +71,8 @@ namespace OS
 
         void WaitForQuiesce() noexcept
         {
-            std::unique_lock<std::mutex> lock{ m_lock };
-            m_quiesced.wait(lock, [this]() noexcept
-            {
-                return m_inFlightDispatch == 0;
-            });
+            std::unique_lock<DefaultUnnamedMutex> lock{ m_mutex };
+            m_quiesced.wait(lock, [this]() noexcept { return m_inFlightDispatch == 0; });
         }
 
         void InvokeCallback() noexcept
@@ -99,10 +83,9 @@ namespace OS
     private:
         void* m_context;
         WaitTimerCallback* m_callback;
-        std::atomic<uint64_t> m_generation{ 0 };
         std::atomic<bool> m_terminating{ false };
-        DefaultUnnamedMutex m_lock;
-        std::condition_variable m_quiesced;
+        DefaultUnnamedMutex m_mutex;
+        DefaultUnnamedConditionVariable m_quiesced;
         uint32_t m_inFlightDispatch = 0;
     };
 
@@ -123,13 +106,10 @@ namespace OS
     struct TimerEntry
     {
         Deadline When;
+        WaitTimerImpl* Timer;
         std::shared_ptr<WaitTimerState> State;
-        // Each Start() pushes a new heap entry instead of searching/removing the
-        // old one. Generation lets the Worker discard superseded entries cheaply.
-        uint64_t Generation;
-        TimerEntry(Deadline d, std::shared_ptr<WaitTimerState> state, uint64_t g)
-            : When{ d }, State{ std::move(state) }, Generation{ g }
-        {}
+        TimerEntry(Deadline d, WaitTimerImpl* timer, std::shared_ptr<WaitTimerState> state)
+            : When{ d }, Timer{ timer }, State{ std::move(state) } {}
     };
 
     struct TimerEntryComparator
@@ -140,8 +120,12 @@ namespace OS
         }
     };
 
-    // The queue is shared across timers, but it should still retire once the
-    // last timer goes away instead of leaking for process lifetime.
+    // A single process-wide TimerQueue owns the worker thread that fires every
+    // WaitTimer callback. Ownership is shared: each live WaitTimerImpl holds a
+    // shared_ptr, and the running worker holds one too (captured in Init), so
+    // the queue is never destroyed while a callback is in flight. m_timerCount
+    // tracks live timers under g_timerQueueMutex so the last owner can retire
+    // the queue and stop the worker.
     class TimerQueue : public std::enable_shared_from_this<TimerQueue>
     {
     public:
@@ -150,8 +134,8 @@ namespace OS
 
         void AddTimer() noexcept;
         void RemoveTimer() noexcept;
-        void Set(std::shared_ptr<WaitTimerState> const& state, Deadline deadline) noexcept;
-        void Remove(WaitTimerState const* state) noexcept;
+        void Set(WaitTimerImpl* timer, std::shared_ptr<WaitTimerState> const& state, Deadline deadline) noexcept;
+        void Remove(WaitTimerImpl const* timer) noexcept;
         std::thread::id WorkerThreadId() const noexcept;
 
     private:
@@ -161,10 +145,10 @@ namespace OS
         TimerEntry Pop() noexcept;
 
         DefaultUnnamedMutex m_mutex;
-        std::condition_variable m_cv;
+        DefaultUnnamedConditionVariable m_cv;
         std::vector<TimerEntry> m_queue; // used as a heap
         std::thread m_t;
-        std::atomic<uint32_t> m_timerCount{ 0 };
+        uint32_t m_timerCount = 0; // live timers; guarded by g_timerQueueMutex
         bool m_exitThread = false;
         bool m_initialized = false;
     };
@@ -173,22 +157,84 @@ namespace OS
     {
         std::shared_ptr<TimerQueue> g_timerQueue;
         DefaultUnnamedMutex g_timerQueueMutex;
+        DefaultUnnamedMutex g_testHooksMutex;
+        DefaultUnnamedConditionVariable g_testHooksChanged;
+        WaitTimerTestHooks* g_testHooks = nullptr;
+        std::atomic<bool> g_testHooksInstalled{ false };
+        uint32_t g_testHooksActive = 0;
+        bool g_testHooksReplacing = false;
+    }
+
+    class WaitTimerTestHookLease
+    {
+    public:
+        WaitTimerTestHookLease() noexcept
+        {
+            // Production fast path: when no hooks are installed, avoid the
+            // process-global hook mutex entirely on Start/Cancel/dispatch.
+            if (!g_testHooksInstalled.load(std::memory_order_acquire))
+            {
+                return;
+            }
+
+            std::unique_lock<DefaultUnnamedMutex> lock{ g_testHooksMutex };
+            g_testHooksChanged.wait(lock, []() noexcept { return !g_testHooksReplacing; });
+            m_hooks = g_testHooks;
+            if (m_hooks != nullptr)
+            {
+                ++g_testHooksActive;
+            }
+        }
+
+        ~WaitTimerTestHookLease()
+        {
+            if (m_hooks != nullptr)
+            {
+                std::lock_guard<DefaultUnnamedMutex> lock{ g_testHooksMutex };
+                ASSERT(g_testHooksActive != 0);
+                if (--g_testHooksActive == 0)
+                {
+                    g_testHooksChanged.notify_all();
+                }
+            }
+        }
+
+        WaitTimerTestHooks* Get() const noexcept
+        {
+            return m_hooks;
+        }
+
+    private:
+        WaitTimerTestHooks* m_hooks = nullptr;
+    };
+
+    void WaitTimerSetTestHooks(_In_opt_ WaitTimerTestHooks* hooks) noexcept
+    {
+        std::unique_lock<DefaultUnnamedMutex> lock{ g_testHooksMutex };
+        g_testHooksReplacing = true;
+        g_testHooksChanged.wait(lock, []() noexcept { return g_testHooksActive == 0; });
+        g_testHooks = hooks;
+        g_testHooksInstalled.store(hooks != nullptr, std::memory_order_release);
+        g_testHooksReplacing = false;
+        lock.unlock();
+        g_testHooksChanged.notify_all();
     }
 
     TimerQueue::~TimerQueue()
     {
         {
-            std::lock_guard<std::mutex> lock{ m_mutex };
+            std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
             m_exitThread = true;
         }
 
         m_cv.notify_all();
         if (m_t.joinable())
         {
+            // A timer callback can drop the last queue reference, so the queue
+            // may be destroyed on its own worker thread. Detach in that case;
+            // joining our own thread would deadlock.
             if (m_t.get_id() == std::this_thread::get_id())
             {
-                // Immediate-port callbacks can tear down their own timer from the
-                // Worker thread. Joining from that path would deadlock.
                 m_t.detach();
             }
             else
@@ -204,8 +250,9 @@ namespace OS
 
         try
         {
-            // Capture a self-reference so the queue stays alive until the Worker
-            // exits even if the last timer concurrently clears the global slot.
+            // Capture a shared_ptr so the worker keeps the queue alive for its
+            // whole lifetime. This lets a callback tear down its own timer (and
+            // the last queue reference) without the worker touching freed state.
             m_t = std::thread([keepAlive = shared_from_this()]()
             {
                 keepAlive->Worker();
@@ -222,20 +269,30 @@ namespace OS
 
     void TimerQueue::AddTimer() noexcept
     {
-        m_timerCount.fetch_add(1, std::memory_order_relaxed);
+        // Caller holds g_timerQueueMutex, which serializes timer adoption in
+        // Initialize with last-owner retirement in RemoveTimer.
+        ++m_timerCount;
     }
 
     void TimerQueue::RemoveTimer() noexcept
     {
-        if (m_timerCount.fetch_sub(1, std::memory_order_acq_rel) != 1)
         {
-            return;
-        }
+            // The decrement and the last-owner decision run under the same lock
+            // Initialize takes to adopt a timer, so a queue that is retiring can
+            // never be resurrected by a concurrent Initialize.
+            std::lock_guard<DefaultUnnamedMutex> globalLock{ g_timerQueueMutex };
+            ASSERT(m_timerCount != 0);
+            if (--m_timerCount != 0)
+            {
+                return;
+            }
 
-        // Last timer out clears the global queue and wakes the Worker so Linux
-        // teardown actually quiesces instead of depending on process exit.
-        {
-            std::lock_guard<std::mutex> globalLock{ g_timerQueueMutex };
+            WaitTimerTestHookLease testHooks;
+            if (auto hooks = testHooks.Get())
+            {
+                hooks->BeforeTimerQueueRetirement();
+            }
+
             if (g_timerQueue.get() == this)
             {
                 g_timerQueue.reset();
@@ -243,51 +300,10 @@ namespace OS
         }
 
         {
-            std::lock_guard<std::mutex> lock{ m_mutex };
+            std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
             m_exitThread = true;
         }
-
-        m_cv.notify_one();
-    }
-
-    void TimerQueue::Set(std::shared_ptr<WaitTimerState> const& state, Deadline deadline) noexcept
-    {
-        bool shouldNotify;
-        {
-            std::lock_guard<std::mutex> lock{ m_mutex };
-
-            // Bump the generation so stale heap entries for this timer are
-            // skipped by the Worker on pop.  This replaces the old O(N)
-            // nullification scan with an O(log N) push.
-            uint64_t gen = state->NextGeneration();
-
-            // Only wake the Worker when the new deadline might be earlier
-            // than the current heap top; otherwise the Worker is already
-            // sleeping for a deadline that is at least as early.
-            shouldNotify = m_queue.empty() || deadline < m_queue.front().When;
-
-            m_queue.emplace_back(deadline, state, gen);
-            std::push_heap(m_queue.begin(), m_queue.end(), TimerEntryComparator{});
-        }
-        if (shouldNotify)
-        {
-            m_cv.notify_one();
-        }
-    }
-
-    void TimerQueue::Remove(WaitTimerState const* state) noexcept
-    {
-        std::lock_guard<std::mutex> lock{ m_mutex };
-
-        // Remove is only called during cancellation/teardown.
-        // Reset shared state entries so the Worker never dispatches them.
-        for (auto& entry : m_queue)
-        {
-            if (entry.State.get() == state)
-            {
-                entry.State.reset();
-            }
-        }
+        m_cv.notify_all();
     }
 
     std::thread::id TimerQueue::WorkerThreadId() const noexcept
@@ -295,59 +311,77 @@ namespace OS
         return m_t.get_id();
     }
 
+    void TimerQueue::Set(WaitTimerImpl* timer, std::shared_ptr<WaitTimerState> const& state, Deadline deadline) noexcept
+    {
+        {
+            std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+
+            for (auto& entry : m_queue)
+            {
+                if (entry.Timer == timer)
+                {
+                    entry.Timer = nullptr;
+                    entry.State.reset();
+                }
+            }
+
+            m_queue.emplace_back(deadline, timer, state);
+            std::push_heap(m_queue.begin(), m_queue.end(), TimerEntryComparator{});
+        }
+        m_cv.notify_all();
+    }
+
+    void TimerQueue::Remove(WaitTimerImpl const* timer) noexcept
+    {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+
+        // since m_queue is a heap, removing elements is non trivial, instead we
+        // just clean the timer pointer and the entry will be popped eventually
+
+        for (auto& entry : m_queue)
+        {
+            if (entry.Timer == timer)
+            {
+                entry.Timer = nullptr;
+                entry.State.reset();
+            }
+        }
+    }
+
     void TimerQueue::Worker() noexcept
     {
-        std::unique_lock<std::mutex> lock{ m_mutex };
+        std::unique_lock<DefaultUnnamedMutex> lock{ m_mutex };
         while (!m_exitThread)
         {
             while (!m_queue.empty())
             {
-                auto& top = Peek();
-
-                // Discard stale/nullified entries without releasing the lock.
-                if (!top.State ||
-                    top.Generation != top.State->Generation())
-                {
-                    Pop();
-                    continue;
-                }
-
-                if (Clock::now() < top.When)
+                Deadline next = Peek().When;
+                if (Clock::now() < next)
                 {
                     break;
                 }
 
                 TimerEntry entry = Pop();
-                if (!entry.State->TryBeginDispatch())
-                {
-                    continue;
-                }
 
-                // Release the lock while invoking the callback, just in case
-                // the timer gets destroyed on this thread or re-adds itself
-                // in the callback.
+                // The raw timer pointer is only a cancellation key. Dispatch owns
+                // the shared state so teardown cannot invalidate the callback.
                 lock.unlock();
-                entry.State->InvokeCallback();
-                entry.State->EndDispatch();
-                lock.lock();
-            }
-
-            // Drain dead entries at the heap top so wait_until targets a
-            // live deadline rather than sleeping until a stale entry's time.
-            while (!m_queue.empty())
-            {
-                auto& top = Peek();
-                if (top.State &&
-                    top.Generation == top.State->Generation())
+                if (entry.State && entry.State->TryBeginDispatch())
                 {
-                    break;
+                    WaitTimerTestHookLease testHooks;
+                    if (auto hooks = testHooks.Get(); hooks == nullptr || hooks->BeforeTimerInvoke())
+                    {
+                        entry.State->InvokeCallback();
+                    }
+                    entry.State->EndDispatch();
                 }
-                Pop();
+                lock.lock();
             }
 
             if (!m_queue.empty())
             {
-                m_cv.wait_until(lock, Peek().When);
+                Deadline next = Peek().When;
+                m_cv.wait_until(lock, next);
             }
             else
             {
@@ -376,6 +410,43 @@ namespace OS
         Terminate();
     }
 
+    void WaitTimerImpl::Terminate() noexcept
+    {
+        // Take ownership of the shared state and queue. Terminate is idempotent:
+        // the destructor always runs it, and a second call is a no-op once the
+        // members have been moved out.
+        std::shared_ptr<WaitTimerState> state = std::move(m_state);
+        std::shared_ptr<TimerQueue> timerQueue = std::move(m_timerQueue);
+
+        // Initialize may have failed before wiring up state/queue; there is
+        // nothing to tear down in that case.
+        if (state == nullptr || timerQueue == nullptr)
+        {
+            return;
+        }
+
+        // Stop new dispatches, drop any queued entry, then wait for an in-flight
+        // dispatch to finish so the callback can never run against freed state.
+        // Skip the wait on the worker thread (a callback is tearing down its own
+        // timer): blocking on our own dispatch would deadlock, and the entry's
+        // shared-state lease keeps the state alive until the callback returns.
+        state->BeginTerminate();
+        timerQueue->Remove(this);
+        if (std::this_thread::get_id() != timerQueue->WorkerThreadId())
+        {
+            state->WaitForQuiesce();
+        }
+
+        WaitTimerTestHookLease testHooks;
+        if (auto hooks = testHooks.Get())
+        {
+            hooks->WaitTimerImplDestructionStarted();
+        }
+
+        // Release this timer's queue ownership; the last owner retires the queue.
+        timerQueue->RemoveTimer();
+    }
+
     HRESULT WaitTimerImpl::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback)
     {
         try
@@ -387,7 +458,7 @@ namespace OS
             return E_OUTOFMEMORY;
         }
 
-        std::lock_guard<std::mutex> lock{ g_timerQueueMutex };
+        std::lock_guard<DefaultUnnamedMutex> lock{ g_timerQueueMutex };
 
         if (g_timerQueue == nullptr)
         {
@@ -415,39 +486,12 @@ namespace OS
 
     void WaitTimerImpl::Start(_In_ uint64_t dueTime)
     {
-        m_timerQueue->Set(m_state, DeadlineFromDueTime(dueTime));
+        m_timerQueue->Set(this, m_state, Deadline(Deadline::duration(dueTime)));
     }
 
     void WaitTimerImpl::Cancel()
     {
-        if (m_state != nullptr && m_timerQueue != nullptr)
-        {
-            m_timerQueue->Remove(m_state.get());
-        }
-    }
-
-    void WaitTimerImpl::Terminate() noexcept
-    {
-        std::shared_ptr<WaitTimerState> state = std::move(m_state);
-        std::shared_ptr<TimerQueue> timerQueue = std::move(m_timerQueue);
-        if (state == nullptr || timerQueue == nullptr)
-        {
-            return;
-        }
-
-        // Block any new dispatch before removing queued entries so teardown has
-        // a single publish point that both the Worker and waiter observe.
-        state->BeginTerminate();
-        timerQueue->Remove(state.get());
-
-        if (std::this_thread::get_id() != timerQueue->WorkerThreadId())
-        {
-            // Delayed callbacks can run on Immediate queues and self-terminate on
-            // the Worker thread. Waiting there would deadlock on our own dispatch.
-            state->WaitForQuiesce();
-        }
-
-        timerQueue->RemoveTimer();
+        m_timerQueue->Remove(this);
     }
 
     WaitTimer::WaitTimer() noexcept
@@ -461,6 +505,7 @@ namespace OS
 
     HRESULT WaitTimer::Initialize(_In_opt_ void* context, _In_ WaitTimerCallback* callback) noexcept
     {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
         if (m_impl.load() != nullptr || callback == nullptr)
         {
             ASSERT(false);
@@ -478,31 +523,56 @@ namespace OS
 
     void WaitTimer::Terminate() noexcept
     {
-        std::unique_ptr<WaitTimerImpl> timer(m_impl.exchange(nullptr));
+        std::unique_ptr<WaitTimerImpl> timer;
+        {
+            std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+            timer.reset(m_impl.exchange(nullptr));
+        }
         if (timer != nullptr)
         {
-            timer->Terminate();
+            timer->Cancel();
         }
     }
 
     void WaitTimer::Start(_In_ uint64_t dueTime) noexcept
     {
-        m_impl.load()->Start(dueTime);
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+        WaitTimerImpl* timer = m_impl.load();
+        WaitTimerTestHookLease testHooks;
+        if (auto hooks = testHooks.Get(); hooks != nullptr && !hooks->WaitTimerOperationLoaded(true))
+        {
+            return;
+        }
+        if (timer != nullptr)
+        {
+            timer->Start(dueTime);
+        }
     }
 
     void WaitTimer::Cancel() noexcept
     {
-        m_impl.load()->Cancel();
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_mutex };
+        WaitTimerImpl* timer = m_impl.load();
+        WaitTimerTestHookLease testHooks;
+        if (auto hooks = testHooks.Get(); hooks != nullptr && !hooks->WaitTimerOperationLoaded(false))
+        {
+            return;
+        }
+        if (timer != nullptr)
+        {
+            timer->Cancel();
+        }
     }
 
     uint64_t WaitTimer::GetCurrentTime() noexcept
     {
-        return DueTimeFromDeadline(Clock::now());
+        Deadline now = Clock::now();
+        return now.time_since_epoch().count();
     }
 
     uint64_t WaitTimer::GetDueTime(_In_ uint32_t msFromNow) noexcept
     {
-        Deadline deadline = Clock::now() + std::chrono::milliseconds(msFromNow);
-        return DueTimeFromDeadline(deadline);
+        Deadline d = Clock::now() + std::chrono::milliseconds(msFromNow);
+        return d.time_since_epoch().count();
     }
 } // Namespace

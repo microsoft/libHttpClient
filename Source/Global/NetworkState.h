@@ -34,7 +34,7 @@ public:
 #endif
 
     static HRESULT CleanupAsync(
-        UniquePtr<NetworkState> networkManager,
+        NetworkState* networkState,
         XAsyncBlock* async
     ) noexcept;
 
@@ -50,6 +50,9 @@ public: // Http
 
 #ifdef HC_UNITTEST_API
     bool CanCleanupCancelHttpRequest(XAsyncBlock* async) noexcept;
+    // Test seam: simulate that cleanup has begun on this NetworkState without running the
+    // real cleanup flow, so admission-control behavior can be exercised deterministically.
+    void TestSetCleanupStarted(bool started, XAsyncBlock* cleanupAsyncBlock = nullptr) noexcept;
 #endif
 
 #ifndef HC_NOWEBSOCKETS
@@ -93,6 +96,14 @@ private:
 
     Set<HttpPerformContext*> m_activeHttpRequests;
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr }; // non-owning
+
+    // Admission-control gate for new network operations. Set (under m_mutex) once cleanup has
+    // begun; while set, new HTTP performs and WebSocket connects are refused so they cannot land
+    // in the tracking sets after the cleanup snapshot has been taken.
+    // All reads and writes must occur under m_mutex; that is what makes a plain bool sufficient
+    // (no atomic needed) and what makes the guard atomic with the tracking-set insert/snapshot. Do
+    // not read this outside m_mutex.
+    bool m_cleanupStarted{ false };
 
 #ifndef HC_NOWEBSOCKETS
     static HRESULT CALLBACK WebSocketConnectAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);

@@ -123,7 +123,11 @@ STDAPI HCMemGetFunctions(
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, E_OUTOFMEMORY, or E_FAIL.</returns>
 /// <remarks>
 /// This must be called before any other method, except for HCMemSetFunctions() and HCMemGetFunctions().
-/// Should have a corresponding call to HCGlobalCleanup().
+/// Should have a corresponding call to HCCleanup() or HCCleanupAsync().
+///
+/// Initialization is reference counted.  Multiple calls to HCInitialize are allowed and will
+/// succeed, but each call must be balanced with a corresponding call to HCCleanup/HCCleanupAsync.
+/// The library is not fully cleaned up until the last reference is released.
 /// </remarks>
 STDAPI HCInitialize(_In_opt_ HCInitArgs* args) noexcept;
 
@@ -139,6 +143,10 @@ STDAPI_(bool) HCIsInitialized() noexcept;
 /// </summary>
 /// <remarks>
 /// Deprecated, Use HCCleanupAsync instead which allows control of which queue is running the cleanup work and does not potentially deadlock.
+///
+/// Initialization is reference counted.  Each call to HCInitialize must be balanced with a
+/// corresponding call to HCCleanup or HCCleanupAsync.  Resources are not fully released until
+/// the last reference is closed.
 /// </remarks>
 /// <returns></returns>
 STDAPI_(void) HCCleanup() noexcept;
@@ -149,6 +157,11 @@ STDAPI_(void) HCCleanup() noexcept;
 /// </summary>
 /// <param name="async">Pointer to the XAsyncBlock for the asynchronous call.  </param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// Initialization is reference counted.  Each call to HCInitialize must be balanced with a
+/// corresponding call to HCCleanup or HCCleanupAsync.  Resources are not fully released until
+/// the last reference is closed.
+/// </remarks>
 STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept;
 
 /// <summary>
@@ -1043,7 +1056,13 @@ enum class HCWebSocketOptions : uint32_t
     CompressionClientNoContextTakeover = 0x00000004
 };
 
+// DEFINE_ENUM_FLAG_OPERATORS expands to C++ inline operators returning
+// HCWebSocketOptions&, which is not legal inside the surrounding extern "C"
+// block. Re-enter C++ linkage just for the macro expansion so callers can
+// still combine flags with |, &, ^, etc.
+extern "C++" {
 DEFINE_ENUM_FLAG_OPERATORS(HCWebSocketOptions)
+} // extern "C++"
 
 /// <summary>
 /// Creates an WebSocket handle.

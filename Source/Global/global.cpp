@@ -156,7 +156,7 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
             XAsyncSchedule(singletonCleanupAsyncBlock, 0);
         };
 
-        RETURN_IF_FAILED(NetworkState::CleanupAsync(std::move(singleton->m_networkState), performEnvCleanupAsyncBlock.get()));
+        RETURN_IF_FAILED(NetworkState::CleanupAsync(singleton->m_networkState.get(), performEnvCleanupAsyncBlock.get()));
         performEnvCleanupAsyncBlock.release();
 
         return S_OK;
@@ -169,6 +169,19 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
         // Note that the use count check here is only valid because we never create
         // a weak_ptr to the singleton. If we did that could cause the use count
         // to increase even though we are the only strong reference
+        //
+        // This gate is also what keeps NetworkState safe to own from the singleton for its whole
+        // lifetime (rather than moving it out during cleanup Begin). An in-flight API caller that
+        // obtained a strong reference via get_http_singleton() before cleanup detached the singleton
+        // keeps use_count above 1 here, so neither the singleton nor the NetworkState it owns is
+        // destroyed until that caller releases its reference. That is what prevents an in-flight
+        // HCHttpCallPerformAsync / HCWebSocketConnectAsync from observing a moved-from or destroyed
+        // m_networkState.
+        //
+        // INVARIANT: no code may hold a get_http_singleton() reference across an async wait or other
+        // blocking operation. Doing so would keep use_count above 1 indefinitely and stall cleanup
+        // here. Every caller today takes the reference as a short-lived local scoped to a single
+        // synchronous operation.
         if (self.use_count() > 1)
         {
             RETURN_IF_FAILED(XAsyncSchedule(data->async, 10));

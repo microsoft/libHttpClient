@@ -26,7 +26,14 @@ done
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 build_dependencies=(clang make autoconf automake libtool)
-library_dependencies=(zlib1g zlib1g-dev)
+library_dependencies=()
+
+# zlib is only needed when zlib support is enabled (default on) AND websockets are enabled,
+# since WebSocket Compression (HC_ENABLE_WEBSOCKET_COMPRESSION, default ON) depends on zlib.
+# Consumers that opt out via HC_NOZLIB=true or HC_NOWEBSOCKETS=true do not need zlib system packages.
+if [ "${HC_NOZLIB}" != "true" ] && [ "${HC_NOWEBSOCKETS}" != "true" ]; then
+  library_dependencies+=(zlib1g zlib1g-dev)
+fi
 
 if [ "$DO_INSTALL" = false ]; then
 

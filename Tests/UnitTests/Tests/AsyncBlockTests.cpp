@@ -8,6 +8,10 @@
 #include "XTaskQueue.h"
 #include "XTaskQueuePriv.h"
 #include <array>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -1265,5 +1269,99 @@ public:
 
         // Because there was no payload this should continue to succeed
         VERIFY_SUCCEEDED(XAsyncGetResult(&async, nullptr, 0, nullptr, nullptr));
+    }
+
+    // Regression: XAsyncComplete must not write to the XAsyncBlock after
+    // XAsyncGetStatus(wait=true) reports completion (the DoLock signature-clear UAF).
+    DEFINE_TEST_CASE(VerifyNoWriteAfterGetStatusRace)
+    {
+        struct CallContext
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            XAsyncBlock* asyncBlock = nullptr;
+            bool cancelRequested = false;
+            bool completeReturned = false;
+            bool stop = false;
+        };
+
+        auto provider = [](XAsyncOp op, const XAsyncProviderData* data) -> HRESULT
+        {
+            auto* ctx = static_cast<CallContext*>(data->context);
+            if (op == XAsyncOp::Cancel)
+            {
+                std::lock_guard<std::mutex> lk(ctx->mtx);
+                ctx->cancelRequested = true;
+                ctx->cv.notify_all();
+            }
+            return S_OK;
+        };
+
+        CallContext ctx;
+
+        std::thread worker([&ctx]
+        {
+            for (;;)
+            {
+                XAsyncBlock* block;
+                {
+                    std::unique_lock<std::mutex> lk(ctx.mtx);
+                    ctx.cv.wait(lk, [&ctx] { return ctx.stop || ctx.cancelRequested; });
+                    if (ctx.stop) { return; }
+                    ctx.cancelRequested = false;
+                    block = ctx.asyncBlock;
+                }
+                XAsyncComplete(block, E_ABORT, 0);
+                {
+                    std::lock_guard<std::mutex> lk(ctx.mtx);
+                    ctx.completeReturned = true;
+                    ctx.cv.notify_all();
+                }
+            }
+        });
+
+        std::atomic<bool> noiseStop{ false };
+        std::thread noise[8];
+        for (auto& t : noise)
+        {
+            t = std::thread([&noiseStop] { while (!noiseStop.load()) { std::this_thread::yield(); } });
+        }
+
+        constexpr int kIterations = 20000;
+        for (int i = 0; i < kIterations; ++i)
+        {
+            XAsyncBlock async{};
+            async.queue = queue;
+            {
+                std::lock_guard<std::mutex> lk(ctx.mtx);
+                ctx.asyncBlock = &async;
+                ctx.cancelRequested = false;
+                ctx.completeReturned = false;
+            }
+
+            VERIFY_SUCCEEDED(XAsyncBegin(&async, &ctx, nullptr, nullptr, provider));
+            XAsyncCancel(&async);
+            VERIFY_ARE_EQUAL(E_ABORT, XAsyncGetStatus(&async, true));
+
+            XAsyncBlock snapshot = async;
+
+            {
+                std::unique_lock<std::mutex> lk(ctx.mtx);
+                ctx.cv.wait(lk, [&ctx] { return ctx.completeReturned; });
+                ctx.asyncBlock = nullptr;
+            }
+
+            // After the wait returned, the library must not have modified the block.
+            VERIFY_ARE_EQUAL(0, memcmp(&snapshot, &async, sizeof(XAsyncBlock)));
+        }
+
+        noiseStop = true;
+        for (auto& t : noise) { t.join(); }
+        {
+            std::lock_guard<std::mutex> lk(ctx.mtx);
+            ctx.stop = true;
+            ctx.cv.notify_all();
+        }
+        worker.join();
     }
 };
