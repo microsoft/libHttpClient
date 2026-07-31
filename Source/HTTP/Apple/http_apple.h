@@ -7,13 +7,21 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+class AppleHttpSessionManager;
+
 class AppleHttpProvider : public IHttpProvider
 {
 public:
+    AppleHttpProvider();
+    ~AppleHttpProvider();
+    
     HRESULT PerformAsync(
         HCCallHandle callHandle,
         XAsyncBlock *async
     ) noexcept override;
+    
+private:
+    std::shared_ptr<AppleHttpSessionManager> m_httpSessionManager;
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_END
