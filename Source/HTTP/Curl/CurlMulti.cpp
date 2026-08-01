@@ -215,7 +215,7 @@ HRESULT CurlMulti::PerformStepLocked(int& runningRequests) noexcept
     CURLMcode result = CURL_CALL(curl_multi_perform)(m_curlMultiHandle, &runningRequests);
     if (result != CURLM_OK)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_perform failed with CURLCode=%u", result);
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::PerformStepLocked: curl_multi_perform failed with CURLMcode=%u", result);
         return HrFromCurlm(result);
     }
 
@@ -235,7 +235,7 @@ HRESULT CurlMulti::PerformStepLocked(int& runningRequests) noexcept
                 result = CURL_CALL(curl_multi_remove_handle)(m_curlMultiHandle, message->easy_handle);
                 if (result != CURLM_OK)
                 {
-                    HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_remove_handle failed with CURLCode=%u", result);
+                    HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::PerformStepLocked: curl_multi_remove_handle failed with CURLMcode=%u", result);
                 }
 
                 requestIter->second->Complete(message->data.result);
@@ -246,7 +246,7 @@ HRESULT CurlMulti::PerformStepLocked(int& runningRequests) noexcept
             case CURLMSG_LAST:
             default:
             {
-                HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: Unrecognized CURLMsg!");
+                HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::PerformStepLocked: Unrecognized CURLMsg!");
                 assert(false);
             }
             break;
@@ -341,7 +341,10 @@ HRESULT CurlMulti::PerformUntilDrained(uint32_t timeoutMs) noexcept
         if (std::chrono::steady_clock::now() >= deadline)
         {
             HC_TRACE_WARNING(HTTPCLIENT, "CurlMulti::PerformUntilDrained: timed out with %zu request(s) still active", activeRequests);
-            return HRESULT_FROM_WIN32(ERROR_TIMEOUT);
+            // __HRESULT_FROM_WIN32 (not HRESULT_FROM_WIN32) because this file also builds for
+            // Linux/Android/Apple, where pal.h supplies the double-underscore form and the
+            // ERROR_TIMEOUT constant but not the single-underscore macro.
+            return __HRESULT_FROM_WIN32(ERROR_TIMEOUT);
         }
 
         // Mirrors the delay the task queue path uses between curl_multi_perform calls.

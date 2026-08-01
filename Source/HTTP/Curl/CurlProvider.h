@@ -55,7 +55,7 @@ protected:
     static void CALLBACK MultiCleanupComplete(_Inout_ struct XAsyncBlock* asyncBlock) noexcept;
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    static void CALLBACK AppStateChangedCallback(BOOLEAN isSuspended, void* context);
+    static void CALLBACK AppStateChangedCallback(BOOLEAN isSuspended, void* context) noexcept;
 
     PAPPSTATE_REGISTRATION m_appStateChangedToken{ nullptr };
     bool m_isSuspended{ false };
