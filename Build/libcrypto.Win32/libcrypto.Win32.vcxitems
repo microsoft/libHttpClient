@@ -10,38 +10,42 @@
     <ClCompile>
       <AdditionalIncludeDirectories>
         %(AdditionalIncludeDirectories);
+        $(HCRoot)\External\opensslGeneratedHeaders\win32\;
+        $(HCRoot)\External\opensslGeneratedHeaders\win32\internal\;
         $(HCRoot)\External\openssl\;
         $(HCRoot)\External\openssl\include\;
+        $(HCRoot)\External\openssl\crypto\;
         $(HCRoot)\External\openssl\crypto\include\;
         $(HCRoot)\External\openssl\crypto\modes\;
         $(HCRoot)\External\openssl\crypto\ec;
         $(HCRoot)\External\openssl\crypto\ec\curve448;
         $(HCRoot)\External\openssl\crypto\ec\curve448\arch_32;
-        $(HCRoot)\External\opensslGeneratedHeaders\Win32\;
-        $(HCRoot)\External\opensslGeneratedHeaders\Win32\internal\
+        $(HCRoot)\External\openssl\providers\common\include\;
+        $(HCRoot)\External\openssl\providers\implementations\include\;
+        $(HCRoot)\External\openssl\providers\fips\include\;
       </AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalOptions>%(AdditionalOptions) /analyze-</AdditionalOptions>
-      <DisableSpecificWarnings>4005;4028;4031;4047;4090;4133;4164;4244;4267</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4013;4028;4031;4033;4047;4090;4133;4164;4244;4267;4293;4319;4334</DisableSpecificWarnings>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>
-        WIN32;
-        _WIN32_WINNT=0x601;
-        WIN32_LEAN_AND_MEAN;
-        _LIB;
-        DSO_WIN32;
-        ENGINESDIR="THIS_SHOULD_NOT_BE_USED";
-        L_ENDIAN;
-        OPENSSL_THREADS;
-        OPENSSL_NO_DYNAMIC_ENGINE;
-        OPENSSL_PIC;
         OPENSSL_SYS_WIN32;
-        OPENSSLDIR="THIS_SHOULD_NOT_BE_USED";
+        WIN32_LEAN_AND_MEAN;
+        L_ENDIAN;
         UNICODE;
-        _CRT_SECURE_NO_DEPRECATE;
+        _WIN32_WINNT=0x601;
         _UNICODE;
+        _CRT_SECURE_NO_DEPRECATE;
         _WINSOCK_DEPRECATED_NO_WARNINGS;
+        OPENSSL_BUILDING_OPENSSL;
+        OPENSSL_PIC;
+        OPENSSL_ENGINES_DIR="N/A";
+        OPENSSL_ENGINES_DIRS="N/A";
+        OPENSSL_MODULES_DIR="N/A";
+        OPENSSLDIR="THIS_SHOULD_NOT_BE_USED";
+        ENGINESDIR="THIS_SHOULD_NOT_BE_USED";
+        MODULESDIR="THIS_SHOULD_NOT_BE_USED";
         %(PreprocessorDefinitions)
       </PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
@@ -50,7 +54,7 @@
   <ItemGroup>
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
-    <ItemGroup>
+  <ItemGroup>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\aes\aes_cbc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\aes\aes_cfb.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\aes\aes_core.c" />
@@ -84,20 +88,20 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn1_gen.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn1_item_list.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn1_lib.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn1_par.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn1_parse.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn_mime.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn_moid.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn_mstbl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\asn_pack.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\bio_asn1.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\bio_ndef.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\d2i_param.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\d2i_pr.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\d2i_pu.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\evp_asn1.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\f_int.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\f_string.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\i2d_pr.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\i2d_pu.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\i2d_evp.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\n_pkey.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\nsseq.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1\p5_pbe.c" />
@@ -132,40 +136,48 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\async\async_wait.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bf\bf_cfb64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bf\bf_ecb.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bf\bf_enc.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bf\bf_enc.c">
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bf\bf_ofb64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bf\bf_skey.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\b_addr.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\b_dump.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\b_print.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\b_sock.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\b_sock2.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bf_buff.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bf_lbuf.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bf_nbio.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bf_null.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bf_prefix.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bf_readbuff.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_addr.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_cb.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_dump.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_print.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_sock.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bio_sock2.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_acpt.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_bio.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_conn.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_core.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_dgram.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_dgram_pair.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_fd.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_file.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_log.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_mem.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_null.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\bss_sock.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\blake2\blake2b.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\blake2\blake2s.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\blake2\m_blake2b.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\blake2\m_blake2s.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bio\ossl_core_bio.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_add.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_asm.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_asm.c">
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_blind.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_const.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_conv.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_ctx.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_depr.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_dh.c" />
@@ -187,6 +199,7 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_print.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_rand.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_recp.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_rsa_fips186_4.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_shift.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_sqr.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\bn\bn_sqrt.c" />
@@ -200,7 +213,10 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\camellia\cmll_cfb.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\camellia\cmll_ctr.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\camellia\cmll_ecb.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\camellia\cmll_misc.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\camellia\cmll_misc.c">
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\camellia\cmll_ofb.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cast\c_cfb64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cast\c_ecb.c" />
@@ -208,13 +224,26 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cast\c_ofb64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cast\c_skey.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\chacha\chacha_enc.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmac\cm_ameth.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmac\cm_pmeth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmac\cmac.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_asn.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_client.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_ctx.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_genm.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_hdr.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_http.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_msg.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_protect.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_server.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_status.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_util.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cmp\cmp_vfy.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_asn1.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_att.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_cd.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_dd.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_dh.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_ec.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_env.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_err.c" />
@@ -223,9 +252,12 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_kari.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_pwri.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_rsa.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_sd.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\cms\cms_smime.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\comp\c_brotli.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\comp\c_zlib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\comp\c_zstd.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\comp\comp_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\comp\comp_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\conf\conf_api.c" />
@@ -236,8 +268,10 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\conf\conf_mod.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\conf\conf_sap.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\conf\conf_ssl.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cpt_err.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cryptlib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\crmf\crmf_asn.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\crmf\crmf_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\crmf\crmf_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\crmf\crmf_pbm.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ct\ct_b64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ct\ct_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ct\ct_log.c" />
@@ -248,18 +282,22 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ct\ct_sct_ctx.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ct\ct_vfy.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ct\ct_x509v3.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ctype.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cversion.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\cbc_cksm.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\cbc_enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\cfb64ede.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\cfb64enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\cfb_enc.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\des_enc.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\des_enc.c">
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\ecb3_enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\ecb_enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\fcrypt.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\fcrypt_b.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\fcrypt_b.c">
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\ofb64ede.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\ofb64enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\ofb_enc.c" />
@@ -271,10 +309,12 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\des\xcbc_enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_ameth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_asn1.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_backend.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_check.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_depr.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_gen.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_group_params.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_kdf.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_key.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_lib.c" />
@@ -282,9 +322,10 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_pmeth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_prn.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_rfc5114.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\dh\dh_rfc7919.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dsa\dsa_ameth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dsa\dsa_asn1.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\dsa\dsa_backend.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\dsa\dsa_check.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dsa\dsa_depr.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dsa\dsa_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dsa\dsa_gen.c" />
@@ -303,21 +344,23 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dso\dso_openssl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dso\dso_vms.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\dso\dso_win32.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ebcdic.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve25519.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\arch_32\f_impl.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\arch_32\f_impl32.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\arch_64\f_impl64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\curve448.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\curve448_tables.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\eddsa.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\f_generic.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve448\scalar.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\curve25519.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec2_oct.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec2_smpl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_ameth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_asn1.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_backend.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_check.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_curve.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_cvt.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_deprecated.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_key.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ec_kmeth.c" />
@@ -334,13 +377,19 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\eck_prn.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_mont.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_nist.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_nistp224.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_nistp256.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_nistp521.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_nistputil.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_oct.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecp_smpl.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecx_backend.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecx_key.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ec\ecx_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\decoder_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\decoder_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\decoder_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\decoder_pkey.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\encoder_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\encoder_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\encoder_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\encode_decode\encoder_pkey.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\engine\eng_all.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\engine\eng_cnf.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\engine\eng_ctrl.c" />
@@ -365,7 +414,15 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\engine\tb_rsa.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\err\err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\err\err_all.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\err\err_all_legacy.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\err\err_blocks.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\err\err_mark.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\err\err_prn.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\err\err_save.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ess\ess_asn1.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ess\ess_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ess\ess_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\asymcipher.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\bio_b64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\bio_enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\bio_md.c" />
@@ -373,7 +430,11 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\c_allc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\c_alld.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\cmeth_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\ctrl_params_translate.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\dh_ctrl.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\dh_support.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\digest.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\dsa_ctrl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\e_aes.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\e_aes_cbc_hmac_sha1.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\e_aes_cbc_hmac_sha256.c" />
@@ -394,66 +455,149 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\e_seed.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\e_sm4.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\e_xcbc_d.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\ec_ctrl.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\ec_support.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\encode.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_cnf.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_enc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_fetch.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_key.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_pbe.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_pkey.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_md2.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_md4.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_md5.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_md5_sha1.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_mdc2.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_rand.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\evp_utils.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\exchange.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\kdf_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\kdf_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\kem.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\keymgmt_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\keymgmt_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_blake2.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_md4.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_md5.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_md5_sha1.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_mdc2.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_ripemd.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_sha.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\legacy_wp.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_null.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_ripemd.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_sha1.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_sha3.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_sigver.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\m_wp.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\mac_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\mac_meth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\names.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p5_crpt.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p5_crpt2.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_dec.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_enc.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_legacy.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_open.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_seal.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_sign.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\p_verify.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\pbe_scrypt.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\pmeth_fn.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\pmeth_check.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\pmeth_gn.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\pmeth_lib.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ex_data.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\getenv.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\hmac\hm_ameth.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\hmac\hm_pmeth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\s_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\signature.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\evp\skeymgmt_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ffc\ffc_backend.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ffc\ffc_dh.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ffc\ffc_key_generate.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ffc\ffc_key_validate.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ffc\ffc_params.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ffc\ffc_params_generate.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ffc\ffc_params_validate.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\hashtable\hashfunc.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\hashtable\hashtable.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\hmac\hmac.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\hpke\hpke.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\hpke\hpke_util.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\http\http_client.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\http\http_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\http\http_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\idea\i_cbc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\idea\i_cfb64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\idea\i_ecb.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\idea\i_ofb64.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\idea\i_skey.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\init.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\kdf\hkdf.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\kdf\kdf_err.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\kdf\scrypt.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\kdf\tls1_prf.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\lhash\lh_stats.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\lhash\lhash.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\asn1_dsa.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\bsearch.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\comp_methods.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\context.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\core_algorithm.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\core_fetch.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\core_namemap.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cpt_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cpuid.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cryptlib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ctype.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\cversion.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\defaults.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\der_writer.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\deterministic_nonce.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ebcdic.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ex_data.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\getenv.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\indicator_core.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\info.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\init.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\initthread.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\mem.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\mem_clr.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\mem_sec.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_dir.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_fopen.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_init.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_str.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_time.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\packet.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\param_build.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\param_build_set.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\params.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\params_dup.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\params_from_text.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\passphrase.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\provider.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\provider_child.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\provider_conf.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\provider_core.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\provider_predefined.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\punycode.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\quic_vlint.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\self_test_core.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sleep.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sparse_array.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ssl_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\threads_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\threads_none.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\threads_pthread.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\threads_win.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\time.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\trace.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\uid.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\md4\md4_dgst.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\md4\md4_one.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\md5\md5_dgst.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\md5\md5_one.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\md5\md5_sha1.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\mdc2\mdc2_one.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\mdc2\mdc2dgst.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\mem.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\mem_clr.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\mem_dbg.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\mem_sec.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_encoders.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_key.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_key_compress.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_matrix.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_ntt.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_params.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_sample.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_dsa\ml_dsa_sign.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ml_kem\ml_kem.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\cbc128.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\ccm128.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\cfb128.c" />
@@ -462,14 +606,10 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\gcm128.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\ocb128.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\ofb128.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\siv128.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\wrap128.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\xts128.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_dir.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_fips.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_fopen.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_init.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_str.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\o_time.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\modes\xts128gb.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\objects\o_names.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\objects\obj_dat.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\objects\obj_err.c" />
@@ -479,7 +619,7 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_cl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_ext.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_ht.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_http.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_prn.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ocsp\ocsp_srv.c" />
@@ -521,16 +661,19 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\pkcs7\pk7_smime.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\pkcs7\pkcs7err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\poly1305\poly1305.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\poly1305\poly1305_ameth.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\poly1305\poly1305_pmeth.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\drbg_ctr.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\drbg_lib.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_egd.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\property\defn_cache.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\property\property.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\property\property_err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\property\property_parse.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\property\property_query.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\property\property_string.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\prov_seed.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_deprecated.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_lib.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_unix.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_vms.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_win.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_meth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_pool.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\rand_uniform.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rand\randfile.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rc2\rc2_cbc.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rc2\rc2_ecb.c" />
@@ -543,6 +686,7 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ripemd\rmd_one.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_ameth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_asn1.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_backend.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_chk.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_crpt.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_depr.c" />
@@ -551,6 +695,7 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_meth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_mp.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_mp_names.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_none.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_oaep.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_ossl.c" />
@@ -559,8 +704,10 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_prn.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_pss.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_saos.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_schemes.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_sign.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_ssl.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_sp800_56b_check.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_sp800_56b_gen.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_x931.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\rsa\rsa_x931g.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\seed\seed.c" />
@@ -568,33 +715,49 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\seed\seed_cfb.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\seed\seed_ecb.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\seed\seed_ofb.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sha\keccak1600.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sha\keccak1600.c">
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sha\sha1_one.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sha\sha1dgst.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sha\sha256.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sha\sha3.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sha\sha512.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\siphash\siphash.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\siphash\siphash_ameth.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\siphash\siphash_pmeth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_adrs.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_dsa.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_dsa_hash_ctx.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_dsa_key.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_fors.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_hash.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_hypertree.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_params.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_wots.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\slh_dsa\slh_xmss.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm2\sm2_crypt.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm2\sm2_err.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm2\sm2_pmeth.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm2\sm2_key.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm2\sm2_sign.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm3\m_sm3.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm3\legacy_sm3.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm3\sm3.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\sm4\sm4.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\srp\srp_lib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\srp\srp_vfy.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\stack\stack.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\loader_file.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\store_err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\store_init.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\store_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\store_meth.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\store_register.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\store_result.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\store\store_strings.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\threads_none.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\threads_pthread.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\threads_win.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\thread\arch\thread_none.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\thread\arch\thread_posix.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\thread\arch\thread_win.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\thread\api.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\thread\arch.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\thread\internal.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ts\ts_asn1.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ts\ts_conf.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ts\ts_err.c" />
@@ -612,14 +775,76 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ui\ui_null.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ui\ui_openssl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\ui\ui_util.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\uid.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\whrlpool\wp_block.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\whrlpool\wp_block.c">
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+        <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\whrlpool\wp_dgst.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\by_dir.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\by_file.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\by_store.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\pcy_cache.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\pcy_data.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\pcy_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\pcy_map.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\pcy_node.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\pcy_tree.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\t_acert.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\t_crl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\t_req.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\t_x509.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_aaa.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_ac_tgt.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_addr.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_admis.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_akeya.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_akid.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_asid.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_attrdesc.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_attrmap.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_audit_id.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_authattid.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_battcons.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_bcons.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_bitst.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_conf.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_cpols.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_crld.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_enum.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_extku.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_genn.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_group_ac.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_ia5.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_ind_iss.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_info.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_int.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_iobo.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_ist.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_lib.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_ncons.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_no_ass.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_no_rev_avail.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_pci.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_pcia.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_pcons.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_pku.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_pmaps.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_prn.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_purp.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_rolespec.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_san.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_sda.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_single_use.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_skid.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_soa_id.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_sxnet.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_timespec.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_tlsf.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_usernotice.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_utf8.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3_utl.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\v3err.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_acert.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_att.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_cmp.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_d2.c" />
@@ -632,11 +857,12 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_r2x.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_req.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_set.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_trs.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_trust.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_txt.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_v3.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_vfy.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509_vpm.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509aset.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509cset.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509name.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x509rset.c" />
@@ -646,49 +872,17 @@
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_attrib.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_crl.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_exten.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_ietfatt.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_name.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_pubkey.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_req.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_x509.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509\x_x509a.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\pcy_cache.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\pcy_data.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\pcy_lib.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\pcy_map.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\pcy_node.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\pcy_tree.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_addr.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_admis.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_akey.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_akeya.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_alt.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_asid.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_bcons.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_bitst.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_conf.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_cpols.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_crld.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_enum.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_extku.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_genn.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_ia5.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_info.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_int.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_lib.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_ncons.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_pci.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_pcia.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_pcons.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_pku.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_pmaps.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_prn.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_purp.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_skey.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_sxnet.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_tlsf.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3_utl.c" />
-    <ClCompile Include="$(HCRoot)\External\openssl\crypto\x509v3\v3err.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\engines\e_capi.c" />
     <ClCompile Include="$(HCRoot)\External\openssl\engines\e_padlock.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\providers\baseprov.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\providers\defltprov.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\providers\nullprov.c" />
+    <ClCompile Include="$(HCRoot)\External\openssl\providers\prov_running.c" />
   </ItemGroup>
 </Project>
