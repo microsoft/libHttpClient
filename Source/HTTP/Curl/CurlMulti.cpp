@@ -3,6 +3,9 @@
 #include "CurlDynamicLoader.h"
 #include "CurlProvider.h"
 
+#include <chrono>
+#include <thread>
+
 namespace xbox
 {
 namespace httpclient
@@ -206,15 +209,13 @@ void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool can
     }
 }
 
-HRESULT CurlMulti::Perform() noexcept
+HRESULT CurlMulti::PerformStepLocked(int& runningRequests) noexcept
 {
-    std::unique_lock<std::mutex> lock{ m_mutex };
-
-    int runningRequests{ 0 };
+    runningRequests = 0;
     CURLMcode result = CURL_CALL(curl_multi_perform)(m_curlMultiHandle, &runningRequests);
     if (result != CURLM_OK)
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_perform failed with CURLCode=%u", result);
+        HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::PerformStepLocked: curl_multi_perform failed with CURLMcode=%u", result);
         return HrFromCurlm(result);
     }
 
@@ -234,7 +235,7 @@ HRESULT CurlMulti::Perform() noexcept
                 result = CURL_CALL(curl_multi_remove_handle)(m_curlMultiHandle, message->easy_handle);
                 if (result != CURLM_OK)
                 {
-                    HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: curl_multi_remove_handle failed with CURLCode=%u", result);
+                    HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::PerformStepLocked: curl_multi_remove_handle failed with CURLMcode=%u", result);
                 }
 
                 requestIter->second->Complete(message->data.result);
@@ -245,7 +246,7 @@ HRESULT CurlMulti::Perform() noexcept
             case CURLMSG_LAST:
             default:
             {
-                HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::Perform: Unrecognized CURLMsg!");
+                HC_TRACE_ERROR(HTTPCLIENT, "CurlMulti::PerformStepLocked: Unrecognized CURLMsg!");
                 assert(false);
             }
             break;
@@ -253,10 +254,21 @@ HRESULT CurlMulti::Perform() noexcept
         }
     }
 
+    return S_OK;
+}
+
+HRESULT CurlMulti::Perform() noexcept
+{
+    std::unique_lock<std::mutex> lock{ m_mutex };
+
+    int runningRequests{ 0 };
+    RETURN_IF_FAILED(PerformStepLocked(runningRequests));
+
     if (runningRequests)
     {
         // Reschedule Perform if there are still running requests
         int workAvailable{ 0 };
+        CURLMcode result{ CURLM_OK };
 #if HC_PLATFORM == HC_PLATFORM_GDK
         // Try curl_multi_poll first, fall back to curl_multi_wait if not available
         if (CURL_CALL(curl_multi_poll))
@@ -276,12 +288,68 @@ HRESULT CurlMulti::Perform() noexcept
         static_assert(CURL_CALL(curl_multi_wait) == curl_multi_wait, "curl_multi_wait must be unconditionally available");
         result = CURL_CALL(curl_multi_wait)(m_curlMultiHandle, nullptr, 0, POLL_TIMEOUT_MS, &workAvailable);
 #endif
+        UNREFERENCED_PARAMETER(result);
 
         uint32_t delay = workAvailable ? 0 : PERFORM_DELAY_MS;
         ScheduleTaskQueueCallback(std::move(lock), delay);
     }
 
     return S_OK;
+}
+
+size_t CurlMulti::ActiveRequestCount() noexcept
+{
+    std::lock_guard<std::mutex> lock{ m_mutex };
+    return m_easyRequests.size();
+}
+
+HRESULT CurlMulti::PerformUntilDrained(uint32_t timeoutMs) noexcept
+{
+    auto const deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
+
+    for (;;)
+    {
+        int runningRequests{ 0 };
+        size_t activeRequests{ 0 };
+
+        {
+            std::unique_lock<std::mutex> lock{ m_mutex };
+            if (m_easyRequests.empty())
+            {
+                return S_OK;
+            }
+
+            HRESULT hr = PerformStepLocked(runningRequests);
+            if (FAILED(hr))
+            {
+                // Match the task-queue path: an unexpected CURLM error fails everything rather
+                // than leaving requests wedged while the title is suspending.
+                lock.unlock();
+                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::PerformUntilDrained: Perform failed. Failing all active requests.");
+                FailAllRequests(hr);
+                return hr;
+            }
+
+            activeRequests = m_easyRequests.size();
+        }
+
+        if (activeRequests == 0)
+        {
+            return S_OK;
+        }
+
+        if (std::chrono::steady_clock::now() >= deadline)
+        {
+            HC_TRACE_WARNING(HTTPCLIENT, "CurlMulti::PerformUntilDrained: timed out with %zu request(s) still active", activeRequests);
+            // __HRESULT_FROM_WIN32 (not HRESULT_FROM_WIN32) because this file also builds for
+            // Linux/Android/Apple, where pal.h supplies the double-underscore form and the
+            // ERROR_TIMEOUT constant but not the single-underscore macro.
+            return __HRESULT_FROM_WIN32(ERROR_TIMEOUT);
+        }
+
+        // Mirrors the delay the task queue path uses between curl_multi_perform calls.
+        std::this_thread::sleep_for(std::chrono::milliseconds(PERFORM_DELAY_MS));
+    }
 }
 
 void CurlMulti::FailAllRequests(HRESULT hr) noexcept
