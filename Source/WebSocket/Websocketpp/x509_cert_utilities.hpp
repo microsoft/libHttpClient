@@ -66,9 +66,9 @@ bool verify_cert_chain_platform_specific(asio::ssl::verify_context &verifyCtx, c
         return true;
     }
 
-    STACK_OF(X509) *certStack = X509_STORE_CTX_get_chain(storeContext);
+    STACK_OF(X509) *certStack = X509_STORE_CTX_get0_chain(storeContext);
     const int numCerts = sk_X509_num(certStack);
-    if (numCerts < 0)
+    if (numCerts <= 0)
     {
         return false;
     }
@@ -201,16 +201,7 @@ static bool verify_X509_cert_chain(const http_internal_vector<http_internal_stri
         // value, but swallow any error messages.
         if (__builtin_available(iOS 12.0, macOS 10.14, *))
         {
-            return SecTrustEvaluateWithError(trust.get(), nil);
-        }
-        else
-        {
-            SecTrustResultType trustResult;
-            status = SecTrustEvaluate(trust.get(), &trustResult);
-            if (status == noErr && (trustResult == kSecTrustResultUnspecified || trustResult == kSecTrustResultProceed))
-            {
-                return true;
-            }
+            return SecTrustEvaluateWithError(trust.get(), nullptr);
         }
     }
 
@@ -302,50 +293,58 @@ static bool verify_X509_cert_chain(asio::ssl::verify_context& verifyCtx, const h
         return true;
     }
 
-    STACK_OF(X509)* certStack = X509_STORE_CTX_get_chain(storeContext);
+    STACK_OF(X509)* certStack = X509_STORE_CTX_get0_chain(storeContext);
     const int numCerts = sk_X509_num(certStack);
-    if (numCerts < 0)
+    if (numCerts <= 0)
     {
         return false;
     }
 
-    std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> sslContext{ SSL_CTX_new(TLS_method()), &SSL_CTX_free };
-    if (sslContext == nullptr)
+    // Create a fresh store loaded with system trust anchors.
+    // Do NOT reinitialize the storeContext passed in by OpenSSL — in OpenSSL 3,
+    // X509_STORE_CTX_init runs an implicit cleanup that wipes the active chain,
+    // causing X509_verify_cert to fail and the TLS handshake to be rejected.
+    X509_STORE* store = X509_STORE_new();
+    if (store == nullptr)
     {
         return false;
     }
-
-    X509_STORE_CTX_trusted_stack(storeContext, certStack);
-    // The cert store is owned by sslContext and freed with it; do not free it separately.
-    X509_STORE* store = SSL_CTX_get_cert_store(sslContext.get());
 
     int ret = X509_STORE_set_default_paths(store);
     if (ret != 1)
     {
+        X509_STORE_free(store);
         return false;
     }
 
-    ret = X509_STORE_load_locations(store, NULL, "/etc/ssl/certs");
+    ret = X509_STORE_load_locations(store, nullptr, "/etc/ssl/certs");
     if (ret != 1)
     {
+        X509_STORE_free(store);
         return false;
     }
 
-    ret = X509_STORE_CTX_init(storeContext, store, sk_X509_value(certStack, 0), certStack);
+    X509_STORE_CTX* verifyContext = X509_STORE_CTX_new();
+    if (verifyContext == nullptr)
+    {
+        X509_STORE_free(store);
+        return false;
+    }
 
+    ret = X509_STORE_CTX_init(verifyContext, store, sk_X509_value(certStack, 0), certStack);
     if (ret != 1)
     {
+        X509_STORE_CTX_free(verifyContext);
+        X509_STORE_free(store);
         return false;
     }
 
-    ret = X509_verify_cert(storeContext);
+    ret = X509_verify_cert(verifyContext);
 
-    if (ret != 1)
-    {
-        return false;
-    }
+    X509_STORE_CTX_free(verifyContext);
+    X509_STORE_free(store);
 
-    return true;
+    return ret == 1;
 }
 #endif
 }}

@@ -147,9 +147,9 @@
 		828CED672AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
 		828CED682AFC486000CA08B1 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED642AFC486000CA08B1 /* unzip.c */; };
 		828CED692AFC486100CA08B1 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED632AFC486100CA08B1 /* ioapi.c */; };
-		828CED6C2AFD885100CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; settings = {COMPILER_FLAGS = "-Wno-error=macro-redefined"; }; };
 		828CED6A2AFC486100CA08B1 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED632AFC486100CA08B1 /* ioapi.c */; };
 		828CED6B2AFC486100CA08B1 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED632AFC486100CA08B1 /* ioapi.c */; };
+		828CED6C2AFD885100CA08B1 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED262AFC484D00CA08B1 /* adler32.c */; settings = {COMPILER_FLAGS = "-Wno-error=macro-redefined"; }; };
 		828CED6D2AFD885100CA08B1 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1E2AFC484D00CA08B1 /* crc32.c */; settings = {COMPILER_FLAGS = "-Wno-error=implicit-int-conversion -Wno-error=shorten-64-to-32 -Wno-error=macro-redefined"; }; };
 		828CED6E2AFD885100CA08B1 /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED1D2AFC484D00CA08B1 /* deflate.c */; settings = {COMPILER_FLAGS = "-Wno-error=implicit-int-conversion -Wno-error=shorten-64-to-32 -Wno-error=comma -Wno-error=macro-redefined"; }; };
 		828CED6F2AFD885100CA08B1 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 828CED252AFC484D00CA08B1 /* gzread.c */; settings = {COMPILER_FLAGS = "-Wno-error=implicit-int-conversion -Wno-error=shorten-64-to-32"; }; };
@@ -475,7 +475,6 @@
 		D3DAA84821C0E4090009C7F6 /* TaskQueueP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskQueueP.h; sourceTree = "<group>"; };
 		D3DAA84921C0E4090009C7F6 /* TaskQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TaskQueue.cpp; sourceTree = "<group>"; };
 		D3DAA84A21C0E4090009C7F6 /* referenced_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = referenced_ptr.h; sourceTree = "<group>"; };
-		D3DAA84B21C0E4090009C7F6 /* SpinLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpinLock.h; sourceTree = "<group>"; };
 		D3DAA84B21C0E4090009C7F6 /* StaticArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StaticArray.h; sourceTree = "<group>"; };
 		D3DAA84C21C0E4090009C7F6 /* ThreadPool_stl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadPool_stl.cpp; sourceTree = "<group>"; };
 		D3DAA84D21C0E4090009C7F6 /* TaskQueueImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskQueueImpl.h; sourceTree = "<group>"; };
@@ -1855,7 +1854,9 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1890,7 +1891,9 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1966,12 +1969,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "-ObjC";
@@ -1992,12 +1997,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_MODULE_NAME = SSL;
@@ -2039,8 +2046,10 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
@@ -2077,8 +2086,10 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				SKIP_INSTALL = YES;
@@ -2093,12 +2104,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "-ObjC";
@@ -2120,12 +2133,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "${BUILT_PRODUCTS_DIR}/openssl/lib";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_MODULE_NAME = SSL;
@@ -2161,7 +2176,9 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DHC_NOWEBSOCKETS",
@@ -2195,7 +2212,9 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DHC_NOWEBSOCKETS",
@@ -2299,7 +2318,9 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DHC_NOWEBSOCKETS",
@@ -2334,7 +2355,9 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DHC_NOWEBSOCKETS",
