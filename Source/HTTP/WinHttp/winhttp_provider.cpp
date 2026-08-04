@@ -399,8 +399,7 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
         openFlags
     );
 
-    DWORD error = GetLastError();
-    if (error == ERROR_INVALID_PARAMETER && isHttps)
+    if (hSession == nullptr && GetLastError() == ERROR_INVALID_PARAMETER && isHttps)
     {
         // WINHTTP_FLAG_SECURE_DEFAULTS exists only on newer Windows versions;
         // on earlier OS releases we will receive ERROR_INVALID_PARAMETER and should continue without it.
@@ -414,7 +413,8 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
 
     if (hSession == nullptr)
     {
-        HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+        DWORD openErr = GetLastError();
+        HRESULT hr = openErr != 0 ? HRESULT_FROM_WIN32(openErr) : E_FAIL;
         HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpOpen");
         return hr;
     }
@@ -452,8 +452,10 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
                 WINHTTP_FLAG_ASYNC);
             if (hSession == nullptr)
             {
-                HRESULT openHr = HRESULT_FROM_WIN32(GetLastError());
-                HC_TRACE_WARNING_HR(HTTPCLIENT, openHr, "WinHttpProvider fallback WinHttpOpen with WINHTTP_FLAG_ASYNC failed; continuing without explicitly setting secure protocols");
+                DWORD openErr = GetLastError();
+                HRESULT openHr = openErr != 0 ? HRESULT_FROM_WIN32(openErr) : E_FAIL;
+                HC_TRACE_ERROR_HR(HTTPCLIENT, openHr, "WinHttpProvider fallback WinHttpOpen with WINHTTP_FLAG_ASYNC failed");
+                return openHr;
             }
             else
             {
