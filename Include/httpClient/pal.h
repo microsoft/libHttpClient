@@ -502,25 +502,97 @@ enum class HCWebSocketCloseStatus : uint32_t
 // On some platforms, std::mutex default construction creates named mutexes which have a low
 // system-wide limit. DefaultUnnamedMutex forces unnamed mutex construction on affected platforms.
 // Define HC_USE_UNNAMED_MUTEX in your platform build props to enable the workaround.
-#if defined(HC_USE_UNNAMED_MUTEX)
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+namespace UnnamedObjectDiagnostics
+{
+enum class Type : uint32_t
+{
+    Mutex,
+    RecursiveMutex,
+    ConditionVariable,
+    ConditionVariableAny
+};
+
+void RecordConstruction(Type type) noexcept;
+void RecordDestruction(Type type) noexcept;
+}
+#endif
+
+#if defined(HC_USE_UNNAMED_MUTEX) || defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
 class DefaultUnnamedMutex : public std::mutex
 {
 public:
-    DefaultUnnamedMutex() noexcept : std::mutex(nullptr) {}
-    ~DefaultUnnamedMutex() noexcept = default;
+    DefaultUnnamedMutex() noexcept
+#if defined(HC_USE_UNNAMED_MUTEX)
+        : std::mutex(nullptr)
+#endif
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordConstruction(UnnamedObjectDiagnostics::Type::Mutex);
+#endif
+    }
+    ~DefaultUnnamedMutex() noexcept
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordDestruction(UnnamedObjectDiagnostics::Type::Mutex);
+#endif
+    }
     DefaultUnnamedMutex(DefaultUnnamedMutex const&) = delete;
     DefaultUnnamedMutex& operator=(DefaultUnnamedMutex const&) = delete;
     void lock() { std::mutex::lock(); }
     bool try_lock() { return std::mutex::try_lock(); }
     void unlock() { std::mutex::unlock(); }
+#if defined(HC_USE_UNNAMED_MUTEX)
     native_handle_type native_handle() { return std::mutex::native_handle(); }
+#endif
+};
+
+class DefaultUnnamedRecursiveMutex : public std::recursive_mutex
+{
+public:
+    DefaultUnnamedRecursiveMutex() noexcept
+#if defined(HC_USE_UNNAMED_MUTEX)
+        : std::recursive_mutex(nullptr)
+#endif
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordConstruction(UnnamedObjectDiagnostics::Type::RecursiveMutex);
+#endif
+    }
+    ~DefaultUnnamedRecursiveMutex() noexcept
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordDestruction(UnnamedObjectDiagnostics::Type::RecursiveMutex);
+#endif
+    }
+    DefaultUnnamedRecursiveMutex(DefaultUnnamedRecursiveMutex const&) = delete;
+    DefaultUnnamedRecursiveMutex& operator=(DefaultUnnamedRecursiveMutex const&) = delete;
+    void lock() { std::recursive_mutex::lock(); }
+    bool try_lock() { return std::recursive_mutex::try_lock(); }
+    void unlock() { std::recursive_mutex::unlock(); }
+#if defined(HC_USE_UNNAMED_MUTEX)
+    native_handle_type native_handle() { return std::recursive_mutex::native_handle(); }
+#endif
 };
 
 class DefaultUnnamedConditionVariable : public std::condition_variable
 {
 public:
-    DefaultUnnamedConditionVariable() noexcept : std::condition_variable(nullptr) {}
-    ~DefaultUnnamedConditionVariable() noexcept = default;
+    DefaultUnnamedConditionVariable() noexcept
+#if defined(HC_USE_UNNAMED_MUTEX)
+        : std::condition_variable(nullptr)
+#endif
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordConstruction(UnnamedObjectDiagnostics::Type::ConditionVariable);
+#endif
+    }
+    ~DefaultUnnamedConditionVariable() noexcept
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordDestruction(UnnamedObjectDiagnostics::Type::ConditionVariable);
+#endif
+    }
     DefaultUnnamedConditionVariable(DefaultUnnamedConditionVariable const&) = delete;
     DefaultUnnamedConditionVariable& operator=(DefaultUnnamedConditionVariable const&) = delete;
 };
@@ -528,13 +600,27 @@ public:
 class DefaultUnnamedConditionVariableAny : public std::condition_variable_any
 {
 public:
-    DefaultUnnamedConditionVariableAny() noexcept : std::condition_variable_any(nullptr) {}
-    ~DefaultUnnamedConditionVariableAny() noexcept = default;
+    DefaultUnnamedConditionVariableAny() noexcept
+#if defined(HC_USE_UNNAMED_MUTEX)
+        : std::condition_variable_any(nullptr)
+#endif
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordConstruction(UnnamedObjectDiagnostics::Type::ConditionVariableAny);
+#endif
+    }
+    ~DefaultUnnamedConditionVariableAny() noexcept
+    {
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+        UnnamedObjectDiagnostics::RecordDestruction(UnnamedObjectDiagnostics::Type::ConditionVariableAny);
+#endif
+    }
     DefaultUnnamedConditionVariableAny(DefaultUnnamedConditionVariableAny const&) = delete;
     DefaultUnnamedConditionVariableAny& operator=(DefaultUnnamedConditionVariableAny const&) = delete;
 };
 #else
 using DefaultUnnamedMutex = std::mutex;
+using DefaultUnnamedRecursiveMutex = std::recursive_mutex;
 using DefaultUnnamedConditionVariable = std::condition_variable;
 using DefaultUnnamedConditionVariableAny = std::condition_variable_any;
 #endif

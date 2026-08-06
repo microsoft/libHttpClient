@@ -47,15 +47,15 @@ public:
     http_singleton& operator=(http_singleton) = delete;
     ~http_singleton();
 
-    std::recursive_mutex m_singletonLock;
+    DefaultUnnamedRecursiveMutex m_singletonLock;
 
-    std::recursive_mutex m_retryAfterCacheLock;
+    DefaultUnnamedRecursiveMutex m_retryAfterCacheLock;
     http_internal_unordered_map<uint32_t, http_retry_after_api_state> m_retryAfterCache;
     void set_retry_state(_In_ uint32_t retryAfterCacheId, _In_ const http_retry_after_api_state& state);
     http_retry_after_api_state get_retry_state(_In_ uint32_t retryAfterCacheId);
     void clear_retry_state(_In_ uint32_t retryAfterCacheId);
 
-    std::recursive_mutex m_callRoutedHandlersLock;
+    DefaultUnnamedRecursiveMutex m_callRoutedHandlersLock;
     std::atomic<int32_t> m_callRoutedHandlersContext{ 0 };
     http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 #ifndef HC_NOWEBSOCKETS
@@ -76,11 +76,11 @@ public:
 #endif
 
     // Mock state
-    std::recursive_mutex m_mocksLock;
+    DefaultUnnamedRecursiveMutex m_mocksLock;
     http_internal_vector<HC_MOCK_CALL*> m_mocks;
     http_internal_map<http_internal_string, size_t> m_mockCycleIndex;
 
-    std::recursive_mutex m_sharedPtrsLock;
+    DefaultUnnamedRecursiveMutex m_sharedPtrsLock;
     http_internal_unordered_map<void*, std::shared_ptr<void>> m_sharedPtrs;
 
     http_singleton(UniquePtr<NetworkState> networkManager);

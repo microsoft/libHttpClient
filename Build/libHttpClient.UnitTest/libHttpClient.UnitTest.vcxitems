@@ -8,6 +8,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>HC_UNITTEST_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(HCEnableUnnamedObjectDiagnostics)'=='true'">HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(HCRoot)\Tests\UnitTests\Support;$(HCRoot)\Tests\UnitTests;$(HCRoot)\Tests\Shared;</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
