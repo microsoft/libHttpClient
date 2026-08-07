@@ -162,6 +162,45 @@ public:
         VERIFY_IS_TRUE(completeCalled);
     }
 
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+    DEFINE_TEST_CASE(VerifySyncObjectDiagnosticCounters)
+    {
+        XTaskQueueSyncObjectSnapshot before{};
+        XTaskQueueSyncObjectSnapshot during{};
+        XTaskQueueSyncObjectSnapshot after{};
+        VERIFY_SUCCEEDED(XTaskQueueRunSyncObjectDiagnosticProbe(&before, &during, &after));
+
+        VERIFY_ARE_EQUAL_UINT(before.mutex.constructed + 1, during.mutex.constructed);
+        VERIFY_ARE_EQUAL_UINT(before.recursiveMutex.constructed + 1, during.recursiveMutex.constructed);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariable.constructed + 1, during.conditionVariable.constructed);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariableAny.constructed + 1, during.conditionVariableAny.constructed);
+        VERIFY_ARE_EQUAL_UINT(before.mutex.live + 1, during.mutex.live);
+        VERIFY_ARE_EQUAL_UINT(before.recursiveMutex.live + 1, during.recursiveMutex.live);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariable.live + 1, during.conditionVariable.live);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariableAny.live + 1, during.conditionVariableAny.live);
+
+        VERIFY_ARE_EQUAL_UINT(before.mutex.destroyed + 1, after.mutex.destroyed);
+        VERIFY_ARE_EQUAL_UINT(before.recursiveMutex.destroyed + 1, after.recursiveMutex.destroyed);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariable.destroyed + 1, after.conditionVariable.destroyed);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariableAny.destroyed + 1, after.conditionVariableAny.destroyed);
+
+        VERIFY_ARE_EQUAL_UINT(during.mutex.constructed, after.mutex.constructed);
+        VERIFY_ARE_EQUAL_UINT(during.recursiveMutex.constructed, after.recursiveMutex.constructed);
+        VERIFY_ARE_EQUAL_UINT(during.conditionVariable.constructed, after.conditionVariable.constructed);
+        VERIFY_ARE_EQUAL_UINT(during.conditionVariableAny.constructed, after.conditionVariableAny.constructed);
+        VERIFY_ARE_EQUAL_UINT(before.mutex.live, after.mutex.live);
+        VERIFY_ARE_EQUAL_UINT(before.recursiveMutex.live, after.recursiveMutex.live);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariable.live, after.conditionVariable.live);
+        VERIFY_ARE_EQUAL_UINT(before.conditionVariableAny.live, after.conditionVariableAny.live);
+
+    #if defined(HC_USE_UNNAMED_MUTEX)
+        VERIFY_IS_TRUE(after.usesUnnamedConstructors);
+    #else
+        VERIFY_IS_FALSE(after.usesUnnamedConstructors);
+    #endif
+    }
+#endif
+
     DEFINE_TEST_CASE(VerifyCompositeQueue)
     {
         AutoQueueHandle queue;

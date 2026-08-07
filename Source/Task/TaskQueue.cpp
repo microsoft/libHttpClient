@@ -7,6 +7,97 @@
 #include "TaskQueueP.h"
 #include "TaskQueueImpl.h"
 
+#if defined(HC_ENABLE_UNNAMED_OBJECT_DIAGNOSTICS)
+namespace
+{
+struct UnnamedObjectDiagnosticCounters
+{
+    std::atomic<uint64_t> constructed[4]{};
+    std::atomic<uint64_t> destroyed[4]{};
+};
+
+UnnamedObjectDiagnosticCounters& DiagnosticCounters() noexcept
+{
+    static UnnamedObjectDiagnosticCounters counters;
+    return counters;
+}
+
+size_t DiagnosticTypeIndex(UnnamedObjectDiagnostics::Type type) noexcept
+{
+    return static_cast<size_t>(type);
+}
+}
+
+namespace UnnamedObjectDiagnostics
+{
+void RecordConstruction(Type type) noexcept
+{
+    ++DiagnosticCounters().constructed[DiagnosticTypeIndex(type)];
+}
+
+void RecordDestruction(Type type) noexcept
+{
+    ++DiagnosticCounters().destroyed[DiagnosticTypeIndex(type)];
+}
+}
+
+STDAPI XTaskQueueGetSyncObjectDiagnosticSnapshot(
+    _Out_ XTaskQueueSyncObjectSnapshot* snapshot
+    ) noexcept
+{
+    RETURN_HR_IF(E_POINTER, snapshot == nullptr);
+
+    auto loadCounts = [](UnnamedObjectDiagnostics::Type type)
+    {
+        const size_t index = DiagnosticTypeIndex(type);
+        auto& counters = DiagnosticCounters();
+        const uint64_t destroyed = counters.destroyed[index].load();
+        const uint64_t constructed = counters.constructed[index].load();
+        return XTaskQueueSyncObjectCounts
+        {
+            constructed,
+            destroyed,
+            constructed - destroyed
+        };
+    };
+
+    snapshot->mutex = loadCounts(UnnamedObjectDiagnostics::Type::Mutex);
+    snapshot->recursiveMutex = loadCounts(UnnamedObjectDiagnostics::Type::RecursiveMutex);
+    snapshot->conditionVariable = loadCounts(UnnamedObjectDiagnostics::Type::ConditionVariable);
+    snapshot->conditionVariableAny = loadCounts(UnnamedObjectDiagnostics::Type::ConditionVariableAny);
+#if defined(HC_USE_UNNAMED_MUTEX)
+    snapshot->usesUnnamedConstructors = true;
+#else
+    snapshot->usesUnnamedConstructors = false;
+#endif
+    return S_OK;
+}
+
+STDAPI XTaskQueueRunSyncObjectDiagnosticProbe(
+    _Out_ XTaskQueueSyncObjectSnapshot* before,
+    _Out_ XTaskQueueSyncObjectSnapshot* during,
+    _Out_ XTaskQueueSyncObjectSnapshot* after
+    ) noexcept
+{
+    RETURN_HR_IF(E_POINTER, before == nullptr || during == nullptr || after == nullptr);
+    RETURN_IF_FAILED(XTaskQueueGetSyncObjectDiagnosticSnapshot(before));
+
+    {
+        DefaultUnnamedMutex mutex;
+        DefaultUnnamedRecursiveMutex recursiveMutex;
+        DefaultUnnamedConditionVariable conditionVariable;
+        DefaultUnnamedConditionVariableAny conditionVariableAny;
+
+        std::lock_guard<DefaultUnnamedMutex> mutexLock{ mutex };
+        std::lock_guard<DefaultUnnamedRecursiveMutex> outerRecursiveLock{ recursiveMutex };
+        std::lock_guard<DefaultUnnamedRecursiveMutex> innerRecursiveLock{ recursiveMutex };
+        RETURN_IF_FAILED(XTaskQueueGetSyncObjectDiagnosticSnapshot(during));
+    }
+
+    return XTaskQueueGetSyncObjectDiagnosticSnapshot(after);
+}
+#endif
+
 //
 // ApiRefs tracks global refcounts for all APIs. It is used to identify memory leaks
 // in tests and can be called to wait for all refs to be released.
@@ -14,7 +105,7 @@
 namespace ApiRefs
 {
     std::atomic<uint32_t> g_globalApiRefs{ 0 };
-    std::mutex g_waitMutex;
+    DefaultUnnamedMutex g_waitMutex;
     DefaultUnnamedConditionVariable g_waitCv;
     
     void GlobalAddRef()
@@ -774,7 +865,7 @@ bool __stdcall TaskQueuePortImpl::IsEmpty()
 
 void __stdcall TaskQueuePortImpl::WaitForUnwind()
 {
-    std::mutex mutex;
+    DefaultUnnamedMutex mutex;
     std::unique_lock<std::mutex> lock(mutex);
 
     while(m_processingCallback.load() != 0)
