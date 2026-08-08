@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Defines $(HCPublicIncludeDir): the include directory that *consumers* of libHttpClient should
+    put on their header search path.
+
+    Import this after $(HCPlatform) has been resolved (that is, after platform_select.props), and
+    use $(HCPublicIncludeDir) rather than $(HCIncludeDir) in consumer include paths.
+    libHttpClient's own projects still build against $(HCIncludeDir).
+
+    On every platform except GDK the two are the same directory.
+
+    On GDK they must not be, because XAsync, XAsyncProvider and XTaskQueue are owned by the Game
+    Runtime there, not by libHttpClient. $(HCIncludeDir) holds two unrelated header sets:
+
+      Include\httpClient\*.h  - libHttpClient's public API.
+      Include\XAsync.h,
+      Include\XAsyncProvider.h,
+      Include\XTaskQueue.h    - libHttpClient's standalone async library. It is only built on
+                                platforms where libHttpClient compiles Source\Task itself, via
+                                libHttpClient.XAsync.vcxitems - which libHttpClient.GDK.vcxproj
+                                deliberately does not import, precisely because the GDK supplies
+                                these.
+
+    The GDK ships libHttpClient with that same split: %GameDK%\<edition>\windows\include\httpClient
+    holds only the public API headers, while XAsync.h, XAsyncProvider.h and XTaskQueue.h sit in the
+    GDK include root next to XGameRuntime.h.
+
+    Putting $(HCIncludeDir) on a GDK consumer's search path collapses the split and breaks the
+    build. httpClient\async.h resolves <XAsync.h> and <XTaskQueue.h> through the search path, so it
+    picks up libHttpClient's copies; the GDK's XGameRuntime.h quote-includes "XAsync.h" and
+    "XTaskQueue.h", which always resolve next to XGameRuntime.h, so it picks up the GDK's copies.
+    A translation unit that pulls in both then declares every XAsync/XTaskQueue type twice
+    (error C2011: 'XAsyncBlock': 'struct' type redefinition).
+
+    So on GDK, expose a generated directory mirroring only Include\httpClient. <XAsync.h> and
+    <XTaskQueue.h> then resolve to the GDK, while <httpClient/*.h> resolves to this repo - which is
+    what a consumer that links the repo-built libHttpClient needs, since the GDK's prebuilt headers
+    are older and do not declare newly added APIs.
+  -->
+  <PropertyGroup>
+    <HCPublicIncludeImported>true</HCPublicIncludeImported>
+    <HCPublicIncludeDir Condition="'$(HCPublicIncludeDir)' == '' AND '$(HCPlatform)' == 'GDK'">$(HCOutRoot)\PublicInclude.GDK\</HCPublicIncludeDir>
+    <HCPublicIncludeDir Condition="'$(HCPublicIncludeDir)' == ''">$(HCIncludeDir)</HCPublicIncludeDir>
+  </PropertyGroup>
+
+  <!-- Refreshed on every build so the mirror tracks edits to Include\httpClient. Headers deleted
+       from the repo are not pruned from the mirror; delete $(HCPublicIncludeDir) to reset it. -->
+  <Target Name="HCMirrorGdkPublicHeaders"
+          Condition="'$(HCPlatform)' == 'GDK'"
+          BeforeTargets="ClCompile">
+    <ItemGroup>
+      <HCPublicHeader Include="$(HCIncludeDir)\httpClient\*.h" />
+    </ItemGroup>
+    <Error Condition="'@(HCPublicHeader)' == ''"
+           Text="No libHttpClient public headers found under '$(HCIncludeDir)\httpClient'. Check that HCRoot ('$(HCRoot)') points at the libHttpClient repo." />
+    <Copy SourceFiles="@(HCPublicHeader)"
+          DestinationFolder="$(HCPublicIncludeDir)httpClient"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>

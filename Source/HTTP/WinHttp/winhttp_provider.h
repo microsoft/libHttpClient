@@ -133,8 +133,29 @@ private:
     http_internal_string m_globalProxy;
     std::mutex m_lock;
 
-    // Maintain a WinHttpSession for each unique security protocol flags
-    http_internal_map<uint32_t, HINTERNET> m_hSessions;
+    // Maintain a WinHttpSession for each unique (security protocol flags, secure scheme) pair.
+    //
+    // The scheme is part of the key because sessions are not interchangeable across schemes:
+    // GetHSession opens HTTPS sessions with WINHTTP_FLAG_SECURE_DEFAULTS, which permanently
+    // restricts that session to secure requests, and opens plain HTTP sessions with only
+    // WINHTTP_FLAG_ASYNC. Keying on the protocol flags alone let whichever scheme ran first win
+    // the cache slot, so an http:// or ws:// request that followed an https:// request reused the
+    // secure-defaults session and failed in WinHttpOpenRequest with ERROR_ACCESS_DENIED.
+    struct SessionKey
+    {
+        uint32_t securityProtocolFlags;
+        bool isSecure;
+
+        bool operator<(SessionKey const& other) const
+        {
+            if (securityProtocolFlags != other.securityProtocolFlags)
+            {
+                return securityProtocolFlags < other.securityProtocolFlags;
+            }
+            return isSecure < other.isSecure;
+        }
+    };
+    http_internal_map<SessionKey, HINTERNET> m_hSessions;
 
     // Track WinHttpConnections so that we can close them on shutdown/suspend
     http_internal_list<std::weak_ptr<WinHttpConnection>> m_connections;

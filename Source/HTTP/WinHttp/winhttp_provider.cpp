@@ -487,7 +487,8 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
 #endif
     
     std::lock_guard<std::mutex> lock(m_lock);
-    auto iter = m_hSessions.find(securityProtocolFlags);
+    SessionKey const sessionKey{ securityProtocolFlags, isHttps };
+    auto iter = m_hSessions.find(sessionKey);
     if (iter != m_hSessions.end())
     {
         HINTERNET hSession = iter->second;
@@ -618,7 +619,7 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
         (void)SetGlobalProxyForHSession(hSession, m_globalProxy.c_str());
     }
 
-    m_hSessions[securityProtocolFlags] = hSession;
+    m_hSessions[sessionKey] = hSession;
 
     return hSession;
 }
