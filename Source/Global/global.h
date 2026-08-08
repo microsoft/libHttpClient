@@ -12,6 +12,14 @@ namespace log
     class logger;
 }
 
+// Process-wide cap on the number of HTTP requests allowed in flight against the platform HTTP
+// stack at once. Kept outside the http_singleton so it can be configured before HCInitialize.
+// Enforcement lives in the platform HTTP provider; only the WinHTTP provider (GDK and Win32)
+// implements admission control today, so on other platforms this value is stored and readable but
+// does not throttle.
+void SetGlobalRequestLimit(uint32_t limit) noexcept;
+uint32_t GetGlobalRequestLimit() noexcept;
+
 typedef struct http_retry_after_api_state
 {
     http_retry_after_api_state() = default;

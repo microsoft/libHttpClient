@@ -211,6 +211,43 @@ STDAPI_(void) HCRemoveCallRoutedHandler(
 /// <remarks> If it is passed a null proxy, it will reset to default. Does not include proxying web socket traffic.</remarks>
 STDAPI HCSetGlobalProxy(_In_z_ const char* proxyUri) noexcept;
 
+/// <summary>
+/// Sets the maximum number of HTTP requests allowed to be in flight at one time.
+/// </summary>
+/// <param name="limit">The maximum number of concurrent HTTP requests. Passing 0 restores the default of 12.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, or E_FAIL.</returns>
+/// <remarks>
+/// Requests submitted beyond this limit are queued and started automatically as earlier requests
+/// complete, so HCHttpCallPerformAsync() never fails because of the limit. Callers may create and
+/// submit as many HTTP calls as they like; only the number that reach the platform HTTP stack at
+/// once is capped.
+///
+/// The limit exists to bound the memory held by in-flight requests, which matters most on
+/// memory-constrained titles. The default is 12.
+///
+/// This may be called before HCInitialize(). Changing the value does not affect requests that are
+/// already in flight, and lowering it will not cancel them; the count drains naturally as they
+/// complete.
+///
+/// Platform support: the limit is currently enforced only on GDK (Xbox and PC) and Win32, which
+/// use the WinHTTP-based HTTP provider. On UWP, Linux, Android, iOS and macOS this value is stored
+/// and returned by HCSettingsGetGlobalRequestLimit() but does not throttle requests, because those
+/// platforms use HTTP providers that do not implement admission control.
+/// </remarks>
+STDAPI HCSettingsSetGlobalRequestLimit(_In_ uint32_t limit) noexcept;
+
+/// <summary>
+/// Gets the maximum number of HTTP requests allowed to be in flight at one time.
+/// </summary>
+/// <param name="limit">Passes back the current concurrent HTTP request limit.</param>
+/// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>
+/// This may be called before HCInitialize(). Returns the configured value on every platform, which
+/// is not necessarily enforced on every platform - see HCSettingsSetGlobalRequestLimit() for the
+/// list of platforms where the limit throttles requests.
+/// </remarks>
+STDAPI HCSettingsGetGlobalRequestLimit(_Out_ uint32_t* limit) noexcept;
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Http APIs
 //

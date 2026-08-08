@@ -180,6 +180,10 @@ public:
     // Called by WinHttpProvider to force close on PLM Suspend or shutdown
     HRESULT Close(ConnectionClosedCallback callback);
 
+    // Invoked exactly once when the HTTP request completes, so WinHttpProvider can release the
+    // request's slot in the global concurrency budget and promote a queued request. Not used for
+    // WebSocket connections, which are long-lived and do not consume budget slots.
+    void SetRequestCompletedCallback(std::function<void()> callback) { m_requestCompletedCallback = std::move(callback); }
 private:
     WinHttpConnection(
         HINTERNET hSession,
@@ -290,6 +294,7 @@ private:
     HCCallHandle m_call; // ref-counted, released in destructor
     Uri m_uri;
     XAsyncBlock* m_asyncBlock = nullptr; // non-owning
+    std::function<void()> m_requestCompletedCallback;
     XPlatSecurityInformation const m_securityInformation{};
     ConnectionClosedCallback m_connectionClosedCallback;
 

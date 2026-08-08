@@ -82,6 +82,28 @@ try
 CATCH_RETURN()
 
 STDAPI
+HCSettingsSetGlobalRequestLimit(_In_ uint32_t limit) noexcept
+try
+{
+    // Deliberately does not require initialization: the limit is process-wide state so it can be
+    // configured before HCInitialize creates the provider.
+    xbox::httpclient::SetGlobalRequestLimit(limit);
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
+HCSettingsGetGlobalRequestLimit(_Out_ uint32_t* limit) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !limit);
+
+    *limit = xbox::httpclient::GetGlobalRequestLimit();
+    return S_OK;
+}
+CATCH_RETURN()
+
+STDAPI
 HCSetHttpCallPerformFunction(
     _In_ HCCallPerformFunction performFunc,
     _In_opt_ void* performContext

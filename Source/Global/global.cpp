@@ -19,6 +19,25 @@ using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+// Bounds the memory held by in-flight requests, which matters most on memory-constrained titles.
+// Applied uniformly on all platforms so a single shipped binary behaves identically everywhere.
+constexpr uint32_t c_defaultGlobalRequestLimit = 12;
+
+// Deliberately not part of http_singleton: this must be settable before HCInitialize.
+static std::atomic<uint32_t> g_globalRequestLimit{ c_defaultGlobalRequestLimit };
+
+void SetGlobalRequestLimit(uint32_t limit) noexcept
+{
+    // A limit of 0 would stall every request forever with no way to recover, so treat it as
+    // "restore the default" rather than silently wedging the title.
+    g_globalRequestLimit.store(limit == 0 ? c_defaultGlobalRequestLimit : limit, std::memory_order_relaxed);
+}
+
+uint32_t GetGlobalRequestLimit() noexcept
+{
+    return g_globalRequestLimit.load(std::memory_order_relaxed);
+}
+
 HRESULT http_singleton::singleton_access(
     _In_ singleton_access_mode mode,
     _In_opt_ HCInitArgs* createArgs,

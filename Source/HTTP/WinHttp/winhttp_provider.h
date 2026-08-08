@@ -70,6 +70,11 @@ public: // IHttpProvider
         XAsyncBlock* async
     ) noexcept;
 
+    // Global cap on the number of HTTP requests allowed to be in flight against WinHTTP at once.
+    // Requests beyond the cap are queued and started as earlier requests complete, so callers may
+    // enqueue as many as they like. The limit itself is process-wide state owned by global.h
+    // (xbox::httpclient::GetGlobalRequestLimit), since it may be set before the provider exists.
+
     HRESULT SetGlobalProxy(
         _In_ String const& proxyUri
     ) noexcept;
@@ -110,6 +115,13 @@ private:
 
     HRESULT CloseAllConnections();
 
+    // Starts a request against WinHTTP immediately, bypassing the admission check. Callers must
+    // already hold a reserved slot in m_activeRequestCount.
+    HRESULT StartRequest(HCCallHandle callHandle, XAsyncBlock* async) noexcept;
+
+    // Called when an admitted request finishes. Releases its slot and promotes queued requests.
+    void OnRequestCompleted() noexcept;
+
     Result<XPlatSecurityInformation> GetSecurityInformation(const char* url);
     Result<HINTERNET> GetHSession(uint32_t securityProtocolFlags, const char* url);
 
@@ -127,19 +139,35 @@ private:
     // Track WinHttpConnections so that we can close them on shutdown/suspend
     http_internal_list<std::weak_ptr<WinHttpConnection>> m_connections;
 
+    // Requests admitted to WinHTTP but not yet completed. Bounded by GetGlobalRequestLimit().
+    uint32_t m_activeRequestCount{ 0 };
+
+    // Requests the caller has submitted that are waiting for a free slot. Unbounded by design:
+    // titles may queue as many requests as they like, only concurrency is capped. FIFO, so a
+    // queued request cannot be starved by later arrivals.
+    struct PendingRequest
+    {
+        HCCallHandle callHandle;
+        XAsyncBlock* async;
+    };
+    http_internal_list<PendingRequest> m_pendingRequests;
+
 #if HC_PLATFORM == HC_PLATFORM_GDK
 public: // For testing purposes only
     void Suspend();
     void Resume();
 
 private:
-    static void CALLBACK NetworkConnectivityChangedCallback(void* context, const XNetworkingConnectivityHint* hint);
     static void CALLBACK AppStateChangedCallback(BOOLEAN isSuspended, void* context);
 
-    bool m_networkInitialized{ false };
     bool m_isSuspended{ false };
-    XTaskQueueRegistrationToken m_networkConnectivityChangedToken{ 0 };
     PAPPSTATE_REGISTRATION m_appStateChangedToken{ nullptr };
+
+    // Serializes the whole suspend sequence against resume and against provider destruction.
+    // Suspend drops m_lock while it blocks waiting for connections to close, so m_lock alone cannot
+    // keep a concurrent Resume (or a destructor running CloseAllConnections) from interleaving with
+    // a suspend that is still in progress.
+    std::mutex m_suspendLock;
 #endif
 };
 
