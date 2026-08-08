@@ -399,9 +399,24 @@ public:
 
     AsyncBlockTests::~AsyncBlockTests()
     {
-        VERIFY_ARE_EQUAL(s_AsyncLibGlobalStateCount, (DWORD)0);
+        // Completion of an async op (XAsyncGetStatus no longer returning E_PENDING) does not mean
+        // its AsyncState has been reclaimed yet: the final release happens on the queue thread
+        // slightly later. Poll rather than sampling the count immediately, otherwise this races
+        // with any test whose last operation completed just before it returned.
+        for (int i = 0; i < 500 && s_AsyncLibGlobalStateCount != 0; i++)
+        {
+            Sleep(10);
+        }
+
+        DWORD leakedState = static_cast<DWORD>(s_AsyncLibGlobalStateCount.load());
+
+        // Tear the queue down before verifying. VERIFY_ARE_EQUAL throws on failure, so asserting
+        // first would skip this cleanup and leak the task queue, which then fails the global
+        // XTaskQueueUninitialize leak check in every subsequent TaskQueueTests case.
         XTaskQueueTerminate(queue, true, nullptr, nullptr);
         XTaskQueueCloseHandle(queue);
+
+        VERIFY_ARE_EQUAL(leakedState, (DWORD)0);
     }
 
     DEFINE_TEST_CASE(VerifySimpleAsyncCall)
