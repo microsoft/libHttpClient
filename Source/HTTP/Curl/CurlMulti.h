@@ -24,14 +24,17 @@ public:
     // completed or timeoutMs elapses.
     //
     // The normal perform loop only advances when the caller-supplied task queue is being
-    // dispatched (see ScheduleTaskQueueCallback). During an app suspend a title is free to
-    // park its own queue, which would otherwise stall the loop and leave xCurl blocked in
-    // Curl_multi::WaitForActiveHandles until the suspend watchdog terminates the title
-    // (bug 63050439). The xCurl contract puts the "keep performing" duty on the multi
-    // consumer, so on suspend LHC drives the loop itself instead of relying on that queue.
+    // dispatched (see ScheduleTaskQueueCallback), so this exists for callers that must make
+    // progress without that queue - originally the GDK suspend path for bug 63050439.
+    //
+    // NOTE: currently unreferenced. Its only caller was CurlProvider's GDK suspend handling,
+    // which was removed when GDK moved to the WinHTTP provider. Kept because it is provider
+    // -agnostic and the same need arises for any caller that must drain without the queue;
+    // delete it if no such caller materializes.
     HRESULT PerformUntilDrained(uint32_t timeoutMs) noexcept;
 
-    // Number of requests still owned by this multi handle.
+    // Number of requests still owned by this multi handle. Currently only used by
+    // PerformUntilDrained.
     size_t ActiveRequestCount() noexcept;
 
     // Asyncronously cleanup any outstanding requests

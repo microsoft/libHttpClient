@@ -70,6 +70,11 @@ public: // IHttpProvider
         XAsyncBlock* async
     ) noexcept;
 
+    // Global cap on the number of HTTP requests allowed to be in flight against WinHTTP at once.
+    // Requests beyond the cap are queued and started as earlier requests complete, so callers may
+    // enqueue as many as they like. The limit itself is process-wide state owned by global.h
+    // (xbox::httpclient::GetGlobalRequestLimit), since it may be set before the provider exists.
+
     HRESULT SetGlobalProxy(
         _In_ String const& proxyUri
     ) noexcept;
@@ -108,7 +113,19 @@ public: // IWebSocketProvider
 private:
     WinHttpProvider() = default;
 
-    HRESULT CloseAllConnections();
+    // timeoutMs bounds the wait for connections to report closed. Suspend passes a short budget so
+    // a stuck connection cannot trigger the PLM watchdog; shutdown passes INFINITE because the wait
+    // is what prevents callbacks from outliving the provider.
+    HRESULT CloseAllConnections(DWORD timeoutMs);
+
+    // Starts a request against WinHTTP immediately, bypassing the admission check. Callers must
+    // already hold a reserved slot in m_activeRequestCount, reserved during epoch `epoch`.
+    HRESULT StartRequest(HCCallHandle callHandle, XAsyncBlock* async, uint64_t epoch) noexcept;
+
+    // Called when an admitted request finishes. Releases its slot and promotes queued requests.
+    // `epoch` is the value of m_requestEpoch when the slot was reserved; a release from an earlier
+    // epoch is ignored because CloseAllConnections already reclaimed those slots in bulk.
+    void OnRequestCompleted(uint64_t epoch) noexcept;
 
     Result<XPlatSecurityInformation> GetSecurityInformation(const char* url);
     Result<HINTERNET> GetHSession(uint32_t securityProtocolFlags, const char* url);
@@ -121,11 +138,52 @@ private:
     http_internal_string m_globalProxy;
     std::mutex m_lock;
 
-    // Maintain a WinHttpSession for each unique security protocol flags
-    http_internal_map<uint32_t, HINTERNET> m_hSessions;
+    // Maintain a WinHttpSession for each unique (security protocol flags, secure scheme) pair.
+    //
+    // The scheme is part of the key because sessions are not interchangeable across schemes:
+    // GetHSession opens HTTPS sessions with WINHTTP_FLAG_SECURE_DEFAULTS, which permanently
+    // restricts that session to secure requests, and opens plain HTTP sessions with only
+    // WINHTTP_FLAG_ASYNC. Keying on the protocol flags alone let whichever scheme ran first win
+    // the cache slot, so an http:// or ws:// request that followed an https:// request reused the
+    // secure-defaults session and failed in WinHttpOpenRequest with ERROR_ACCESS_DENIED.
+    struct SessionKey
+    {
+        uint32_t securityProtocolFlags;
+        bool isSecure;
+
+        bool operator<(SessionKey const& other) const
+        {
+            if (securityProtocolFlags != other.securityProtocolFlags)
+            {
+                return securityProtocolFlags < other.securityProtocolFlags;
+            }
+            return isSecure < other.isSecure;
+        }
+    };
+    http_internal_map<SessionKey, HINTERNET> m_hSessions;
 
     // Track WinHttpConnections so that we can close them on shutdown/suspend
     http_internal_list<std::weak_ptr<WinHttpConnection>> m_connections;
+
+    // Requests admitted to WinHTTP but not yet completed. Bounded by GetGlobalRequestLimit().
+    uint32_t m_activeRequestCount{ 0 };
+
+    // Incremented whenever CloseAllConnections reclaims every slot at once. A slot reserved before
+    // that reset must not be released again afterwards: the count is unsigned, so the stray
+    // decrement would underflow to UINT32_MAX and make m_activeRequestCount >= the limit
+    // permanently true, queueing every subsequent request forever. Releases carry the epoch they
+    // were reserved in and are dropped if it no longer matches.
+    uint64_t m_requestEpoch{ 0 };
+
+    // Requests the caller has submitted that are waiting for a free slot. Unbounded by design:
+    // titles may queue as many requests as they like, only concurrency is capped. FIFO, so a
+    // queued request cannot be starved by later arrivals.
+    struct PendingRequest
+    {
+        HCCallHandle callHandle;
+        XAsyncBlock* async;
+    };
+    http_internal_list<PendingRequest> m_pendingRequests;
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 public: // For testing purposes only
@@ -133,13 +191,16 @@ public: // For testing purposes only
     void Resume();
 
 private:
-    static void CALLBACK NetworkConnectivityChangedCallback(void* context, const XNetworkingConnectivityHint* hint);
     static void CALLBACK AppStateChangedCallback(BOOLEAN isSuspended, void* context);
 
-    bool m_networkInitialized{ false };
     bool m_isSuspended{ false };
-    XTaskQueueRegistrationToken m_networkConnectivityChangedToken{ 0 };
     PAPPSTATE_REGISTRATION m_appStateChangedToken{ nullptr };
+
+    // Serializes the whole suspend sequence against resume and against provider destruction.
+    // Suspend drops m_lock while it blocks waiting for connections to close, so m_lock alone cannot
+    // keep a concurrent Resume (or a destructor running CloseAllConnections) from interleaving with
+    // a suspend that is still in progress.
+    std::mutex m_suspendLock;
 #endif
 };
 

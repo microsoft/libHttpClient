@@ -296,6 +296,113 @@ public:
         HCCleanup();
         XTaskQueueCloseHandle(queue);
     }
+
+    // ------------------------------------------------------------------------
+    // Global request limit
+    //
+    // These cover the API contract only. Enforcement (admission control and the pending
+    // queue) lives in WinHttpProvider, which this test project does not compile -- it builds
+    // PlatformComponents_Generic instead -- so concurrency behavior is covered by the
+    // device-side scenarios in PlayFab.C\Test\GameTestScenarios\lhc-xbox rather than here.
+    // ------------------------------------------------------------------------
+
+    // Restores the shipping default so a failure part-way through a test cannot leak a custom
+    // limit into later tests. The limit is process-wide and deliberately survives HCCleanup,
+    // so nothing else resets it.
+    struct RequestLimitRestorer
+    {
+        ~RequestLimitRestorer() { HCSettingsSetGlobalRequestLimit(0); }
+    };
+
+    DEFINE_TEST_CASE(TestGlobalRequestLimitDefault)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitDefault);
+        RequestLimitRestorer restore;
+
+        // Readable before HCInitialize: a title needs to size the cap before issuing requests,
+        // so these APIs must not require initialization.
+        VERIFY_ARE_EQUAL(HCIsInitialized(), false);
+
+        uint32_t limit{ 0 };
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(12u, limit);
+    }
+
+    DEFINE_TEST_CASE(TestGlobalRequestLimitRoundTrip)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitRoundTrip);
+        RequestLimitRestorer restore;
+
+        VERIFY_SUCCEEDED(HCSettingsSetGlobalRequestLimit(4));
+
+        uint32_t limit{ 0 };
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(4u, limit);
+
+        VERIFY_SUCCEEDED(HCSettingsSetGlobalRequestLimit(64));
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(64u, limit);
+
+        // A single request in flight is a legitimate configuration, so 1 must be preserved
+        // rather than treated as a degenerate value.
+        VERIFY_SUCCEEDED(HCSettingsSetGlobalRequestLimit(1));
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(1u, limit);
+    }
+
+    DEFINE_TEST_CASE(TestGlobalRequestLimitZeroRestoresDefault)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitZeroRestoresDefault);
+        RequestLimitRestorer restore;
+
+        VERIFY_SUCCEEDED(HCSettingsSetGlobalRequestLimit(3));
+
+        // A literal cap of zero would park every request forever with no completion able to
+        // release a slot, wedging the title. 0 therefore means "restore the default".
+        VERIFY_SUCCEEDED(HCSettingsSetGlobalRequestLimit(0));
+
+        uint32_t limit{ 0 };
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(12u, limit);
+    }
+
+    DEFINE_TEST_CASE(TestGlobalRequestLimitInvalidArg)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitInvalidArg);
+
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCSettingsGetGlobalRequestLimit(nullptr));
+    }
+
+    DEFINE_TEST_CASE(TestGlobalRequestLimitSurvivesInitAndCleanup)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitSurvivesInitAndCleanup);
+        RequestLimitRestorer restore;
+
+        // Set before init: the provider must read the live global rather than snapshotting the
+        // value when it is constructed.
+        VERIFY_ARE_EQUAL(HCIsInitialized(), false);
+        VERIFY_SUCCEEDED(HCSettingsSetGlobalRequestLimit(7));
+
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+
+        uint32_t limit{ 0 };
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(7u, limit);
+
+        // Settable while initialized too.
+        VERIFY_SUCCEEDED(HCSettingsSetGlobalRequestLimit(9));
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(9u, limit);
+
+        HCCleanup();
+
+        // Deliberately process-wide rather than part of http_singleton, so it outlives cleanup
+        // and a title that configures it once at startup does not have to re-apply it after
+        // every init/cleanup cycle.
+        VERIFY_ARE_EQUAL(HCIsInitialized(), false);
+        VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(9u, limit);
+    }
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

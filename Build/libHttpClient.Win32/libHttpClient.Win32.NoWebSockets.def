@@ -79,6 +79,8 @@ EXPORTS
     HCMockSetMockMatchedCallback
     HCRemoveCallRoutedHandler
     HCSetGlobalProxy
+    HCSettingsSetGlobalRequestLimit
+    HCSettingsGetGlobalRequestLimit
     HCSetHttpCallPerformFunction
     HCSettingsGetTraceLevel
     HCSettingsSetTraceLevel

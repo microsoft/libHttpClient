@@ -84,6 +84,8 @@ EXPORTS
     HCRemoveCallRoutedHandler
     HCRemoveWebSocketRoutedHandler
     HCSetGlobalProxy
+    HCSettingsSetGlobalRequestLimit
+    HCSettingsGetGlobalRequestLimit
     HCSetHttpCallPerformFunction
     HCSetWebSocketFunctions
     HCSettingsGetTraceLevel

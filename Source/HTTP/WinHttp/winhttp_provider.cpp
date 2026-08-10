@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "HTTP/httpcall.h"
+#include "Global/global.h"
+#include <httpClient/httpProvider.h>
 #include "winhttp_provider.h"
 #include "winhttp_connection.h"
 #include "uri.h"
@@ -18,18 +20,7 @@ Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
     RETURN_IF_FAILED(XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &provider->m_immediateQueue));
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
-    {
-        RETURN_IF_FAILED(XNetworkingRegisterConnectivityHintChanged(provider->m_immediateQueue, provider.get(), WinHttpProvider::NetworkConnectivityChangedCallback, &provider->m_networkConnectivityChangedToken));
-    }
-    else
-    {
-        // XNetworking not available (e.g., PC GDK build), assume network is ready
-        provider->m_networkInitialized = true;
-    }
-
     RETURN_IF_FAILED(RegisterAppStateChangeNotification(WinHttpProvider::AppStateChangedCallback, provider.get(), &provider->m_appStateChangedToken));
-
 #endif // HC_PLATFORM == HC_PLATFORM_GDK
 
     return std::move(provider);
@@ -48,29 +39,36 @@ WinHttpProvider::~WinHttpProvider()
         UnregisterAppStateChangeNotification(m_appStateChangedToken);
     }
 
-    if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
-    {
-        if (m_networkConnectivityChangedToken.token)
-        {
-            XNetworkingUnregisterConnectivityHintChanged(m_networkConnectivityChangedToken, true);
-        }
-    }
+    // Unregistering above stops new PLM notifications, but one may already be executing. Take the
+    // suspend lock so teardown cannot run concurrently with an in-progress Suspend or Resume.
+    std::unique_lock<std::mutex> suspendLock{ m_suspendLock };
 #endif
 
-    HRESULT hr = CloseAllConnections();
+    // INFINITE on the shutdown path: waiting for every connection to report closed is what keeps a
+    // WinHTTP callback from running after this object, the singleton, and any caller-supplied
+    // memory hooks are gone.
+    HRESULT hr = CloseAllConnections(INFINITE);
     if (FAILED(hr))
     {
         HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider::CloseAllConnections failed during shutdown");
     }
 
-    for (auto& pair : m_hSessions)
     {
-        if (pair.second)
+        std::lock_guard<std::mutex> lock{ m_lock };
+        for (auto& pair : m_hSessions)
         {
-            WinHttpCloseHandle(pair.second);
+            if (pair.second)
+            {
+                WinHttpCloseHandle(pair.second);
+            }
         }
+        m_hSessions.clear();
     }
-    m_hSessions.clear();
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Release before the mutex itself is destroyed with the object.
+    suspendLock.unlock();
+#endif
 }
 
 WinHttpWebSocketExports GetWinHttpWebSocketExportsHelper()
@@ -100,6 +98,42 @@ HRESULT WinHttpProvider::PerformAsync(
     XAsyncBlock* async
 ) noexcept
 {
+    // Admission control: only GetGlobalRequestLimit() requests are allowed to reach WinHTTP at
+    // once, to bound the memory held by in-flight requests (each one costs WinHTTP request and
+    // connection handles, TLS state, and receive buffers). Requests beyond the cap are queued and
+    // started as earlier ones complete, so the caller never sees a failure for exceeding the cap.
+    uint64_t epoch{ 0 };
+    {
+        std::lock_guard<std::mutex> lock{ m_lock };
+
+        if (m_activeRequestCount >= GetGlobalRequestLimit())
+        {
+            HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpProvider::PerformAsync queueing request, %u already active (limit %u)",
+                m_activeRequestCount, GetGlobalRequestLimit());
+            m_pendingRequests.push_back(PendingRequest{ callHandle, async });
+            return S_OK;
+        }
+
+        ++m_activeRequestCount;
+        epoch = m_requestEpoch;
+    }
+
+    HRESULT hr = StartRequest(callHandle, async, epoch);
+    if (FAILED(hr))
+    {
+        // The request never reached WinHTTP, so it will never complete and would otherwise leak
+        // its slot. Release it and let any queued request take it.
+        OnRequestCompleted(epoch);
+    }
+    return hr;
+}
+
+HRESULT WinHttpProvider::StartRequest(
+    HCCallHandle callHandle,
+    XAsyncBlock* async,
+    uint64_t epoch
+) noexcept
+{
     // Get Security information for the call
     auto getSecurityInfoResult = GetSecurityInformation(callHandle->url.data());
     RETURN_IF_FAILED(getSecurityInfoResult.hr);
@@ -110,7 +144,16 @@ HRESULT WinHttpProvider::PerformAsync(
 
     std::unique_lock<std::mutex> lock{ m_lock };
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    if (!m_networkInitialized)
+    // Refuse new requests while suspended: PLM requires every network resource to be destroyed
+    // before the process is snapshotted, so nothing may be started until Resume.
+    //
+    // Note there is deliberately no "is the network initialized" check here. That gate used to
+    // consult a cached XNetworking connectivity hint, which could latch false permanently when the
+    // change notification was never delivered (observed on Steam Deck under Proton after an
+    // offline->online transition), leaving every request failing with E_HC_NETWORK_NOT_INITIALIZED
+    // for the life of the process. WinHTTP is the authority on whether a request can go out, so we
+    // let it try and return a real, retryable error instead.
+    if (m_isSuspended)
     {
         return E_HC_NETWORK_NOT_INITIALIZED;
     }
@@ -123,8 +166,74 @@ HRESULT WinHttpProvider::PerformAsync(
     // Store weak reference to connection so we can close it if it is still active on shutdown
     m_connections.push_back(initConnectionResult.Payload());
 
+    // Release the concurrency slot when the request finishes, however it finishes. Safe to capture
+    // `this`: the provider outlives its connections, which it force-closes in CloseAllConnections
+    // during both suspend and destruction.
+    initConnectionResult.Payload()->SetRequestCompletedCallback([this, epoch]() { OnRequestCompleted(epoch); });
+
+    // Unlock before starting: HttpCallPerformAsync can complete synchronously, which re-enters
+    // OnRequestCompleted and would deadlock on the non-recursive m_lock.
+    auto connection = initConnectionResult.Payload();
+    lock.unlock();
+
     // WinHttpConnection manages its own lifetime from here
-    return initConnectionResult.Payload()->HttpCallPerformAsync(async);
+    return connection->HttpCallPerformAsync(async);
+}
+
+void WinHttpProvider::OnRequestCompleted(uint64_t epoch) noexcept
+{
+    // Promote at most one queued request per completion, matching the slot that was just freed.
+    // Started outside the lock: HttpCallPerformAsync can complete synchronously and re-enter
+    // OnRequestCompleted, which would deadlock on the non-recursive m_lock.
+    for (;;)
+    {
+        PendingRequest next{};
+        uint64_t nextEpoch{ 0 };
+        {
+            std::lock_guard<std::mutex> lock{ m_lock };
+
+            // CloseAllConnections already reclaimed every slot reserved in this epoch, so this
+            // release refers to a slot that no longer exists. Dropping it is what keeps the
+            // unsigned count from underflowing and wedging admission control permanently.
+            if (epoch != m_requestEpoch)
+            {
+                return;
+            }
+
+            // Defensive: the epoch check above should make a zero count unreachable here, but the
+            // consequence of being wrong is a permanent stall, so saturate rather than wrap.
+            if (m_activeRequestCount > 0)
+            {
+                --m_activeRequestCount;
+            }
+
+            if (m_pendingRequests.empty() || m_activeRequestCount >= GetGlobalRequestLimit())
+            {
+                return;
+            }
+
+            next = m_pendingRequests.front();
+            m_pendingRequests.pop_front();
+            ++m_activeRequestCount;
+            nextEpoch = m_requestEpoch;
+        }
+
+        HRESULT hr = StartRequest(next.callHandle, next.async, nextEpoch);
+        if (SUCCEEDED(hr))
+        {
+            return;
+        }
+
+        // Complete the failed request for the caller, then loop to release its slot and give the
+        // next queued request a chance. Without this the caller would wait forever on a request
+        // that never reached WinHTTP.
+        HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider: queued request failed to start");
+        HCHttpCallResponseSetNetworkErrorCode(next.callHandle, hr, static_cast<uint32_t>(hr));
+        XAsyncComplete(next.async, S_OK, 0);
+
+        // The next iteration releases the slot just reserved above, which belongs to nextEpoch.
+        epoch = nextEpoch;
+    }
 }
 
 HRESULT WinHttpProvider::SetGlobalProxy(_In_ String const& proxyUri) noexcept
@@ -165,7 +274,9 @@ HRESULT WinHttpProvider::ConnectAsync(
 
     std::unique_lock<std::mutex> lock{ m_lock };
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    if (!m_networkInitialized)
+    // See the equivalent comment in StartRequest: suspend blocks new work, but there is
+    // deliberately no cached network-initialized gate here.
+    if (m_isSuspended)
     {
         return E_HC_NETWORK_NOT_INITIALIZED;
     }
@@ -230,7 +341,7 @@ HRESULT WinHttpProvider::Disconnect(
 }
 #endif //!HC_NOWEBSOCKETS
 
-HRESULT WinHttpProvider::CloseAllConnections()
+HRESULT WinHttpProvider::CloseAllConnections(DWORD timeoutMs)
 {
     // Should set result to HRESULT_FROM_WIN32(PROCESS_SUSPEND_RESUME)
 
@@ -246,22 +357,26 @@ HRESULT WinHttpProvider::CloseAllConnections()
 
         HANDLE connectionsClosedEvent;
         std::atomic<size_t> openConnections;
+    };
 
-    } closeContext;
+    // Heap allocated and shared with the completion callback rather than living on this stack
+    // frame. The wait below is bounded, so a connection can report closed after this function has
+    // returned; a stack-allocated context would be freed memory by then.
+    auto closeContext = std::allocate_shared<CloseContext>(http_stl_allocator<CloseContext>{});
 
-    closeContext.connectionsClosedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-    if (closeContext.connectionsClosedEvent == nullptr)
+    closeContext->connectionsClosedEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+    if (closeContext->connectionsClosedEvent == nullptr)
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto connectionClosedCallback = [&closeContext]()
+    auto connectionClosedCallback = [closeContext]()
     {
-        HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Connection Closed, %llu remaining", closeContext.openConnections - 1);
+        HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Connection Closed, %llu remaining", closeContext->openConnections - 1);
 
-        if (--closeContext.openConnections == 0)
+        if (--closeContext->openConnections == 0)
         {
-            SetEvent(closeContext.connectionsClosedEvent);
+            SetEvent(closeContext->connectionsClosedEvent);
         }
     };
 
@@ -280,14 +395,20 @@ HRESULT WinHttpProvider::CloseAllConnections()
         m_connections.clear();
     }
 
-    closeContext.openConnections = connections.size();
-    if (closeContext.openConnections > 0)
+    closeContext->openConnections = connections.size();
+    if (closeContext->openConnections > 0)
     {
         for (auto& connection : connections)
         {
             assert(connection);
             if (connection)
             {
+                // Drop the budget callback before closing. These connections are about to be torn
+                // down as a group and the budget is reset in bulk below, so per-connection release
+                // is both unnecessary and unsafe here: a connection can outlive this call and would
+                // then invoke a callback capturing a provider that may already be destroyed.
+                connection->SetRequestCompletedCallback(nullptr);
+
                 HRESULT hr = connection->Close(connectionClosedCallback);
                 if (FAILED(hr))
                 {
@@ -295,7 +416,40 @@ HRESULT WinHttpProvider::CloseAllConnections()
                 }
             }
         }
-        WaitForSingleObject(closeContext.connectionsClosedEvent, INFINITE);
+        // Bounded on the PLM suspend path, where the title has a short budget to comply before the
+        // OS terminates it: a connection that fails to report closed in time must not turn a slow
+        // teardown into a watchdog kill. The close context is shared with the callback, so a late
+        // report after this point is still safe. Shutdown passes INFINITE instead, because there
+        // the wait is what guarantees no WinHTTP callback can still run against connections that
+        // allocate through the libHttpClient allocator after the provider and singleton are gone.
+        if (WaitForSingleObject(closeContext->connectionsClosedEvent, timeoutMs) == WAIT_TIMEOUT)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "WinHttpProvider::CloseAllConnections timed out after %ums with %llu connection(s) still open",
+                timeoutMs, static_cast<unsigned long long>(closeContext->openConnections.load()));
+        }
+    }
+
+    // Every connection is gone, so nothing is in flight. Reset the budget rather than relying on
+    // per-request release, and fail anything still queued: those requests never reached WinHTTP and
+    // there is no longer a completion that would start them, so callers must not be left waiting.
+    http_internal_list<PendingRequest> abandoned;
+    {
+        std::lock_guard<std::mutex> lock{ m_lock };
+        m_activeRequestCount = 0;
+
+        // Invalidate every slot reserved so far. A request that reserved a slot before this reset
+        // can still run its completion afterwards (it may have been mid-flight, or its connection
+        // may already have been destroyed and so skipped by the callback-clearing loop above);
+        // without this its release would decrement a count that was just zeroed and underflow it.
+        ++m_requestEpoch;
+
+        abandoned.swap(m_pendingRequests);
+    }
+
+    for (auto& pending : abandoned)
+    {
+        HCHttpCallResponseSetNetworkErrorCode(pending.callHandle, E_ABORT, static_cast<uint32_t>(E_ABORT));
+        XAsyncComplete(pending.async, S_OK, 0);
     }
 
     return S_OK;
@@ -364,7 +518,8 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
 #endif
     
     std::lock_guard<std::mutex> lock(m_lock);
-    auto iter = m_hSessions.find(securityProtocolFlags);
+    SessionKey const sessionKey{ securityProtocolFlags, isHttps };
+    auto iter = m_hSessions.find(sessionKey);
     if (iter != m_hSessions.end())
     {
         HINTERNET hSession = iter->second;
@@ -495,7 +650,7 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
         (void)SetGlobalProxyForHSession(hSession, m_globalProxy.c_str());
     }
 
-    m_hSessions[securityProtocolFlags] = hSession;
+    m_hSessions[sessionKey] = hSession;
 
     return hSession;
 }
@@ -595,15 +750,25 @@ void WinHttpProvider::Suspend()
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpProvider::Suspend");
 
+    // Held across the entire sequence, including the blocking drain in CloseAllConnections, so a
+    // concurrent Resume or provider teardown cannot interleave with a suspend in progress.
+    std::lock_guard<std::mutex> suspendLock{ m_suspendLock };
+
     {
         std::lock_guard<std::mutex> lock{ m_lock };
 
-        assert(!m_isSuspended);
+        if (m_isSuspended)
+        {
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Suspend called while already suspended, ignoring");
+            return;
+        }
         m_isSuspended = true;
-        m_networkInitialized = false;
     }
 
-    HRESULT hr = CloseAllConnections();
+    // Bounded on suspend: exceeding the platform's suspend budget gets the title killed by the
+    // watchdog, which is worse than proceeding with a connection that has not reported closed.
+    constexpr DWORD c_suspendCloseTimeoutMs = 2000;
+    HRESULT hr = CloseAllConnections(c_suspendCloseTimeoutMs);
     if (FAILED(hr))
     {
         HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider::CloseAllConnections failed during suspend, continuing with suspend sequence");
@@ -624,49 +789,18 @@ void WinHttpProvider::Resume()
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpProvider::Resume");
 
-    std::unique_lock<std::mutex> lock{ m_lock };
+    // Blocks until any in-progress Suspend has fully completed, so resume can never race ahead of
+    // the teardown and let new requests start against half-destroyed state.
+    std::lock_guard<std::mutex> suspendLock{ m_suspendLock };
 
-    assert(m_isSuspended);
-    m_isSuspended = false;
+    std::lock_guard<std::mutex> lock{ m_lock };
 
-    lock.unlock();
-
-    // Force a query of network state since we've ignored notifications during suspend
-    NetworkConnectivityChangedCallback(this, nullptr);
-}
-
-void WinHttpProvider::NetworkConnectivityChangedCallback(void* context, const XNetworkingConnectivityHint* /*hint*/)
-{
-    assert(context);
-    auto provider = static_cast<WinHttpProvider*>(context);
-
-    std::lock_guard<std::mutex> lock{ provider->m_lock };
-
-    // Ignore network connectivity changes if we are suspended
-    if (!provider->m_isSuspended)
+    if (!m_isSuspended)
     {
-        if (XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking))
-        {
-            // Always requery the latest network connectivity hint rather than relying on the passed parameter in case this is a stale notification
-            XNetworkingConnectivityHint hint{};
-            HRESULT hr = XNetworkingGetConnectivityHint(&hint);
-            if (SUCCEEDED(hr))
-            {
-                HC_TRACE_INFORMATION(HTTPCLIENT, "NetworkConnectivityChangedCallback, hint.networkInitialized=%d", hint.networkInitialized);
-                provider->m_networkInitialized = hint.networkInitialized;
-            }
-            else
-            {
-                HC_TRACE_ERROR(HTTPCLIENT, "Unable to get NetworkConnectivityHint, setting m_networkInitialized=false");
-                provider->m_networkInitialized = false;
-            }
-        }
-        else
-        {
-            // Fallback to default network state if XNetworking is not available
-            provider->m_networkInitialized = true;
-        }
+        HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpProvider::Resume called while not suspended, ignoring");
+        return;
     }
+    m_isSuspended = false;
 }
 
 void WinHttpProvider::AppStateChangedCallback(BOOLEAN isSuspended, void* context)
