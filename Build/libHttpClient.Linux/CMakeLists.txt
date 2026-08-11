@@ -490,6 +490,64 @@ set_tests_properties(
 )
 
 #################################################
+### Manual queue timer-retirement integration ###
+#################################################
+# Public-XTaskQueue regression for a component destroying its private
+# Manual/Manual queue while creating the replacement. The internal retirement
+# hook makes the lifetime race deterministic; the delayed callback proves the
+# replacement queue received a live STL timer worker. The hook is intentionally
+# not exported from the shared library, so this test belongs to the static-build
+# test pass (the Linux pipeline runs ctest immediately after that build).
+if (NOT BUILD_SHARED_LIBS)
+add_executable(
+    "ManualQueueTimerRetirementTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/ManualQueueTimerRetirementRepro.cpp"
+)
+
+target_include_directories(
+    "ManualQueueTimerRetirementTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+)
+
+target_link_libraries(
+    "ManualQueueTimerRetirementTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "ManualQueueTimerRetirementTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "ManualQueueTimerRetirementTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME manual-queue-timer-retirement-linux
+    COMMAND "ManualQueueTimerRetirementTests.Linux"
+)
+set_tests_properties(
+    manual-queue-timer-retirement-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+endif()
+
+#################################################
 ### WaitTimer wrapper lifetime race repro      ###
 #################################################
 add_executable(
