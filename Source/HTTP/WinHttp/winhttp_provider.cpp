@@ -20,7 +20,17 @@ Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
     RETURN_IF_FAILED(XTaskQueueCreate(XTaskQueueDispatchMode::Immediate, XTaskQueueDispatchMode::Immediate, &provider->m_immediateQueue));
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    RETURN_IF_FAILED(RegisterAppStateChangeNotification(WinHttpProvider::AppStateChangedCallback, provider.get(), &provider->m_appStateChangedToken));
+    // Soft-fail: PLM suspend handling is a resilience feature, so losing it must not cost the
+    // title HTTP entirely. RegisterAppStateChangeNotification resolves from
+    // api-ms-win-core-psm-appnotify, which is not guaranteed to be present in every configuration
+    // the GDK runs in. Log and continue without suspend notifications; the destructor tolerates a
+    // null token, and Suspend/Resume simply never fire.
+    HRESULT registerHr = RegisterAppStateChangeNotification(WinHttpProvider::AppStateChangedCallback, provider.get(), &provider->m_appStateChangedToken);
+    if (FAILED(registerHr))
+    {
+        HC_TRACE_ERROR_HR(HTTPCLIENT, registerHr, "WinHttpProvider::Initialize: RegisterAppStateChangeNotification failed; suspend handling disabled");
+        provider->m_appStateChangedToken = nullptr;
+    }
 #endif // HC_PLATFORM == HC_PLATFORM_GDK
 
     return std::move(provider);
