@@ -163,6 +163,18 @@ private:
     http_internal_map<SessionKey, HINTERNET> m_hSessions;
 
     // Track WinHttpConnections so that we can close them on shutdown/suspend
+    // Shared with the connection-closed callbacks so a connection that reports closed after a
+    // bounded wait has already returned still has a valid context to signal. Defined in the .cpp.
+    struct CloseContext;
+
+    // Contexts from earlier CloseAllConnections calls whose bounded wait expired with connections
+    // still open. Those connections were dropped from m_connections and cannot be closed a second
+    // time (WinHttpConnection::Close is once-only and returns E_UNEXPECTED without invoking the
+    // callback), so waiting on the context they were originally given is the only way to observe
+    // them finishing. Shutdown drains these with an INFINITE timeout, which is what keeps a
+    // straggler from outliving the provider and the WinHTTP session handles it is still using.
+    http_internal_vector<std::shared_ptr<CloseContext>> m_pendingCloseContexts;
+
     http_internal_list<std::weak_ptr<WinHttpConnection>> m_connections;
 
     // Requests admitted to WinHTTP but not yet completed. Bounded by GetGlobalRequestLimit().

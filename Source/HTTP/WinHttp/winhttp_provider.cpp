@@ -12,6 +12,20 @@
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
+struct WinHttpProvider::CloseContext
+{
+    ~CloseContext()
+    {
+        if (connectionsClosedEvent)
+        {
+            CloseHandle(connectionsClosedEvent);
+        }
+    }
+
+    HANDLE connectionsClosedEvent{ nullptr };
+    std::atomic<size_t> openConnections{ 0 };
+};
+
 Result<HC_UNIQUE_PTR<WinHttpProvider>> WinHttpProvider::Initialize()
 {
     http_stl_allocator<WinHttpProvider> a{};
@@ -355,20 +369,6 @@ HRESULT WinHttpProvider::CloseAllConnections(DWORD timeoutMs)
 {
     // Should set result to HRESULT_FROM_WIN32(PROCESS_SUSPEND_RESUME)
 
-    struct CloseContext
-    {
-        ~CloseContext()
-        {
-            if (connectionsClosedEvent)
-            {
-                CloseHandle(connectionsClosedEvent);
-            }
-        }
-
-        HANDLE connectionsClosedEvent;
-        std::atomic<size_t> openConnections;
-    };
-
     // Heap allocated and shared with the completion callback rather than living on this stack
     // frame. The wait below is bounded, so a connection can report closed after this function has
     // returned; a stack-allocated context would be freed memory by then.
@@ -436,6 +436,41 @@ HRESULT WinHttpProvider::CloseAllConnections(DWORD timeoutMs)
         {
             HC_TRACE_ERROR(HTTPCLIENT, "WinHttpProvider::CloseAllConnections timed out after %ums with %llu connection(s) still open",
                 timeoutMs, static_cast<unsigned long long>(closeContext->openConnections.load()));
+
+            // Those connections have already been dropped from m_connections and cannot be closed
+            // again, so retain the context they were given. A later call - notably shutdown, which
+            // waits INFINITE - drains it below and so still observes them finishing.
+            std::lock_guard<std::mutex> lock{ m_lock };
+            m_pendingCloseContexts.push_back(closeContext);
+        }
+    }
+
+    // Drain contexts left behind by earlier timed-out closes.
+    //
+    // Deliberately bounded even when the caller passed INFINITE. These connections already missed
+    // one close deadline, so they are exactly the ones most likely never to report at all; blocking
+    // shutdown on them forever would turn a rare stuck connection into a permanent hang in
+    // HCCleanup. The unbounded wait above still covers the connections this call closed itself,
+    // which is the case that actually protects the session handles the destructor is about to
+    // close. This is a best-effort second chance, not a guarantee.
+    constexpr DWORD c_retainedCloseTimeoutMs = 5000;
+    DWORD retainedTimeoutMs = (timeoutMs == INFINITE) ? c_retainedCloseTimeoutMs : timeoutMs;
+
+    http_internal_vector<std::shared_ptr<CloseContext>> pendingCloseContexts;
+    {
+        std::lock_guard<std::mutex> lock{ m_lock };
+        pendingCloseContexts.swap(m_pendingCloseContexts);
+    }
+
+    for (auto& pendingContext : pendingCloseContexts)
+    {
+        if (WaitForSingleObject(pendingContext->connectionsClosedEvent, retainedTimeoutMs) == WAIT_TIMEOUT)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "WinHttpProvider::CloseAllConnections: %llu connection(s) from an earlier close still open",
+                static_cast<unsigned long long>(pendingContext->openConnections.load()));
+
+            std::lock_guard<std::mutex> lock{ m_lock };
+            m_pendingCloseContexts.push_back(pendingContext);
         }
     }
 
