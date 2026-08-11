@@ -27,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XAsyncProviderPriv.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueueDiagnostics.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Task\XTaskQueuePriv.h" />
   </ItemGroup>
   <ItemGroup>
