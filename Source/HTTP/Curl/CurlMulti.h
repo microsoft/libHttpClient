@@ -20,20 +20,6 @@ public:
     // Wrapper around curl_multi_add_handle
     HRESULT AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest);
 
-    // Drives curl_multi_perform on the *calling* thread until every active request has
-    // completed or timeoutMs elapses.
-    //
-    // The normal perform loop only advances when the caller-supplied task queue is being
-    // dispatched (see ScheduleTaskQueueCallback). During an app suspend a title is free to
-    // park its own queue, which would otherwise stall the loop and leave xCurl blocked in
-    // Curl_multi::WaitForActiveHandles until the suspend watchdog terminates the title
-    // (bug 63050439). The xCurl contract puts the "keep performing" duty on the multi
-    // consumer, so on suspend LHC drives the loop itself instead of relying on that queue.
-    HRESULT PerformUntilDrained(uint32_t timeoutMs) noexcept;
-
-    // Number of requests still owned by this multi handle.
-    size_t ActiveRequestCount() noexcept;
-
     // Asyncronously cleanup any outstanding requests
     static HRESULT CleanupAsync(HC_UNIQUE_PTR<CurlMulti> multi, XAsyncBlock* async);
 

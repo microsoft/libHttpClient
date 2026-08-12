@@ -149,3 +149,5 @@ EXPORTS
     HCWebSocketSetPingInterval
     HCHttpCallRequestGetMaxReceiveBufferSize
     HCHttpCallRequestSetMaxReceiveBufferSize
+    HCSettingsSetGlobalRequestLimit
+    HCSettingsGetGlobalRequestLimit

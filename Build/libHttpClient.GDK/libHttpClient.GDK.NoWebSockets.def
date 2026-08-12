@@ -98,3 +98,5 @@ EXPORTS
     HCTraceSetTraceToDebugger
     HCWinHttpResume
     HCWinHttpSuspend
+    HCSettingsSetGlobalRequestLimit
+    HCSettingsGetGlobalRequestLimit

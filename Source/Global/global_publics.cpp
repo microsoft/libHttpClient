@@ -82,6 +82,43 @@ try
 CATCH_RETURN()
 
 STDAPI
+HCSettingsSetGlobalRequestLimit(_In_ uint32_t limit) noexcept
+try
+{
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+    // Deliberately does not require initialization: the limit is process-wide state so it can be
+    // configured before HCInitialize creates the provider.
+    xbox::httpclient::SetGlobalRequestLimit(limit);
+    return S_OK;
+#else
+    // Admission control lives in the WinHTTP provider, which is only built for Win32 and GDK.
+    // Failing here is deliberate: storing a value that can never throttle anything would let a
+    // title believe it had configured a cap that silently does nothing.
+    (void)limit;
+    return E_NOTIMPL;
+#endif
+}
+CATCH_RETURN()
+
+STDAPI
+HCSettingsGetGlobalRequestLimit(_Out_ uint32_t* limit) noexcept
+try
+{
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+    RETURN_HR_IF(E_INVALIDARG, !limit);
+
+    *limit = xbox::httpclient::GetGlobalRequestLimit();
+    return S_OK;
+#else
+    // Symmetric with HCSettingsSetGlobalRequestLimit: there is no meaningful limit to report on
+    // platforms whose HTTP provider does not implement admission control.
+    (void)limit;
+    return E_NOTIMPL;
+#endif
+}
+CATCH_RETURN()
+
+STDAPI
 HCSetHttpCallPerformFunction(
     _In_ HCCallPerformFunction performFunc,
     _In_opt_ void* performContext

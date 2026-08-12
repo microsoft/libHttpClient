@@ -139,6 +139,17 @@ WinHttpConnection::~WinHttpConnection()
     }
 
     HCHttpCallCloseHandle(m_call);
+
+    // Release this request's slot in the provider's global concurrency budget. Tied to object
+    // lifetime rather than complete_task because a connection can be torn down on paths that never
+    // complete the task (for example force-closed during suspend or provider shutdown); leaking a
+    // slot there would permanently shrink the budget until requests queued forever.
+    if (m_requestCompletedCallback)
+    {
+        auto callback = std::move(m_requestCompletedCallback);
+        m_requestCompletedCallback = nullptr;
+        callback();
+    }
 }
 
 Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
@@ -1483,6 +1494,20 @@ void CALLBACK WinHttpConnection::completion_callback(
                     {
                         win32_cs_autolock cs{ &pRequestContext->m_lock };
                         pRequestContext->m_hRequest = nullptr;
+
+                        // Close the connect handle here rather than leaving it to the destructor.
+                        // Callers that wait for this callback (PLM suspend) require every WinHTTP
+                        // resource to be released before they destroy the session handles, and the
+                        // destructor may not have run by then: m_connections holds only weak
+                        // references, so the object's lifetime depends on refcounts that may still
+                        // be held elsewhere. WinHttp guarantees no further callbacks for the
+                        // request at this point, so the connect handle is safe to close.
+                        if (pRequestContext->m_hConnection != nullptr)
+                        {
+                            WinHttpCloseHandle(pRequestContext->m_hConnection);
+                            pRequestContext->m_hConnection = nullptr;
+                        }
+
                         connectionClosedCallback = std::move(pRequestContext->m_connectionClosedCallback);
                         pRequestContext->m_state = ConnectionState::Closed;
                     }

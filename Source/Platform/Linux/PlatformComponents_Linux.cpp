@@ -10,11 +10,11 @@ HRESULT PlatformInitialize(PlatformComponents& components, HCInitArgs* initArgs)
     // We don't expect initArgs on linux
     RETURN_HR_IF(E_INVALIDARG, initArgs);
 
-    // XCurl will be used for HTTP
-    auto initXCurlResult = CurlProvider::Initialize();
-    RETURN_IF_FAILED(initXCurlResult.hr);
+    // libcurl will be used for HTTP
+    auto initCurlResult = CurlProvider::Initialize();
+    RETURN_IF_FAILED(initCurlResult.hr);
 
-    components.HttpProvider = initXCurlResult.ExtractPayload();
+    components.HttpProvider = initCurlResult.ExtractPayload();
 
 #ifndef HC_NOWEBSOCKETS
     // Websocketpp will be used for WebSockets

@@ -8,6 +8,10 @@
 #include "../Logger/trace_internal.h"
 #include "../Mock/lhc_mock.h"
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include "XSystem.h"
+#endif
+
 #ifndef HC_NOWEBSOCKETS
 #include "../WebSocket/hcwebsocket.h"
 #endif
@@ -18,6 +22,46 @@ HC_DEFINE_TRACE_AREA(WEBSOCKET, HCTraceLevel::Information);
 using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+// Unlimited is the historical behavior on every platform, so it stays the default everywhere
+// except Xbox consoles. That keeps this change from regressing concurrency for titles that were
+// never throttled before.
+constexpr uint32_t c_unlimitedGlobalRequestLimit = UINT32_MAX;
+
+// 0 means "no explicit limit configured"; GetGlobalRequestLimit resolves that to the device default.
+// Deliberately not part of http_singleton: this must be settable before HCInitialize.
+static std::atomic<uint32_t> g_globalRequestLimit{ 0 };
+
+// Resolved per call rather than cached: the same Gaming.Desktop binary ships on Xbox consoles, GDK
+// PC, Steam and Steam Deck, so the device is only knowable at runtime. Caching would also risk
+// latching a wrong answer, because these APIs are callable before the game runtime is initialized.
+static uint32_t DefaultGlobalRequestLimit() noexcept
+{
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    // Bounds the memory held by in-flight requests on Xbox consoles, where that budget is tightest.
+    // Declared here rather than at namespace scope so it is not an unused constant on the platforms
+    // that never consult it, which build with -Werror.
+    constexpr uint32_t c_consoleDefaultGlobalRequestLimit = 12;
+
+    return XSystemGetDeviceType() == XSystemDeviceType::Pc
+        ? c_unlimitedGlobalRequestLimit
+        : c_consoleDefaultGlobalRequestLimit;
+#else
+    return c_unlimitedGlobalRequestLimit;
+#endif
+}
+
+void SetGlobalRequestLimit(uint32_t limit) noexcept
+{
+    // Callers pass 0 to restore the default request limit.
+    g_globalRequestLimit.store(limit, std::memory_order_relaxed);
+}
+
+uint32_t GetGlobalRequestLimit() noexcept
+{
+    uint32_t const limit = g_globalRequestLimit.load(std::memory_order_relaxed);
+    return limit == 0 ? DefaultGlobalRequestLimit() : limit;
+}
 
 HRESULT http_singleton::singleton_access(
     _In_ singleton_access_mode mode,

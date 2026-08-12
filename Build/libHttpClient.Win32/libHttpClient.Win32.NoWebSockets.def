@@ -118,3 +118,5 @@ EXPORTS
     HCHttpCallRequestSetProgressReportFunction
     HCHttpCallRequestGetMaxReceiveBufferSize
     HCHttpCallRequestSetMaxReceiveBufferSize
+    HCSettingsSetGlobalRequestLimit
+    HCSettingsGetGlobalRequestLimit

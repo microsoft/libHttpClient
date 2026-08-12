@@ -112,7 +112,6 @@
         websocketpp; we don't use its serial-port transport, so disable it.
       -->
       <PreprocessorDefinitions>__WRL_NO_DEFAULT_LIB__;_LIB;ASIO_DISABLE_SERIAL_PORT;$(libHttpClientDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories Condition="'$(Platform)'!='x64' AND '$(Platform)'!='ARM64'">%(AdditionalIncludeDirectories);$(GDKCrossPlatformPath)GRDK\ExtensionLibraries\Xbox.XCurl.API\Include</AdditionalIncludeDirectories>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <AdditionalOptions>/Zc:__cplusplus /ZH:SHA_256 /bigobj /Zi %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions Condition="'$(Platform)'=='x64' OR '$(Platform)'=='ARM64'">HC_PLATFORM=HC_PLATFORM_GDK;HC_DATAMODEL=HC_DATAMODEL_LLP64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -124,7 +123,7 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <FullProgramDatabaseFile Condition="'$(Configuration)'=='Debug'">true</FullProgramDatabaseFile>
       <AdditionalDependencies>$(Console_Libs);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Platform)'=='x64'">xgameruntime.lib;XCurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='x64'">xgameruntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Platform)'=='ARM64'">xgameruntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
 	</Link>
     <Lib>

@@ -19,9 +19,6 @@
     <Filter Include="Source\Common\Win">
       <UniqueIdentifier>{cebce833-dc13-4078-9dc3-23dec64d44e6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\HTTP\Curl">
-      <UniqueIdentifier>{184db77a-e1d6-458b-ae23-8e7cb1ac3238}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\WebSocket\WinHttp">
       <UniqueIdentifier>{70210c99-2f90-422b-b92b-53521fc41574}</UniqueIdentifier>
     </Filter>
@@ -39,15 +36,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp">
       <Filter>Source\Common\Win</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlEasyRequest.cpp">
-      <Filter>Source\HTTP\Curl</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlMulti.cpp">
-      <Filter>Source\HTTP\Curl</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.cpp">
-      <Filter>Source\HTTP\Curl</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\GDK\PlatformComponents_GDK.cpp">
       <Filter>Source\Platform\GDK</Filter>
     </ClCompile>
@@ -60,9 +48,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp">
       <Filter>Source\Platform\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlDynamicLoader.cpp">
-      <Filter>Source\HTTP\Curl</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_proxy_helper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp">
       <Filter>Source\WebSocket\Websocketpp</Filter>
@@ -72,23 +57,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h">
       <Filter>Source\Common\Win</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlEasyRequest.h">
-      <Filter>Source\HTTP\Curl</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlMulti.h">
-      <Filter>Source\HTTP\Curl</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlProvider.h">
-      <Filter>Source\HTTP\Curl</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.h">
       <Filter>Source\WebSocket\WinHttp</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h">
       <Filter>Source\WebSocket\WinHttp</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlDynamicLoader.h">
-      <Filter>Source\HTTP\Curl</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h">
       <Filter>Source\WebSocket\Websocketpp</Filter>

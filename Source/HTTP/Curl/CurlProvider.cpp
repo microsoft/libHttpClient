@@ -1,9 +1,6 @@
 #include "pch.h"
 #include "CurlProvider.h"
 #include "CurlEasyRequest.h"
-#include "CurlDynamicLoader.h"
-
-#include <chrono>
 
 namespace xbox
 {
@@ -25,9 +22,7 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
     switch (c)
     {
     case CURLMcode::CURLM_OK: return S_OK;
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
-#elif defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7,69,0)
+#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7,69,0)
     case CURLMcode::CURLM_BAD_FUNCTION_ARGUMENT: assert(false); return E_INVALIDARG;
 #endif
     default: return E_FAIL;
@@ -36,47 +31,11 @@ HRESULT HrFromCurlm(CURLMcode c) noexcept
 
 Result<HC_UNIQUE_PTR<CurlProvider>> CurlProvider::Initialize()
 {
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    // Initialize dynamic curl loader first
-    auto& loader = CurlDynamicLoader::GetInstance();
-    if (!loader.Initialize())
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "CurlProvider::Initialize: Failed to load XCurl.dll");
-        // Ensure the loader is cleaned up if initialization fails
-        CurlDynamicLoader::DestroyInstance();
-        return E_FAIL;
-    }
-
-    CURLcode initRes = CURL_CALL(curl_global_init)(CURL_GLOBAL_ALL);
-    HRESULT initHr = HrFromCurle(initRes);
-    if (FAILED(initHr))
-    {
-        // If curl init fails, unload XCurl and free the loader singleton
-        CurlDynamicLoader::DestroyInstance();
-        return initHr;
-    }
-#else
-    CURLcode initRes = CURL_CALL(curl_global_init)(CURL_GLOBAL_ALL);
+    CURLcode initRes = curl_global_init(CURL_GLOBAL_ALL);
     RETURN_IF_FAILED(HrFromCurle(initRes));
-#endif
 
     http_stl_allocator<CurlProvider> a{};
     auto provider = HC_UNIQUE_PTR<CurlProvider>{ new (a.allocate(1)) CurlProvider };
-
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    // Mirror WinHttpProvider: subscribe to PLM app state so the provider can keep the curl
-    // perform loop running while the title suspends. Without this the loop only advances when
-    // the title dispatches its own task queue, and a title that parks that queue on suspend
-    // leaves xCurl blocked in WaitForActiveHandles until the watchdog kills it (bug 63050439).
-    HRESULT registerHr = RegisterAppStateChangeNotification(CurlProvider::AppStateChangedCallback, provider.get(), &provider->m_appStateChangedToken);
-    if (FAILED(registerHr))
-    {
-        // Suspend handling is a resilience feature; failing to subscribe must not stop HTTP from
-        // working, so log and continue rather than failing initialization.
-        HC_TRACE_ERROR_HR(HTTPCLIENT, registerHr, "CurlProvider::Initialize: RegisterAppStateChangeNotification failed; suspend handling disabled");
-        provider->m_appStateChangedToken = nullptr;
-    }
-#endif
 
     return std::move(provider);
 }
@@ -86,45 +45,19 @@ CurlProvider::~CurlProvider()
     // Either CleanupAsync was never called or CurlProvider shouldn't be destroyed until it completes.
     assert(!m_cleanupTasksRemaining);
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    if (m_appStateChangedToken)
-    {
-        UnregisterAppStateChangeNotification(m_appStateChangedToken);
-        m_appStateChangedToken = nullptr;
-    }
-#endif
-
     if (m_multiCleanupQueue)
     {
         XTaskQueueCloseHandle(m_multiCleanupQueue);
     }
 
-    // make sure XCurlMultis are cleaned up before curl_global_cleanup
+    // make sure CurlMultis are cleaned up before curl_global_cleanup
     m_curlMultis.clear();
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    if (CurlDynamicLoader::GetInstance().IsLoaded())
-    {
-        CURL_CALL(curl_global_cleanup)();
-    }
-    // Free the dynamic loader singleton (unloads XCurl.dll via its destructor)
-    CurlDynamicLoader::DestroyInstance();
-#else
-    CURL_CALL(curl_global_cleanup)();
-#endif
+    curl_global_cleanup();
 }
 
 HRESULT CurlProvider::PerformAsync(HCCallHandle hcCall, XAsyncBlock* async) noexcept
 {
-#if HC_PLATFORM == HC_PLATFORM_GDK
-    // Check if curl is available before proceeding
-    if (!CurlDynamicLoader::GetInstance().IsLoaded())
-    {
-        HC_TRACE_ERROR(HTTPCLIENT, "CurlProvider::PerformAsync: XCurl.dll not available");
-        return E_HC_XCURL_REQUIRED;
-    }
-#endif
-
     XTaskQueuePortHandle workPort{ nullptr };
     RETURN_IF_FAILED(XTaskQueueGetPort(async->queue, XTaskQueuePort::Work, &workPort));
 
@@ -250,87 +183,6 @@ void CALLBACK CurlProvider::MultiCleanupComplete(_Inout_ struct XAsyncBlock* asy
     }
 }
 
-#if HC_PLATFORM == HC_PLATFORM_GDK
-
-// Total time the provider will spend driving curl_multi_perform while suspending. The xCurl
-// contract requires the multi consumer to keep performing across suspend so xCurl can quiesce
-// its handles; this bounds that work so a stuck request can never hold the suspend open longer
-// than the platform's own watchdog budget. This is a budget for the WHOLE drain, shared across
-// every CurlMulti, not a per-multi allowance -- a title with several task queues would otherwise
-// multiply this by the number of multis and could still blow the suspend budget.
-#define SUSPEND_DRAIN_TIMEOUT_MS 4000
-
-void CurlProvider::Suspend() noexcept
-{
-    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlProvider::Suspend");
-
-    // The lock is held for the whole drain so a concurrent CleanupAsync cannot move and destroy
-    // the CurlMultis while they are being performed. Completions are delivered through the
-    // async block's task queue rather than inline, so no request completion can re-enter
-    // PerformAsync on this thread while the lock is held. The drain is time-bounded, so the
-    // worst case for a blocked caller is SUSPEND_DRAIN_TIMEOUT_MS in total.
-    std::lock_guard<std::mutex> lock{ m_mutex };
-
-    if (m_isSuspended)
-    {
-        return;
-    }
-    m_isSuspended = true;
-
-    auto const deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(SUSPEND_DRAIN_TIMEOUT_MS);
-
-    for (auto& pair : m_curlMultis)
-    {
-        CurlMulti* multi = pair.second.get();
-        if (!multi || multi->ActiveRequestCount() == 0)
-        {
-            continue;
-        }
-
-        // Give each multi only what is left of the shared budget so the total drain stays
-        // bounded regardless of how many multis (task queue work ports) exist.
-        auto const now = std::chrono::steady_clock::now();
-        if (now >= deadline)
-        {
-            HC_TRACE_WARNING(HTTPCLIENT, "CurlProvider::Suspend: drain budget exhausted; remaining CurlMulti(s) not drained");
-            break;
-        }
-
-        auto const remainingMs = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
-
-        HRESULT hr = multi->PerformUntilDrained(static_cast<uint32_t>(remainingMs));
-        if (FAILED(hr))
-        {
-            HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "CurlProvider::Suspend: CurlMulti did not fully drain before suspend");
-        }
-    }
-}
-
-void CurlProvider::Resume() noexcept
-{
-    HC_TRACE_INFORMATION(HTTPCLIENT, "CurlProvider::Resume");
-
-    std::lock_guard<std::mutex> lock{ m_mutex };
-    m_isSuspended = false;
-}
-
-void CALLBACK CurlProvider::AppStateChangedCallback(BOOLEAN isSuspended, void* context) noexcept
-{
-    assert(context);
-    auto provider = static_cast<CurlProvider*>(context);
-
-    // RegisterAppStateChangeNotification reports "quiescing" as isSuspended == TRUE.
-    if (isSuspended)
-    {
-        provider->Suspend();
-    }
-    else
-    {
-        provider->Resume();
-    }
-}
-
-#endif // HC_PLATFORM == HC_PLATFORM_GDK
 
 } // httpclient
 } // xbox
