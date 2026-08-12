@@ -79,8 +79,6 @@ EXPORTS
     HCMockSetMockMatchedCallback
     HCRemoveCallRoutedHandler
     HCSetGlobalProxy
-    HCSettingsSetGlobalRequestLimit
-    HCSettingsGetGlobalRequestLimit
     HCSetHttpCallPerformFunction
     HCSettingsGetTraceLevel
     HCSettingsSetTraceLevel
@@ -120,3 +118,5 @@ EXPORTS
     HCHttpCallRequestSetProgressReportFunction
     HCHttpCallRequestGetMaxReceiveBufferSize
     HCHttpCallRequestSetMaxReceiveBufferSize
+    HCSettingsSetGlobalRequestLimit
+    HCSettingsGetGlobalRequestLimit

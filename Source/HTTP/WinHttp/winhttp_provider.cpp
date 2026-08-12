@@ -438,39 +438,47 @@ HRESULT WinHttpProvider::CloseAllConnections(DWORD timeoutMs)
                 timeoutMs, static_cast<unsigned long long>(closeContext->openConnections.load()));
 
             // Those connections have already been dropped from m_connections and cannot be closed
-            // again, so retain the context they were given. A later call - notably shutdown, which
-            // waits INFINITE - drains it below and so still observes them finishing.
+            // again, so retain the context they were given. The shutdown path drains it below, so
+            // their eventual close is still observed rather than being lost entirely.
             std::lock_guard<std::mutex> lock{ m_lock };
             m_pendingCloseContexts.push_back(closeContext);
         }
     }
 
-    // Drain contexts left behind by earlier timed-out closes.
+    // Drain contexts left behind by earlier timed-out closes. Shutdown only.
     //
-    // Deliberately bounded even when the caller passed INFINITE. These connections already missed
-    // one close deadline, so they are exactly the ones most likely never to report at all; blocking
-    // shutdown on them forever would turn a rare stuck connection into a permanent hang in
-    // HCCleanup. The unbounded wait above still covers the connections this call closed itself,
-    // which is the case that actually protects the session handles the destructor is about to
-    // close. This is a best-effort second chance, not a guarantee.
-    constexpr DWORD c_retainedCloseTimeoutMs = 5000;
-    DWORD retainedTimeoutMs = (timeoutMs == INFINITE) ? c_retainedCloseTimeoutMs : timeoutMs;
-
-    http_internal_vector<std::shared_ptr<CloseContext>> pendingCloseContexts;
+    // These exist to protect provider destruction: the destructor closes the WinHTTP session
+    // handles a straggler may still be using. Suspend destroys nothing, so draining there buys
+    // nothing and costs real time - each retained context would burn its full timeout in sequence,
+    // and these are by definition the connections least likely to ever report, so worst case adds
+    // N x the timeout to the suspend budget. That is precisely the watchdog kill the bounded wait
+    // above exists to avoid, and it would delay the E_ABORT completions below by the same amount.
+    //
+    // Bounded even here rather than INFINITE: a connection that already missed one deadline is the
+    // one most likely never to report, and blocking HCCleanup forever would be worse than the race
+    // this closes. The unbounded wait above still covers connections closed by this call, which is
+    // the case that actually protects the session handles. Best-effort second chance, not a
+    // guarantee.
+    if (timeoutMs == INFINITE)
     {
-        std::lock_guard<std::mutex> lock{ m_lock };
-        pendingCloseContexts.swap(m_pendingCloseContexts);
-    }
+        constexpr DWORD c_retainedCloseTimeoutMs = 5000;
 
-    for (auto& pendingContext : pendingCloseContexts)
-    {
-        if (WaitForSingleObject(pendingContext->connectionsClosedEvent, retainedTimeoutMs) == WAIT_TIMEOUT)
+        http_internal_vector<std::shared_ptr<CloseContext>> pendingCloseContexts;
         {
-            HC_TRACE_ERROR(HTTPCLIENT, "WinHttpProvider::CloseAllConnections: %llu connection(s) from an earlier close still open",
-                static_cast<unsigned long long>(pendingContext->openConnections.load()));
-
             std::lock_guard<std::mutex> lock{ m_lock };
-            m_pendingCloseContexts.push_back(pendingContext);
+            pendingCloseContexts.swap(m_pendingCloseContexts);
+        }
+
+        for (auto& pendingContext : pendingCloseContexts)
+        {
+            if (WaitForSingleObject(pendingContext->connectionsClosedEvent, c_retainedCloseTimeoutMs) == WAIT_TIMEOUT)
+            {
+                HC_TRACE_ERROR(HTTPCLIENT, "WinHttpProvider::CloseAllConnections: %llu connection(s) from an earlier close still open",
+                    static_cast<unsigned long long>(pendingContext->openConnections.load()));
+
+                std::lock_guard<std::mutex> lock{ m_lock };
+                m_pendingCloseContexts.push_back(pendingContext);
+            }
         }
     }
 

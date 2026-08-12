@@ -314,6 +314,10 @@ public:
         ~RequestLimitRestorer() { HCSettingsSetGlobalRequestLimit(0); }
     };
 
+    // The default is device-dependent: 12 on Xbox consoles, unlimited everywhere else. These unit
+    // tests build for Win32/UWP, so the expected default here is unlimited.
+    constexpr uint32_t c_expectedDefaultRequestLimit = UINT32_MAX;
+
     DEFINE_TEST_CASE(TestGlobalRequestLimitDefault)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitDefault);
@@ -325,7 +329,7 @@ public:
 
         uint32_t limit{ 0 };
         VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
-        VERIFY_ARE_EQUAL(12u, limit);
+        VERIFY_ARE_EQUAL(c_expectedDefaultRequestLimit, limit);
     }
 
     DEFINE_TEST_CASE(TestGlobalRequestLimitRoundTrip)
@@ -363,7 +367,7 @@ public:
 
         uint32_t limit{ 0 };
         VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
-        VERIFY_ARE_EQUAL(12u, limit);
+        VERIFY_ARE_EQUAL(c_expectedDefaultRequestLimit, limit);
     }
 
     DEFINE_TEST_CASE(TestGlobalRequestLimitInvalidArg)

@@ -140,12 +140,12 @@ private:
 
     // Maintain a WinHttpSession for each unique (security protocol flags, secure scheme) pair.
     //
-    // The scheme is part of the key because sessions are not interchangeable across schemes:
-    // GetHSession opens HTTPS sessions with WINHTTP_FLAG_SECURE_DEFAULTS, which permanently
-    // restricts that session to secure requests, and opens plain HTTP sessions with only
-    // WINHTTP_FLAG_ASYNC. Keying on the protocol flags alone let whichever scheme ran first win
-    // the cache slot, so an http:// or ws:// request that followed an https:// request reused the
-    // secure-defaults session and failed in WinHttpOpenRequest with ERROR_ACCESS_DENIED.
+    // `isSecure` is part of the key because WinHTTP sessions cannot be reused across TLS and
+    // non-TLS connections. TLS-enabled sessions are restricted with WINHTTP_FLAG_SECURE_DEFAULTS
+    // which then prevents those sessions from being used with insecure WS and HTTP schemes.
+    // Keying on the protocol flags alone let whichever ran first win the cache slot, so an http://
+    // or ws:// request that followed an https:// request reused the secure-defaults session and
+    // failed in WinHttpOpenRequest with ERROR_ACCESS_DENIED.
     struct SessionKey
     {
         uint32_t securityProtocolFlags;
@@ -162,7 +162,6 @@ private:
     };
     http_internal_map<SessionKey, HINTERNET> m_hSessions;
 
-    // Track WinHttpConnections so that we can close them on shutdown/suspend
     // Shared with the connection-closed callbacks so a connection that reports closed after a
     // bounded wait has already returned still has a valid context to signal. Defined in the .cpp.
     struct CloseContext;
@@ -171,10 +170,13 @@ private:
     // still open. Those connections were dropped from m_connections and cannot be closed a second
     // time (WinHttpConnection::Close is once-only and returns E_UNEXPECTED without invoking the
     // callback), so waiting on the context they were originally given is the only way to observe
-    // them finishing. Shutdown drains these with an INFINITE timeout, which is what keeps a
-    // straggler from outliving the provider and the WinHTTP session handles it is still using.
+    // them finishing. Only the shutdown path drains these, and only for a bounded time - not
+    // INFINITE - so a connection that already missed one deadline cannot hang HCCleanup forever.
+    // Best-effort: it narrows the window where a straggler outlives the provider and the WinHTTP
+    // session handles it is still using, rather than closing it entirely.
     http_internal_vector<std::shared_ptr<CloseContext>> m_pendingCloseContexts;
 
+    // Track WinHttpConnections so that we can close them on shutdown/suspend
     http_internal_list<std::weak_ptr<WinHttpConnection>> m_connections;
 
     // Requests admitted to WinHTTP but not yet completed. Bounded by GetGlobalRequestLimit().

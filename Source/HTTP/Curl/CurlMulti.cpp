@@ -2,9 +2,6 @@
 #include "CurlMulti.h"
 #include "CurlProvider.h"
 
-#include <chrono>
-#include <thread>
-
 namespace xbox
 {
 namespace httpclient
@@ -273,61 +270,6 @@ HRESULT CurlMulti::Perform() noexcept
     }
 
     return S_OK;
-}
-
-size_t CurlMulti::ActiveRequestCount() noexcept
-{
-    std::lock_guard<std::mutex> lock{ m_mutex };
-    return m_easyRequests.size();
-}
-
-HRESULT CurlMulti::PerformUntilDrained(uint32_t timeoutMs) noexcept
-{
-    auto const deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
-
-    for (;;)
-    {
-        int runningRequests{ 0 };
-        size_t activeRequests{ 0 };
-
-        {
-            std::unique_lock<std::mutex> lock{ m_mutex };
-            if (m_easyRequests.empty())
-            {
-                return S_OK;
-            }
-
-            HRESULT hr = PerformStepLocked(runningRequests);
-            if (FAILED(hr))
-            {
-                // Match the task-queue path: an unexpected CURLM error fails everything rather
-                // than leaving requests wedged while the title is suspending.
-                lock.unlock();
-                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::PerformUntilDrained: Perform failed. Failing all active requests.");
-                FailAllRequests(hr);
-                return hr;
-            }
-
-            activeRequests = m_easyRequests.size();
-        }
-
-        if (activeRequests == 0)
-        {
-            return S_OK;
-        }
-
-        if (std::chrono::steady_clock::now() >= deadline)
-        {
-            HC_TRACE_WARNING(HTTPCLIENT, "CurlMulti::PerformUntilDrained: timed out with %zu request(s) still active", activeRequests);
-            // __HRESULT_FROM_WIN32 (not HRESULT_FROM_WIN32) because this file also builds for
-            // Linux/Android/Apple, where pal.h supplies the double-underscore form and the
-            // ERROR_TIMEOUT constant but not the single-underscore macro.
-            return __HRESULT_FROM_WIN32(ERROR_TIMEOUT);
-        }
-
-        // Mirrors the delay the task queue path uses between curl_multi_perform calls.
-        std::this_thread::sleep_for(std::chrono::milliseconds(PERFORM_DELAY_MS));
-    }
 }
 
 void CurlMulti::FailAllRequests(HRESULT hr) noexcept
