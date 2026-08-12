@@ -23,10 +23,9 @@ using namespace xbox::httpclient;
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
-// Bounds the memory held by in-flight requests on Xbox consoles, where that budget is tightest.
-// Every other device keeps the historical uncapped behavior unless a title opts in, so this change
-// cannot regress concurrency for titles that were never throttled before.
-constexpr uint32_t c_consoleDefaultGlobalRequestLimit = 12;
+// Unlimited is the historical behavior on every platform, so it stays the default everywhere
+// except Xbox consoles. That keeps this change from regressing concurrency for titles that were
+// never throttled before.
 constexpr uint32_t c_unlimitedGlobalRequestLimit = UINT32_MAX;
 
 // 0 means "no explicit limit configured"; GetGlobalRequestLimit resolves that to the device default.
@@ -39,6 +38,11 @@ static std::atomic<uint32_t> g_globalRequestLimit{ 0 };
 static uint32_t DefaultGlobalRequestLimit() noexcept
 {
 #if HC_PLATFORM == HC_PLATFORM_GDK
+    // Bounds the memory held by in-flight requests on Xbox consoles, where that budget is tightest.
+    // Declared here rather than at namespace scope so it is not an unused constant on the platforms
+    // that never consult it, which build with -Werror.
+    constexpr uint32_t c_consoleDefaultGlobalRequestLimit = 12;
+
     return XSystemGetDeviceType() == XSystemDeviceType::Pc
         ? c_unlimitedGlobalRequestLimit
         : c_consoleDefaultGlobalRequestLimit;
