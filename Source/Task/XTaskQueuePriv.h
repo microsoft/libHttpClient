@@ -4,6 +4,7 @@
 #pragma once
 
 #include "XTaskQueue.h"
+#include "XTaskQueueDiagnostics.h"
 
 //----------------------------------------------------------------//
 //

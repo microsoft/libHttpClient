@@ -85,7 +85,7 @@ namespace OS
         WaitTimerCallback* m_callback;
         std::atomic<bool> m_terminating{ false };
         DefaultUnnamedMutex m_mutex;
-        DefaultUnnamedConditionVariable m_quiesced;
+        DefaultUnnamedConditionVariableAny m_quiesced;
         uint32_t m_inFlightDispatch = 0;
     };
 
@@ -145,7 +145,7 @@ namespace OS
         TimerEntry Pop() noexcept;
 
         DefaultUnnamedMutex m_mutex;
-        DefaultUnnamedConditionVariable m_cv;
+        DefaultUnnamedConditionVariableAny m_cv;
         std::vector<TimerEntry> m_queue; // used as a heap
         std::thread m_t;
         uint32_t m_timerCount = 0; // live timers; guarded by g_timerQueueMutex
@@ -158,7 +158,7 @@ namespace OS
         std::shared_ptr<TimerQueue> g_timerQueue;
         DefaultUnnamedMutex g_timerQueueMutex;
         DefaultUnnamedMutex g_testHooksMutex;
-        DefaultUnnamedConditionVariable g_testHooksChanged;
+        DefaultUnnamedConditionVariableAny g_testHooksChanged;
         WaitTimerTestHooks* g_testHooks = nullptr;
         std::atomic<bool> g_testHooksInstalled{ false };
         uint32_t g_testHooksActive = 0;
