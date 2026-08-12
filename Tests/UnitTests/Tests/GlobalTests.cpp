@@ -36,6 +36,12 @@ static bool g_gotCall = false;
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
+// The default request limit is device-dependent: 12 on Xbox consoles, unlimited everywhere else.
+// This test project builds for Win32/UWP, so the expected default here is unlimited. Kept at
+// namespace scope rather than inside the test class because a non-static member cannot be
+// constexpr, and a static one would be odr-used by VERIFY_ARE_EQUAL under C++14.
+constexpr uint32_t c_expectedDefaultRequestLimit = UINT32_MAX;
+
 DEFINE_TEST_CLASS(GlobalTests)
 {
 public:
@@ -313,10 +319,6 @@ public:
     {
         ~RequestLimitRestorer() { HCSettingsSetGlobalRequestLimit(0); }
     };
-
-    // The default is device-dependent: 12 on Xbox consoles, unlimited everywhere else. These unit
-    // tests build for Win32/UWP, so the expected default here is unlimited.
-    constexpr uint32_t c_expectedDefaultRequestLimit = UINT32_MAX;
 
     DEFINE_TEST_CASE(TestGlobalRequestLimitDefault)
     {
