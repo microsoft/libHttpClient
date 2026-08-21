@@ -13,17 +13,23 @@
 // This backend uses the original pointer-keyed cancellation and an
 // unconditional notify on every Set, which cannot drop a due callback. The
 // public WaitTimer API matches the post-#975 surface (GetCurrentTime /
-// GetDueTime / Start(dueTime)); both time helpers and the worker share a
-// single monotonic clock so the values TaskQueue compares stay consistent and
-// are immune to wall-clock adjustments.
+// GetDueTime / Start(dueTime)); both time helpers and the worker use the same
+// platform-selected clock so the values TaskQueue compares stay consistent.
 //
-// The pre-#975 backend keyed this clock off std::high_resolution_clock. That
-// alias is steady_clock on some standard libraries (libc++) but system_clock
-// on others (libstdc++), which is wall-clock and not monotonic. We pin it to
-// steady_clock explicitly so the ordering and "now < dueTime" comparisons in
-// TaskQueue are monotonic on every platform that compiles this backend.
-
+// The pre-#975 backend keyed this clock off std::high_resolution_clock. On
+// Prospero, high_resolution_clock aliases system_clock, which is also the clock
+// used by the absolute timeout passed to the platform condition variable. Keep
+// those clocks aligned on PS5: a steady_clock deadline converted to an absolute
+// system-clock wait before rest mode can remain blocked after resume even though
+// the original steady deadline is already due. Other STL platforms retain the
+// monotonic clock selected by #975.
+#if HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5
+using Clock = std::chrono::system_clock;
+static_assert(std::is_same<Clock, std::chrono::high_resolution_clock>::value,
+    "PS5 WaitTimer must preserve the pre-#975 high_resolution_clock behavior");
+#else
 using Clock = std::chrono::steady_clock;
+#endif
 using Deadline = Clock::time_point;
 
 namespace OS
