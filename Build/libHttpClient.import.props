@@ -71,9 +71,25 @@
     </Link>
   </ItemDefinitionGroup>
 
-  <!--Copy PlayFabCore to OutDir-->
-  <ItemGroup Label="CopyDependencies">
-    <ReferenceCopyLocalPaths Include="$(HCOutDir)\*" />
-  </ItemGroup>
+  <!--
+    Copy libHttpClient's build output (dll, import library, pdb) next to the consuming project.
+
+    This must be populated from inside a target rather than from a static ItemGroup. Static item
+    globs are expanded when the project is evaluated, which happens before the referenced
+    libHttpClient project has been built. On a clean tree $(HCOutDir) does not exist yet, so an
+    evaluation-time glob matches nothing and the import library is never staged. Consumers that
+    link against the staged output then fail with:
+
+        LNK1181: cannot open input file 'libHttpClient.GDK.lib'
+
+    A second build appears to fix it only because the folder is populated by then. Running the
+    glob inside a target defers expansion to execution time, after the project reference has
+    been resolved and built, so a clean first build stages the correct files.
+  -->
+  <Target Name="HCCopyDependencies" AfterTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Include="$(HCOutDir)*" />
+    </ItemGroup>
+  </Target>
 
 </Project>
