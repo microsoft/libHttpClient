@@ -72,13 +72,16 @@
   </ItemDefinitionGroup>
 
   <!--
-    Copy libHttpClient's build output (dll, import library, pdb) next to the consuming project.
+    Copy libHttpClient's build output next to the consuming project. What that output is depends
+    on the configuration: the dynamic flavor produces a dll, import library and pdb, while
+    HCStaticLib=true produces a static library and its pdb. The glob below stages whichever
+    applies.
 
     This must be populated from inside a target rather than from a static ItemGroup. Static item
     globs are expanded when the project is evaluated, which happens before the referenced
     libHttpClient project has been built. On a clean tree $(HCOutDir) does not exist yet, so an
-    evaluation-time glob matches nothing and the import library is never staged. Consumers that
-    link against the staged output then fail with:
+    evaluation-time glob matches nothing and nothing is staged at all. Consumers that link
+    against the staged output then fail with:
 
         LNK1181: cannot open input file 'libHttpClient.GDK.lib'
 
