@@ -34,6 +34,14 @@ public:
     HRESULT PerformAsync(XAsyncBlock* async) noexcept;
     uint32_t GetPerformCount() const noexcept { return m_iterationNumber; }
 
+#ifdef HC_UNITTEST_API
+    // Test seam: invoked at the top of PerfomAsyncProvider's Begin op, before the perform work
+    // queues have been created. Lets tests deterministically stall a perform inside that startup
+    // window so cleanup cancellation can be driven into it.
+    using PerformStartTestHook = void(CALLBACK*)(void* context);
+    static void SetPerformStartTestHook(PerformStartTestHook hook, void* context) noexcept;
+#endif
+
     // Request ID for logging
     const uint64_t id;
 

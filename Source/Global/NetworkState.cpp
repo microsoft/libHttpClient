@@ -126,6 +126,14 @@ struct NetworkState::HttpPerformContext
     HCCallHandle const callHandle;
     XAsyncBlock* const clientAsyncBlock;
     std::atomic<HttpPerformClientBlockState> clientBlockState{ HttpPerformClientBlockState::CleanupMayCancel };
+
+    // Set once this request has been inserted into NetworkState::m_activeHttpRequests. A request
+    // refused by the m_cleanupStarted guard is never tracked and holds no reference that keeps the
+    // http_singleton -- and the NetworkState it owns -- alive, so NetworkState may already be
+    // destroyed by the time the refused request's deferred cleanup op runs. Only an admitted
+    // request may touch NetworkState there.
+    std::atomic<bool> admitted{ false };
+
     XAsyncBlock internalAsyncBlock;
 };
 
@@ -185,6 +193,7 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
             return E_HC_NOT_INITIALISED;
         }
         state.m_activeHttpRequests.insert(performContext);
+        performContext->admitted.store(true, std::memory_order_release);
         lock.unlock();
 
         return performContext->callHandle->PerformAsync(&performContext->internalAsyncBlock);
@@ -196,13 +205,19 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
     }
     case XAsyncOp::Cleanup:
     {
-        std::unique_lock<std::mutex> lock{ state.m_mutex };
-        // Only a perform that was actually admitted (present in m_activeHttpRequests) may drive the
-        // cleanup wakeup. A perform rejected by the m_cleanupStarted guard was never inserted, so
-        // erase() returns 0 and we must not call ScheduleCleanup()/XAsyncSchedule for it -- doing so
-        // would spuriously (re)schedule cleanup's async block for a request that was never tracked.
-        bool scheduleCleanup = state.m_activeHttpRequests.erase(performContext) != 0 && state.ScheduleCleanup();
-        lock.unlock();
+        // Only a perform that was actually admitted may touch NetworkState here. A perform refused
+        // by the m_cleanupStarted guard was never inserted into m_activeHttpRequests, so it has no
+        // bookkeeping to undo -- and, critically, nothing kept NetworkState alive on its behalf.
+        // This op runs asynchronously (on the completion port, after the client callback), by which
+        // point cleanup may already have destroyed the singleton and its NetworkState, so touching
+        // state at all here would be a use-after-free.
+        bool scheduleCleanup{ false };
+        if (performContext->admitted.load(std::memory_order_acquire))
+        {
+            std::unique_lock<std::mutex> lock{ state.m_mutex };
+            scheduleCleanup = state.m_activeHttpRequests.erase(performContext) != 0 && state.ScheduleCleanup();
+            lock.unlock();
+        }
 
         // Free performContext before scheduling cleanup to ensure it happens before returing to client
         UniquePtr<HttpPerformContext> reclaim{ performContext };

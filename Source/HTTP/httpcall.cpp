@@ -58,6 +58,12 @@ struct PerformContext
     XAsyncBlock* const asyncBlock; // client owned
     XTaskQueueHandle workQueue{ nullptr };
     XTaskQueueHandle providerQueue{ nullptr };
+
+    // Orders publication of workQueue in the Begin op against the Cancel op. Cleanup can cancel a
+    // perform as soon as NetworkState has tracked it, which happens before HC_CALL::PerformAsync
+    // runs, so a cancel can arrive while Begin is still starting up and before workQueue exists.
+    DefaultUnnamedMutex startupMutex;
+    bool cancelRequested{ false };
 };
 
 HRESULT HC_CALL::PerformAsync(XAsyncBlock* async) noexcept
@@ -68,6 +74,20 @@ HRESULT HC_CALL::PerformAsync(XAsyncBlock* async) noexcept
     return S_OK;
 }
 
+#ifdef HC_UNITTEST_API
+namespace
+{
+std::atomic<HC_CALL::PerformStartTestHook> g_performStartTestHook{ nullptr };
+std::atomic<void*> g_performStartTestHookContext{ nullptr };
+}
+
+void HC_CALL::SetPerformStartTestHook(PerformStartTestHook hook, void* context) noexcept
+{
+    g_performStartTestHookContext.store(context, std::memory_order_release);
+    g_performStartTestHook.store(hook, std::memory_order_release);
+}
+#endif
+
 HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData const* data)
 {
     PerformContext* context{ static_cast<PerformContext*>(data->context) };
@@ -77,6 +97,12 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
     {
     case XAsyncOp::Begin:
     {
+#ifdef HC_UNITTEST_API
+        if (auto hook = g_performStartTestHook.load(std::memory_order_acquire))
+        {
+            hook(g_performStartTestHookContext.load(std::memory_order_acquire));
+        }
+#endif
         bool expected = false;
         if (!call->performCalled.compare_exchange_strong(expected, true))
         {
@@ -87,8 +113,28 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         // Initialize work queues
         XTaskQueuePortHandle workPort{ nullptr };
         RETURN_IF_FAILED(XTaskQueueGetPort(data->async->queue, XTaskQueuePort::Work, &workPort));
-        RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->workQueue));
-        RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->providerQueue));
+
+        bool canceledDuringStartup{ false };
+        {
+            std::lock_guard<DefaultUnnamedMutex> lock{ context->startupMutex };
+            RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->workQueue));
+            RETURN_IF_FAILED(XTaskQueueCreateComposite(workPort, workPort, &context->providerQueue));
+            canceledDuringStartup = context->cancelRequested;
+        }
+
+        if (canceledDuringStartup)
+        {
+            // A cancel (typically from HCCleanupAsync) arrived before the work queues existed, so
+            // the Cancel op had nothing to terminate and deferred to us. Honor it now, completing
+            // the same way a cancel that arrives once the queues are live would.
+            if (call->traceCall)
+            {
+                HC_TRACE_INFORMATION(HTTPCLIENT, "HC_CALL::PerfomAsyncProvider [ID %llu] canceled during startup", TO_ULL(call->id));
+            }
+            XTaskQueueTerminate(context->workQueue, false, nullptr, nullptr);
+            XAsyncComplete(data->async, E_ABORT, 0);
+            return S_OK;
+        }
 
         // Fail Fast check
         uint32_t performDelay{ 0 };
@@ -140,7 +186,24 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         // Terminate the Perform workQueue and allow XAsync to handle synchronization. If PerformSingleRequest has been scheduled but is not yet
         // running, it will be canceled and the Perform operation will be completed then.  If a request is currently running, the Perform
         // operation will be completed when that request completes (either with success or with E_ABORT, depending on whether the request succeeded).
-        RETURN_IF_FAILED(XTaskQueueTerminate(context->workQueue, false, nullptr, nullptr));
+        XTaskQueueHandle workQueue{ nullptr };
+        {
+            std::lock_guard<DefaultUnnamedMutex> lock{ context->startupMutex };
+            context->cancelRequested = true;
+            workQueue = context->workQueue;
+        }
+
+        if (!workQueue)
+        {
+            // The cancel raced ahead of the Begin op, which has not created the work queues yet.
+            // NetworkState tracks a perform before HC_CALL::PerformAsync starts, so cleanup can
+            // reach this point while startup is still in progress. There is nothing to terminate,
+            // and terminating a null handle would crash; Begin observes cancelRequested once it
+            // publishes the queues and completes the perform as canceled.
+            return S_OK;
+        }
+
+        RETURN_IF_FAILED(XTaskQueueTerminate(workQueue, false, nullptr, nullptr));
 
         return S_OK;
     }
