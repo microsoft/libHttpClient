@@ -45,6 +45,7 @@ namespace WinHttpStall
 {
     void SetStall(unsigned long ms) noexcept;
     bool SendRequestWasEntered() noexcept;
+    long long SendReturnedTicks() noexcept;
 }
 
 namespace
@@ -56,12 +57,15 @@ namespace
     // CloseAllConnections drain, and long enough to be unambiguous against scheduler noise.
     constexpr unsigned long c_sendRequestStallMs = 5000;
 
-    // A healthy provider releases m_lock before calling into WinHTTP, so the victim returns in
-    // single-digit milliseconds. A regressed provider blocks it for the remainder of the stall,
-    // roughly c_sendRequestStallMs - c_victimDelay (~4500ms). The threshold sits between those two
-    // populations rather than close to the healthy one: the only realistic false failure is a
-    // heavily loaded CI agent descheduling the victim thread, so leaving a 2000ms cushion above
-    // "healthy" costs nothing in sensitivity while making that essentially impossible.
+    // The verdict is an overlap test, not a stopwatch: the victim is only considered blocked if it
+    // was still inside HCWebSocketConnectAsync at the moment the stalled WinHttpSendRequest
+    // returned. If the provider releases m_lock correctly the victim finishes long before that, and
+    // no amount of unrelated slowness on the victim's own thread can push it past a point in time
+    // that has already passed. A wall-clock threshold alone could not tell "waited on m_lock" apart
+    // from "did its own slow work" -- WinHttpConnection::Initialize is still called with the lock
+    // held, and on Win32 it performs WPAD auto-discovery (stubbed out by the harness for exactly
+    // this reason). The elapsed time below is reported for diagnosis and used only as a sanity
+    // bound, never as the sole signal.
     constexpr auto c_victimStallThreshold = 2000ms;
 
     // How long the victim waits before contending for m_lock, so the connect thread is reliably
@@ -198,25 +202,40 @@ int main()
 
     auto victimStart = Clock::now();
     victimHr = HCWebSocketConnectAsync(c_uri, "", victimSocket, &victimAsync);
-    long long victimMs = Ms(Clock::now() - victimStart);
+    auto victimEnd = Clock::now();
+    long long victimMs = Ms(victimEnd - victimStart);
 
     connectThread.join();
     long long connectMs = connectCallMs.load(std::memory_order_acquire);
+
+    // Did the victim's connect finish before or after the stalled send returned? Only "after" means
+    // it was actually waiting on the provider lock.
+    long long sendReturnedTicks = WinHttpStall::SendReturnedTicks();
+    bool victimOutlastedStalledSend =
+        sendReturnedTicks != 0 && victimEnd.time_since_epoch().count() >= sendReturnedTicks;
 
     std::printf("[winhttp-provider-lock] injected WinHttpSendRequest stall: %lums\n", c_sendRequestStallMs);
     std::printf("[winhttp-provider-lock] HCWebSocketConnectAsync returned 0x%08x after %lldms\n",
         connectHr.load(std::memory_order_acquire), connectMs);
     std::printf("[winhttp-provider-lock] HCWebSocketConnectAsync (victim, stands in for Suspend) returned 0x%08x after %lldms\n",
         static_cast<unsigned int>(victimHr), victimMs);
+    std::printf("[winhttp-provider-lock] victim still running when the stalled send returned: %s\n",
+        victimOutlastedStalledSend ? "yes" : "no");
 
     (void)XAsyncGetStatus(&connectAsync, true);
     (void)XAsyncGetStatus(&victimAsync, true);
     HCWebSocketCloseHandle(victimSocket);
 
-    if (victimMs >= Ms(c_victimStallThreshold))
+    if (sendReturnedTicks == 0)
+    {
+        std::printf("[winhttp-provider-lock] FAILED: the stalled send never returned; the measurement is inconclusive\n");
+        return Cleanup(queue, websocket, 2);
+    }
+
+    if (victimOutlastedStalledSend && victimMs >= Ms(c_victimStallThreshold))
     {
         std::printf("[winhttp-provider-lock] REPRO: provider m_lock was held across the WinHTTP call for %lldms.\n", victimMs);
-        std::printf("[winhttp-provider-lock]        On GDK this is WinHttpProvider::Suspend() blocked at winhttp_provider.cpp:811,\n");
+        std::printf("[winhttp-provider-lock]        On GDK this is WinHttpProvider::Suspend() blocked in winhttp_provider.cpp,\n");
         std::printf("[winhttp-provider-lock]        before it can reach its bounded 2000ms CloseAllConnections drain.\n");
         return Cleanup(queue, websocket, 1);
     }

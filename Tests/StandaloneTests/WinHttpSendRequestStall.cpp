@@ -42,10 +42,15 @@ namespace WinHttpStall
     namespace
     {
         using SendRequestFn = BOOL(WINAPI*)(HINTERNET, LPCWSTR, DWORD, LPVOID, DWORD, DWORD, DWORD_PTR);
+        using GetProxyForUrlFn = BOOL(WINAPI*)(HINTERNET, LPCWSTR, WINHTTP_AUTOPROXY_OPTIONS*, WINHTTP_PROXY_INFO*);
 
         std::atomic<unsigned long> g_stallMs{ 0 };
         std::atomic<bool> g_entered{ false };
         std::atomic<bool> g_armed{ true };
+
+        // Set when the stalled send returns, so the harness can test for overlap rather than
+        // inferring contention from elapsed time alone.
+        std::atomic<long long> g_sendReturnedTicks{ 0 };
 
         SendRequestFn RealSendRequest() noexcept
         {
@@ -71,6 +76,11 @@ namespace WinHttpStall
     bool SendRequestWasEntered() noexcept
     {
         return g_entered.load(std::memory_order_acquire);
+    }
+
+    long long SendReturnedTicks() noexcept
+    {
+        return g_sendReturnedTicks.load(std::memory_order_acquire);
     }
 }
 
@@ -108,9 +118,37 @@ extern "C"
         // Forward to the genuine export so WinHTTP takes ownership of the request and the normal
         // completion callback path runs. The stall has already happened on this thread, with
         // WinHttpProvider::m_lock held by the caller, which is the whole point of the repro.
-        return real(hRequest, pwszHeaders, dwHeadersLength, lpOptional, dwOptionalLength, dwTotalLength, dwContext);
+        BOOL result = real(hRequest, pwszHeaders, dwHeadersLength, lpOptional, dwOptionalLength, dwTotalLength, dwContext);
+
+        WinHttpStall::g_sendReturnedTicks.store(
+            std::chrono::steady_clock::now().time_since_epoch().count(), std::memory_order_release);
+
+        return result;
     }
 
-    // The import thunk libHttpClient's call site binds to. Defining it here pre-empts winhttp.lib.
+    // WPAD auto-discovery is the one piece of WinHTTP work the victim does on its own thread
+    // (WinHttpConnection::Initialize -> set_autodiscover_proxy, live on Win32), and on a corporate
+    // or CI network it can block for seconds. That would land inside the interval this test
+    // measures and is indistinguishable from waiting on the provider lock, so it is stubbed out to
+    // keep the measurement about lock contention only. Returning FALSE is a supported outcome:
+    // set_autodiscover_proxy treats a failed auto-configuration as non-fatal and falls back to the
+    // default proxy.
+    static BOOL WINAPI Stub_WinHttpGetProxyForUrl(
+        HINTERNET hSession,
+        LPCWSTR lpcwszUrl,
+        WINHTTP_AUTOPROXY_OPTIONS* pAutoProxyOptions,
+        WINHTTP_PROXY_INFO* pProxyInfo)
+    {
+        UNREFERENCED_PARAMETER(hSession);
+        UNREFERENCED_PARAMETER(lpcwszUrl);
+        UNREFERENCED_PARAMETER(pAutoProxyOptions);
+        UNREFERENCED_PARAMETER(pProxyInfo);
+
+        ::SetLastError(ERROR_WINHTTP_AUTODETECTION_FAILED);
+        return FALSE;
+    }
+
+    // The import thunks libHttpClient's call sites bind to. Defining them here pre-empts winhttp.lib.
     decltype(&WinHttpSendRequest) __imp_WinHttpSendRequest = &Stall_WinHttpSendRequest;
+    decltype(&WinHttpGetProxyForUrl) __imp_WinHttpGetProxyForUrl = &Stub_WinHttpGetProxyForUrl;
 }
