@@ -75,6 +75,12 @@ IHttpProvider & NetworkState::HttpProvider() noexcept
     {
         return externalProvider;
     }
+
+    return PlatformHttpProvider();
+}
+
+IHttpProvider & NetworkState::PlatformHttpProvider() noexcept
+{
     assert(m_httpProvider);
     return *m_httpProvider;
 }

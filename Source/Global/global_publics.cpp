@@ -147,10 +147,15 @@ void CALLBACK HttpProviderPerformAsyncProxy(
     if (nullptr == httpSingleton)
     {
         XAsyncComplete(asyncBlock, E_HC_NOT_INITIALISED, 0);
+        return;
     }
-    else
+
+    // NetworkState::HttpProvider() returns the client's own callback once one is installed;
+    // using that here would then recurse infinitely.
+    HRESULT hr = httpSingleton->m_networkState->PlatformHttpProvider().PerformAsync(call, asyncBlock);
+    if (FAILED(hr))
     {
-        httpSingleton->m_networkState->HttpProvider().PerformAsync(call, asyncBlock);
+        XAsyncComplete(asyncBlock, hr, 0);
     }
 }
 
