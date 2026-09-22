@@ -68,9 +68,14 @@ namespace
     // bound, never as the sole signal.
     constexpr auto c_victimStallThreshold = 2000ms;
 
-    // How long the victim waits before contending for m_lock, so the connect thread is reliably
-    // inside the stalled WinHttpSendRequest first.
-    constexpr auto c_victimDelay = 500ms;
+    // How long to wait for the connect thread to actually reach the stalled WinHttpSendRequest
+    // before giving up. Polled rather than slept: on a cold agent this has to cover HCInitialize,
+    // the first WinHttpOpen (loading winhttp and schannel), WinHttpConnect, WinHttpOpenRequest and
+    // the WebSocket upgrade options. A fixed sleep generous enough for the worst case would make
+    // every run pay for it, and one that is not generous enough fails the CI leg for reasons that
+    // have nothing to do with lock discipline. The victim starts the moment the stall is confirmed.
+    constexpr auto c_sendRequestEntryTimeout = 30000ms;
+    constexpr auto c_sendRequestEntryPollInterval = 25ms;
 
     // Loopback discard port: the connect is refused immediately, so once the injected stall is over
     // the request fails fast and teardown does not wait on a real network timeout. The repro is
@@ -176,13 +181,19 @@ int main()
         return Cleanup(queue, websocket, 2);
     }
 
-    std::this_thread::sleep_for(c_victimDelay);
-
-    if (!WinHttpStall::SendRequestWasEntered())
+    // Wait until the connect thread is confirmed inside the stalled WinHttpSendRequest. Starting
+    // the victim any earlier would measure a lock that nobody is holding.
+    auto entryWaitStart = Clock::now();
+    while (!WinHttpStall::SendRequestWasEntered())
     {
-        std::printf("[winhttp-provider-lock] FAILED: WinHttpSendRequest was never reached; the stall was not injected\n");
-        connectThread.join();
-        return Cleanup(queue, websocket, 2);
+        if (Clock::now() - entryWaitStart >= c_sendRequestEntryTimeout)
+        {
+            std::printf("[winhttp-provider-lock] FAILED: WinHttpSendRequest was not reached within %lldms; the stall was not injected\n",
+                Ms(c_sendRequestEntryTimeout));
+            connectThread.join();
+            return Cleanup(queue, websocket, 2);
+        }
+        std::this_thread::sleep_for(c_sendRequestEntryPollInterval);
     }
 
     // Public API whose inline path takes WinHttpProvider::m_lock, exactly as Suspend() does.

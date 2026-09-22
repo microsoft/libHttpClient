@@ -416,6 +416,24 @@ HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
 {
     RETURN_HR_IF(E_INVALIDARG, !async);
 
+    // WinHttpProvider::ConnectAsync publishes this connection to m_connections before releasing its
+    // own lock, so from here Close() can run concurrently on a PLM suspend or provider shutdown
+    // thread. The option calls below and the send that follows all operate on m_hRequest without
+    // the provider lock, so hold the setup guard across the whole sequence: Close() records the
+    // request and it is performed when this scope unwinds.
+    // See SendRequest: this scope ends up completing the operation on failure paths, and the setup
+    // guard's destructor runs after that.
+    auto self = shared_from_this();
+
+    WinHttpSetupGuard setupGuard{ this };
+    RETURN_HR_IF(E_ABORT, !setupGuard.Acquired());
+
+    HINTERNET hRequest{ nullptr };
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+        hRequest = m_hRequest;
+    }
+
     // Set WebSocket specific options and then call send
     auto headers{ m_websocketHandle->websocket->Headers() };
 
@@ -429,7 +447,7 @@ HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
     {
         http_internal_wstring flattenedHeaders = flatten_http_headers(headers);
         if (!WinHttpAddRequestHeaders(
-            m_hRequest,
+            hRequest,
             flattenedHeaders.c_str(),
             static_cast<DWORD>(flattenedHeaders.length()),
             WINHTTP_ADDREQ_FLAG_ADD))
@@ -443,7 +461,7 @@ HRESULT WinHttpConnection::WebSocketConnectAsync(XAsyncBlock* async)
     // Request protocol upgrade from http to websocket.
     #pragma warning(push)
     #pragma warning(disable : 6387)  // WinHttpSetOption's SAL doesn't understand WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET
-    bool status = WinHttpSetOption(m_hRequest, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, nullptr, 0);
+    bool status = WinHttpSetOption(hRequest, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, nullptr, 0);
     if (!status)
     {
         DWORD dwError = GetLastError();
@@ -536,33 +554,10 @@ HRESULT WinHttpConnection::Close(ConnectionClosedCallback callback)
             closeComplete = true;
             break;
         }
-        case ConnectionState::Initialized:
-        {
-            // Force-closed (PLM suspend or provider shutdown) before SendRequest registered the
-            // status callback. StartWinHttpClose would close the handle, but with no callback
-            // registered WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING can never arrive, so the
-            // connection would never report itself closed: the caller's drain would burn its
-            // entire budget (INFINITE on the shutdown path) and the destructor would close
-            // m_hRequest a second time. Release the handles here and report the close
-            // synchronously instead. SendRequest takes this same lock and abandons the send when
-            // it observes a state other than Initialized or WinHttpRunning.
-            if (m_hRequest != nullptr)
-            {
-                WinHttpCloseHandle(m_hRequest);
-                m_hRequest = nullptr;
-            }
-            if (m_hConnection != nullptr)
-            {
-                WinHttpCloseHandle(m_hConnection);
-                m_hConnection = nullptr;
-            }
-
-            m_state = ConnectionState::Closed;
-            closeComplete = true;
-            break;
-        }
         default:
         {
+            // Initialized or WinHttpRunning. StartWinHttpClose decides how to close based on
+            // whether the request was ever handed to WinHTTP, and defers if a setup is in flight.
             doWinHttpClose = true;
             break;
         }
@@ -1391,6 +1386,16 @@ void CALLBACK WinHttpConnection::completion_callback(
     UNREFERENCED_PARAMETER(statusInfoLength);
 
     WinHttpCallbackContext* callbackContext = reinterpret_cast<WinHttpCallbackContext*>(context);
+    if (callbackContext == nullptr)
+    {
+        // WinHTTP raised a notification for a handle that has no context attached. The setup guard
+        // in SendRequest/WebSocketConnectAsync is what keeps the handle from being closed before
+        // WinHttpSendRequest attaches one, so this is not expected -- but every branch below
+        // dereferences the context, so fail the notification rather than the process.
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection::completion_callback invoked with no context, statusCode=%u. Ignoring.", statusCode);
+        return;
+    }
+
     WinHttpConnection* pRequestContext = callbackContext->winHttpConnection.get();
 
     try
@@ -1616,60 +1621,54 @@ void WinHttpConnection::SendRequest()
 {
     HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [%llu] SendRequest", TO_ULL(HCHttpCallGetId(m_call)));
 
-    HC_UNIQUE_PTR<WinHttpCallbackContext> context = http_allocate_unique<WinHttpCallbackContext>(shared_from_this());
+    // Anchors this connection for the whole function. complete_task below calls XAsyncComplete,
+    // which can run the operation's cleanup inline and drop the last reference, and the setup
+    // guard's destructor touches this afterwards. Declared before the guard so it outlives it.
+    auto self = shared_from_this();
 
-    bool closedBeforeSend = false;
-    DWORD setCallbackError = 0;
-
-    {
-        // Registering the status callback and recording that the request is live happen together
-        // under m_lock, which is the same lock Close() takes. That makes the two mutually
-        // exclusive: either Close() runs first and observes Initialized, in which case it releases
-        // the WinHTTP handles itself and this send is abandoned, or this runs first and Close()
-        // observes WinHttpRunning and can rely on WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING being
-        // delivered. Without this, a connection force-closed between being published to
-        // WinHttpProvider::m_connections and this point would close its handle with no callback
-        // registered, so it could never report itself closed.
-        win32_cs_autolock autoCriticalSection(&m_lock);
-
-        // Initialized is the first send; WinHttpRunning is a reissue (see callback_status_request_error).
-        if (m_state != ConnectionState::Initialized && m_state != ConnectionState::WinHttpRunning)
-        {
-            closedBeforeSend = true;
-        }
-        else if (WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
-            m_hRequest,
-            &WinHttpConnection::completion_callback,
-#if HC_PLATFORM == HC_PLATFORM_GDK
-            WINHTTP_CALLBACK_FLAG_SEND_REQUEST |
-#endif
-            WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS,
-            0))
-        {
-            setCallbackError = GetLastError();
-        }
-        else
-        {
-            m_state = ConnectionState::WinHttpRunning;
-        }
-    }
-
-    if (closedBeforeSend)
+    // Held until WinHttpSendRequest has returned. Everything in between runs unlocked against
+    // m_hRequest while WinHTTP still has no context for it, so a concurrent Close() must not touch
+    // the handle; the guard makes it wait for this scope to unwind.
+    WinHttpSetupGuard setupGuard{ this };
+    if (!setupGuard.Acquired())
     {
         HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] closed before the request was sent, abandoning send", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId());
-
-        // Close() has already released the WinHTTP handles and reported the connection closed.
         complete_task(E_ABORT);
         return;
     }
 
-    if (setCallbackError != 0)
+    HC_UNIQUE_PTR<WinHttpCallbackContext> context = http_allocate_unique<WinHttpCallbackContext>(shared_from_this());
+
+    if (WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
+        m_hRequest,
+        &WinHttpConnection::completion_callback,
+#if HC_PLATFORM == HC_PLATFORM_GDK
+        WINHTTP_CALLBACK_FLAG_SEND_REQUEST |
+#endif
+        WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS,
+        0))
     {
-        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetStatusCallback errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), setCallbackError);
+        DWORD dwError = GetLastError();
+        HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] WinHttpSetStatusCallback errorcode %d", TO_ULL(HCHttpCallGetId(m_call)), GetCurrentThreadId(), dwError);
 
         // Complete XAsync operation
-        complete_task(E_FAIL, HRESULT_FROM_WIN32(setCallbackError));
+        complete_task(E_FAIL, HRESULT_FROM_WIN32(dwError));
         return;
+    }
+
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+
+        // A status callback is registered now, so from here a WinHttpCloseHandle on m_hRequest
+        // comes back as WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING and StartWinHttpClose can wait for
+        // it. Note the context is not attached to the handle until WinHttpSendRequest below; the
+        // setup guard is what keeps a close out of that gap, where a notification would arrive
+        // with a null context. Only promote from Initialized, since a reissue re-enters here with
+        // the connection already further along.
+        if (m_state == ConnectionState::Initialized)
+        {
+            m_state = ConnectionState::WinHttpRunning;
+        }
     }
 
     // WinHttp callback successfully set. Error handling and cleanup path now go through completion_callback.
@@ -1705,6 +1704,9 @@ void WinHttpConnection::SendRequest()
 
 void WinHttpConnection::StartWinHttpClose()
 {
+    bool releasedSynchronously = false;
+    ConnectionClosedCallback connectionClosedCallback{};
+
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
 
@@ -1713,11 +1715,59 @@ void WinHttpConnection::StartWinHttpClose()
             HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose called while already closing, ignored");
             return;
         }
+
+        if (m_winHttpSetupDepth > 0)
+        {
+            // A thread is inside the WinHTTP setup sequence and may be about to call
+            // WinHttpSendRequest on m_hRequest. Closing the handle now would pull it out from
+            // under that thread, and any callback WinHTTP raised for it would arrive before the
+            // context was attached. Record the close; EndWinHttpSetup runs it on the way out.
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose deferred, WinHttp setup in progress");
+            m_winHttpCloseDeferred = true;
+            return;
+        }
+
+        if (m_state == ConnectionState::Initialized)
+        {
+            // The request was never handed to WinHTTP, so no status callback is registered and the
+            // handle has no context. WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING therefore cannot be
+            // delivered -- and that notification is the only path that reports a force-closed
+            // connection as closed, nulls m_hRequest and reclaims the callback context. Closing
+            // the handle and waiting would hang the caller's drain (2000ms on suspend, INFINITE on
+            // provider shutdown) and leave the destructor to close the handle a second time.
+            // Release the handles here and report the close directly instead.
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose before the request reached WinHttp, releasing handles directly");
+
+            if (m_hRequest != nullptr)
+            {
+                WinHttpCloseHandle(m_hRequest);
+                m_hRequest = nullptr;
+            }
+            if (m_hConnection != nullptr)
+            {
+                WinHttpCloseHandle(m_hConnection);
+                m_hConnection = nullptr;
+            }
+
+            m_state = ConnectionState::Closed;
+            connectionClosedCallback = std::move(m_connectionClosedCallback);
+            releasedSynchronously = true;
+        }
         else
         {
             HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::StartWinHttpClose, current state=%u transitioning to ConnectionState::WinHttpClosing", m_state);
             m_state = ConnectionState::WinHttpClosing;
         }
+    }
+
+    if (releasedSynchronously)
+    {
+        // May be empty: this path is also reached from complete_task, where nobody is waiting.
+        if (connectionClosedCallback)
+        {
+            connectionClosedCallback();
+        }
+        return;
     }
 
     BOOL closed = WinHttpCloseHandle(m_hRequest);
@@ -1728,6 +1778,53 @@ void WinHttpConnection::StartWinHttpClose()
     }
 
     // Flow continues from this point via WinHttp calling completion_callback
+}
+
+bool WinHttpConnection::TryBeginWinHttpSetup()
+{
+    win32_cs_autolock autoCriticalSection(&m_lock);
+
+    if (m_winHttpCloseDeferred)
+    {
+        // A close landed on an enclosing setup scope. Do not start another WinHTTP call against a
+        // connection that is about to be torn down.
+        return false;
+    }
+
+    switch (m_state)
+    {
+    case ConnectionState::Initialized:
+    case ConnectionState::WinHttpRunning: // reissue, see callback_status_request_error
+        ++m_winHttpSetupDepth;
+        return true;
+
+    default:
+        return false;
+    }
+}
+
+void WinHttpConnection::EndWinHttpSetup()
+{
+    bool runDeferredClose = false;
+
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+
+        assert(m_winHttpSetupDepth > 0);
+        if (--m_winHttpSetupDepth == 0 && m_winHttpCloseDeferred)
+        {
+            m_winHttpCloseDeferred = false;
+            runDeferredClose = true;
+        }
+    }
+
+    if (runDeferredClose)
+    {
+        // The handles are no longer in use by this thread, so the close recorded during the setup
+        // can now run for real. m_state decides whether that is a handle close WinHTTP will report
+        // back through completion_callback or a direct release.
+        StartWinHttpClose();
+    }
 }
 
 HRESULT WinHttpConnection::StartWebSocketClose(HCWebSocketCloseStatus closeStatus) noexcept

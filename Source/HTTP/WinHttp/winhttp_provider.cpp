@@ -324,10 +324,10 @@ HRESULT WinHttpProvider::ConnectAsync(
     // The connection must be published to m_connections before unlocking, not after: Suspend()
     // closes every session handle in m_hSessions once CloseAllConnections returns, and the drain
     // only waits for connections it can see. Publishing late would let suspend destroy the session
-    // this connect is still using. Because it is published early, a Suspend can instead observe the
-    // connection before SendRequest has registered its status callback; WinHttpConnection::Close
-    // and WinHttpConnection::SendRequest are serialized on the connection's own lock so that case
-    // resolves cleanly, with the connect failing against a closed connection.
+    // this connect is still using. Because it is published early, a Close can instead land while
+    // the connect is still setting the request up; WinHttpConnection holds a setup guard across
+    // that whole sequence, so such a close is recorded and performed once the connect unwinds
+    // rather than pulling the request handle out from under it.
     lock.unlock();
 
     RETURN_IF_FAILED(connection->WebSocketConnectAsync(async));
