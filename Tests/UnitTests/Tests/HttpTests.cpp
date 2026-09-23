@@ -157,6 +157,9 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestPerformCallbackChainsToDefaultProvider);
 
+        // This test only works while no client callback is installed.
+        VERIFY_IS_FALSE(ExternalHttpProvider::Get().HasCallback());
+
         g_chainingFilterCalls = 0;
         VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&g_defaultPerform, &g_defaultPerformContext));
         VERIFY_IS_NOT_NULL(g_defaultPerform);
