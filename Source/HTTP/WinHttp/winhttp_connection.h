@@ -128,7 +128,14 @@ private:
 enum class ConnectionState : uint32_t
 {
     Initialized,
+
+    // The request handle has a status callback registered, so a WinHttpCloseHandle on it will be
+    // reported back through completion_callback as WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, which is
+    // what reclaims the callback context, nulls m_hRequest and reports the connection closed.
+    // Outside the WinHttpSetupGuard window this is exactly the set of states in which closing the
+    // handle is a complete close; in Initialized no callback is registered and it is not.
     WinHttpRunning,
+
     WebSocketConnected,
     WebSocketClosing,
     WinHttpClosing,
@@ -281,12 +288,56 @@ private:
     HRESULT StartWebSocketClose(HCWebSocketCloseStatus closeStatus) noexcept;
     size_t EffectiveReceiveBufferLimit() const noexcept;
 
+    // WinHttpProvider publishes a connection to m_connections before releasing its own lock, so
+    // Close() can be called from a PLM suspend or provider shutdown on another thread while this
+    // thread is still setting the request up. Between publication and WinHttpSendRequest returning,
+    // the setup runs unlocked against m_hRequest and WinHTTP has no context for the handle, so
+    // closing it there would either race those calls or produce a close that is never reported.
+    // TryBeginWinHttpSetup marks that window; while it is open StartWinHttpClose only records the
+    // request, and EndWinHttpSetup performs it as the setup unwinds.
+    bool TryBeginWinHttpSetup();
+    void EndWinHttpSetup();
+
+    // Scoped form of the above. Acquired() is false when the connection was closed before or during
+    // the attempt, in which case the caller must abandon the setup.
+    class WinHttpSetupGuard
+    {
+    public:
+        explicit WinHttpSetupGuard(WinHttpConnection* connection) noexcept
+            : m_connection{ connection->TryBeginWinHttpSetup() ? connection : nullptr }
+        {
+        }
+
+        ~WinHttpSetupGuard()
+        {
+            if (m_connection)
+            {
+                m_connection->EndWinHttpSetup();
+            }
+        }
+
+        WinHttpSetupGuard(WinHttpSetupGuard const&) = delete;
+        WinHttpSetupGuard& operator=(WinHttpSetupGuard const&) = delete;
+
+        bool Acquired() const noexcept { return m_connection != nullptr; }
+
+    private:
+        WinHttpConnection* m_connection;
+    };
+
 #if HC_PLATFORM != HC_PLATFORM_GDK
     HRESULT set_autodiscover_proxy();
 #endif
 
     // HttpCall state
     ConnectionState m_state{ ConnectionState::Initialized };
+
+    // Non-zero while a thread is inside the unlocked WinHTTP setup sequence guarded by
+    // WinHttpSetupGuard. m_winHttpCloseDeferred records a close that arrived during that window;
+    // it is only ever set while m_winHttpSetupDepth > 0 and is cleared when the depth reaches zero.
+    uint32_t m_winHttpSetupDepth{ 0 };
+    bool m_winHttpCloseDeferred{ false };
+
     HINTERNET m_hSession; // non-owning
     HINTERNET m_hConnection = nullptr;
     HINTERNET m_hRequest = nullptr;

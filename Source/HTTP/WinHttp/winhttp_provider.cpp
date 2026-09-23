@@ -313,6 +313,23 @@ HRESULT WinHttpProvider::ConnectAsync(
     auto connection = initConnectionResult.ExtractPayload();
     // Store weak reference to connection so we can close it if it is still active on shutdown
     m_connections.push_back(connection);
+
+    // Unlock before connecting. WebSocketConnectAsync runs its XAsyncOp::Begin inline on this
+    // thread, so WinHttpConnection::SendRequest -> WinHttpSendRequest would otherwise execute with
+    // m_lock held. On GDK that blocks WinHttpProvider::Suspend(), which needs m_lock just to set
+    // m_isSuspended before it reaches its bounded CloseAllConnections drain -- so the suspend
+    // budget never applies and a slow send can push the title past the Quiesce deadline.
+    // StartRequest already releases the lock before performing an HTTP call for the same reason.
+    //
+    // The connection must be published to m_connections before unlocking, not after: Suspend()
+    // closes every session handle in m_hSessions once CloseAllConnections returns, and the drain
+    // only waits for connections it can see. Publishing late would let suspend destroy the session
+    // this connect is still using. Because it is published early, a Close can instead land while
+    // the connect is still setting the request up; WinHttpConnection holds a setup guard across
+    // that whole sequence, so such a close is recorded and performed once the connect unwinds
+    // rather than pulling the request handle out from under it.
+    lock.unlock();
+
     RETURN_IF_FAILED(connection->WebSocketConnectAsync(async));
 
     websocketHandle->websocket->impl = std::move(connection);
