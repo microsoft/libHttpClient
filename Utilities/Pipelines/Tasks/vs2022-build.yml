@@ -48,3 +48,34 @@ steps:
       logProjectEvents: true
       logFileVerbosity: 'diagnostic'
 
+  # Regression guard for the WinHTTP provider lock being held across WinHttpSendRequest, which
+  # stalls WinHttpProvider::Suspend() on GDK and can miss the PLM Quiesce deadline. The solution
+  # builds this project for x64 only (its WinHttpSendRequest interposer relies on undecorated
+  # import naming), so it is run only in the x64 legs. It needs no network: it connects to the
+  # loopback discard port and measures lock hold time.
+  - task: PowerShell@2
+    displayName: Run WinHttpProviderLockStallRepro
+    condition: and(succeeded(), eq(variables['Platform'], 'x64'))
+    inputs:
+      targetType: inline
+      script: |
+        $exe = Join-Path '$(Build.SourcesDirectory)' 'Out\x64\${{ parameters.configuration }}\WinHttpProviderLockStallRepro\WinHttpProviderLockStallRepro.exe'
+        if (-not (Test-Path $exe))
+        {
+            Write-Host "##vso[task.logissue type=error]Regression guard was not built; expected it at $exe"
+            exit 1
+        }
+
+        & $exe
+        $code = $LASTEXITCODE
+        Write-Host "WinHttpProviderLockStallRepro exit code: $code"
+
+        switch ($code)
+        {
+            0 { Write-Host 'PASSED: WinHttpProvider::m_lock was released before the WinHTTP call.' }
+            1 { Write-Host '##vso[task.logissue type=error]REPRO: WinHttpProvider::m_lock is being held across WinHttpSendRequest again. On GDK this blocks WinHttpProvider::Suspend() before it reaches its bounded CloseAllConnections drain. See Tests/StandaloneTests/WinHttpProviderLockStallRepro.cpp.' }
+            default { Write-Host "##vso[task.logissue type=error]FAILED: the regression guard could not run (exit $code); the result is inconclusive." }
+        }
+
+        exit $code
+
