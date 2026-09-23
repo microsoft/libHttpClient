@@ -41,6 +41,9 @@ public:
 public: // Http
     IHttpProvider& HttpProvider() noexcept;
 
+    // This will always return the platform's built-in provider, ignoring any external provider.
+    IHttpProvider& PlatformHttpProvider() noexcept;
+
     Result<UniquePtr<HC_CALL>> HttpCallCreate() noexcept;
 
     HRESULT HttpCallPerformAsync(

@@ -7,6 +7,7 @@
 #include "DefineTestMacros.h"
 #include "Utils.h"
 #include "../global/global.h"
+#include "Platform/ExternalHttpProvider.h"
 #include <httpClient/httpProvider.h>
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
@@ -70,6 +71,30 @@ static void CALLBACK PerformCallback(
     XAsyncComplete(asyncBlock, S_OK, 0);
 }
 
+static HCCallPerformFunction g_defaultPerform = nullptr;
+static void* g_defaultPerformContext = nullptr;
+static std::atomic<int> g_chainingFilterCalls{ 0 };
+
+// Models the filter documented on HCGetHttpCallPerformFunction: chain to the default
+// implementation after inspecting the call.
+static void CALLBACK ChainingPerformCallback(
+    _In_ HCCallHandle call,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* ctx,
+    _In_opt_ HCPerformEnv env
+    )
+{
+    UNREFERENCED_PARAMETER(ctx);
+
+    if (++g_chainingFilterCalls > 1)
+    {
+        // Re-entered
+        XAsyncComplete(asyncBlock, E_UNEXPECTED, 0);
+        return;
+    }
+
+    g_defaultPerform(call, asyncBlock, g_defaultPerformContext, env);
+}
 
 DEFINE_TEST_CLASS(HttpTests)
 {
@@ -126,6 +151,44 @@ public:
         VERIFY_IS_NOT_NULL(get_http_singleton());
         HCCleanup();
         VERIFY_IS_NULL(get_http_singleton());
+    }
+
+    DEFINE_TEST_CASE(TestPerformCallbackChainsToDefaultProvider)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestPerformCallbackChainsToDefaultProvider);
+
+        // This test only works while no client callback is installed.
+        VERIFY_IS_FALSE(ExternalHttpProvider::Get().HasCallback());
+
+        g_chainingFilterCalls = 0;
+        VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&g_defaultPerform, &g_defaultPerformContext));
+        VERIFY_IS_NOT_NULL(g_defaultPerform);
+
+        VERIFY_ARE_EQUAL(S_OK, HCSetHttpCallPerformFunction(&ChainingPerformCallback, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        HCCallHandle call{ nullptr };
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "GET", "http://127.0.0.1:1/"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
+
+        XTaskQueueHandle queue{ nullptr };
+        VERIFY_ARE_EQUAL(S_OK, XTaskQueueCreate(
+            XTaskQueueDispatchMode::ThreadPool,
+            XTaskQueueDispatchMode::ThreadPool,
+            &queue));
+
+        XAsyncBlock asyncBlock{};
+        asyncBlock.queue = queue;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(call, &asyncBlock));
+        XAsyncGetStatus(&asyncBlock, true);
+
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
+        XTaskQueueCloseHandle(queue);
+        HCCleanup();
+
+        // Has to happen after HCCleanup() or else other tests break.
+        VERIFY_ARE_EQUAL(1, g_chainingFilterCalls.load());
     }
 
     DEFINE_TEST_CASE(TestPerformCallback)
