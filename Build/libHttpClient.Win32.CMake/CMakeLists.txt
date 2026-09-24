@@ -260,7 +260,8 @@ if(NOT HC_NOZLIB)
     # Same suppressions the MSBuild projects apply to zlib.
     if(MSVC)
         set_source_files_properties(${HC_ZLIB_SOURCE_FILES} PROPERTIES
-            COMPILE_OPTIONS "/wd4131;/wd4100;/wd4189;/wd4456;/wd4127")
+            COMPILE_OPTIONS "/wd4131;/wd4100;/wd4189;/wd4456;/wd4127"
+            COMPILE_DEFINITIONS "_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE")
     endif()
 endif()
 
