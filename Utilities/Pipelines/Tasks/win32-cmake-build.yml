@@ -1,0 +1,17 @@
+parameters:
+  - name: configuration
+    type: string
+  - name: platform
+    type: string
+
+steps:
+  - template: checkout.yml
+
+  - script: |
+      cmake -B Build/libHttpClient.Win32.CMake/build -S Build/libHttpClient.Win32.CMake ^
+            -A ${{ parameters.platform }} ^
+            -DCMAKE_INSTALL_PREFIX=Build/libHttpClient.Win32.CMake/build/install ^
+            -DHC_WARNINGS_AS_ERRORS=ON
+      cmake --build Build/libHttpClient.Win32.CMake/build --config ${{ parameters.configuration }}
+      cmake --install Build/libHttpClient.Win32.CMake/build --config ${{ parameters.configuration }}
+    displayName: 'Build Win32 CMake static lib'
