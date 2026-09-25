@@ -21,6 +21,16 @@ option(HC_NOASYNC "Build without the XAsync/XTaskQueue implementation; the host 
 option(HC_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 option(HC_ENABLE_WEBSOCKET_COMPRESSION "Build the hybrid WinHTTP/websocketpp WebSocket provider (permessage-deflate)" OFF)
 
+# Link dependencies the environment already provides instead of compiling bundled copies. Package
+# managers should turn these ON: a curated package must not ship symbols owned by another package.
+# zlib matters most, because it compiles into the archive and exports unprefixed deflate/inflate/
+# crc32 that would silently satisfy other packages built against a different zlib.
+option(HC_USE_SYSTEM_ZLIB "Link an installed zlib (find_package(ZLIB)) instead of building the bundled sources" OFF)
+option(HC_USE_SYSTEM_ASIO "Link an installed standalone asio (find_package(asio)) instead of using bundled headers" OFF)
+
+# Source trees for the bundled copies, used when the matching HC_USE_SYSTEM_* option is OFF.
+# websocketpp and boost-wintls are header-only and have no CMake package to find, so point these
+# at an installed copy's include directory to use one.
 set(HC_ZLIB_SOURCE_DIR "${PATH_TO_ROOT}/External/zlib" CACHE PATH "zlib source tree")
 set(HC_WEBSOCKETPP_INCLUDE_DIR "${PATH_TO_ROOT}/External/websocketpp" CACHE PATH "websocketpp headers")
 set(HC_ASIO_INCLUDE_DIR "${PATH_TO_ROOT}/External/asio/asio/include" CACHE PATH "standalone asio headers")
@@ -112,7 +122,11 @@ if(HC_ENABLE_WEBSOCKET_COMPRESSION)
     if(HC_NOZLIB)
         message(FATAL_ERROR "HC_ENABLE_WEBSOCKET_COMPRESSION requires zlib; do not combine it with HC_NOZLIB.")
     endif()
-    foreach(_hc_dep HC_WEBSOCKETPP_INCLUDE_DIR HC_ASIO_INCLUDE_DIR HC_WINTLS_INCLUDE_DIR)
+    set(_hc_wspp_dep_vars HC_WEBSOCKETPP_INCLUDE_DIR HC_WINTLS_INCLUDE_DIR)
+    if(NOT HC_USE_SYSTEM_ASIO)
+        list(APPEND _hc_wspp_dep_vars HC_ASIO_INCLUDE_DIR)
+    endif()
+    foreach(_hc_dep ${_hc_wspp_dep_vars})
         if(NOT EXISTS "${${_hc_dep}}")
             message(FATAL_ERROR
                 "HC_ENABLE_WEBSOCKET_COMPRESSION: ${_hc_dep} does not exist (${${_hc_dep}}).\n"
@@ -213,55 +227,61 @@ if(HC_ENABLE_WEBSOCKET_COMPRESSION)
     target_compile_definitions(libHttpClient PRIVATE HC_ENABLE_WEBSOCKET_COMPRESSION=1 _WEBSOCKETPP_CPP11_RANDOM_DEVICE_)
     target_include_directories(libHttpClient PRIVATE
         "${HC_WEBSOCKETPP_INCLUDE_DIR}"
-        "${HC_ASIO_INCLUDE_DIR}"
         "${HC_WINTLS_INCLUDE_DIR}"
         )
+    if(HC_USE_SYSTEM_ASIO)
+        find_package(asio CONFIG REQUIRED)
+        target_link_libraries(libHttpClient PRIVATE asio::asio)
+    else()
+        target_include_directories(libHttpClient PRIVATE "${HC_ASIO_INCLUDE_DIR}")
+    endif()
     set_source_files_properties(${HC_WSPP_SOURCE_FILES} PROPERTIES
         COMPILE_DEFINITIONS "_CRT_NONSTDC_NO_WARNINGS;_WEBSOCKETPP_CPP11_STL_;ASIO_DISABLE_SERIAL_PORT")
 endif()
 
 if(NOT HC_NOZLIB)
-    # Same file set the MSBuild projects compile (Build/libHttpClient.Zlib.vcxitems).
-    if(NOT EXISTS "${HC_ZLIB_SOURCE_DIR}/zlib.h")
-        message(FATAL_ERROR
-            "No zlib sources at ${HC_ZLIB_SOURCE_DIR}. Run:\n"
-            "  git submodule update --init External/zlib\n"
-            "or set -DHC_ZLIB_SOURCE_DIR to a zlib source tree, "
-            "or -DHC_NOZLIB=ON to build without compression.")
-    endif()
+    if(HC_USE_SYSTEM_ZLIB)
+        find_package(ZLIB REQUIRED)
+        target_link_libraries(libHttpClient PRIVATE ZLIB::ZLIB)
+    else()
+        if(NOT EXISTS "${HC_ZLIB_SOURCE_DIR}/zlib.h")
+            message(FATAL_ERROR
+                "No zlib sources at ${HC_ZLIB_SOURCE_DIR}. Run:\n"
+                "  git submodule update --init External/zlib\n"
+                "or set -DHC_ZLIB_SOURCE_DIR to a zlib source tree, "
+                "or -DHC_USE_SYSTEM_ZLIB=ON to link an installed zlib, "
+                "or -DHC_NOZLIB=ON to build without compression.")
+        endif()
 
-    set(HC_ZLIB_SOURCE_FILES
-        "${HC_ZLIB_SOURCE_DIR}/adler32.c"
-        "${HC_ZLIB_SOURCE_DIR}/compress.c"
-        "${HC_ZLIB_SOURCE_DIR}/crc32.c"
-        "${HC_ZLIB_SOURCE_DIR}/deflate.c"
-        "${HC_ZLIB_SOURCE_DIR}/gzclose.c"
-        "${HC_ZLIB_SOURCE_DIR}/gzlib.c"
-        "${HC_ZLIB_SOURCE_DIR}/gzread.c"
-        "${HC_ZLIB_SOURCE_DIR}/gzwrite.c"
-        "${HC_ZLIB_SOURCE_DIR}/infback.c"
-        "${HC_ZLIB_SOURCE_DIR}/inffast.c"
-        "${HC_ZLIB_SOURCE_DIR}/inflate.c"
-        "${HC_ZLIB_SOURCE_DIR}/inftrees.c"
-        "${HC_ZLIB_SOURCE_DIR}/trees.c"
-        "${HC_ZLIB_SOURCE_DIR}/uncompr.c"
-        "${HC_ZLIB_SOURCE_DIR}/zutil.c"
-        "${HC_ZLIB_SOURCE_DIR}/contrib/minizip/ioapi.c"
-        "${HC_ZLIB_SOURCE_DIR}/contrib/minizip/iowin32.c"
-        "${HC_ZLIB_SOURCE_DIR}/contrib/minizip/unzip.c"
-        )
+        # The MSBuild projects also compile contrib/minizip, but nothing in Source uses it;
+        # compression.cpp only calls deflate/inflate.
+        set(HC_ZLIB_SOURCE_FILES
+            "${HC_ZLIB_SOURCE_DIR}/adler32.c"
+            "${HC_ZLIB_SOURCE_DIR}/compress.c"
+            "${HC_ZLIB_SOURCE_DIR}/crc32.c"
+            "${HC_ZLIB_SOURCE_DIR}/deflate.c"
+            "${HC_ZLIB_SOURCE_DIR}/gzclose.c"
+            "${HC_ZLIB_SOURCE_DIR}/gzlib.c"
+            "${HC_ZLIB_SOURCE_DIR}/gzread.c"
+            "${HC_ZLIB_SOURCE_DIR}/gzwrite.c"
+            "${HC_ZLIB_SOURCE_DIR}/infback.c"
+            "${HC_ZLIB_SOURCE_DIR}/inffast.c"
+            "${HC_ZLIB_SOURCE_DIR}/inflate.c"
+            "${HC_ZLIB_SOURCE_DIR}/inftrees.c"
+            "${HC_ZLIB_SOURCE_DIR}/trees.c"
+            "${HC_ZLIB_SOURCE_DIR}/uncompr.c"
+            "${HC_ZLIB_SOURCE_DIR}/zutil.c"
+            )
 
-    target_sources(libHttpClient PRIVATE ${HC_ZLIB_SOURCE_FILES})
-    target_include_directories(libHttpClient PRIVATE
-        "${HC_ZLIB_SOURCE_DIR}"
-        "${HC_ZLIB_SOURCE_DIR}/contrib/minizip"
-        )
+        target_sources(libHttpClient PRIVATE ${HC_ZLIB_SOURCE_FILES})
+        target_include_directories(libHttpClient PRIVATE "${HC_ZLIB_SOURCE_DIR}")
 
-    # Same suppressions the MSBuild projects apply to zlib.
-    if(MSVC)
-        set_source_files_properties(${HC_ZLIB_SOURCE_FILES} PROPERTIES
-            COMPILE_OPTIONS "/wd4131;/wd4100;/wd4189;/wd4456;/wd4127"
-            COMPILE_DEFINITIONS "_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE")
+        # Same suppressions the MSBuild projects apply to zlib.
+        if(MSVC)
+            set_source_files_properties(${HC_ZLIB_SOURCE_FILES} PROPERTIES
+                COMPILE_OPTIONS "/wd4131;/wd4100;/wd4189;/wd4456;/wd4127"
+                COMPILE_DEFINITIONS "_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE")
+        endif()
     endif()
 endif()
 
@@ -332,6 +352,19 @@ endif()
 set(HC_CONFIG_SHARED OFF)
 if(BUILD_SHARED_LIBS)
     set(HC_CONFIG_SHARED ON)
+endif()
+
+# A static build's exported target references ZLIB::ZLIB / asio::asio, so consumers must be able to
+# resolve them. A DLL links them PRIVATE and resolves everything at its own link time.
+set(HC_CONFIG_FIND_ZLIB OFF)
+set(HC_CONFIG_FIND_ASIO OFF)
+if(NOT BUILD_SHARED_LIBS)
+    if(NOT HC_NOZLIB AND HC_USE_SYSTEM_ZLIB)
+        set(HC_CONFIG_FIND_ZLIB ON)
+    endif()
+    if(HC_ENABLE_WEBSOCKET_COMPRESSION AND HC_USE_SYSTEM_ASIO)
+        set(HC_CONFIG_FIND_ASIO ON)
+    endif()
 endif()
 
 configure_package_config_file(
