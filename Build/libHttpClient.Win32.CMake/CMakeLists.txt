@@ -277,6 +277,9 @@ install(TARGETS libHttpClient
     )
 
 # Install only what PUBLIC_SOURCE_FILES declares; a glob would also ship the Android-only headers.
+# With HC_NOASYNC the host supplies XAsync/XTaskQueue, so its headers must be the only ones on the
+# include path: httpClient/async.h reaches them via #include <XAsync.h>, and a second copy here
+# would be a distinct file that #pragma once cannot dedupe, redefining every type.
 set(HC_PUBLIC_HEADERS_ROOT "")
 set(HC_PUBLIC_HEADERS_HTTPCLIENT "")
 foreach(_hc_header ${PUBLIC_SOURCE_FILES})
@@ -284,14 +287,16 @@ foreach(_hc_header ${PUBLIC_SOURCE_FILES})
     get_filename_component(_hc_header_dir "${_hc_header_dir}" NAME)
     if(_hc_header_dir STREQUAL "httpClient")
         list(APPEND HC_PUBLIC_HEADERS_HTTPCLIENT "${_hc_header}")
-    else()
+    elseif(NOT HC_NOASYNC)
         list(APPEND HC_PUBLIC_HEADERS_ROOT "${_hc_header}")
     endif()
 endforeach()
 
-install(FILES ${HC_PUBLIC_HEADERS_ROOT}
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-    )
+if(HC_PUBLIC_HEADERS_ROOT)
+    install(FILES ${HC_PUBLIC_HEADERS_ROOT}
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        )
+endif()
 
 install(FILES ${HC_PUBLIC_HEADERS_HTTPCLIENT}
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/httpClient"
