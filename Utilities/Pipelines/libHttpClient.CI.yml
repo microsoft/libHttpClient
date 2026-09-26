@@ -73,6 +73,36 @@ jobs:
           configuration: $(Configuration)
 
   ####################
+  # Win32 CMake
+  ####################
+
+  # The vcpkg uses cmake which is why this is separate from the VS build.
+  - job: Win32CMakeBuild
+    displayName: libHttpClient Win32 CMake Build
+    pool:
+      vmImage: windows-2022
+    timeoutInMinutes: 120
+    strategy:
+      matrix:
+        x64_Debug:
+          Platform: x64
+          Configuration: Debug
+        x64_Release:
+          Platform: x64
+          Configuration: Release
+        ARM64_Debug:
+          Platform: ARM64
+          Configuration: Debug
+        ARM64_Release:
+          Platform: ARM64
+          Configuration: Release
+    steps:
+      - template: Tasks/win32-cmake-build.yml
+        parameters:
+          platform: $(Platform)
+          configuration: $(Configuration)
+
+  ####################
   # Android
   ####################
 

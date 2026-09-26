@@ -1,0 +1,19 @@
+@PACKAGE_INIT@
+
+set(libHttpClient_WITH_WEBSOCKETS @HC_CONFIG_WEBSOCKETS@)
+set(libHttpClient_WITH_ZLIB @HC_CONFIG_ZLIB@)
+set(libHttpClient_WITH_ASYNC @HC_CONFIG_ASYNC@)
+set(libHttpClient_WITH_WEBSOCKET_COMPRESSION @HC_CONFIG_WEBSOCKET_COMPRESSION@)
+set(libHttpClient_SHARED @HC_CONFIG_SHARED@)
+
+include(CMakeFindDependencyMacro)
+if(@HC_CONFIG_FIND_ZLIB@)
+    find_dependency(ZLIB)
+endif()
+if(@HC_CONFIG_FIND_ASIO@)
+    find_dependency(asio)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/libHttpClientTargets.cmake")
+
+check_required_components(libHttpClient)
