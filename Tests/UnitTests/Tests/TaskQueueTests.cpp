@@ -2287,6 +2287,196 @@ public:
         VERIFY_IS_TRUE(secondFired.load());
     }
 
+    DEFINE_TEST_CASE(VerifyDelayedSubmissionRescuesOverdueTimer)
+    {
+        struct TestBarrier
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            bool timerCallbackBlocked = false;
+            bool releaseTimerCallback = false;
+            bool timerCallbackReleased = false;
+        };
+
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            explicit TestHooks(_In_ TestBarrier* barrier) : m_testBarrier(barrier) {}
+
+            void NoNextPendingCallbackFound(XTaskQueuePort port, uint64_t dueTime) override
+            {
+                UNREFERENCED_PARAMETER(dueTime);
+
+                std::unique_lock<std::mutex> lock(m_testBarrier->mtx);
+                if (port != XTaskQueuePort::Work || !m_hookArmed)
+                {
+                    return;
+                }
+
+                m_hookArmed = false;
+                m_testBarrier->timerCallbackBlocked = true;
+                lock.unlock();
+                m_testBarrier->cv.notify_all();
+
+                lock.lock();
+                m_testBarrier->cv.wait_for(
+                    lock,
+                    std::chrono::seconds(5),
+                    [&] { return m_testBarrier->releaseTimerCallback; });
+                m_testBarrier->timerCallbackReleased = true;
+                lock.unlock();
+                m_testBarrier->cv.notify_all();
+            }
+
+        private:
+            TestBarrier* m_testBarrier = nullptr;
+            bool m_hookArmed = true;
+        };
+
+        struct CallbackState
+        {
+            std::atomic<bool> invoked{ false };
+            std::atomic<bool> canceled{ false };
+            std::atomic<uint64_t> firedAtNs{ 0 };
+
+            static uint64_t NowNs()
+            {
+                return static_cast<uint64_t>(
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        std::chrono::steady_clock::now().time_since_epoch()).count());
+            }
+
+            static void CALLBACK Invoke(void* context, bool canceled)
+            {
+                auto* state = static_cast<CallbackState*>(context);
+                state->canceled.store(canceled, std::memory_order_release);
+                state->firedAtNs.store(NowNs(), std::memory_order_release);
+                state->invoked.store(true, std::memory_order_release);
+            }
+        };
+
+        struct TimerCallbackRelease
+        {
+            explicit TimerCallbackRelease(_In_ TestBarrier* barrier) : m_testBarrier(barrier) {}
+
+            ~TimerCallbackRelease()
+            {
+                {
+                    std::lock_guard<std::mutex> lock(m_testBarrier->mtx);
+                    m_testBarrier->releaseTimerCallback = true;
+                }
+                m_testBarrier->cv.notify_all();
+            }
+
+        private:
+            TestBarrier* m_testBarrier = nullptr;
+        };
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Immediate,
+            &queue));
+
+        TestBarrier barrier;
+        TestHooks hooks(&barrier);
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, &hooks));
+
+        CallbackState firstState;
+        CallbackState secondState;
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(
+            queue,
+            XTaskQueuePort::Work,
+            1,
+            &firstState,
+            &CallbackState::Invoke));
+
+        bool timerCallbackBlocked = false;
+        {
+            std::unique_lock<std::mutex> lock(barrier.mtx);
+            timerCallbackBlocked = barrier.cv.wait_for(
+                lock,
+                std::chrono::seconds(5),
+                [&] { return barrier.timerCallbackBlocked; });
+        }
+        VERIFY_IS_TRUE(timerCallbackBlocked);
+
+        HRESULT secondSubmitHr = E_FAIL;
+        bool firstFiredBeforeRelease = false;
+        bool secondFiredBeforeRelease = false;
+        bool secondCanceledBeforeRelease = false;
+        uint64_t secondSubmittedAtNs = 0;
+        uint64_t secondFiredAtNs = 0;
+
+        {
+            TimerCallbackRelease release(&barrier);
+
+            constexpr uint32_t secondDelayMs = 50;
+            secondSubmittedAtNs = CallbackState::NowNs();
+            secondSubmitHr = XTaskQueueSubmitDelayedCallback(
+                queue,
+                XTaskQueuePort::Work,
+                secondDelayMs,
+                &secondState,
+                &CallbackState::Invoke);
+
+            const uint64_t waitStartTicks = GetTickCount64();
+            while (!secondState.invoked.load(std::memory_order_acquire) &&
+                   GetTickCount64() - waitStartTicks < 2000)
+            {
+                XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+            }
+
+            firstFiredBeforeRelease = firstState.invoked.load(std::memory_order_acquire);
+            secondFiredBeforeRelease = secondState.invoked.load(std::memory_order_acquire);
+            secondCanceledBeforeRelease = secondState.canceled.load(std::memory_order_acquire);
+            secondFiredAtNs = secondState.firedAtNs.load(std::memory_order_acquire);
+        }
+
+        bool timerCallbackReleased = false;
+        {
+            std::unique_lock<std::mutex> lock(barrier.mtx);
+            timerCallbackReleased = barrier.cv.wait_for(
+                lock,
+                std::chrono::seconds(5),
+                [&] { return barrier.timerCallbackReleased; });
+        }
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, nullptr));
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(
+            queue,
+            false,
+            &terminated,
+            [](void* context)
+            {
+                static_cast<std::atomic<bool>*>(context)->store(true, std::memory_order_release);
+            }));
+
+        const uint64_t terminationStartTicks = GetTickCount64();
+        while (!terminated.load(std::memory_order_acquire) &&
+               GetTickCount64() - terminationStartTicks < 2000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+        }
+
+        VERIFY_SUCCEEDED(secondSubmitHr);
+        VERIFY_IS_TRUE(timerCallbackReleased);
+        VERIFY_IS_TRUE(firstFiredBeforeRelease);
+        VERIFY_IS_TRUE(secondFiredBeforeRelease);
+        VERIFY_IS_FALSE(secondCanceledBeforeRelease);
+        VERIFY_IS_TRUE(terminated.load(std::memory_order_acquire));
+        VERIFY_IS_GREATER_THAN_OR_EQUAL(secondFiredAtNs, secondSubmittedAtNs);
+        const uint64_t secondElapsedNs =
+            secondFiredAtNs >= secondSubmittedAtNs
+                ? secondFiredAtNs - secondSubmittedAtNs
+                : 0;
+        VERIFY_IS_GREATER_THAN_OR_EQUAL(
+            secondElapsedNs,
+            static_cast<uint64_t>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    std::chrono::milliseconds{ 50 }).count()));
+    }
+
     DEFINE_TEST_CASE(VerifyTerminationDoesNotEarlyPromoteSiblingDelayedCallback)
     {
         using TestClock = std::chrono::steady_clock;

@@ -459,7 +459,29 @@ HRESULT __stdcall TaskQueuePortImpl::QueueItem(
         entry.enqueueTime = m_timer.GetDueTime(waitMs);
         RETURN_HR_IF(E_OUTOFMEMORY, !m_pendingList->push_back(entry));
 
-        ArmTimerIfEarlier(entry.enqueueTime);
+        while (true)
+        {
+            const uint64_t publishedDueTime = m_timerDue.load();
+            const uint64_t now = m_timer.GetCurrentTime();
+
+            // A one-shot timer callback may already be processing an overdue
+            // deadline without having advanced m_timerDue yet. Rearm that
+            // published deadline so this newly queued entry cannot be stranded
+            // behind the in-progress callback.
+            if (publishedDueTime != UINT64_MAX && publishedDueTime <= now)
+            {
+                if (!RearmTimerIfDueTimeUnchanged(publishedDueTime))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                ArmTimerIfEarlier(entry.enqueueTime);
+            }
+
+            break;
+        }
     }
 
     // QueueEntry now owns the ref.
@@ -1131,52 +1153,86 @@ void TaskQueuePortImpl::CancelPendingEntries(
 // backend), the remaining delayed callbacks never run and the queue starves.
 void TaskQueuePortImpl::RearmTimerForEarliestPending()
 {
-    QueueEntry nextItem = {};
-    bool hasNextItem = false;
-
-    // Read-only scan: keep every entry (return false), tracking the earliest.
-    m_pendingList->remove_if([&](auto& entry, auto /*address*/)
+    while (true)
     {
-        if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
+        // Snapshot before scanning so a concurrent QueueItem publish makes the
+        // compare-exchange below fail instead of being overwritten.
+        uint64_t currentDue = m_timerDue.load();
+        QueueEntry nextItem = {};
+        bool hasNextItem = false;
+
+        // Read-only scan: keep every entry (return false), tracking the earliest.
+        m_pendingList->remove_if([&](auto& entry, auto /*address*/)
         {
-            if (hasNextItem)
+            if (!hasNextItem || nextItem.enqueueTime > entry.enqueueTime)
             {
-                nextItem.portContext->Release();
+                if (hasNextItem)
+                {
+                    nextItem.portContext->Release();
+                }
+
+                nextItem = entry;
+                nextItem.portContext->AddRef();
+                hasNextItem = true;
             }
 
-            nextItem = entry;
-            nextItem.portContext->AddRef();
-            hasNextItem = true;
-        }
+            return false;
+        });
 
-        return false;
-    });
-
-    uint64_t currentDue = m_timerDue.load();
-
-    if (hasNextItem)
-    {
-        if (nextItem.enqueueTime < currentDue)
+        if (hasNextItem)
         {
-            // Surviving entry is earlier than the armed deadline: min-wins arm.
-            ArmTimerIfEarlier(nextItem.enqueueTime);
-        }
-        else if (nextItem.enqueueTime > currentDue)
-        {
-            // The armed deadline belonged to a removed entry; advance the timer
-            // to the earliest surviving deadline using the same verified helper
-            // the fire path uses (handles a concurrent earlier publish safely).
-            ArmTimerForNextPendingDueTime(currentDue, nextItem.enqueueTime);
+            bool timerStable = true;
+            bool movedTimerLater = false;
+            if (nextItem.enqueueTime < currentDue)
+            {
+                // Surviving entry is earlier than the armed deadline: min-wins arm.
+                timerStable = ArmTimerIfEarlier(nextItem.enqueueTime);
+            }
+            else if (nextItem.enqueueTime > currentDue)
+            {
+                // The armed deadline belonged to a removed entry; advance the timer
+                // to the earliest surviving deadline using the same verified helper
+                // the fire path uses (handles a concurrent earlier publish safely).
+                timerStable = ArmTimerForNextPendingDueTime(currentDue, nextItem.enqueueTime);
+                movedTimerLater = timerStable;
+            }
+
+            nextItem.portContext->Release();
+
+            if (!timerStable)
+            {
+                continue;
+            }
+
+            // A submission can land after the scan while the old, earlier due
+            // time is still published. Once we move that due time later, scan
+            // again to catch the intermediate entry. Repeat after every actual
+            // deadline advance until a scan reaches a fixed point.
+            if (movedTimerLater)
+            {
+                continue;
+            }
+
+            return;
         }
 
-        nextItem.portContext->Release();
-    }
-    else if (currentDue != UINT64_MAX)
-    {
+        if (currentDue == UINT64_MAX)
+        {
+            return;
+        }
+
         // No pending entries remain on any attached context; let the timer go
         // idle. Mirrors the no-next-item branch of PromoteReadyPendingCallbacks
         // (CAS only, never Cancel(), to avoid racing concurrent Start calls).
-        m_timerDue.compare_exchange_strong(currentDue, UINT64_MAX);
+        if (!m_timerDue.compare_exchange_strong(currentDue, UINT64_MAX))
+        {
+            continue;
+        }
+
+        // A callback can be queued after the scan while currentDue still names
+        // the removed entry. Rescan once after publishing the idle sentinel so
+        // that callback is either found here or arms itself against UINT64_MAX.
+        continue;
     }
 }
 
@@ -1278,10 +1334,10 @@ bool TaskQueuePortImpl::ArmTimerForNextPendingDueTime(
 
             if (afterDue < nextDueTime)
             {
-                // Another thread published an earlier deadline and is
-                // responsible for its own Start+verify cycle. The timer
-                // is already covered.
-                return true;
+                // Our Start may have overwritten the earlier publisher's Start.
+                // Re-arm the currently published deadline so the final OS timer
+                // programming always agrees with m_timerDue.
+                return ArmTimerIfEarlier(afterDue);
             }
 
             return false;
@@ -1414,17 +1470,21 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
 
         if (hasNextItem)
         {
+            bool timerAdvanced = false;
             if (nextItem.portContext->GetStatus() == TaskQueuePortStatus::Active)
             {
-                // Replace the due time that just fired with the earliest
-                // future deadline that survived the ready sweep.
-                if (!ArmTimerForNextPendingDueTime(dueTime, nextItem.enqueueTime))
+                // A rescue scan that finds the deadline it just published has
+                // reached a fixed point. Otherwise replace the fired due time
+                // with the earliest future deadline that survived the sweep.
+                if (nextItem.enqueueTime != dueTime &&
+                    !ArmTimerForNextPendingDueTime(dueTime, nextItem.enqueueTime))
                 {
                     nextItem.portContext->Release();
                     now = m_timer.GetCurrentTime();
                     dueTime = m_timerDue.load();
                     continue;
                 }
+                timerAdvanced = nextItem.enqueueTime != dueTime;
             }
             else
             {
@@ -1436,6 +1496,19 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
             }
 
             nextItem.portContext->Release();
+
+            // A callback can be inserted after the scan while the fired due
+            // time is still published. It will not arm itself if its deadline
+            // falls between dueTime and nextItem.enqueueTime, so rescan after
+            // every successful advance until a scan reaches a fixed point.
+            // Later submissions see the advanced deadline and arm themselves.
+            if (timerAdvanced)
+            {
+                now = m_timer.GetCurrentTime();
+                dueTime = m_timerDue.load();
+                continue;
+            }
+
             return;
         }
 
@@ -1648,7 +1721,8 @@ void TaskQueuePortImpl::SignalTerminations()
     while (entries_to_process.pop_front(entry, address))
     {
         // AddRef portContext to prevent UAF if callback releases the queue
-        entry->portContext->AddRef();
+        auto context = entry->portContext;
+        context->AddRef();
         
         entry->callback(entry->callbackContext);
                 
@@ -1657,9 +1731,8 @@ void TaskQueuePortImpl::SignalTerminations()
             m_terminationList->free_node(address);
         }
 
-        // Release portContext after callback completes
-        entry->portContext->Release();
         delete entry;
+        context->Release();
     }
 }
 
@@ -2756,4 +2829,3 @@ STDAPI XTaskQueueSubmitPendingCallbacks(
     portContext->GetPort()->SubmitPendingCallbacks();
     return S_OK;
 }
-
