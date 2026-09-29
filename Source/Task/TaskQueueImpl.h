@@ -46,8 +46,13 @@ public:
 
         if (refs == 0 && m_deleting.test_and_set() == false)
         {
+            // Hold an extra global ref during destruction to prevent
+            // cascading child releases from bringing g_globalApiRefs
+            // to zero while DLL code is still on the stack.
+            ApiRefs::GlobalAddRef();
             RundownObject();
             delete this;
+            ApiRefs::GlobalRelease();
         }
         ApiRefs::GlobalRelease();
         return refs;
