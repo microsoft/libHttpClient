@@ -94,6 +94,7 @@ EXPORTS
     HCTraceImplScopeId
     HCTraceInit
     HCTraceSetClientCallback
+    HCTraceRemoveClientCallback
     HCTraceSetEtwEnabled
     HCTraceSetPlatformCallbacks
     HCTraceSetTraceToDebugger

@@ -199,15 +199,7 @@ void TraceMessageToClient(
     char const* message
 ) noexcept
 {
-    TraceState& traceState{ GetTraceState() };
-    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
-    {
-        HCTraceCallback* cb = traceState.clientCallbacks[i].load();
-        if (cb)
-        {
-            cb(areaName, level, threadId, timestamp, message);
-        }
-    }
+    GetTraceState().InvokeClientCallbacks(areaName, level, threadId, timestamp, message);
 }
 
 #if HC_PLATFORM_IS_MICROSOFT
@@ -246,6 +238,11 @@ STDAPI_(void) HCTraceSetTraceToDebugger(_In_ bool traceToDebugger) noexcept
 STDAPI_(bool) HCTraceSetClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
 {
     return GetTraceState().SetClientCallback(callback);
+}
+
+STDAPI_(void) HCTraceRemoveClientCallback(_In_opt_ HCTraceCallback* callback) noexcept
+{
+    GetTraceState().RemoveClientCallback(callback);
 }
 
 #if HC_PLATFORM_IS_MICROSOFT
@@ -303,17 +300,7 @@ STDAPI_(void) HCTraceImplMessage_v(
     }
 
     // Only do work if there's reason to
-    bool haveClientCallback = false;
-    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
-    {
-        if (traceState.clientCallbacks[i].load()) // be explicit about the bool coercion
-        {
-            haveClientCallback = true;
-            break;
-        }
-    }
-
-    if (!haveClientCallback && !traceState.GetTraceToDebugger() && !traceState.GetEtwEnabled())
+    if (!traceState.HasClientCallbacks() && !traceState.GetTraceToDebugger() && !traceState.GetEtwEnabled())
     {
         return;
     }
@@ -359,9 +346,11 @@ void TraceState::Cleanup() noexcept
 {
     --m_tracingClients;
 
+    std::lock_guard<std::mutex> lock{ m_clientCallbacksMutex };
+
     for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        clientCallbacks[i] = nullptr;
+        m_clientCallbacks[i] = nullptr;
     }
 }
 
@@ -394,18 +383,73 @@ void TraceState::SetEtwEnabled(_In_ bool etwEnabled) noexcept
 
 bool TraceState::SetClientCallback(HCTraceCallback* callback) noexcept
 {
-    // Try to add a client callback. If MAX_TRACE_CLIENTS have already set callbacks, the callback won't be set
-    // and the client will not get trace callbacks.
+    std::lock_guard<std::mutex> lock{ m_clientCallbacksMutex };
+
     for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
     {
-        // the first argument of compare exchange is in/out
-        HCTraceCallback* oldVal = nullptr;
-        if (clientCallbacks[i].compare_exchange_strong(oldVal, callback))
+        if (m_clientCallbacks[i].load() == callback)
         {
             return true;
         }
     }
+
+    // Try to add a client callback. If MAX_TRACE_CLIENTS have already set callbacks, the callback won't be set
+    // and the client will not get trace callbacks.
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
+    {
+        if (m_clientCallbacks[i].load() == nullptr)
+        {
+            m_clientCallbacks[i] = callback;
+            return true;
+        }
+    }
+
     return false;
+}
+
+void TraceState::RemoveClientCallback(HCTraceCallback* callback) noexcept
+{
+    std::lock_guard<std::mutex> lock{ m_clientCallbacksMutex };
+
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
+    {
+        if (m_clientCallbacks[i].load() == callback)
+        {
+            m_clientCallbacks[i] = nullptr;
+            return;
+        }
+    }
+}
+
+bool TraceState::HasClientCallbacks() const noexcept
+{
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
+    {
+        if (m_clientCallbacks[i].load() != nullptr)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void TraceState::InvokeClientCallbacks(
+    char const* areaName,
+    HCTraceLevel level,
+    uint64_t threadId,
+    uint64_t timestamp,
+    char const* message
+) noexcept
+{
+    for (size_t i = 0; i < MAX_TRACE_CLIENTS; ++i)
+    {
+        HCTraceCallback* callback = m_clientCallbacks[i].load();
+        if (callback != nullptr)
+        {
+            callback(areaName, level, threadId, timestamp, message);
+        }
+    }
 }
 
 uint64_t TraceState::GetTimestamp() const noexcept

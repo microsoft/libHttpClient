@@ -179,7 +179,7 @@ public:
             if (s_activeCapture == this)
             {
                 s_activeCapture = nullptr;
-                HCTraceSetClientCallback(nullptr);
+                HCTraceRemoveClientCallback(&ScopedTraceCapture::TraceCallback);
             }
         }
 
