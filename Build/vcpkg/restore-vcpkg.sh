@@ -48,11 +48,12 @@ up_to_date() {
 # Parallel builds can call this concurrently; mkdir is atomic everywhere (flock isn't on macOS).
 mkdir -p "$repo_root/External"
 lock_dir="$repo_root/External/.vcpkg-restore.lock"
+acquired_lock=0
 for _ in $(seq 1 1800); do
-    if mkdir "$lock_dir" 2>/dev/null; then break; fi
+    if mkdir "$lock_dir" 2>/dev/null; then acquired_lock=1; break; fi
     sleep 1
 done
-if [ ! -d "$lock_dir" ]; then
+if [ "$acquired_lock" -eq 0 ]; then
     echo "Timed out waiting for '$lock_dir'; remove it if no restore is running." >&2
     exit 1
 fi
