@@ -13,4 +13,7 @@
     <HCOutRoot>$(HCRoot)\Out</HCOutRoot>
     <HCIntRoot>$(HCRoot)\Int</HCIntRoot>
   </PropertyGroup>
+
+  <!-- Restores third-party sources into External/ before building (see Build/vcpkg). -->
+  <Import Condition="'$(HCVcpkgPropsImported)' != 'true'" Project="$(MSBuildThisFileDirectory)libHttpClient.vcpkg.props" />
 </Project>

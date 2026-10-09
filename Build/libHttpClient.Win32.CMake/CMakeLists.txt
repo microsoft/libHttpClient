@@ -4,6 +4,9 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient")
 
+# Restore third-party sources into External/ if missing or out of date (see Build/vcpkg).
+include("${CMAKE_CURRENT_LIST_DIR}/../vcpkg/AutoRestore.cmake")
+
 if(NOT WIN32)
     message(FATAL_ERROR "Build/libHttpClient.Win32.CMake is the Windows (HC_PLATFORM_WIN32) build. Use Build/libHttpClient.Linux, Build/libHttpClient.Android or Build/libHttpClient.iOS.CMake on other platforms.")
 endif()
@@ -130,7 +133,7 @@ if(HC_ENABLE_WEBSOCKET_COMPRESSION)
         if(NOT EXISTS "${${_hc_dep}}")
             message(FATAL_ERROR
                 "HC_ENABLE_WEBSOCKET_COMPRESSION: ${_hc_dep} does not exist (${${_hc_dep}}).\n"
-                "Run 'git submodule update --init External/websocketpp External/asio External/boost-wintls', "
+                "Run Build/vcpkg/Restore-Vcpkg.ps1 to restore External/websocketpp, External/asio and External/boost-wintls, "
                 "or set the HC_*_INCLUDE_DIR variables to your own copies.")
         endif()
     endforeach()
@@ -247,7 +250,7 @@ if(NOT HC_NOZLIB)
         if(NOT EXISTS "${HC_ZLIB_SOURCE_DIR}/zlib.h")
             message(FATAL_ERROR
                 "No zlib sources at ${HC_ZLIB_SOURCE_DIR}. Run:\n"
-                "  git submodule update --init External/zlib\n"
+                "  Build/vcpkg/Restore-Vcpkg.ps1\n"
                 "or set -DHC_ZLIB_SOURCE_DIR to a zlib source tree, "
                 "or -DHC_USE_SYSTEM_ZLIB=ON to link an installed zlib, "
                 "or -DHC_NOZLIB=ON to build without compression.")

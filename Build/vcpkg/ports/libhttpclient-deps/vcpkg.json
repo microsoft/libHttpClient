@@ -1,0 +1,6 @@
+{
+  "name": "libhttpclient-deps",
+  "version-string": "1",
+  "description": "Third-party sources libHttpClient builds from (asio, boost-wintls, curl, openssl, websocketpp, zlib), at the pins in deps.cmake.",
+  "homepage": "https://github.com/microsoft/libHttpClient"
+}

@@ -4,6 +4,9 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.Linux")
 
+# Restore third-party sources into External/ if missing or out of date (see Build/vcpkg).
+include("${CMAKE_CURRENT_LIST_DIR}/../vcpkg/AutoRestore.cmake")
+
 include(CTest)
 enable_testing()
 

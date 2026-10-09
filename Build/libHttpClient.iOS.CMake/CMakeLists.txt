@@ -4,6 +4,9 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libHttpClient.iOS")
 
+# Restore third-party sources into External/ if missing or out of date (see Build/vcpkg).
+include("${CMAKE_CURRENT_LIST_DIR}/../vcpkg/AutoRestore.cmake")
+
 set(HC_WEBSOCKETS FALSE)
 
 add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD -DHC_LINK_STATIC=1)

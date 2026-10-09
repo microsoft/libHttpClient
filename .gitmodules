@@ -1,21 +1,3 @@
 [submodule "Samples/Kits/DirectXTK"]
 	path = Samples/Kits/DirectXTK
 	url = https://github.com/jasonsandlin/DirectXTK.git
-[submodule "External/websocketpp"]
-	path = External/websocketpp
-	url = https://github.com/zaphoyd/websocketpp
-[submodule "External/asio"]
-	path = External/asio
-	url = https://github.com/chriskohlhoff/asio
-[submodule "External/openssl"]
-	path = External/openssl
-	url = https://github.com/openssl/openssl
-[submodule "External/curl"]
-	path = External/curl
-	url = https://github.com/curl/curl.git
-[submodule "External/zlib"]
-	path = External/zlib
-	url = https://github.com/madler/zlib
-[submodule "External/boost-wintls"]
-	path = External/boost-wintls
-	url = https://github.com/laudrup/boost-wintls.git

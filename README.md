@@ -119,18 +119,29 @@ An example customization file hc_settings.props.example can be found at the root
 
 ## How to clone repo
 
-This repo contains submodules.  There are two ways to make sure you get submodules.
+    git clone https://github.com/Microsoft/libHttpClient.git
 
-When initially cloning, make sure you use the "--recursive" option. i.e.:
+That's it: no `--recursive` needed. libHttpClient's third-party sources (asio, boost-wintls, curl,
+openssl, websocketpp, zlib) are not git submodules. They are restored into `External/` with
+[vcpkg](https://vcpkg.io), **automatically on your first build** (Visual Studio/MSBuild, CMake,
+Android Gradle, Xcode, and `libHttpClient_Linux.bash` all do it). The first build takes a few extra
+minutes while vcpkg is downloaded and the sources are fetched from GitHub; later builds skip this
+step unless the pinned versions change.
 
-    git clone --recursive https://github.com/Microsoft/libHttpClient.git
+- **Pinned versions:** `Build/vcpkg/ports/libhttpclient-deps/deps.cmake` (commit + SHA512 for each dependency).
+- **Restore manually:** `Build\vcpkg\Restore-Vcpkg.ps1` (Windows) or `Build/vcpkg/restore-vcpkg.sh` (Linux/macOS). Add `-Force` / `--force` to re-fetch.
+- **Where vcpkg goes:** `~/.tools/vcpkg` (shared by every checkout), or set `XBBL_VCPKG_ROOT` to use another location.
+- **Requirements:** `git` and internet access to GitHub; on Linux/macOS also `curl`, `zip`, `unzip` and `tar`.
+- **Offline builds or a custom `External/`:** set the environment variable `HC_SKIP_VCPKG_RESTORE=1` (MSBuild: `/p:HCSkipVcpkgRestore=true`) and populate `External/` yourself.
 
-If you already cloned the repo, you can initialize submodules with:
+The only remaining submodule is the DirectXTK kit used by the samples. If you build the samples, run:
 
-    git submodule sync
-    git submodule update --init --recursive
+    git submodule update --init
 
-Note that using GitHub's feature to "Download Zip" does not contain the submodules and will not properly build.  Please clone recursively instead.
+GitHub's "Download Zip" works too, since restore doesn't depend on git submodules.
+
+If you are updating an existing clone made before this change, the old submodule folders under
+`External/` are replaced on your next build.
 
 ## Contribute Back!
 
