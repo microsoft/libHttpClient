@@ -5,6 +5,14 @@ parameters:
 steps:
   - template: checkout.yml
 
+  # Restore External/ before xcodebuild starts. The Xcode targets also restore in a build phase, but
+  # Xcode plans the build (and records missing source files) before any script phase runs, so on a
+  # fresh agent the External/zlib sources compiled by libHttpClient_* would be reported missing.
+  - task: Bash@3
+    displayName: 'Restore third-party sources (vcpkg)'
+    inputs:
+      filePath: './Build/vcpkg/restore-vcpkg.sh'
+
   - task: Xcode@5
     displayName: 'Clean build iOS static lib'
     inputs:
