@@ -6,6 +6,17 @@ project("libHttpClient.Android")
 
 option(BUILD_SHARED_LIBS "Build libHC Shared Library")
 
+# Target name override, so a project can build more than one copy of libHC
+# (for example a private copy embedded in another library plus a public one).
+if (NOT DEFINED HC_TARGET_NAME)
+    set(HC_TARGET_NAME "${PROJECT_NAME}")
+endif()
+
+# When ON, XAsync/XTaskQueue (Source/Task) are not compiled into libHC; they
+# must come from another library, named by HC_XASYNC_LINK_LIBRARY (for example
+# a runtime library that exports them).
+option(HC_EXTERNAL_XASYNC "Take XAsync/XTaskQueue from an external library" OFF)
+
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 if(BUILD_SHARED_LIBS)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -39,11 +50,18 @@ set(COMMON_SOURCE_FILES
     "${GLOBAL_SOURCE_FILES}"
     "${PLATFORM_SOURCE_FILES}"
     "${WEBSOCKET_SOURCE_FILES}"
-    "${TASK_SOURCE_FILES}"
     "${MOCK_SOURCE_FILES}"
     "${HTTP_SOURCE_FILES}"
     "${LOGGER_SOURCE_FILES}"
     )
+
+if (NOT HC_EXTERNAL_XASYNC)
+    list(APPEND COMMON_SOURCE_FILES
+        "${TASK_SOURCE_FILES}"
+        "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
+        "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
+        )
+endif()
 
 set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Include/httpClient/async_jvm.h"
@@ -57,8 +75,6 @@ set(ANDROID_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Platform/Android/PlatformComponents_Android.cpp"
     "${PATH_TO_ROOT}/Source/Platform/Android/PlatformComponents_Android.h"
     "${PATH_TO_ROOT}/Source/Platform/Android/PlatformTrace_Android.cpp"
-    "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
-    "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
     "${PATH_TO_ROOT}/Source/WebSocket/Android/AndroidWebSocketProvider.cpp"
     "${PATH_TO_ROOT}/Source/WebSocket/Android/AndroidWebSocketProvider.h"
     )
@@ -125,14 +141,14 @@ set(ANDROID_INCLUDE_DIRS
 #########################
 
 add_library(
-    "${PROJECT_NAME}"
+    "${HC_TARGET_NAME}"
     "${COMMON_SOURCE_FILES}"
     "${ANDROID_SOURCE_FILES}"
     "${ZLIB_SOURCE_FILES}"
 )
 
 target_include_directories(
-    "${PROJECT_NAME}"
+    "${HC_TARGET_NAME}"
     PRIVATE
     "${COMMON_INCLUDE_DIRS}"
     "${ANDROID_INCLUDE_DIRS}"
@@ -141,7 +157,7 @@ target_include_directories(
 
 if (BUILD_SHARED_LIBS)
   target_link_libraries(
-    "${PROJECT_NAME}"
+    "${HC_TARGET_NAME}"
     PRIVATE
       log
       # Following should be moved to target_link_options when available with cmake 3.13
@@ -152,10 +168,21 @@ if (BUILD_SHARED_LIBS)
   )
 
   set_target_properties(
-      "${PROJECT_NAME}"
+      "${HC_TARGET_NAME}"
       PROPERTIES
       LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/libHttpClient.Android.map.txt
   )
+endif()
+
+if (HC_EXTERNAL_XASYNC)
+  if (NOT DEFINED HC_XASYNC_LINK_LIBRARY)
+    message(FATAL_ERROR "HC_EXTERNAL_XASYNC requires HC_XASYNC_LINK_LIBRARY")
+  endif()
+  target_link_libraries("${HC_TARGET_NAME}" PRIVATE "${HC_XASYNC_LINK_LIBRARY}")
+endif()
+
+if (DEFINED HC_ANDROID_JAVA_PACKAGE_PATH)
+  target_compile_definitions("${HC_TARGET_NAME}" PRIVATE "HC_ANDROID_JAVA_PACKAGE_PATH=\"${HC_ANDROID_JAVA_PACKAGE_PATH}\"")
 endif()
 
 include("../libHttpClient.CMake/GetLibHCFlags.cmake")
@@ -163,7 +190,7 @@ get_libhc_flags(FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
 include("../libHttpClient.CMake/TargetSetFlags.cmake")
 target_set_flags(
-    "${PROJECT_NAME}"
+    "${HC_TARGET_NAME}"
     "${FLAGS}"
     "${FLAGS_DEBUG}"
     "${FLAGS_RELEASE}"
@@ -173,5 +200,5 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 # Support 16KB page sizes on 64-bit devices
 # https://developer.android.com/guide/practices/page-sizes#compile-16-kb-alignment
-set_property(TARGET "${PROJECT_NAME}"
+set_property(TARGET "${HC_TARGET_NAME}"
         APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,max-page-size=16384")
