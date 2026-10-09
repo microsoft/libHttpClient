@@ -129,6 +129,7 @@ minutes while vcpkg is downloaded and the sources are fetched from GitHub; later
 step unless the pinned versions change.
 
 - **Pinned versions:** `Build/vcpkg/ports/libhttpclient-deps/deps.cmake` (commit + SHA512 for each dependency).
+- **Updating a dependency:** in `deps.cmake`, change that dependency's `REF` to the new full commit SHA and set its `SHA512` to `0`. Run `Build\vcpkg\Restore-Vcpkg.ps1 -Force` (or `restore-vcpkg.sh --force`): vcpkg reports the real SHA512 in the error. Paste it in, restore again, build, and commit `deps.cmake`. Builds pick up the change automatically, because restore runs whenever `deps.cmake` differs from what was last restored.
 - **Restore manually:** `Build\vcpkg\Restore-Vcpkg.ps1` (Windows) or `Build/vcpkg/restore-vcpkg.sh` (Linux/macOS). Add `-Force` / `--force` to re-fetch.
 - **Where vcpkg goes:** `~/.tools/vcpkg` (shared by every checkout), or set `XBBL_VCPKG_ROOT` to use another location.
 - **Requirements:** `git` and internet access to GitHub; on Linux/macOS also `curl`, `zip`, `unzip` and `tar`.
