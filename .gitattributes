@@ -7,3 +7,8 @@
 # Don't add crlf to Linux bash files or they get Bash: /bin/bash^M: bad interpreter errors
 ###############################################################################
 *.bash text eol=lf
+
+###############################################################################
+# Shell scripts must keep LF endings (Build/vcpkg/*.sh)
+###############################################################################
+*.sh text eol=lf

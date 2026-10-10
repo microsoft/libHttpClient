@@ -3,6 +3,11 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# Restore third-party sources into External/ if missing or out of date (fast no-op when current).
+# CI and users can call this script directly, before libHttpClient_Linux.bash. HC_SKIP_VCPKG_RESTORE=1 skips.
+if [ "${HC_SKIP_VCPKG_RESTORE:-0}" != "1" ]; then
+    bash "$SCRIPT_DIR"/../vcpkg/restore-vcpkg.sh
+fi
 CONFIGURATION="Release"
 
 while [[ $# -gt 0 ]]; do

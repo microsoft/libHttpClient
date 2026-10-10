@@ -1,0 +1,5 @@
+{
+  "repository": "https://github.com/microsoft/vcpkg.git",
+  "commit": "cd61e1e26a038e82d6550a3ebbe0fbbfe7da78e3",
+  "tag": "2026.06.24"
+}

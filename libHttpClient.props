@@ -46,6 +46,9 @@
     <libHttpClientInclude>$(HCRoot)\Include\</libHttpClientInclude>
   </PropertyGroup>
 
+  <!-- Restores third-party sources into External/ before building (see Build/vcpkg). -->
+  <Import Condition="'$(HCVcpkgPropsImported)' != 'true'" Project="$(MSBuildThisFileDirectory)Build\libHttpClient.vcpkg.props" />
+
   <!--Import hc_settings file after defining props so that they can be overriden-->
   <PropertyGroup>
     <HCSettingsFile>$([MSBuild]::GetDirectoryNameOfFileAbove($(HCRoot), hc_settings.props))\hc_settings.props</HCSettingsFile>

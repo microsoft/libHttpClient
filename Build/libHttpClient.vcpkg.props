@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Restores libHttpClient's third-party sources (asio, boost-wintls, curl, openssl, websocketpp,
+    zlib) into External/ before the first compile, when they are missing or out of date.
+    See Build/vcpkg/Restore-Vcpkg.ps1. Downloads come from GitHub; no internal access is needed.
+
+    Opt out with /p:HCSkipVcpkgRestore=true or the environment variable HC_SKIP_VCPKG_RESTORE=1,
+    for example offline builds or consumers that stage External/ themselves.
+  -->
+  <PropertyGroup>
+    <HCVcpkgPropsImported>true</HCVcpkgPropsImported>
+    <_HCDepsRoot>$([MSBuild]::EnsureTrailingSlash('$(HCRoot)'))</_HCDepsRoot>
+    <HCDepsFile>$(_HCDepsRoot)Build\vcpkg\ports\libhttpclient-deps\deps.cmake</HCDepsFile>
+    <HCDepsStamp>$(_HCDepsRoot)External\.vcpkg-deps.stamp</HCDepsStamp>
+    <HCDepsRestoreScript>$(_HCDepsRoot)Build\vcpkg\Restore-Vcpkg.ps1</HCDepsRestoreScript>
+  </PropertyGroup>
+
+  <Target Name="HCRestoreVcpkgDeps"
+          BeforeTargets="PrepareForBuild"
+          Condition="'$(HCSkipVcpkgRestore)' != 'true' AND '$(HC_SKIP_VCPKG_RESTORE)' != '1' AND Exists('$(HCDepsFile)')">
+    <PropertyGroup>
+      <_HCDepsText>$([System.IO.File]::ReadAllText('$(HCDepsFile)'))</_HCDepsText>
+      <_HCStampText Condition="Exists('$(HCDepsStamp)')">$([System.IO.File]::ReadAllText('$(HCDepsStamp)'))</_HCStampText>
+      <_HCDepsCurrent>false</_HCDepsCurrent>
+      <_HCDepsCurrent Condition="'$(_HCStampText)' == '$(_HCDepsText)'">true</_HCDepsCurrent>
+    </PropertyGroup>
+    <Exec Condition="'$(_HCDepsCurrent)' != 'true'"
+          Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(HCDepsRestoreScript)&quot;" />
+  </Target>
+</Project>

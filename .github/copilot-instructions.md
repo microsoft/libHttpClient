@@ -35,7 +35,7 @@ Source/
   Logger/              — Logging/tracing
 Build/                 — Platform-specific build projects (.vcxproj, CMakeLists.txt, .xcworkspace)
 Tests/UnitTests/       — TAEF/TE unit tests
-External/              — Git submodules: openssl, curl, websocketpp, asio, zlib
+External/              — Third-party sources restored by vcpkg (Build/vcpkg): openssl, curl, websocketpp, asio, zlib, boost-wintls
 Samples/               — Sample apps (Win32, UWP, GDK)
 Utilities/Pipelines/   — Azure DevOps CI pipeline definitions
 ```
@@ -194,14 +194,15 @@ Azure DevOps pipeline at `Utilities/Pipelines/libHttpClient.CI.yml`:
 
 ## External Dependencies
 
-All managed as git submodules in `External/`:
+Restored into `External/` by vcpkg (not git submodules). Pins: `Build/vcpkg/ports/libhttpclient-deps/deps.cmake`:
 - **openssl** — SSL/TLS
 - **curl** — HTTP for Linux
 - **websocketpp** — WebSocket for Linux
 - **asio** — Async I/O for websocketpp
 - **zlib** — Compression
+- **boost-wintls** — TLS for websocketpp on Windows
 
-After cloning, run: `git submodule update --init --recursive`
+Builds restore them automatically (MSBuild: `Build/libHttpClient.vcpkg.props`; CMake: `Build/vcpkg/AutoRestore.cmake`; Xcode build phase; `libHttpClient_Linux.bash`). Manual: `Build\vcpkg\Restore-Vcpkg.ps1` / `Build/vcpkg/restore-vcpkg.sh`. Opt out with `HC_SKIP_VCPKG_RESTORE=1`.
 
 ## Key Rules
 

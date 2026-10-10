@@ -4,6 +4,9 @@ get_filename_component(PATH_TO_ROOT "../.." ABSOLUTE)
 
 project("libssl.Android")
 
+# Restore third-party sources into External/ if missing or out of date (see Build/vcpkg).
+include("${CMAKE_CURRENT_LIST_DIR}/../vcpkg/AutoRestore.cmake")
+
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
 ###########################################

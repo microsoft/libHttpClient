@@ -161,3 +161,14 @@ Samples/GDK-Http/httpClient
 
 # Keep working planning / handoff docs out of commits
 .github/working/
+
+# Third-party sources restored by Build/vcpkg (see README). Pins: Build/vcpkg/ports/libhttpclient-deps/deps.cmake
+External/asio/
+External/boost-wintls/
+External/curl/
+External/openssl/
+External/websocketpp/
+External/zlib/
+External/.vcpkg-deps.stamp
+External/.vcpkg-restore.lock/
+Build/vcpkg/vcpkg_installed/

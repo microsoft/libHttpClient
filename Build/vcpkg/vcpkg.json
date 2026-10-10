@@ -1,0 +1,8 @@
+{
+  "name": "libhttpclient-build",
+  "version-string": "1",
+  "description": "Restores the third-party sources libHttpClient builds from. Run Restore-Vcpkg.ps1 / restore-vcpkg.sh; builds also run it automatically.",
+  "dependencies": [
+    "libhttpclient-deps"
+  ]
+}

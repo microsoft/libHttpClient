@@ -26,6 +26,8 @@ done
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 build_dependencies=(clang make autoconf automake libtool)
+# Needed to bootstrap vcpkg, which restores libHttpClient's third-party sources (Build/vcpkg).
+build_dependencies+=(git curl zip unzip tar)
 library_dependencies=()
 
 # zlib is only needed when zlib support is enabled (default on) AND websockets are enabled,

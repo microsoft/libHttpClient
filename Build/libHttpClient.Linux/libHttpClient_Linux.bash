@@ -120,6 +120,13 @@ else
     log "Unreal Compatibility Disabled"
 fi
 
+# Restore third-party sources (openssl, curl, websocketpp, asio, zlib, ...) into External/ if missing
+# or out of date. Downloads from GitHub. Set HC_SKIP_VCPKG_RESTORE=1 to skip.
+if [ "${HC_SKIP_VCPKG_RESTORE:-0}" != "1" ]; then
+    log "Restoring third-party sources"
+    bash "$SCRIPT_DIR"/../vcpkg/restore-vcpkg.sh
+fi
+
 # make libcrypto and libssl
 if [ "$BUILD_SSL" = true ]; then
     log "Building SSL"
