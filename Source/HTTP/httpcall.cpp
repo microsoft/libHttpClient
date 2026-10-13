@@ -79,6 +79,10 @@ namespace
 {
 std::atomic<HC_CALL::PerformStartTestHook> g_performStartTestHook{ nullptr };
 std::atomic<void*> g_performStartTestHookContext{ nullptr };
+std::atomic<HC_CALL::ClockTestHook> g_clockTestHook{ nullptr };
+std::atomic<void*> g_clockTestHookContext{ nullptr };
+std::atomic<HC_CALL::PerformDelayTestHook> g_performDelayTestHook{ nullptr };
+std::atomic<void*> g_performDelayTestHookContext{ nullptr };
 }
 
 void HC_CALL::SetPerformStartTestHook(PerformStartTestHook hook, void* context) noexcept
@@ -86,7 +90,44 @@ void HC_CALL::SetPerformStartTestHook(PerformStartTestHook hook, void* context) 
     g_performStartTestHookContext.store(context, std::memory_order_release);
     g_performStartTestHook.store(hook, std::memory_order_release);
 }
+
+void HC_CALL::SetClockTestHook(ClockTestHook hook, void* context) noexcept
+{
+    g_clockTestHookContext.store(context, std::memory_order_release);
+    g_clockTestHook.store(hook, std::memory_order_release);
+}
+
+void HC_CALL::SetPerformDelayTestHook(PerformDelayTestHook hook, void* context) noexcept
+{
+    g_performDelayTestHookContext.store(context, std::memory_order_release);
+    g_performDelayTestHook.store(hook, std::memory_order_release);
+}
 #endif
+
+namespace
+{
+// Current time as seen by the retry / fail-fast logic. Unit tests may substitute a fake clock.
+chrono_clock_t::time_point RetryClockNow() noexcept
+{
+#ifdef HC_UNITTEST_API
+    if (auto hook = g_clockTestHook.load(std::memory_order_acquire))
+    {
+        return hook(g_clockTestHookContext.load(std::memory_order_acquire));
+    }
+#endif
+    return chrono_clock_t::now();
+}
+
+#ifdef HC_UNITTEST_API
+void ApplyPerformDelayTestHook(HC_CALL* call, HC_CALL::PerformDelayReason reason, uint32_t& performDelay) noexcept
+{
+    if (auto hook = g_performDelayTestHook.load(std::memory_order_acquire))
+    {
+        hook(g_performDelayTestHookContext.load(std::memory_order_acquire), call, reason, &performDelay);
+    }
+}
+#endif
+}
 
 HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData const* data)
 {
@@ -108,7 +149,7 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         {
             return E_HC_PERFORM_ALREADY_CALLED;
         }
-        call->m_performStartTime = chrono_clock_t::now();
+        call->m_performStartTime = RetryClockNow();
 
         // Initialize work queues
         XTaskQueuePortHandle workPort{ nullptr };
@@ -151,6 +192,10 @@ HRESULT CALLBACK HC_CALL::PerfomAsyncProvider(XAsyncOp op, XAsyncProviderData co
         }
         else
         {
+#ifdef HC_UNITTEST_API
+            ApplyPerformDelayTestHook(call, PerformDelayReason::FirstAttempt, performDelay);
+#endif
+
             // If Custom ReponseWriteFunction is specified and compressedResponse is specified reset to default response body write callback
             if (call->responseBodyWriteFunction != HC_CALL::ResponseBodyWrite && call->compressedResponse)
             {   
@@ -440,6 +485,9 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
             }
 
             // Schedule retry
+#ifdef HC_UNITTEST_API
+            ApplyPerformDelayTestHook(call, PerformDelayReason::Retry, performDelay);
+#endif
             hr = XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest);
             if (SUCCEEDED(hr))
             {
@@ -555,7 +603,7 @@ Result<bool> HC_CALL::ShouldFailFast(uint32_t& performDelay)
         return false;
     }
 
-    std::chrono::milliseconds remainingTimeBeforeRetryAfterInMS = std::chrono::duration_cast<std::chrono::milliseconds>(apiState.retryAfterTime - chrono_clock_t::now());
+    std::chrono::milliseconds remainingTimeBeforeRetryAfterInMS = std::chrono::duration_cast<std::chrono::milliseconds>(apiState.retryAfterTime - RetryClockNow());
     if (remainingTimeBeforeRetryAfterInMS.count() <= 0)
     {
         // We are outside the Retry-After window for this endpoint. Clear retry state and make HTTP call without delay
@@ -599,7 +647,7 @@ bool HC_CALL::ShouldRetry(uint32_t& performDelay)
         return false;
     }
 
-    auto responseReceivedTime{ chrono_clock_t::now() };
+    auto responseReceivedTime{ RetryClockNow() };
 
     if (statusCode == 408 || // Request Timeout
         statusCode == 429 || // Too Many Requests
