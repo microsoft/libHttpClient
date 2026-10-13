@@ -22,6 +22,9 @@ public:
 
     bool HasCallback() const noexcept;
 
+    // Removes the client callback. There is no public API for this; unit tests use it to start from a clean state.
+    void ClearCallback() noexcept;
+
 public: // IHttpProvider
     HRESULT PerformAsync(
         HCCallHandle callHandle,

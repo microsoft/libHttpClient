@@ -48,6 +48,26 @@ steps:
       logProjectEvents: true
       logFileVerbosity: 'diagnostic'
 
+  # Run the unit tests (TE / VS CppUnitTest flavor; TAEF isn't installed on hosted agents and runs the
+  # same test sources). The solution already builds the test DLL in every leg; x64 hosted agents can
+  # run x64 and x86 binaries but not ARM64, so ARM64 stays build-only. The tests need no network.
+  - task: VSTest@2
+    displayName: Run unit tests (${{ parameters.platform }} ${{ parameters.configuration }})
+    condition: and(succeeded(), in(variables['Platform'], 'x64', 'x86'))
+    timeoutInMinutes: 20
+    inputs:
+      testSelector: testAssemblies
+      searchFolder: $(Build.SourcesDirectory)
+      testAssemblyVer2: |
+        Out\*\${{ parameters.configuration }}\libHttpClient.UnitTest.TE\libHttpClient.UnitTest.TE.dll
+      otherConsoleOptions: /Platform:${{ parameters.platform }}
+      platform: ${{ parameters.platform }}
+      configuration: ${{ parameters.configuration }}
+      testRunTitle: libHttpClient unit tests ${{ parameters.platform }} ${{ parameters.configuration }}
+      runInParallel: false
+      failOnMinTestsNotRun: true
+      minimumExpectedTests: 100
+
   # Regression guard for the WinHTTP provider lock being held across WinHttpSendRequest, which
   # stalls WinHttpProvider::Suspend() on GDK and can miss the PLM Quiesce deadline. The solution
   # builds this project for x64 only (its WinHttpSendRequest interposer relies on undecorated

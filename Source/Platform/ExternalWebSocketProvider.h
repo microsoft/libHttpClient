@@ -30,6 +30,9 @@ public:
 
     bool HasCallbacks() const noexcept;
 
+    // Removes the client callbacks. There is no public API for this; unit tests use it to start from a clean state.
+    void ClearCallbacks() noexcept;
+
 public: // IWebSocketProvider
     virtual HRESULT ConnectAsync(
         String const& uri,

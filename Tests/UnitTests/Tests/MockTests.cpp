@@ -7,10 +7,18 @@
 #include "DefineTestMacros.h"
 #include "Utils.h"
 #include "../global/global.h"
+#include "Platform/ExternalHttpProvider.h"
 
 #pragma warning(disable:4389)
 
 static bool g_gotCall = false;
+
+// Stands in for the network when no mock matches: completes successfully without a response, so the
+// test sees an "unmocked" call deterministically instead of whatever provider a previous test left behind.
+static void CALLBACK UnmockedPerform(HCCallHandle, XAsyncBlock* asyncBlock, void*, HCPerformEnv) noexcept
+{
+    XAsyncComplete(asyncBlock, S_OK, 0);
+}
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
@@ -131,6 +139,7 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlBodyMock);
 
+        VERIFY_ARE_EQUAL(S_OK, HCSetHttpCallPerformFunction(&UnmockedPerform, nullptr));
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         HCMockCallHandle mockCall = CreateMockCall("Mock1", true, true);
@@ -210,6 +219,7 @@ public:
         }
 
         HCCleanup();
+        xbox::httpclient::ExternalHttpProvider::Get().ClearCallback();
     }
 
     DEFINE_TEST_CASE(ExampleMultiSpecificUrlBodyMock)

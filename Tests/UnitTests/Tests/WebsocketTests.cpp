@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "../global/global.h"
 #include "WebSocket/hcwebsocket.h"
+#include "Platform/ExternalWebSocketProvider.h"
 #include "../../Source/WebSocket/Websocketpp/websocketpp_websocket.h"
 #include <httpClient/httpClient.h>
 #include <httpClient/httpProvider.h>
@@ -651,6 +652,12 @@ public:
 
     DEFINE_TEST_CASE(TestConnect)
     {
+        // This test checks the "no callbacks installed" state first, so drop any a previous test left behind.
+        xbox::httpclient::ExternalWebSocketProvider::Get().ClearCallbacks();
+        g_HCWebSocketConnect_Called = false;
+        g_HCWebSocketSendMessage_Called = false;
+        g_HCWebSocketDisconnect_Called = false;
+
         HCWebSocketConnectFunction websocketConnectFunc = nullptr;
         HCWebSocketSendMessageFunction websocketSendMessageFunc = nullptr;
         HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc = nullptr;

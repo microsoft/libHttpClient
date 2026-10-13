@@ -157,8 +157,8 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestPerformCallbackChainsToDefaultProvider);
 
-        // This test only works while no client callback is installed.
-        VERIFY_IS_FALSE(ExternalHttpProvider::Get().HasCallback());
+        // This test needs the default provider, so drop any client callback a previous test installed.
+        ExternalHttpProvider::Get().ClearCallback();
 
         g_chainingFilterCalls = 0;
         VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&g_defaultPerform, &g_defaultPerformContext));
@@ -186,6 +186,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         XTaskQueueCloseHandle(queue);
         HCCleanup();
+        ExternalHttpProvider::Get().ClearCallback();
 
         // Has to happen after HCCleanup() or else other tests break.
         VERIFY_ARE_EQUAL(1, g_chainingFilterCalls.load());
@@ -239,6 +240,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         XTaskQueueCloseHandle(queue);
         HCCleanup();
+        ExternalHttpProvider::Get().ClearCallback();
     }
 
     DEFINE_TEST_CASE(TestSettings)
