@@ -60,6 +60,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.h">
       <Filter>Source\WebSocket\WinHttp</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_redirect_helper.h">
+      <Filter>Source\WebSocket\WinHttp</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h">
       <Filter>Source\WebSocket\WinHttp</Filter>
     </ClInclude>
