@@ -35,9 +35,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\HttpTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueueTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockBehaviorTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TraceApiTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TraceTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\UriTests.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebSocketApiTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\ProxyTests.cpp" />
   <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_proxy_helper.cpp" />

@@ -68,10 +68,22 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueueTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockBehaviorTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TraceApiTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\UriTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebSocketApiTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\WebsocketTests.cpp">
