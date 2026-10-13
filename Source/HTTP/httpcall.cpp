@@ -770,6 +770,7 @@ void HC_CALL::ResetResponseProperties()
     statusCode = 0;
     networkErrorCode = S_OK;
     platformNetworkErrorCode = 0;
+    platformNetworkErrorMessage.clear();
 }
 
 bool HeaderCompare::operator()(http_internal_string const& l, http_internal_string const& r) const
