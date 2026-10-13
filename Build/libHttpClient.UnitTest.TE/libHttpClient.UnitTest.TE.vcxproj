@@ -15,10 +15,17 @@
   <Import Project="$(HCBuildRoot)\libHttpClient.Common\libHttpClient.Common.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.XAsync\libHttpClient.XAsync.vcxitems" Label="Shared" />
   <Import Project="$(HCBuildRoot)\libHttpClient.UnitTest\libHttpClient.UnitTest.vcxitems" Label="Shared" />
+  <Import Condition="'$(HCNoZlib)' != 'true'" Project="$(HCBuildRoot)\libHttpClient.Zlib\libHttpClient.Zlib.vcxitems" Label="Shared" />
+  <ItemGroup Condition="'$(HCNoZlib)' != 'true'">
+    <!-- The zlib sources are C; /ZW (CompileAsWinRT) is C++-only. -->
+    <ClCompile Update="$(HCRoot)\External\zlib\**\*.c">
+      <CompileAsWinRT>false</CompileAsWinRT>
+    </ClCompile>
+  </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;UNITTEST_TE;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;HC_NOZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DASHBOARD_PRINCIPLE_GROUP;_NO_ASYNCRTIMP;UNITTEST_TE;INLINE_TEST_METHOD_MARKUP;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;UNIT_TEST_SERVICES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalUsingDirectories>$(WindowsSDK_UnionMetadataPath);$(VCIDEInstallDir)\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;$(HCSourceDir)\Task;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>

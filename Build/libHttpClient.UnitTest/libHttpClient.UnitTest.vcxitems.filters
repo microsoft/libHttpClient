@@ -59,6 +59,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\AsyncBlockTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CompressionTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
