@@ -220,3 +220,61 @@ proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpcli
 NAMESPACE_XBOX_HTTP_CLIENT_END
 
 #endif
+
+NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+http_internal_string format_platform_error_message(_In_ uint32_t platformErrorCode) noexcept
+{
+    if (platformErrorCode == 0)
+    {
+        return {};
+    }
+
+    // Win32 errors usually arrive wrapped as HRESULT_FROM_WIN32; the message tables are keyed by the raw code.
+    DWORD messageId = platformErrorCode;
+    if (HRESULT_FACILITY(platformErrorCode) == FACILITY_WIN32 && (platformErrorCode & 0x80000000) != 0)
+    {
+        messageId = HRESULT_CODE(platformErrorCode);
+    }
+
+    DWORD flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+    LPCVOID source = nullptr;
+
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+    // WinHTTP error text lives in winhttp.dll rather than the system message table.
+    constexpr DWORD winHttpErrorBase = 12000;
+    constexpr DWORD winHttpErrorLast = 12199;
+    if (messageId >= winHttpErrorBase && messageId <= winHttpErrorLast)
+    {
+        HMODULE winHttpModule = GetModuleHandleW(L"winhttp.dll");
+        if (winHttpModule != nullptr)
+        {
+            flags = FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_IGNORE_INSERTS;
+            source = winHttpModule;
+        }
+    }
+#endif
+
+    wchar_t buffer[512]{};
+    DWORD length = FormatMessageW(flags, source, messageId, 0, buffer, static_cast<DWORD>(ARRAYSIZE(buffer)), nullptr);
+    while (length > 0 && iswspace(buffer[length - 1]))
+    {
+        --length;
+    }
+
+    if (length == 0)
+    {
+        return {};
+    }
+
+    try
+    {
+        return utf8_from_utf16(buffer, length);
+    }
+    catch (...)
+    {
+        return {};
+    }
+}
+
+NAMESPACE_XBOX_HTTP_CLIENT_END
