@@ -2211,8 +2211,12 @@ void WinHttpConnection::callback_websocket_status_headers_available(
         {
             assert(winHttpConnection->m_winHttpWebSocketExports.completeUpgrade);
 
-            winHttpConnection->m_hRequest = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, (DWORD_PTR)(winHttpContext));
-            if (winHttpConnection->m_hRequest == NULL)
+            // Keep m_hRequest pointing at the original request handle until the upgrade succeeds. If it
+            // fails, that handle (which owns our callback context) must still be closed through
+            // StartWinHttpClose; overwriting it with NULL made the close fail with ERROR_INVALID_HANDLE,
+            // so WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING never arrived and HCCleanup hung.
+            HINTERNET hWebSocket = winHttpConnection->m_winHttpWebSocketExports.completeUpgrade(hRequestHandle, (DWORD_PTR)(winHttpContext));
+            if (hWebSocket == NULL)
             {
                 DWORD dwError = GetLastError();
                 HC_TRACE_ERROR(WEBSOCKET, "HCHttpCallPerform [ID %llu] [TID %ul] WinHttpWebSocketCompleteUpgrade errorcode %d", TO_ULL(HCHttpCallGetId(winHttpConnection->m_call)), GetCurrentThreadId(), dwError);
@@ -2222,6 +2226,7 @@ void WinHttpConnection::callback_websocket_status_headers_available(
             }
             else
             {
+                winHttpConnection->m_hRequest = hWebSocket;
                 const uint32_t pingIntervalSeconds = winHttpConnection->m_websocketHandle->websocket->PingInterval();
                 if (pingIntervalSeconds > 0)
                 {
