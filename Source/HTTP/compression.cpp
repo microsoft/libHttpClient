@@ -97,15 +97,17 @@ void Compression::DecompressFromGzip(uint8_t* inData, size_t inDataSize, http_in
 
         ret = inflate(&stream, Z_NO_FLUSH);
 
-        if (ret == Z_OK || ret == Z_BUF_ERROR) 
+        if (ret == Z_OK) 
         {
-            // Z_BUF_ERROR -> no progress was possible or there was not enough room in the output buffer 
             // Z_OK -> some progress has been made 
             continue;
         } 
         else if (ret != Z_STREAM_END) 
         {
             // Handle error
+            // Note: Z_BUF_ERROR means no progress was possible. Every iteration supplies a fresh CHUNK of output
+            // space and all of the input up front, so it can only mean the input ended before the end of the gzip
+            // stream (truncated data). Retrying could never make progress, so it is treated as an error too.
             // All dynamically allocated data structures for this stream are freed
             inflateEnd(&stream);
             // Clear output data since it may contain incomplete or corrupted data

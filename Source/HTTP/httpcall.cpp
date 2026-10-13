@@ -475,6 +475,8 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
 
                     call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
                     call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
+                    // Drop any response string cached from the compressed bytes (e.g. by a routed handler)
+                    call->responseString.clear();
                 }
             }
         }
