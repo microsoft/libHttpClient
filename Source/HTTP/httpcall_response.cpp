@@ -380,7 +380,7 @@ HCHttpCallResponseSetPlatformNetworkErrorMessage(
     ) noexcept
 try
 {
-    if (call == nullptr)
+    if (call == nullptr || platformNetworkErrorMessage == nullptr)
     {
         return E_INVALIDARG;
     }

@@ -63,6 +63,7 @@ CATCH_RETURN_WITH(;)
 STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept
 try
 {
+    RETURN_HR_IF(E_INVALIDARG, !async);
     return http_singleton::cleanup_async(async);
 }
 CATCH_RETURN()

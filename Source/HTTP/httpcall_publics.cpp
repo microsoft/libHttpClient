@@ -69,7 +69,7 @@ STDAPI HCHttpCallPerformAsync(
 ) noexcept
 try
 {
-    RETURN_HR_IF(E_INVALIDARG, !call);
+    RETURN_HR_IF(E_INVALIDARG, !call || !asyncBlock);
 
     auto httpSingleton = get_http_singleton();
     if (nullptr == httpSingleton)
