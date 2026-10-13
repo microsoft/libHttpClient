@@ -133,6 +133,17 @@ HRESULT HttpRequest::AddHeader(const char* headerName, const char* headerValue)
 
     jniEnv->DeleteLocalRef(nameJstr);
     jniEnv->DeleteLocalRef(valueJstr);
+
+    // A Java exception left pending here aborts the process on the next JNI call,
+    // so surface it as a failed request instead.
+    if (jniEnv->ExceptionCheck())
+    {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+        HC_TRACE_ERROR(HTTPCLIENT, "HttpClientRequest.setHttpHeader threw for header '%s'", headerName);
+        return E_INVALIDARG;
+    }
+
     return S_OK;
 }
 

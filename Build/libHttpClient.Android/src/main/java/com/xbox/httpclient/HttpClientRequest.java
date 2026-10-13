@@ -12,6 +12,7 @@ import java.net.UnknownHostException;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -31,6 +32,7 @@ public class HttpClientRequest {
 
     private final Context appContext;
     private Request.Builder requestBuilder;
+    private final Headers.Builder headersBuilder = new Headers.Builder();
 
     private static final ProgressListener downloadProgressListener = new ProgressListener() {
         @Override 
@@ -82,7 +84,10 @@ public class HttpClientRequest {
 
     @SuppressWarnings("unused")
     public void setHttpHeader(String name, String value) {
-        this.requestBuilder = requestBuilder.addHeader(name, value);
+        // Request.Builder.addHeader rejects non-ASCII values (e.g. a localized carrier name),
+        // so collect headers leniently and send values as UTF-8 like the other platforms do.
+        this.headersBuilder.addUnsafeNonAscii(name, value);
+        this.requestBuilder = requestBuilder.headers(headersBuilder.build());
     }
 
     @SuppressWarnings("unused")
