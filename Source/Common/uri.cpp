@@ -216,7 +216,17 @@ String Uri::Authority() const
         s += '@';
     }
 
-    s += m_host;
+    // Only IPv6 literals can contain ':' in the host; they need their brackets back (RFC 3986 section 3.2.2).
+    if (m_host.find(':') != String::npos)
+    {
+        s += '[';
+        s += m_host;
+        s += ']';
+    }
+    else
+    {
+        s += m_host;
+    }
 
     AppendPortToString(s, m_port);
 
@@ -613,7 +623,8 @@ bool Uri::ParsePort(String const& uri, String::const_iterator& it)
 
     char const* port = &*it;
     uint64_t portV = 0;
-    if (!StringToUint4(port, port + portLen, portV, 0))
+    // Ports are always decimal (RFC 3986 section 3.2.3); base 0 would treat a leading '0' as octal.
+    if (!StringToUint4(port, port + portLen, portV, 10))
     {
         HC_TRACE_WARNING(HTTPCLIENT, "Cannot parse port in URI."); // no tracing uris they could contain PII
         return false;
