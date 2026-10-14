@@ -77,7 +77,10 @@ try
         return E_HC_NOT_INITIALISED;
     }
 
-    return httpSingleton->m_networkState->HttpProvider().SetGlobalProxy(proxyUri);
+    // A null proxy is documented to reset to the default proxy. Providers take a String, and building
+    // one from a null pointer is undefined behavior (strlen(nullptr)), so pass the empty string, which
+    // providers treat as "no explicit proxy".
+    return httpSingleton->m_networkState->HttpProvider().SetGlobalProxy(proxyUri != nullptr ? proxyUri : "");
 }
 CATCH_RETURN()
 
