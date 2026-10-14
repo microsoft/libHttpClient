@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Code coverage for the TE unit tests (CI x64 Debug leg). Dynamic native instrumentation; only product sources under Source\ are reported. -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <Format>Cobertura</Format>
+          <CodeCoverage>
+            <EnableStaticNativeInstrumentation>False</EnableStaticNativeInstrumentation>
+            <EnableDynamicNativeInstrumentation>True</EnableDynamicNativeInstrumentation>
+            <ModulePaths>
+              <Include><ModulePath>.*libHttpClient\.UnitTest\.TE\.dll$</ModulePath></Include>
+            </ModulePaths>
+            <Sources>
+              <Include><Source>.*\\Source\\.*</Source></Include>
+            </Sources>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

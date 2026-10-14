@@ -51,6 +51,15 @@ steps:
   # Run the unit tests (TE / VS CppUnitTest flavor; TAEF isn't installed on hosted agents and runs the
   # same test sources). The solution already builds the test DLL in every leg; x64 hosted agents can
   # run x64 and x86 binaries but not ARM64, so ARM64 stays build-only. The tests need no network.
+  # Code coverage (report only, no gate) is collected on the x64 Debug leg and published to the
+  # pipeline's Code Coverage tab; other legs use the default settings.
+  - powershell: |
+      $settings = if ('$(Platform)' -eq 'x64' -and '${{ parameters.configuration }}' -eq 'Debug') { 'coverage.runsettings' } else { 'default.runsettings' }
+      Write-Host "Unit test settings: $settings"
+      Write-Host "##vso[task.setvariable variable=HCUnitTestRunSettings]$(Build.SourcesDirectory)\Tests\UnitTests\$settings"
+    displayName: Select unit test settings
+    condition: and(succeeded(), in(variables['Platform'], 'x64', 'x86'))
+
   - task: VSTest@2
     displayName: Run unit tests (${{ parameters.platform }} ${{ parameters.configuration }})
     condition: and(succeeded(), in(variables['Platform'], 'x64', 'x86'))
@@ -67,6 +76,14 @@ steps:
       runInParallel: false
       failOnMinTestsNotRun: true
       minimumExpectedTests: 100
+      runSettingsFile: $(HCUnitTestRunSettings)
+
+  - task: PublishCodeCoverageResults@2
+    displayName: Publish unit test code coverage (report only)
+    condition: and(succeededOrFailed(), eq(variables['Platform'], 'x64'), eq('${{ parameters.configuration }}', 'Debug'))
+    inputs:
+      summaryFileLocation: $(Agent.TempDirectory)/**/*.cobertura.xml
+      failIfCoverageEmpty: false
 
   # Regression guard for the WinHTTP provider lock being held across WinHttpSendRequest, which
   # stalls WinHttpProvider::Suspend() on GDK and can miss the PLM Quiesce deadline. The solution
