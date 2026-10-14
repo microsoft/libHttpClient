@@ -179,9 +179,20 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestLeakCheckAllocatorCountsAllocations);
 
+        // A block allocated through the default functions before Install() and freed after it --
+        // as when a task queue from an earlier test runs down on a thread pool thread -- is not
+        // this allocator's and must not count as a free (that pushed the balance negative and was
+        // reported as a leak).
+        void* foreignBlock = http_memory::mem_alloc(32);
+        VERIFY_IS_NOT_NULL(foreignBlock);
+
         VERIFY_SUCCEEDED(LeakCheckAllocator::Install());
         VERIFY_IS_TRUE(LeakCheckAllocator::IsInstalled());
         VERIFY_ARE_EQUAL_UINT(0u, LeakCheckAllocator::AllocCount());
+
+        http_memory::mem_free(foreignBlock);
+        VERIFY_ARE_EQUAL_UINT(0u, LeakCheckAllocator::FreeCount());
+        VERIFY_IS_TRUE(LeakCheckAllocator::WaitForBalance(0));
 
         // The checker must see an outstanding block, or a passing leak test proves nothing.
         void* block = http_memory::mem_alloc(64);

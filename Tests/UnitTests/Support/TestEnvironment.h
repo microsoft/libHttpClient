@@ -5,7 +5,9 @@
 
 #include <atomic>
 #include <cstdint>
+#include <mutex>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
@@ -144,6 +146,13 @@ private:
 
     static std::atomic<uint64_t> s_allocCount;
     static std::atomic<uint64_t> s_freeCount;
+
+    // Blocks handed out since Install(). Only frees of these are counted: libHttpClient can free a
+    // block it allocated through the previous (default) functions after Install() -- e.g. task queue
+    // timer state from an earlier test that runs down on the timer thread -- and counting that free
+    // would push the balance negative (a spurious "leak") or hide a real leak.
+    static std::mutex s_blocksLock;
+    static std::unordered_set<void*> s_blocks;
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

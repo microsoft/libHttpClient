@@ -366,6 +366,8 @@ std::atomic<bool> TestEnvironment::s_verifyFailed{ false };
 
 std::atomic<uint64_t> LeakCheckAllocator::s_allocCount{ 0 };
 std::atomic<uint64_t> LeakCheckAllocator::s_freeCount{ 0 };
+std::mutex LeakCheckAllocator::s_blocksLock;
+std::unordered_set<void*> LeakCheckAllocator::s_blocks;
 
 HRESULT LeakCheckAllocator::Install() noexcept
 {
@@ -374,8 +376,12 @@ HRESULT LeakCheckAllocator::Install() noexcept
         return E_HC_ALREADY_INITIALISED;
     }
 
-    s_allocCount = 0;
-    s_freeCount = 0;
+    {
+        std::lock_guard<std::mutex> lock{ s_blocksLock };
+        s_blocks.clear();
+        s_allocCount = 0;
+        s_freeCount = 0;
+    }
     return HCMemSetFunctions(Alloc, Free);
 }
 
@@ -431,7 +437,17 @@ _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE LeakCheckA
     void* pointer = std::malloc(size);
     if (pointer != nullptr)
     {
-        ++s_allocCount;
+        try
+        {
+            std::lock_guard<std::mutex> lock{ s_blocksLock };
+            s_blocks.insert(pointer);
+            ++s_allocCount;
+        }
+        catch (...)
+        {
+            std::free(pointer);
+            return nullptr;
+        }
     }
     return pointer;
 }
@@ -443,7 +459,15 @@ void STDAPIVCALLTYPE LeakCheckAllocator::Free(
 {
     if (pointer != nullptr)
     {
-        ++s_freeCount;
+        {
+            // A block allocated before Install() came from the default functions (malloc), so
+            // std::free is still the right way to release it; it just isn't counted.
+            std::lock_guard<std::mutex> lock{ s_blocksLock };
+            if (s_blocks.erase(pointer) != 0)
+            {
+                ++s_freeCount;
+            }
+        }
         std::free(pointer);
     }
 }
