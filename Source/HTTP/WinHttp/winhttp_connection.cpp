@@ -293,8 +293,11 @@ HRESULT WinHttpConnection::Initialize()
         RETURN_IF_FAILED(HCHttpCallRequestGetTimeout(m_call, &timeoutInSeconds));
 
         int timeoutInMilliseconds = static_cast<int>(timeoutInSeconds * 1000);
+        // Apply the timeout to this request's handle. A request handle only picks up session
+        // timeouts when it is opened, so setting them on the (shared) session here never applied
+        // to this call.
         if (!WinHttpSetTimeouts(
-            m_hSession,
+            m_hRequest,
             timeoutInMilliseconds,
             timeoutInMilliseconds,
             timeoutInMilliseconds,
