@@ -570,10 +570,11 @@ public:
             uint64_t call2Ticks = result.Times[1] - baseTicks;
             uint64_t call3Ticks = result.Times[2] - baseTicks;
 
-            // Call 1 at index 0 should have a tick count > 1000 and < 1100 (100ms tolerance for debugger overhead)
-            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1100);
-            VERIFY_IS_TRUE(call2Ticks < 100);
-            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 600);
+            // Delayed callbacks must not run early. The upper bounds only guard against a stalled timer:
+            // hosted CI agents (notably macOS) can fire a timer a few hundred ms late under load.
+            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1600);
+            VERIFY_IS_TRUE(call2Ticks < 500);
+            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 1000);
         }
     }
 

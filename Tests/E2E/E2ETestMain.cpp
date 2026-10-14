@@ -63,7 +63,7 @@ std::string WsUrl(const std::string& path) { return Format("ws://127.0.0.1:%u", 
 
 std::string UniqueId(const char* prefix)
 {
-    return Format("%s-%lu-%llu-%llu", prefix, platform::ProcessId(), static_cast<unsigned long long>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()), static_cast<unsigned long long>(++g_uniqueCounter));
+    return Format("%s-%llu-%llu-%llu", prefix, static_cast<unsigned long long>(platform::ProcessId()), static_cast<unsigned long long>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()), static_cast<unsigned long long>(++g_uniqueCounter));
 }
 
 std::string Format(const char* format, ...)
