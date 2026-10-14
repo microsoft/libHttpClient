@@ -78,6 +78,14 @@ with `--list` or `--filter=<glob>[,<glob>...]`, e.g. `--filter=HttpTests::*,-*Re
 Windows are listed in `Build/libHttpClient.CMake/UnitTests.cmake`. Pass `-DHC_BUILD_UNIT_TESTS=OFF`
 to skip the target.
 
+The same target can be built on its own on any Unix-like host (this is what the macOS CI legs do)
+with the standalone project in `Build/libHttpClient.UnitTest.CMake`:
+
+```
+cmake -S Build/libHttpClient.UnitTest.CMake -B Int/CMake/ut -DCMAKE_BUILD_TYPE=Debug
+cmake --build Int/CMake/ut --parallel && (cd Int/CMake/ut && ctest --output-on-failure -L unit)
+```
+
 ```
 ./libHttpClient_Linux.bash -c Debug -st -san
 ```

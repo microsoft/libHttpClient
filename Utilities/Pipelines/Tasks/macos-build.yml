@@ -56,3 +56,19 @@ steps:
       scheme: 'libHttpClientFramework_NOWEBSOCKETS_macOS'
       packageApp: false
       useXcpretty: false
+
+  # Unit tests (plan 3.2). The Xcode projects above have no ctest integration, so a small host CMake
+  # project (Build/libHttpClient.UnitTest.CMake) builds just the portable unit-test executable -- the
+  # same Tests/UnitTests sources the Windows and Linux legs run, against the Generic platform -- and
+  # ctest runs everything labelled "unit".
+  - task: Bash@3
+    displayName: 'Build and run unit tests (host CMake, ctest -L unit)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        set -e
+        BUILD_DIR="$(Build.SourcesDirectory)/Int/CMake/libHttpClient.UnitTest.macOS.${{ parameters.configuration }}"
+        cmake -S "$(Build.SourcesDirectory)/Build/libHttpClient.UnitTest.CMake" -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=${{ parameters.configuration }}
+        cmake --build "$BUILD_DIR" --parallel "$(sysctl -n hw.ncpu)"
+        cd "$BUILD_DIR"
+        ctest --output-on-failure -L unit
