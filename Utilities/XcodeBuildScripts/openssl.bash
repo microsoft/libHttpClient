@@ -79,10 +79,14 @@ pushd $OPENSSL_SRC
 
 ### Configure and build for each architecture ###
 
-for BUILD_ARCH in $BUILD_ARCHS; do
-    log "Cleaning..."
+MAKE_JOBS="$(sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
-    make clean
+for BUILD_ARCH in $BUILD_ARCHS; do
+    # The source tree has no Makefile until the first Configure
+    if [ -f Makefile ]; then
+        log "Cleaning..."
+        make clean
+    fi
 
     log "Configuring for architecture $BUILD_ARCH and platform $PLATFORM_NAME"
 
@@ -94,24 +98,36 @@ for BUILD_ARCH in $BUILD_ARCHS; do
     #
     # - x86_64, i386: Mac
     # - arm64: Might be an M1 Mac or a physical iOS device
+    #
+    # Only the static libssl.a and libcrypto.a are linked, so the shared libraries
+    # (no-shared) and OpenSSL's own test programs (no-tests) aren't built.
 
     if [ "$BUILD_ARCH" == "x86_64" ]; then
-        ./Configure darwin64-x86_64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+        ./Configure darwin64-x86_64-cc no-shared no-tests enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
     elif [ "$BUILD_ARCH" == "i386" ]; then
-        ./Configure darwin-i386-cc shared no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+        ./Configure darwin-i386-cc no-shared no-tests no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
     elif [ "$BUILD_ARCH" == "arm64" ]; then
         if [ "$PLATFORM_NAME" == "macosx" ] || [ "$PLATFORM_NAME" == "iphonesimulator" ]; then
-            ./Configure darwin64-arm64-cc shared enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+            ./Configure darwin64-arm64-cc no-shared no-tests enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp no-async --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
         elif [ "$PLATFORM_NAME" == "iphoneos" ]; then
-            ./Configure ios64-cross no-shared no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
+            ./Configure ios64-cross no-shared no-tests no-dso no-hw no-engine no-async -fembed-bitcode enable-ec_nistp_64_gcc_128 --prefix="$OPENSSL_TMP/" --openssldir="$OPENSSL_TMP/"
         fi
     else
         log "Unexpected architecture: $BUILD_ARCH"
         exit 1
     fi
 
-    # Only build the "software" components, not docs and manpages
-    make install_sw
+    if [ $? -ne 0 ]; then
+        log "Configure failed for architecture $BUILD_ARCH and platform $PLATFORM_NAME"
+        exit 1
+    fi
+
+    # Build and install only the libraries and headers: not the openssl app, engines,
+    # providers, docs or manpages
+    if ! make -j"$MAKE_JOBS" build_libs || ! make install_dev; then
+        log "Build failed for architecture $BUILD_ARCH and platform $PLATFORM_NAME"
+        exit 1
+    fi
 
     log "Renaming intermediate libraries to $LIB_STAGING/$BUILD_ARCH-*.a"
     cp "$OPENSSL_TMP"/lib/libcrypto.a "$LIB_STAGING"/$BUILD_ARCH-libcrypto.a
