@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include "iso8601.h"
+#include "XTaskQueuePriv.h"
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
@@ -16,6 +17,11 @@ TEST_MODULE_INITIALIZE(ModuleInitialize)
 
 TEST_MODULE_CLEANUP(ModuleCleanup)
 {
+    // Wait for task queue objects to run down before the test DLL unloads.
+    // Threadpool callbacks (e.g. an async completion that already released
+    // the waiting test) can still be unwinding through this module; unloading
+    // under them crashes the test host.
+    XTaskQueueUninitialize(5000);
     Logger::WriteMessage("Stopped unit test");
 }
 

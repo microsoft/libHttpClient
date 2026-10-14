@@ -1102,7 +1102,12 @@ public:
         VERIFY_ARE_EQUAL(E_ABORT, XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, nullptr, cbEmpty));
 
         globalQueue.Close();
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
+
+        // Terminate(wait=true) returns once the termination callback has run,
+        // but the threadpool thread that ran it still holds its port reference
+        // until it finishes unwinding. Allow that rundown to complete instead of
+        // requiring zero references immediately (flaky on 2-core machines).
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(2000));
         VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
         VERIFY_IS_NOT_NULL(globalQueue);
 
