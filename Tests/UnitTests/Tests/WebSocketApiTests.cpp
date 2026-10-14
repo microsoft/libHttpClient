@@ -5,8 +5,8 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"libHttpClient"
 #include "DefineTestMacros.h"
-#include "Utils.h"
-#include "../global/global.h"
+#include "utils.h"
+#include "../Global/global.h"
 #include "WebSocket/hcwebsocket.h"
 #include "Platform/ExternalWebSocketProvider.h"
 #include <httpClient/httpClient.h>

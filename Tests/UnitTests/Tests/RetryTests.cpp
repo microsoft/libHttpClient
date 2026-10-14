@@ -17,7 +17,7 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
-#include "Utils.h"
+#include "utils.h"
 #include "Platform/ExternalHttpProvider.h"
 #include <httpClient/httpProvider.h>
 

@@ -5,7 +5,7 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"libHttpClient"
 #include "DefineTestMacros.h"
-#include "Utils.h"
+#include "utils.h"
 #include "uri.h"
 #include "HTTP/httpcall.h"
 #include <httpClient/httpProvider.h>

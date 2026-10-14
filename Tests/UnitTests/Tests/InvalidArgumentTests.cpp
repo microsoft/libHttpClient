@@ -5,7 +5,7 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
-#include "Utils.h"
+#include "utils.h"
 #include <httpClient/httpProvider.h>
 #include <httpClient/mock.h>
 

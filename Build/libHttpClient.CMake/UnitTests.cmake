@@ -76,14 +76,30 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
         "${PATH_TO_ROOT}/Tests/Shared"
         )
 
-    # Same defines as libHttpClient.UnitTest.vcxitems + the TE project (HC_NOZLIB there too).
+    # Same defines as libHttpClient.UnitTest.vcxitems + the TE project. Like those projects (and the
+    # shipping libraries), zlib is compiled in by default so CompressionTests runs; configure with
+    # -DHC_NOZLIB=1 to build the no-zlib variant instead.
     target_compile_definitions(
         "${UT_TARGET}"
         PRIVATE
         HC_UNITTEST_API
         UNITTEST_PORTABLE
-        HC_NOZLIB
         )
+
+    if (DEFINED HC_NOZLIB)
+        target_compile_definitions("${UT_TARGET}" PRIVATE HC_NOZLIB=1)
+    else()
+        set(UT_ZLIB_DIR "${PATH_TO_ROOT}/External/zlib")
+        set(UT_ZLIB_SOURCE_FILES)
+        foreach(zlibSource adler32 compress crc32 deflate gzclose gzlib gzread gzwrite infback inffast inflate inftrees trees uncompr zutil)
+            list(APPEND UT_ZLIB_SOURCE_FILES "${UT_ZLIB_DIR}/${zlibSource}.c")
+        endforeach()
+        target_sources("${UT_TARGET}" PRIVATE ${UT_ZLIB_SOURCE_FILES})
+        target_include_directories("${UT_TARGET}" PRIVATE "${UT_ZLIB_DIR}")
+        target_compile_definitions("${UT_TARGET}" PRIVATE Z_HAVE_UNISTD_H=1)
+        # Third-party C: same warning relaxation as the Linux library build.
+        set_source_files_properties(${UT_ZLIB_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-Wno-implicit-function-declaration")
+    endif()
 
     find_package(Threads REQUIRED)
     target_link_libraries("${UT_TARGET}" PRIVATE Threads::Threads)
