@@ -176,7 +176,11 @@ WebSocket::~WebSocket()
 
 void WebSocket::EnableFragmentHandler()
 {
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     E2E_CHECK_HR(HCWebSocketSetBinaryMessageFragmentEventFunction(m_ws, OnFragment));
+#else
+    Skip("HCWebSocketSetBinaryMessageFragmentEventFunction is only available on Win32 / GDK");
+#endif
 }
 
 void CALLBACK WebSocket::OnText(HCWebsocketHandle, const char* text, void* context)

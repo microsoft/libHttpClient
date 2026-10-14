@@ -3,13 +3,14 @@
 //
 // Test runner for the libHttpClient end-to-end tests. See Tests/E2E/README.md.
 //
-//   libHttpClient.E2E.Win32.exe [--filter <substring>] [--list] [--ports <http>,<http2>,<https>]
+//   libHttpClient.E2E.Win32.exe / libHttpClient.E2E [--filter <substring>] [--list] [--ports <http>,<http2>,<https>]
 //                               [--server-script <path>] [--python <exe>] [--test-timeout <seconds>]
 //                               [--trace] [--server-verbose]
 //
 // Exit code = number of failed tests (0 = all passed or skipped).
 
 #include "E2ETestFramework.h"
+#include "E2EPlatform.h"
 #include "TestServer.h"
 
 #include <httpClient/trace.h>
@@ -28,6 +29,8 @@ namespace
 ServerInfo g_server;
 std::atomic<uint64_t> g_uniqueCounter{ 0 };
 thread_local const char* t_currentTest = "";
+// The test the runner is currently executing (read by the crash handler from any thread).
+const char* volatile g_runningTest = "";
 std::mutex g_poisonMutex;
 std::string g_poisonReason;
 std::atomic<bool> g_poisoned{ false };
@@ -60,7 +63,7 @@ std::string WsUrl(const std::string& path) { return Format("ws://127.0.0.1:%u", 
 
 std::string UniqueId(const char* prefix)
 {
-    return Format("%s-%lu-%llu-%llu", prefix, GetCurrentProcessId(), static_cast<unsigned long long>(GetTickCount64()), static_cast<unsigned long long>(++g_uniqueCounter));
+    return Format("%s-%lu-%llu-%llu", prefix, platform::ProcessId(), static_cast<unsigned long long>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()), static_cast<unsigned long long>(++g_uniqueCounter));
 }
 
 std::string Format(const char* format, ...)
@@ -91,7 +94,7 @@ void Info(const char* format, ...)
 
 void Fail(const char* file, int line, const std::string& message)
 {
-    const char* base = strrchr(file, '\\');
+    const char* base = strrchr(file, platform::PathSeparator);
     throw TestFailure{ Format("%s(%d): ", base ? base + 1 : file, line) + message };
 }
 
@@ -232,7 +235,7 @@ HRESULT WaitAsync(XAsyncBlock* async, std::chrono::milliseconds timeout)
         {
             return E_PENDING;
         }
-        Sleep(2);
+        platform::SleepMs(2);
     }
 }
 
@@ -373,43 +376,35 @@ constexpr int ChildExitSkip = 77;
 Result RunIsolated(const TestInfo& test, const Options& options)
 {
     Result result{ test.name };
-    char exePath[MAX_PATH] = {};
-    GetModuleFileNameA(nullptr, exePath, MAX_PATH);
-    std::string commandLine = Format("\"%s\" --child --exact %s --ports %u,%u,%u --test-timeout %d%s",
-        exePath, test.name, g_server.http, g_server.http2, g_server.https, options.testTimeoutSeconds, options.trace ? " --trace" : "");
-    std::vector<char> mutableCommandLine(commandLine.begin(), commandLine.end());
-    mutableCommandLine.push_back('\0');
+    std::vector<std::string> args{
+        platform::ExecutablePath(), "--child", "--exact", test.name,
+        "--ports", Format("%u,%u,%u", g_server.http, g_server.http2, g_server.https),
+        "--test-timeout", std::to_string(options.testTimeoutSeconds) };
+    if (options.trace)
+    {
+        args.push_back("--trace");
+    }
 
-    STARTUPINFOA si{};
-    si.cb = sizeof(si);
-    PROCESS_INFORMATION pi{};
-    if (!CreateProcessA(nullptr, mutableCommandLine.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi))
+    platform::ChildProcess child;
+    std::string error;
+    if (!child.Start(args, platform::ChildProcess::Options{}, error))
     {
         result.outcome = Outcome::Fail;
-        result.detail = Format("could not start the child process (%lu)", GetLastError());
+        result.detail = "could not start the child process: " + error;
         return result;
     }
-    CloseHandle(pi.hThread);
-    DWORD wait = WaitForSingleObject(pi.hProcess, static_cast<DWORD>(options.testTimeoutSeconds + 30) * 1000);
-    DWORD code = ChildExitFail;
-    if (wait != WAIT_OBJECT_0)
+    int code = child.Wait(std::chrono::seconds{ options.testTimeoutSeconds + 30 });
+    switch (code)
     {
-        TerminateProcess(pi.hProcess, ChildExitFail);
-        WaitForSingleObject(pi.hProcess, 5000);
+    case -1:
+        child.Kill();
         result.outcome = Outcome::Fail;
         result.detail = "isolated child process did not exit";
+        break;
+    case ChildExitPass: result.outcome = Outcome::Pass; break;
+    case ChildExitSkip: result.outcome = Outcome::Skip; result.detail = "skipped in the isolated child (see its output above)"; break;
+    default: result.outcome = Outcome::Fail; result.detail = Format("isolated child exited with %d (see its output above)", code); break;
     }
-    else
-    {
-        GetExitCodeProcess(pi.hProcess, &code);
-        switch (code)
-        {
-        case ChildExitPass: result.outcome = Outcome::Pass; break;
-        case ChildExitSkip: result.outcome = Outcome::Skip; result.detail = "skipped in the isolated child (see its output above)"; break;
-        default: result.outcome = Outcome::Fail; result.detail = Format("isolated child exited with %lu (see its output above)", code); break;
-        }
-    }
-    CloseHandle(pi.hProcess);
     return result;
 }
 
@@ -473,9 +468,8 @@ bool Matches(const Options& options, const char* name)
 
 std::string EnvOr(const char* name, const std::string& fallback)
 {
-    char buffer[4096];
-    DWORD n = GetEnvironmentVariableA(name, buffer, sizeof(buffer));
-    return (n > 0 && n < sizeof(buffer)) ? std::string{ buffer } : fallback;
+    std::string value = platform::GetEnv(name);
+    return value.empty() ? fallback : value;
 }
 
 } // namespace
@@ -483,6 +477,7 @@ std::string EnvOr(const char* name, const std::string& fallback)
 int main(int argc, char** argv)
 {
     setvbuf(stdout, nullptr, _IONBF, 0);
+    platform::InstallCrashHandler(const_cast<const char* const*>(&g_runningTest));
 
     Options options;
     if (!ParseArgs(argc, argv, options))
@@ -525,7 +520,7 @@ int main(int argc, char** argv)
     if (!ports.empty())
     {
         unsigned a = 0, b = 0, c = 0;
-        if (sscanf_s(ports.c_str(), "%u,%u,%u", &a, &b, &c) != 3)
+        if (sscanf(ports.c_str(), "%u,%u,%u", &a, &b, &c) != 3)
         {
             fprintf(stderr, "Invalid --ports / LHC_E2E_PORTS value '%s' (expected <http>,<http2>,<https>)\n", ports.c_str());
             return 1000;
@@ -556,7 +551,7 @@ int main(int argc, char** argv)
         if (g_server.https == 0)
         {
             printf("WARNING: HTTPS is unavailable, so the HTTPS tests will be skipped: %s\n", g_server.httpsError.c_str());
-            SetEnvironmentVariableA("LHC_E2E_HTTPS_ERROR", g_server.httpsError.c_str());
+            platform::SetEnv("LHC_E2E_HTTPS_ERROR", g_server.httpsError);
         }
     }
 
@@ -580,6 +575,7 @@ int main(int argc, char** argv)
         {
             printf("[ RUN    ] %s%s\n", test.name, test.isolated ? " (isolated child process)" : "");
         }
+        g_runningTest = test.name;
         auto start = std::chrono::steady_clock::now();
 
         if (test.isolated && !options.child)
@@ -634,6 +630,7 @@ int main(int argc, char** argv)
         }
     }
 
+    g_runningTest = "<none: after the last test, during summary / process exit>";
     double total = std::chrono::duration<double>(std::chrono::steady_clock::now() - suiteStart).count();
     int passed = 0, failed = 0, skipped = 0, notRun = 0;
     for (const auto& r : results)
@@ -653,7 +650,7 @@ int main(int argc, char** argv)
         fflush(stdout);
         fflush(stderr);
         // Isolated tests may leave libHttpClient work in flight on purpose; don't run destructors.
-        TerminateProcess(GetCurrentProcess(), static_cast<UINT>(childCode));
+        platform::ExitImmediately(childCode);
     }
 
     printf("\n==== libHttpClient E2E summary: %d passed, %d failed, %d skipped, %d not run (%zu total) in %.1f s ====\n",
@@ -687,7 +684,7 @@ int main(int argc, char** argv)
         // destructors race it.
         fflush(stdout);
         fflush(stderr);
-        TerminateProcess(GetCurrentProcess(), static_cast<UINT>(exitCode));
+        platform::ExitImmediately(exitCode);
     }
     return exitCode;
 }

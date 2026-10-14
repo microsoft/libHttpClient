@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //
 // Minimal test framework for the libHttpClient end-to-end tests. The tests run against the real
-// platform providers (WinHTTP on Win32) and the loopback server in Tests/E2E/server.
+// platform providers (WinHTTP on Win32; curl + websocketpp on Linux) and the loopback server in
+// Tests/E2E/server. OS-specific harness code lives in E2EPlatform.h/.cpp.
 //
 // Register a test with E2E_TEST(name) { ... } in any .cpp in this project. By default the runner
 // calls HCInitialize() before the test and HCCleanupAsync() after it (and fails the test if
@@ -11,13 +12,16 @@
 
 #pragma once
 
+#if defined(_WIN32)
 #include <windows.h>
+#endif
 #include <httpClient/httpClient.h>
 
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -25,6 +29,26 @@
 
 namespace e2e
 {
+
+// Which built-in HTTP / WebSocket providers this binary exercises. Tests use these to state
+// per-provider expectations where the platform stacks legitimately differ.
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
+#define E2E_HTTP_WINHTTP 1
+#elif HC_PLATFORM == HC_PLATFORM_LINUX
+#define E2E_HTTP_CURL 1
+#elif HC_PLATFORM_IS_APPLE
+#define E2E_HTTP_APPLE 1
+#endif
+constexpr const char* HttpProviderName =
+#if defined(E2E_HTTP_WINHTTP)
+    "WinHTTP";
+#elif defined(E2E_HTTP_CURL)
+    "curl";
+#elif defined(E2E_HTTP_APPLE)
+    "NSURLSession";
+#else
+    "unknown";
+#endif
 
 struct TestFailure
 {

@@ -4,19 +4,22 @@
 #pragma once
 
 #include "E2ETestFramework.h"
+#include "E2EPlatform.h"
 
 namespace e2e
 {
 
 // Starts Tests/E2E/server/lhc_test_server.py in a child process, reads the JSON port line it
-// prints, and kills it (via a kill-on-close job object) when stopped or when this process exits.
+// prints, and kills it when stopped. If this process dies without stopping it, the server still
+// exits: on Windows via a kill-on-close job object, elsewhere via the server's --parent-pid
+// watchdog (and its --timeout backstop).
 class TestServer
 {
 public:
     struct LaunchOptions
     {
-        std::string script; // empty = search upwards from the exe for Tests\E2E\server\lhc_test_server.py
-        std::string python; // empty = try "python", then "py -3"
+        std::string script; // empty = search upwards from the exe for Tests/E2E/server/lhc_test_server.py
+        std::string python; // empty = try "python" then "py -3" (Windows) or "python3" then "python"
         bool verbose{ false };
     };
 
@@ -30,11 +33,9 @@ public:
     const std::string& ScriptPath() const { return m_script; }
 
 private:
-    bool TryStart(const std::string& commandLine, ServerInfo& info, std::string& error);
+    bool TryStart(const std::vector<std::string>& args, ServerInfo& info, std::string& error);
 
-    HANDLE m_job{ nullptr };
-    HANDLE m_process{ nullptr };
-    HANDLE m_stdoutRead{ nullptr };
+    std::unique_ptr<platform::ChildProcess> m_process;
     std::string m_script;
 };
 

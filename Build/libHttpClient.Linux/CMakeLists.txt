@@ -13,6 +13,7 @@ enable_testing()
 option(HC_NOWEBSOCKETS "Disable WebSocket support" OFF)
 option(HC_ENABLE_WEBSOCKET_COMPRESSION "Enable compression-capable WebSocket provider support" ON)
 option(HC_BUILD_UNIT_TESTS "Build the portable unit tests (libHttpClient.UnitTests, ctest label 'unit')" ON)
+option(HC_BUILD_E2E_TESTS "Build the end-to-end tests against the loopback server (libHttpClient.E2E, ctest label 'e2e')" ON)
 option(HC_ENABLE_SANITIZERS "Build every target with AddressSanitizer + UndefinedBehaviorSanitizer (test builds only)" OFF)
 
 if (HC_ENABLE_SANITIZERS)
@@ -622,6 +623,25 @@ set_tests_properties(
 if (HC_BUILD_UNIT_TESTS)
     include("../libHttpClient.CMake/UnitTests.cmake")
     hc_add_unit_tests("${PATH_TO_ROOT}" "${FLAGS}" "${FLAGS_DEBUG}" "${FLAGS_RELEASE}")
+endif()
+
+#################################################
+### End-to-end tests (Tests/E2E)              ###
+#################################################
+# The Tests/E2E suite against this build's real providers (curl HTTP, websocketpp WebSockets) and
+# the Python loopback server it starts itself. ctest label "e2e"; needs python3 at test time.
+if (HC_BUILD_E2E_TESTS AND NOT HC_NOWEBSOCKETS)
+    set(HC_E2E_LIBRARIES "${PROJECT_NAME}")
+    if (NOT BUILD_SHARED_LIBS)
+        list(APPEND HC_E2E_LIBRARIES "${LIBCURL_BINARY_PATH}" "${LIBSSL_BINARY_PATH}" "${LIBCRYPTO_BINARY_PATH}")
+    endif()
+    include("../libHttpClient.CMake/E2ETests.cmake")
+    hc_add_e2e_tests(
+        ROOT "${PATH_TO_ROOT}"
+        LIBRARIES ${HC_E2E_LIBRARIES}
+        FLAGS ${FLAGS} -Werror
+        FLAGS_DEBUG ${FLAGS_DEBUG}
+        FLAGS_RELEASE ${FLAGS_RELEASE})
 endif()
 
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
