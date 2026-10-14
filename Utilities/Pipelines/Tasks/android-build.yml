@@ -5,16 +5,22 @@ parameters:
 steps:
   - template: checkout.yml
 
+  # The NDK and CMake versions must match Build/*/build.gradle (ndkVersion, externalNativeBuild.cmake.version).
+  # Hosted images ship the SDK command-line tools under cmdline-tools\latest (the old tools\bin is gone).
   - task: CmdLine@2
-    displayName: "Install the required Android NDK"
+    displayName: "Install the required Android NDK and CMake"
     inputs:
       targetType: inline
-      script: '%ANDROID_HOME%\tools\bin\sdkmanager --install "ndk;22.1.7171670"'
+      script: |
+        echo y | "%ANDROID_HOME%\cmdline-tools\latest\bin\sdkmanager.bat" --install "ndk;27.2.12479018" "cmake;3.18.1"
 
+  # The workspace uses Android Gradle Plugin 4.1 / Gradle 6.6, which need JDK 11.
   - task: Gradle@2
     displayName: "Build libHttpClient.Android.Workspace"
     inputs:
       gradleWrapperFile: Build/libHttpClient.Android.Workspace/gradlew
       workingDirectory: Build/libHttpClient.Android.Workspace
       tasks: assemble${{ parameters.configuration }}
+      javaHomeOption: JDKVersion
+      jdkVersionOption: '1.11'
       publishJUnitResults: false
