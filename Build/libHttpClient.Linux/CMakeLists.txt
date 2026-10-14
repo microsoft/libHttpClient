@@ -12,6 +12,18 @@ enable_testing()
 
 option(HC_NOWEBSOCKETS "Disable WebSocket support" OFF)
 option(HC_ENABLE_WEBSOCKET_COMPRESSION "Enable compression-capable WebSocket provider support" ON)
+option(HC_BUILD_UNIT_TESTS "Build the portable unit tests (libHttpClient.UnitTests, ctest label 'unit')" ON)
+option(HC_ENABLE_SANITIZERS "Build every target with AddressSanitizer + UndefinedBehaviorSanitizer (test builds only)" OFF)
+
+if (HC_ENABLE_SANITIZERS)
+    # Applied directory-wide so the library, the taskqueue repros and the unit tests are all
+    # instrumented. -fno-sanitize-recover makes any UBSan finding fail the test.
+    set(HC_SANITIZER_FLAGS -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+    add_compile_options(${HC_SANITIZER_FLAGS})
+    string(REPLACE ";" " " HC_SANITIZER_LINK_FLAGS "${HC_SANITIZER_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${HC_SANITIZER_LINK_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${HC_SANITIZER_LINK_FLAGS}")
+endif()
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
@@ -601,5 +613,15 @@ set_tests_properties(
     PROPERTIES
     LABELS "taskqueue"
 )
+
+#################################################
+### Portable unit tests (Tests/UnitTests)      ###
+#################################################
+# The shared TE/TAEF unit tests, built with the in-house portable runner against the Generic
+# platform (no curl/OpenSSL needed: `make libHttpClient.UnitTests` builds just this target).
+if (HC_BUILD_UNIT_TESTS)
+    include("../libHttpClient.CMake/UnitTests.cmake")
+    hc_add_unit_tests("${PATH_TO_ROOT}" "${FLAGS}" "${FLAGS_DEBUG}" "${FLAGS_RELEASE}")
+endif()
 
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)

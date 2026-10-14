@@ -59,6 +59,34 @@ build directory with:
 ctest --output-on-failure -R websocket-compression-linux
 ```
 
+### Unit tests
+
+The CMake project also builds `libHttpClient.UnitTests`: the shared unit tests in
+`Tests/UnitTests/Tests/*.cpp` (the same sources the Windows TE/TAEF projects run), compiled with
+the header-only portable runner in `Tests/UnitTests/Support/Portable` against the Generic platform.
+It does not need cURL or OpenSSL, so it can be built on its own. From the CMake build directory:
+
+```
+make libHttpClient.UnitTests
+ctest --output-on-failure -L unit                   # the unit tests
+ctest --output-on-failure -L "unit|taskqueue"       # plus the TaskQueue/WaitTimer repros (CI)
+```
+
+The executable can also be run directly (it lives under `Out/x64/{Configuration}/libHttpClient.Linux`)
+with `--list` or `--filter=<glob>[,<glob>...]`, e.g. `--filter=HttpTests::*,-*Retry*`. New
+`Tests/UnitTests/Tests/*.cpp` files are picked up automatically; files that cannot build off
+Windows are listed in `Build/libHttpClient.CMake/UnitTests.cmake`. Pass `-DHC_BUILD_UNIT_TESTS=OFF`
+to skip the target.
+
+```
+./libHttpClient_Linux.bash -c Debug -st -san
+```
+
+`-san|--sanitizers` (CMake `-DHC_ENABLE_SANITIZERS=ON`) builds every target with AddressSanitizer
+and UndefinedBehaviorSanitizer; CI runs `ctest -L "unit|taskqueue"` on such a Debug build. With
+clang 14 on kernels that use 32 bits of mmap ASLR entropy the ASan runtime can crash at startup;
+run the tests with `setarch $(uname -m) -R ctest ...` (or `sysctl vm.mmap_rnd_bits=28`).
+
 If the bash script fails to run and produces the error:
 ```
 /bin/bash^M: bad interpreter

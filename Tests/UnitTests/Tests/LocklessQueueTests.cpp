@@ -99,14 +99,28 @@ public:
         }
 
         std::thread popThreads[totalPopThreads];
+        std::atomic<bool> pushesDone{ false };
 
         for(uint32_t threadIndex = 0; threadIndex < totalPopThreads; threadIndex++)
         {
-            std::thread newThread([&list, slotsPtr]
+            std::thread newThread([&list, slotsPtr, &pushesDone]
             {
+                // The queue can be momentarily empty while pushers are still running (e.g. when the
+                // pop threads get scheduled first), so only stop once every push has finished.
                 uint32_t* node;
-                while(list.pop_front(node))
+                for (;;)
                 {
+                    bool const done = pushesDone.load();
+                    if (!list.pop_front(node))
+                    {
+                        if (done)
+                        {
+                            break;
+                        }
+                        std::this_thread::yield();
+                        continue;
+                    }
+
                     if (slotsPtr[*node])
                     {
                         // Way too much contention in the logging system to verify directly
@@ -125,6 +139,7 @@ public:
         {
             pushThreads[threadIndex].join();
         }
+        pushesDone = true;
 
         // And now that all the pushes are complete, wait on the pops.
 

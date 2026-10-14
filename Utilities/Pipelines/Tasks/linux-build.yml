@@ -1,6 +1,11 @@
 parameters:
   - name: configuration
     type: string
+  # Debug-only test leg: build every target with AddressSanitizer + UndefinedBehaviorSanitizer
+  # (HC_ENABLE_SANITIZERS) and run the unit + taskqueue tests under them. Skips the shared build.
+  - name: sanitizers
+    type: boolean
+    default: false
 
 steps:
   - template: checkout.yml
@@ -23,25 +28,43 @@ steps:
       arguments: '-c ${{ parameters.configuration }}'
 
   - task: Bash@3
-    displayName: 'Build libHttpClient Static'
+    ${{ if parameters.sanitizers }}:
+      displayName: 'Build libHttpClient Static (ASan + UBSan)'
+    ${{ else }}:
+      displayName: 'Build libHttpClient Static'
     inputs:
       filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
-      arguments: '-c ${{ parameters.configuration }} -nc -ns -st'
+      ${{ if parameters.sanitizers }}:
+        arguments: '-c ${{ parameters.configuration }} -nc -ns -st -san'
+      ${{ else }}:
+        arguments: '-c ${{ parameters.configuration }} -nc -ns -st'
 
   - task: Bash@3
-    displayName: 'Run libHttpClient Linux tests (ctest)'
+    ${{ if parameters.sanitizers }}:
+      displayName: 'Run libHttpClient Linux tests under ASan + UBSan (ctest)'
+    ${{ else }}:
+      displayName: 'Run libHttpClient Linux tests (ctest)'
     inputs:
       targetType: 'inline'
       script: |
         set -e
         cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
-        # Run every test labelled "taskqueue" so new regression scenarios are
-        # picked up automatically just by adding the label in CMake (no pipeline
-        # change needed).
-        ctest --output-on-failure -L taskqueue
+        if [ "${{ parameters.sanitizers }}" = "True" ]; then
+          # clang 14's ASan runtime intermittently segfaults at startup when the kernel uses
+          # 32 bits of mmap ASLR entropy (the default on current hosted images); 28 bits is safe.
+          sudo sysctl -w vm.mmap_rnd_bits=28
+          export ASAN_OPTIONS=detect_leaks=1:strict_init_order=1
+          export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
+          export ASAN_SYMBOLIZER_PATH="$(command -v llvm-symbolizer || ls /usr/bin/llvm-symbolizer-* 2>/dev/null | head -n 1 || true)"
+        fi
+        # "unit" is the portable unit-test executable (Tests/UnitTests, libHttpClient.UnitTests);
+        # "taskqueue" are the standalone TaskQueue/WaitTimer regression repros. Labels let new tests
+        # be picked up just by labelling them in CMake (no pipeline change needed).
+        ctest --output-on-failure -L "unit|taskqueue"
 
-  - task: Bash@3
-    displayName: 'Build libHttpClient Shared'
-    inputs:
-      filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
-      arguments: '-c ${{ parameters.configuration }} -nc -ns'
+  - ${{ if not(parameters.sanitizers) }}:
+    - task: Bash@3
+      displayName: 'Build libHttpClient Shared'
+      inputs:
+        filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
+        arguments: '-c ${{ parameters.configuration }} -nc -ns'

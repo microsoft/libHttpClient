@@ -195,3 +195,14 @@ jobs:
       - template: Tasks/linux-build.yml
         parameters:
           configuration: $(Configuration)
+
+  - job: LinuxSanitizers
+    displayName: libHttpClient Linux ASan + UBSan (Debug)
+    pool:
+      vmImage: ubuntu-22.04
+    timeoutInMinutes: 180
+    steps:
+      - template: Tasks/linux-build.yml
+        parameters:
+          configuration: Debug
+          sanitizers: true
