@@ -110,7 +110,9 @@ protected:
 
 private:
     std::atomic<uint32_t> m_refs{ 0 };
-    std::atomic_flag m_deleting;
+    // Explicitly clear: before C++20 a default-constructed atomic_flag has an
+    // unspecified value, and a set flag would make Release() skip deletion.
+    std::atomic_flag m_deleting = ATOMIC_FLAG_INIT;
 };
 
 static uint32_t const SUBMIT_CALLBACK_MAX = 32;
