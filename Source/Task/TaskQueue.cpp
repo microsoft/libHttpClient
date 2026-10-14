@@ -1410,6 +1410,36 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
     _In_ uint64_t dueTime,
     _In_ uint64_t now)
 {
+    // Releasing a port context can drop the last reference to its queue, and the queue owns this
+    // port. On the STL WaitTimer that release happens right here on the timer thread, so the port
+    // (including m_queueList, which readyEntries below shares) would be destroyed while this
+    // function is still using it (AddressSanitizer heap-use-after-free). Hand every reference this
+    // function would release to this holder instead. Any held context keeps its queue, and so this
+    // port, alive; the holder is declared before the loop, so the last release happens after every
+    // other local (readyEntries) is gone and nothing touches the port afterwards.
+    struct DeferredPortContextRelease
+    {
+        ITaskQueuePortContext* held = nullptr;
+
+        void Hold(_In_ ITaskQueuePortContext* portContext) noexcept
+        {
+            ITaskQueuePortContext* previous = held;
+            held = portContext;
+            if (previous != nullptr)
+            {
+                previous->Release(); // safe: 'held' keeps the port alive
+            }
+        }
+
+        ~DeferredPortContextRelease()
+        {
+            if (held != nullptr)
+            {
+                held->Release();
+            }
+        }
+    } deferredRelease;
+
     for (;;)
     {
         // Collect due entries locally first and only touch the active queue
@@ -1463,8 +1493,8 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
         {
             if (!AppendEntry(readyEntry, readyEntryNode))
             {
-                readyEntry.portContext->Release();
                 m_queueList->free_node(readyEntryNode);
+                deferredRelease.Hold(readyEntry.portContext);
             }
         }
 
@@ -1479,7 +1509,7 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
                 if (nextItem.enqueueTime != dueTime &&
                     !ArmTimerForNextPendingDueTime(dueTime, nextItem.enqueueTime))
                 {
-                    nextItem.portContext->Release();
+                    deferredRelease.Hold(nextItem.portContext);
                     now = m_timer.GetCurrentTime();
                     dueTime = m_timerDue.load();
                     continue;
@@ -1495,7 +1525,7 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
                 CancelPendingEntries(nextItem.portContext, true);
             }
 
-            nextItem.portContext->Release();
+            deferredRelease.Hold(nextItem.portContext);
 
             // A callback can be inserted after the scan while the fired due
             // time is still published. It will not arm itself if its deadline
