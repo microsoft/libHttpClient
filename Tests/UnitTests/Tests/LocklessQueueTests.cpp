@@ -15,6 +15,8 @@ public:
     BEGIN_TEST_CLASS(LocklessQueueTests)
     END_TEST_CLASS()
 
+    DEFINE_TEST_METHOD_FIXTURE();
+
 #else
     DEFINE_TEST_CLASS_PROPS(LocklessQueueTests);
 #endif

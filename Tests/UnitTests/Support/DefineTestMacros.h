@@ -51,6 +51,44 @@
     TEST_CLASS_SETUP(TestClassSetup) { UnitTestBase::StartResponseLogging(); return true; } \
     TEST_CLASS_CLEANUP(TestClassCleanup) { UnitTestBase::RemoveResponseLogging(); return true; }  \
 
+// Per-test-method isolation fixture (see TestEnvironment.h). Before each test it forces libHttpClient
+// back to a clean, uninitialized state; after each test it runs HCCleanup if the test did not (for
+// example because a failed VERIFY threw out of it), drops installed perform/WebSocket callbacks, mocks,
+// memory hooks and trace settings, and fails a test that leaked something it should have cleaned up
+// itself (unless it already failed a VERIFY, so the original failure stays the reported one).
+// DEFINE_TEST_CLASS_PROPS includes it, so test classes get it automatically.
+//
+// The test frameworks allow only one method setup and one method cleanup per class, so a class that
+// needs its own per-test cleanup passes it as extraCleanup (a statement, run after the fixture
+// cleanup) instead of declaring TEST_METHOD_CLEANUP itself.
+#ifdef USING_TAEF
+    #define DEFINE_TEST_METHOD_FIXTURE_WITH_CLEANUP(extraCleanup) \
+        TEST_METHOD_SETUP(LhcTestMethodSetup) \
+        { \
+            return ::xbox::httpclienttest::TestEnvironment::SetUpTest(); \
+        } \
+        TEST_METHOD_CLEANUP(LhcTestMethodCleanup) \
+        { \
+            auto const lhcTearDownResult = ::xbox::httpclienttest::TestEnvironment::TearDownTest(); \
+            extraCleanup; \
+            return ::xbox::httpclienttest::TestEnvironment::ReportTearDown(lhcTearDownResult); \
+        }
+#else
+    #define DEFINE_TEST_METHOD_FIXTURE_WITH_CLEANUP(extraCleanup) \
+        TEST_METHOD_INITIALIZE(LhcTestMethodSetup) \
+        { \
+            ::xbox::httpclienttest::TestEnvironment::SetUpTest(); \
+        } \
+        TEST_METHOD_CLEANUP(LhcTestMethodCleanup) \
+        { \
+            auto const lhcTearDownResult = ::xbox::httpclienttest::TestEnvironment::TearDownTest(); \
+            extraCleanup; \
+            ::xbox::httpclienttest::TestEnvironment::ReportTearDown(lhcTearDownResult); \
+        }
+#endif
+
+#define DEFINE_TEST_METHOD_FIXTURE() DEFINE_TEST_METHOD_FIXTURE_WITH_CLEANUP(;)
+
 #ifdef USING_TAEF
     //void VERIFY_ARE_EQUAL_STR(Platform::String^ expected, std::wstring actual);
     //void VERIFY_ARE_EQUAL_STR(Platform::String^ expected, Platform::String^ actual);
@@ -58,7 +96,8 @@
 
     #define DEFINE_TEST_CLASS(x) class x : public UnitTestBase
     #define DEFINE_TEST_CLASS_PROPS(x) TEST_CLASS(x);\
-        DEFINE_TEST_CLASS_SETUP();
+        DEFINE_TEST_CLASS_SETUP(); \
+        DEFINE_TEST_METHOD_FIXTURE()
     #define DEFINE_TEST_CASE(x) TEST_METHOD(x)
     #define DEFINE_TEST_CASE_PROPERTIES(x) DEFINE_TEST_CASE_PROPERTIES_TAEF(x)
     #define DEFINE_TEST_CASE_PROPERTIES_IGNORE(x) DEFINE_TEST_CASE_PROPERTIES_TAEF_IGNORE()
@@ -77,14 +116,14 @@
     //#define VERIFY_ARE_EQUAL_STR(__expected, __actual) VerifyEqualStr((__expected), (__actual), (L#__actual), PRIVATE_VERIFY_ERROR_INFO)
 #else 
     #define DEFINE_TEST_CLASS(x) TEST_CLASS(x)
-    #define DEFINE_TEST_CLASS_PROPS(x) ;
+    #define DEFINE_TEST_CLASS_PROPS(x) DEFINE_TEST_METHOD_FIXTURE()
     //#define DEFINE_TEST_CASE(x) DEFINE_TEST_CASE_TE(x)
     #define DEFINE_TEST_CASE_PROPERTIES(x) DEFINE_TEST_CASE_PROPERTIES_TE()
     #define DEFINE_TEST_CASE_PROPERTIES_IGNORE(x) DEFINE_TEST_CASE_PROPERTIES_TE()
     #define DEFINE_TEST_CASE_PROPERTIES_FOCUS(x) DEFINE_TEST_CASE_PROPERTIES_TE()
     #define DEFINE_TEST_CASE_PROPERTIES_FAILING(x) DEFINE_TEST_CASE_PROPERTIES_TE()
     #define TEST_LOG(x) Logger::WriteMessage(x)
-    #define VERIFY_ARE_NOT_EQUAL(expected, actual) Assert::AreNotEqual(expected, actual)
+    #define VERIFY_ARE_NOT_EQUAL(expected, actual) LHC_TRACK_VERIFY(Assert::AreNotEqual(expected, actual))
 #endif
 
 

@@ -8,3 +8,4 @@
 #include "TE/UnitTestIncludes_TE.h"
 #include "DefineTestMacros.h"
 #endif
+#include "TestEnvironment.h"

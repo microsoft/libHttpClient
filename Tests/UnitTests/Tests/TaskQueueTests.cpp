@@ -115,26 +115,14 @@ public:
     BEGIN_TEST_CLASS(TaskQueueTests)
     END_TEST_CLASS()
 
-    TEST_METHOD_CLEANUP(TestCleanup)
-    {
-        //
-        // Note: this is a global refcount for tracking
-        // leaks in the task queue.  If any other tests fail
-        // this may also fail, as those tests could have leaked.
-        //
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
-        return true;
-    }
-
-#else
-    DEFINE_TEST_CLASS_PROPS(TaskQueueTests);
-
-    TEST_METHOD_CLEANUP(TestCleanup)
-    {
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
-    }
-
 #endif
+
+    //
+    // Note: XTaskQueueUninitialize checks a global refcount for tracking
+    // leaks in the task queue.  If any other tests fail
+    // this may also fail, as those tests could have leaked.
+    //
+    DEFINE_TEST_METHOD_FIXTURE_WITH_CLEANUP(VERIFY_IS_TRUE(XTaskQueueUninitialize(250)));
 
     DEFINE_TEST_CASE(VerifyStockQueue)
     {
