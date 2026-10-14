@@ -2,30 +2,46 @@
 
 End-to-end (E2E) tests that drive the **real platform providers** against a local loopback
 server. Unlike the unit tests (`Tests/UnitTests`, Generic platform, no network), these exercise
-WinHTTP for HTTP and WebSockets, and the websocketpp provider that the Win32 build switches to
-when WebSocket compression is requested. Nothing leaves `127.0.0.1`, so they run on CI agents
-without internet access.
+the shipping network stacks. Nothing leaves `127.0.0.1`, so they run on CI agents without
+internet access. One set of test sources builds for every platform:
+
+| Platform | HTTP provider | WebSocket provider | Build | CI |
+|---|---|---|---|---|
+| Win32 x64 | WinHTTP | WinHTTP (websocketpp when compression is requested) | `libHttpClient.E2E.Win32.vcxproj` | `vs2022-build.yml`, x64 Debug + Release |
+| Linux | curl | websocketpp | `libHttpClient.E2E` in `Build/libHttpClient.Linux` (`HC_BUILD_E2E_TESTS`, default ON), ctest label `e2e` | `linux-build.yml`, Debug + Release + ASan/UBSan |
+| macOS | NSURLSession | websocketpp | `libHttpClient.E2E` in `Build/libHttpClient.UnitTest.CMake` (`-DHC_BUILD_E2E_TESTS=ON`, opt-in) | `macos-build.yml`, **experimental** (`continueOnError`) |
 
 | Piece | Location |
 |---|---|
 | Test server (Python 3.8+, **standard library only**) | `server/lhc_test_server.py` |
 | TLS certificate | none in the repo: the server generates a throwaway one at startup (see below) |
-| Win32 test runner + tests | `libHttpClient.E2E.Win32.vcxproj` (`E2ETestMain.cpp`, `HttpE2ETests.cpp`, `WebSocketE2ETests.cpp`) |
-| CI | `Utilities/Pipelines/Tasks/vs2022-build.yml`, x64 Debug and Release legs |
+| Runner + framework | `E2ETestMain.cpp`, `E2ETestFramework.h`, `E2EHelpers.*`, `TestServer.*` (portable) |
+| OS-specific harness code (processes, pipes, env, sockets, crash handler) | `E2EPlatform.h/.cpp` (`_WIN32` / POSIX) |
+| Tests | `HttpE2ETests.cpp`, `WebSocketE2ETests.cpp` |
+| CMake target definition (shared by Linux and macOS) | `Build/libHttpClient.CMake/E2ETests.cmake` |
 
 ## Running locally
 
-Prerequisites: Python 3 on `PATH` (`python`, or the `py -3` launcher; no pip packages), and the
-`openssl` CLI for the HTTPS tests (on `PATH` or from Git for Windows; without it they skip).
+Prerequisites: Python 3 on `PATH` (`python` / `py -3` on Windows, `python3` / `python`
+elsewhere; no pip packages), and the `openssl` CLI for the HTTPS tests (on `PATH`, or from Git for
+Windows; without it they skip).
 
-1. Build `libHttpClient.vs2022.sln` for **x64** (the project is x64-only in the solution), or just
-   the project:
-   `msbuild Tests\E2E\libHttpClient.E2E.Win32.vcxproj /p:Platform=x64 /p:Configuration=Debug`
-2. Run `Out\x64\Debug\libHttpClient.E2E.Win32\libHttpClient.E2E.Win32.exe`.
+**Windows:** build `libHttpClient.vs2022.sln` for **x64** (the project is x64-only in the
+solution), or just the project:
+`msbuild Tests\E2E\libHttpClient.E2E.Win32.vcxproj /p:Platform=x64 /p:Configuration=Debug`,
+then run `Out\x64\Debug\libHttpClient.E2E.Win32\libHttpClient.E2E.Win32.exe`.
 
-The exe starts the server itself (in a kill-on-close job object), reads the ports it prints,
-runs the tests and stops it. The exit code is the number of failed tests; skips don't count.
+**Linux:** build OpenSSL and curl first (`Build/libHttpClient.Linux/openssl_Linux.bash -c Debug`,
+`curl_Linux.bash -c Debug`), then `Build/libHttpClient.Linux/libHttpClient_Linux.bash -c Debug -nc -ns -st`
+and `cd Int/CMake/libHttpClient.Linux && ctest --output-on-failure -L e2e` (or run
+`Out/x64/Debug/libHttpClient.Linux/libHttpClient.E2E` directly).
 
+**macOS:** see the `HC_BUILD_E2E_TESTS` block in `Build/libHttpClient.UnitTest.CMake/CMakeLists.txt`.
+
+The exe starts the server itself, reads the ports it prints, runs the tests and stops it. If the
+exe dies without stopping it, the server exits anyway (Windows: kill-on-close job object; POSIX:
+the server's `--parent-pid` watchdog). The exit code is the number of failed tests; skips don't
+count. On POSIX a fatal signal prints the running test and a backtrace before the process dies.
 Options:
 
 | Option | Meaning |
@@ -148,6 +164,23 @@ E2E_TEST(http_example)
   and leak them (after `PoisonProcess`) if they don't complete, so a hang becomes a failure
   rather than a crash.
 - Keep tests fast (the whole suite runs in well under a minute) and independent of order.
+- Portability: no OS APIs in tests; use `platform::` (`E2EPlatform.h`) for sleeps, sockets, etc.
+  Where providers legitimately differ, branch on `E2E_HTTP_WINHTTP` / `E2E_HTTP_CURL` /
+  `E2E_HTTP_APPLE` or `HC_PLATFORM` and state each provider's expectation (don't weaken an
+  existing one), or `Skip` with the reason. APIs that only exist on some platforms
+  (`HCHttpCallRequestSetSSLValidation`, the WebSocket fragment callback) need `#if` guards.
+
+## Per-provider expectations
+
+| Test | WinHTTP (Win32) | curl / websocketpp (Linux) |
+|---|---|---|
+| `http_redirect_*` | Redirects are followed | The curl provider doesn't set `CURLOPT_FOLLOWLOCATION`: the 302 and its `Location` are returned to the caller (asserted) |
+| `http_progress_callbacks` | First report is > 0 | curl's first report is 0 (before any bytes move) |
+| `http_request_header_outside_latin1` | Header sent as ISO-8859-1; above U+00FF → `E_INVALIDARG` | Header sent as raw UTF-8 |
+| `https_ssl_validation_disabled` | Runs | Skipped: `HCHttpCallRequestSetSSLValidation` is Windows-only |
+| `http_global_request_limit_queues` | Runs | Skipped: `HCSettingsSetGlobalRequestLimit` is `E_NOTIMPL` off WinHTTP (by design) |
+| `ws_legacy_oversized_message_fragments` | Fragment callback | No fragment API; the message arrives whole (legacy 32 MB cap) |
+| `ws_deterministic_too_large_closes`, `ws_compression_negotiated` | Skipped if `HCWebSocketSetOptions` returns `E_NOT_SUPPORTED` (compression not compiled in, e.g. the first CI build of a fresh clone; #1034) | Compression test skipped likewise when built with `HC_ENABLE_WEBSOCKET_COMPRESSION=OFF` |
 
 ## Known issues recorded by the suite
 
@@ -162,3 +195,6 @@ E2E_TEST(http_example)
 - `http_connection_refused` doesn't check the platform error message (TODO once PR #1031 is in).
 - `http_request_header_outside_latin1`: WinHTTP sends header values as ISO-8859-1; a UTF-8 value
   with a code point above U+00FF fails the request with `E_INVALIDARG`.
+- `ws_many_queued_sends` also guards a fixed websocketpp bug: a send queued behind another used
+  to report `S_OK` from `XAsyncGetStatus` before its operation had started, so a caller that
+  waited on and freed it caused a use-after-free when the provider later began it.

@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //
-// WebSocket end-to-end tests: real WinHTTP WebSocket provider (and the websocketpp provider that
-// the Win32 build uses when compression is requested) against the loopback server.
+// WebSocket end-to-end tests against the loopback server. On Win32 this is the WinHTTP WebSocket
+// provider (and websocketpp, which the Win32 build switches to when compression is requested); on
+// Linux and Apple it is websocketpp throughout. Per-provider expectations are marked with
+// HC_PLATFORM checks; the Win32 expectations are unchanged.
 
 #include "E2EHelpers.h"
 
@@ -30,7 +32,7 @@ std::string WaitForServerClose(const std::string& id)
         {
             return log;
         }
-        Sleep(50);
+        platform::SleepMs(50);
     }
     Fail(__FILE__, __LINE__, "server never saw WebSocket " + id + " close: " + log);
 }
@@ -50,6 +52,21 @@ void ConnectOrFail(WebSocket& ws, const std::string& path)
 {
     HRESULT hr = ws.Connect(WsUrl(path));
     E2E_CHECK_MSG(SUCCEEDED(hr), "connect to %s failed: hr=%s platformError=%u", path.c_str(), HrToString(hr).c_str(), ws.ConnectResult().platformErrorCode);
+}
+
+// HCWebSocketSetOptions returns E_NOT_SUPPORTED (HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED)) when the
+// library was built without WebSocket compression support (HC_ENABLE_WEBSOCKET_COMPRESSION). On
+// Win32 that happens on the first MSBuild of a fresh clone, because the wintls Exists() check runs
+// before the vcpkg restore (fixed separately by #1034); on Linux with -nwc / HC_ENABLE_WEBSOCKET_
+// COMPRESSION=OFF. Skip rather than fail; any other failure is still a failure.
+void SetOptionsOrSkip(WebSocket& ws, HCWebSocketOptions options, const char* what)
+{
+    HRESULT hr = HCWebSocketSetOptions(ws, options);
+    if (hr == E_NOT_SUPPORTED)
+    {
+        Skip(std::string{ "HCWebSocketSetOptions(" } + what + ") returned E_NOT_SUPPORTED: WebSocket compression not compiled into this build; see #1034");
+    }
+    E2E_CHECK_MSG(SUCCEEDED(hr), "HCWebSocketSetOptions(%s) failed: %s", what, HrToString(hr).c_str());
 }
 
 } // namespace
@@ -115,6 +132,26 @@ E2E_TEST(ws_many_queued_sends)
         asyncs.push_back(new XAsyncBlock{});
         E2E_CHECK_HR(HCWebSocketSendMessageAsync(ws, messages[i].c_str(), asyncs.back()));
     }
+
+    // Every block must now belong to a started operation: E_PENDING, or genuinely completed with a
+    // result for this socket. (The websocketpp provider used to start a queued send's operation
+    // only when it reached the front of its queue, so a queued block still reported S_OK from
+    // XAsyncGetStatus; callers that waited on it freed it while the provider still held it.)
+    std::vector<bool> resultTaken(count, false);
+    for (int i = count - 1; i >= 0; --i)
+    {
+        if (XAsyncGetStatus(asyncs[i], false) != E_PENDING)
+        {
+            WebSocketCompletionResult result{};
+            HRESULT hr = HCGetWebSocketSendMessageResult(asyncs[i], &result);
+            // Note: send results carry the provider-side (observer) handle, not the caller's handle,
+            // on every provider; a never-started operation leaves the result zeroed.
+            E2E_CHECK_MSG(SUCCEEDED(hr) && result.websocket != nullptr, "send %d reported completion right after being queued, but has no result (hr=%s)", i, HrToString(hr).c_str());
+            E2E_CHECK_HR(result.errorCode);
+            resultTaken[i] = true;
+        }
+    }
+
     for (int i = 0; i < count; ++i)
     {
         HRESULT hr = WaitAsync(asyncs[i], std::chrono::seconds{ 15 });
@@ -124,7 +161,10 @@ E2E_TEST(ws_many_queued_sends)
             Fail(__FILE__, __LINE__, "queued send did not complete");
         }
         WebSocketCompletionResult result{};
-        HCGetWebSocketSendMessageResult(asyncs[i], &result);
+        if (!resultTaken[i])
+        {
+            HCGetWebSocketSendMessageResult(asyncs[i], &result);
+        }
         delete asyncs[i];
         E2E_CHECK_MSG(SUCCEEDED(hr) && SUCCEEDED(result.errorCode), "send %d: hr=%s errorCode=%s", i, HrToString(hr).c_str(), HrToString(result.errorCode).c_str());
     }
@@ -159,9 +199,10 @@ E2E_TEST(ws_large_binary_with_max_receive_buffer)
 
 E2E_TEST(ws_legacy_oversized_message_fragments)
 {
+    const size_t size = 100 * 1000;
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     // Legacy Win32 semantics: payloads larger than the receive buffer (default 20 KB) are surfaced
     // through the fragment handler.
-    const size_t size = 100 * 1000;
     WebSocket ws;
     ws.EnableFragmentHandler();
     ConnectOrFail(ws, "/ws/echo");
@@ -178,6 +219,19 @@ E2E_TEST(ws_legacy_oversized_message_fragments)
     E2E_CHECK_HR(ws.SendBinary(PatternBytes(0, 1000)));
     E2E_CHECK(ws.WaitForBinary(1));
     ws.DisconnectAndWait();
+#else
+    // websocketpp (Linux, Apple) has no fragment callback: legacy semantics keep its 32,000,000-byte
+    // maximum and ignore HCWebSocketSetMaxReceiveBufferSize, so an oversized message (relative to
+    // the Win32 20 KB default, and even to an explicit smaller buffer) arrives whole.
+    WebSocket ws;
+    E2E_CHECK_HR(HCWebSocketSetMaxReceiveBufferSize(ws, 16 * 1024));
+    ConnectOrFail(ws, "/ws/echo");
+    E2E_CHECK_HR(ws.SendText("__cmd:binary:" + std::to_string(size)));
+    E2E_CHECK_MSG(ws.WaitForBinary(1), "the %zu-byte message was not delivered", size);
+    E2E_CHECK_EQ(size, ws.Binaries()[0].size());
+    E2E_CHECK(IsPattern(ws.Binaries()[0].data(), size));
+    ws.DisconnectAndWait();
+#endif
 }
 
 E2E_TEST(ws_server_fragmented_message_reassembled)
@@ -198,7 +252,7 @@ E2E_TEST(ws_server_fragmented_message_reassembled)
 E2E_TEST(ws_deterministic_too_large_closes)
 {
     WebSocket ws;
-    E2E_CHECK_HR(HCWebSocketSetOptions(ws, HCWebSocketOptions::None));
+    SetOptionsOrSkip(ws, HCWebSocketOptions::None, "deterministic WebSocket semantics (HCWebSocketOptions::None)");
     E2E_CHECK_HR(HCWebSocketSetMaxReceiveBufferSize(ws, 16 * 1024));
     ConnectOrFail(ws, "/ws/echo");
     // Under the cap: delivered.
@@ -220,7 +274,7 @@ E2E_TEST(ws_ping_interval_and_server_ping)
     E2E_CHECK_EQ(1u, interval);
     // The server pings every 100 ms; the client must answer with pongs and keep working.
     ConnectOrFail(ws, "/ws/echo?ping_ms=100");
-    Sleep(700);
+    platform::SleepMs(700);
     E2E_CHECK_HR(ws.SendText("__ping__"));
     E2E_CHECK_HR(ws.SendText("still alive"));
     E2E_CHECK(ws.WaitForText(1));
@@ -364,7 +418,7 @@ E2E_TEST(ws_compression_negotiated)
     {
         const std::string id = UniqueId("deflate");
         WebSocket ws;
-        E2E_CHECK_HR(HCWebSocketSetOptions(ws, variant.options));
+        SetOptionsOrSkip(ws, variant.options, variant.name);
         HRESULT hr = ws.Connect(WsUrl("/ws/echo?id=" + id));
         E2E_CHECK_MSG(SUCCEEDED(hr), "%s: connect failed: hr=%s platformError=%u", variant.name, HrToString(hr).c_str(), ws.ConnectResult().platformErrorCode);
 

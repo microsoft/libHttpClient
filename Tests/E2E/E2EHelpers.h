@@ -4,6 +4,7 @@
 #pragma once
 
 #include "E2ETestFramework.h"
+#include "E2EPlatform.h"
 
 namespace e2e
 {

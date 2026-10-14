@@ -790,6 +790,8 @@ def main():
     parser.add_argument("--openssl", default=None, help="openssl executable to use (default: search PATH, then Git for Windows)")
     parser.add_argument("--no-https", action="store_true", help="don't serve HTTPS (simulates openssl being unavailable)")
     parser.add_argument("--verbose", action="store_true", help="log requests to stderr")
+    parser.add_argument("--parent-pid", type=int, default=0,
+                        help="POSIX only: exit when this process (our parent) exits")
     args = parser.parse_args()
     VERBOSE = args.verbose
 
@@ -820,12 +822,23 @@ def main():
 
     # Never read stdin: when launched in the background it may be closed.
     stop = threading.Event()
+    if args.parent_pid:
+        threading.Thread(target=watch_parent, args=(args.parent_pid, stop), daemon=True).start()
     try:
         stop.wait(args.timeout if args.timeout > 0 else None)
     except KeyboardInterrupt:
         pass
     for srv in servers.values():
         srv.shutdown()
+
+
+def watch_parent(parent_pid, stop):
+    """POSIX: exit when the test runner that started us goes away (it may be killed without
+    cleaning up; on Windows it uses a kill-on-close job object instead)."""
+    while not stop.wait(0.5):
+        if os.getppid() != parent_pid:
+            log("parent %d exited; shutting down" % parent_pid)
+            os._exit(0)
 
 
 if __name__ == "__main__":

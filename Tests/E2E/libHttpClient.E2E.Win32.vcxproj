@@ -40,11 +40,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="E2EHelpers.h" />
+    <ClInclude Include="E2EPlatform.h" />
     <ClInclude Include="E2ETestFramework.h" />
     <ClInclude Include="TestServer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="E2EHelpers.cpp" />
+    <ClCompile Include="E2EPlatform.cpp" />
     <ClCompile Include="E2ETestMain.cpp" />
     <ClCompile Include="HttpE2ETests.cpp" />
     <ClCompile Include="TestServer.cpp" />

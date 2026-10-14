@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //
-// HTTP end-to-end tests: real WinHTTP provider against the loopback server.
+// HTTP end-to-end tests: the platform HTTP provider (WinHTTP on Win32, curl on Linux) against the
+// loopback server. Where the providers legitimately differ, the expectation is spelled out per
+// provider (E2E_HTTP_WINHTTP / E2E_HTTP_CURL); the WinHTTP expectations are unchanged.
 
-#include <winsock2.h>
 #include "E2EHelpers.h"
 
 #include <algorithm>
@@ -22,29 +23,24 @@ std::string EchoField(const std::string& json, const char* key)
 // A port nothing is listening on: bind an ephemeral port, then release it.
 uint16_t UnusedLoopbackPort()
 {
-    WSADATA wsa{};
-    WSAStartup(MAKEWORD(2, 2), &wsa);
-    SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    addr.sin_port = 0;
-    uint16_t port = 0;
-    if (s != INVALID_SOCKET && bind(s, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == 0)
-    {
-        int len = sizeof(addr);
-        getsockname(s, reinterpret_cast<sockaddr*>(&addr), &len);
-        port = ntohs(addr.sin_port);
-    }
-    if (s != INVALID_SOCKET)
-    {
-        closesocket(s);
-    }
-    WSACleanup();
+    uint16_t port = platform::UnusedLoopbackPort();
     E2E_CHECK_MSG(port != 0, "could not reserve an ephemeral port");
     return port;
 }
 
+#if defined(E2E_HTTP_CURL)
+// The curl provider doesn't set CURLOPT_FOLLOWLOCATION, so a redirect is returned to the caller
+// as-is (WinHTTP and NSURLSession follow redirects). Check the 3xx and its Location header are
+// passed through intact. If the curl provider starts following redirects, drop this branch.
+void CheckRedirectPassedThrough(Call& call, HRESULT hr, const std::string& expectedLocation)
+{
+    E2E_CHECK_MSG(SUCCEEDED(hr) && call.Status() == 302, "expected the 302 to be returned unfollowed: hr=%s %s", HrToString(hr).c_str(), call.Describe().c_str());
+    std::string location;
+    E2E_CHECK_MSG(call.ResponseHeader("Location", location), "302 response has no Location header");
+    E2E_CHECK_EQ(expectedLocation, location);
+    Info("curl provider returned the 302 to the caller (Location: %s) instead of following it", location.c_str());
+}
+#endif
 // Collects every chunk handed to a custom response body write function.
 struct BodyCollector
 {
@@ -89,9 +85,15 @@ struct ProgressRecorder
             E2E_CHECK_MSG(r.first <= r.second, "%s progress current %llu > total %llu", direction, r.first, r.second);
             previous = r.first;
         }
-        // The first report fires as soon as the first chunk moves, so it must not claim the whole
-        // body (upload progress used to report the response counter, i.e. always 100%).
+        // The first report must not claim the whole body (WinHTTP upload progress used to report
+        // the response counter, i.e. always 100%). WinHTTP first reports after a chunk has moved;
+        // curl's transfer-info callback first fires before any bytes move, so 0 is valid there
+        // (and for other providers, whose first-report timing isn't pinned down).
+#if defined(E2E_HTTP_WINHTTP)
         E2E_CHECK_MSG(reports.front().first > 0 && reports.front().first < expectedTotal, "first %s progress report was %llu of %llu", direction, reports.front().first, expectedTotal);
+#else
+        E2E_CHECK_MSG(reports.front().first < expectedTotal, "first %s progress report was %llu of %llu", direction, reports.front().first, expectedTotal);
+#endif
         std::string trail;
         for (const auto& r : reports)
         {
@@ -175,7 +177,7 @@ E2E_TEST(http_request_and_response_headers)
         const char* name = nullptr;
         const char* v = nullptr;
         E2E_CHECK_HR(HCHttpCallResponseGetHeaderAtIndex(call, i, &name, &v));
-        if (name && _stricmp(name, "X-Lhc-Echo") == 0)
+        if (name && platform::StrICmp(name, "X-Lhc-Echo") == 0)
         {
             found = true;
         }
@@ -521,6 +523,10 @@ E2E_TEST(http_redirect_same_origin_keeps_authorization)
         .Header("Authorization", "Bearer e2e-token")
         .Header("X-Lhc-Custom", "kept");
     HRESULT hr = call.Perform();
+#if defined(E2E_HTTP_CURL)
+    CheckRedirectPassedThrough(call, hr, HttpUrl("/echo"));
+    return;
+#endif
     E2E_CHECK_MSG(SUCCEEDED(hr) && call.Status() == 200, "hr=%s %s", HrToString(hr).c_str(), call.Describe().c_str());
     std::string json = call.ResponseString();
     E2E_CHECK_EQ(static_cast<uint64_t>(Server().http), JsonUInt(json, "port"));
@@ -536,6 +542,10 @@ E2E_TEST(http_redirect_cross_origin)
         .Header("Authorization", "Bearer e2e-token")
         .Header("X-Lhc-Custom", "kept");
     HRESULT hr = call.Perform();
+#if defined(E2E_HTTP_CURL)
+    CheckRedirectPassedThrough(call, hr, Http2Url("/echo"));
+    return;
+#endif
     E2E_CHECK_MSG(SUCCEEDED(hr) && call.Status() == 200, "hr=%s %s", HrToString(hr).c_str(), call.Describe().c_str());
     std::string json = call.ResponseString();
     E2E_CHECK_EQ(static_cast<uint64_t>(Server().http2), JsonUInt(json, "port"));
@@ -563,6 +573,7 @@ E2E_TEST(https_self_signed_rejected_by_default)
 E2E_TEST(https_ssl_validation_disabled)
 {
     RequireHttps();
+#if HC_PLATFORM_IS_MICROSOFT
     Call call;
     call.Url("POST", HttpsUrl("/echo")).NoRetry().Body("over tls");
     E2E_CHECK_HR(HCHttpCallRequestSetSSLValidation(call, false));
@@ -571,6 +582,9 @@ E2E_TEST(https_ssl_validation_disabled)
     std::string json = call.ResponseString();
     E2E_CHECK_EQ(std::string{ "https" }, EchoField(json, "server"));
     E2E_CHECK_EQ(std::string{ "over tls" }, EchoField(json, "body"));
+#else
+    Skip(std::string{ "HCHttpCallRequestSetSSLValidation is only available on Windows (" } + HttpProviderName + " always validates)");
+#endif
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -587,7 +601,7 @@ E2E_TEST(http_cancel_inflight)
     call.Url("GET", HttpUrl("/delay/1500")).NoRetry();
     auto* async = new XAsyncBlock{};
     E2E_CHECK_HR(HCHttpCallPerformAsync(call, async));
-    Sleep(300);
+    platform::SleepMs(300);
     auto start = std::chrono::steady_clock::now();
     XAsyncCancel(async);
     HRESULT hr = WaitAsync(async, std::chrono::seconds{ 15 });
@@ -620,11 +634,11 @@ E2E_TEST(http_cancel_during_retry_backoff)
         firstAttemptSeen = JsonUInt(FetchString(HttpUrl("/retry-count?id=" + id)), "count") >= 1;
         if (!firstAttemptSeen)
         {
-            Sleep(25);
+            platform::SleepMs(25);
         }
     }
     E2E_CHECK_MSG(firstAttemptSeen, "the first attempt never reached the server");
-    Sleep(300);
+    platform::SleepMs(300);
     auto start = std::chrono::steady_clock::now();
     XAsyncCancel(async);
     HRESULT hr = WaitAsync(async, std::chrono::seconds{ 15 });
@@ -676,7 +690,7 @@ E2E_TEST_SELF_INIT(http_cleanup_with_inflight_call)
     auto* async = new XAsyncBlock{};
     E2E_CHECK_HR(HCHttpCallPerformAsync(call, async));
     E2E_CHECK_HR(HCHttpCallCloseHandle(call));
-    Sleep(300);
+    platform::SleepMs(300);
 
     auto start = std::chrono::steady_clock::now();
     HRESULT cleanupHr = CleanupWithTimeout(std::chrono::seconds{ 15 });
@@ -704,7 +718,13 @@ E2E_TEST_SELF_INIT(http_global_request_limit_queues)
     // Set before HCInitialize; restored to the device default (0) before returning.
     const uint32_t limit = 2;
     const int calls = 6;
-    E2E_CHECK_HR(HCSettingsSetGlobalRequestLimit(limit));
+    HRESULT setHr = HCSettingsSetGlobalRequestLimit(limit);
+    if (setHr == E_NOTIMPL)
+    {
+        // Documented: only the WinHTTP provider (Win32, GDK) implements admission control.
+        Skip(std::string{ "HCSettingsSetGlobalRequestLimit returns E_NOTIMPL with the " } + HttpProviderName + " provider (WinHTTP only, by design)");
+    }
+    E2E_CHECK_HR(setHr);
     struct RestoreLimit { ~RestoreLimit() { HCSettingsSetGlobalRequestLimit(0); } } restore;
     E2E_CHECK_HR(HCInitialize(nullptr));
     struct Cleanup { ~Cleanup() { if (HCIsInitialized()) { CleanupWithTimeout(std::chrono::seconds{ 20 }); } } } cleanup;

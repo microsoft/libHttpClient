@@ -2,7 +2,7 @@ parameters:
   - name: configuration
     type: string
   # Debug-only test leg: build every target with AddressSanitizer + UndefinedBehaviorSanitizer
-  # (HC_ENABLE_SANITIZERS) and run the unit + taskqueue tests under them. Skips the shared build.
+  # (HC_ENABLE_SANITIZERS) and run the unit + taskqueue + e2e tests under them. Skips the shared build.
   - name: sanitizers
     type: boolean
     default: false
@@ -58,9 +58,12 @@ steps:
           export ASAN_SYMBOLIZER_PATH="$(command -v llvm-symbolizer || ls /usr/bin/llvm-symbolizer-* 2>/dev/null | head -n 1 || true)"
         fi
         # "unit" is the portable unit-test executable (Tests/UnitTests, libHttpClient.UnitTests);
-        # "taskqueue" are the standalone TaskQueue/WaitTimer regression repros. Labels let new tests
-        # be picked up just by labelling them in CMake (no pipeline change needed).
-        ctest --output-on-failure -L "unit|taskqueue"
+        # "taskqueue" are the standalone TaskQueue/WaitTimer regression repros; "e2e" is the Tests/E2E
+        # suite against this build's curl + websocketpp providers and a Python 3 (stdlib-only) loopback
+        # server that libHttpClient.E2E starts itself on 127.0.0.1 (python3 and the openssl CLI are on
+        # the hosted image; without openssl only the HTTPS tests skip). Labels let new tests be picked
+        # up just by labelling them in CMake (no pipeline change needed).
+        ctest --output-on-failure -L "unit|taskqueue|e2e"
 
   - ${{ if not(parameters.sanitizers) }}:
     - task: Bash@3

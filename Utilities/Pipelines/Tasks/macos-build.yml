@@ -72,3 +72,22 @@ steps:
         cmake --build "$BUILD_DIR" --parallel "$(sysctl -n hw.ncpu)"
         cd "$BUILD_DIR"
         ctest --output-on-failure -L unit
+
+  # End-to-end tests (plan 2.6): the Tests/E2E suite against a host-CMake build of the library with the
+  # real Apple providers (NSURLSession HTTP + websocketpp/OpenSSL WebSockets, see HC_BUILD_E2E_TESTS in
+  # Build/libHttpClient.UnitTest.CMake) and the Python 3 loopback server the test exe starts itself.
+  # EXPERIMENTAL: this CMake target has never been built outside CI (no local macOS), so the step is
+  # continueOnError until it has run green; then drop continueOnError so E2E failures fail the leg.
+  # OpenSSL comes from Homebrew (openssl@3 is preinstalled on the hosted macOS images).
+  - task: Bash@3
+    displayName: 'Build and run E2E tests (host CMake, ctest -L e2e) [experimental]'
+    continueOnError: true
+    inputs:
+      targetType: 'inline'
+      script: |
+        set -e
+        BUILD_DIR="$(Build.SourcesDirectory)/Int/CMake/libHttpClient.E2E.macOS.${{ parameters.configuration }}"
+        cmake -S "$(Build.SourcesDirectory)/Build/libHttpClient.UnitTest.CMake" -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=${{ parameters.configuration }} -DHC_BUILD_E2E_TESTS=ON -DOPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
+        cmake --build "$BUILD_DIR" --parallel "$(sysctl -n hw.ncpu)" --target libHttpClient.E2E
+        cd "$BUILD_DIR"
+        ctest --output-on-failure -L e2e
