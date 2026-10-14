@@ -149,6 +149,10 @@ GitHub's "Download Zip" works too, since restore doesn't depend on git submodule
 If you are updating an existing clone made before this change, the old submodule folders under
 `External/` are replaced on your next build.
 
+## Tests
+
+Unit tests (`Tests/UnitTests`) cover the public API against fake providers and run on Windows, Linux (including ASan/UBSan) and macOS; end-to-end tests (`Tests/E2E`) drive the real platform providers against a local loopback server. Both run in CI. See [Tests/README.md](Tests/README.md) for how to run and write them.
+
 ## Contribute Back!
 
 Is there a feature missing that you'd like to see, or have you found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](../../issues).  
