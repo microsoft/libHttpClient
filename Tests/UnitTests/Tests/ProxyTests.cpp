@@ -5,7 +5,7 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"libHttpClient"
 #include "DefineTestMacros.h"
-#include "Utils.h"
+#include "utils.h"
 #include "../Common/Win/utils_win.h"
 #include "../../Source/HTTP/WinHttp/winhttp_provider.h"
 

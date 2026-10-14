@@ -814,6 +814,7 @@ public:
         VERIFY_IS_TRUE(WaitForSingleObject(threadWaits[1], 750) == WAIT_OBJECT_0);
     }
 
+#if HC_PLATFORM_IS_MICROSOFT // XTaskQueueRegisterWaiter is only implemented on Windows (E_NOTIMPL elsewhere)
     DEFINE_TEST_CASE(VerifyRegisterWithAutoReset)
     {
         AutoQueueHandle queue;
@@ -883,6 +884,7 @@ public:
         CloseHandle(workEvent);
         CloseHandle(completionEvent);
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyQueueTermination)
     {
@@ -970,7 +972,11 @@ public:
         {
             normalCount = 5;
             futureCount = 5;
+#if HC_PLATFORM_IS_MICROSOFT
             eventCount = 5;
+#else
+            eventCount = 0; // XTaskQueueRegisterWaiter is only implemented on Windows
+#endif
 
             for(uint32_t idx = 0; idx < normalCount; idx++)
             {
@@ -1204,6 +1210,7 @@ public:
         VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, true, nullptr, nullptr));
     }
 
+#if HC_PLATFORM_IS_MICROSOFT // XTaskQueueRegisterWaiter is only implemented on Windows (E_NOTIMPL elsewhere)
     DEFINE_TEST_CASE(VerifyTerminationOfCompositeQueue)
     {
         struct TestData
@@ -1333,6 +1340,7 @@ public:
         VERIFY_IS_FALSE(data.waitCanceled);
         VERIFY_IS_FALSE(compositeData.waitInvoked);
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyQueueMonitorHasCorrectPorts)
     {
@@ -2287,6 +2295,12 @@ public:
         VERIFY_IS_TRUE(secondFired.load());
     }
 
+// TODO(linux): this scenario blocks the timer callback inside a test hook and expects a second
+// delayed callback to still fire. That holds for the Win32 threadpool timers, which run callbacks
+// concurrently, but the STL WaitTimer (Linux/Apple/Android) fires every timer from one process-wide
+// worker thread, so the blocked hook stalls the second timer until it is released. Rework the
+// test to block somewhere that does not own the timer thread before enabling it off Windows.
+#if HC_PLATFORM_IS_MICROSOFT
     DEFINE_TEST_CASE(VerifyDelayedSubmissionRescuesOverdueTimer)
     {
         struct TestBarrier
@@ -2476,6 +2490,7 @@ public:
                 std::chrono::duration_cast<std::chrono::nanoseconds>(
                     std::chrono::milliseconds{ 50 }).count()));
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyTerminationDoesNotEarlyPromoteSiblingDelayedCallback)
     {

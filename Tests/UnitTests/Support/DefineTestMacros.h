@@ -75,6 +75,16 @@
     void VerifyEqualStr(Platform::String^ expected, Platform::String^ actual, std::wstring actualName, const WEX::TestExecution::ErrorInfo& errorInfo);
     void VerifyEqualStr(std::wstring expected, std::wstring actual, std::wstring actualName, const WEX::TestExecution::ErrorInfo& errorInfo);
     //#define VERIFY_ARE_EQUAL_STR(__expected, __actual) VerifyEqualStr((__expected), (__actual), (L#__actual), PRIVATE_VERIFY_ERROR_INFO)
+#elif defined(UNITTEST_PORTABLE)
+    // Portable runner (Support/Portable/UnitTestIncludes_Portable.h). Test properties are no-ops.
+    #define DEFINE_TEST_CLASS(x) TEST_CLASS(x)
+    #define DEFINE_TEST_CLASS_PROPS(x) ;
+    #define DEFINE_TEST_CASE(x) TEST_METHOD(x)
+    #define DEFINE_TEST_CASE_PROPERTIES(x) ;
+    #define DEFINE_TEST_CASE_PROPERTIES_IGNORE(x) ;
+    #define DEFINE_TEST_CASE_PROPERTIES_FOCUS(x) ;
+    #define DEFINE_TEST_CASE_PROPERTIES_FAILING(x) ;
+    #define TEST_LOG(x)
 #else 
     #define DEFINE_TEST_CLASS(x) TEST_CLASS(x)
     #define DEFINE_TEST_CLASS_PROPS(x) ;

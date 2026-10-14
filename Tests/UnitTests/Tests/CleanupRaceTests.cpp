@@ -16,7 +16,7 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
-#include "Utils.h"
+#include "utils.h"
 #include "PumpedTaskQueue.h"
 
 using namespace xbox::httpclient;
@@ -98,6 +98,7 @@ public:
     }
 
 private:
+#if HC_PLATFORM_IS_MICROSOFT
     static size_t PageAlignedSize(size_t size) noexcept
     {
         SYSTEM_INFO info{};
@@ -106,6 +107,7 @@ private:
         size_t const usable = size == 0 ? 1 : size;
         return ((usable + granularity - 1) / granularity) * granularity;
     }
+#endif
 
     static _Ret_maybenull_ void* STDAPIVCALLTYPE AllocHook(size_t size, HCMemoryType) noexcept
     {
@@ -127,7 +129,13 @@ private:
             }
         }
 
+#if HC_PLATFORM_IS_MICROSOFT
         void* block = VirtualAlloc(nullptr, PageAlignedSize(size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+#else
+        // No guard pages off Windows: armed blocks are ordinary heap blocks, so a use-after-free is
+        // only caught when the test binary runs under AddressSanitizer (the Linux sanitizer leg).
+        void* block = malloc(size == 0 ? 1 : size);
+#endif
         if (!block)
         {
             return nullptr;
@@ -158,8 +166,12 @@ private:
             {
                 m_watchedFreed = true;
             }
+#if !HC_PLATFORM_IS_MICROSOFT
+            m_blocks.erase(pointer);
+#endif
         }
 
+#if HC_PLATFORM_IS_MICROSOFT
         // Quarantine: keep the reservation so the address is never recycled, and make every
         // subsequent access fault.
         DWORD previousProtection{ 0 };
@@ -168,6 +180,9 @@ private:
         {
             VirtualProtect(pointer, info.RegionSize, PAGE_NOACCESS, &previousProtection);
         }
+#else
+        free(pointer);
+#endif
     }
 
     std::mutex m_mutex;
@@ -179,6 +194,7 @@ private:
 
 // SEH trampolines. These are deliberately free of C++ objects so __try/__except is legal, and they
 // convert the reported access violation into a bool the tests can assert on.
+#if HC_PLATFORM_IS_MICROSOFT
 
 __declspec(noinline) bool CleanupAsyncFaulted(XAsyncBlock* cleanupAsyncBlock, HRESULT* hr) noexcept
 {
@@ -205,6 +221,22 @@ __declspec(noinline) bool DispatchFaulted(XTaskQueueHandle queue, XTaskQueuePort
         return true;
     }
 }
+
+#else // No SEH: a fault (or an AddressSanitizer report) terminates the test process instead.
+
+bool CleanupAsyncFaulted(XAsyncBlock* cleanupAsyncBlock, HRESULT* hr) noexcept
+{
+    *hr = HCCleanupAsync(cleanupAsyncBlock);
+    return false;
+}
+
+bool DispatchFaulted(XTaskQueueHandle queue, XTaskQueuePort port, bool* dispatched) noexcept
+{
+    *dispatched = XTaskQueueDispatch(queue, port, 0);
+    return false;
+}
+
+#endif
 
 }
 
@@ -235,6 +267,7 @@ public:
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
         VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 200));
         VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mock)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call{ nullptr };
         VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
@@ -363,6 +396,7 @@ public:
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
         VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 200));
         VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mock)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call{ nullptr };
         VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
