@@ -229,10 +229,23 @@ public:
         VERIFY_SUCCEEDED(LeakCheckAllocator::Uninstall());
     }
 
+    // PerformCall uses the process-wide default task queue, which libHttpClient creates lazily on first
+    // use and keeps for the life of the process. Create it before the leak-check allocator is installed
+    // so its allocations aren't counted when this class runs on its own.
+    static void EnsureProcessQueueExists()
+    {
+        XTaskQueueHandle queue{ nullptr };
+        if (XTaskQueueGetCurrentProcessTaskQueue(&queue) && queue != nullptr)
+        {
+            XTaskQueueCloseHandle(queue);
+        }
+    }
+
     DEFINE_TEST_CASE(TestNoLeaksAfterMockedHttpCall)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestNoLeaksAfterMockedHttpCall);
 
+        EnsureProcessQueueExists();
         VERIFY_SUCCEEDED(LeakCheckAllocator::Install());
         VERIFY_SUCCEEDED(HCInitialize(nullptr));
 
@@ -263,6 +276,7 @@ public:
         DEFINE_TEST_CASE_PROPERTIES(TestNoLeaksAfterHttpCallWithPerformCallback);
 
         s_performCalls = 0;
+        EnsureProcessQueueExists();
         VERIFY_SUCCEEDED(LeakCheckAllocator::Install());
         VERIFY_SUCCEEDED(HCSetHttpCallPerformFunction(&RespondingPerform, nullptr));
         VERIFY_SUCCEEDED(HCInitialize(nullptr));
