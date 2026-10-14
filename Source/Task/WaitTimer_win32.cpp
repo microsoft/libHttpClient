@@ -17,6 +17,12 @@ namespace
         return static_cast<uint64_t>(
             std::chrono::duration_cast<TimerDuration>(deadline.time_since_epoch()).count());
     }
+
+    // The timer whose callback is currently executing on this thread, if any,
+    // and the threadpool callback instance it is running under. Terminate uses
+    // this to detect a callback that tears down its own timer.
+    thread_local void* t_callbackTimer = nullptr;
+    thread_local PTP_CALLBACK_INSTANCE t_callbackInstance = nullptr;
 }
 
 namespace OS
@@ -49,6 +55,22 @@ namespace OS
             if (m_timer != nullptr)
             {
                 SetThreadpoolTimer(m_timer, nullptr, 0, 0);
+
+                // A timer callback can tear down its own timer, e.g. when the
+                // task queue port that owns this timer is released for the last
+                // time from inside the callback. WaitForThreadpoolTimerCallbacks
+                // would then wait for the very callback that is calling it and
+                // deadlock. Disassociate the current callback first so we only
+                // wait for other in-flight callbacks; the calling callback must
+                // not touch this object after Terminate returns (WaitCallback
+                // doesn't).
+                if (t_callbackTimer == this)
+                {
+                    DisassociateCurrentThreadFromCallback(t_callbackInstance);
+                    t_callbackTimer = nullptr;
+                    t_callbackInstance = nullptr;
+                }
+
                 WaitForThreadpoolTimerCallbacks(m_timer, TRUE);
                 CloseThreadpoolTimer(m_timer);
                 m_timer = nullptr;
@@ -103,14 +125,21 @@ namespace OS
         WaitTimerCallback* m_callback;
 
         static VOID CALLBACK WaitCallback(
-            _Inout_ PTP_CALLBACK_INSTANCE,
+            _Inout_ PTP_CALLBACK_INSTANCE instance,
             _Inout_opt_ void* context,
             _Inout_ PTP_TIMER)
         {
             if (context != nullptr)
             {
                 WaitTimerImpl* pthis = static_cast<WaitTimerImpl*>(context);
+                t_callbackTimer = pthis;
+                t_callbackInstance = instance;
+
                 pthis->m_callback(pthis->m_context);
+
+                // pthis may have been destroyed by the callback; don't touch it.
+                t_callbackTimer = nullptr;
+                t_callbackInstance = nullptr;
             }
         }
     };

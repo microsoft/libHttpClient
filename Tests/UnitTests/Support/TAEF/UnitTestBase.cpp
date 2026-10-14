@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "UnitTestIncludes.h"
 #include "UnitTestBase.h"
+#include "XTaskQueuePriv.h"
 #include <Objbase.h>
 #if USING_TAEF
 #include "WexTestClass.h"
@@ -34,6 +35,9 @@ bool ModuleSetup()
 ////////////////////////////////////////////////////////////////////////////////
 bool ModuleCleanup()
 {
+    // Wait for task queue objects to run down before the test DLL unloads.
+    // Threadpool callbacks can still be unwinding through this module.
+    XTaskQueueUninitialize(5000);
     CoUninitialize();
     return true;
 }
