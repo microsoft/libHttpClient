@@ -99,3 +99,37 @@ steps:
 
         exit $code
 
+  # End-to-end tests: the Win32 (WinHTTP) flavor against a Python 3 stdlib-only loopback server
+  # (Tests/E2E/server/lhc_test_server.py) that the test exe starts itself on 127.0.0.1, so no
+  # internet access is needed. The solution builds the E2E project for x64 only. The exe's exit
+  # code is the number of failed tests. The server makes its HTTPS certificate at startup with the
+  # openssl CLI (PATH or Git for Windows, both present on hosted agents). See Tests/E2E/README.md.
+  - task: UsePythonVersion@0
+    displayName: Use Python 3 for the E2E test server
+    condition: and(succeeded(), eq(variables['Platform'], 'x64'))
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+
+  - task: PowerShell@2
+    displayName: Run E2E tests (Win32 WinHTTP, ${{ parameters.configuration }})
+    condition: and(succeeded(), eq(variables['Platform'], 'x64'))
+    timeoutInMinutes: 15
+    inputs:
+      targetType: inline
+      script: |
+        $exe = Join-Path '$(Build.SourcesDirectory)' 'Out\x64\${{ parameters.configuration }}\libHttpClient.E2E.Win32\libHttpClient.E2E.Win32.exe'
+        if (-not (Test-Path $exe))
+        {
+            Write-Host "##vso[task.logissue type=error]E2E tests were not built; expected them at $exe"
+            exit 1
+        }
+
+        python --version
+        & $exe
+        $code = $LASTEXITCODE
+        if ($code -ne 0)
+        {
+            Write-Host "##vso[task.logissue type=error]libHttpClient E2E tests failed (exit code $code). See the summary at the end of the log."
+        }
+        exit $code
