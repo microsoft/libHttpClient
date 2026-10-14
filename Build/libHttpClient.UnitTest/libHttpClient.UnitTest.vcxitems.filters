@@ -59,6 +59,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\AsyncBlockTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\BodyStreamingTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\GlobalTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
@@ -69,6 +72,12 @@
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\MockTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\RoutedHandlerTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\SettingsTests.cpp">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\TaskQueueTests.cpp">
