@@ -152,11 +152,16 @@ try
         return E_NOT_SUFFICIENT_BUFFER;
     }
 
+    // Skip the copy for an empty body: data() may be null then, and passing null to memcpy is
+    // undefined behavior even for a zero length (UBSan flags it).
+    if (!call->responseBodyBytes.empty())
+    {
 #if HC_PLATFORM_IS_MICROSOFT
-    memcpy_s(buffer, bufferSize, call->responseBodyBytes.data(), call->responseBodyBytes.size());
+        memcpy_s(buffer, bufferSize, call->responseBodyBytes.data(), call->responseBodyBytes.size());
 #else
-    memcpy(buffer, call->responseBodyBytes.data(), call->responseBodyBytes.size());
+        memcpy(buffer, call->responseBodyBytes.data(), call->responseBodyBytes.size());
 #endif
+    }
 
     if (bufferUsed != nullptr)
     {

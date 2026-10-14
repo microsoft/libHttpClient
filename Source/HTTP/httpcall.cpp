@@ -488,12 +488,32 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
 #ifdef HC_UNITTEST_API
             ApplyPerformDelayTestHook(call, PerformDelayReason::Retry, performDelay);
 #endif
+            // Clear the response before the retry is submitted, not after: with a short delay the
+            // retry can run (and even complete) on a worker thread before the submit call returns,
+            // and clearing afterwards wiped that attempt's response. Keep the previous response so
+            // a failed submit still completes the call with it, as before.
+            auto previousResponseString = std::move(call->responseString);
+            auto previousResponseBodyBytes = std::move(call->responseBodyBytes);
+            auto previousResponseHeaders = std::move(call->responseHeaders);
+            auto const previousStatusCode = call->statusCode;
+            auto const previousNetworkErrorCode = call->networkErrorCode;
+            auto const previousPlatformNetworkErrorCode = call->platformNetworkErrorCode;
+            auto previousPlatformNetworkErrorMessage = std::move(call->platformNetworkErrorMessage);
+            call->ResetResponseProperties();
+
             hr = XTaskQueueSubmitDelayedCallback(context->workQueue, XTaskQueuePort::Work, performDelay, context, HC_CALL::PerformSingleRequest);
             if (SUCCEEDED(hr))
             {
-                call->ResetResponseProperties();
                 return;
             }
+
+            call->responseString = std::move(previousResponseString);
+            call->responseBodyBytes = std::move(previousResponseBodyBytes);
+            call->responseHeaders = std::move(previousResponseHeaders);
+            call->statusCode = previousStatusCode;
+            call->networkErrorCode = previousNetworkErrorCode;
+            call->platformNetworkErrorCode = previousPlatformNetworkErrorCode;
+            call->platformNetworkErrorMessage = std::move(previousPlatformNetworkErrorMessage);
         }
     }
 
