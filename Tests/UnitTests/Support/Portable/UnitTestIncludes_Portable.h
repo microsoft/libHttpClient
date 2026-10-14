@@ -5,7 +5,7 @@
 // Visual Studio's CppUnitTest (TE) and TAEF, e.g. on Linux and macOS through CMake/ctest.
 //
 // It provides the small, fixed macro set the tests use (TEST_CLASS / TEST_METHOD /
-// TEST_METHOD_SETUP / TEST_METHOD_CLEANUP and the VERIFY_* family). The DEFINE_TEST_* wrappers
+// TEST_METHOD_SETUP / TEST_METHOD_INITIALIZE / TEST_METHOD_CLEANUP and the VERIFY_* family). The DEFINE_TEST_* wrappers
 // are mapped onto these in DefineTestMacros.h, exactly like the TE backend.
 //
 // Semantics follow the TE backend: every test method runs on a fresh instance of its class,
@@ -83,6 +83,21 @@ inline void RecordFailure(const std::string& message)
 {
     std::lock_guard<std::mutex> guard{ Failures().lock };
     Failures().messages.push_back(message);
+}
+
+// True once the current test has recorded a failure (TestEnvironment uses it so a test's own
+// failure stays the reported one instead of its follow-on leak report).
+inline bool HasRecordedFailures()
+{
+    std::lock_guard<std::mutex> guard{ Failures().lock };
+    return !Failures().messages.empty();
+}
+
+// Informational output for the current test (TestEnvironment's reset/leak notes).
+inline void LogMessage(const std::string& message)
+{
+    std::printf("    [log] %s\n", message.c_str());
+    std::fflush(stdout);
 }
 
 [[noreturn]] inline void Fail(const char* file, int line, const std::string& message)
@@ -310,6 +325,7 @@ inline int RunAllTests(int argc, char** argv)
     void methodName()
 
 #define TEST_METHOD_SETUP(methodName) void HcMethodSetup() override { methodName(); } void methodName()
+#define TEST_METHOD_INITIALIZE(methodName) TEST_METHOD_SETUP(methodName)
 #define TEST_METHOD_CLEANUP(methodName) void HcMethodCleanup() override { methodName(); } void methodName()
 
 #define VERIFY_ARE_EQUAL(expected, actual) ::hcunittest::VerifyAreEqual((expected), (actual), true, #expected, #actual, __FILE__, __LINE__)

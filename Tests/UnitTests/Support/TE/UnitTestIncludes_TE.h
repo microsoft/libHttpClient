@@ -108,46 +108,46 @@ public:
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
 
 #define VERIFY_SUCCEEDED(x) \
-    xbox::httpclienttest::AssertHelper::AreEqual(S_OK, (HRESULT)x)
+    LHC_TRACK_VERIFY(xbox::httpclienttest::AssertHelper::AreEqual(S_OK, (HRESULT)x))
 
 #define VERIFY_FAILED(x) \
-    Assert::IsTrue(FAILED((HRESULT)x))
+    LHC_TRACK_VERIFY(Assert::IsTrue(FAILED((HRESULT)x)))
 
 #define VERIFY_FAIL() \
-    Assert::Fail()
+    do { ::xbox::httpclienttest::TestEnvironment::NoteVerifyFailure(); Assert::Fail(); } while (false)
 
 #define VERIFY_ARE_EQUAL_UINT(expected, actual) \
-    Assert::IsTrue(static_cast<uint64_t>(expected) == static_cast<uint64_t>(actual))
+    LHC_TRACK_VERIFY(Assert::IsTrue(static_cast<uint64_t>(expected) == static_cast<uint64_t>(actual)))
 
 #define VERIFY_ARE_EQUAL_INT(expected, actual) \
-    Assert::IsTrue(static_cast<int64_t>(expected) == static_cast<int64_t>(actual))
+    LHC_TRACK_VERIFY(Assert::IsTrue(static_cast<int64_t>(expected) == static_cast<int64_t>(actual)))
 
 #define VERIFY_ARE_EQUAL(expected,actual) \
-    xbox::httpclienttest::AssertHelper::AreEqual((double)expected,(double)actual)
+    LHC_TRACK_VERIFY(xbox::httpclienttest::AssertHelper::AreEqual((double)expected,(double)actual))
 
 #define VERIFY_ARE_EQUAL_STR(expected,actual) \
-    xbox::httpclienttest::AssertHelper::AreEqual(expected,actual)
+    LHC_TRACK_VERIFY(xbox::httpclienttest::AssertHelper::AreEqual(expected,actual))
 
 #define VERIFY_ARE_EQUAL_STR_IGNORE_CASE(expected,actual) \
-    Assert::AreEqual(expected, actual, true)
+    LHC_TRACK_VERIFY(Assert::AreEqual(expected, actual, true))
 
 #define VERIFY_IS_TRUE(x) \
-    Assert::IsTrue(x, L#x)
+    LHC_TRACK_VERIFY(Assert::IsTrue(x, L#x))
 
 #define VERIFY_IS_FALSE(x) \
-    Assert::IsFalse(x, L#x)
+    LHC_TRACK_VERIFY(Assert::IsFalse(x, L#x))
 
 #define VERIFY_IS_NULL(x) \
-    Assert::IsTrue(x == nullptr, L#x)
+    LHC_TRACK_VERIFY(Assert::IsTrue(x == nullptr, L#x))
 
 #define VERIFY_IS_NOT_NULL(x) \
-    Assert::IsTrue(x != nullptr, L#x)
+    LHC_TRACK_VERIFY(Assert::IsTrue(x != nullptr, L#x))
 
 #define VERIFY_IS_LESS_THAN(expectedLess, expectedGreater) \
-    Assert::IsTrue(expectedLess < expectedGreater)
+    LHC_TRACK_VERIFY(Assert::IsTrue(expectedLess < expectedGreater))
 
 #define VERIFY_IS_GREATER_THAN_OR_EQUAL(expectedGreater, expectedLess) \
-    Assert::IsTrue(expectedGreater >= expectedLess)
+    LHC_TRACK_VERIFY(Assert::IsTrue(expectedGreater >= expectedLess))
 
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_SECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::seconds(__seconds))
 #define VERIFY_ARE_EQUAL_TIMESPAN_TO_MILLISECONDS(__timespan, __seconds) VERIFY_ARE_EQUAL(Microsoft::Xbox::Services::System::timeSpanTicks(__timespan.Duration), std::chrono::milliseconds(__seconds))

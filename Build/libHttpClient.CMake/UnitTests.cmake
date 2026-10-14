@@ -58,6 +58,7 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
         "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
         "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
         "${PATH_TO_ROOT}/Tests/UnitTests/Support/Portable/UnitTestMain_Portable.cpp"
+        "${PATH_TO_ROOT}/Tests/UnitTests/Support/TestEnvironment.cpp"
         ${UT_TEST_SOURCE_FILES}
         )
 
