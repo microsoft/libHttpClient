@@ -1326,6 +1326,29 @@ private:
         websocket_outgoing_message message;
     };
 
+    // websocketpp's endpoint::send(hdl, data, len, op) builds a message that is never flagged as
+    // compressible, so permessage-deflate would only ever apply to incoming messages. Build the
+    // message ourselves and flag it; websocketpp ignores the flag unless the extension was
+    // negotiated on this connection.
+    template<typename Client>
+    void send_compressible(Client& client, void const* payload, size_t size, websocketpp::frame::opcode::value op, websocketpp::lib::error_code& ec)
+    {
+        auto con = client.get_con_from_hdl(m_con, ec);
+        if (ec)
+        {
+            return;
+        }
+        auto msg = con->get_message(op, size);
+        if (!msg)
+        {
+            ec = websocketpp::error::make_error_code(websocketpp::error::no_outgoing_buffers);
+            return;
+        }
+        msg->append_payload(payload, size);
+        msg->set_compressed(true);
+        ec = con->send(msg);
+    }
+
     HRESULT send_msg_do_work(websocket_outgoing_message& message)
     {
         HRESULT hr = S_OK;
@@ -1346,7 +1369,7 @@ private:
                     {
                         invoke_wspp_client([this, &message](auto& client)
                         {
-                            client.send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                            send_compressible(client, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
                         });
                     }
                     else
@@ -1358,7 +1381,7 @@ private:
                 {
                     invoke_wspp_client([this, &message](auto& client)
                     {
-                        client.send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                        send_compressible(client, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
                     });
                 }
             }
