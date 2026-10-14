@@ -818,7 +818,9 @@ public:
         XAsyncCancel(&async);
 
         // Dispatch to clear out the queue
-        while(XTaskQueueDispatch(async.queue, XTaskQueuePort::Work, 0));
+        while(XTaskQueueDispatch(async.queue, XTaskQueuePort::Work, 0))
+        {
+        }
 
         VERIFY_QUEUE_EMPTY(async.queue);
         XTaskQueueCloseHandle(async.queue);
@@ -1072,6 +1074,9 @@ public:
 
             case XAsyncOp::Cleanup:
                 ((Context*)data->context)->cleanupCount++;
+                break;
+
+            default:
                 break;
             }
 

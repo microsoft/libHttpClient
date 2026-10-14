@@ -18,6 +18,11 @@
 
 #pragma warning(disable:4389)
 
+// The binary-fragment callback APIs only exist for the Win32 / GDK WinHTTP provider, and the
+// proxy-decrypts-HTTPS API only on Win32 / GDK desktop (see httpClient.h).
+#define WSAPI_HAS_FRAGMENT_API (HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK)
+#define WSAPI_HAS_PROXY_DECRYPTS_HTTPS (HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK))
+
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
 namespace
@@ -318,6 +323,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
     }
 
+#if WSAPI_HAS_FRAGMENT_API
     DEFINE_TEST_CASE(TestBinaryMessageFragmentFunctions)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestBinaryMessageFragmentFunctions);
@@ -375,6 +381,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
     }
+#endif
 
     DEFINE_TEST_CASE(TestPingIntervalRoundTrip)
     {
@@ -412,6 +419,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
     }
 
+#if WSAPI_HAS_PROXY_DECRYPTS_HTTPS
     DEFINE_TEST_CASE(TestProxyDecryptsHttpsRequiresProxyUri)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestProxyDecryptsHttpsRequiresProxyUri);
@@ -454,6 +462,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
     }
+#endif
 
     DEFINE_TEST_CASE(TestProviderEventsReachClientHandlersInOrder)
     {
@@ -463,7 +472,9 @@ public:
 
         WsApiClientLog log;
         HCWebsocketHandle websocket = CreateWebSocket(&log);
+#if WSAPI_HAS_FRAGMENT_API
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetBinaryMessageFragmentEventFunction(websocket, WsApiClientFragment));
+#endif
         ConnectWebSocket(websocket);
         HCWebsocketHandle providerHandle = g_wsApiProvider.providerHandle;
 
@@ -479,16 +490,22 @@ public:
         VERIFY_IS_NOT_NULL(closeFunc);
         VERIFY_IS_NULL(eventContext);
 
+#if WSAPI_HAS_FRAGMENT_API
         HCWebSocketBinaryMessageFragmentFunction fragmentFunc = nullptr;
         void* fragmentContext = nullptr;
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketGetBinaryMessageFragmentEventFunction(providerHandle, &fragmentFunc, &fragmentContext));
+#endif
 
         uint8_t const binary[] = { 0xDE, 0xAD, 0xBE };
+#if WSAPI_HAS_FRAGMENT_API
         uint8_t const fragment[] = { 0xEF, 0x00 };
+#endif
         messageFunc(providerHandle, "hello", eventContext);
         binaryFunc(providerHandle, binary, sizeof(binary), eventContext);
         messageFunc(providerHandle, "world", eventContext);
+#if WSAPI_HAS_FRAGMENT_API
         fragmentFunc(providerHandle, fragment, sizeof(fragment), true, fragmentContext);
+#endif
         closeFunc(providerHandle, HCWebSocketCloseStatus::GoingAway, eventContext);      // server-initiated close
         providerHandle = nullptr; // the provider's handle is released once the close is delivered
 
@@ -497,7 +514,9 @@ public:
             "message:hello",
             "binary:3",
             "message:world",
+#if WSAPI_HAS_FRAGMENT_API
             "fragment:2:last",
+#endif
             "close:1001",
         };
         VERIFY_ARE_EQUAL(static_cast<uint32_t>(expected.size()), static_cast<uint32_t>(log.events.size()));
@@ -508,7 +527,9 @@ public:
             VERIFY_IS_TRUE(log.contexts[i] == &log);
         }
         VERIFY_IS_TRUE(log.payloads[1] == std::vector<uint8_t>(binary, binary + sizeof(binary)));
+#if WSAPI_HAS_FRAGMENT_API
         VERIFY_IS_TRUE(log.payloads[3] == std::vector<uint8_t>(fragment, fragment + sizeof(fragment)));
+#endif
         VERIFY_ARE_EQUAL(1u, log.closeCalls);
 
         // After a remote close the socket is disconnected; the provider is not called again.
