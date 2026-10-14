@@ -172,3 +172,21 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
 STDAPI_(bool) XTaskQueueUninitialize(
     _In_ uint32_t timeoutMilliseconds = 0
     ) noexcept;
+
+#ifdef HC_UNITTEST_API
+/// <summary>
+/// Unit-test diagnostics: the number of task queue / task queue port objects
+/// still alive and the outstanding global task queue reference count. Used to
+/// report what leaked when XTaskQueueUninitialize fails.
+/// </summary>
+struct XTaskQueueLiveObjectCounts
+{
+    uint32_t globalRefs;
+    uint32_t queues;
+    uint32_t ports;
+};
+
+STDAPI_(void) XTaskQueueGetLiveObjectCounts(
+    _Out_ XTaskQueueLiveObjectCounts* counts
+    ) noexcept;
+#endif

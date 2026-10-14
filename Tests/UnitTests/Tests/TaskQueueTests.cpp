@@ -110,6 +110,22 @@ DEFINE_TEST_CLASS(TaskQueueTests)
 {
 public:
 
+    // Every test must leave no task queue objects behind. Report what leaked
+    // so a failure here (often caused by an earlier test) is actionable.
+    static bool VerifyNoLeakedQueues()
+    {
+        if (XTaskQueueUninitialize(250))
+        {
+            return true;
+        }
+
+        XTaskQueueLiveObjectCounts counts{};
+        XTaskQueueGetLiveObjectCounts(&counts);
+        LOG_COMMENT(L"Task queue leak: %u queue(s) and %u port(s) still alive, %u global ref(s)",
+            counts.queues, counts.ports, counts.globalRefs);
+        return false;
+    }
+
 #ifdef USING_TAEF
 
     BEGIN_TEST_CLASS(TaskQueueTests)
@@ -122,7 +138,7 @@ public:
         // leaks in the task queue.  If any other tests fail
         // this may also fail, as those tests could have leaked.
         //
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
+        VERIFY_IS_TRUE(VerifyNoLeakedQueues());
         return true;
     }
 
@@ -131,7 +147,7 @@ public:
 
     TEST_METHOD_CLEANUP(TestCleanup)
     {
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
+        VERIFY_IS_TRUE(VerifyNoLeakedQueues());
     }
 
 #endif

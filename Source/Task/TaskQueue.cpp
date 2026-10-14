@@ -137,7 +137,43 @@ namespace ApiRefs
 
         return true;
     }
+
+#ifdef HC_UNITTEST_API
+    std::atomic<int32_t> g_liveQueues{ 0 };
+    std::atomic<int32_t> g_livePorts{ 0 };
+
+    void TrackLiveObject(ApiId id, int32_t delta) noexcept
+    {
+        switch (id)
+        {
+        case ApiId::TaskQueue:
+            g_liveQueues += delta;
+            break;
+
+        case ApiId::TaskQueuePort:
+            g_livePorts += delta;
+            break;
+
+        default:
+            break;
+        }
+    }
+#endif
 }
+
+#ifdef HC_UNITTEST_API
+STDAPI_(void) XTaskQueueGetLiveObjectCounts(
+    _Out_ XTaskQueueLiveObjectCounts* counts
+    ) noexcept
+{
+    if (counts != nullptr)
+    {
+        counts->globalRefs = ApiRefs::g_globalApiRefs.load();
+        counts->queues = static_cast<uint32_t>(ApiRefs::g_liveQueues.load());
+        counts->ports = static_cast<uint32_t>(ApiRefs::g_livePorts.load());
+    }
+}
+#endif
 
 namespace ProcessGlobals
 {
