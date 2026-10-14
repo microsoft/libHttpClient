@@ -85,6 +85,9 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
         PRIVATE
         HC_UNITTEST_API
         UNITTEST_PORTABLE
+        # The sources are compiled straight into the test binary (no framework); on Apple async.h
+        # otherwise includes <httpClient/XAsync.h> from the framework. Harmless elsewhere.
+        HC_LINK_STATIC=1
         )
 
     if (DEFINED HC_NOZLIB)
