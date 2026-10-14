@@ -269,7 +269,10 @@ HRESULT WinHttpProvider::SetGlobalProxy(_In_ String const& proxyUri) noexcept
         auto hSession = e.second;
         if (hSession != nullptr)
         {
-            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri.data());
+            // An empty proxy means "reset to the default proxy" (HCSetGlobalProxy(nullptr)), which
+            // SetGlobalProxyForHSession implements for a null proxyUri. New sessions already skip an
+            // empty m_globalProxy, so this keeps existing and new sessions consistent.
+            HRESULT hr = SetGlobalProxyForHSession(hSession, proxyUri.empty() ? nullptr : proxyUri.c_str());
             if (FAILED(hr))
             {
                 return hr;
