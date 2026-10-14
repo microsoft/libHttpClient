@@ -659,7 +659,7 @@ void WinHttpConnection::ReportProgress(_In_ WinHttpConnection* pRequestContext, 
             }
             else
             {
-                current = bodySize - pRequestContext->m_responseBodyRemainingToRead;
+                current = bodySize - pRequestContext->m_requestBodyRemainingToWrite;
             }
 
             lastProgressReport = pRequestContext->m_call->uploadLastProgressReport;
