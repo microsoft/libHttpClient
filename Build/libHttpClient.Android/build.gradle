@@ -34,6 +34,8 @@ android {
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
+            // AGP 4.1's default CMake 3.10.2 can't configure with NDK r27; 3.18.1 is the newest version AGP 4.1 supports.
+            version "3.18.1"
             buildStagingDirectory "${project.buildDir.getParentFile().getAbsolutePath()}/.cxx/${project.name}"
         }
     }
