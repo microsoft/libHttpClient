@@ -9,6 +9,19 @@
     <HCEnableWebSocketCompression Condition="'$(HCEnableWebSocketCompression)' == ''">true</HCEnableWebSocketCompression>
   </PropertyGroup>
   <Import Condition="'$(HCPathsImported)' != 'true'" Project="$([MSBuild]::GetPathOfFileAbove(libHttpClient.paths.props)" />
+  <PropertyGroup>
+    <!--
+      boost-wintls is required for WebSocket compression. On a fresh clone External\ is populated by the
+      HCRestoreVcpkgDeps target (libHttpClient.vcpkg.props) during the build, after these conditions are
+      evaluated, so count a pending restore as available; otherwise the first build silently omits compression.
+    -->
+    <HCWinTlsAvailable Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp')">true</HCWinTlsAvailable>
+    <HCWinTlsAvailable Condition="'$(HCWinTlsAvailable)' != 'true' and '$(HCVcpkgPropsImported)' == 'true' and '$(HCSkipVcpkgRestore)' != 'true' and '$(HC_SKIP_VCPKG_RESTORE)' != '1' and Exists('$(HCDepsFile)')">true</HCWinTlsAvailable>
+    <HCWebSocketCompressionAvailable Condition="'$(HCEnableWebSocketCompression)' == 'true' and '$(HCWinTlsAvailable)' == 'true'">true</HCWebSocketCompressionAvailable>
+  </PropertyGroup>
+  <Target Name="HCWarnWebSocketCompressionUnavailable" BeforeTargets="PrepareForBuild" Condition="'$(HCEnableWebSocketCompression)' == 'true' and '$(HCWebSocketCompressionAvailable)' != 'true'">
+    <Warning Text="HCEnableWebSocketCompression is true but External\boost-wintls is missing and the vcpkg restore is disabled, so libHttpClient is being built WITHOUT WebSocket compression. Run Build\vcpkg\Restore-Vcpkg.ps1 (or stage External\boost-wintls), or set HCEnableWebSocketCompression=false to silence this warning." />
+  </Target>
   <ItemGroup>
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
@@ -16,18 +29,18 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_websocket_hybrid.cpp" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp') and '$(HCEnableWebSocketCompression)' == 'true'">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_websocket_hybrid.cpp" Condition="'$(HCWebSocketCompressionAvailable)' == 'true'">
       <PreprocessorDefinitions>HC_ENABLE_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_proxy_helper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Win32\PlatformComponents_Win32.cpp">
-      <PreprocessorDefinitions Condition="'$(HCEnableWebSocketCompression)' == 'true' and Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp')">_CRT_SECURE_NO_WARNINGS;_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;HC_ENABLE_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(HCEnableWebSocketCompression)' != 'true' or !Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp')">_CRT_SECURE_NO_WARNINGS;_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(HCWebSocketCompressionAvailable)' == 'true'">_CRT_SECURE_NO_WARNINGS;_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;HC_ENABLE_WEBSOCKET_COMPRESSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(HCWebSocketCompressionAvailable)' != 'true'">_CRT_SECURE_NO_WARNINGS;_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Platform\Windows\PlatformTrace_Windows.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\ThreadPool_win32.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\Task\WaitTimer_win32.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp') and '$(HCEnableWebSocketCompression)' == 'true'">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.cpp" Condition="'$(HCWebSocketCompressionAvailable)' == 'true'">
       <AdditionalIncludeDirectories>$(HCRoot)\External\asio\asio\include;$(HCRoot)\External\websocketpp;$(HCRoot)\External\boost-wintls\include;$(HCRoot)\External\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <!--
         ASIO_DISABLE_SERIAL_PORT must be set per-file here: %(PreprocessorDefinitions)
@@ -43,8 +56,9 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\Common\Win\utils_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_connection.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_redirect_helper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\WinHttp\winhttp_provider.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp')" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\wintls_socket.hpp" Condition="Exists('$(HCRoot)\External\boost-wintls\include\wintls.hpp')" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\websocketpp_websocket.h" Condition="'$(HCWinTlsAvailable)' == 'true'" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Source\WebSocket\Websocketpp\wintls_socket.hpp" Condition="'$(HCWinTlsAvailable)' == 'true'" />
   </ItemGroup>
 </Project>
