@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -83,11 +84,29 @@ public class HttpClientRequest {
     }
 
     @SuppressWarnings("unused")
+    public void setHttpHeader(byte[] name, byte[] value) {
+        // Native code passes raw UTF-8 bytes. JNI's NewStringUTF expects Modified UTF-8, so a
+        // 4-byte UTF-8 character (e.g. an emoji) is invalid input there and can abort under CheckJNI.
+        setHttpHeader(new String(name, StandardCharsets.UTF_8), new String(value, StandardCharsets.UTF_8));
+    }
+
     public void setHttpHeader(String name, String value) {
         // Request.Builder.addHeader rejects non-ASCII values (e.g. a localized carrier name),
         // so collect headers leniently and send values as UTF-8 like the other platforms do.
+        checkHeaderValue(name, value);
         this.headersBuilder.addUnsafeNonAscii(name, value);
         this.requestBuilder = requestBuilder.headers(headersBuilder.build());
+    }
+
+    // addUnsafeNonAscii skips OkHttp's value validation entirely, so keep rejecting control
+    // characters (other than tab) to stop a value from injecting extra header lines.
+    private static void checkHeaderValue(String name, String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if ((c < 0x20 && c != '\t') || c == 0x7f) {
+                throw new IllegalArgumentException(String.format("Unexpected char %#04x at %d in %s value", (int) c, i, name));
+            }
+        }
     }
 
     @SuppressWarnings("unused")

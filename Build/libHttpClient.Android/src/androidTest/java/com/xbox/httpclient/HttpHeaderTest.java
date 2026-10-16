@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +27,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * Instrumentation tests for HttpClientRequest.setHttpHeader().
@@ -125,5 +127,43 @@ public class HttpHeaderTest {
     public void testInvalidHeaderNameStillThrows() throws Exception {
         // Names must remain valid tokens; native AddHeader() turns this into a failed call.
         newGetRequest().setHttpHeader("bad name\u4e2d", "value");
+    }
+
+    @Test
+    public void testControlCharactersInHeaderValueRejected() throws Exception {
+        // addUnsafeNonAscii doesn't validate values, so CR/LF would otherwise inject extra headers.
+        String[] injected = { "foo\r\nX-Injected: 1", "foo\nX-Injected: 1", "foo\rbar", "foo\u0000bar", "foo\u007fbar", "foo\u001bbar" };
+        for (String value : injected) {
+            try {
+                newGetRequest().setHttpHeader("x-test", value);
+                fail("Expected IllegalArgumentException for a control character in: " + value.replace("\r", "\\r").replace("\n", "\\n"));
+            } catch (IllegalArgumentException expected) {
+                // The native caller maps this to E_INVALIDARG.
+            }
+        }
+    }
+
+    @Test
+    public void testTabInHeaderValueAllowed() throws Exception {
+        HttpClientRequest request = newGetRequest();
+        request.setHttpHeader("x-tab", "a\tb");
+
+        assertEquals("a\tb", buildRequest(request).header("x-tab"));
+    }
+
+    @Test
+    public void testUtf8BytesWithSupplementaryCharacterSent() throws Exception {
+        // Native code passes raw UTF-8 bytes; a 4-byte character (emoji) isn't valid Modified UTF-8.
+        String value = "player \ud83c\udfae \u4e2d";
+        HttpClientRequest request = newGetRequest();
+        request.setHttpHeader("x-name".getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8));
+
+        RecordedRequest recorded = send(buildRequest(request));
+        assertEquals(value, recorded.getHeader("x-name"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUtf8BytesWithCrLfRejected() throws Exception {
+        newGetRequest().setHttpHeader("x-test".getBytes(StandardCharsets.UTF_8), "foo\r\nX-Injected: 1".getBytes(StandardCharsets.UTF_8));
     }
 }
