@@ -6,6 +6,7 @@
 #include "HTTP/httpcall.h"
 #include "uri.h"
 #include "winhttp_connection.h"
+#include "winhttp_redirect_helper.h"
 #include <schannel.h>
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
@@ -1363,6 +1364,40 @@ void WinHttpConnection::callback_status_secure_failure(
     HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu] [TID %ul] WINHTTP_CALLBACK_STATUS_SECURE_FAILURE statusFlags=%d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), statusFlags);
 }
 
+void WinHttpConnection::callback_status_redirect(
+    _In_ HINTERNET hRequestHandle,
+    _In_ WinHttpConnection* pRequestContext,
+    _In_opt_ void* statusInfo)
+{
+    // WinHTTP follows redirects automatically and re-sends every header added with WinHttpAddRequestHeaders.
+    // Drop the caller's Authorization header when the redirect leaves the original origin so credentials
+    // aren't leaked to another host. Once removed it stays removed for any later hops.
+    auto redirectUrl = static_cast<const wchar_t*>(statusInfo);
+    if (redirectUrl == nullptr)
+    {
+        return;
+    }
+
+    Uri redirectUri{ utf8_from_utf16(redirectUrl) };
+    if (!IsCrossOriginRedirect(pRequestContext->m_uri, redirectUri))
+    {
+        return;
+    }
+
+    if (WinHttpAddRequestHeaders(hRequestHandle, L"Authorization:", static_cast<DWORD>(-1L), WINHTTP_ADDREQ_FLAG_REPLACE))
+    {
+        HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] Removed Authorization header for cross-origin redirect to %s", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), redirectUri.Host().c_str());
+    }
+    else
+    {
+        DWORD dwError = GetLastError();
+        if (dwError != ERROR_WINHTTP_HEADER_NOT_FOUND)
+        {
+            HC_TRACE_ERROR(HTTPCLIENT, "WinHttpConnection [ID %llu] [TID %ul] Failed to remove Authorization header on redirect, errorcode %d", TO_ULL(HCHttpCallGetId(pRequestContext->m_call)), GetCurrentThreadId(), dwError);
+        }
+    }
+}
+
 struct WinHttpCallbackContext
 {
     WinHttpCallbackContext(std::shared_ptr<WinHttpConnection> _winHttpConnection) : winHttpConnection{ std::move(_winHttpConnection) }
@@ -1504,6 +1539,12 @@ void CALLBACK WinHttpConnection::completion_callback(
             case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
             {
                 callback_status_secure_failure(hRequestHandle, pRequestContext, statusInfo);
+                break;
+            }
+
+            case WINHTTP_CALLBACK_STATUS_REDIRECT:
+            {
+                callback_status_redirect(hRequestHandle, pRequestContext, statusInfo);
                 break;
             }
 

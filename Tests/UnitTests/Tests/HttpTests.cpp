@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "../global/global.h"
 #include "Platform/ExternalHttpProvider.h"
+#include "HTTP/WinHttp/winhttp_redirect_helper.h"
 #include <httpClient/httpProvider.h>
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
@@ -616,6 +617,33 @@ public:
 
         HCHttpCallCloseHandle(call);
         HCCleanup();
+    }
+
+    DEFINE_TEST_CASE(TestCrossOriginRedirectDetection)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestCrossOriginRedirectDetection);
+
+        auto crossOrigin = [](const char* from, const char* to)
+        {
+            return IsCrossOriginRedirect(xbox::httpclient::Uri{ from }, xbox::httpclient::Uri{ to });
+        };
+
+        // Same origin: Authorization is kept
+        VERIFY_IS_FALSE(crossOrigin("https://example.com/a", "https://example.com/b?x=1"));
+        VERIFY_IS_FALSE(crossOrigin("https://example.com/a", "https://EXAMPLE.com/b"));
+        VERIFY_IS_FALSE(crossOrigin("https://example.com/a", "https://example.com:443/b"));
+        VERIFY_IS_FALSE(crossOrigin("http://example.com:80/a", "http://example.com/b"));
+        VERIFY_IS_FALSE(crossOrigin("https://example.com:8443/a", "https://example.com:8443/b"));
+
+        // Different host, subdomain, scheme or port: Authorization is removed
+        VERIFY_IS_TRUE(crossOrigin("https://example.com/a", "https://attacker.example.net/a"));
+        VERIFY_IS_TRUE(crossOrigin("https://example.com/a", "https://cdn.example.com/a"));
+        VERIFY_IS_TRUE(crossOrigin("https://example.com/a", "http://example.com/a"));
+        VERIFY_IS_TRUE(crossOrigin("https://example.com/a", "https://example.com:8443/a"));
+        VERIFY_IS_TRUE(crossOrigin("http://127.0.0.1:8080/a", "http://localhost:8080/a"));
+
+        // Unparseable redirect target is treated as cross-origin
+        VERIFY_IS_TRUE(crossOrigin("https://example.com/a", "not a url"));
     }
 
 };

@@ -106,6 +106,7 @@ set(HC_SOURCE_FILES
     "${PATH_TO_ROOT}/Source/Platform/Win32/PlatformComponents_Win32.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/WinHttp/winhttp_connection.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/WinHttp/winhttp_connection.h"
+    "${PATH_TO_ROOT}/Source/HTTP/WinHttp/winhttp_redirect_helper.h"
     "${PATH_TO_ROOT}/Source/HTTP/WinHttp/winhttp_provider.cpp"
     "${PATH_TO_ROOT}/Source/HTTP/WinHttp/winhttp_provider.h"
     "${PATH_TO_ROOT}/Source/HTTP/WinHttp/winhttp_proxy_helper.cpp"
