@@ -424,6 +424,60 @@ public:
         VERIFY_ARE_EQUAL(101, platErrorCode);
     }
 
+#if HC_PLATFORM_IS_MICROSOFT
+    static std::string GetPlatformErrorMessage(HRESULT errorCode, uint32_t platformErrorCode, const char* providerMessage = nullptr)
+    {
+        HCCallHandle call = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
+        if (providerMessage != nullptr)
+        {
+            VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetPlatformNetworkErrorMessage(call, providerMessage));
+        }
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetNetworkErrorCode(call, errorCode, platformErrorCode));
+
+        const char* message = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetPlatformNetworkErrorMessage(call, &message));
+        VERIFY_IS_NOT_NULL(message);
+        std::string result{ message };
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
+        return result;
+    }
+
+    DEFINE_TEST_CASE(TestPlatformNetworkErrorMessage)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestPlatformNetworkErrorMessage);
+
+        VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+
+        // Win32 error wrapped as an HRESULT, as the WinHTTP provider reports it
+        std::string accessDenied = GetPlatformErrorMessage(E_FAIL, HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED));
+        VERIFY_IS_FALSE(accessDenied.empty());
+        VERIFY_IS_FALSE(isspace(static_cast<unsigned char>(accessDenied.back())) != 0);
+
+        // Raw Win32 code resolves to the same text
+        VERIFY_ARE_EQUAL_STR(accessDenied.c_str(), GetPlatformErrorMessage(E_FAIL, ERROR_ACCESS_DENIED).c_str());
+
+        // No platform code falls back to the HRESULT itself
+        VERIFY_IS_FALSE(GetPlatformErrorMessage(E_OUTOFMEMORY, 0).empty());
+
+        // WinHTTP errors come from winhttp.dll's message table
+        HMODULE winHttp = LoadLibraryW(L"winhttp.dll");
+        VERIFY_IS_NOT_NULL(winHttp);
+        constexpr DWORD ERROR_WINHTTP_NAME_NOT_RESOLVED_CODE = 12007;
+        VERIFY_IS_FALSE(GetPlatformErrorMessage(E_FAIL, HRESULT_FROM_WIN32(ERROR_WINHTTP_NAME_NOT_RESOLVED_CODE)).empty());
+        FreeLibrary(winHttp);
+
+        // A provider-supplied message is kept
+        VERIFY_ARE_EQUAL_STR("provider message", GetPlatformErrorMessage(E_FAIL, HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), "provider message").c_str());
+
+        // Success and unknown codes leave the message empty
+        VERIFY_IS_TRUE(GetPlatformErrorMessage(S_OK, 0).empty());
+        VERIFY_IS_TRUE(GetPlatformErrorMessage(E_FAIL, 0xDEAD0000).empty());
+
+        HCCleanup();
+    }
+#endif
+
     DEFINE_TEST_CASE(TestResponseHeaders)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestResponseHeaders);
