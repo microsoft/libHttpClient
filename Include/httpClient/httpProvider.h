@@ -428,6 +428,9 @@ STDAPI HCHttpCallResponseSetStatusCode(
 /// <param name="networkErrorCode">The network error code of the HTTP call.</param>
 /// <param name="platformNetworkErrorCode">The platform specific network error code of the HTTP call to be used for logging / debugging.</param>
 /// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
+/// <remarks>On Windows platforms, if networkErrorCode is a failure and no platform network error message has been set,
+/// the message is filled in with the system description of platformNetworkErrorCode (or networkErrorCode if it is 0).
+/// Call HCHttpCallResponseSetPlatformNetworkErrorMessage afterwards to override it.</remarks>
 STDAPI HCHttpCallResponseSetNetworkErrorCode(
     _In_ HCCallHandle call,
     _In_ HRESULT networkErrorCode,

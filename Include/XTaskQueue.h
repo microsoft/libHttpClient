@@ -329,7 +329,7 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(_Out_ XTaskQueueHandle* queue
 /// </summary>
 /// <param name='queue'>The queue to set up as the default task queue for the procces.</param>
 STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
-    _In_ XTaskQueueHandle queue
+    _In_opt_ XTaskQueueHandle queue
     ) noexcept;
 
 } // extern "C"
