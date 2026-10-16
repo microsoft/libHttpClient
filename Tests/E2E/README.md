@@ -182,6 +182,17 @@ E2E_TEST(http_example)
 | `ws_legacy_oversized_message_fragments` | Fragment callback | No fragment API; the message arrives whole (legacy 32 MB cap) |
 | `ws_deterministic_too_large_closes`, `ws_compression_negotiated` | Skipped if `HCWebSocketSetOptions` returns `E_NOT_SUPPORTED` (compression not compiled in, e.g. the first CI build of a fresh clone; #1034) | Compression test skipped likewise when built with `HC_ENABLE_WEBSOCKET_COMPRESSION=OFF` |
 
+NSURLSession (macOS) differs from WinHTTP in two more places, besides the two Windows-only skips above:
+
+- `http_redirect_same_origin_keeps_authorization`: redirects are followed, but NSURLSession treats
+  `Authorization` as a reserved header and drops it on **every** redirect, same-origin included.
+  The test records that instead of asserting the header is kept. This is a known gap for callers
+  that rely on a redirect keeping their token.
+- `http_progress_callbacks`: on loopback NSURLSession can send the whole 1 MB upload in one write
+  before its first `didSendBodyData`, so the first upload report may already be 100%. The test
+  requires the last upload report to equal the total instead. Download progress must still start
+  partial.
+
 ## Known issues recorded by the suite
 
 - `ws_bad_upgrade_fails_and_cleanup_completes` is **skipped** while `HCCleanupAsync` hangs after
