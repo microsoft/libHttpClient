@@ -22,6 +22,7 @@ for the route contract.
 
 import argparse
 import base64
+import faulthandler
 import gzip
 import hashlib
 import http.server
@@ -29,6 +30,7 @@ import json
 import os
 import shutil
 import socket
+import socketserver
 import ssl
 import struct
 import subprocess
@@ -662,6 +664,13 @@ class Server(http.server.ThreadingHTTPServer):
         self.ssl_context = ssl_context
         super().__init__(("127.0.0.1", 0), Handler)
 
+    def server_bind(self):
+        # HTTPServer.server_bind also sets server_name from socket.getfqdn(), a reverse DNS lookup
+        # that can stall for a long time on some hosts (e.g. macOS build agents) before the ready
+        # line is printed. Nothing here uses server_name, so skip the lookup.
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+
     def finish_request(self, request, client_address):
         # Runs on the per-connection thread, so a slow or failing TLS handshake never blocks accept().
         if self.ssl_context is None:
@@ -765,8 +774,10 @@ def create_tls_context(openssl):
         command = [openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha256", "-days", "2",
                    "-config", config, "-keyout", key, "-out", cert]
         try:
+            # Well under the test exe's 30 s wait for the ready line, so a hung openssl costs HTTPS
+            # coverage (reported via https_error) rather than the whole run.
             result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                    env=env, timeout=60, universal_newlines=True)
+                                    env=env, timeout=15, universal_newlines=True)
         except (OSError, subprocess.SubprocessError) as e:
             return None, "running %s failed: %r" % (openssl, e)
         if result.returncode != 0 or not os.path.isfile(cert) or not os.path.isfile(key):
@@ -795,6 +806,10 @@ def main():
     args = parser.parse_args()
     VERBOSE = args.verbose
 
+    # The test exe waits 30 s for the ready line and then reports only a timeout. If startup stalls,
+    # dump every thread's stack to stderr first so the log shows where.
+    faulthandler.dump_traceback_later(25, exit=False)
+
     if args.no_https:
         ctx, https_error = None, "HTTPS disabled with --no-https"
     else:
@@ -819,6 +834,7 @@ def main():
     }
     sys.stdout.write(json.dumps(ready) + "\n")
     sys.stdout.flush()
+    faulthandler.cancel_dump_traceback_later()
 
     # Never read stdin: when launched in the background it may be closed.
     stop = threading.Event()

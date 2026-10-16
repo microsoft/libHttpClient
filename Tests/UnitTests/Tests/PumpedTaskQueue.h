@@ -92,11 +92,15 @@ private:
         notifyData.cv.notify_all();
     }
 
+    // Notifications coalesce into one flag, so each wake must drain the port until it is empty.
+    // Dispatching a single item per wake strands any item queued while the pump was busy, and a
+    // Manual port only signals pending terminations once its queue is empty, so a stranded item
+    // also strands queue terminations (leaking the queue).
     void WorkThreadProc()
     {
         while (WaitForNotify(workData))
         {
-            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+            while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) {}
         }
     }
 
@@ -104,7 +108,7 @@ private:
     {
         while (WaitForNotify(completionData))
         {
-            XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
+            while (XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0)) {}
         }
     }
 
