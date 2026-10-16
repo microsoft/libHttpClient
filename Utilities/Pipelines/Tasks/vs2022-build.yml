@@ -54,7 +54,7 @@ steps:
   # Code coverage (report only, no gate) is collected on the x64 Debug leg and published to the
   # pipeline's Code Coverage tab; other legs use the default settings.
   - powershell: |
-      $settings = if ('$(Platform)' -eq 'x64' -and '${{ parameters.configuration }}' -eq 'Debug') { 'coverage.runsettings' } else { 'default.runsettings' }
+      $settings = if ('$(Platform)' -eq 'x64' -and '$(Configuration)' -eq 'Debug') { 'coverage.runsettings' } else { 'default.runsettings' }
       Write-Host "Unit test settings: $settings"
       Write-Host "##vso[task.setvariable variable=HCUnitTestRunSettings]$(Build.SourcesDirectory)\Tests\UnitTests\$settings"
     displayName: Select unit test settings
@@ -80,7 +80,7 @@ steps:
 
   - task: PublishCodeCoverageResults@2
     displayName: Publish unit test code coverage (report only)
-    condition: and(succeededOrFailed(), eq(variables['Platform'], 'x64'), eq('${{ parameters.configuration }}', 'Debug'))
+    condition: and(succeededOrFailed(), eq(variables['Platform'], 'x64'), eq(variables['Configuration'], 'Debug'))
     inputs:
       summaryFileLocation: $(Agent.TempDirectory)/**/*.cobertura.xml
       failIfCoverageEmpty: false
@@ -143,6 +143,8 @@ steps:
         }
 
         python --version
+        # Fail (not skip) the HTTPS tests if the server can't make its certificate, so that coverage can't vanish quietly.
+        $env:LHC_E2E_REQUIRE_HTTPS = '1'
         & $exe
         $code = $LASTEXITCODE
         if ($code -ne 0)

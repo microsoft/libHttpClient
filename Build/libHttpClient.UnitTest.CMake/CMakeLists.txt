@@ -59,7 +59,7 @@ hc_add_unit_tests("${PATH_TO_ROOT}" "${HC_UT_FLAGS}" "${HC_UT_FLAGS_DEBUG}" "${H
 option(HC_BUILD_E2E_TESTS "macOS only: build the Tests/E2E suite against an NSURLSession + websocketpp build (ctest label 'e2e')" OFF)
 if (HC_BUILD_E2E_TESTS)
     if (NOT APPLE)
-        message(FATAL_ERROR "HC_BUILD_E2E_TESTS in this project is for macOS. On Linux, use Build/libHttpClient.Linux (HC_BUILD_E2E_TESTS is ON there).")
+        message(FATAL_ERROR "HC_BUILD_E2E_TESTS in this project is for macOS. On Linux, use Build/libHttpClient.Linux (configure it with -DHC_BUILD_E2E_TESTS=ON, or libHttpClient_Linux.bash -t).")
     endif()
     if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
         enable_language(OBJCXX)
@@ -110,8 +110,10 @@ if (HC_BUILD_E2E_TESTS)
         "${PATH_TO_ROOT}/External/websocketpp"
         "${PATH_TO_ROOT}/External/asio/asio/include"
         "${OPENSSL_INCLUDE_DIR}")
+    # HC_LINK_STATIC is PUBLIC: the E2E executable's own sources include httpClient headers too, and
+    # without it async.h on Apple includes <httpClient/XAsync.h> from the (absent) framework.
+    target_compile_definitions(libHttpClient.Apple.E2E PUBLIC HC_LINK_STATIC=1)
     target_compile_definitions(libHttpClient.Apple.E2E PRIVATE
-        HC_LINK_STATIC=1
         HC_ENABLE_WEBSOCKET_COMPRESSION=1
         Z_HAVE_UNISTD_H=1
         $<IF:$<CONFIG:Debug>,HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_VERBOSE,HC_TRACE_BUILD_LEVEL=HC_PRIVATE_TRACE_LEVEL_IMPORTANT>)

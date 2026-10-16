@@ -8,8 +8,8 @@ internet access. One set of test sources builds for every platform:
 | Platform | HTTP provider | WebSocket provider | Build | CI |
 |---|---|---|---|---|
 | Win32 x64 | WinHTTP | WinHTTP (websocketpp when compression is requested) | `libHttpClient.E2E.Win32.vcxproj` | `vs2022-build.yml`, x64 Debug + Release |
-| Linux | curl | websocketpp | `libHttpClient.E2E` in `Build/libHttpClient.Linux` (`HC_BUILD_E2E_TESTS`, default ON), ctest label `e2e` | `linux-build.yml`, Debug + Release + ASan/UBSan |
-| macOS | NSURLSession | websocketpp | `libHttpClient.E2E` in `Build/libHttpClient.UnitTest.CMake` (`-DHC_BUILD_E2E_TESTS=ON`, opt-in) | `macos-build.yml`, **experimental** (`continueOnError`) |
+| Linux | curl | websocketpp | `libHttpClient.E2E` in `Build/libHttpClient.Linux` (`HC_BUILD_E2E_TESTS`, opt-in: `libHttpClient_Linux.bash -t`), ctest label `e2e` | `linux-build.yml`, Debug + Release + ASan/UBSan |
+| macOS | NSURLSession | websocketpp | `libHttpClient.E2E` in `Build/libHttpClient.UnitTest.CMake` (`-DHC_BUILD_E2E_TESTS=ON`, opt-in) | `macos-build.yml`, Debug + Release |
 
 | Piece | Location |
 |---|---|
@@ -32,7 +32,7 @@ solution), or just the project:
 then run `Out\x64\Debug\libHttpClient.E2E.Win32\libHttpClient.E2E.Win32.exe`.
 
 **Linux:** build OpenSSL and curl first (`Build/libHttpClient.Linux/openssl_Linux.bash -c Debug`,
-`curl_Linux.bash -c Debug`), then `Build/libHttpClient.Linux/libHttpClient_Linux.bash -c Debug -nc -ns -st`
+`curl_Linux.bash -c Debug`), then `Build/libHttpClient.Linux/libHttpClient_Linux.bash -c Debug -nc -ns -st -t`
 and `cd Int/CMake/libHttpClient.Linux && ctest --output-on-failure -L e2e` (or run
 `Out/x64/Debug/libHttpClient.Linux/libHttpClient.E2E` directly).
 

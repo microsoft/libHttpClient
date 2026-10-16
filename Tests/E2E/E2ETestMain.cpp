@@ -51,8 +51,14 @@ void RequireHttps()
 {
     if (g_server.https == 0)
     {
-        Skip("the test server has no HTTPS endpoint (it generates its certificate with the openssl CLI, "
-            "looked up on PATH and then in Git for Windows): " + (g_server.httpsError.empty() ? std::string{ "port 0 was passed with --ports" } : g_server.httpsError));
+        std::string reason = "the test server has no HTTPS endpoint (it generates its certificate with the openssl CLI, "
+            "looked up on PATH and then in Git for Windows): " + (g_server.httpsError.empty() ? std::string{ "port 0 was passed with --ports" } : g_server.httpsError);
+        // CI sets LHC_E2E_REQUIRE_HTTPS=1 so the HTTPS coverage can't silently disappear.
+        if (platform::GetEnv("LHC_E2E_REQUIRE_HTTPS") == "1")
+        {
+            Fail(__FILE__, __LINE__, "LHC_E2E_REQUIRE_HTTPS=1 but " + reason);
+        }
+        Skip(reason);
     }
 }
 

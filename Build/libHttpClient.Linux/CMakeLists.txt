@@ -12,8 +12,9 @@ enable_testing()
 
 option(HC_NOWEBSOCKETS "Disable WebSocket support" OFF)
 option(HC_ENABLE_WEBSOCKET_COMPRESSION "Enable compression-capable WebSocket provider support" ON)
-option(HC_BUILD_UNIT_TESTS "Build the portable unit tests (libHttpClient.UnitTests, ctest label 'unit')" ON)
-option(HC_BUILD_E2E_TESTS "Build the end-to-end tests against the loopback server (libHttpClient.E2E, ctest label 'e2e')" ON)
+# Test targets are opt-in so consumers building the library don't compile them (CI and libHttpClient_Linux.bash -t turn them on).
+option(HC_BUILD_UNIT_TESTS "Build the portable unit tests (libHttpClient.UnitTests, ctest label 'unit')" OFF)
+option(HC_BUILD_E2E_TESTS "Build the end-to-end tests against the loopback server (libHttpClient.E2E, ctest label 'e2e')" OFF)
 option(HC_ENABLE_SANITIZERS "Build every target with AddressSanitizer + UndefinedBehaviorSanitizer (test builds only)" OFF)
 
 if (HC_ENABLE_SANITIZERS)

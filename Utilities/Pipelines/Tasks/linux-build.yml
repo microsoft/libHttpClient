@@ -35,9 +35,9 @@ steps:
     inputs:
       filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
       ${{ if parameters.sanitizers }}:
-        arguments: '-c ${{ parameters.configuration }} -nc -ns -st -san'
+        arguments: '-c ${{ parameters.configuration }} -nc -ns -st -t -san'
       ${{ else }}:
-        arguments: '-c ${{ parameters.configuration }} -nc -ns -st'
+        arguments: '-c ${{ parameters.configuration }} -nc -ns -st -t'
 
   - task: Bash@3
     ${{ if parameters.sanitizers }}:
@@ -61,8 +61,10 @@ steps:
         # "taskqueue" are the standalone TaskQueue/WaitTimer regression repros; "e2e" is the Tests/E2E
         # suite against this build's curl + websocketpp providers and a Python 3 (stdlib-only) loopback
         # server that libHttpClient.E2E starts itself on 127.0.0.1 (python3 and the openssl CLI are on
-        # the hosted image; without openssl only the HTTPS tests skip). Labels let new tests be picked
-        # up just by labelling them in CMake (no pipeline change needed).
+        # the hosted image). Labels let new tests be picked
+        # up just by labelling them in CMake (no pipeline change needed). LHC_E2E_REQUIRE_HTTPS makes the
+        # HTTPS tests fail rather than skip if openssl is missing, so that coverage can't vanish quietly.
+        export LHC_E2E_REQUIRE_HTTPS=1
         ctest --output-on-failure -L "unit|taskqueue|e2e"
 
   - ${{ if not(parameters.sanitizers) }}:

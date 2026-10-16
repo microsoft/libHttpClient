@@ -64,7 +64,8 @@ ctest --output-on-failure -R websocket-compression-linux
 The CMake project also builds `libHttpClient.UnitTests`: the shared unit tests in
 `Tests/UnitTests/Tests/*.cpp` (the same sources the Windows TE/TAEF projects run), compiled with
 the header-only portable runner in `Tests/UnitTests/Support/Portable` against the Generic platform.
-It does not need cURL or OpenSSL, so it can be built on its own. From the CMake build directory:
+It does not need cURL or OpenSSL, so it can be built on its own. The test targets are off by default; enable them with
+`libHttpClient_Linux.bash -t` (or CMake `-DHC_BUILD_UNIT_TESTS=ON -DHC_BUILD_E2E_TESTS=ON`). From the CMake build directory:
 
 ```
 make libHttpClient.UnitTests
@@ -75,8 +76,7 @@ ctest --output-on-failure -L "unit|taskqueue"       # plus the TaskQueue/WaitTim
 The executable can also be run directly (it lives under `Out/x64/{Configuration}/libHttpClient.Linux`)
 with `--list` or `--filter=<glob>[,<glob>...]`, e.g. `--filter=HttpTests::*,-*Retry*`. New
 `Tests/UnitTests/Tests/*.cpp` files are picked up automatically; files that cannot build off
-Windows are listed in `Build/libHttpClient.CMake/UnitTests.cmake`. Pass `-DHC_BUILD_UNIT_TESTS=OFF`
-to skip the target.
+Windows are listed in `Build/libHttpClient.CMake/UnitTests.cmake`.
 
 The same target can be built on its own on any Unix-like host (this is what the macOS CI legs do)
 with the standalone project in `Build/libHttpClient.UnitTest.CMake`:
@@ -87,7 +87,7 @@ cmake --build Int/CMake/ut --parallel && (cd Int/CMake/ut && ctest --output-on-f
 ```
 
 ```
-./libHttpClient_Linux.bash -c Debug -st -san
+./libHttpClient_Linux.bash -c Debug -st -t -san
 ```
 
 `-san|--sanitizers` (CMake `-DHC_ENABLE_SANITIZERS=ON`) builds every target with AddressSanitizer

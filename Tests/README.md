@@ -25,14 +25,14 @@ The TAEF flavor (`libHttpClient.UnitTest.TAEF`) compiles the same sources; it ne
 (`Tests/UnitTests/Support/Portable`):
 
 ```sh
-# Linux, as part of the normal CMake build (see Build/libHttpClient.Linux/README.md)
+# Linux: build with the test targets on (libHttpClient_Linux.bash -t; see Build/libHttpClient.Linux/README.md)
 cd Int/CMake/libHttpClient.Linux && ctest --output-on-failure -L unit
 # Standalone (any host, no curl/OpenSSL needed)
 cmake -S Build/libHttpClient.UnitTest.CMake -B Int/CMake/ut -DCMAKE_BUILD_TYPE=Debug
 cmake --build Int/CMake/ut --parallel && (cd Int/CMake/ut && ctest --output-on-failure -L unit)
 ```
 
-`libHttpClient_Linux.bash -san` builds with AddressSanitizer + UndefinedBehaviorSanitizer.
+`libHttpClient_Linux.bash -t -san` builds the tests with AddressSanitizer + UndefinedBehaviorSanitizer.
 
 ## Writing a unit test
 
