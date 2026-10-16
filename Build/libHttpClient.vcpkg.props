@@ -23,7 +23,8 @@
       <_HCDepsText>$([System.IO.File]::ReadAllText('$(HCDepsFile)'))</_HCDepsText>
       <_HCStampText Condition="Exists('$(HCDepsStamp)')">$([System.IO.File]::ReadAllText('$(HCDepsStamp)'))</_HCStampText>
       <_HCDepsCurrent>false</_HCDepsCurrent>
-      <_HCDepsCurrent Condition="'$(_HCStampText)' == '$(_HCDepsText)'">true</_HCDepsCurrent>
+      <!-- The shared items assume boost-wintls exists once restore has run, so a deleted copy must re-trigger it. -->
+      <_HCDepsCurrent Condition="'$(_HCStampText)' == '$(_HCDepsText)' AND Exists('$(_HCDepsRoot)External\boost-wintls\include\wintls.hpp')">true</_HCDepsCurrent>
     </PropertyGroup>
     <Exec Condition="'$(_HCDepsCurrent)' != 'true'"
           Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(HCDepsRestoreScript)&quot;" />
