@@ -36,4 +36,8 @@ enum class proxy_protocol
 
 proxy_type get_ie_proxy_info(_In_ proxy_protocol protocol, _Inout_ xbox::httpclient::Uri& proxyUri);
 
+// Returns the system description (UTF-8, no trailing whitespace) for a Win32 error, an HRESULT, or a
+// WinHTTP error, or an empty string if none is available.
+http_internal_string format_platform_error_message(_In_ uint32_t platformErrorCode) noexcept;
+
 NAMESPACE_XBOX_HTTP_CLIENT_END
