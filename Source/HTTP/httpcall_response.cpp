@@ -352,6 +352,17 @@ try
     call->networkErrorCode = networkErrorCode;
     call->platformNetworkErrorCode = platformNetworkErrorCode;
     if (call->traceCall) { HC_TRACE_INFORMATION(HTTPCLIENT, "HCHttpCallResponseSetErrorCode [ID %llu]: errorCode=%08X (%08X)", TO_ULL(call->id), networkErrorCode, platformNetworkErrorCode); }
+
+#if HC_PLATFORM_IS_MICROSOFT
+    // Microsoft platform providers report only codes, so fill in the system description unless the
+    // provider already supplied a message.
+    if (FAILED(networkErrorCode) && call->platformNetworkErrorMessage.empty())
+    {
+        uint32_t codeToFormat = platformNetworkErrorCode != 0 ? platformNetworkErrorCode : static_cast<uint32_t>(networkErrorCode);
+        call->platformNetworkErrorMessage = format_platform_error_message(codeToFormat);
+    }
+#endif
+
     return S_OK;
 }
 CATCH_RETURN()

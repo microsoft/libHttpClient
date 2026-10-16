@@ -261,6 +261,11 @@ private:
         _In_ WinHttpConnection* pRequestContext,
         _In_ void* statusInfo);
 
+    static void callback_status_redirect(
+        _In_ HINTERNET hRequestHandle,
+        _In_ WinHttpConnection* pRequestContext,
+        _In_opt_ void* statusInfo);
+
     static HRESULT flush_response_buffer(
         _In_ WinHttpConnection* pRequestContext
     );

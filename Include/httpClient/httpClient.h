@@ -886,7 +886,9 @@ STDAPI HCHttpCallResponseGetNetworkErrorCode(
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="platformNetworkErrorMessage">The platform specific network error message of the HTTP call to be used for tracing / debugging.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
-/// <remarks>This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.</remarks>
+/// <remarks>This can only be called after calling HCHttpCallPerformAsync when the HTTP task is completed.
+/// On Windows platforms (Win32, GDK, UWP) the message is the system description of the platform error code unless
+/// the HTTP provider supplied its own. The string may be empty if no description is available.</remarks>
 STDAPI HCHttpCallResponseGetPlatformNetworkErrorMessage(
     _In_ HCCallHandle call,
     _Out_ const char** platformNetworkErrorMessage
