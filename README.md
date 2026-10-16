@@ -113,7 +113,7 @@ If you are building libHttpClient from source, you can provide an hc_settings.pr
 
 For Linux CMake builds, `HC_ENABLE_WEBSOCKET_COMPRESSION` is enabled by default. The helper script in `Build\libHttpClient.Linux\libHttpClient_Linux.bash` keeps that default and exposes `-nwc|--no-websocket-compression` as an opt-out, while still accepting `-wc|--websocket-compression` for explicit enablement.
 
-For Apple Xcode builds, the websocket-enabled `libHttpClient_iOS` and `libHttpClient_macOS` targets define `HC_ENABLE_WEBSOCKET_COMPRESSION` and include the vendored `External/zlib` headers by default, so built-in compression support is enabled on iOS and macOS as well.
+For Apple Xcode builds, the websocket-enabled `libHttpClient_iOS` and `libHttpClient_macOS` targets define `HC_ENABLE_WEBSOCKET_COMPRESSION` and include the vendored `External/zlib` headers by default, so built-in compression support is enabled on iOS and macOS as well. To compile it out, set the `HC_ENABLE_WEBSOCKET_COMPRESSION` build setting to `NO` (for example `xcodebuild ... HC_ENABLE_WEBSOCKET_COMPRESSION=NO`, or in an `.xcconfig`).
 
 An example customization file hc_settings.props.example can be found at the root of the repository.
 
