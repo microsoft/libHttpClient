@@ -70,7 +70,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 extern "C"
 {
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_NetworkObserver_Log(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_NetworkObserver_Log(
     JNIEnv* env,
     jclass /*clazz*/,
     jstring message
@@ -81,7 +81,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_NetworkObserver_Log(
     env->ReleaseStringUTFChars(message, nativeMessage);
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
     JNIEnv* /* env */,
     jobject /* instance */,
     jlong call,
@@ -105,7 +105,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompl
     }
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
     JNIEnv* env,
     jobject /* instance */,
     jlong call,
@@ -142,7 +142,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
     XAsyncComplete(sourceRequest->GetAsyncBlock(), S_OK, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress(
         JNIEnv* env,
         jobject /* instance */,
         jlong call,
@@ -202,7 +202,7 @@ jint ThrowIOException(JNIEnv* env, char const* message) {
     return -1;
 }
 
-JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
+HC_JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
     JNIEnv* env,
     jobject /* instance */,
     jlong callHandle,
@@ -271,7 +271,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
     return static_cast<jint>(bytesWritten);
 }
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(
     JNIEnv* env,
     jobject /* instance */,
     jlong callHandle,

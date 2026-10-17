@@ -8,15 +8,6 @@
 #include "httpProvider.h"
 #include "Platform/Android/PlatformComponents_Android.h"
 
-extern "C"
-{
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject, jobjectArray, jobjectArray);
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint, jobjectArray, jobjectArray);
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv*, jobject, jint);
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv*, jobject, jstring);
-    void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv*, jobject, jobject);
-}
-
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 
 struct okhttp_websocket_impl;
@@ -1104,7 +1095,7 @@ NAMESPACE_XBOX_HTTP_CLIENT_END
 extern "C"
 {
 
-JNIEXPORT void JNICALL
+HC_JNIEXPORT void JNICALL
 Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv *env, jobject thiz, jobjectArray headerNames, jobjectArray headerValues)
 {
     using namespace xbox::httpclient;
@@ -1119,7 +1110,7 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv *env, jobject thiz, j
     owner->OnOpen(owner->Lock());
 }
 
-JNIEXPORT void JNICALL
+HC_JNIEXPORT void JNICALL
 Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz, jint statusCode, jobjectArray headerNames, jobjectArray headerValues)
 {
     using namespace xbox::httpclient;
@@ -1134,7 +1125,7 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv *env, jobject thiz
     owner->OnFailure(owner->Lock(), statusCode);
 }
 
-JNIEXPORT void JNICALL
+HC_JNIEXPORT void JNICALL
 Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv *env, jobject thiz, jint code)
 {
     using namespace xbox::httpclient;
@@ -1148,7 +1139,7 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv *env, jobject thiz, 
     owner->OnClose(owner->Lock(), HCWebSocketCloseStatus(code));
 }
 
-JNIEXPORT void JNICALL
+HC_JNIEXPORT void JNICALL
 Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv *env, jobject thiz, jstring text)
 {
     using namespace xbox::httpclient;
@@ -1175,7 +1166,7 @@ Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv *env, jobject thiz
     env->ReleaseStringUTFChars(text, message);
 }
 
-JNIEXPORT void JNICALL
+HC_JNIEXPORT void JNICALL
 Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv *env, jobject thiz, jobject data)
 {
     using namespace xbox::httpclient;
