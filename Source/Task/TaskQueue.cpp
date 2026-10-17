@@ -2756,7 +2756,7 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueue(
 // and any existing process task queue will have its handle closed.
 //
 STDAPI_(void) XTaskQueueSetCurrentProcessTaskQueue(
-    _In_ XTaskQueueHandle queue
+    _In_opt_ XTaskQueueHandle queue
     ) noexcept
 {
     XTaskQueueHandle newQueue = nullptr;

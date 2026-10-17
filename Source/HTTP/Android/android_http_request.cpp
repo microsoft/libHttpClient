@@ -14,6 +14,22 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 volatile auto dummyHCRequestOnRequestCompleted = &Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted;
 volatile auto dummyHCRequestOnRequestFailed = &Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed;
 
+namespace
+{
+// Copies UTF-8 bytes into a Java byte[]. Header values can contain 4-byte UTF-8 characters, which
+// aren't valid Modified UTF-8 and so can't go through NewStringUTF.
+jbyteArray NewUtf8ByteArray(JNIEnv* jniEnv, const char* utf8)
+{
+    const jsize length = static_cast<jsize>(strlen(utf8));
+    jbyteArray bytes = jniEnv->NewByteArray(length);
+    if (bytes != nullptr && length > 0)
+    {
+        jniEnv->SetByteArrayRegion(bytes, 0, length, reinterpret_cast<const jbyte*>(utf8));
+    }
+    return bytes;
+}
+}
+
 HttpRequest::HttpRequest(
     XAsyncBlock* asyncBlock,
     JavaVM* javaVm,
@@ -120,19 +136,41 @@ HRESULT HttpRequest::AddHeader(const char* headerName, const char* headerValue)
         return result;
     }
 
-    jmethodID httpRequestAddHeaderMethod = jniEnv->GetMethodID(m_httpRequestClass, "setHttpHeader", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID httpRequestAddHeaderMethod = jniEnv->GetMethodID(m_httpRequestClass, "setHttpHeader", "([B[B)V");
     if (httpRequestAddHeaderMethod == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest.setHttpHeader");
         return E_FAIL;
     }
 
-    jstring nameJstr = jniEnv->NewStringUTF(headerName);
-    jstring valueJstr = jniEnv->NewStringUTF(headerValue);
-    jniEnv->CallVoidMethod(m_httpRequestInstance, httpRequestAddHeaderMethod, nameJstr, valueJstr);
+    jbyteArray nameBytes = NewUtf8ByteArray(jniEnv, headerName);
+    jbyteArray valueBytes = nameBytes != nullptr ? NewUtf8ByteArray(jniEnv, headerValue) : nullptr;
+    if (nameBytes == nullptr || valueBytes == nullptr)
+    {
+        jniEnv->ExceptionClear();
+        if (nameBytes != nullptr)
+        {
+            jniEnv->DeleteLocalRef(nameBytes);
+        }
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not allocate header arrays for '%s'", headerName);
+        return E_OUTOFMEMORY;
+    }
 
-    jniEnv->DeleteLocalRef(nameJstr);
-    jniEnv->DeleteLocalRef(valueJstr);
+    jniEnv->CallVoidMethod(m_httpRequestInstance, httpRequestAddHeaderMethod, nameBytes, valueBytes);
+
+    jniEnv->DeleteLocalRef(nameBytes);
+    jniEnv->DeleteLocalRef(valueBytes);
+
+    // A Java exception left pending here aborts the process on the next JNI call,
+    // so surface it as a failed request instead.
+    if (jniEnv->ExceptionCheck())
+    {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+        HC_TRACE_ERROR(HTTPCLIENT, "HttpClientRequest.setHttpHeader threw for header '%s'", headerName);
+        return E_INVALIDARG;
+    }
+
     return S_OK;
 }
 

@@ -51,7 +51,13 @@ HRESULT AndroidHttpProvider::PerformAsync(
         const char* headerValue = nullptr;
 
         HCHttpCallRequestGetHeaderAtIndex(call, i, &headerName, &headerValue);
-        httpRequest->AddHeader(headerName, headerValue);
+        result = httpRequest->AddHeader(headerName, headerValue);
+        if (FAILED(result))
+        {
+            HCHttpCallResponseSetNetworkErrorCode(call, result, result);
+            XAsyncComplete(asyncBlock, result, 0);
+            return S_OK;
+        }
     }
 
     HCHttpCallRequestBodyReadFunction readFunction = nullptr;
