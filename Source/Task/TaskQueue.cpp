@@ -1166,33 +1166,59 @@ void TaskQueuePortImpl::CancelPendingEntries(
     
 #ifdef _WIN32
     
-    // Abort any registered waits and promote their entries too.
+    // Abort this port context's registered waits and promote their entries too.
     // Wait registration is not lock free.
 
     StaticArray<WaitRegistration*, PORT_WAIT_MAX> waits;
 
     {
         std::unique_lock<std::mutex> lock(m_lock);
-        waits = m_waits;
-        m_waits.clear();
+
+        // Take only this port context's registrations. The port can be shared by
+        // other queues (e.g. composites), and their registrations must stay in
+        // m_waits so they can still be unregistered (#1047). The canceled handles
+        // also leave m_events so a manual Wait stops waiting on them.
+        for (uint32_t index = m_waits.count(); index > 0; index--)
+        {
+            uint32_t idx = index - 1;
+            WaitRegistration* waitReg = m_waits[idx];
+            if (waitReg->queueEntry.portContext != portContext)
+            {
+                continue;
+            }
+
+            waits.append(waitReg);
+            m_waits.removeAt(idx);
+
+            for (uint32_t eventIdx = 1; eventIdx < m_events.count(); eventIdx++)
+            {
+                if (m_events[eventIdx] == waitReg->waitHandle)
+                {
+                    m_events.removeAt(eventIdx);
+                    break;
+                }
+            }
+        }
     }
 
-    for (uint32_t index = waits.count(); index > 0; index--)
+    for (uint32_t idx = 0; idx < waits.count(); idx++)
     {
-        uint32_t idx = index - 1;
-        if (waits[idx]->queueEntry.portContext == portContext)
-        {
-            CloseThreadpoolWait(waits[idx]->threadpoolWait);
-            waits[idx]->queueEntry.waitRegistration = nullptr;
+        CloseThreadpoolWait(waits[idx]->threadpoolWait);
+        waits[idx]->queueEntry.waitRegistration = nullptr;
 
-            if (appendToQueue)
-            {
-                AppendWaitRegistrationEntry(waits[idx]);
-            }
-            
-            delete waits[idx];
-            waits.removeAt(idx);
+        if (appendToQueue)
+        {
+            AppendWaitRegistrationEntry(waits[idx]);
         }
+
+        delete waits[idx];
+    }
+
+    if (waits.count() != 0)
+    {
+        // A manual Wait may be blocked on the old handle array; make it fetch
+        // the updated one.
+        SignalQueue();
     }
 
 #endif
