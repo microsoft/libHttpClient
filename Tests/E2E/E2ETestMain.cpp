@@ -66,6 +66,7 @@ std::string HttpUrl(const std::string& path) { return Format("http://127.0.0.1:%
 std::string Http2Url(const std::string& path) { return Format("http://127.0.0.1:%u", g_server.http2) + path; }
 std::string HttpsUrl(const std::string& path) { return Format("https://127.0.0.1:%u", g_server.https) + path; }
 std::string WsUrl(const std::string& path) { return Format("ws://127.0.0.1:%u", g_server.http) + path; }
+std::string WssUrl(const std::string& path) { return Format("wss://127.0.0.1:%u", g_server.https) + path; }
 
 std::string UniqueId(const char* prefix)
 {

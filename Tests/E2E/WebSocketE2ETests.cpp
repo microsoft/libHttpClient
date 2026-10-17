@@ -475,3 +475,49 @@ E2E_TEST_ISOLATED(ws_bad_upgrade_fails_and_cleanup_completes)
     Info("HCCleanupAsync completed in %.2f s", seconds);
     E2E_CHECK_MSG(seconds < 5.0, "HCCleanupAsync took %.2f s after a failed upgrade", seconds);
 }
+
+// ------------------------------------------------------------------------------------------------
+// wss:// against the server's throwaway self-signed certificate (#679)
+// ------------------------------------------------------------------------------------------------
+
+#if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
+E2E_TEST(wss_self_signed_rejected_by_default)
+{
+    RequireHttps();
+    WebSocket ws;
+    HRESULT hr = ws.Connect(WssUrl("/ws/echo"));
+    Info("hr=%s platformError=%u", HrToString(hr).c_str(), ws.ConnectResult().platformErrorCode);
+    E2E_CHECK_MSG(FAILED(hr), "a self-signed certificate was accepted with TLS validation on");
+}
+
+E2E_TEST(wss_ssl_validation_disabled)
+{
+    RequireHttps();
+
+    // The default WinHTTP WebSocket, then (when compression is compiled in) the websocketpp +
+    // wintls client that HCWebSocketOptions::RequestCompression selects.
+    for (bool compression : { false, true })
+    {
+        const char* name = compression ? "websocketpp (RequestCompression)" : "WinHTTP";
+        WebSocket ws;
+        if (compression)
+        {
+            HRESULT optionsHr = HCWebSocketSetOptions(ws, HCWebSocketOptions::RequestCompression);
+            if (optionsHr == E_NOT_SUPPORTED)
+            {
+                Info("%s: skipped, WebSocket compression not compiled into this build", name);
+                continue;
+            }
+            E2E_CHECK_HR(optionsHr);
+        }
+        E2E_CHECK_HR(HCWebSocketSetSSLValidation(ws, false));
+        HRESULT hr = ws.Connect(WssUrl("/ws/echo"));
+        E2E_CHECK_MSG(SUCCEEDED(hr), "%s: wss connect with SSL validation disabled failed: hr=%s platformError=%u", name, HrToString(hr).c_str(), ws.ConnectResult().platformErrorCode);
+        E2E_CHECK_HR(ws.SendText("over tls"));
+        E2E_CHECK_MSG(ws.WaitForText(1), "%s: no echo over wss", name);
+        E2E_CHECK_EQ(std::string{ "over tls" }, ws.Texts()[0]);
+        ws.DisconnectAndWait();
+        Info("%s: connected and echoed over wss with SSL validation disabled", name);
+    }
+}
+#endif

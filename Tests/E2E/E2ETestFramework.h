@@ -101,6 +101,8 @@ std::string Http2Url(const std::string& path);
 std::string HttpsUrl(const std::string& path);
 // "ws://127.0.0.1:<http port><path>"
 std::string WsUrl(const std::string& path);
+// "wss://127.0.0.1:<https port><path>"
+std::string WssUrl(const std::string& path);
 
 // A unique token for keying per-test server state (retry counters, WebSocket logs, ...).
 std::string UniqueId(const char* prefix);
