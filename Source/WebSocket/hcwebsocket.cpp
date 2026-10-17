@@ -445,6 +445,16 @@ const bool WebSocket::ProxyDecryptsHttps() const noexcept
     return m_allowProxyToDecryptHttps;
 }
 
+bool WebSocket::SSLValidation() const noexcept
+{
+    return m_sslValidation;
+}
+
+bool WebSocket::SkipsTlsServerValidation() const noexcept
+{
+    return m_allowProxyToDecryptHttps || !m_sslValidation;
+}
+
 HCWebSocketOptions WebSocket::Options() const noexcept
 {
     return m_options;
@@ -517,6 +527,15 @@ HRESULT WebSocket::SetProxyDecryptsHttps(
     }
     RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
     m_allowProxyToDecryptHttps = allowProxyToDecryptHttps;
+    return S_OK;
+}
+
+HRESULT WebSocket::SetSSLValidation(
+    bool sslValidation
+) noexcept
+{
+    RETURN_HR_IF(E_HC_CONNECT_ALREADY_CALLED, m_state != State::Initial);
+    m_sslValidation = sslValidation;
     return S_OK;
 }
 

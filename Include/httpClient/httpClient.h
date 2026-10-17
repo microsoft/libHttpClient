@@ -1218,6 +1218,25 @@ STDAPI HCWebSocketSetProxyDecryptsHttps(
     _In_ HCWebsocketHandle websocket,
     _In_ bool allowProxyToDecryptHttps
 ) noexcept;
+
+/// <summary>
+/// Enables or disables TLS server certificate validation for this WebSocket connection.
+/// This is the WebSocket counterpart of HCHttpCallRequestSetSSLValidation. Unlike
+/// HCWebSocketSetProxyDecryptsHttps it does not require a proxy, so it can be used to connect
+/// directly to a development server that uses a self-signed certificate.
+/// Disabling validation is for development only and should never be done in production.
+/// </summary>
+/// <param name="websocket">The handle of the WebSocket.</param>
+/// <param name="sslValidation">false to disable TLS server certificate validation; true (the default) to validate.</param>
+/// <returns>Result code for this API operation.  Possible values are S_OK, E_INVALIDARG, or E_HC_CONNECT_ALREADY_CALLED.</returns>
+/// <remarks>
+/// Available on Win32 and GDK. On GDK console, TLS validation is always enforced regardless of
+/// this setting. This must be called prior to calling HCWebSocketConnectAsync.
+/// </remarks>
+STDAPI HCWebSocketSetSSLValidation(
+    _In_ HCWebsocketHandle websocket,
+    _In_ bool sslValidation
+) noexcept;
 #endif
 
 /// <summary>
