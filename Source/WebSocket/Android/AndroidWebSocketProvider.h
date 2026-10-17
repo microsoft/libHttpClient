@@ -1,6 +1,21 @@
 #pragma once
 
+#include <jni.h>
+#include "Platform/Android/JavaPackage_Android.h"
 #include "Platform/IWebSocketProvider.h"
+
+#ifndef HC_NOWEBSOCKETS
+// JNI callbacks from com.xbox.httpclient.HttpClientWebSocket, declared here so
+// every translation unit that references them agrees on the signatures.
+extern "C"
+{
+    HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onOpen(JNIEnv*, jobject, jobjectArray, jobjectArray);
+    HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onFailure(JNIEnv*, jobject, jint, jobjectArray, jobjectArray);
+    HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onClose(JNIEnv*, jobject, jint);
+    HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onMessage(JNIEnv*, jobject, jstring);
+    HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage(JNIEnv*, jobject, jobject);
+}
+#endif
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 

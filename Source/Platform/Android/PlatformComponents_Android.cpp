@@ -2,8 +2,89 @@
 #include "Platform/Android/PlatformComponents_Android.h"
 #include "HTTP/Android/AndroidHttpProvider.h"
 #include "WebSocket/Android/AndroidWebSocketProvider.h"
+#include "HTTP/Android/http_android.h"
+#include "Platform/Android/JavaPackage_Android.h"
+
 
 NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
+
+#ifdef HC_ANDROID_REGISTER_NATIVES
+namespace
+{
+
+HRESULT RegisterNativeMethods(JNIEnv* jniEnv, jclass clazz, const char* className, const JNINativeMethod* methods, jint count) noexcept
+{
+    if (clazz == nullptr || jniEnv->RegisterNatives(clazz, methods, count) != JNI_OK)
+    {
+        if (jniEnv->ExceptionCheck())
+        {
+            jniEnv->ExceptionClear();
+        }
+        HC_TRACE_ERROR(HTTPCLIENT, "Could not register native methods for %s", className);
+        return E_FAIL;
+    }
+    return S_OK;
+}
+
+HRESULT RegisterAllNativeMethods(
+    JNIEnv* jniEnv,
+    jclass networkObserverClass,
+    jclass requestClass,
+    jclass webSocketClass
+) noexcept
+{
+    const JNINativeMethod networkObserverMethods[] = {
+        { "Log", "(Ljava/lang/String;)V", reinterpret_cast<void*>(&Java_com_xbox_httpclient_NetworkObserver_Log) },
+    };
+    RETURN_IF_FAILED(RegisterNativeMethods(jniEnv, networkObserverClass, "NetworkObserver", networkObserverMethods, 1));
+
+    const JNINativeMethod requestMethods[] = {
+        { "OnRequestCompleted", "(JL" HC_JAVA_CLASS("HttpClientResponse") ";)V", reinterpret_cast<void*>(&Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted) },
+        { "OnRequestFailed", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V", reinterpret_cast<void*>(&Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed) },
+        { "ReportProgress", "(JJJZ)V", reinterpret_cast<void*>(&Java_com_xbox_httpclient_HttpClientRequest_ReportProgress) },
+    };
+    RETURN_IF_FAILED(RegisterNativeMethods(jniEnv, requestClass, "HttpClientRequest", requestMethods, 3));
+
+    jclass requestBodyStreamClass = jniEnv->FindClass(HC_JAVA_CLASS("HttpClientRequestBody$NativeInputStream"));
+    const JNINativeMethod requestBodyStreamMethods[] = {
+        { "nativeRead", "(JJ[BJJ)I", reinterpret_cast<void*>(&Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead) },
+    };
+    HRESULT hr = RegisterNativeMethods(jniEnv, requestBodyStreamClass, "HttpClientRequestBody$NativeInputStream", requestBodyStreamMethods, 1);
+    if (requestBodyStreamClass != nullptr)
+    {
+        jniEnv->DeleteLocalRef(requestBodyStreamClass);
+    }
+    RETURN_IF_FAILED(hr);
+
+    jclass responseStreamClass = jniEnv->FindClass(HC_JAVA_CLASS("HttpClientResponse$NativeOutputStream"));
+    const JNINativeMethod responseStreamMethods[] = {
+        { "nativeWrite", "(J[BII)V", reinterpret_cast<void*>(&Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite) },
+    };
+    hr = RegisterNativeMethods(jniEnv, responseStreamClass, "HttpClientResponse$NativeOutputStream", responseStreamMethods, 1);
+    if (responseStreamClass != nullptr)
+    {
+        jniEnv->DeleteLocalRef(responseStreamClass);
+    }
+    RETURN_IF_FAILED(hr);
+
+#ifndef HC_NOWEBSOCKETS
+    const JNINativeMethod webSocketMethods[] = {
+        { "onOpen", "([Ljava/lang/String;[Ljava/lang/String;)V", reinterpret_cast<void*>(&::Java_com_xbox_httpclient_HttpClientWebSocket_onOpen) },
+        { "onFailure", "(I[Ljava/lang/String;[Ljava/lang/String;)V", reinterpret_cast<void*>(&::Java_com_xbox_httpclient_HttpClientWebSocket_onFailure) },
+        { "onClose", "(I)V", reinterpret_cast<void*>(&::Java_com_xbox_httpclient_HttpClientWebSocket_onClose) },
+        { "onMessage", "(Ljava/lang/String;)V", reinterpret_cast<void*>(&::Java_com_xbox_httpclient_HttpClientWebSocket_onMessage) },
+        { "onBinaryMessage", "(Ljava/nio/ByteBuffer;)V", reinterpret_cast<void*>(&::Java_com_xbox_httpclient_HttpClientWebSocket_onBinaryMessage) },
+    };
+    RETURN_IF_FAILED(RegisterNativeMethods(jniEnv, webSocketClass, "HttpClientWebSocket", webSocketMethods, 5));
+#else
+    UNREFERENCED_PARAMETER(webSocketClass);
+#endif
+
+    return S_OK;
+}
+
+} // anonymous namespace
+#endif
 
 Result<std::shared_ptr<PlatformComponents_Android>> PlatformComponents_Android::Initialize(HCInitArgs* args) noexcept
 {
@@ -28,28 +109,28 @@ Result<std::shared_ptr<PlatformComponents_Android>> PlatformComponents_Android::
 
     // Get class references we need to hold onto
 
-    jclass localNetworkObserver = jniEnv->FindClass("com/xbox/httpclient/NetworkObserver");
+    jclass localNetworkObserver = jniEnv->FindClass(HC_JAVA_CLASS("NetworkObserver"));
     if (localNetworkObserver == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find NetworkObserver class");
         return E_FAIL;
     }
 
-    jclass localHttpRequest = jniEnv->FindClass("com/xbox/httpclient/HttpClientRequest");
+    jclass localHttpRequest = jniEnv->FindClass(HC_JAVA_CLASS("HttpClientRequest"));
     if (localHttpRequest == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientRequest class");
         return E_FAIL;
     }
 
-    jclass localHttpResponse = jniEnv->FindClass("com/xbox/httpclient/HttpClientResponse");
+    jclass localHttpResponse = jniEnv->FindClass(HC_JAVA_CLASS("HttpClientResponse"));
     if (localHttpResponse == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientResponse class");
         return E_FAIL;
     }
 
-    jclass localWebSocket = jniEnv->FindClass("com/xbox/httpclient/HttpClientWebSocket");
+    jclass localWebSocket = jniEnv->FindClass(HC_JAVA_CLASS("HttpClientWebSocket"));
     if (localWebSocket == nullptr)
     {
         HC_TRACE_ERROR(HTTPCLIENT, "Could not find HttpClientWebSocket class");
@@ -60,6 +141,18 @@ Result<std::shared_ptr<PlatformComponents_Android>> PlatformComponents_Android::
     jclass globalRequestClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpRequest));
     jclass globalResponseClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localHttpResponse));
     jclass globalWebSocketClass = reinterpret_cast<jclass>(jniEnv->NewGlobalRef(localWebSocket));
+
+#ifdef HC_ANDROID_REGISTER_NATIVES
+    HRESULT registerHr = RegisterAllNativeMethods(jniEnv, globalNetworkObserver, globalRequestClass, globalWebSocketClass);
+    if (FAILED(registerHr))
+    {
+        jniEnv->DeleteGlobalRef(globalNetworkObserver);
+        jniEnv->DeleteGlobalRef(globalRequestClass);
+        jniEnv->DeleteGlobalRef(globalResponseClass);
+        jniEnv->DeleteGlobalRef(globalWebSocketClass);
+        return registerHr;
+    }
+#endif
 
     // Initialize the network observer
 
