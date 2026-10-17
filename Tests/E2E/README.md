@@ -178,6 +178,7 @@ E2E_TEST(http_example)
 | `http_progress_callbacks` | First report is > 0 | curl's first report is 0 (before any bytes move) |
 | `http_request_header_outside_latin1` | Header sent as ISO-8859-1; above U+00FF → `E_INVALIDARG` | Header sent as raw UTF-8 |
 | `https_ssl_validation_disabled` | Runs | Skipped: `HCHttpCallRequestSetSSLValidation` is Windows-only |
+| `wss_self_signed_rejected_by_default`, `wss_ssl_validation_disabled` | Run; the second covers the WinHTTP WebSocket and, when compression is compiled in, the websocketpp + wintls client | Not built: `HCWebSocketSetSSLValidation` is Windows-only |
 | `http_global_request_limit_queues` | Runs | Skipped: `HCSettingsSetGlobalRequestLimit` is `E_NOTIMPL` off WinHTTP (by design) |
 | `ws_legacy_oversized_message_fragments` | Fragment callback | No fragment API; the message arrives whole (legacy 32 MB cap) |
 | `ws_deterministic_too_large_closes`, `ws_compression_negotiated` | Skipped if `HCWebSocketSetOptions` returns `E_NOT_SUPPORTED` (compression not compiled in, e.g. the first CI build of a fresh clone; #1034) | Compression test skipped likewise when built with `HC_ENABLE_WEBSOCKET_COMPRESSION=OFF` |

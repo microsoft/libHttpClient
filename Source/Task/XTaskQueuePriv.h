@@ -73,6 +73,18 @@ struct XTaskQueueTestHooks
         UNREFERENCED_PARAMETER(lastDueTime);
         UNREFERENCED_PARAMETER(nextDueTime);
     }
+
+    // Called after a timer sweep found a future pending callback, before the
+    // timer is re-armed from the fired due time to that callback's deadline.
+    virtual void NextPendingCallbackFound(
+        XTaskQueuePort port,
+        uint64_t dueTime,
+        uint64_t nextDueTime)
+    {
+        UNREFERENCED_PARAMETER(port);
+        UNREFERENCED_PARAMETER(dueTime);
+        UNREFERENCED_PARAMETER(nextDueTime);
+    }
 };
 
 /// <summary>

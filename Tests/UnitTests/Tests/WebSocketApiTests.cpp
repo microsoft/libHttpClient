@@ -462,6 +462,46 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
     }
+
+    DEFINE_TEST_CASE(TestSSLValidationDoesNotRequireProxy)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestSSLValidationDoesNotRequireProxy);
+        WsApiScope scope;
+        scope.VerifyInitialized();
+
+        WsApiClientLog log;
+        HCWebsocketHandle websocket = CreateWebSocket(&log);
+
+        VERIFY_ARE_EQUAL(E_INVALIDARG, HCWebSocketSetSSLValidation(nullptr, false));
+
+        // Validation is on by default, and can be turned off without a proxy (#679).
+        VERIFY_IS_TRUE(websocket->websocket->SSLValidation());
+        VERIFY_IS_FALSE(websocket->websocket->SkipsTlsServerValidation());
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetSSLValidation(websocket, false));
+        VERIFY_IS_FALSE(websocket->websocket->SSLValidation());
+        VERIFY_IS_TRUE(websocket->websocket->SkipsTlsServerValidation());
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetSSLValidation(websocket, true));
+        VERIFY_IS_FALSE(websocket->websocket->SkipsTlsServerValidation());
+
+        // Independent of the proxy settings: changing the proxy doesn't reset it, and
+        // ProxyDecryptsHttps alone still skips validation.
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetSSLValidation(websocket, false));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetProxyUri(websocket, "http://127.0.0.1:8888"));
+        VERIFY_IS_FALSE(websocket->websocket->SSLValidation());
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetSSLValidation(websocket, true));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetProxyDecryptsHttps(websocket, true));
+        VERIFY_IS_TRUE(websocket->websocket->SkipsTlsServerValidation());
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetProxyDecryptsHttps(websocket, false));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketSetSSLValidation(websocket, false));
+
+        // Fixed once connect has been called.
+        ConnectWebSocket(websocket);
+        VERIFY_ARE_EQUAL(E_HC_CONNECT_ALREADY_CALLED, HCWebSocketSetSSLValidation(websocket, true));
+        VERIFY_IS_FALSE(websocket->websocket->SSLValidation());
+
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+    }
 #endif
 
     DEFINE_TEST_CASE(TestProviderEventsReachClientHandlersInOrder)

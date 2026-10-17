@@ -187,7 +187,7 @@ Result<std::shared_ptr<WinHttpConnection>> WinHttpConnection::Initialize(
     RETURN_IF_FAILED(HCHttpCallCreate(&webSocketCall));
     RETURN_IF_FAILED(HCHttpCallRequestSetUrl(webSocketCall, "GET", uri));
 
-    if (webSocket->websocket->ProxyDecryptsHttps())
+    if (webSocket->websocket->SkipsTlsServerValidation())
     {
 #if HC_PLATFORM == HC_PLATFORM_GDK
         if (XSystemGetDeviceType() == XSystemDeviceType::Pc)
