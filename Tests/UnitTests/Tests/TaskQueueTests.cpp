@@ -889,6 +889,119 @@ public:
         CloseHandle(workEvent);
         CloseHandle(completionEvent);
     }
+
+    // Regression for #1047: terminating or closing a queue that shares a port (here a composite
+    // over another queue's work port) must only cancel that queue's wait registrations. It used
+    // to clear the port's whole registration list, orphaning other queues' registrations: they
+    // stayed armed but could no longer be unregistered.
+    DEFINE_TEST_CASE(VerifySharedPortQueueRundownKeepsOtherWaiters)
+    {
+        for (bool terminate : { true, false })
+        {
+            LOG_COMMENT(terminate ? L"** sibling composite terminated **" : L"** sibling composite closed **");
+
+            AutoQueueHandle queue;
+            VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &queue));
+
+            struct Context
+            {
+                HANDLE signaled;
+                std::atomic<uint32_t> count{ 0 };
+            } context;
+            context.signaled = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            HANDLE waitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+            XTaskQueueRegistrationToken token = {};
+            VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(queue, XTaskQueuePort::Work, waitEvent, &context, [](void* cxt, bool canceled)
+            {
+                if (!canceled)
+                {
+                    Context* c = static_cast<Context*>(cxt);
+                    c->count++;
+                    SetEvent(c->signaled);
+                }
+            }, &token));
+
+            SetEvent(waitEvent);
+            VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(context.signaled, 1000));
+
+            // A sibling queue on the same port runs down, as every AsyncProvider's composite does.
+            XTaskQueuePortHandle workPort = nullptr;
+            VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Work, &workPort));
+            XTaskQueueHandle sibling = nullptr;
+            VERIFY_SUCCEEDED(XTaskQueueCreateComposite(workPort, workPort, &sibling));
+            if (terminate)
+            {
+                VERIFY_SUCCEEDED(XTaskQueueTerminate(sibling, true, nullptr, nullptr));
+            }
+            XTaskQueueCloseHandle(sibling);
+
+            // Our registration still works...
+            SetEvent(waitEvent);
+            VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(context.signaled, 1000));
+            VERIFY_ARE_EQUAL(2u, context.count.load());
+
+            // ...and can still be unregistered: no callback after this.
+            XTaskQueueUnregisterWaiter(queue, token);
+            SetEvent(waitEvent);
+            bool firedAfterUnregister = WaitForSingleObject(context.signaled, 300) == WAIT_OBJECT_0;
+            LOG_COMMENT(L"Callbacks: %u%s", context.count.load(), firedAfterUnregister ? L" -- fired after XTaskQueueUnregisterWaiter" : L"");
+            VERIFY_IS_FALSE(firedAfterUnregister);
+            VERIFY_ARE_EQUAL(2u, context.count.load());
+
+            CloseHandle(context.signaled);
+            if (!firedAfterUnregister)
+            {
+                CloseHandle(waitEvent);
+            }
+            // else: leak the handle; an orphaned threadpool wait may still reference it.
+        }
+    }
+
+    // Regression for #1047: a queue's wait registrations are removed when it runs down, so their
+    // handles must also leave the port's event list. Otherwise a Manual dispatch on another queue
+    // sharing the port keeps waiting on the handle: a signaled manual-reset event makes
+    // XTaskQueueDispatch spin without ever returning, and a closed handle fails fast.
+    DEFINE_TEST_CASE(VerifySharedPortQueueRundownDropsItsWaitHandles)
+    {
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+
+        XTaskQueuePortHandle workPort = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Work, &workPort));
+        XTaskQueueHandle sibling = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(workPort, workPort, &sibling));
+
+        HANDLE waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr); // manual reset
+        XTaskQueueRegistrationToken token = {};
+        VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(sibling, XTaskQueuePort::Work, waitEvent, nullptr, [](void*, bool) {}, &token));
+
+        // The sibling runs down without unregistering; that cancels its registration.
+        XTaskQueueCloseHandle(sibling);
+        SetEvent(waitEvent);
+
+        std::atomic<bool> dispatchReturned{ false };
+        std::thread dispatcher([&]()
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+            dispatchReturned = true;
+        });
+
+        const uint64_t start = GetTickCount64();
+        while (!dispatchReturned && GetTickCount64() - start < 2000)
+        {
+            Sleep(10);
+        }
+        bool returnedInTime = dispatchReturned.load();
+        LOG_COMMENT(L"Dispatch(100 ms) %s", returnedInTime ? L"returned" : L"still spinning after 2 s on the canceled registration's handle");
+
+        // Unblock a spinning dispatcher so the test can clean up either way.
+        ResetEvent(waitEvent);
+        dispatcher.join();
+        CloseHandle(waitEvent);
+
+        VERIFY_IS_TRUE(returnedInTime);
+    }
 #endif
 
     DEFINE_TEST_CASE(VerifyQueueTermination)
