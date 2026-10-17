@@ -628,10 +628,12 @@ public:
     {
         bool const enableCompression = ShouldUseCompression(m_hcWebsocketHandle);
         auto const compressionClientPolicy = GetCompressionClientPolicy(m_hcWebsocketHandle);
-        bool allowProxyToDecryptHttps = m_hcWebsocketHandle->websocket->ProxyDecryptsHttps();
+        // "Proxy decrypts HTTPS" and HCWebSocketSetSSLValidation(false) both mean: skip TLS server
+        // validation. The variable keeps its historical name.
+        bool allowProxyToDecryptHttps = m_hcWebsocketHandle->websocket->SkipsTlsServerValidation();
         RETURN_IF_FAILED(ResolveEffectiveProxyDecryptsHttpsSetting(
             m_hcWebsocketHandle,
-            m_hcWebsocketHandle->websocket->ProxyDecryptsHttps(),
+            m_hcWebsocketHandle->websocket->SkipsTlsServerValidation(),
             allowProxyToDecryptHttps));
 
         bool const isTlsClient = m_uri.Scheme() == "wss";
@@ -829,8 +831,9 @@ private:
             sharedThis->m_opensslFailed = false;
             sslContext->set_verify_callback([sharedThis](bool preverified, asio::ssl::verify_context &verifyCtx)
             {
-                // Allow debugging proxies that decrypt HTTPS and re-sign the connection.
-                if (sharedThis->m_hcWebsocketHandle->websocket->ProxyDecryptsHttps())
+                // Allow debugging proxies that decrypt HTTPS and re-sign the connection, and
+                // callers that turned TLS server validation off.
+                if (sharedThis->m_hcWebsocketHandle->websocket->SkipsTlsServerValidation())
                 {
                     return true;
                 }

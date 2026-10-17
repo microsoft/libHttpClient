@@ -575,6 +575,7 @@ public:
             GLOBAL_ROW(E_INVALIDARG, HCWebSocketSetProxyUri(nullWs, "http://127.0.0.1:8888")),
 #if HC_PLATFORM_IS_MICROSOFT && (HC_PLATFORM != HC_PLATFORM_UWP) && (HC_PLATFORM != HC_PLATFORM_XDK)
             GLOBAL_ROW(E_INVALIDARG, HCWebSocketSetProxyDecryptsHttps(nullWs, true)),
+            GLOBAL_ROW(E_INVALIDARG, HCWebSocketSetSSLValidation(nullWs, false)),
 #endif
             GLOBAL_ROW(E_INVALIDARG, HCWebSocketSetHeader(nullWs, "name", "value")),
             GLOBAL_ROW(E_INVALIDARG, HCWebSocketGetResponseHeader(nullWs, "name", &str)),

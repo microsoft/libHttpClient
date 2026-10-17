@@ -137,6 +137,10 @@ public:
     const xbox::httpclient::HttpHeaders& Headers() const noexcept;
     const http_internal_string& ProxyUri() const noexcept;
     const bool ProxyDecryptsHttps() const noexcept;
+    bool SSLValidation() const noexcept;
+    // True when TLS server certificate validation is off, either via HCWebSocketSetSSLValidation
+    // or HCWebSocketSetProxyDecryptsHttps. Providers still apply platform enforcement (GDK console).
+    bool SkipsTlsServerValidation() const noexcept;
     size_t MaxReceiveBufferSize() const noexcept;
     size_t DeterministicMaxReceiveBufferSize() const noexcept;
     bool MaxReceiveBufferSizeExplicitlySet() const noexcept;
@@ -152,6 +156,7 @@ public:
     HRESULT SetHeader(http_internal_string&& headerName, http_internal_string&& headerValue) noexcept;
     HRESULT SetProxyUri(http_internal_string&& proxyUri) noexcept;
     HRESULT SetProxyDecryptsHttps(bool allowProxyToDecryptHttps) noexcept;  
+    HRESULT SetSSLValidation(bool sslValidation) noexcept;
     HRESULT SetMaxReceiveBufferSize(size_t maxReceiveBufferSizeBytes) noexcept;
     HRESULT SetPingInterval(uint32_t pingInterval) noexcept;
     HRESULT SetOptions(HCWebSocketOptions options) noexcept;
@@ -184,6 +189,7 @@ private:
     xbox::httpclient::HttpHeaders m_connectHeaders;
     xbox::httpclient::HttpHeaders m_connectResponseHeaders;
     bool m_allowProxyToDecryptHttps{ false };
+    bool m_sslValidation{ true };
     http_internal_string m_proxyUri;
     http_internal_string m_uri;
     http_internal_string m_subProtocol;

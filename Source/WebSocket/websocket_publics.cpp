@@ -65,6 +65,17 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCWebSocketSetSSLValidation(
+    _In_ HCWebsocketHandle handle,
+    _In_ bool sslValidation
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle);
+    return handle->websocket->SetSSLValidation(sslValidation);
+}
+CATCH_RETURN()
+
 STDAPI HCWebSocketSetHeader(
     _In_ HCWebsocketHandle handle,
     _In_z_ const char* headerName,
