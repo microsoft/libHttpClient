@@ -19,6 +19,12 @@ namespace ApiRefs
 {
     void GlobalAddRef();
     void GlobalRelease();
+
+#ifdef HC_UNITTEST_API
+    // Unit-test diagnostics: tracks live Api<> objects by type so a failed
+    // XTaskQueueUninitialize can report what leaked.
+    void TrackLiveObject(ApiId id, int32_t delta) noexcept;
+#endif
 }
 
 template <ApiId iid, typename TInterface>
@@ -26,8 +32,18 @@ class Api : public TInterface
 {
 public:
 
+#ifdef HC_UNITTEST_API
+    Api() noexcept
+    {
+        ApiRefs::TrackLiveObject(iid, 1);
+    }
+#endif
+
     virtual ~Api() 
     {
+#ifdef HC_UNITTEST_API
+        ApiRefs::TrackLiveObject(iid, -1);
+#endif
     }
     
     uint32_t __stdcall AddRef()
@@ -94,7 +110,9 @@ protected:
 
 private:
     std::atomic<uint32_t> m_refs{ 0 };
-    std::atomic_flag m_deleting;
+    // Explicitly clear: before C++20 a default-constructed atomic_flag has an
+    // unspecified value, and a set flag would make Release() skip deletion.
+    std::atomic_flag m_deleting = ATOMIC_FLAG_INIT;
 };
 
 static uint32_t const SUBMIT_CALLBACK_MAX = 32;

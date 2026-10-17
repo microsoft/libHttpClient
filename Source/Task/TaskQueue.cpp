@@ -137,7 +137,43 @@ namespace ApiRefs
 
         return true;
     }
+
+#ifdef HC_UNITTEST_API
+    std::atomic<int32_t> g_liveQueues{ 0 };
+    std::atomic<int32_t> g_livePorts{ 0 };
+
+    void TrackLiveObject(ApiId id, int32_t delta) noexcept
+    {
+        switch (id)
+        {
+        case ApiId::TaskQueue:
+            g_liveQueues += delta;
+            break;
+
+        case ApiId::TaskQueuePort:
+            g_livePorts += delta;
+            break;
+
+        default:
+            break;
+        }
+    }
+#endif
 }
+
+#ifdef HC_UNITTEST_API
+STDAPI_(void) XTaskQueueGetLiveObjectCounts(
+    _Out_ XTaskQueueLiveObjectCounts* counts
+    ) noexcept
+{
+    if (counts != nullptr)
+    {
+        counts->globalRefs = ApiRefs::g_globalApiRefs.load();
+        counts->queues = static_cast<uint32_t>(ApiRefs::g_liveQueues.load());
+        counts->ports = static_cast<uint32_t>(ApiRefs::g_livePorts.load());
+    }
+}
+#endif
 
 namespace ProcessGlobals
 {
@@ -397,7 +433,18 @@ HRESULT TaskQueuePortImpl::Initialize(
     RETURN_IF_FAILED(m_timer.Initialize(this, [](void* context)
     {
         TaskQueuePortImpl* pthis = static_cast<TaskQueuePortImpl*>(context);
+
+        // Keep the port alive while we process pending callbacks. The sweep
+        // takes and drops temporary references on queues attached to this
+        // port, and if a queue is closed concurrently one of those releases
+        // can be the last, destroying the queue and its port on this thread.
+        // Holding our own reference defers any port destruction to the
+        // Release below, after which we touch nothing. The timer can't be
+        // torn down underneath us before this AddRef because port
+        // destruction waits for in-flight timer callbacks.
+        pthis->AddRef();
         pthis->SubmitPendingCallbacks();
+        pthis->Release(); // May destroy the port and its timer.
     }));
 
 #ifdef _WIN32
@@ -1058,6 +1105,12 @@ void TaskQueuePortImpl::CancelPendingEntries(
     // share this port's delayed-callback timer state, so leave m_timer and
     // m_timerDue alone; if we removed the armed earliest entry, the existing
     // timer simply takes one blank fire and re-arms for the next real item.
+    //
+    // Lifetime: every caller holds its own reference on portContext (and so on
+    // its queue, which keeps this port alive), so the entry releases below are
+    // never the final release and this port and portContext stay valid for
+    // the rest of the function. Still free each node before releasing its
+    // reference so nothing touches the port after a release.
     LocklessQueue<QueueEntry> entriesToAppend(*m_queueList.get());
 
     m_pendingList->remove_if([&](auto& entry, auto address)
@@ -1070,8 +1123,8 @@ void TaskQueuePortImpl::CancelPendingEntries(
             }
             else
             {
-                entry.portContext->Release();
                 m_pendingList->free_node(address);
+                entry.portContext->Release();
             }
 
             return true;
@@ -1091,8 +1144,8 @@ void TaskQueuePortImpl::CancelPendingEntries(
 
         if (!AppendEntry(entry, address))
         {
-            entry.portContext->Release();
             m_queueList->free_node(address);
+            entry.portContext->Release();
         }
     }
 
@@ -1113,33 +1166,59 @@ void TaskQueuePortImpl::CancelPendingEntries(
     
 #ifdef _WIN32
     
-    // Abort any registered waits and promote their entries too.
+    // Abort this port context's registered waits and promote their entries too.
     // Wait registration is not lock free.
 
     StaticArray<WaitRegistration*, PORT_WAIT_MAX> waits;
 
     {
         std::unique_lock<std::mutex> lock(m_lock);
-        waits = m_waits;
-        m_waits.clear();
+
+        // Take only this port context's registrations. The port can be shared by
+        // other queues (e.g. composites), and their registrations must stay in
+        // m_waits so they can still be unregistered (#1047). The canceled handles
+        // also leave m_events so a manual Wait stops waiting on them.
+        for (uint32_t index = m_waits.count(); index > 0; index--)
+        {
+            uint32_t idx = index - 1;
+            WaitRegistration* waitReg = m_waits[idx];
+            if (waitReg->queueEntry.portContext != portContext)
+            {
+                continue;
+            }
+
+            waits.append(waitReg);
+            m_waits.removeAt(idx);
+
+            for (uint32_t eventIdx = 1; eventIdx < m_events.count(); eventIdx++)
+            {
+                if (m_events[eventIdx] == waitReg->waitHandle)
+                {
+                    m_events.removeAt(eventIdx);
+                    break;
+                }
+            }
+        }
     }
 
-    for (uint32_t index = waits.count(); index > 0; index--)
+    for (uint32_t idx = 0; idx < waits.count(); idx++)
     {
-        uint32_t idx = index - 1;
-        if (waits[idx]->queueEntry.portContext == portContext)
-        {
-            CloseThreadpoolWait(waits[idx]->threadpoolWait);
-            waits[idx]->queueEntry.waitRegistration = nullptr;
+        CloseThreadpoolWait(waits[idx]->threadpoolWait);
+        waits[idx]->queueEntry.waitRegistration = nullptr;
 
-            if (appendToQueue)
-            {
-                AppendWaitRegistrationEntry(waits[idx]);
-            }
-            
-            delete waits[idx];
-            waits.removeAt(idx);
+        if (appendToQueue)
+        {
+            AppendWaitRegistrationEntry(waits[idx]);
         }
+
+        delete waits[idx];
+    }
+
+    if (waits.count() != 0)
+    {
+        // A manual Wait may be blocked on the old handle array; make it fetch
+        // the updated one.
+        SignalQueue();
     }
 
 #endif
@@ -1151,6 +1230,10 @@ void TaskQueuePortImpl::CancelPendingEntries(
 // port's timer can terminate while owning the armed-earliest entry, leaving the
 // timer pointed at an orphaned deadline; if the orphaned fire is lost (STL timer
 // backend), the remaining delayed callbacks never run and the queue starves.
+//
+// Only called from CancelPendingEntries, whose callers keep this port alive
+// (see there), so releasing the temporary nextItem reference below can never
+// destroy this port even if it is the last reference to a sibling queue.
 void TaskQueuePortImpl::RearmTimerForEarliestPending()
 {
     while (true)
@@ -1410,6 +1493,36 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
     _In_ uint64_t dueTime,
     _In_ uint64_t now)
 {
+    // Releasing a port context can drop the last reference to its queue, and the queue owns this
+    // port. On the STL WaitTimer that release happens right here on the timer thread, so the port
+    // (including m_queueList, which readyEntries below shares) would be destroyed while this
+    // function is still using it (AddressSanitizer heap-use-after-free). Hand every reference this
+    // function would release to this holder instead. Any held context keeps its queue, and so this
+    // port, alive; the holder is declared before the loop, so the last release happens after every
+    // other local (readyEntries) is gone and nothing touches the port afterwards.
+    struct DeferredPortContextRelease
+    {
+        ITaskQueuePortContext* held = nullptr;
+
+        void Hold(_In_ ITaskQueuePortContext* portContext) noexcept
+        {
+            ITaskQueuePortContext* previous = held;
+            held = portContext;
+            if (previous != nullptr)
+            {
+                previous->Release(); // safe: 'held' keeps the port alive
+            }
+        }
+
+        ~DeferredPortContextRelease()
+        {
+            if (held != nullptr)
+            {
+                held->Release();
+            }
+        }
+    } deferredRelease;
+
     for (;;)
     {
         // Collect due entries locally first and only touch the active queue
@@ -1463,8 +1576,8 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
         {
             if (!AppendEntry(readyEntry, readyEntryNode))
             {
-                readyEntry.portContext->Release();
                 m_queueList->free_node(readyEntryNode);
+                deferredRelease.Hold(readyEntry.portContext);
             }
         }
 
@@ -1473,13 +1586,28 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
             bool timerAdvanced = false;
             if (nextItem.portContext->GetStatus() == TaskQueuePortStatus::Active)
             {
+                if (nextItem.enqueueTime != dueTime)
+                {
+                    m_attachedContexts.Visit([&](ITaskQueuePortContext* portContext)
+                    {
+                        auto hooks = portContext->GetQueue()->GetTestHooks();
+                        if (hooks != nullptr)
+                        {
+                            hooks->NextPendingCallbackFound(
+                                portContext->GetType(),
+                                dueTime,
+                                nextItem.enqueueTime);
+                        }
+                    });
+                }
+
                 // A rescue scan that finds the deadline it just published has
                 // reached a fixed point. Otherwise replace the fired due time
                 // with the earliest future deadline that survived the sweep.
                 if (nextItem.enqueueTime != dueTime &&
                     !ArmTimerForNextPendingDueTime(dueTime, nextItem.enqueueTime))
                 {
-                    nextItem.portContext->Release();
+                    deferredRelease.Hold(nextItem.portContext);
                     now = m_timer.GetCurrentTime();
                     dueTime = m_timerDue.load();
                     continue;
@@ -1495,7 +1623,7 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
                 CancelPendingEntries(nextItem.portContext, true);
             }
 
-            nextItem.portContext->Release();
+            deferredRelease.Hold(nextItem.portContext);
 
             // A callback can be inserted after the scan while the fired due
             // time is still published. It will not arm itself if its deadline

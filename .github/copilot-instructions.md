@@ -161,37 +161,43 @@ cd Build/libHttpClient.Android.Workspace
 
 ## Testing
 
-### Unit Tests (TAEF/TE)
+See `Tests/README.md` for the full guide.
 
-Test files are in `Tests/UnitTests/Tests/`:
-- `HttpTests.cpp`, `WebsocketTests.cpp`, `MockTests.cpp`, `GlobalTests.cpp`
-- `TaskQueueTests.cpp`, `AsyncBlockTests.cpp`, `LocklessQueueTests.cpp`, `ProxyTests.cpp`
-- `BufferSize/` — buffer size unit and E2E tests
+### Unit tests (`Tests/UnitTests/Tests/`)
 
-**Test frameworks:** Both TAEF and TE (Visual Studio CppUnitTest) are supported via macro abstraction in `Tests/UnitTests/Support/DefineTestMacros.h`.
-
-**Running tests:**
+- One file per area: Http, Retry, Compression, BodyStreaming, RoutedHandler, Settings, InvalidArgument, Mock/MockBehavior, Websocket/WebSocketApi, Uri, Trace/TraceApi, Global, CleanupRace, TaskQueue, AsyncBlock, LocklessQueue, Proxy (Windows only), MemoryLeak, TestEnvironment.
+- Built three ways from the same sources via `Tests/UnitTests/Support/DefineTestMacros.h`: TE (VS CppUnitTest, used by CI on Windows), TAEF, and a header-only portable runner (`Support/Portable`) used by CMake on Linux/macOS.
+- They compile the library against the **Generic** platform (no network): use mocks (`HCMockCallCreate` + `HCMockResponseSet*`) or fake providers (`HCSetHttpCallPerformFunction`, `HCSetWebSocketFunctions`).
+- New files must be added to `Build/libHttpClient.UnitTest/libHttpClient.UnitTest.vcxitems` (+ `.filters`); CMake globs them.
 
 ```powershell
-# TAEF from command line (after building the test DLL)
-te.exe Out\x64\Debug\libHttpClient.UnitTest.TAEF\libHttpClient.UnitTest.TAEF.dll
-
-# Or use Visual Studio Test Explorer with the TE project
+vstest.console.exe Out\x64\Debug\libHttpClient.UnitTest.TE\libHttpClient.UnitTest.TE.dll /Platform:x64 [/Tests:Name]
+```
+```bash
+cd Int/CMake/libHttpClient.Linux && ctest --output-on-failure -L unit      # Linux (also -L taskqueue)
 ```
 
 **Test patterns:**
-- Use `DEFINE_TEST_CLASS(Name)` / `DEFINE_TEST_CASE(Name)` macros (not raw TEST_CLASS/TEST_METHOD)
-- Use `VERIFY_ARE_EQUAL`, `VERIFY_SUCCEEDED(hr)`, `VERIFY_IS_TRUE` assertions
-- Async tests use `PumpedTaskQueue` helper (creates manual-dispatch XTaskQueue with worker threads)
-- Mock HTTP responses via `HCMockCallCreate()` + `HCMockResponseSet*()` APIs
-- Callback bridging via `CallbackThunk<T, R>` template
+- Use `DEFINE_TEST_CLASS(Name)` / `DEFINE_TEST_CLASS_PROPS(Name)` / `DEFINE_TEST_CASE(Name)` (not raw TEST_CLASS/TEST_METHOD).
+- `DEFINE_TEST_CLASS_PROPS` adds a per-test isolation fixture (`Support/TestEnvironment.h`): after each test it cleans up libHttpClient, clears callbacks/mocks/hooks, restores settings and memory functions, and fails tests that leak (use `LeakCheckAllocator` for allocation checks).
+- Use `VERIFY_ARE_EQUAL`, `VERIFY_SUCCEEDED(hr)`, `VERIFY_IS_TRUE` assertions.
+- Async tests use `PumpedTaskQueue` (manual-dispatch XTaskQueue with worker threads); callback bridging via `CallbackThunk<T, R>`.
+- Retry tests use internal hooks `HC_CALL::SetClockTestHook` / `SetPerformDelayTestHook` instead of sleeping.
+- Tests must pass alone and in full-suite order in Debug and Release; keep them portable (`#if HC_PLATFORM_IS_MICROSOFT` for Win32-only APIs, lowercase include names).
+
+### E2E tests (`Tests/E2E/`)
+
+Real providers (WinHTTP, websocketpp) against a Python 3 stdlib-only loopback server (`Tests/E2E/server/lhc_test_server.py`) that the test exe starts itself. See `Tests/E2E/README.md`.
 
 ### CI Pipeline
 
 Azure DevOps pipeline at `Utilities/Pipelines/libHttpClient.CI.yml`:
 - **Triggers:** Push to `main`, PRs to `main`/`releases/*`, nightly at 8am UTC
-- **Matrix:** Win32/UWP VS2022 (x86/x64/ARM64 × Debug/Release), iOS (Debug/Release), Linux (Debug/Release)
-
+- **Win32/UWP VS2022** (x86/x64/ARM64 × Debug/Release): builds; runs the TE unit tests on x64/x86 (code coverage published from x64 Debug, report only), and the E2E suite plus `WinHttpProviderLockStallRepro` on x64.
+- **Linux** (Debug/Release): builds; `ctest -L "unit|taskqueue"`. **LinuxSanitizers** (Debug): ASan + UBSan build running the same tests.
+- **macOS**: Xcode build plus the unit tests via host CMake (`ctest -L unit`). **iOS**: build only.
+- **Android** (Debug/Release): Gradle build only; instrumentation tests are manual.
+- **Win32 CMake** (x64/ARM64): build only.
 ## External Dependencies
 
 Restored into `External/` by vcpkg (not git submodules). Pins: `Build/vcpkg/ports/libhttpclient-deps/deps.cmake`:

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C341232F-DF07-45F1-AFE4-90787429441A}</ProjectGuid>
+    <ConfigurationType>Application</ConfigurationType>
+    <HCStaticLib>true</HCStaticLib>
+  </PropertyGroup>
+  <!-- End-to-end tests for the Win32 (WinHTTP) flavor against the loopback server in
+       Tests/E2E/server. Built and run in the x64 legs only: the solution maps every other
+       platform to the x64 project configuration without building it. See Tests/E2E/README.md. -->
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <SpectreMitigation>Spectre</SpectreMitigation>
+  </PropertyGroup>
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\libHttpClient.Win32.props" />
+  <Import Project="$(HCBuildRoot)\libHttpClient.import.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <OptimizeReferences>false</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="E2EHelpers.h" />
+    <ClInclude Include="E2EPlatform.h" />
+    <ClInclude Include="E2ETestFramework.h" />
+    <ClInclude Include="TestServer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="E2EHelpers.cpp" />
+    <ClCompile Include="E2EPlatform.cpp" />
+    <ClCompile Include="E2ETestMain.cpp" />
+    <ClCompile Include="HttpE2ETests.cpp" />
+    <ClCompile Include="TestServer.cpp" />
+    <ClCompile Include="WebSocketE2ETests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="server\lhc_test_server.py" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

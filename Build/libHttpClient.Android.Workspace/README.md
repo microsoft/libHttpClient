@@ -9,6 +9,13 @@ To use these builds, you will need Android Studio installed, with the
 appropriate SDK and NDK installed. Opening this project should prompt
 installation of the right required components.
 
+Command-line builds (and CI) need:
+
+- JDK 11 (Android Gradle Plugin 4.1 / Gradle 6.6)
+- Android SDK platform 34, NDK `27.2.12479018` and CMake `3.18.1`, e.g.
+  `sdkmanager --install "ndk;27.2.12479018" "cmake;3.18.1" "platforms;android-34"`
+  (the SDK command-line tools themselves require JDK 17 to run).
+
 ## Outputs
 
 This project produces binaries for the above projects for both their native
@@ -102,3 +109,19 @@ To clean, use:
 
 Note that all intermediate and output artifacts are located in
 `/Binaries/Android`, so to do a "hard clean" simply remove that directory.
+
+### Instrumentation tests (manual)
+
+CI only builds the Android projects. The instrumentation tests in
+`Build/libHttpClient.Android/src/androidTest` (`HttpMethodTest`, `HttpHeaderTest`)
+need a running emulator or attached device, so run them manually before changing
+the Java/JNI HTTP or WebSocket code:
+
+```sh
+[cmd]  > gradlew.bat :libHttpClient.Android:connectedDebugAndroidTest
+```
+
+Results are written under
+`/Binaries/Android/libHttpClient.Android/reports/androidTests/connected/`.
+Some tests talk to a local `MockWebServer`; `HttpMethodTest.testHttpbinDeleteEcho`
+needs internet access and skips itself if the network is unavailable.

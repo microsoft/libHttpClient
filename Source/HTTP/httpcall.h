@@ -40,6 +40,24 @@ public:
     // window so cleanup cancellation can be driven into it.
     using PerformStartTestHook = void(CALLBACK*)(void* context);
     static void SetPerformStartTestHook(PerformStartTestHook hook, void* context) noexcept;
+
+    // Test seam: replaces chrono_clock_t::now() everywhere the retry and fail-fast logic reads the
+    // clock (perform start time, ShouldFailFast, ShouldRetry), so tests can drive the Retry-After
+    // and timeout windows deterministically. Pass nullptr to restore the real clock.
+    using ClockTestHook = chrono_clock_t::time_point(CALLBACK*)(void* context);
+    static void SetClockTestHook(ClockTestHook hook, void* context) noexcept;
+
+    // Test seam: invoked with the delay computed by the retry / fail-fast logic immediately before
+    // an attempt is scheduled with XTaskQueueSubmitDelayedCallback. The hook observes the computed
+    // delay in *delayInMs and may overwrite it (for example with 0, so a test does not sleep through
+    // real backoff). Pass nullptr to remove the hook.
+    enum class PerformDelayReason
+    {
+        FirstAttempt, // Delay from ShouldFailFast (non-zero only inside a cached Retry-After window)
+        Retry         // Backoff / Retry-After delay from ShouldRetry
+    };
+    using PerformDelayTestHook = void(CALLBACK*)(void* context, HC_CALL* call, PerformDelayReason reason, uint32_t* delayInMs);
+    static void SetPerformDelayTestHook(PerformDelayTestHook hook, void* context) noexcept;
 #endif
 
     // Request ID for logging

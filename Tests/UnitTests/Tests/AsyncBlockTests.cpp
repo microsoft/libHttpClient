@@ -293,9 +293,15 @@ private:
         return hr;
     }
 
+    // Function pointers don't implicitly convert to the "const void*" identity outside MSVC.
+    static const void* FactorialAsyncIdentity()
+    {
+        return reinterpret_cast<const void*>(&FactorialAsync);
+    }
+
     static HRESULT FactorialAsync(FactorialCallData* data, XAsyncBlock* async)
     {
-        HRESULT hr = XAsyncBegin(async, data, FactorialAsync, __FUNCTION__, FactorialWorkerSimple);
+        HRESULT hr = XAsyncBegin(async, data, FactorialAsyncIdentity(), __FUNCTION__, FactorialWorkerSimple);
         if (SUCCEEDED(hr))
         {
             hr = XAsyncSchedule(async, 0);
@@ -305,7 +311,7 @@ private:
 
     static HRESULT FactorialDistributedAsync(FactorialCallData* data, XAsyncBlock* async)
     {
-        HRESULT hr = XAsyncBegin(async, data, FactorialAsync, __FUNCTION__, FactorialWorkerDistributed);
+        HRESULT hr = XAsyncBegin(async, data, FactorialAsyncIdentity(), __FUNCTION__, FactorialWorkerDistributed);
         if (SUCCEEDED(hr))
         {
             hr = XAsyncSchedule(async, 0);
@@ -315,14 +321,14 @@ private:
 
     static HRESULT FactorialAllocateAsync(DWORD value, XAsyncBlock* async)
     {
-        HRESULT hr = XAsyncBeginAlloc(async, FactorialAsync, __FUNCTION__, FactorialWorkerDistributedWithSchedule, sizeof(FactorialCallData), sizeof(DWORD), &value);
+        HRESULT hr = XAsyncBeginAlloc(async, FactorialAsyncIdentity(), __FUNCTION__, FactorialWorkerDistributedWithSchedule, sizeof(FactorialCallData), sizeof(DWORD), &value);
         return hr;
     }
 
     static HRESULT FactorialResult(XAsyncBlock* async, _Out_writes_(1) DWORD* result)
     {
         size_t written;
-        HRESULT hr = XAsyncGetResult(async, FactorialAsync, sizeof(DWORD), result, &written);
+        HRESULT hr = XAsyncGetResult(async, FactorialAsyncIdentity(), sizeof(DWORD), result, &written);
         if (SUCCEEDED(hr))
         {
             VERIFY_ARE_EQUAL(sizeof(DWORD), written);
@@ -383,13 +389,14 @@ public:
     BEGIN_TEST_CLASS(AsyncBlockTests)
     END_TEST_CLASS()
 
+    DEFINE_TEST_METHOD_FIXTURE();
 
 #else
     DEFINE_TEST_CLASS_PROPS(AsyncBlockTests);
 
 #endif
 
-    AsyncBlockTests::AsyncBlockTests()
+    AsyncBlockTests()
     {
         VERIFY_SUCCEEDED(XTaskQueueCreate(
             XTaskQueueDispatchMode::ThreadPool,
@@ -397,7 +404,7 @@ public:
             &queue));
     }
 
-    AsyncBlockTests::~AsyncBlockTests()
+    ~AsyncBlockTests()
     {
         // Completion of an async op (XAsyncGetStatus no longer returning E_PENDING) does not mean
         // its AsyncState has been reclaimed yet: the final release happens on the queue thread
@@ -811,7 +818,9 @@ public:
         XAsyncCancel(&async);
 
         // Dispatch to clear out the queue
-        while(XTaskQueueDispatch(async.queue, XTaskQueuePort::Work, 0));
+        while(XTaskQueueDispatch(async.queue, XTaskQueuePort::Work, 0))
+        {
+        }
 
         VERIFY_QUEUE_EMPTY(async.queue);
         XTaskQueueCloseHandle(async.queue);
@@ -1065,6 +1074,9 @@ public:
 
             case XAsyncOp::Cleanup:
                 ((Context*)data->context)->cleanupCount++;
+                break;
+
+            default:
                 break;
             }
 

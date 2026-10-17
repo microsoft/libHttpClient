@@ -94,6 +94,8 @@ On Win32 and GDK, `HCWebSocketSetProxyUri()` applies the explicit proxy URI to b
 
 `HCWebSocketSetProxyDecryptsHttps()` disables TLS server certificate validation for a WebSocket connection. It is a debugging-only setting for use with HTTPS-intercepting proxies (Fiddler, Charles, etc.) and should never be enabled in production. Available on Win32 and GDK. On GDK console, TLS validation is always enforced regardless of this setting.
 
+`HCWebSocketSetSSLValidation(websocket, false)` disables TLS server certificate validation without requiring a proxy, for example to connect directly to a development server with a self-signed certificate. It is the WebSocket counterpart of `HCHttpCallRequestSetSSLValidation()`, must be called before connect, and has the same restrictions: development only, available on Win32 and GDK, and ignored on GDK console, where TLS validation is always enforced.
+
 ## Behavior control
 
 * On GDK, XDK ERA, UWP, iOS, and Android, HCHttpCallPerform() will call native platform APIs
@@ -148,6 +150,10 @@ GitHub's "Download Zip" works too, since restore doesn't depend on git submodule
 
 If you are updating an existing clone made before this change, the old submodule folders under
 `External/` are replaced on your next build.
+
+## Tests
+
+Unit tests (`Tests/UnitTests`) cover the public API against fake providers and run on Windows, Linux (including ASan/UBSan) and macOS; end-to-end tests (`Tests/E2E`) drive the real platform providers against a local loopback server. Both run in CI. See [Tests/README.md](Tests/README.md) for how to run and write them.
 
 ## Contribute Back!
 

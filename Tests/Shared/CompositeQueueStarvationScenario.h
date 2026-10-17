@@ -256,8 +256,27 @@ inline bool RunCompositeQueueStarvationScenario(
                     r->TerminateOnce();
                     XTaskQueueCloseHandle(r->composite);
                 }
-                delete r;
             }
+        }
+
+        // Terminate + drain the shared queue so composite terminations and any cancelled delayed
+        // polls still parked on the (now unpumped) manual Work port are dispatched. Closing a
+        // manual queue with undispatched items would otherwise leak those queue references.
+        std::atomic<bool> queueTerminated{ false };
+        XTaskQueueTerminate(queue, false, &queueTerminated, [](void* context)
+        {
+            static_cast<std::atomic<bool>*>(context)->store(true);
+        });
+        auto drainDeadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(5000);
+        while (!queueTerminated.load() && std::chrono::steady_clock::now() < drainDeadline)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 10);
+            XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
+        }
+
+        for (auto& slot : slots)
+        {
+            delete slot.load(std::memory_order_acquire);
         }
 
         XTaskQueueCloseHandle(queue);

@@ -5,9 +5,10 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
-#include "Utils.h"
-#include "../global/global.h"
+#include "utils.h"
+#include "../Global/global.h"
 #include "WebSocket/hcwebsocket.h"
+#include "Platform/ExternalWebSocketProvider.h"
 #include "../../Source/WebSocket/Websocketpp/websocketpp_websocket.h"
 #include <httpClient/httpClient.h>
 #include <httpClient/httpProvider.h>
@@ -647,10 +648,17 @@ public:
         VERIFY_ARE_EQUAL(true, g_memFreeCalled);
 
         HCCleanup();
+        VERIFY_ARE_EQUAL(S_OK, HCMemSetFunctions(nullptr, nullptr)); // restore the default hooks
     }
 
     DEFINE_TEST_CASE(TestConnect)
     {
+        // This test checks the "no callbacks installed" state first, so drop any a previous test left behind.
+        xbox::httpclient::ExternalWebSocketProvider::Get().ClearCallbacks();
+        g_HCWebSocketConnect_Called = false;
+        g_HCWebSocketSendMessage_Called = false;
+        g_HCWebSocketDisconnect_Called = false;
+
         HCWebSocketConnectFunction websocketConnectFunc = nullptr;
         HCWebSocketSendMessageFunction websocketSendMessageFunc = nullptr;
         HCWebSocketSendBinaryMessageFunction websocketSendBinaryMessageFunc = nullptr;
@@ -814,6 +822,8 @@ public:
         XAsyncBlock asyncBlock{};
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+        WebSocketCompletionResult connectResult{};
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketConnectResult(&asyncBlock, &connectResult));
 
         g_HCWebSocketDisconnect_Called = false;
         g_HCWebSocketDisconnect_CloseStatus = HCWebSocketCloseStatus::Normal;
@@ -863,6 +873,8 @@ public:
         XAsyncBlock asyncBlock{};
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("test", "subProtoTest", websocket, &asyncBlock));
         VERIFY_SUCCEEDED(XAsyncGetStatus(&asyncBlock, true));
+        WebSocketCompletionResult connectResult{};
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketConnectResult(&asyncBlock, &connectResult));
         VERIFY_ARE_EQUAL(E_HC_CONNECT_ALREADY_CALLED, HCWebSocketSetOptions(websocket, requestWithBothNoContextTakeover));
 
         VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));

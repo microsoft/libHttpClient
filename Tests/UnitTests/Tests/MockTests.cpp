@@ -5,12 +5,20 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
-#include "Utils.h"
-#include "../global/global.h"
+#include "utils.h"
+#include "../Global/global.h"
+#include "Platform/ExternalHttpProvider.h"
 
 #pragma warning(disable:4389)
 
 static bool g_gotCall = false;
+
+// Stands in for the network when no mock matches: completes successfully without a response, so the
+// test sees an "unmocked" call deterministically instead of whatever provider a previous test left behind.
+static void CALLBACK UnmockedPerform(HCCallHandle, XAsyncBlock* asyncBlock, void*, HCPerformEnv) noexcept
+{
+    XAsyncComplete(asyncBlock, S_OK, 0);
+}
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
@@ -44,6 +52,7 @@ public:
 
         HCMockCallHandle mockCall = CreateMockCall("Mock1", false, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, "", "", nullptr, 0));
+        VERIFY_ARE_EQUAL(S_OK, HCMockCallCloseHandle(mockCall)); // HCMockAddMock keeps its own reference
 
         XAsyncBlock asyncBlock{};
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(call, &asyncBlock));
@@ -73,6 +82,7 @@ public:
 
         HCMockCallHandle mockCall = CreateMockCall("Mock1", true, false);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
+        VERIFY_ARE_EQUAL(S_OK, HCMockCallCloseHandle(mockCall)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call = nullptr;
 
@@ -131,10 +141,12 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(ExampleSingleSpecificUrlBodyMock);
 
+        VERIFY_ARE_EQUAL(S_OK, HCSetHttpCallPerformFunction(&UnmockedPerform, nullptr));
         VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
 
         HCMockCallHandle mockCall = CreateMockCall("Mock1", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, nullptr, nullptr, nullptr, 0));
+        VERIFY_ARE_EQUAL(S_OK, HCMockCallCloseHandle(mockCall)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call = nullptr;
 
@@ -207,9 +219,11 @@ public:
             VERIFY_ARE_EQUAL(0, errCode);
             VERIFY_ARE_EQUAL(0, statusCode);
             VERIFY_ARE_EQUAL_STR("", responseStr);
+            VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         }
 
         HCCleanup();
+        xbox::httpclient::ExternalHttpProvider::Get().ClearCallback();
     }
 
     DEFINE_TEST_CASE(ExampleMultiSpecificUrlBodyMock)
@@ -220,6 +234,7 @@ public:
 
         HCMockCallHandle mockCall1 = CreateMockCall("Mock1", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall1, nullptr, nullptr, nullptr, 0));
+        VERIFY_ARE_EQUAL(S_OK, HCMockCallCloseHandle(mockCall1)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call = nullptr;
 
@@ -249,6 +264,7 @@ public:
 
         HCMockCallHandle mockCall2 = CreateMockCall("Mock2", true, true);
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall2, nullptr, nullptr, nullptr, 0));
+        VERIFY_ARE_EQUAL(S_OK, HCMockCallCloseHandle(mockCall2)); // HCMockAddMock keeps its own reference
 
         {
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));

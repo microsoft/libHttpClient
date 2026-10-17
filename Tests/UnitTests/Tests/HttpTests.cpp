@@ -5,8 +5,8 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
-#include "Utils.h"
-#include "../global/global.h"
+#include "utils.h"
+#include "../Global/global.h"
 #include "Platform/ExternalHttpProvider.h"
 #include "HTTP/WinHttp/winhttp_redirect_helper.h"
 #include <httpClient/httpProvider.h>
@@ -42,7 +42,9 @@ _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE MemAlloc(
 {
     UNREFERENCED_PARAMETER(memoryType);
     g_memAllocCalled = true;
-    return new (std::nothrow) int8_t[size];
+    // malloc/free, like the library's default hooks: process-lifetime task-queue objects that were
+    // allocated before a test installed these hooks may be freed through them (and vice versa).
+    return malloc(size);
 }
 
 void STDAPIVCALLTYPE MemFree(
@@ -52,7 +54,7 @@ void STDAPIVCALLTYPE MemFree(
 {
     UNREFERENCED_PARAMETER(memoryType);
     g_memFreeCalled = true;
-    delete[] pointer;
+    free(pointer);
 }
 
 static bool g_PerformCallbackCalled = false;
@@ -158,8 +160,8 @@ public:
     {
         DEFINE_TEST_CASE_PROPERTIES(TestPerformCallbackChainsToDefaultProvider);
 
-        // This test only works while no client callback is installed.
-        VERIFY_IS_FALSE(ExternalHttpProvider::Get().HasCallback());
+        // This test needs the default provider, so drop any client callback a previous test installed.
+        ExternalHttpProvider::Get().ClearCallback();
 
         g_chainingFilterCalls = 0;
         VERIFY_ARE_EQUAL(S_OK, HCGetHttpCallPerformFunction(&g_defaultPerform, &g_defaultPerformContext));
@@ -187,6 +189,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         XTaskQueueCloseHandle(queue);
         HCCleanup();
+        ExternalHttpProvider::Get().ClearCallback();
 
         // Has to happen after HCCleanup() or else other tests break.
         VERIFY_ARE_EQUAL(1, g_chainingFilterCalls.load());
@@ -240,6 +243,7 @@ public:
         VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
         XTaskQueueCloseHandle(queue);
         HCCleanup();
+        ExternalHttpProvider::Get().ClearCallback();
     }
 
     DEFINE_TEST_CASE(TestSettings)
@@ -597,6 +601,7 @@ public:
         std::string responseBody = "HTTP test successful";
         VERIFY_ARE_EQUAL(S_OK, HCMockResponseSetResponseBodyBytes(mockCall, (uint8_t*)responseBody.c_str(), (uint32_t)responseBody.length()));
         VERIFY_ARE_EQUAL(S_OK, HCMockAddMock(mockCall, "GET", "http://example.com", nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mockCall)); // HCMockAddMock keeps its own reference
 
         XAsyncBlock asyncBlock = {};
         asyncBlock.context = call;

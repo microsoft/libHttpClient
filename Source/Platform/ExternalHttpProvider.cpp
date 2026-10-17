@@ -41,6 +41,12 @@ bool ExternalHttpProvider::HasCallback() const noexcept
     return m_perform;
 }
 
+void ExternalHttpProvider::ClearCallback() noexcept
+{
+    m_perform = nullptr;
+    m_context = nullptr;
+}
+
 HRESULT ExternalHttpProvider::PerformAsync(
     HCCallHandle callHandle,
     XAsyncBlock* async

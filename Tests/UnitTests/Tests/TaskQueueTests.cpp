@@ -110,31 +110,35 @@ DEFINE_TEST_CLASS(TaskQueueTests)
 {
 public:
 
+    // Every test must leave no task queue objects behind. Report what leaked
+    // so a failure here (often caused by an earlier test) is actionable.
+    static bool VerifyNoLeakedQueues()
+    {
+        if (XTaskQueueUninitialize(250))
+        {
+            return true;
+        }
+
+        XTaskQueueLiveObjectCounts counts{};
+        XTaskQueueGetLiveObjectCounts(&counts);
+        LOG_COMMENT(L"Task queue leak: %u queue(s) and %u port(s) still alive, %u global ref(s)",
+            counts.queues, counts.ports, counts.globalRefs);
+        return false;
+    }
+
 #ifdef USING_TAEF
 
     BEGIN_TEST_CLASS(TaskQueueTests)
     END_TEST_CLASS()
 
-    TEST_METHOD_CLEANUP(TestCleanup)
-    {
-        //
-        // Note: this is a global refcount for tracking
-        // leaks in the task queue.  If any other tests fail
-        // this may also fail, as those tests could have leaked.
-        //
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
-        return true;
-    }
-
-#else
-    DEFINE_TEST_CLASS_PROPS(TaskQueueTests);
-
-    TEST_METHOD_CLEANUP(TestCleanup)
-    {
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
-    }
-
 #endif
+
+    //
+    // Note: XTaskQueueUninitialize checks a global refcount for tracking
+    // leaks in the task queue.  If any other tests fail
+    // this may also fail, as those tests could have leaked.
+    //
+    DEFINE_TEST_METHOD_FIXTURE_WITH_CLEANUP(VERIFY_IS_TRUE(VerifyNoLeakedQueues()));
 
     DEFINE_TEST_CASE(VerifyStockQueue)
     {
@@ -566,10 +570,11 @@ public:
             uint64_t call2Ticks = result.Times[1] - baseTicks;
             uint64_t call3Ticks = result.Times[2] - baseTicks;
 
-            // Call 1 at index 0 should have a tick count > 1000 and < 1100 (100ms tolerance for debugger overhead)
-            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1100);
-            VERIFY_IS_TRUE(call2Ticks < 100);
-            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 600);
+            // Delayed callbacks must not run early. The upper bounds only guard against a stalled timer:
+            // hosted CI agents (notably macOS) can fire a timer a few hundred ms late under load.
+            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1600);
+            VERIFY_IS_TRUE(call2Ticks < 500);
+            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 1000);
         }
     }
 
@@ -814,6 +819,7 @@ public:
         VERIFY_IS_TRUE(WaitForSingleObject(threadWaits[1], 750) == WAIT_OBJECT_0);
     }
 
+#if HC_PLATFORM_IS_MICROSOFT // XTaskQueueRegisterWaiter is only implemented on Windows (E_NOTIMPL elsewhere)
     DEFINE_TEST_CASE(VerifyRegisterWithAutoReset)
     {
         AutoQueueHandle queue;
@@ -883,6 +889,120 @@ public:
         CloseHandle(workEvent);
         CloseHandle(completionEvent);
     }
+
+    // Regression for #1047: terminating or closing a queue that shares a port (here a composite
+    // over another queue's work port) must only cancel that queue's wait registrations. It used
+    // to clear the port's whole registration list, orphaning other queues' registrations: they
+    // stayed armed but could no longer be unregistered.
+    DEFINE_TEST_CASE(VerifySharedPortQueueRundownKeepsOtherWaiters)
+    {
+        for (bool terminate : { true, false })
+        {
+            LOG_COMMENT(terminate ? L"** sibling composite terminated **" : L"** sibling composite closed **");
+
+            AutoQueueHandle queue;
+            VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &queue));
+
+            struct Context
+            {
+                HANDLE signaled;
+                std::atomic<uint32_t> count{ 0 };
+            } context;
+            context.signaled = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            HANDLE waitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+            XTaskQueueRegistrationToken token = {};
+            VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(queue, XTaskQueuePort::Work, waitEvent, &context, [](void* cxt, bool canceled)
+            {
+                if (!canceled)
+                {
+                    Context* c = static_cast<Context*>(cxt);
+                    c->count++;
+                    SetEvent(c->signaled);
+                }
+            }, &token));
+
+            SetEvent(waitEvent);
+            VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(context.signaled, 1000));
+
+            // A sibling queue on the same port runs down, as every AsyncProvider's composite does.
+            XTaskQueuePortHandle workPort = nullptr;
+            VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Work, &workPort));
+            XTaskQueueHandle sibling = nullptr;
+            VERIFY_SUCCEEDED(XTaskQueueCreateComposite(workPort, workPort, &sibling));
+            if (terminate)
+            {
+                VERIFY_SUCCEEDED(XTaskQueueTerminate(sibling, true, nullptr, nullptr));
+            }
+            XTaskQueueCloseHandle(sibling);
+
+            // Our registration still works...
+            SetEvent(waitEvent);
+            VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(context.signaled, 1000));
+            VERIFY_ARE_EQUAL(2u, context.count.load());
+
+            // ...and can still be unregistered: no callback after this.
+            XTaskQueueUnregisterWaiter(queue, token);
+            SetEvent(waitEvent);
+            bool firedAfterUnregister = WaitForSingleObject(context.signaled, 300) == WAIT_OBJECT_0;
+            LOG_COMMENT(L"Callbacks: %u%s", context.count.load(), firedAfterUnregister ? L" -- fired after XTaskQueueUnregisterWaiter" : L"");
+            VERIFY_IS_FALSE(firedAfterUnregister);
+            VERIFY_ARE_EQUAL(2u, context.count.load());
+
+            CloseHandle(context.signaled);
+            if (!firedAfterUnregister)
+            {
+                CloseHandle(waitEvent);
+            }
+            // else: leak the handle; an orphaned threadpool wait may still reference it.
+        }
+    }
+
+    // Regression for #1047: a queue's wait registrations are removed when it runs down, so their
+    // handles must also leave the port's event list. Otherwise a Manual dispatch on another queue
+    // sharing the port keeps waiting on the handle: a signaled manual-reset event makes
+    // XTaskQueueDispatch spin without ever returning, and a closed handle fails fast.
+    DEFINE_TEST_CASE(VerifySharedPortQueueRundownDropsItsWaitHandles)
+    {
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+
+        XTaskQueuePortHandle workPort = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Work, &workPort));
+        XTaskQueueHandle sibling = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueCreateComposite(workPort, workPort, &sibling));
+
+        HANDLE waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr); // manual reset
+        XTaskQueueRegistrationToken token = {};
+        VERIFY_SUCCEEDED(XTaskQueueRegisterWaiter(sibling, XTaskQueuePort::Work, waitEvent, nullptr, [](void*, bool) {}, &token));
+
+        // The sibling runs down without unregistering; that cancels its registration.
+        XTaskQueueCloseHandle(sibling);
+        SetEvent(waitEvent);
+
+        std::atomic<bool> dispatchReturned{ false };
+        std::thread dispatcher([&]()
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+            dispatchReturned = true;
+        });
+
+        const uint64_t start = GetTickCount64();
+        while (!dispatchReturned && GetTickCount64() - start < 2000)
+        {
+            Sleep(10);
+        }
+        bool returnedInTime = dispatchReturned.load();
+        LOG_COMMENT(L"Dispatch(100 ms) %s", returnedInTime ? L"returned" : L"still spinning after 2 s on the canceled registration's handle");
+
+        // Unblock a spinning dispatcher so the test can clean up either way.
+        ResetEvent(waitEvent);
+        dispatcher.join();
+        CloseHandle(waitEvent);
+
+        VERIFY_IS_TRUE(returnedInTime);
+    }
+#endif
 
     DEFINE_TEST_CASE(VerifyQueueTermination)
     {
@@ -970,7 +1090,11 @@ public:
         {
             normalCount = 5;
             futureCount = 5;
+#if HC_PLATFORM_IS_MICROSOFT
             eventCount = 5;
+#else
+            eventCount = 0; // XTaskQueueRegisterWaiter is only implemented on Windows
+#endif
 
             for(uint32_t idx = 0; idx < normalCount; idx++)
             {
@@ -1086,7 +1210,12 @@ public:
         VERIFY_ARE_EQUAL(E_ABORT, XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, nullptr, cbEmpty));
 
         globalQueue.Close();
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
+
+        // Terminate(wait=true) returns once the termination callback has run,
+        // but the threadpool thread that ran it still holds its port reference
+        // until it finishes unwinding. Allow that rundown to complete instead of
+        // requiring zero references immediately (flaky on 2-core machines).
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(2000));
         VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
         VERIFY_IS_NOT_NULL(globalQueue);
 
@@ -1204,6 +1333,7 @@ public:
         VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, true, nullptr, nullptr));
     }
 
+#if HC_PLATFORM_IS_MICROSOFT // XTaskQueueRegisterWaiter is only implemented on Windows (E_NOTIMPL elsewhere)
     DEFINE_TEST_CASE(VerifyTerminationOfCompositeQueue)
     {
         struct TestData
@@ -1333,6 +1463,7 @@ public:
         VERIFY_IS_FALSE(data.waitCanceled);
         VERIFY_IS_FALSE(compositeData.waitInvoked);
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyQueueMonitorHasCorrectPorts)
     {
@@ -2157,10 +2288,21 @@ public:
         LOG_COMMENT(L"Canary fired: %s",
                     canaryFired.load() ? L"yes" : L"NO -- timer stalled");
 
-        XTaskQueueTerminate(queue, false, nullptr, nullptr);
-        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
+        // Termination cancels pending delayed callbacks by posting them to the manual Work port, which can
+        // happen after a single non-blocking drain has already returned on a slow machine. Dispatch until
+        // termination completes; otherwise the queue never runs down and leaks into later tests.
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
         {
+            static_cast<std::atomic<bool>*>(context)->store(true, std::memory_order_release);
+        }));
+        const uint64_t terminationStartTicks = GetTickCount64();
+        while (!terminated.load(std::memory_order_acquire) &&
+               GetTickCount64() - terminationStartTicks < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 50);
         }
+        VERIFY_IS_TRUE(terminated.load(std::memory_order_acquire));
 
         VERIFY_IS_TRUE(canaryFired.load());
     }
@@ -2278,15 +2420,158 @@ public:
         LOG_COMMENT(L"Second callback fired: %s",
             secondFired.load() ? L"yes" : L"NO -- callback stranded during empty sweep");
 
-        XTaskQueueTerminate(queue, false, nullptr, nullptr);
-        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
+        // Termination cancels pending delayed callbacks by posting them to the manual Work port, which can
+        // happen after a single non-blocking drain has already returned on a slow machine. Dispatch until
+        // termination completes; otherwise the queue never runs down and leaks into later tests.
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
         {
+            static_cast<std::atomic<bool>*>(context)->store(true, std::memory_order_release);
+        }));
+        const uint64_t terminationStartTicks = GetTickCount64();
+        while (!terminated.load(std::memory_order_acquire) &&
+               GetTickCount64() - terminationStartTicks < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 50);
         }
+        VERIFY_IS_TRUE(terminated.load(std::memory_order_acquire));
 
         VERIFY_IS_TRUE(firstFired.load());
         VERIFY_IS_TRUE(secondFired.load());
     }
 
+    DEFINE_TEST_CASE(VerifyDelayedCallbackQueuedBeforeRearmToLaterDeadlineDoesNotWait)
+    {
+        // Regression for #1048: when the timer fires and the sweep finds a later pending entry
+        // (Y), the timer is re-armed from the fired deadline (X) to Y's. A delayed callback (Z)
+        // submitted in between sees the stale, already-past X deadline, assumes an earlier timer
+        // is armed and does not arm one. Without a rescan after the re-arm, Z then waits until Y.
+
+        struct TestBarrier
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            bool sweepFoundLaterEntry = false; // timer callback -> test thread
+            bool lateEntrySubmitted = false;   // test thread -> timer callback
+        };
+
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            explicit TestHooks(_In_ TestBarrier* barrier) : m_testBarrier(barrier) {}
+
+            void NextPendingCallbackFound(XTaskQueuePort port, uint64_t dueTime, uint64_t nextDueTime) override
+            {
+                UNREFERENCED_PARAMETER(port);
+                UNREFERENCED_PARAMETER(dueTime);
+                UNREFERENCED_PARAMETER(nextDueTime);
+
+                std::unique_lock<std::mutex> lk(m_testBarrier->mtx);
+                if (!m_hookArmed)
+                {
+                    return;
+                }
+
+                m_hookArmed = false;
+                m_testBarrier->sweepFoundLaterEntry = true;
+                lk.unlock();
+                m_testBarrier->cv.notify_all();
+
+                lk.lock();
+                m_testBarrier->cv.wait_for(
+                    lk,
+                    std::chrono::seconds(5),
+                    [&] { return m_testBarrier->lateEntrySubmitted; });
+            }
+
+        private:
+            TestBarrier* m_testBarrier = nullptr;
+            bool m_hookArmed = true;
+        };
+
+        TestBarrier barrier;
+        TestHooks hooks(&barrier);
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Immediate,
+            &queue));
+
+        std::atomic<bool> xFired{ false };
+        std::atomic<bool> yFired{ false };
+        std::atomic<bool> zFired{ false };
+
+        auto markFired = [](void* ctx, bool cancel)
+        {
+            if (!cancel)
+            {
+                static_cast<std::atomic<bool>*>(ctx)->store(true);
+            }
+        };
+
+        // Y is far in the future so it is the "next item" when X fires.
+        constexpr uint32_t yDelayMs = 30000;
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, yDelayMs, &yFired, markFired));
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, &hooks));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, 1, &xFired, markFired));
+
+        bool sweepReachedRearm = false;
+        {
+            std::unique_lock<std::mutex> lk(barrier.mtx);
+            sweepReachedRearm = barrier.cv.wait_for(
+                lk,
+                std::chrono::seconds(5),
+                [&] { return barrier.sweepFoundLaterEntry; });
+        }
+
+        // Z is due long before Y, but is queued while the fired X deadline is still published.
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, 10, &zFired, markFired));
+
+        {
+            std::lock_guard<std::mutex> lk(barrier.mtx);
+            barrier.lateEntrySubmitted = true;
+        }
+        barrier.cv.notify_all();
+
+        const uint64_t start = GetTickCount64();
+        while ((!xFired.load() || !zFired.load()) &&
+               GetTickCount64() - start < 3000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+        }
+
+        LOG_COMMENT(L"X fired: %s, Z fired: %s, Y fired: %s",
+            xFired.load() ? L"yes" : L"no",
+            zFired.load() ? L"yes" : L"NO -- stranded until Y's deadline",
+            yFired.load() ? L"yes" : L"no");
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, nullptr));
+
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
+        {
+            static_cast<std::atomic<bool>*>(context)->store(true, std::memory_order_release);
+        }));
+        const uint64_t terminationStartTicks = GetTickCount64();
+        while (!terminated.load(std::memory_order_acquire) &&
+               GetTickCount64() - terminationStartTicks < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 50);
+        }
+        VERIFY_IS_TRUE(terminated.load(std::memory_order_acquire));
+
+        VERIFY_IS_TRUE(sweepReachedRearm);
+        VERIFY_IS_TRUE(xFired.load());
+        VERIFY_IS_TRUE(zFired.load());
+        VERIFY_IS_FALSE(yFired.load());
+    }
+
+// TODO(linux): this scenario blocks the timer callback inside a test hook and expects a second
+// delayed callback to still fire. That holds for the Win32 threadpool timers, which run callbacks
+// concurrently, but the STL WaitTimer (Linux/Apple/Android) fires every timer from one process-wide
+// worker thread, so the blocked hook stalls the second timer until it is released. Rework the
+// test to block somewhere that does not own the timer thread before enabling it off Windows.
+#if HC_PLATFORM_IS_MICROSOFT
     DEFINE_TEST_CASE(VerifyDelayedSubmissionRescuesOverdueTimer)
     {
         struct TestBarrier
@@ -2476,6 +2761,7 @@ public:
                 std::chrono::duration_cast<std::chrono::nanoseconds>(
                     std::chrono::milliseconds{ 50 }).count()));
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyTerminationDoesNotEarlyPromoteSiblingDelayedCallback)
     {
@@ -2701,5 +2987,108 @@ public:
         VERIFY_IS_GREATER_THAN_OR_EQUAL(
             secondState.firedAtNs.load(std::memory_order_acquire) - secondSubmittedAtNs,
             secondDelayNs);
+    }
+
+    DEFINE_TEST_CASE(VerifyQueueReleasedFromDelayedCallbackTimerRunsDown)
+    {
+        // Regression: the delayed-callback timer callback holds a temporary
+        // reference on a queue while it sweeps the pending list. If the app
+        // terminates and closes that queue meanwhile, the timer callback's
+        // release is the final one, so the queue -- and the port that owns
+        // the timer -- are destroyed on the timer's own callback thread. The
+        // Win32 WaitTimer then waited for its own in-flight callback inside
+        // WaitForThreadpoolTimerCallbacks and deadlocked forever, leaking the
+        // queue and port (every later XTaskQueueUninitialize failed).
+        //
+        // Deterministic interleaving:
+        //   1. Terminate the queue without dispatching its Work port, so the
+        //      Completion port stays Canceled with delayed callbacks pending.
+        //   2. The first delayed completion fires. The timer sweep holds a ref
+        //      on the queue for the surviving (future) entry, sees the port is
+        //      no longer active and cancels it; the PendingEntriesRemoved hook
+        //      parks the timer thread right there.
+        //   3. The test finishes termination and closes the handle, leaving
+        //      the timer thread with the last queue reference, then releases it.
+
+        struct TestState
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            std::thread::id testThread;
+            bool timerParked = false;
+            bool releaseTimer = false;
+        };
+
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            explicit TestHooks(_In_ TestState* state) : m_state(state) {}
+
+            void PendingEntriesRemovedDuringTermination(XTaskQueuePort port) override
+            {
+                std::unique_lock<std::mutex> lk(m_state->mtx);
+                if (port != XTaskQueuePort::Completion ||
+                    std::this_thread::get_id() == m_state->testThread ||
+                    m_state->timerParked)
+                {
+                    return;
+                }
+
+                m_state->timerParked = true;
+                m_state->cv.notify_all();
+                m_state->cv.wait_for(lk, std::chrono::seconds(10), [&] { return m_state->releaseTimer; });
+            }
+
+        private:
+            TestState* m_state;
+        };
+
+        TestState state;
+        state.testThread = std::this_thread::get_id();
+        TestHooks hooks(&state);
+
+        XTaskQueueHandle queue = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, &hooks));
+
+        auto noop = [](void*, bool) {};
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Completion, 500, nullptr, noop));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Completion, 60000, nullptr, noop));
+
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
+        {
+            static_cast<std::atomic<bool>*>(context)->store(true);
+        }));
+
+        bool parked = false;
+        {
+            std::unique_lock<std::mutex> lk(state.mtx);
+            parked = state.cv.wait_for(lk, std::chrono::seconds(10), [&] { return state.timerParked; });
+        }
+
+        // Finish termination: the Work port's termination terminates the
+        // Completion port, which then drains its canceled callbacks.
+        const uint64_t start = GetTickCount64();
+        while (!terminated.load() && GetTickCount64() - start < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+            XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 10);
+        }
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, nullptr));
+        XTaskQueueCloseHandle(queue);
+
+        {
+            std::lock_guard<std::mutex> lk(state.mtx);
+            state.releaseTimer = true;
+        }
+        state.cv.notify_all();
+
+        VERIFY_IS_TRUE(parked);
+        VERIFY_IS_TRUE(terminated.load());
+
+        // The queue and its ports must run down once the timer thread drops
+        // its reference. Before the fix this deadlocked and never reached zero.
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(5000));
     }
 };

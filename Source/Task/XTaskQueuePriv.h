@@ -73,6 +73,18 @@ struct XTaskQueueTestHooks
         UNREFERENCED_PARAMETER(lastDueTime);
         UNREFERENCED_PARAMETER(nextDueTime);
     }
+
+    // Called after a timer sweep found a future pending callback, before the
+    // timer is re-armed from the fired due time to that callback's deadline.
+    virtual void NextPendingCallbackFound(
+        XTaskQueuePort port,
+        uint64_t dueTime,
+        uint64_t nextDueTime)
+    {
+        UNREFERENCED_PARAMETER(port);
+        UNREFERENCED_PARAMETER(dueTime);
+        UNREFERENCED_PARAMETER(nextDueTime);
+    }
 };
 
 /// <summary>
@@ -172,3 +184,21 @@ STDAPI_(bool) XTaskQueueGetCurrentProcessTaskQueueWithOptions(
 STDAPI_(bool) XTaskQueueUninitialize(
     _In_ uint32_t timeoutMilliseconds = 0
     ) noexcept;
+
+#ifdef HC_UNITTEST_API
+/// <summary>
+/// Unit-test diagnostics: the number of task queue / task queue port objects
+/// still alive and the outstanding global task queue reference count. Used to
+/// report what leaked when XTaskQueueUninitialize fails.
+/// </summary>
+struct XTaskQueueLiveObjectCounts
+{
+    uint32_t globalRefs;
+    uint32_t queues;
+    uint32_t ports;
+};
+
+STDAPI_(void) XTaskQueueGetLiveObjectCounts(
+    _Out_ XTaskQueueLiveObjectCounts* counts
+    ) noexcept;
+#endif

@@ -65,6 +65,17 @@ try
 }
 CATCH_RETURN()
 
+STDAPI HCWebSocketSetSSLValidation(
+    _In_ HCWebsocketHandle handle,
+    _In_ bool sslValidation
+) noexcept
+try
+{
+    RETURN_HR_IF(E_INVALIDARG, !handle);
+    return handle->websocket->SetSSLValidation(sslValidation);
+}
+CATCH_RETURN()
+
 STDAPI HCWebSocketSetHeader(
     _In_ HCWebsocketHandle handle,
     _In_z_ const char* headerName,
@@ -109,7 +120,7 @@ STDAPI HCWebSocketConnectAsync(
 ) noexcept
 try
 {
-    RETURN_HR_IF(E_INVALIDARG, !handle || !uri || !subProtocol);
+    RETURN_HR_IF(E_INVALIDARG, !handle || !uri || !subProtocol || !asyncBlock);
 
     auto httpSingleton = get_http_singleton();
     RETURN_HR_IF(E_HC_NOT_INITIALISED, !httpSingleton);
@@ -125,7 +136,7 @@ STDAPI HCWebSocketSendMessageAsync(
 ) noexcept
 try
 {
-    RETURN_HR_IF(E_INVALIDARG, !handle || !message);
+    RETURN_HR_IF(E_INVALIDARG, !handle || !message || !asyncBlock);
     return handle->websocket->SendAsync(message, asyncBlock);
 }
 CATCH_RETURN()
@@ -138,7 +149,7 @@ STDAPI HCWebSocketSendBinaryMessageAsync(
 ) noexcept
 try
 {
-    RETURN_HR_IF(E_INVALIDARG, !handle || !payloadBytes || !payloadSize);
+    RETURN_HR_IF(E_INVALIDARG, !handle || !payloadBytes || !payloadSize || !asyncBlock);
     return handle->websocket->SendBinaryAsync(payloadBytes, payloadSize, asyncBlock);
 }
 CATCH_RETURN()
@@ -427,6 +438,7 @@ STDAPI HCGetWebSocketConnectResult(
 ) noexcept
 try
 {
+    RETURN_HR_IF(E_INVALIDARG, !asyncBlock);
     return XAsyncGetResult(
         asyncBlock,
         reinterpret_cast<void*>(HCWebSocketConnectAsync),
@@ -443,6 +455,7 @@ STDAPI HCGetWebSocketSendMessageResult(
 ) noexcept
 try
 {
+    RETURN_HR_IF(E_INVALIDARG, !asyncBlock);
     return XAsyncGetResult(
         asyncBlock,
         reinterpret_cast<void*>(HCWebSocketSendMessageAsync),
