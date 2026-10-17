@@ -59,6 +59,42 @@ build directory with:
 ctest --output-on-failure -R websocket-compression-linux
 ```
 
+### Unit tests
+
+The CMake project also builds `libHttpClient.UnitTests`: the shared unit tests in
+`Tests/UnitTests/Tests/*.cpp` (the same sources the Windows TE/TAEF projects run), compiled with
+the header-only portable runner in `Tests/UnitTests/Support/Portable` against the Generic platform.
+It does not need cURL or OpenSSL, so it can be built on its own. The test targets are off by default; enable them with
+`libHttpClient_Linux.bash -t` (or CMake `-DHC_BUILD_UNIT_TESTS=ON -DHC_BUILD_E2E_TESTS=ON`). From the CMake build directory:
+
+```
+make libHttpClient.UnitTests
+ctest --output-on-failure -L unit                   # the unit tests
+ctest --output-on-failure -L "unit|taskqueue"       # plus the TaskQueue/WaitTimer repros (CI)
+```
+
+The executable can also be run directly (it lives under `Out/x64/{Configuration}/libHttpClient.Linux`)
+with `--list` or `--filter=<glob>[,<glob>...]`, e.g. `--filter=HttpTests::*,-*Retry*`. New
+`Tests/UnitTests/Tests/*.cpp` files are picked up automatically; files that cannot build off
+Windows are listed in `Build/libHttpClient.CMake/UnitTests.cmake`.
+
+The same target can be built on its own on any Unix-like host (this is what the macOS CI legs do)
+with the standalone project in `Build/libHttpClient.UnitTest.CMake`:
+
+```
+cmake -S Build/libHttpClient.UnitTest.CMake -B Int/CMake/ut -DCMAKE_BUILD_TYPE=Debug
+cmake --build Int/CMake/ut --parallel && (cd Int/CMake/ut && ctest --output-on-failure -L unit)
+```
+
+```
+./libHttpClient_Linux.bash -c Debug -st -t -san
+```
+
+`-san|--sanitizers` (CMake `-DHC_ENABLE_SANITIZERS=ON`) builds every target with AddressSanitizer
+and UndefinedBehaviorSanitizer; CI runs `ctest -L "unit|taskqueue"` on such a Debug build. With
+clang 14 on kernels that use 32 bits of mmap ASLR entropy the ASan runtime can crash at startup;
+run the tests with `setarch $(uname -m) -R ctest ...` (or `sysctl vm.mmap_rnd_bits=28`).
+
 If the bash script fails to run and produces the error:
 ```
 /bin/bash^M: bad interpreter

@@ -685,18 +685,7 @@ public:
         message.payload = std::move(payload);
         message.id = ++httpSingleton->m_lastId;
 
-        {
-            // Only actually have to take the lock if touching the queue.
-            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
-            m_outgoingMessageQueue.push(std::move(message));
-        }
-
-        if (++m_numSends == 1) // No sends in progress
-        {
-            // Start sending the message
-            return send_msg();
-        }
-        return S_OK;
+        return enqueue_send(std::move(message));
     }
 
     HRESULT sendBinary(XAsyncBlock* async, const uint8_t* payloadBytes, uint32_t payloadSize)
@@ -729,18 +718,7 @@ public:
         message.payloadBinary.assign(payloadBytes, payloadBytes + payloadSize);
         message.id = ++httpSingleton->m_lastId;
 
-        {
-            // Only actually have to take the lock if touching the queue.
-            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
-            m_outgoingMessageQueue.push(std::move(message));
-        }
-
-        if (++m_numSends == 1) // No sends in progress
-        {
-            // Start sending the message
-            return send_msg();
-        }
-        return S_OK;
+        return enqueue_send(std::move(message));
     }
 
     HRESULT close()
@@ -1324,10 +1302,36 @@ private:
     {
         std::shared_ptr<wspp_websocket_impl> pThis;
         websocket_outgoing_message message;
+        // Set by whichever of DoWork / Cleanup first finishes with this send; that one hands the
+        // send queue on to the next message (see advance_send_queue).
+        std::atomic<bool> handedOff{ false };
     };
-
-    HRESULT send_msg_do_work(websocket_outgoing_message& message)
+    // websocketpp's endpoint::send(hdl, data, len, op) builds a message that is never flagged as
+    // compressible, so permessage-deflate would only ever apply to incoming messages. Build the
+    // message ourselves and flag it; websocketpp ignores the flag unless the extension was
+    // negotiated on this connection.
+    template<typename Client>
+    void send_compressible(Client& client, void const* payload, size_t size, websocketpp::frame::opcode::value op, websocketpp::lib::error_code& ec)
     {
+        auto con = client.get_con_from_hdl(m_con, ec);
+        if (ec)
+        {
+            return;
+        }
+        auto msg = con->get_message(op, size);
+        if (!msg)
+        {
+            ec = websocketpp::error::make_error_code(websocketpp::error::no_outgoing_buffers);
+            return;
+        }
+        msg->append_payload(payload, size);
+        msg->set_compressed(true);
+        ec = con->send(msg);
+    }
+
+    HRESULT send_msg_do_work(send_msg_context& context)
+    {
+        websocket_outgoing_message& message = context.message;
         HRESULT hr = S_OK;
 
         try
@@ -1346,7 +1350,7 @@ private:
                     {
                         invoke_wspp_client([this, &message](auto& client)
                         {
-                            client.send(m_con, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
+                            send_compressible(client, message.payloadBinary.data(), message.payloadBinary.size(), websocketpp::frame::opcode::binary, message.error);
                         });
                     }
                     else
@@ -1358,7 +1362,7 @@ private:
                 {
                     invoke_wspp_client([this, &message](auto& client)
                     {
-                        client.send(m_con, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
+                        send_compressible(client, message.payload.data(), message.payload.length(), websocketpp::frame::opcode::text, message.error);
                     });
                 }
             }
@@ -1367,96 +1371,161 @@ private:
             {
                 hr = E_FAIL;
             }
-            XAsyncComplete(message.async, hr, sizeof(WebSocketCompletionResult));
-
-            if (--m_numSends > 0)
-            {
-                hr = send_msg();
-            }
         }
         catch (...)
         {
             hr = E_FAIL;
-            XAsyncComplete(message.async, hr, sizeof(WebSocketCompletionResult));
+        }
+
+        // Claim the hand-off before completing: once XAsyncComplete returns, the client may
+        // retrieve the result (running Cleanup on another thread) and free its XAsyncBlock.
+        bool const handOff = !context.handedOff.exchange(true);
+        XAsyncComplete(message.async, hr, sizeof(WebSocketCompletionResult));
+        if (handOff)
+        {
+            advance_send_queue();
         }
         return hr;
     }
 
-    // Pull the next message from the queue and send it
-    HRESULT send_msg()
+    // Sends are serialized: only the message at the front of m_outgoingMessageQueue is scheduled.
+    // When it finishes, the next one is scheduled. m_numSends counts queued + in-flight sends.
+    void advance_send_queue() noexcept
+    {
+        while (--m_numSends > 0)
+        {
+            std::shared_ptr<send_msg_context> next;
+            {
+                std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
+                ASSERT(!m_outgoingMessageQueue.empty());
+                if (m_outgoingMessageQueue.empty())
+                {
+                    return;
+                }
+                next = std::move(m_outgoingMessageQueue.front());
+                m_outgoingMessageQueue.pop();
+            }
+
+            HRESULT hr = XAsyncSchedule(next->message.async, 0);
+            if (SUCCEEDED(hr))
+            {
+                return;
+            }
+
+            // Couldn't schedule it (e.g. its task queue is terminating): fail it and move on.
+            HC_TRACE_ERROR_HR(WEBSOCKET, hr, "Websocket: failed to schedule a queued send");
+            next->handedOff = true;
+            XAsyncComplete(next->message.async, hr, 0);
+        }
+    }
+
+    // Starts the client's async operation for a send immediately, so its XAsyncBlock reports
+    // E_PENDING as soon as HCWebSocketSend*Async returns S_OK, even while it waits behind earlier
+    // sends. (It used to call XAsyncBegin only when the message reached the front of the queue;
+    // until then XAsyncGetStatus on the client's untouched block returned S_OK, so a caller that
+    // waited on it could free the block before the provider began the operation on it.)
+    HRESULT enqueue_send(websocket_outgoing_message&& message)
     {
         auto sendContext = http_allocate_shared<send_msg_context>();
         sendContext->pThis = shared_from_this();
-        {
-            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
-            ASSERT(!m_outgoingMessageQueue.empty());
-            sendContext->message = std::move(m_outgoingMessageQueue.front());
-            m_outgoingMessageQueue.pop();
-        }
+        sendContext->message = std::move(message);
+        XAsyncBlock* async = sendContext->message.async;
 
         auto rawSendContext = shared_ptr_cache::store(sendContext);
         if (rawSendContext == nullptr)
         {
-            XAsyncComplete(sendContext->message.async, E_HC_NOT_INITIALISED, 0);
             return E_HC_NOT_INITIALISED;
         }
 
-        auto hr = XAsyncBegin(sendContext->message.async, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__,
-            [](XAsyncOp op, const XAsyncProviderData* data)
+        HRESULT hr = XAsyncBegin(async, rawSendContext, (void*)HCWebSocketSendMessageAsync, __FUNCTION__, SendProvider);
+        if (FAILED(hr))
         {
-            auto httpSingleton = get_http_singleton();
-            if (nullptr == httpSingleton)
-            {
-                return E_HC_NOT_INITIALISED;
-            }
-
-            WebSocketCompletionResult* result;
-            switch (op)
-            {
-                case XAsyncOp::DoWork:
-                {
-                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
-                    if (context == nullptr)
-                    {
-                        return E_HC_NOT_INITIALISED;
-                    }
-                    return context->pThis->send_msg_do_work(context->message);
-                }
-            
-                case XAsyncOp::GetResult:
-                {
-                    auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
-                    if (context == nullptr)
-                    {
-                        return E_HC_NOT_INITIALISED;
-                    }
-                    result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
-                    result->websocket = context->pThis->m_hcWebsocketHandle;
-                    result->platformErrorCode = context->message.error.value();
-                    result->errorCode = XAsyncGetStatus(data->async, false);
-                    return S_OK;
-                }
-
-                case XAsyncOp::Cleanup:
-                {
-                    shared_ptr_cache::remove(data->context);
-                    return S_OK;
-                }
-
-                default:
-                    break;
-            }
-
-            return S_OK;
-        });
-
-        if (SUCCEEDED(hr))
-        {
-            hr = XAsyncSchedule(sendContext->message.async, 0);
+            shared_ptr_cache::remove(rawSendContext);
+            return hr;
         }
-        return hr;
+
+        {
+            std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
+            m_outgoingMessageQueue.push(sendContext);
+        }
+
+        if (++m_numSends == 1) // No sends in progress
+        {
+            std::shared_ptr<send_msg_context> first;
+            {
+                std::lock_guard<std::recursive_mutex> lock(m_outgoingMessageQueueLock);
+                ASSERT(!m_outgoingMessageQueue.empty());
+                first = std::move(m_outgoingMessageQueue.front());
+                m_outgoingMessageQueue.pop();
+            }
+
+            hr = XAsyncSchedule(first->message.async, 0);
+            if (FAILED(hr))
+            {
+                HC_TRACE_ERROR_HR(WEBSOCKET, hr, "Websocket: failed to schedule a send");
+                first->handedOff = true;
+                XAsyncComplete(first->message.async, hr, 0);
+                advance_send_queue();
+            }
+        }
+
+        // The operation has begun, so report success and deliver any failure through it.
+        return S_OK;
     }
 
+    static HRESULT CALLBACK SendProvider(XAsyncOp op, const XAsyncProviderData* data)
+    {
+        auto httpSingleton = get_http_singleton();
+        if (nullptr == httpSingleton)
+        {
+            return E_HC_NOT_INITIALISED;
+        }
+
+        switch (op)
+        {
+            case XAsyncOp::DoWork:
+            {
+                auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
+                if (context == nullptr)
+                {
+                    return E_HC_NOT_INITIALISED;
+                }
+                // send_msg_do_work completes the client's block itself.
+                context->pThis->send_msg_do_work(*context);
+                return E_PENDING;
+            }
+
+            case XAsyncOp::GetResult:
+            {
+                auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
+                if (context == nullptr)
+                {
+                    return E_HC_NOT_INITIALISED;
+                }
+                auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
+                result->websocket = context->pThis->m_hcWebsocketHandle;
+                result->platformErrorCode = context->message.error.value();
+                result->errorCode = XAsyncGetStatus(data->async, false);
+                return S_OK;
+            }
+
+            case XAsyncOp::Cleanup:
+            {
+                auto context = shared_ptr_cache::fetch<send_msg_context>(data->context);
+                shared_ptr_cache::remove(data->context);
+                // If this send finished without its DoWork running (e.g. it was cancelled because
+                // its task queue terminated), hand the queue on so later sends aren't stranded.
+                if (context != nullptr && !context->handedOff.exchange(true))
+                {
+                    context->pThis->advance_send_queue();
+                }
+                return S_OK;
+            }
+
+            default:
+                return S_OK;
+        }
+    }
     void send_ping()
     {
         // By design, wspp doesn't raise any sort of event when the client's connection
@@ -1843,7 +1912,7 @@ private:
     std::recursive_mutex m_outgoingMessageQueueLock;
 
     // Queue to order the sends
-    http_internal_queue<websocket_outgoing_message> m_outgoingMessageQueue;
+    http_internal_queue<std::shared_ptr<send_msg_context>> m_outgoingMessageQueue;
 
     // Number of sends in progress and queued up.
     std::atomic<int> m_numSends{ 0 };

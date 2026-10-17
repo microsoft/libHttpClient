@@ -62,6 +62,15 @@ bool ExternalWebSocketProvider::HasCallbacks() const noexcept
     return m_connect;
 }
 
+void ExternalWebSocketProvider::ClearCallbacks() noexcept
+{
+    m_connect = nullptr;
+    m_send = nullptr;
+    m_sendBinary = nullptr;
+    m_disconnect = nullptr;
+    m_context = nullptr;
+}
+
 HRESULT ExternalWebSocketProvider::ConnectAsync(
     String const& uri,
     String const& subprotocol,

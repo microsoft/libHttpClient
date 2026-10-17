@@ -1,5 +1,16 @@
 # Buffer Size API Tests
 
+> **Superseded by `Tests/E2E`.** The end-to-end scenarios here (`BufferSizeE2ETests.cpp`,
+> `LargeFileTests.cpp`, `MegaFileTests.cpp`, `HeaderAnalysisTests.cpp`) download from
+> raw.githubusercontent.com, httpbin.org, github.com, nodejs.org, python.org and ubuntu.com, so
+> they can't run in CI. Their intent (64 KB / 1 MB / 20 MB downloads with several
+> `HCHttpCallRequestSetMaxReceiveBufferSize` values, chunked responses, Content-Length vs chunked
+> header analysis, write-callback chunk sizes) is now covered against a local loopback server by
+> `http_response_sizes_with_receive_buffer`, `http_chunked_response_with_receive_buffer` and
+> `http_response_write_function_honours_buffer_size` in `Tests/E2E/HttpE2ETests.cpp`, which run in
+> the Windows x64 CI legs. The set/get API checks in `BufferSizeUnitTests.cpp` need no network.
+> See `Tests/E2E/README.md`.
+
 This directory contains tests and examples for the new LibHttpClient buffer size APIs:
 
 - `HCHttpCallRequestSetMaxReceiveBufferSize()` 

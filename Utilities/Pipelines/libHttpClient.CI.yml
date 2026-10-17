@@ -106,21 +106,23 @@ jobs:
   # Android
   ####################
 
-  # - job: AndroidBuild
-  #   displayName: libHttpClient Android Build
-  #   pool:
-  #     vmImage: windows-2019
-  #   timeoutInMinutes: 180
-  #   strategy:
-  #     matrix:
-  #       Debug:
-  #         Configuration: Debug
-  #       Release:
-  #         Configuration: Release
-  #   steps:
-  #     - template: Tasks/android-build.yml
-  #       parameters:
-  #         configuration: $(Configuration)
+  # Build only. The androidTest instrumentation tests (HttpMethodTest, HttpHeaderTest) need an emulator or
+  # device and are run manually: see Build/libHttpClient.Android.Workspace/README.md.
+  - job: AndroidBuild
+    displayName: libHttpClient Android Build
+    pool:
+      vmImage: windows-2022
+    timeoutInMinutes: 180
+    strategy:
+      matrix:
+        Debug:
+          Configuration: Debug
+        Release:
+          Configuration: Release
+    steps:
+      - template: Tasks/android-build.yml
+        parameters:
+          configuration: $(Configuration)
 
   ####################
   # iOS
@@ -193,3 +195,14 @@ jobs:
       - template: Tasks/linux-build.yml
         parameters:
           configuration: $(Configuration)
+
+  - job: LinuxSanitizers
+    displayName: libHttpClient Linux ASan + UBSan (Debug)
+    pool:
+      vmImage: ubuntu-22.04
+    timeoutInMinutes: 180
+    steps:
+      - template: Tasks/linux-build.yml
+        parameters:
+          configuration: Debug
+          sanitizers: true

@@ -5,8 +5,10 @@
 #include "UnitTestIncludes.h"
 #define TEST_CLASS_OWNER L"jasonsa"
 #include "DefineTestMacros.h"
-#include "Utils.h"
+#include "utils.h"
+#if HC_PLATFORM_IS_MICROSOFT
 #include "../Common/Win/utils_win.h"
+#endif
 #include "PumpedTaskQueue.h"
 #include "CallbackThunk.h"
 
@@ -55,11 +57,13 @@ public:
         HCGetLibVersion(&ver);
         VERIFY_ARE_EQUAL_STR("1.0.0.0", ver);
 
+#if HC_PLATFORM_IS_MICROSOFT // utf16/utf8 conversion helpers live in Common/Win/utils_win.h
 #pragma warning(disable: 4800)
         http_internal_wstring utf16 = utf16_from_utf8("test");
         VERIFY_ARE_EQUAL_STR(L"test", utf16.c_str());
         http_internal_string utf8 = utf8_from_utf16(L"test");
         VERIFY_ARE_EQUAL_STR("test", utf8.c_str());
+#endif
     }
 
     DEFINE_TEST_CASE(TestAsyncCleanup)
@@ -88,6 +92,7 @@ public:
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
         VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 500));
         VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mock)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call{ nullptr };
         VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
@@ -117,6 +122,7 @@ public:
 
         VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(cleanupCompleteEvent, INFINITE));
         CloseHandle(cleanupCompleteEvent);
+        VERIFY_SUCCEEDED(HCHttpCallCloseHandle(call));
     }
 
     DEFINE_TEST_CASE(TestAsyncCleanupWithHttpCallPendingRetry)
@@ -132,6 +138,7 @@ public:
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
         VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 500));
         VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mock)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call{ nullptr };
         VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
@@ -177,6 +184,7 @@ public:
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
         VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 200));
         VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mock)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call{ nullptr };
         VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
@@ -270,6 +278,7 @@ public:
         VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
         VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 200));
         VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mock)); // HCMockAddMock keeps its own reference
 
         HCCallHandle call{ nullptr };
         VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
@@ -320,6 +329,7 @@ public:
         ~RequestLimitRestorer() { HCSettingsSetGlobalRequestLimit(0); }
     };
 
+#if HC_PLATFORM == HC_PLATFORM_WIN32 || HC_PLATFORM == HC_PLATFORM_GDK
     DEFINE_TEST_CASE(TestGlobalRequestLimitDefault)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitDefault);
@@ -409,6 +419,18 @@ public:
         VERIFY_SUCCEEDED(HCSettingsGetGlobalRequestLimit(&limit));
         VERIFY_ARE_EQUAL(9u, limit);
     }
+#else
+    // Admission control only exists in the WinHTTP provider; elsewhere the settings APIs refuse
+    // rather than store a cap that would silently do nothing.
+    DEFINE_TEST_CASE(TestGlobalRequestLimitNotImplemented)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGlobalRequestLimitNotImplemented);
+
+        uint32_t limit{ 0 };
+        VERIFY_ARE_EQUAL(E_NOTIMPL, HCSettingsGetGlobalRequestLimit(&limit));
+        VERIFY_ARE_EQUAL(E_NOTIMPL, HCSettingsSetGlobalRequestLimit(4));
+    }
+#endif
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

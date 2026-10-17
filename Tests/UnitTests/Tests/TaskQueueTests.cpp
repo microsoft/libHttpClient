@@ -110,31 +110,35 @@ DEFINE_TEST_CLASS(TaskQueueTests)
 {
 public:
 
+    // Every test must leave no task queue objects behind. Report what leaked
+    // so a failure here (often caused by an earlier test) is actionable.
+    static bool VerifyNoLeakedQueues()
+    {
+        if (XTaskQueueUninitialize(250))
+        {
+            return true;
+        }
+
+        XTaskQueueLiveObjectCounts counts{};
+        XTaskQueueGetLiveObjectCounts(&counts);
+        LOG_COMMENT(L"Task queue leak: %u queue(s) and %u port(s) still alive, %u global ref(s)",
+            counts.queues, counts.ports, counts.globalRefs);
+        return false;
+    }
+
 #ifdef USING_TAEF
 
     BEGIN_TEST_CLASS(TaskQueueTests)
     END_TEST_CLASS()
 
-    TEST_METHOD_CLEANUP(TestCleanup)
-    {
-        //
-        // Note: this is a global refcount for tracking
-        // leaks in the task queue.  If any other tests fail
-        // this may also fail, as those tests could have leaked.
-        //
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
-        return true;
-    }
-
-#else
-    DEFINE_TEST_CLASS_PROPS(TaskQueueTests);
-
-    TEST_METHOD_CLEANUP(TestCleanup)
-    {
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
-    }
-
 #endif
+
+    //
+    // Note: XTaskQueueUninitialize checks a global refcount for tracking
+    // leaks in the task queue.  If any other tests fail
+    // this may also fail, as those tests could have leaked.
+    //
+    DEFINE_TEST_METHOD_FIXTURE_WITH_CLEANUP(VERIFY_IS_TRUE(VerifyNoLeakedQueues()));
 
     DEFINE_TEST_CASE(VerifyStockQueue)
     {
@@ -566,10 +570,11 @@ public:
             uint64_t call2Ticks = result.Times[1] - baseTicks;
             uint64_t call3Ticks = result.Times[2] - baseTicks;
 
-            // Call 1 at index 0 should have a tick count > 1000 and < 1100 (100ms tolerance for debugger overhead)
-            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1100);
-            VERIFY_IS_TRUE(call2Ticks < 100);
-            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 600);
+            // Delayed callbacks must not run early. The upper bounds only guard against a stalled timer:
+            // hosted CI agents (notably macOS) can fire a timer a few hundred ms late under load.
+            VERIFY_IS_TRUE(call1Ticks >= 1000 && call1Ticks < 1600);
+            VERIFY_IS_TRUE(call2Ticks < 500);
+            VERIFY_IS_TRUE(call3Ticks >= 500 && call3Ticks < 1000);
         }
     }
 
@@ -814,6 +819,7 @@ public:
         VERIFY_IS_TRUE(WaitForSingleObject(threadWaits[1], 750) == WAIT_OBJECT_0);
     }
 
+#if HC_PLATFORM_IS_MICROSOFT // XTaskQueueRegisterWaiter is only implemented on Windows (E_NOTIMPL elsewhere)
     DEFINE_TEST_CASE(VerifyRegisterWithAutoReset)
     {
         AutoQueueHandle queue;
@@ -883,6 +889,7 @@ public:
         CloseHandle(workEvent);
         CloseHandle(completionEvent);
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyQueueTermination)
     {
@@ -970,7 +977,11 @@ public:
         {
             normalCount = 5;
             futureCount = 5;
+#if HC_PLATFORM_IS_MICROSOFT
             eventCount = 5;
+#else
+            eventCount = 0; // XTaskQueueRegisterWaiter is only implemented on Windows
+#endif
 
             for(uint32_t idx = 0; idx < normalCount; idx++)
             {
@@ -1086,7 +1097,12 @@ public:
         VERIFY_ARE_EQUAL(E_ABORT, XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, nullptr, cbEmpty));
 
         globalQueue.Close();
-        VERIFY_IS_TRUE(XTaskQueueUninitialize(0));
+
+        // Terminate(wait=true) returns once the termination callback has run,
+        // but the threadpool thread that ran it still holds its port reference
+        // until it finishes unwinding. Allow that rundown to complete instead of
+        // requiring zero references immediately (flaky on 2-core machines).
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(2000));
         VERIFY_IS_TRUE(XTaskQueueGetCurrentProcessTaskQueue(&globalQueue));
         VERIFY_IS_NOT_NULL(globalQueue);
 
@@ -1204,6 +1220,7 @@ public:
         VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, true, nullptr, nullptr));
     }
 
+#if HC_PLATFORM_IS_MICROSOFT // XTaskQueueRegisterWaiter is only implemented on Windows (E_NOTIMPL elsewhere)
     DEFINE_TEST_CASE(VerifyTerminationOfCompositeQueue)
     {
         struct TestData
@@ -1333,6 +1350,7 @@ public:
         VERIFY_IS_FALSE(data.waitCanceled);
         VERIFY_IS_FALSE(compositeData.waitInvoked);
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyQueueMonitorHasCorrectPorts)
     {
@@ -2157,10 +2175,21 @@ public:
         LOG_COMMENT(L"Canary fired: %s",
                     canaryFired.load() ? L"yes" : L"NO -- timer stalled");
 
-        XTaskQueueTerminate(queue, false, nullptr, nullptr);
-        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
+        // Termination cancels pending delayed callbacks by posting them to the manual Work port, which can
+        // happen after a single non-blocking drain has already returned on a slow machine. Dispatch until
+        // termination completes; otherwise the queue never runs down and leaks into later tests.
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
         {
+            static_cast<std::atomic<bool>*>(context)->store(true, std::memory_order_release);
+        }));
+        const uint64_t terminationStartTicks = GetTickCount64();
+        while (!terminated.load(std::memory_order_acquire) &&
+               GetTickCount64() - terminationStartTicks < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 50);
         }
+        VERIFY_IS_TRUE(terminated.load(std::memory_order_acquire));
 
         VERIFY_IS_TRUE(canaryFired.load());
     }
@@ -2278,15 +2307,32 @@ public:
         LOG_COMMENT(L"Second callback fired: %s",
             secondFired.load() ? L"yes" : L"NO -- callback stranded during empty sweep");
 
-        XTaskQueueTerminate(queue, false, nullptr, nullptr);
-        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
+        // Termination cancels pending delayed callbacks by posting them to the manual Work port, which can
+        // happen after a single non-blocking drain has already returned on a slow machine. Dispatch until
+        // termination completes; otherwise the queue never runs down and leaks into later tests.
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
         {
+            static_cast<std::atomic<bool>*>(context)->store(true, std::memory_order_release);
+        }));
+        const uint64_t terminationStartTicks = GetTickCount64();
+        while (!terminated.load(std::memory_order_acquire) &&
+               GetTickCount64() - terminationStartTicks < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 50);
         }
+        VERIFY_IS_TRUE(terminated.load(std::memory_order_acquire));
 
         VERIFY_IS_TRUE(firstFired.load());
         VERIFY_IS_TRUE(secondFired.load());
     }
 
+// TODO(linux): this scenario blocks the timer callback inside a test hook and expects a second
+// delayed callback to still fire. That holds for the Win32 threadpool timers, which run callbacks
+// concurrently, but the STL WaitTimer (Linux/Apple/Android) fires every timer from one process-wide
+// worker thread, so the blocked hook stalls the second timer until it is released. Rework the
+// test to block somewhere that does not own the timer thread before enabling it off Windows.
+#if HC_PLATFORM_IS_MICROSOFT
     DEFINE_TEST_CASE(VerifyDelayedSubmissionRescuesOverdueTimer)
     {
         struct TestBarrier
@@ -2476,6 +2522,7 @@ public:
                 std::chrono::duration_cast<std::chrono::nanoseconds>(
                     std::chrono::milliseconds{ 50 }).count()));
     }
+#endif
 
     DEFINE_TEST_CASE(VerifyTerminationDoesNotEarlyPromoteSiblingDelayedCallback)
     {
@@ -2701,5 +2748,108 @@ public:
         VERIFY_IS_GREATER_THAN_OR_EQUAL(
             secondState.firedAtNs.load(std::memory_order_acquire) - secondSubmittedAtNs,
             secondDelayNs);
+    }
+
+    DEFINE_TEST_CASE(VerifyQueueReleasedFromDelayedCallbackTimerRunsDown)
+    {
+        // Regression: the delayed-callback timer callback holds a temporary
+        // reference on a queue while it sweeps the pending list. If the app
+        // terminates and closes that queue meanwhile, the timer callback's
+        // release is the final one, so the queue -- and the port that owns
+        // the timer -- are destroyed on the timer's own callback thread. The
+        // Win32 WaitTimer then waited for its own in-flight callback inside
+        // WaitForThreadpoolTimerCallbacks and deadlocked forever, leaking the
+        // queue and port (every later XTaskQueueUninitialize failed).
+        //
+        // Deterministic interleaving:
+        //   1. Terminate the queue without dispatching its Work port, so the
+        //      Completion port stays Canceled with delayed callbacks pending.
+        //   2. The first delayed completion fires. The timer sweep holds a ref
+        //      on the queue for the surviving (future) entry, sees the port is
+        //      no longer active and cancels it; the PendingEntriesRemoved hook
+        //      parks the timer thread right there.
+        //   3. The test finishes termination and closes the handle, leaving
+        //      the timer thread with the last queue reference, then releases it.
+
+        struct TestState
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            std::thread::id testThread;
+            bool timerParked = false;
+            bool releaseTimer = false;
+        };
+
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            explicit TestHooks(_In_ TestState* state) : m_state(state) {}
+
+            void PendingEntriesRemovedDuringTermination(XTaskQueuePort port) override
+            {
+                std::unique_lock<std::mutex> lk(m_state->mtx);
+                if (port != XTaskQueuePort::Completion ||
+                    std::this_thread::get_id() == m_state->testThread ||
+                    m_state->timerParked)
+                {
+                    return;
+                }
+
+                m_state->timerParked = true;
+                m_state->cv.notify_all();
+                m_state->cv.wait_for(lk, std::chrono::seconds(10), [&] { return m_state->releaseTimer; });
+            }
+
+        private:
+            TestState* m_state;
+        };
+
+        TestState state;
+        state.testThread = std::this_thread::get_id();
+        TestHooks hooks(&state);
+
+        XTaskQueueHandle queue = nullptr;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &queue));
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, &hooks));
+
+        auto noop = [](void*, bool) {};
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Completion, 500, nullptr, noop));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Completion, 60000, nullptr, noop));
+
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
+        {
+            static_cast<std::atomic<bool>*>(context)->store(true);
+        }));
+
+        bool parked = false;
+        {
+            std::unique_lock<std::mutex> lk(state.mtx);
+            parked = state.cv.wait_for(lk, std::chrono::seconds(10), [&] { return state.timerParked; });
+        }
+
+        // Finish termination: the Work port's termination terminates the
+        // Completion port, which then drains its canceled callbacks.
+        const uint64_t start = GetTickCount64();
+        while (!terminated.load() && GetTickCount64() - start < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+            XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 10);
+        }
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, nullptr));
+        XTaskQueueCloseHandle(queue);
+
+        {
+            std::lock_guard<std::mutex> lk(state.mtx);
+            state.releaseTimer = true;
+        }
+        state.cv.notify_all();
+
+        VERIFY_IS_TRUE(parked);
+        VERIFY_IS_TRUE(terminated.load());
+
+        // The queue and its ports must run down once the timer thread drops
+        // its reference. Before the fix this deadlocked and never reached zero.
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(5000));
     }
 };

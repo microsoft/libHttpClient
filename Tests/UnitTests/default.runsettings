@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Unit-test settings for CI legs that don't collect coverage. -->
+<RunSettings>
+  <RunConfiguration>
+  </RunConfiguration>
+</RunSettings>
