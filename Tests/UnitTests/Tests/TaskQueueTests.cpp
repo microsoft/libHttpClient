@@ -2327,6 +2327,132 @@ public:
         VERIFY_IS_TRUE(secondFired.load());
     }
 
+    DEFINE_TEST_CASE(VerifyDelayedCallbackQueuedBeforeRearmToLaterDeadlineDoesNotWait)
+    {
+        // Regression for #1048: when the timer fires and the sweep finds a later pending entry
+        // (Y), the timer is re-armed from the fired deadline (X) to Y's. A delayed callback (Z)
+        // submitted in between sees the stale, already-past X deadline, assumes an earlier timer
+        // is armed and does not arm one. Without a rescan after the re-arm, Z then waits until Y.
+
+        struct TestBarrier
+        {
+            std::mutex mtx;
+            std::condition_variable cv;
+            bool sweepFoundLaterEntry = false; // timer callback -> test thread
+            bool lateEntrySubmitted = false;   // test thread -> timer callback
+        };
+
+        struct TestHooks : public XTaskQueueTestHooks
+        {
+            explicit TestHooks(_In_ TestBarrier* barrier) : m_testBarrier(barrier) {}
+
+            void NextPendingCallbackFound(XTaskQueuePort port, uint64_t dueTime, uint64_t nextDueTime) override
+            {
+                UNREFERENCED_PARAMETER(port);
+                UNREFERENCED_PARAMETER(dueTime);
+                UNREFERENCED_PARAMETER(nextDueTime);
+
+                std::unique_lock<std::mutex> lk(m_testBarrier->mtx);
+                if (!m_hookArmed)
+                {
+                    return;
+                }
+
+                m_hookArmed = false;
+                m_testBarrier->sweepFoundLaterEntry = true;
+                lk.unlock();
+                m_testBarrier->cv.notify_all();
+
+                lk.lock();
+                m_testBarrier->cv.wait_for(
+                    lk,
+                    std::chrono::seconds(5),
+                    [&] { return m_testBarrier->lateEntrySubmitted; });
+            }
+
+        private:
+            TestBarrier* m_testBarrier = nullptr;
+            bool m_hookArmed = true;
+        };
+
+        TestBarrier barrier;
+        TestHooks hooks(&barrier);
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(
+            XTaskQueueDispatchMode::Manual,
+            XTaskQueueDispatchMode::Immediate,
+            &queue));
+
+        std::atomic<bool> xFired{ false };
+        std::atomic<bool> yFired{ false };
+        std::atomic<bool> zFired{ false };
+
+        auto markFired = [](void* ctx, bool cancel)
+        {
+            if (!cancel)
+            {
+                static_cast<std::atomic<bool>*>(ctx)->store(true);
+            }
+        };
+
+        // Y is far in the future so it is the "next item" when X fires.
+        constexpr uint32_t yDelayMs = 30000;
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, yDelayMs, &yFired, markFired));
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, &hooks));
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, 1, &xFired, markFired));
+
+        bool sweepReachedRearm = false;
+        {
+            std::unique_lock<std::mutex> lk(barrier.mtx);
+            sweepReachedRearm = barrier.cv.wait_for(
+                lk,
+                std::chrono::seconds(5),
+                [&] { return barrier.sweepFoundLaterEntry; });
+        }
+
+        // Z is due long before Y, but is queued while the fired X deadline is still published.
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, 10, &zFired, markFired));
+
+        {
+            std::lock_guard<std::mutex> lk(barrier.mtx);
+            barrier.lateEntrySubmitted = true;
+        }
+        barrier.cv.notify_all();
+
+        const uint64_t start = GetTickCount64();
+        while ((!xFired.load() || !zFired.load()) &&
+               GetTickCount64() - start < 3000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 100);
+        }
+
+        LOG_COMMENT(L"X fired: %s, Z fired: %s, Y fired: %s",
+            xFired.load() ? L"yes" : L"no",
+            zFired.load() ? L"yes" : L"NO -- stranded until Y's deadline",
+            yFired.load() ? L"yes" : L"no");
+
+        VERIFY_SUCCEEDED(XTaskQueueSetTestHooks(queue, nullptr));
+
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
+        {
+            static_cast<std::atomic<bool>*>(context)->store(true, std::memory_order_release);
+        }));
+        const uint64_t terminationStartTicks = GetTickCount64();
+        while (!terminated.load(std::memory_order_acquire) &&
+               GetTickCount64() - terminationStartTicks < 5000)
+        {
+            XTaskQueueDispatch(queue, XTaskQueuePort::Work, 50);
+        }
+        VERIFY_IS_TRUE(terminated.load(std::memory_order_acquire));
+
+        VERIFY_IS_TRUE(sweepReachedRearm);
+        VERIFY_IS_TRUE(xFired.load());
+        VERIFY_IS_TRUE(zFired.load());
+        VERIFY_IS_FALSE(yFired.load());
+    }
+
 // TODO(linux): this scenario blocks the timer callback inside a test hook and expects a second
 // delayed callback to still fire. That holds for the Win32 threadpool timers, which run callbacks
 // concurrently, but the STL WaitTimer (Linux/Apple/Android) fires every timer from one process-wide

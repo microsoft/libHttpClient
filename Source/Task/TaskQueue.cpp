@@ -1560,6 +1560,21 @@ void TaskQueuePortImpl::PromoteReadyPendingCallbacks(
             bool timerAdvanced = false;
             if (nextItem.portContext->GetStatus() == TaskQueuePortStatus::Active)
             {
+                if (nextItem.enqueueTime != dueTime)
+                {
+                    m_attachedContexts.Visit([&](ITaskQueuePortContext* portContext)
+                    {
+                        auto hooks = portContext->GetQueue()->GetTestHooks();
+                        if (hooks != nullptr)
+                        {
+                            hooks->NextPendingCallbackFound(
+                                portContext->GetType(),
+                                dueTime,
+                                nextItem.enqueueTime);
+                        }
+                    });
+                }
+
                 // A rescue scan that finds the deadline it just published has
                 // reached a fixed point. Otherwise replace the fired due time
                 // with the earliest future deadline that survived the sweep.
