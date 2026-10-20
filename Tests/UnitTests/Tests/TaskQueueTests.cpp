@@ -8,6 +8,7 @@
 #include "XTaskQueuePriv.h"
 #include "CompositeQueueStarvationScenario.h"
 #include "SingleQueueDelayedPollStrandScenario.h"
+#include "LocklessQueuePushParker.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -3090,5 +3091,137 @@ public:
         // The queue and its ports must run down once the timer thread drops
         // its reference. Before the fix this deadlocked and never reached zero.
         VERIFY_IS_TRUE(XTaskQueueUninitialize(5000));
+    }
+
+    DEFINE_TEST_CASE(VerifyDelayedCallbackPushPreemptedDuringSiblingTerminationRuns)
+    {
+        // Regression: a delayed callback (e.g. XAsyncSchedule(async, 20) from a
+        // polling DoWork) was accepted with S_OK but never ran on a thread pool
+        // queue whose port was otherwise idle.
+        //
+        // A port's pending list and active list share one LocklessQueue node
+        // heap, and termination moves pending nodes into the active list. The
+        // delayed submit read the pending list's tail and its end marker, was
+        // preempted, and meanwhile a sibling composite's termination moved that
+        // very tail node to the end of the active list. Every list sharing the
+        // heap used the same end marker, so the submit's compare-exchange still
+        // succeeded and linked the callback into the active list without
+        // notifying the thread pool: it sat there until something else was
+        // queued on the port.
+        //
+        // Deterministic interleaving (thread pool queue, composites sharing the
+        // work port, like PlayFab's RunContext):
+        //   1. A far-future delayed callback is the pending list's tail.
+        //   2. The test thread parks a 20 ms delayed submit right before it
+        //      links its node after that tail.
+        //   3. A sibling composite queues exactly two long delayed callbacks and
+        //      is terminated: its two entries are moved (canceled) to the active
+        //      list and the parked submit's tail node ends up as the active
+        //      list's tail once both have run.
+        //   4. The parked submit resumes. Its callback must still run.
+
+        using Clock = std::chrono::steady_clock;
+
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::ThreadPool, XTaskQueueDispatchMode::ThreadPool, &queue));
+
+        XTaskQueuePortHandle workPort;
+        VERIFY_SUCCEEDED(XTaskQueueGetPort(queue, XTaskQueuePort::Work, &workPort));
+
+        // Like a 30 minute token refresh timer on the shared port.
+        auto noop = [](void*, bool) {};
+        VERIFY_SUCCEEDED(XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, 30 * 60 * 1000, nullptr, noop));
+
+        struct DelayedCallbackState
+        {
+            std::atomic<bool> ran{ false };
+            std::atomic<bool> canceled{ false };
+        } delayed;
+
+        auto delayedCallback = [](void* context, bool canceled)
+        {
+            DelayedCallbackState* state = static_cast<DelayedCallbackState*>(context);
+            state->canceled = canceled;
+            state->ran = true;
+        };
+
+        HRESULT submitResult = E_FAIL;
+        bool parked = false;
+        bool siblingTerminated = false;
+        uint32_t siblingCallbackCount = 0;
+        std::atomic<uint32_t> siblingCallbacks{ 0 };
+        std::atomic<bool> siblingTerminatedFlag{ false };
+        {
+            LocklessQueuePushParker parker;
+            std::thread submitter([&]
+            {
+                LocklessQueuePushParker::ArmCurrentThread();
+                submitResult = XTaskQueueSubmitDelayedCallback(queue, XTaskQueuePort::Work, 20, &delayed, delayedCallback);
+            });
+
+            parked = parker.WaitUntilParked(std::chrono::seconds(10));
+
+            // No VERIFY until the submitter is joined: it is parked inside the queue.
+            XTaskQueueHandle sibling = nullptr;
+            if (parked && SUCCEEDED(XTaskQueueCreateComposite(workPort, workPort, &sibling)))
+            {
+                auto countCallback = [](void* context, bool)
+                {
+                    static_cast<std::atomic<uint32_t>*>(context)->fetch_add(1);
+                };
+                XTaskQueueSubmitDelayedCallback(sibling, XTaskQueuePort::Work, 60000, &siblingCallbacks, countCallback);
+                XTaskQueueSubmitDelayedCallback(sibling, XTaskQueuePort::Work, 60000, &siblingCallbacks, countCallback);
+
+                HRESULT hr = XTaskQueueTerminate(sibling, false, &siblingTerminatedFlag, [](void* context)
+                {
+                    static_cast<std::atomic<bool>*>(context)->store(true);
+                });
+                XTaskQueueCloseHandle(sibling);
+
+                const auto terminateStart = Clock::now();
+                while (SUCCEEDED(hr) &&
+                       (!siblingTerminatedFlag.load() || siblingCallbacks.load() != 2) &&
+                       Clock::now() - terminateStart < std::chrono::seconds(10))
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                }
+                siblingTerminated = siblingTerminatedFlag.load();
+                siblingCallbackCount = siblingCallbacks.load();
+            }
+
+            parker.Release();
+            submitter.join();
+        }
+
+        VERIFY_IS_TRUE(parked);
+        VERIFY_IS_TRUE(siblingTerminated);
+        VERIFY_ARE_EQUAL(2u, siblingCallbackCount);
+        VERIFY_SUCCEEDED(submitResult);
+
+        // Nothing else is queued on the port, just like the hung PlayFab poll.
+        const auto waitStart = Clock::now();
+        while (!delayed.ran.load() && Clock::now() - waitStart < std::chrono::seconds(5))
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        bool const ranBeforeTermination = delayed.ran.load();
+        bool const canceledBeforeTermination = delayed.canceled.load();
+
+        // Terminating dispatches anything stranded so nothing leaks either way.
+        std::atomic<bool> terminated{ false };
+        VERIFY_SUCCEEDED(XTaskQueueTerminate(queue, false, &terminated, [](void* context)
+        {
+            static_cast<std::atomic<bool>*>(context)->store(true);
+        }));
+        const auto terminateStart = Clock::now();
+        while (!terminated.load() && Clock::now() - terminateStart < std::chrono::seconds(10))
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        queue.Close();
+
+        VERIFY_IS_TRUE(terminated.load());
+        VERIFY_IS_TRUE(ranBeforeTermination);
+        VERIFY_IS_FALSE(canceledBeforeTermination);
     }
 };

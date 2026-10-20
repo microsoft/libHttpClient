@@ -48,6 +48,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueuePushParker.h">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\PumpedTaskQueue.h">
       <Filter>Source\UnitTests\Tests</Filter>
     </ClInclude>
