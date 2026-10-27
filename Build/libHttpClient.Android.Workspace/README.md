@@ -79,6 +79,25 @@ library rather than a static library for libHttpClient:
 Android Studio can also be configured to pass this flag, or it can be
 configured in the project's `build.gradle`.
 
+#### Embedding libHttpClient in another native library
+
+A library that builds its own private copy of libHttpClient (by adding
+`Build/libHttpClient.Android` to its CMake build) can set these CMake variables.
+All of them are off by default and don't change the standard build:
+
+- `HC_TARGET_NAME`: CMake target name for libHttpClient (default
+  `libHttpClient.Android`), so it doesn't collide with another copy.
+- `HC_EXTERNAL_XASYNC=ON`: don't compile XAsync/XTaskQueue (`Source/Task`) into
+  libHttpClient. A shared build links them from `HC_XASYNC_LINK_LIBRARY`
+  (required). A static build leaves them for the final link, for example when
+  the embedding library defines them itself.
+- `HC_ANDROID_JAVA_PACKAGE_PATH`: JNI path of the package that holds
+  libHttpClient's Java classes (default `com/xbox/httpclient`). The embedding
+  library must ship libHttpClient's Java classes renamed into that package.
+  Native methods are then bound with `RegisterNatives` during `HCInitialize`,
+  and the default-package `Java_com_xbox_httpclient_*` symbols are hidden so
+  they can't bind to a public copy's Java classes.
+
 ### Clean
 
 To clean, use:

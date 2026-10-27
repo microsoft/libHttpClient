@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jni.h>
+#include "Platform/Android/JavaPackage_Android.h"
 
 // These JNI functions are being exposed by this header file so that they
 // can be referenced in another .cpp file. This is so the compiler is forced
@@ -11,20 +12,20 @@ NAMESPACE_XBOX_HTTP_CLIENT_BEGIN
 extern "C"
 {
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_NetworkObserver_Log(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_NetworkObserver_Log(
     JNIEnv* env,
     jclass clazz,
     jstring message
 );
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted(
     JNIEnv * /* env */,
     jobject /* instance */,
     jlong call,
     jobject response
 );
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed(
         JNIEnv* env,
         jobject /* instance */,
         jlong call,
@@ -34,7 +35,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_OnRequestFaile
         jboolean isNoNetwork
 );
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress(
         JNIEnv* env,
         jobject /* instance */,
         jlong call,
@@ -43,7 +44,7 @@ JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgress
         jboolean isUpload
 );
 
-JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
+HC_JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
         JNIEnv* env,
         jobject /* instance */,
         jlong callHandle,
@@ -53,7 +54,7 @@ JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Nativ
         jlong bytesAvailable
 );
 
-JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(
+HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite(
         JNIEnv* env,
         jobject /* instance */,
         jlong callHandle,
