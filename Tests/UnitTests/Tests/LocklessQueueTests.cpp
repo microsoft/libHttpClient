@@ -281,13 +281,13 @@ public:
         const uint32_t producerCount = hw;
         const uint32_t moverCount = hw;
         const uint32_t consumerCount = hw;
-        const uint64_t maxPerProducer = 1000000;
+        const size_t maxPerProducer = 1000000;
         const auto timeLimit = std::chrono::seconds(3);
-        const uint64_t slotCount = producerCount * maxPerProducer;
+        const size_t slotCount = producerCount * maxPerProducer;
 
         std::unique_ptr<std::atomic<uint8_t>[]> moved(new std::atomic<uint8_t>[slotCount]);
         std::unique_ptr<std::atomic<uint8_t>[]> consumed(new std::atomic<uint8_t>[slotCount]);
-        for (uint64_t idx = 0; idx < slotCount; idx++)
+        for (size_t idx = 0; idx < slotCount; idx++)
         {
             moved[idx] = 0;
             consumed[idx] = 0;
@@ -307,12 +307,12 @@ public:
 
         auto consume = [&](uint64_t value)
         {
-            if (moved[value].load() == 0)
+            if (moved[static_cast<size_t>(value)].load() == 0)
             {
                 misrouted++;
                 stop = true;
             }
-            if (consumed[value].exchange(1) != 0)
+            if (consumed[static_cast<size_t>(value)].exchange(1) != 0)
             {
                 duplicates++;
                 stop = true;
@@ -326,7 +326,7 @@ public:
         {
             threads.emplace_back([&, producer]
             {
-                for (uint64_t idx = 0; idx < maxPerProducer && !stop.load(std::memory_order_relaxed); idx++)
+                for (size_t idx = 0; idx < maxPerProducer && !stop.load(std::memory_order_relaxed); idx++)
                 {
                     if (!listA->push_back(producer * maxPerProducer + idx))
                     {
@@ -350,7 +350,7 @@ public:
                     bool const producing = producersRunning.load() != 0;
                     if (listA->pop_front(value, address))
                     {
-                        moved[value] = 1;
+                        moved[static_cast<size_t>(value)] = 1;
                         listB->push_back(value, address);
                     }
                     else if (!producing)
