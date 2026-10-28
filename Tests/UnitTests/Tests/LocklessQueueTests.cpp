@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "UnitTestIncludes.h"
 #include "LocklessQueue.h"
+#include "LocklessQueuePushParker.h"
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -210,6 +211,210 @@ public:
         {
             VERIFY_IS_TRUE(ops[idx]);
         }
+    }
+
+    TEST_METHOD(VerifyPreemptedPushDoesNotLinkIntoAnotherList)
+    {
+        // Deterministic version of VerifySharedHeapPushIsNotMisrouted: park a
+        // push to listA right before it links its node after listA's tail, move
+        // that tail node to the tail of listB (which shares the heap), then let
+        // the push finish. It must land in listA, not after the node in listB.
+
+        std::unique_ptr<LocklessQueue<uint32_t>> listA(new LocklessQueue<uint32_t>);
+        std::unique_ptr<LocklessQueue<uint32_t>> listB(new LocklessQueue<uint32_t>(*listA));
+
+        VERIFY_IS_TRUE(listA->push_back(1));
+
+        LocklessQueuePushParker parker;
+        std::thread pusher([&]
+        {
+            LocklessQueuePushParker::ArmCurrentThread();
+            listA->push_back(100);
+        });
+
+        bool parked = parker.WaitUntilParked(std::chrono::seconds(10));
+
+        // listA's tail node (holding 1) stops being the tail, is popped out of
+        // listA carrying 2, and becomes the tail of listB.
+        uint32_t value = 0;
+        uint64_t firstNode = 0;
+        uint64_t tailNode = 0;
+        VERIFY_IS_TRUE(listA->push_back(2));
+        VERIFY_IS_TRUE(listA->pop_front(value, firstNode));
+        VERIFY_ARE_EQUAL(1u, value);
+        VERIFY_IS_TRUE(listA->pop_front(value, tailNode));
+        VERIFY_ARE_EQUAL(2u, value);
+        listA->free_node(firstNode);
+        listB->push_back(value, tailNode);
+
+        parker.Release();
+        pusher.join();
+
+        VERIFY_IS_TRUE(parked);
+
+        VERIFY_IS_TRUE(listB->pop_front(value));
+        VERIFY_ARE_EQUAL(2u, value);
+        bool const misrouted = listB->pop_front(value);
+        VERIFY_IS_FALSE(misrouted);
+
+        VERIFY_IS_TRUE(listA->pop_front(value));
+        VERIFY_ARE_EQUAL(100u, value);
+        VERIFY_IS_TRUE(listA->empty());
+    }
+
+    TEST_METHOD(VerifySharedHeapPushIsNotMisrouted)
+    {
+        // Regression: push_back reads the tail node's "next" field, verifies it is the
+        // end marker and then CASes the new node in. Every list sharing a heap used the
+        // same end marker, so if the pushing thread was preempted between those steps
+        // while the tail node was popped and pushed to another list sharing the heap
+        // (the task queue moves nodes between its pending, ready and active lists), the
+        // stale CAS still succeeded and linked the new item into the *other* list. The
+        // task queue lost delayed callbacks this way: XTaskQueueSubmitDelayedCallback
+        // returned S_OK but the callback never ran.
+        //
+        // Producers push to listA, movers transfer nodes from listA to listB (sharing
+        // the heap), consumers pop listB. A consumed value that no mover transferred
+        // was misrouted. Threads are oversubscribed to force preemption inside push.
+
+        const uint32_t hw = std::max(2u, std::thread::hardware_concurrency());
+        const uint32_t producerCount = hw;
+        const uint32_t moverCount = hw;
+        const uint32_t consumerCount = hw;
+        const size_t maxPerProducer = 1000000;
+        const auto timeLimit = std::chrono::seconds(3);
+        const size_t slotCount = producerCount * maxPerProducer;
+
+        std::unique_ptr<std::atomic<uint8_t>[]> moved(new std::atomic<uint8_t>[slotCount]);
+        std::unique_ptr<std::atomic<uint8_t>[]> consumed(new std::atomic<uint8_t>[slotCount]);
+        for (size_t idx = 0; idx < slotCount; idx++)
+        {
+            moved[idx] = 0;
+            consumed[idx] = 0;
+        }
+
+        std::unique_ptr<LocklessQueue<uint64_t>> listA(new LocklessQueue<uint64_t>);
+        std::unique_ptr<LocklessQueue<uint64_t>> listB(new LocklessQueue<uint64_t>(*listA));
+
+        std::atomic<bool> stop{ false };
+        std::atomic<uint32_t> producersRunning{ producerCount };
+        std::atomic<uint32_t> moversRunning{ moverCount };
+        std::atomic<uint64_t> produced{ 0 };
+        std::atomic<uint64_t> consumedCount{ 0 };
+        std::atomic<uint64_t> misrouted{ 0 };
+        std::atomic<uint64_t> duplicates{ 0 };
+        std::atomic<uint64_t> pushFailures{ 0 };
+
+        auto consume = [&](uint64_t value)
+        {
+            if (moved[static_cast<size_t>(value)].load() == 0)
+            {
+                misrouted++;
+                stop = true;
+            }
+            if (consumed[static_cast<size_t>(value)].exchange(1) != 0)
+            {
+                duplicates++;
+                stop = true;
+            }
+            consumedCount++;
+        };
+
+        std::vector<std::thread> threads;
+
+        for (uint32_t producer = 0; producer < producerCount; producer++)
+        {
+            threads.emplace_back([&, producer]
+            {
+                for (size_t idx = 0; idx < maxPerProducer && !stop.load(std::memory_order_relaxed); idx++)
+                {
+                    if (!listA->push_back(producer * maxPerProducer + idx))
+                    {
+                        pushFailures++;
+                        break;
+                    }
+                    produced++;
+                }
+                producersRunning--;
+            });
+        }
+
+        for (uint32_t mover = 0; mover < moverCount; mover++)
+        {
+            threads.emplace_back([&]
+            {
+                uint64_t value;
+                uint64_t address;
+                for (;;)
+                {
+                    bool const producing = producersRunning.load() != 0;
+                    if (listA->pop_front(value, address))
+                    {
+                        moved[static_cast<size_t>(value)] = 1;
+                        listB->push_back(value, address);
+                    }
+                    else if (!producing)
+                    {
+                        break;
+                    }
+                }
+                moversRunning--;
+            });
+        }
+
+        for (uint32_t consumer = 0; consumer < consumerCount; consumer++)
+        {
+            threads.emplace_back([&]
+            {
+                uint64_t value;
+                for (;;)
+                {
+                    bool const moving = moversRunning.load() != 0;
+                    if (listB->pop_front(value))
+                    {
+                        consume(value);
+                    }
+                    else if (!moving)
+                    {
+                        break;
+                    }
+                }
+            });
+        }
+
+        auto const start = std::chrono::steady_clock::now();
+        while (producersRunning.load() != 0)
+        {
+            if (std::chrono::steady_clock::now() - start > timeLimit)
+            {
+                stop = true;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        for (auto& thread : threads)
+        {
+            thread.join();
+        }
+
+        // A misrouted push can also land in listB after the consumers exit.
+        uint64_t value;
+        while (listB->pop_front(value))
+        {
+            consume(value);
+        }
+        uint64_t leftInA = 0;
+        while (listA->pop_front(value))
+        {
+            leftInA++;
+        }
+
+        const uint64_t none = 0;
+        VERIFY_ARE_EQUAL(none, pushFailures.load());
+        VERIFY_ARE_EQUAL(none, misrouted.load());
+        VERIFY_ARE_EQUAL(none, duplicates.load());
+        VERIFY_ARE_EQUAL(none, leftInA);
+        VERIFY_ARE_EQUAL(produced.load(), consumedCount.load());
     }
 
     TEST_METHOD(VerifyRemoveAndReAdd)

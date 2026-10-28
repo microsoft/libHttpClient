@@ -56,6 +56,23 @@
 
  ******************************************************************************/
 
+#ifdef HC_UNITTEST_API
+// Unit-test hook: invoked by push after it has found the list's tail node and
+// verified that the tail's next field is the end marker, immediately before it
+// links the new node with a compare-exchange on that field. Tests use it to park
+// a pushing thread inside that window so they can force interleavings.
+struct LocklessQueueTestHooks
+{
+    using BeforeTailLinkHook = void (*)();
+
+    static std::atomic<BeforeTailLinkHook>& BeforeTailLink() noexcept
+    {
+        static std::atomic<BeforeTailLinkHook> hook{ nullptr };
+        return hook;
+    }
+};
+#endif
+
 // LocklessQueue needs certain alignment.  Disable alignment warning.
 #pragma warning(push)
 #pragma warning(disable: 4324)
@@ -405,6 +422,13 @@ private:
         inline Address end() { return m_end; }
         inline Address head() { return m_head.load(); }
 
+        // End markers carry a generation tag in their aba field (see push), so
+        // compare only the marker's position.
+        inline bool is_end(_In_ const Address& address) const noexcept
+        {
+            return address.index == m_end.index && address.block == m_end.block;
+        }
+
         // Returns true if the queue is empty. Note that 
         // since there are no locks this is a snapshot in time.
         bool empty() noexcept
@@ -415,7 +439,7 @@ private:
             
             if (head == m_head.load() &&
                 head == tail &&
-                next == m_end)
+                is_end(next))
             {
                 return true;
             }
@@ -428,8 +452,21 @@ private:
         // and the address aba is incremented.
         inline void push(_In_ Node* node, _In_ Address address) noexcept
         {
-            node->next = m_end;
             address.aba++;
+
+            // Tag the end marker with this push's aba. Lists that share a heap
+            // share the same end marker, and a pusher that read this node's end
+            // marker while it was the tail of one list may be preempted while the
+            // node is popped and pushed onto another list sharing the heap. An
+            // untagged marker would let that stale compare-exchange in push_range
+            // succeed and link the pusher's node into the wrong list (the task
+            // queue moves nodes between its pending and active lists this way,
+            // which silently stranded delayed callbacks). Every push increments
+            // the node's aba, so the stale value no longer matches.
+            Address end = m_end;
+            end.aba = address.aba;
+            node->next = end;
+
             push_range(address, address);
         }
 
@@ -446,13 +483,21 @@ private:
                 
                 if (tail == m_tail.load())
                 {
-                    if (tailNext == m_end)
+                    if (is_end(tailNext))
                     {
                         // The next of the tail points to an invalid node, so
                         // this really is the tail.  Fix up the next pointer to
                         // point to our new node.  If this succeeds we try to
                         // adjust the tail, which isn't guaranteed to succeed.
-                        // That's OK, we can fix it up later.
+                        // That's OK, we can fix it up later. The compare-exchange
+                        // includes the end marker's generation tag (see push).
+
+#ifdef HC_UNITTEST_API
+                        if (auto hook = LocklessQueueTestHooks::BeforeTailLink().load())
+                        {
+                            hook();
+                        }
+#endif
 
                         if (tailNode->next.compare_exchange_strong(tailNext, beginAddress))
                         {
@@ -489,7 +534,7 @@ private:
                 {
                     if (head == tail)
                     {
-                        if (next == m_end)
+                        if (is_end(next))
                         {
                             // List is empty
                             address = m_end;
@@ -792,7 +837,10 @@ private:
 
         if (n != nullptr)
         {
-            n->next = end;
+            // Tag the end marker with the dummy's aba, as push does.
+            Address dummyEnd = end;
+            dummyEnd.aba = dummy.aba;
+            n->next = dummyEnd;
         }
         else
         {

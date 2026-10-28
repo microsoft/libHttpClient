@@ -22,6 +22,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\TestEnvironment.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\UnitTestIncludes.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CallbackThunk.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\LocklessQueuePushParker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\PumpedTaskQueue.h" />
   </ItemGroup>
   <ItemGroup>
