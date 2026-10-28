@@ -1585,6 +1585,18 @@ void CALLBACK WinHttpConnection::completion_callback(
                         connectionClosedCallback = std::move(pRequestContext->m_connectionClosedCallback);
                         pRequestContext->m_state = ConnectionState::Closed;
                     }
+
+#ifndef HC_NOWEBSOCKETS
+                    if (pRequestContext->m_websocketHandle)
+                    {
+                        // A disconnect does not complete sends WinHttp had accepted but not finished,
+                        // and no WRITE_COMPLETE will follow for them. WinHttp no longer references any
+                        // send buffer once the handle is closing, so fail whatever is still queued
+                        // rather than leave its callers waiting forever. Done while callbackContext
+                        // still anchors this connection.
+                        pRequestContext->WebSocketCompleteEntireSendQueueWithError(E_ABORT);
+                    }
+#endif
                     reclaim.reset();
 
                     if (connectionClosedCallback)
