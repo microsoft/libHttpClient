@@ -1169,17 +1169,27 @@ private:
     }
 #endif
         // Initialize the 'connect' XAsyncBlock here, but the actual work will happen on the ASIO background thread below.
-        auto hr = XAsyncBegin(async, shared_ptr_cache::store(shared_from_this()), (void*)HCWebSocketConnectAsync, __FUNCTION__,
+        //
+        // The operation owns its reference to this websocket rather than parking it in the
+        // http_singleton's shared_ptr_cache: HCCleanupAsync detaches the singleton while a connect
+        // can still be in flight, and a cache lookup would then fail the connect even though the
+        // connection was established -- leaving the caller to free the HCWebsocketHandle this
+        // connection still uses for its close callback (#1058).
+        struct connect_op_context
+        {
+            std::shared_ptr<wspp_websocket_impl> websocket;
+        };
+        auto connectContext = http_allocate_unique<connect_op_context>();
+        RETURN_IF_NULL_ALLOC(connectContext);
+        connectContext->websocket = shared_from_this();
+
+        auto hr = XAsyncBegin(async, connectContext.get(), (void*)HCWebSocketConnectAsync, __FUNCTION__,
             [](XAsyncOp op, const XAsyncProviderData* data)
         {
+            auto opContext = static_cast<connect_op_context*>(data->context);
             if (op == XAsyncOp::GetResult)
             {
-                auto context = shared_ptr_cache::fetch<wspp_websocket_impl>(data->context);
-                if (context == nullptr)
-                {
-                    return E_HC_NOT_INITIALISED;
-                }
-
+                auto const& context = opContext->websocket;
                 auto result = reinterpret_cast<WebSocketCompletionResult*>(data->buffer);
                 result->websocket = context->m_hcWebsocketHandle;
                 result->platformErrorCode = static_cast<uint32_t>(context->m_connectError.value());
@@ -1187,13 +1197,15 @@ private:
             }
             else if (op == XAsyncOp::Cleanup)
             {
-                shared_ptr_cache::remove(data->context);
+                HC_UNIQUE_PTR<connect_op_context> reclaim{ opContext };
             }
             return S_OK;
         });
 
         if (SUCCEEDED(hr))
         {
+            // The async operation owns the context now and frees it in its Cleanup op.
+            connectContext.release();
             m_state = CONNECTING;
             {
                 std::lock_guard<std::mutex> lock{ m_websocketThreadStateMutex };
