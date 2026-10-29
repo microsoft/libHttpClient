@@ -181,6 +181,10 @@ private:
     // close and wait for every connection without allocating (#1054).
     std::shared_ptr<CloseContext> m_shutdownCloseContext;
 
+    // Destination for that shutdown's swap of m_connections. Constructed with the provider, because
+    // constructing a std::list allocates (its sentinel node) while swapping one does not.
+    http_internal_list<std::weak_ptr<WinHttpConnection>> m_shutdownConnections;
+
     // Track WinHttpConnections so that we can close them on shutdown/suspend
     http_internal_list<std::weak_ptr<WinHttpConnection>> m_connections;
 

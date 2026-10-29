@@ -5,6 +5,7 @@
 #include "winhttp_provider.h"
 #include "winhttp_connection.h"
 #include "uri.h"
+#include <optional>
 
 #if HC_PLATFORM == HC_PLATFORM_GDK
 #include <XGameRuntimeFeature.h>
@@ -449,19 +450,26 @@ try
         }
     };
 
-    // Take the whole list (a swap, so no allocation). A connection that has been handed to WinHTTP
-    // is kept alive by its WinHTTP callback context until it reports closed, so holding only weak
-    // references here is enough.
-    http_internal_list<std::weak_ptr<WinHttpConnection>> connections;
+    // Take the whole list with a swap. A connection that has been handed to WinHTTP is kept alive by
+    // its WinHTTP callback context until it reports closed, so holding only weak references here is
+    // enough. Shutdown swaps into the list reserved with the provider: MSVC's std::list allocates
+    // its sentinel node (and, in Debug, its iterator proxy) in the default constructor, so even an
+    // empty local list would allocate, while swapping lists with equal allocators does not.
+    http_internal_list<std::weak_ptr<WinHttpConnection>>* connections{ &m_shutdownConnections };
+    std::optional<http_internal_list<std::weak_ptr<WinHttpConnection>>> boundedConnections;
+    if (timeoutMs != INFINITE)
+    {
+        connections = &boundedConnections.emplace();
+    }
     {
         std::lock_guard<std::mutex> lock{ m_lock };
-        connections.swap(m_connections);
+        connections->swap(m_connections);
     }
 
     // Starts at 1 for this function, so a connection reporting closed synchronously inside Close
     // cannot signal the event before every connection has been counted.
     closeContext->openConnections = 1;
-    for (auto& weakConnection : connections)
+    for (auto& weakConnection : *connections)
     {
         auto connection{ weakConnection.lock() };
         if (connection)
@@ -503,6 +511,9 @@ try
         }
     }
 
+    // Frees nodes only. Leaves the reserved shutdown list empty, so it doesn't hold stale entries.
+    connections->clear();
+
     // Drain contexts left behind by earlier timed-out closes. Shutdown only.
     //
     // These exist to protect provider destruction: the destructor closes the WinHTTP session
@@ -521,29 +532,52 @@ try
     {
         constexpr DWORD c_retainedCloseTimeoutMs = 5000;
 
-        http_internal_vector<std::shared_ptr<CloseContext>> pendingCloseContexts;
+        // Drained in place rather than swapped into a local vector: on the shutdown path a local
+        // container must not be constructed at all, because in Debug (_ITERATOR_DEBUG_LEVEL=2)
+        // std::vector's noexcept default constructor allocates its iterator proxy, and a failed
+        // allocation there is std::terminate rather than a catchable bad_alloc. The indices below
+        // stay valid: the only other writer is Suspend's bounded close, and m_suspendLock excludes
+        // it from provider teardown.
+        size_t pendingCount{ 0 };
         {
             std::lock_guard<std::mutex> lock{ m_lock };
-            pendingCloseContexts.swap(m_pendingCloseContexts);
+            pendingCount = m_pendingCloseContexts.size();
         }
 
-        for (auto& pendingContext : pendingCloseContexts)
+        for (size_t i = 0; i < pendingCount; ++i)
         {
+            std::shared_ptr<CloseContext> pendingContext;
+            {
+                std::lock_guard<std::mutex> lock{ m_lock };
+                pendingContext = m_pendingCloseContexts[i];
+            }
+
             if (WaitForSingleObject(pendingContext->connectionsClosedEvent, c_retainedCloseTimeoutMs) == WAIT_TIMEOUT)
             {
                 HC_TRACE_ERROR(HTTPCLIENT, "WinHttpProvider::CloseAllConnections: %llu connection(s) from an earlier close still open",
                     static_cast<unsigned long long>(pendingContext->openConnections.load()));
-
-                std::lock_guard<std::mutex> lock{ m_lock };
-                m_pendingCloseContexts.push_back(pendingContext);
             }
         }
+
+        // Keep only the contexts whose connections are still open. erase/remove_if don't allocate.
+        std::lock_guard<std::mutex> lock{ m_lock };
+        m_pendingCloseContexts.erase(
+            std::remove_if(
+                m_pendingCloseContexts.begin(),
+                m_pendingCloseContexts.end(),
+                [](std::shared_ptr<CloseContext> const& pendingContext)
+                {
+                    return pendingContext->openConnections.load() == 0;
+                }),
+            m_pendingCloseContexts.end());
     }
 
     // Every connection is gone, so nothing is in flight. Reset the budget rather than relying on
     // per-request release, and fail anything still queued: those requests never reached WinHTTP and
     // there is no longer a completion that would start them, so callers must not be left waiting.
-    http_internal_list<PendingRequest> abandoned;
+    // The list is only constructed when there is something to fail, since constructing it allocates
+    // (normally nothing is queued at shutdown: NetworkState has already waited for every request).
+    std::optional<http_internal_list<PendingRequest>> abandoned;
     {
         std::lock_guard<std::mutex> lock{ m_lock };
         m_activeRequestCount = 0;
@@ -554,13 +588,19 @@ try
         // without this its release would decrement a count that was just zeroed and underflow it.
         ++m_requestEpoch;
 
-        abandoned.swap(m_pendingRequests);
+        if (!m_pendingRequests.empty())
+        {
+            abandoned.emplace().swap(m_pendingRequests);
+        }
     }
 
-    for (auto& pending : abandoned)
+    if (abandoned)
     {
-        HCHttpCallResponseSetNetworkErrorCode(pending.callHandle, E_ABORT, static_cast<uint32_t>(E_ABORT));
-        XAsyncComplete(pending.async, S_OK, 0);
+        for (auto& pending : *abandoned)
+        {
+            HCHttpCallResponseSetNetworkErrorCode(pending.callHandle, E_ABORT, static_cast<uint32_t>(E_ABORT));
+            XAsyncComplete(pending.async, S_OK, 0);
+        }
     }
 
     return S_OK;
