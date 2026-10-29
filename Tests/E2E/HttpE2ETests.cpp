@@ -8,6 +8,10 @@
 #include "E2EHelpers.h"
 
 #include <algorithm>
+#include <atomic>
+#include <csignal>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 
 using namespace e2e;
@@ -782,3 +786,104 @@ E2E_TEST_SELF_INIT(http_global_request_limit_queues)
     E2E_CHECK_EQ(static_cast<uint64_t>(calls), JsonUInt(stats, "total"));
     E2E_CHECK_MSG(maxActive <= limit, "server saw %llu concurrent requests with a limit of %u", static_cast<unsigned long long>(maxActive), limit);
 }
+
+#if defined(E2E_HTTP_WINHTTP)
+namespace
+{
+
+// Allocation hooks that start failing every libHttpClient allocation once NetworkState cleanup
+// has completed. From that point on the singleton, NetworkState and WinHttpProvider are torn down.
+std::atomic<bool> g_failTeardownAllocations{ false };
+std::atomic<bool> g_teardownAllocationFailureArmed{ false };
+std::atomic<uint32_t> g_failedTeardownAllocations{ 0 };
+std::atomic<bool> g_shutdownCloseFailed{ false };
+
+_Ret_maybenull_ void* STDAPIVCALLTYPE TeardownAlloc(size_t size, HCMemoryType) noexcept
+{
+    if (g_failTeardownAllocations)
+    {
+        ++g_failedTeardownAllocations;
+        return nullptr;
+    }
+    return malloc(size);
+}
+
+void STDAPIVCALLTYPE TeardownFree(_Post_invalid_ void* pointer, HCMemoryType) noexcept
+{
+    free(pointer);
+}
+
+void CALLBACK ArmTeardownAllocationFailure(const char*, HCTraceLevel, uint64_t, uint64_t, const char* message)
+{
+    if (message && strstr(message, "HC_PERFORM_ENV::CleanupAsync Complete"))
+    {
+        g_failTeardownAllocations = true;
+        g_teardownAllocationFailureArmed = true;
+    }
+    else if (message && g_failTeardownAllocations && strstr(message, "CloseAllConnections failed during shutdown"))
+    {
+        // The destructor gave up before closing and waiting for its connections.
+        g_shutdownCloseFailed = true;
+    }
+}
+
+} // namespace
+
+E2E_TEST_ISOLATED(winhttp_provider_teardown_survives_allocation_failure)
+{
+    // Issue #1054. ~WinHttpProvider calls CloseAllConnections, which allocated through the
+    // caller's memory hooks. A failed allocation threw std::bad_alloc out of the destructor, which
+    // is implicitly noexcept, so the process was terminated. Teardown must not throw, and must still
+    // close and wait for its connections, when allocations fail. An escaping exception ends in
+    // std::terminate -> abort() on whichever thread
+    // runs the teardown, so report that process-wide and without the Debug CRT's abort dialog.
+#if defined(_MSC_VER)
+    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
+    signal(SIGABRT, [](int)
+    {
+        fprintf(stderr, "abort() called during libHttpClient teardown (exception escaped a destructor?)\n");
+        fflush(stderr);
+        std::_Exit(3);
+    });
+
+    E2E_CHECK_HR(HCMemSetFunctions(TeardownAlloc, TeardownFree));
+    E2E_CHECK_HR(HCInitialize(nullptr));
+    E2E_CHECK_HR(HCSettingsSetTraceLevel(HCTraceLevel::Verbose));
+    E2E_CHECK(HCTraceSetClientCallback(ArmTeardownAllocationFailure));
+
+    // A live WinHTTP WebSocket across cleanup, so the provider has a connection to close. Only
+    // NetworkState holds it once the client handle is closed; cleanup disconnects it.
+    HCWebsocketHandle websocket{ nullptr };
+    E2E_CHECK_HR(HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+    auto* connectAsync = new XAsyncBlock{};
+    E2E_CHECK_HR(HCWebSocketConnectAsync(WsUrl("/ws/echo").c_str(), "", websocket, connectAsync));
+    HRESULT connectHr = WaitAsync(connectAsync, std::chrono::seconds{ 15 });
+    if (connectHr == E_PENDING)
+    {
+        PoisonProcess("a WebSocket connect never completed");
+        Fail(__FILE__, __LINE__, "HCWebSocketConnectAsync did not complete");
+    }
+    WebSocketCompletionResult connectResult{};
+    E2E_CHECK_HR(HCGetWebSocketConnectResult(connectAsync, &connectResult));
+    delete connectAsync;
+    E2E_CHECK_HR(connectHr);
+    E2E_CHECK_HR(connectResult.errorCode);
+    E2E_CHECK_HR(HCWebSocketCloseHandle(websocket));
+
+    HRESULT cleanupHr = CleanupWithTimeout(std::chrono::seconds{ 10 });
+    g_failTeardownAllocations = false;
+    HCTraceRemoveClientCallback(ArmTeardownAllocationFailure);
+    if (cleanupHr == E_PENDING)
+    {
+        PoisonProcess("HCCleanupAsync hung after a provider teardown allocation failure");
+        Fail(__FILE__, __LINE__, "HCCleanupAsync did not complete");
+    }
+    E2E_CHECK_HR(cleanupHr);
+
+    // Otherwise teardown never ran under failing allocations and the test proves nothing.
+    E2E_CHECK_MSG(g_teardownAllocationFailureArmed, "the failing allocator was never armed before provider teardown");
+    Info("failed %u allocation(s) during teardown", g_failedTeardownAllocations.load());
+    E2E_CHECK_MSG(!g_shutdownCloseFailed, "~WinHttpProvider's CloseAllConnections failed under allocation failure, so it never closed or waited for its connections");
+}
+#endif

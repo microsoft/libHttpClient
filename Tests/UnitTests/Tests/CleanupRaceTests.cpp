@@ -5,11 +5,13 @@
 // Reproductions for the cleanup/request-kickoff races reported in
 //   https://github.com/microsoft/libHttpClient/issues/1018
 //   https://github.com/microsoft/libHttpClient/issues/1019
+//   https://github.com/microsoft/libHttpClient/issues/1056
+//   https://github.com/microsoft/libHttpClient/issues/1059
 //
-// Both races are extremely narrow in the wild. These tests force the exact reported interleavings
-// deterministically instead of relying on stress, and both convert the reported crash (an access
-// violation) into a normal test failure so a regression reports as a failed assertion rather than
-// tearing down the test host.
+// These races are extremely narrow in the wild. These tests force the exact reported interleavings
+// deterministically instead of relying on stress, and the crash reproductions convert the reported
+// crash (an access violation) into a normal test failure so a regression reports as a failed
+// assertion rather than tearing down the test host.
 //
 
 #include "pch.h"
@@ -18,6 +20,7 @@
 #include "DefineTestMacros.h"
 #include "utils.h"
 #include "PumpedTaskQueue.h"
+#include <httpClient/httpProvider.h>
 
 using namespace xbox::httpclient;
 
@@ -236,6 +239,92 @@ bool DispatchFaulted(XTaskQueueHandle queue, XTaskQueuePort port, bool* dispatch
     return false;
 }
 
+#endif
+
+// Pumps both ports of a manual-dispatch queue until the async block leaves E_PENDING or the
+// iteration budget runs out. Returns the final status.
+HRESULT PumpUntilComplete(XTaskQueueHandle queue, XAsyncBlock* async, XTaskQueueHandle otherQueue = nullptr) noexcept
+{
+    for (int i = 0; i < 500 && XAsyncGetStatus(async, false) == E_PENDING; ++i)
+    {
+        bool dispatched = XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+        dispatched |= XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
+        if (otherQueue)
+        {
+            dispatched |= XTaskQueueDispatch(otherQueue, XTaskQueuePort::Work, 0);
+            dispatched |= XTaskQueueDispatch(otherQueue, XTaskQueuePort::Completion, 0);
+        }
+        if (!dispatched)
+        {
+            Sleep(10);
+        }
+    }
+    return XAsyncGetStatus(async, false);
+}
+
+// Dispatches a manual-dispatch queue until it has stayed idle for a while, so work queued behind a
+// completed operation (for example a terminated perform queue running down) is not stranded when
+// the queue is closed.
+void DrainQueue(XTaskQueueHandle queue) noexcept
+{
+    for (int idle = 0, i = 0; idle < 5 && i < 500; ++i)
+    {
+        bool dispatched = XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+        dispatched |= XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
+        if (dispatched)
+        {
+            idle = 0;
+        }
+        else
+        {
+            ++idle;
+            Sleep(10);
+        }
+    }
+}
+
+#ifndef HC_NOWEBSOCKETS
+// WebSocket provider whose connect operation completes, but whose result cannot be retrieved. This is
+// what the websocketpp provider reports once HCCleanupAsync has detached the http_singleton: its
+// GetResult op looks its context up through the singleton and returns E_HC_NOT_INITIALISED.
+HRESULT CALLBACK ResultUnavailableConnect(
+    _In_z_ const char* /*uri*/,
+    _In_z_ const char* /*subProtocol*/,
+    _In_ HCWebsocketHandle websocket,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* /*context*/,
+    _In_ HCPerformEnv /*env*/)
+{
+    return XAsyncBegin(asyncBlock, websocket, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+                XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                return S_OK;
+            case XAsyncOp::GetResult:
+                return E_HC_NOT_INITIALISED;
+            default:
+                return S_OK;
+            }
+        });
+}
+
+HRESULT CALLBACK UnexpectedSend(HCWebsocketHandle, const char*, XAsyncBlock*, void*)
+{
+    return E_UNEXPECTED;
+}
+
+HRESULT CALLBACK UnexpectedSendBinary(HCWebsocketHandle, const uint8_t*, uint32_t, XAsyncBlock*, void*)
+{
+    return E_UNEXPECTED;
+}
+
+HRESULT CALLBACK UnexpectedDisconnect(HCWebsocketHandle, HCWebSocketCloseStatus, void*)
+{
+    return E_UNEXPECTED;
+}
 #endif
 
 }
@@ -468,6 +557,151 @@ public:
         // Pre-fix the deferred cleanup takes NetworkState::m_mutex on freed memory.
         VERIFY_IS_FALSE(faulted);
     }
+
+    // ------------------------------------------------------------------------------------------
+    // Issue #1059
+    //
+    // NetworkState tracks a perform in m_activeHttpRequests before HC_CALL::PerformAsync has begun
+    // the perform's internal XAsyncBlock, so cleanup can snapshot the request and XAsyncCancel it
+    // inside that window. The Cancel op forwarded XAsyncCancel straight to the internal block, which
+    // is not in a usable state yet: either it has no async state (the cancel is silently dropped and
+    // the request runs to completion anyway), or XAsyncBegin has published its state but not yet set
+    // its provider (XAsyncCancel calls a null provider and crashes, as reported). The cancel must be
+    // held until the internal block has been begun, and then forwarded.
+    //
+    // The test parks a perform after admission and before the internal block is begun, and issues
+    // the same XAsyncCancel on the client block that NetworkState::CleanupAsyncProvider issues. It
+    // cancels directly rather than through HCCleanupAsync because cleanup also detaches the
+    // singleton, which makes the resumed perform fail on its own and would hide a dropped cancel.
+    // ------------------------------------------------------------------------------------------
+    DEFINE_TEST_CASE(TestCancelBeforeInternalPerformBeginIsNotLost)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestCancelBeforeInternalPerformBeginIsNotLost);
+
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+
+        constexpr char mockUrl[]{ "www.bing.com" };
+        HCMockCallHandle mock{ nullptr };
+        VERIFY_SUCCEEDED(HCMockCallCreate(&mock));
+        VERIFY_SUCCEEDED(HCMockResponseSetStatusCode(mock, 200));
+        VERIFY_SUCCEEDED(HCMockAddMock(mock, "GET", mockUrl, nullptr, 0));
+        VERIFY_SUCCEEDED(HCMockCallCloseHandle(mock)); // HCMockAddMock keeps its own reference
+
+        HCCallHandle call{ nullptr };
+        VERIFY_SUCCEEDED(HCHttpCallCreate(&call));
+        VERIFY_SUCCEEDED(HCHttpCallRequestSetUrl(call, "GET", mockUrl));
+
+        // Manual queue: nothing runs unless the test dispatches it, so the mock cannot complete the
+        // request before a forwarded cancel has had the chance to terminate it.
+        XTaskQueueHandle performQueue{ nullptr };
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &performQueue));
+
+        struct Gate
+        {
+            Event parked;
+            Event release;
+            std::atomic<bool> used{ false };
+        } gate;
+
+        NetworkState::SetHttpPerformAdmittedTestHook([](void* context)
+        {
+            Gate* g{ static_cast<Gate*>(context) };
+            bool expected{ false };
+            if (!g->used.compare_exchange_strong(expected, true))
+            {
+                return;
+            }
+            g->parked.Set();
+            g->release.Wait(c_waitTimeoutMs);
+        }, &gate);
+
+        XAsyncBlock performAsyncBlock{ performQueue };
+
+        HRESULT performHr{ E_FAIL };
+        std::thread performThread{ [&]()
+        {
+            performHr = HCHttpCallPerformAsync(call, &performAsyncBlock);
+        } };
+
+        bool const parked = gate.parked.Wait(c_waitTimeoutMs);
+        bool const cancelable = parked && get_http_singleton()->m_networkState->CanCleanupCancelHttpRequest(&performAsyncBlock);
+
+        // What cleanup does to every request in its snapshot.
+        if (parked)
+        {
+            XAsyncCancel(&performAsyncBlock);
+        }
+
+        gate.release.Set();
+        performThread.join();
+        NetworkState::SetHttpPerformAdmittedTestHook(nullptr, nullptr);
+
+        HRESULT const performStatus = PumpUntilComplete(performQueue, &performAsyncBlock);
+
+        HCHttpCallCloseHandle(call);
+        DrainQueue(performQueue);
+        XTaskQueueCloseHandle(performQueue);
+        HCCleanup();
+
+        VERIFY_IS_TRUE(parked);
+        VERIFY_IS_TRUE(cancelable); // the parked request is one cleanup would snapshot and cancel
+        VERIFY_SUCCEEDED(performHr);
+
+        // Pre-fix the cancel is dropped and the mock request completes successfully.
+        VERIFY_ARE_EQUAL(E_ABORT, performStatus);
+    }
+
+#ifndef HC_NOWEBSOCKETS
+    // ------------------------------------------------------------------------------------------
+    // Issue #1056
+    //
+    // NetworkState::WebSocketConnectComplete stored the result of HCGetWebSocketConnectResult in hr
+    // and then overwrote it with the result of XAsyncSchedule when that connect was the last
+    // operation cleanup was waiting for. A connect whose result could not be retrieved was then
+    // reported to the client as S_OK.
+    // ------------------------------------------------------------------------------------------
+    DEFINE_TEST_CASE(TestWebSocketConnectFailureDuringCleanupIsReported)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestWebSocketConnectFailureDuringCleanupIsReported);
+
+        VERIFY_SUCCEEDED(HCSetWebSocketFunctions(ResultUnavailableConnect, UnexpectedSend, UnexpectedSendBinary, UnexpectedDisconnect, nullptr));
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+
+        XTaskQueueHandle connectQueue{ nullptr };
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &connectQueue));
+        XTaskQueueHandle cleanupQueue{ nullptr };
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &cleanupQueue));
+
+        HCWebsocketHandle websocket{ nullptr };
+        VERIFY_SUCCEEDED(HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr));
+
+        // The connect is admitted and its provider completes, but its completion stays queued.
+        XAsyncBlock connectAsyncBlock{ connectQueue };
+        VERIFY_SUCCEEDED(HCWebSocketConnectAsync("ws://127.0.0.1/socket", "", websocket, &connectAsyncBlock));
+
+        // Cleanup begins while the connect is still pending, so cleanup waits for it.
+        XAsyncBlock cleanupAsyncBlock{ cleanupQueue };
+        VERIFY_SUCCEEDED(HCCleanupAsync(&cleanupAsyncBlock));
+
+        // Completing the connect is what lets cleanup proceed.
+        HRESULT const connectStatus = PumpUntilComplete(connectQueue, &connectAsyncBlock);
+        WebSocketCompletionResult result{};
+        HRESULT const resultHr = HCGetWebSocketConnectResult(&connectAsyncBlock, &result);
+
+        VERIFY_SUCCEEDED(HCWebSocketCloseHandle(websocket));
+        HRESULT const cleanupStatus = PumpUntilComplete(cleanupQueue, &cleanupAsyncBlock, connectQueue);
+
+        DrainQueue(connectQueue);
+        DrainQueue(cleanupQueue);
+        XTaskQueueCloseHandle(connectQueue);
+        XTaskQueueCloseHandle(cleanupQueue);
+
+        // Pre-fix both report S_OK: the connect failure is replaced by XAsyncSchedule's result.
+        VERIFY_ARE_EQUAL(E_HC_NOT_INITIALISED, connectStatus);
+        VERIFY_ARE_EQUAL(E_HC_NOT_INITIALISED, resultHr);
+        VERIFY_SUCCEEDED(cleanupStatus);
+    }
+#endif
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END

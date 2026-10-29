@@ -49,6 +49,10 @@ _HCHttpCallRequestGetDynamicBytesWritten
 _HCHttpCallResponseSetDynamicSize
 _HCHttpCallResponseAddDynamicBytesWritten
 _HCHttpCallResponseGetDynamicBytesWritten
+_HCHttpCallRequestSetMaxReceiveBufferSize
+_HCHttpCallRequestGetMaxReceiveBufferSize
+_HCSettingsSetGlobalRequestLimit
+_HCSettingsGetGlobalRequestLimit
 
 _HCWebSocketCreate
 _HCWebSocketSetPingInterval
@@ -69,6 +73,7 @@ _HCWebSocketDisconnect
 _HCWebSocketDisconnectWithStatus
 _HCWebSocketDuplicateHandle
 _HCWebSocketCloseHandle
+_HCWebSocketSetMaxReceiveBufferSize
 
 #
 # httpProvider.h
@@ -88,6 +93,7 @@ _HCHttpCallRequestGetRetryCacheId
 _HCHttpCallRequestGetTimeout
 _HCHttpCallRequestGetRetryDelay
 _HCHttpCallRequestGetTimeoutWindow
+_HCHttpCallRequestGetProgressReportFunction
 _HCHttpCallResponseSetResponseBodyBytes
 _HCHttpCallResponseAppendResponseBodyBytes
 _HCHttpCallResponseSetStatusCode

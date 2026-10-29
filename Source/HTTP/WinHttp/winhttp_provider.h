@@ -115,8 +115,9 @@ private:
 
     // timeoutMs bounds the wait for connections to report closed. Suspend passes a short budget so
     // a stuck connection cannot trigger the PLM watchdog; shutdown passes INFINITE because the wait
-    // is what prevents callbacks from outliving the provider.
-    HRESULT CloseAllConnections(DWORD timeoutMs);
+    // is what prevents callbacks from outliving the provider. Never throws: it runs from the
+    // destructor and from the PLM suspend callback.
+    HRESULT CloseAllConnections(DWORD timeoutMs) noexcept;
 
     // Starts a request against WinHTTP immediately, bypassing the admission check. Callers must
     // already hold a reserved slot in m_activeRequestCount, reserved during epoch `epoch`.
@@ -175,6 +176,14 @@ private:
     // Best-effort: it narrows the window where a straggler outlives the provider and the WinHTTP
     // session handles it is still using, rather than closing it entirely.
     http_internal_vector<std::shared_ptr<CloseContext>> m_pendingCloseContexts;
+
+    // Reserved by Initialize for the destructor's CloseAllConnections(INFINITE), so shutdown can
+    // close and wait for every connection without allocating (#1054).
+    std::shared_ptr<CloseContext> m_shutdownCloseContext;
+
+    // Destination for that shutdown's swap of m_connections. Constructed with the provider, because
+    // constructing a std::list allocates (its sentinel node) while swapping one does not.
+    http_internal_list<std::weak_ptr<WinHttpConnection>> m_shutdownConnections;
 
     // Track WinHttpConnections so that we can close them on shutdown/suspend
     http_internal_list<std::weak_ptr<WinHttpConnection>> m_connections;

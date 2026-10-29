@@ -56,6 +56,11 @@ public: // Http
     // Test seam: simulate that cleanup has begun on this NetworkState without running the
     // real cleanup flow, so admission-control behavior can be exercised deterministically.
     void TestSetCleanupStarted(bool started, XAsyncBlock* cleanupAsyncBlock = nullptr) noexcept;
+
+    // Test seam: invoked once an HTTP perform has been admitted (tracked in m_activeHttpRequests,
+    // and so visible to cleanup) but before HC_CALL::PerformAsync has begun its internal XAsyncBlock.
+    using HttpPerformAdmittedTestHook = void(CALLBACK*)(void* context);
+    static void SetHttpPerformAdmittedTestHook(HttpPerformAdmittedTestHook hook, void* context) noexcept;
 #endif
 
 #ifndef HC_NOWEBSOCKETS

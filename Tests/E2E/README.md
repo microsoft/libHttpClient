@@ -119,7 +119,11 @@ deterministic pattern *byte i = i % 251* (`e2e::IsPattern`).
 |---|---|
 | `/ws/echo?id=X&ping_ms=N` | Echoes text and binary messages (reassembling fragmented ones). Negotiates **permessage-deflate** when offered (honouring `server_no_context_takeover` / `client_no_context_takeover`), echoes the first `Sec-WebSocket-Protocol`, adds `X-Lhc-Ws: 1` to the 101. With `ping_ms`, sends a ping every N ms. Answers pings, echoes the client's close code |
 | `/ws/close/{code}?after_ms=N` | Accepts, waits `after_ms`, then closes with `code` |
+| `/ws/stall?after_ms=N` | Accepts, never reads, then after `after_ms` (default 1000) resets the TCP connection, so client sends stay in flight (issue #1057) |
 | `/ws/bad-upgrade` | Replies 101 with an invalid `Sec-WebSocket-Accept`, then holds the socket open (issue #909) |
+
+`/ws/echo`, `/ws/close` and `/ws/stall` also take `upgrade_delay_ms=N`: the server waits N ms
+before sending the 101, so a test can act while the client's connect is still in flight (issue #1058).
 
 Text commands on `/ws/echo` (not echoed):
 
@@ -180,6 +184,7 @@ E2E_TEST(http_example)
 | `https_ssl_validation_disabled` | Runs | Skipped: `HCHttpCallRequestSetSSLValidation` is Windows-only |
 | `wss_self_signed_rejected_by_default`, `wss_ssl_validation_disabled` | Run; the second covers the WinHTTP WebSocket and, when compression is compiled in, the websocketpp + wintls client | Not built: `HCWebSocketSetSSLValidation` is Windows-only |
 | `http_global_request_limit_queues` | Runs | Skipped: `HCSettingsSetGlobalRequestLimit` is `E_NOTIMPL` off WinHTTP (by design) |
+| `ws_inflight_send_completes_on_disconnect`, `winhttp_provider_teardown_survives_allocation_failure` | Run | Not built: they cover the WinHTTP provider (#1057, #1054) |
 | `ws_legacy_oversized_message_fragments` | Fragment callback | No fragment API; the message arrives whole (legacy 32 MB cap) |
 | `ws_deterministic_too_large_closes`, `ws_compression_negotiated` | Skipped if `HCWebSocketSetOptions` returns `E_NOT_SUPPORTED` (compression not compiled in, e.g. the first CI build of a fresh clone; #1034) | Compression test skipped likewise when built with `HC_ENABLE_WEBSOCKET_COMPRESSION=OFF` |
 

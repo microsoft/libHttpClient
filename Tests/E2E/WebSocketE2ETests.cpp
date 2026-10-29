@@ -476,6 +476,85 @@ E2E_TEST_ISOLATED(ws_bad_upgrade_fails_and_cleanup_completes)
     E2E_CHECK_MSG(seconds < 5.0, "HCCleanupAsync took %.2f s after a failed upgrade", seconds);
 }
 
+E2E_TEST_ISOLATED(ws_compression_connect_racing_cleanup)
+{
+    // Issue #1058. RequestCompression selects websocketpp on Win32 (it is the only provider
+    // elsewhere). HCCleanupAsync starts while the server holds the 101 back. websocketpp used to
+    // look its connect result up through the http_singleton, which cleanup has detached by then, so
+    // a connect that succeeded on the wire was reported as failed. WebSocket::ConnectComplete then
+    // freed the handle websocketpp was still holding, and the server's close later reached
+    // WebSocket::CloseFunc through that freed handle.
+    E2E_CHECK_HR(HCInitialize(nullptr));
+
+    // Heap-allocated and leaked if they never complete, so a late completion can't touch freed memory.
+    auto* connectAsync = new XAsyncBlock{};
+    auto* cleanupAsync = new XAsyncBlock{};
+    {
+        WebSocket ws;
+        SetOptionsOrSkip(ws, HCWebSocketOptions::RequestCompression, "RequestCompression");
+
+        E2E_CHECK_HR(HCWebSocketConnectAsync(WsUrl("/ws/close/1000?after_ms=300&upgrade_delay_ms=500").c_str(), "", ws, connectAsync));
+        E2E_CHECK_HR(HCCleanupAsync(cleanupAsync));
+
+        HRESULT connectHr = WaitAsync(connectAsync, std::chrono::seconds{ 15 });
+        if (connectHr == E_PENDING)
+        {
+            PoisonProcess("a WebSocket connect racing HCCleanupAsync never completed");
+            Fail(__FILE__, __LINE__, "HCWebSocketConnectAsync racing HCCleanupAsync did not complete");
+        }
+        WebSocketCompletionResult result{};
+        HRESULT resultHr = HCGetWebSocketConnectResult(connectAsync, &result);
+        delete connectAsync;
+        Info("connect: hr=%s resultHr=%s errorCode=%s", HrToString(connectHr).c_str(), HrToString(resultHr).c_str(), HrToString(result.errorCode).c_str());
+
+        // The connection was established, so the connect must report it; cleanup then closes it.
+        E2E_CHECK_HR(connectHr);
+        E2E_CHECK_HR(resultHr);
+        E2E_CHECK_HR(result.errorCode);
+        E2E_CHECK(result.websocket == ws.Get());
+        E2E_CHECK_MSG(ws.WaitForClose(std::chrono::seconds{ 10 }), "HCCleanupAsync never closed the WebSocket that connected during cleanup");
+    }
+
+    HRESULT cleanupHr = WaitAsync(cleanupAsync, std::chrono::seconds{ 15 });
+    if (cleanupHr == E_PENDING)
+    {
+        PoisonProcess("HCCleanupAsync hung after a WebSocket connect raced it");
+        Fail(__FILE__, __LINE__, "HCCleanupAsync did not complete");
+    }
+    delete cleanupAsync;
+    E2E_CHECK_HR(cleanupHr);
+}
+
+#if defined(E2E_HTTP_WINHTTP)
+E2E_TEST(ws_inflight_send_completes_on_disconnect)
+{
+    // Issue #1057. The server never reads, so a large send is still in flight inside WinHTTP when
+    // the server resets the connection. The disconnect must complete that send (with an error)
+    // rather than leave it pending forever.
+    WebSocket ws;
+    ConnectOrFail(ws, "/ws/stall?after_ms=500");
+
+    // Far larger than the loopback socket buffers, so WinHTTP cannot finish writing it.
+    auto payload = PatternBytes(0, 64 * 1024 * 1024);
+    auto* sendAsync = new XAsyncBlock{};
+    E2E_CHECK_HR(HCWebSocketSendBinaryMessageAsync(ws, payload.data(), static_cast<uint32_t>(payload.size()), sendAsync));
+
+    E2E_CHECK_MSG(ws.WaitForClose(std::chrono::seconds{ 15 }), "the server's reset was never reported as a close");
+
+    HRESULT hr = WaitAsync(sendAsync, std::chrono::seconds{ 10 });
+    if (hr == E_PENDING)
+    {
+        PoisonProcess("an in-flight WebSocket send never completed after disconnect");
+        Fail(__FILE__, __LINE__, "the in-flight WebSocket send never completed after the disconnect (#1057)");
+    }
+    WebSocketCompletionResult result{};
+    HRESULT resultHr = HCGetWebSocketSendMessageResult(sendAsync, &result);
+    delete sendAsync;
+    Info("send: hr=%s resultHr=%s", HrToString(hr).c_str(), HrToString(resultHr).c_str());
+    E2E_CHECK_MSG(FAILED(hr), "a send cut off by the disconnect reported %s", HrToString(hr).c_str());
+}
+#endif
+
 // ------------------------------------------------------------------------------------------------
 // wss:// against the server's throwaway self-signed certificate (#679)
 // ------------------------------------------------------------------------------------------------

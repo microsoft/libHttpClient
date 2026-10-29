@@ -537,9 +537,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 pass
             return
 
-        if route not in ("echo", "close") or not key:
+        if route not in ("echo", "close", "stall") or not key:
             self.send_json(404, {"error": "no such websocket route", "path": self.path})
             return
+
+        # Hold the 101 back so a test can act while the client's connect is still in flight.
+        upgrade_delay_ms = int(self.query.get("upgrade_delay_ms", "0"))
+        if upgrade_delay_ms > 0:
+            time.sleep(upgrade_delay_ms / 1000.0)
 
         accept = base64.b64encode(hashlib.sha1((key + WS_GUID).encode()).digest()).decode()
         deflate, server_no_ctx, client_no_ctx = parse_deflate_offer(self.headers.get("Sec-WebSocket-Extensions"))
@@ -578,6 +583,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             threading.Thread(target=pinger, daemon=True).start()
 
         try:
+            if route == "stall":
+                # Never read, so the client's sends back up in the socket buffers and stay in
+                # flight; then drop the connection with a reset instead of a close handshake.
+                time.sleep(int(self.query.get("after_ms", "1000")) / 1000.0)
+                linger = struct.pack("HH", 1, 0) if os.name == "nt" else struct.pack("ii", 1, 0)
+                self.connection.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, linger)
+                self.connection.close()
+                return
             if route == "close":
                 code = int(parts[2]) if len(parts) > 2 else 1000
                 after_ms = int(self.query.get("after_ms", "0"))

@@ -140,6 +140,16 @@ struct NetworkState::HttpPerformContext
     // request may touch NetworkState there.
     std::atomic<bool> admitted{ false };
 
+    // Orders the Cancel op against the Begin op's start of internalAsyncBlock. NetworkState tracks a
+    // perform before HC_CALL::PerformAsync has begun internalAsyncBlock, so cleanup can cancel it
+    // while that block is not usable yet: before XAsyncBegin it has no async state (the cancel would
+    // be silently dropped), and during XAsyncBegin its state is published before its provider is set
+    // (XAsyncCancel would call a null provider). Whichever of Begin and Cancel sets its flag second
+    // forwards the cancel, so it is delivered exactly once and only to a begun block.
+    static constexpr uint8_t InternalBlockBegun{ 0x1 };
+    static constexpr uint8_t CancelRequested{ 0x2 };
+    std::atomic<uint8_t> internalCancelState{ 0 };
+
     XAsyncBlock internalAsyncBlock;
 };
 
@@ -172,6 +182,18 @@ void NetworkState::TestSetCleanupStarted(bool started, XAsyncBlock* cleanupAsync
     m_cleanupStarted = started;
     m_cleanupAsyncBlock = cleanupAsyncBlock;
 }
+
+namespace
+{
+std::atomic<NetworkState::HttpPerformAdmittedTestHook> g_httpPerformAdmittedTestHook{ nullptr };
+std::atomic<void*> g_httpPerformAdmittedTestHookContext{ nullptr };
+}
+
+void NetworkState::SetHttpPerformAdmittedTestHook(HttpPerformAdmittedTestHook hook, void* context) noexcept
+{
+    g_httpPerformAdmittedTestHookContext.store(context, std::memory_order_release);
+    g_httpPerformAdmittedTestHook.store(hook, std::memory_order_release);
+}
 #endif
 
 HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const XAsyncProviderData* data)
@@ -202,11 +224,31 @@ HRESULT CALLBACK NetworkState::HttpCallPerformAsyncProvider(XAsyncOp op, const X
         performContext->admitted.store(true, std::memory_order_release);
         lock.unlock();
 
-        return performContext->callHandle->PerformAsync(&performContext->internalAsyncBlock);
+#ifdef HC_UNITTEST_API
+        if (auto hook = g_httpPerformAdmittedTestHook.load(std::memory_order_acquire))
+        {
+            hook(g_httpPerformAdmittedTestHookContext.load(std::memory_order_acquire));
+        }
+#endif
+
+        RETURN_IF_FAILED(performContext->callHandle->PerformAsync(&performContext->internalAsyncBlock));
+
+        // The outer async state is held by XAsyncBegin for the duration of this op, so performContext
+        // is still alive here even if the internal perform has already completed.
+        uint8_t const previous = performContext->internalCancelState.fetch_or(HttpPerformContext::InternalBlockBegun, std::memory_order_acq_rel);
+        if (previous & HttpPerformContext::CancelRequested)
+        {
+            XAsyncCancel(&performContext->internalAsyncBlock);
+        }
+        return S_OK;
     }
     case XAsyncOp::Cancel:
     {
-        XAsyncCancel(&performContext->internalAsyncBlock);
+        uint8_t const previous = performContext->internalCancelState.fetch_or(HttpPerformContext::CancelRequested, std::memory_order_acq_rel);
+        if (previous & HttpPerformContext::InternalBlockBegun)
+        {
+            XAsyncCancel(&performContext->internalAsyncBlock);
+        }
         return S_OK;
     }
     case XAsyncOp::Cleanup:
@@ -473,22 +515,23 @@ void CALLBACK NetworkState::WebSocketConnectComplete(XAsyncBlock* async)
     assert(!scheduleCleanup || !disconnect);
     if (disconnect)
     {
-        hr = context->websocket->Disconnect();
-        if (FAILED(hr))
+        HRESULT disconnectHr = context->websocket->Disconnect();
+        if (FAILED(disconnectHr))
         {
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
+            HC_TRACE_ERROR_HR(HTTPCLIENT, disconnectHr, "WebSocket::Disconnect failed during HCCleanup");
         }
     }
     else if (scheduleCleanup)
     {
-        hr = XAsyncSchedule(state.m_cleanupAsyncBlock, 0);
-        if (FAILED(hr))
+        HRESULT scheduleHr = XAsyncSchedule(state.m_cleanupAsyncBlock, 0);
+        if (FAILED(scheduleHr))
         {
             // This should only fail due to client terminating the queue in which case there isn't anything we can do anyhow
-            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "Unable to schedule NetworkState::CleanupAsyncProvider");
+            HC_TRACE_ERROR_HR(HTTPCLIENT, scheduleHr, "Unable to schedule NetworkState::CleanupAsyncProvider");
         }
     }
 
+    // hr is the result of the connect attempt; the cleanup bookkeeping above must not replace it.
     XAsyncComplete(context->clientAsyncBlock, hr, sizeof(WebSocketCompletionResult));
 }
 
