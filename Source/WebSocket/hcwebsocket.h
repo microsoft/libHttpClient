@@ -172,11 +172,23 @@ public:
     // Internal providers use this to store context
     std::shared_ptr<hc_websocket_impl> impl;
 
+#ifdef HC_UNITTEST_API
+    // Test seam: invoked by SendAsync, SendBinaryAsync and Disconnect once the call has been
+    // admitted (the WebSocket was connected) and just before it is handed to the provider.
+    using ProviderCallTestHook = void(CALLBACK*)(void* context);
+    static void SetProviderCallTestHook(ProviderCallTestHook hook, void* context) noexcept;
+#endif
+
 private:
     static HRESULT CALLBACK ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
     static void CALLBACK ConnectComplete(XAsyncBlock* async);
     void ClearResponseHeadersLockHeld() noexcept;
     bool HasBinaryMessageFragmentHandlers() const noexcept;
+
+    // Requires m_stateMutex and a non-null m_providerContext. Returns a new reference to the
+    // provider's observer, so a call handed to the provider keeps that handle alive even if
+    // CloseFunc frees m_providerContext before the provider returns.
+    ObserverPtr RetainProviderObserverLockHeld() const noexcept;
 
     static void NotifyWebSocketRoutedHandlers(
         _In_ HCWebsocketHandle websocket,
@@ -222,7 +234,7 @@ private:
     http_internal_map<uint32_t, EventCallbacks> m_eventCallbacks{};
     uint32_t m_nextToken{ 1 };
 
-    ProviderContext* m_providerContext{ nullptr };
+    ProviderContext* m_providerContext{ nullptr }; // guarded by m_stateMutex
 
     // Stable routing provider for this WebSocket. Hybrid providers may delegate internally,
     // but the WebSocket does not keep per-connection active-provider state.

@@ -21,6 +21,9 @@
 #include "utils.h"
 #include "PumpedTaskQueue.h"
 #include <httpClient/httpProvider.h>
+#ifndef HC_NOWEBSOCKETS
+#include "Platform/ExternalWebSocketProvider.h"
+#endif
 
 using namespace xbox::httpclient;
 
@@ -324,6 +327,147 @@ HRESULT CALLBACK UnexpectedSendBinary(HCWebsocketHandle, const uint8_t*, uint32_
 HRESULT CALLBACK UnexpectedDisconnect(HCWebsocketHandle, HCWebSocketCloseStatus, void*)
 {
     return E_UNEXPECTED;
+}
+
+// WebSocket provider that connects, sends and closes synchronously, recording what it was handed.
+struct FakeWebSocketProviderState
+{
+    HCWebsocketHandle providerHandle{ nullptr };
+    HCWebsocketHandle lastCallHandle{ nullptr };
+    uint32_t sends{ 0 };
+    uint32_t disconnects{ 0 };
+};
+FakeWebSocketProviderState g_fakeWebSocket{};
+
+HRESULT CompleteImmediately(XAsyncBlock* asyncBlock) noexcept
+{
+    return XAsyncBegin(asyncBlock, nullptr, nullptr, __FUNCTION__, [](XAsyncOp op, const XAsyncProviderData* data)
+    {
+        if (op == XAsyncOp::Begin)
+        {
+            XAsyncComplete(data->async, S_OK, 0);
+        }
+        return S_OK;
+    });
+}
+
+HRESULT CALLBACK FakeConnect(
+    _In_z_ const char* /*uri*/,
+    _In_z_ const char* /*subProtocol*/,
+    _In_ HCWebsocketHandle websocket,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* /*context*/,
+    _In_ HCPerformEnv /*env*/)
+{
+    g_fakeWebSocket.providerHandle = websocket;
+    return XAsyncBegin(asyncBlock, websocket, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+                XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                return S_OK;
+            case XAsyncOp::GetResult:
+            {
+                auto result = static_cast<WebSocketCompletionResult*>(data->buffer);
+                *result = WebSocketCompletionResult{};
+                result->websocket = static_cast<HCWebsocketHandle>(data->context);
+                return S_OK;
+            }
+            default:
+                return S_OK;
+            }
+        });
+}
+
+HRESULT CALLBACK FakeSend(HCWebsocketHandle websocket, const char*, XAsyncBlock* asyncBlock, void*)
+{
+    ++g_fakeWebSocket.sends;
+    g_fakeWebSocket.lastCallHandle = websocket;
+    return CompleteImmediately(asyncBlock);
+}
+
+HRESULT CALLBACK FakeSendBinary(HCWebsocketHandle websocket, const uint8_t*, uint32_t, XAsyncBlock* asyncBlock, void*)
+{
+    ++g_fakeWebSocket.sends;
+    g_fakeWebSocket.lastCallHandle = websocket;
+    return CompleteImmediately(asyncBlock);
+}
+
+// Reports the close the way a provider does: through the close function libHttpClient gave it.
+HRESULT ReportProviderClose(HCWebsocketHandle providerHandle, HCWebSocketCloseStatus status) noexcept
+{
+    HCWebSocketCloseEventFunction closeFunc{ nullptr };
+    void* closeContext{ nullptr };
+    RETURN_IF_FAILED(HCWebSocketGetEventFunctions(providerHandle, nullptr, nullptr, &closeFunc, &closeContext));
+    closeFunc(providerHandle, status, closeContext);
+    return S_OK;
+}
+
+HRESULT CALLBACK FakeDisconnect(HCWebsocketHandle websocket, HCWebSocketCloseStatus status, void*)
+{
+    ++g_fakeWebSocket.disconnects;
+    g_fakeWebSocket.lastCallHandle = websocket;
+    return ReportProviderClose(websocket, status);
+}
+
+enum class ProviderCall { Send, SendBinary, Disconnect };
+
+#if HC_PLATFORM_IS_MICROSOFT
+__declspec(noinline) bool ProviderCallFaulted(ProviderCall call, HCWebsocketHandle websocket, XAsyncBlock* async, HRESULT* hr) noexcept
+{
+    static uint8_t const payload[]{ 1, 2, 3 };
+    __try
+    {
+        switch (call)
+        {
+        case ProviderCall::Send: *hr = HCWebSocketSendMessageAsync(websocket, "message", async); break;
+        case ProviderCall::SendBinary: *hr = HCWebSocketSendBinaryMessageAsync(websocket, payload, sizeof(payload), async); break;
+        case ProviderCall::Disconnect: *hr = HCWebSocketDisconnect(websocket); break;
+        }
+        return false;
+    }
+    __except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+    {
+        return true;
+    }
+}
+#else
+bool ProviderCallFaulted(ProviderCall call, HCWebsocketHandle websocket, XAsyncBlock* async, HRESULT* hr) noexcept
+{
+    static uint8_t const payload[]{ 1, 2, 3 };
+    switch (call)
+    {
+    case ProviderCall::Send: *hr = HCWebSocketSendMessageAsync(websocket, "message", async); break;
+    case ProviderCall::SendBinary: *hr = HCWebSocketSendBinaryMessageAsync(websocket, payload, sizeof(payload), async); break;
+    case ProviderCall::Disconnect: *hr = HCWebSocketDisconnect(websocket); break;
+    }
+    return false;
+}
+#endif
+
+// Connects a WebSocket through the fake provider. Returns the client handle, or nullptr on failure.
+HCWebsocketHandle ConnectFakeWebSocket() noexcept
+{
+    HCWebsocketHandle websocket{ nullptr };
+    if (FAILED(HCWebSocketCreate(&websocket, nullptr, nullptr, nullptr, nullptr)))
+    {
+        return nullptr;
+    }
+
+    XAsyncBlock connectAsync{};
+    WebSocketCompletionResult result{};
+    if (FAILED(HCWebSocketConnectAsync("ws://127.0.0.1/socket", "", websocket, &connectAsync)) ||
+        FAILED(XAsyncGetStatus(&connectAsync, true)) ||
+        FAILED(HCGetWebSocketConnectResult(&connectAsync, &result)) ||
+        FAILED(result.errorCode) ||
+        g_fakeWebSocket.providerHandle == nullptr)
+    {
+        HCWebSocketCloseHandle(websocket);
+        return nullptr;
+    }
+    return websocket;
 }
 #endif
 
@@ -699,6 +843,151 @@ public:
         // Pre-fix both report S_OK: the connect failure is replaced by XAsyncSchedule's result.
         VERIFY_ARE_EQUAL(E_HC_NOT_INITIALISED, connectStatus);
         VERIFY_ARE_EQUAL(E_HC_NOT_INITIALISED, resultHr);
+        VERIFY_SUCCEEDED(cleanupStatus);
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Send / disconnect racing the provider's close (follow-up to #1057).
+    //
+    // WebSocket::SendAsync, SendBinaryAsync and Disconnect checked that the socket was connected
+    // and then read m_providerContext without holding the state lock, handing the provider the raw
+    // observer it owns. A close reported by the provider in between (WebSocket::CloseFunc) frees
+    // that context, and the pointer was never cleared, so the call went on through freed memory.
+    // The test reports the provider's close at exactly that point and makes the use-after-free fault.
+    // ------------------------------------------------------------------------------------------
+    DEFINE_TEST_CASE(TestProviderCallRacingCloseDoesNotUseFreedProviderContext)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestProviderCallRacingCloseDoesNotUseFreedProviderContext);
+
+        VERIFY_SUCCEEDED(GuardHeap::Install());
+        GuardHeap::Get().Arm();
+
+        struct Gate
+        {
+            HCWebsocketHandle providerHandle{ nullptr };
+            bool fired{ false };
+        };
+
+        for (ProviderCall call : { ProviderCall::Send, ProviderCall::SendBinary, ProviderCall::Disconnect })
+        {
+            g_fakeWebSocket = FakeWebSocketProviderState{};
+            VERIFY_SUCCEEDED(HCSetWebSocketFunctions(FakeConnect, FakeSend, FakeSendBinary, FakeDisconnect, nullptr));
+            VERIFY_SUCCEEDED(HCInitialize(nullptr));
+
+            HCWebsocketHandle websocket = ConnectFakeWebSocket();
+            VERIFY_IS_NOT_NULL(websocket);
+
+            Gate gate{ g_fakeWebSocket.providerHandle };
+            WebSocket::SetProviderCallTestHook([](void* context)
+            {
+                Gate* g{ static_cast<Gate*>(context) };
+                if (!g->fired)
+                {
+                    g->fired = true;
+                    ReportProviderClose(g->providerHandle, HCWebSocketCloseStatus::GoingAway);
+                }
+            }, &gate);
+
+            XAsyncBlock callAsync{};
+            HRESULT callHr{ E_FAIL };
+            bool const faulted = ProviderCallFaulted(call, websocket, &callAsync, &callHr);
+            WebSocket::SetProviderCallTestHook(nullptr, nullptr);
+
+            if (faulted)
+            {
+                // The library is left mid-call; don't try to tear it down.
+                GuardHeap::Get().Disarm();
+                VERIFY_IS_FALSE(faulted);
+                return;
+            }
+
+            HRESULT callStatus{ callHr };
+            if (call != ProviderCall::Disconnect && SUCCEEDED(callHr))
+            {
+                callStatus = XAsyncGetStatus(&callAsync, true);
+            }
+
+            HCWebsocketHandle const providerHandle{ g_fakeWebSocket.providerHandle };
+            HCWebsocketHandle const handedToProvider{ g_fakeWebSocket.lastCallHandle };
+            VERIFY_SUCCEEDED(HCWebSocketCloseHandle(websocket));
+            HCCleanup();
+            xbox::httpclient::ExternalWebSocketProvider::Get().ClearCallbacks();
+
+            VERIFY_IS_TRUE(gate.fired);
+            VERIFY_SUCCEEDED(callStatus);
+            // The call was admitted before the close, so the provider gets it with a live handle.
+            VERIFY_IS_TRUE(handedToProvider == providerHandle);
+        }
+
+        GuardHeap::Get().Disarm();
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Cleanup racing a client disconnect (crash in WebSocket::Disconnect from CleanupAsyncProvider).
+    //
+    // CleanupAsyncProvider snapshotted m_connectedWebSockets as raw ActiveWebSocketContext pointers,
+    // released m_mutex, and then disconnected each one through the snapshot. A close that finished in
+    // between (here the client's own HCWebSocketDisconnect) frees the context in WebSocketClosed, and
+    // once the client closes its handle the WebSocket itself is freed too, so cleanup called
+    // Disconnect through freed memory.
+    // ------------------------------------------------------------------------------------------
+    DEFINE_TEST_CASE(TestCleanupDisconnectRacingCloseDoesNotUseFreedWebSocket)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestCleanupDisconnectRacingCloseDoesNotUseFreedWebSocket);
+
+        VERIFY_SUCCEEDED(GuardHeap::Install());
+        GuardHeap::Get().Arm();
+
+        g_fakeWebSocket = FakeWebSocketProviderState{};
+        VERIFY_SUCCEEDED(HCSetWebSocketFunctions(FakeConnect, FakeSend, FakeSendBinary, FakeDisconnect, nullptr));
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+
+        HCWebsocketHandle websocket = ConnectFakeWebSocket();
+        VERIFY_IS_NOT_NULL(websocket);
+
+        struct Gate
+        {
+            HCWebsocketHandle websocket{ nullptr };
+            bool fired{ false };
+            HRESULT disconnectHr{ E_FAIL };
+        } gate{ websocket };
+
+        NetworkState::SetCleanupSnapshotTestHook([](void* context)
+        {
+            Gate* g{ static_cast<Gate*>(context) };
+            if (!g->fired)
+            {
+                g->fired = true;
+                g->disconnectHr = HCWebSocketDisconnect(g->websocket);
+                HCWebSocketCloseHandle(g->websocket);
+            }
+        }, &gate);
+
+        XTaskQueueHandle cleanupQueue{ nullptr };
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &cleanupQueue));
+        XAsyncBlock cleanupAsyncBlock{ cleanupQueue };
+
+        HRESULT cleanupHr{ E_FAIL };
+        bool const faulted = CleanupAsyncFaulted(&cleanupAsyncBlock, &cleanupHr);
+        NetworkState::SetCleanupSnapshotTestHook(nullptr, nullptr);
+
+        if (faulted)
+        {
+            // Cleanup is left half run; abandon it rather than unwind it.
+            GuardHeap::Get().Disarm();
+            VERIFY_IS_FALSE(faulted);
+            return;
+        }
+
+        HRESULT const cleanupStatus = SUCCEEDED(cleanupHr) ? PumpUntilComplete(cleanupQueue, &cleanupAsyncBlock) : cleanupHr;
+        DrainQueue(cleanupQueue);
+        XTaskQueueCloseHandle(cleanupQueue);
+        xbox::httpclient::ExternalWebSocketProvider::Get().ClearCallbacks();
+        GuardHeap::Get().Disarm();
+
+        VERIFY_IS_TRUE(gate.fired);
+        VERIFY_SUCCEEDED(gate.disconnectHr);
+        VERIFY_SUCCEEDED(cleanupHr);
         VERIFY_SUCCEEDED(cleanupStatus);
     }
 #endif

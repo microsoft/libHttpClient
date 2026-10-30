@@ -508,13 +508,25 @@ HRESULT WinHttpConnection::WebSocketDisconnect(_In_ HCWebSocketCloseStatus close
 {
     assert(m_winHttpWebSocketExports.shutdown);
 
+    HINTERNET hRequest{ nullptr };
     {
         win32_cs_autolock autoCriticalSection(&m_lock);
+
+        // A disconnect can be admitted just before the connection starts closing on its own (the
+        // peer's close, an error, or HCCleanup). Then there is nothing left to shut down, and the
+        // request handle may already be closed: don't move the state backwards or use the handle.
+        if (m_state != ConnectionState::WebSocketConnected)
+        {
+            HC_TRACE_VERBOSE(HTTPCLIENT, "WinHttpConnection::WebSocketDisconnect: connection already closing (state=%u), nothing to do", m_state);
+            return S_OK;
+        }
+
         m_state = ConnectionState::WebSocketClosing;
+        hRequest = m_hRequest;
     }
 
     // Shutdown closes the send channel after sending a close frame. When we receive a close frame we are fully disconnected
-    DWORD dwError = m_winHttpWebSocketExports.shutdown(m_hRequest, static_cast<short>(closeStatus), nullptr, 0);
+    DWORD dwError = m_winHttpWebSocketExports.shutdown(hRequest, static_cast<short>(closeStatus), nullptr, 0);
     return HRESULT_FROM_WIN32(dwError);
 }
 #endif

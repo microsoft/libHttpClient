@@ -61,6 +61,11 @@ public: // Http
     // and so visible to cleanup) but before HC_CALL::PerformAsync has begun its internal XAsyncBlock.
     using HttpPerformAdmittedTestHook = void(CALLBACK*)(void* context);
     static void SetHttpPerformAdmittedTestHook(HttpPerformAdmittedTestHook hook, void* context) noexcept;
+
+    // Test seam: invoked by CleanupAsyncProvider's Begin op after it has snapshotted the tracked
+    // requests and WebSockets and released m_mutex, before it cancels or disconnects any of them.
+    using CleanupSnapshotTestHook = void(CALLBACK*)(void* context);
+    static void SetCleanupSnapshotTestHook(CleanupSnapshotTestHook hook, void* context) noexcept;
 #endif
 
 #ifndef HC_NOWEBSOCKETS

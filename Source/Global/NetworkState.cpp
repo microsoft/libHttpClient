@@ -187,6 +187,14 @@ namespace
 {
 std::atomic<NetworkState::HttpPerformAdmittedTestHook> g_httpPerformAdmittedTestHook{ nullptr };
 std::atomic<void*> g_httpPerformAdmittedTestHookContext{ nullptr };
+std::atomic<NetworkState::CleanupSnapshotTestHook> g_cleanupSnapshotTestHook{ nullptr };
+std::atomic<void*> g_cleanupSnapshotTestHookContext{ nullptr };
+}
+
+void NetworkState::SetCleanupSnapshotTestHook(CleanupSnapshotTestHook hook, void* context) noexcept
+{
+    g_cleanupSnapshotTestHookContext.store(context, std::memory_order_release);
+    g_cleanupSnapshotTestHook.store(hook, std::memory_order_release);
 }
 
 void NetworkState::SetHttpPerformAdmittedTestHook(HttpPerformAdmittedTestHook hook, void* context) noexcept
@@ -582,7 +590,7 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
     {
         xbox::httpclient::Vector<HttpPerformContext*> activeRequestsToCancel;
 #ifndef HC_NOWEBSOCKETS
-        xbox::httpclient::Vector<ActiveWebSocketContext*> connectedWebSockets;
+        xbox::httpclient::Vector<std::shared_ptr<WebSocket>> connectedWebSockets;
 #endif
         bool scheduleCleanup = false;
         {
@@ -614,9 +622,24 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
                 }
             }
 #ifndef HC_NOWEBSOCKETS
-            connectedWebSockets.assign(state->m_connectedWebSockets.begin(), state->m_connectedWebSockets.end());
+            // Owning references, taken under m_mutex. A close that completes after the lock is
+            // released (WebSocketClosed) frees its ActiveWebSocketContext, and the WebSocket goes
+            // with it once the client has closed its handle, so a raw snapshot of the contexts
+            // would be disconnected through freed memory below.
+            connectedWebSockets.reserve(state->m_connectedWebSockets.size());
+            for (auto context : state->m_connectedWebSockets)
+            {
+                connectedWebSockets.push_back(context->websocketObserver->websocket);
+            }
 #endif
         }
+
+#ifdef HC_UNITTEST_API
+        if (auto hook = g_cleanupSnapshotTestHook.load(std::memory_order_acquire))
+        {
+            hook(g_cleanupSnapshotTestHookContext.load(std::memory_order_acquire));
+        }
+#endif
 
         // The snapshot remains valid outside m_mutex because a request in CleanupCancelInFlight
         // cannot publish CallbackStarted, and the active-set entry is only removed during the
@@ -631,10 +654,15 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
             activeRequest->clientBlockState.store(HttpPerformClientBlockState::CleanupMayCancel, std::memory_order_release);
         }
 #ifndef HC_NOWEBSOCKETS
-        for (auto& context : connectedWebSockets)
+        for (auto& websocket : connectedWebSockets)
         {
-            HRESULT hr = context->websocketObserver->websocket->Disconnect();
-            if (FAILED(hr))
+            HRESULT hr = websocket->Disconnect();
+            if (hr == E_UNEXPECTED)
+            {
+                // Already closed: the close completed after the snapshot was taken.
+                HC_TRACE_VERBOSE(HTTPCLIENT, "WebSocket [ID %llu] closed before HCCleanup disconnected it", TO_ULL(websocket->id));
+            }
+            else if (FAILED(hr))
             {
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
             }
