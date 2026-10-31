@@ -167,6 +167,10 @@ TestEnvironment::ResetResult TestEnvironment::ResetLibraryState(uint32_t cleanup
         // 2. Client hooks that live outside the singleton. There is no public API to remove them.
         HC_CALL::SetPerformStartTestHook(nullptr, nullptr);
         NetworkState::SetHttpPerformAdmittedTestHook(nullptr, nullptr);
+        NetworkState::SetCleanupSnapshotTestHook(nullptr, nullptr);
+#ifndef HC_NOWEBSOCKETS
+        WebSocket::SetProviderCallTestHook(nullptr, nullptr);
+#endif
         // RetryTests' clock and retry-delay seams (decision 3): a test that fails before restoring
         // them must not leave later tests with a fake clock or intercepted retry delays.
         HC_CALL::SetClockTestHook(nullptr, nullptr);

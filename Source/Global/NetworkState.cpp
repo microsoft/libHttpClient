@@ -187,6 +187,14 @@ namespace
 {
 std::atomic<NetworkState::HttpPerformAdmittedTestHook> g_httpPerformAdmittedTestHook{ nullptr };
 std::atomic<void*> g_httpPerformAdmittedTestHookContext{ nullptr };
+std::atomic<NetworkState::CleanupSnapshotTestHook> g_cleanupSnapshotTestHook{ nullptr };
+std::atomic<void*> g_cleanupSnapshotTestHookContext{ nullptr };
+}
+
+void NetworkState::SetCleanupSnapshotTestHook(CleanupSnapshotTestHook hook, void* context) noexcept
+{
+    g_cleanupSnapshotTestHookContext.store(context, std::memory_order_release);
+    g_cleanupSnapshotTestHook.store(hook, std::memory_order_release);
 }
 
 void NetworkState::SetHttpPerformAdmittedTestHook(HttpPerformAdmittedTestHook hook, void* context) noexcept
@@ -582,14 +590,13 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
     {
         xbox::httpclient::Vector<HttpPerformContext*> activeRequestsToCancel;
 #ifndef HC_NOWEBSOCKETS
-        xbox::httpclient::Vector<ActiveWebSocketContext*> connectedWebSockets;
+        xbox::httpclient::Vector<std::shared_ptr<WebSocket>> connectedWebSockets;
 #endif
         bool scheduleCleanup = false;
         {
             std::unique_lock<std::mutex> lock{ state->m_mutex };
             state->m_cleanupAsyncBlock = data->async;
             state->m_cleanupStarted = true;
-            scheduleCleanup = state->ScheduleCleanup();
 
 #ifndef HC_NOWEBSOCKETS 
             HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", state->m_activeHttpRequests.size(), state->m_connectingWebSockets.size(), state->m_connectedWebSockets.size());
@@ -614,9 +621,28 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
                 }
             }
 #ifndef HC_NOWEBSOCKETS
-            connectedWebSockets.assign(state->m_connectedWebSockets.begin(), state->m_connectedWebSockets.end());
+            // Owning references, taken under m_mutex. A close that completes after the lock is
+            // released (WebSocketClosed) frees its ActiveWebSocketContext, and the WebSocket goes
+            // with it once the client has closed its handle, so a raw snapshot of the contexts
+            // would be disconnected through freed memory below.
+            connectedWebSockets.reserve(state->m_connectedWebSockets.size());
+            for (auto context : state->m_connectedWebSockets)
+            {
+                connectedWebSockets.push_back(context->websocketObserver->websocket);
+            }
 #endif
+            // Until Begin is done with its snapshot, only Begin may schedule DoWork. Otherwise a
+            // close or request completion that empties the tracking sets after m_mutex is released
+            // could start provider cleanup while this op still holds references to WebSockets.
+            state->m_cleanupBeginInProgress = true;
         }
+
+#ifdef HC_UNITTEST_API
+        if (auto hook = g_cleanupSnapshotTestHook.load(std::memory_order_acquire))
+        {
+            hook(g_cleanupSnapshotTestHookContext.load(std::memory_order_acquire));
+        }
+#endif
 
         // The snapshot remains valid outside m_mutex because a request in CleanupCancelInFlight
         // cannot publish CallbackStarted, and the active-set entry is only removed during the
@@ -631,15 +657,31 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
             activeRequest->clientBlockState.store(HttpPerformClientBlockState::CleanupMayCancel, std::memory_order_release);
         }
 #ifndef HC_NOWEBSOCKETS
-        for (auto& context : connectedWebSockets)
+        for (auto& websocket : connectedWebSockets)
         {
-            HRESULT hr = context->websocketObserver->websocket->Disconnect();
-            if (FAILED(hr))
+            HRESULT hr = websocket->Disconnect();
+            if (hr == E_UNEXPECTED)
+            {
+                // Already closed: the close completed after the snapshot was taken.
+                HC_TRACE_VERBOSE(HTTPCLIENT, "WebSocket [ID %llu] closed before HCCleanup disconnected it", TO_ULL(websocket->id));
+            }
+            else if (FAILED(hr))
             {
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
             }
         }
+
+        // Release the snapshot's references before provider cleanup can start: these can be the
+        // last references to a WebSocket whose close already completed, and destroying it closes
+        // provider handles.
+        connectedWebSockets.clear();
 #endif
+
+        {
+            std::unique_lock<std::mutex> lock{ state->m_mutex };
+            state->m_cleanupBeginInProgress = false;
+            scheduleCleanup = state->ScheduleCleanup();
+        }
 
         if (scheduleCleanup)
         {
@@ -700,6 +742,12 @@ bool NetworkState::ScheduleCleanup()
     if (!m_cleanupAsyncBlock)
     {
         // HC_PERFORM_ENV::CleanupAsync has not yet been called
+        return false;
+    }
+
+    if (m_cleanupBeginInProgress)
+    {
+        // CleanupAsyncProvider's Begin op re-evaluates this once it has released its snapshot
         return false;
     }
 

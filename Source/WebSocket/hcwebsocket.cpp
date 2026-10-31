@@ -134,6 +134,28 @@ namespace xbox
 namespace httpclient
 {
 
+#ifdef HC_UNITTEST_API
+namespace
+{
+std::atomic<WebSocket::ProviderCallTestHook> g_providerCallTestHook{ nullptr };
+std::atomic<void*> g_providerCallTestHookContext{ nullptr };
+
+void InvokeProviderCallTestHook() noexcept
+{
+    if (auto hook = g_providerCallTestHook.load(std::memory_order_acquire))
+    {
+        hook(g_providerCallTestHookContext.load(std::memory_order_acquire));
+    }
+}
+}
+
+void WebSocket::SetProviderCallTestHook(ProviderCallTestHook hook, void* context) noexcept
+{
+    g_providerCallTestHookContext.store(context, std::memory_order_release);
+    g_providerCallTestHook.store(hook, std::memory_order_release);
+}
+#endif
+
 WebSocket::WebSocket(uint64_t _id, IWebSocketProvider& provider) :
     id{ _id },
     m_maxReceiveBufferSize{ WEBSOCKET_RECVBUFFER_MAXSIZE_DEFAULT },
@@ -300,18 +322,36 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     XAsyncComplete(context->clientAsyncBlock, hr, sizeof(WebSocketCompletionResult));
 }
 
+ObserverPtr WebSocket::RetainProviderObserverLockHeld() const noexcept
+{
+    HC_WEBSOCKET_OBSERVER* observer{ m_providerContext->observer.get() };
+    observer->AddRef();
+    return ObserverPtr{ observer };
+}
+
 HRESULT WebSocket::SendAsync(
     _In_z_ const char* message,
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
-    RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
+    // Admit the send and take a reference to the provider's observer under m_stateMutex. A close
+    // reported by the provider (CloseFunc) frees m_providerContext under the same lock, so the
+    // handle passed to the provider below stays valid even if the close lands first.
+    ObserverPtr providerObserver;
+    {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+        RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected || !m_providerContext);
+        providerObserver = RetainProviderObserverLockHeld();
+    }
+
+#ifdef HC_UNITTEST_API
+    InvokeProviderCallTestHook();
+#endif
 
     try
     {
-        NotifyWebSocketRoutedHandlers(m_providerContext->observer.get(), false, message, nullptr, 0);
-        return m_provider.SendAsync(m_providerContext->observer.get(), message, asyncBlock);
+        NotifyWebSocketRoutedHandlers(providerObserver.get(), false, message, nullptr, 0);
+        return m_provider.SendAsync(providerObserver.get(), message, asyncBlock);
     }
     catch (...)
     {
@@ -326,13 +366,22 @@ HRESULT WebSocket::SendBinaryAsync(
     _Inout_ XAsyncBlock* asyncBlock
 ) noexcept
 {
-    RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
-    RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
+    // See SendAsync.
+    ObserverPtr providerObserver;
+    {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+        RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected || !m_providerContext);
+        providerObserver = RetainProviderObserverLockHeld();
+    }
+
+#ifdef HC_UNITTEST_API
+    InvokeProviderCallTestHook();
+#endif
 
     try
     {
-        NotifyWebSocketRoutedHandlers(m_providerContext->observer.get(), false, nullptr, payloadBytes, payloadSize);
-        return m_provider.SendBinaryAsync(m_providerContext->observer.get(), payloadBytes, payloadSize, asyncBlock);
+        NotifyWebSocketRoutedHandlers(providerObserver.get(), false, nullptr, payloadBytes, payloadSize);
+        return m_provider.SendBinaryAsync(providerObserver.get(), payloadBytes, payloadSize, asyncBlock);
     }
     catch (...)
     {
@@ -348,18 +397,24 @@ HRESULT WebSocket::Disconnect()
 
 HRESULT WebSocket::Disconnect(HCWebSocketCloseStatus closeStatus)
 {
-    RETURN_HR_IF(E_UNEXPECTED, !m_providerContext);
+    // See SendAsync: the provider's observer is retained under m_stateMutex.
+    ObserverPtr providerObserver;
+    {
+        std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+        RETURN_HR_IF(S_OK, m_state == State::Disconnecting);
+        RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected || !m_providerContext);
 
-    std::unique_lock<DefaultUnnamedMutex> lock{ m_stateMutex };
-    RETURN_HR_IF(S_OK, m_state == State::Disconnecting);
-    RETURN_HR_IF(E_UNEXPECTED, m_state != State::Connected);
-    
-    m_state = State::Disconnecting;
-    lock.unlock();
+        m_state = State::Disconnecting;
+        providerObserver = RetainProviderObserverLockHeld();
+    }
+
+#ifdef HC_UNITTEST_API
+    InvokeProviderCallTestHook();
+#endif
 
     try
     {
-        return m_provider.Disconnect(m_providerContext->observer.get(), closeStatus);
+        return m_provider.Disconnect(providerObserver.get(), closeStatus);
     }
     catch (...)
     {
@@ -748,8 +803,10 @@ void CALLBACK WebSocket::CloseFunc(
     }
 
     // We no longer expect callbacks from Provider at this point, so cleanup m_providerContext. If there are no other
-    // observers of websocket, it may be destroyed now
+    // observers of websocket, it may be destroyed now. Clear the pointer under the lock as well: Send/Disconnect check
+    // it under the same lock and retain the observer they hand to the provider.
     HC_UNIQUE_PTR<ProviderContext> reclaim{ websocket->m_providerContext };
+    websocket->m_providerContext = nullptr;
     websocket->m_state = State::Disconnected;
     stateLock.unlock();    
     

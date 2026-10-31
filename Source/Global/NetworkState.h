@@ -61,6 +61,11 @@ public: // Http
     // and so visible to cleanup) but before HC_CALL::PerformAsync has begun its internal XAsyncBlock.
     using HttpPerformAdmittedTestHook = void(CALLBACK*)(void* context);
     static void SetHttpPerformAdmittedTestHook(HttpPerformAdmittedTestHook hook, void* context) noexcept;
+
+    // Test seam: invoked by CleanupAsyncProvider's Begin op after it has snapshotted the tracked
+    // requests and WebSockets and released m_mutex, before it cancels or disconnects any of them.
+    using CleanupSnapshotTestHook = void(CALLBACK*)(void* context);
+    static void SetCleanupSnapshotTestHook(CleanupSnapshotTestHook hook, void* context) noexcept;
 #endif
 
 #ifndef HC_NOWEBSOCKETS
@@ -112,6 +117,12 @@ private:
     // (no atomic needed) and what makes the guard atomic with the tracking-set insert/snapshot. Do
     // not read this outside m_mutex.
     bool m_cleanupStarted{ false };
+
+    // Set (under m_mutex) while CleanupAsyncProvider's Begin op is canceling and disconnecting its
+    // snapshot. While set, ScheduleCleanup() returns false so nothing but Begin can schedule DoWork:
+    // Begin's snapshot can hold the last references to WebSockets, which must be released before
+    // provider cleanup starts. Begin clears it and re-evaluates ScheduleCleanup() when it is done.
+    bool m_cleanupBeginInProgress{ false };
 
 #ifndef HC_NOWEBSOCKETS
     static HRESULT CALLBACK WebSocketConnectAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
