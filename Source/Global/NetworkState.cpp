@@ -597,7 +597,6 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
             std::unique_lock<std::mutex> lock{ state->m_mutex };
             state->m_cleanupAsyncBlock = data->async;
             state->m_cleanupStarted = true;
-            scheduleCleanup = state->ScheduleCleanup();
 
 #ifndef HC_NOWEBSOCKETS 
             HC_TRACE_VERBOSE(HTTPCLIENT, "NetworkState::CleanupAsyncProvider::Begin: HTTP active=%llu, WebSocket Connecting=%llu, WebSocket Connected=%llu", state->m_activeHttpRequests.size(), state->m_connectingWebSockets.size(), state->m_connectedWebSockets.size());
@@ -632,6 +631,10 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
                 connectedWebSockets.push_back(context->websocketObserver->websocket);
             }
 #endif
+            // Until Begin is done with its snapshot, only Begin may schedule DoWork. Otherwise a
+            // close or request completion that empties the tracking sets after m_mutex is released
+            // could start provider cleanup while this op still holds references to WebSockets.
+            state->m_cleanupBeginInProgress = true;
         }
 
 #ifdef HC_UNITTEST_API
@@ -667,7 +670,18 @@ HRESULT CALLBACK NetworkState::CleanupAsyncProvider(XAsyncOp op, const XAsyncPro
                 HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WebSocket::Disconnect failed during HCCleanup");
             }
         }
+
+        // Release the snapshot's references before provider cleanup can start: these can be the
+        // last references to a WebSocket whose close already completed, and destroying it closes
+        // provider handles.
+        connectedWebSockets.clear();
 #endif
+
+        {
+            std::unique_lock<std::mutex> lock{ state->m_mutex };
+            state->m_cleanupBeginInProgress = false;
+            scheduleCleanup = state->ScheduleCleanup();
+        }
 
         if (scheduleCleanup)
         {
@@ -728,6 +742,12 @@ bool NetworkState::ScheduleCleanup()
     if (!m_cleanupAsyncBlock)
     {
         // HC_PERFORM_ENV::CleanupAsync has not yet been called
+        return false;
+    }
+
+    if (m_cleanupBeginInProgress)
+    {
+        // CleanupAsyncProvider's Begin op re-evaluates this once it has released its snapshot
         return false;
     }
 

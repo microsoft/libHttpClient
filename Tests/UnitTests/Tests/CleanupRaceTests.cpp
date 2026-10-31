@@ -990,6 +990,70 @@ public:
         VERIFY_SUCCEEDED(cleanupHr);
         VERIFY_SUCCEEDED(cleanupStatus);
     }
+
+    // ------------------------------------------------------------------------------------------
+    // Provider cleanup starting while CleanupAsyncProvider's Begin op still holds WebSockets.
+    //
+    // Begin's snapshot holds owning references to the connected WebSockets. A close that completes
+    // after the snapshot (here the client's own disconnect, with its handle closed) erased the last
+    // tracked entry, so WebSocketClosed's ScheduleCleanup() returned true and scheduled DoWork. On a
+    // thread-pool queue DoWork could then run provider cleanup while Begin was still disconnecting,
+    // and Begin's snapshot released the last reference to the WebSocket (closing its provider
+    // handles) during or after provider teardown. The test dispatches the cleanup queue from inside
+    // that window: DoWork must not be runnable until Begin has returned.
+    // ------------------------------------------------------------------------------------------
+    DEFINE_TEST_CASE(TestCleanupDoWorkWaitsForBeginToReleaseWebSockets)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestCleanupDoWorkWaitsForBeginToReleaseWebSockets);
+
+        g_fakeWebSocket = FakeWebSocketProviderState{};
+        VERIFY_SUCCEEDED(HCSetWebSocketFunctions(FakeConnect, FakeSend, FakeSendBinary, FakeDisconnect, nullptr));
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+
+        HCWebsocketHandle websocket = ConnectFakeWebSocket();
+        VERIFY_IS_NOT_NULL(websocket);
+
+        XTaskQueueHandle cleanupQueue{ nullptr };
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &cleanupQueue));
+
+        struct Gate
+        {
+            HCWebsocketHandle websocket{ nullptr };
+            XTaskQueueHandle cleanupQueue{ nullptr };
+            bool fired{ false };
+            HRESULT disconnectHr{ E_FAIL };
+            bool doWorkRanDuringBegin{ false };
+        } gate{ websocket, cleanupQueue };
+
+        NetworkState::SetCleanupSnapshotTestHook([](void* context)
+        {
+            Gate* g{ static_cast<Gate*>(context) };
+            if (!g->fired)
+            {
+                g->fired = true;
+                g->disconnectHr = HCWebSocketDisconnect(g->websocket);
+                HCWebSocketCloseHandle(g->websocket);
+
+                // Stand in for a thread-pool worker picking up anything scheduled so far.
+                g->doWorkRanDuringBegin = XTaskQueueDispatch(g->cleanupQueue, XTaskQueuePort::Work, 0);
+            }
+        }, &gate);
+
+        XAsyncBlock cleanupAsyncBlock{ cleanupQueue };
+        HRESULT const cleanupHr = HCCleanupAsync(&cleanupAsyncBlock);
+        NetworkState::SetCleanupSnapshotTestHook(nullptr, nullptr);
+
+        HRESULT const cleanupStatus = SUCCEEDED(cleanupHr) ? PumpUntilComplete(cleanupQueue, &cleanupAsyncBlock) : cleanupHr;
+        DrainQueue(cleanupQueue);
+        XTaskQueueCloseHandle(cleanupQueue);
+        xbox::httpclient::ExternalWebSocketProvider::Get().ClearCallbacks();
+
+        VERIFY_IS_TRUE(gate.fired);
+        VERIFY_SUCCEEDED(gate.disconnectHr);
+        VERIFY_IS_FALSE(gate.doWorkRanDuringBegin);
+        VERIFY_SUCCEEDED(cleanupHr);
+        VERIFY_SUCCEEDED(cleanupStatus);
+    }
 #endif
 };
 

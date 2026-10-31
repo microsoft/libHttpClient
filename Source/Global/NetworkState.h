@@ -118,6 +118,12 @@ private:
     // not read this outside m_mutex.
     bool m_cleanupStarted{ false };
 
+    // Set (under m_mutex) while CleanupAsyncProvider's Begin op is canceling and disconnecting its
+    // snapshot. While set, ScheduleCleanup() returns false so nothing but Begin can schedule DoWork:
+    // Begin's snapshot can hold the last references to WebSockets, which must be released before
+    // provider cleanup starts. Begin clears it and re-evaluates ScheduleCleanup() when it is done.
+    bool m_cleanupBeginInProgress{ false };
+
 #ifndef HC_NOWEBSOCKETS
     static HRESULT CALLBACK WebSocketConnectAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
     static void CALLBACK WebSocketConnectComplete(XAsyncBlock* async);
