@@ -7,15 +7,36 @@ project("libHttpClient.iOS")
 # Restore third-party sources into External/ if missing or out of date (see Build/vcpkg).
 include("${CMAKE_CURRENT_LIST_DIR}/../vcpkg/AutoRestore.cmake")
 
-set(HC_WEBSOCKETS FALSE)
+# Off by default. On builds the websocketpp WebSocket provider, which needs OpenSSL headers in
+# HC_OPENSSL_INCLUDE_DIR. The app must also link OpenSSL's libssl and libcrypto.
+option(HC_WEBSOCKETS "Build the websocketpp WebSocket provider" OFF)
+if(NOT DEFINED HC_OPENSSL_INCLUDE_DIR)
+    set(HC_OPENSSL_INCLUDE_DIR "" CACHE PATH "OpenSSL include directory, used when HC_WEBSOCKETS is on")
+endif()
+
+# Empty by default. When set, the Objective-C classes get this prefix (see objc_class_prefix_apple.h).
+if(NOT DEFINED HC_OBJC_CLASS_PREFIX)
+    set(HC_OBJC_CLASS_PREFIX "" CACHE STRING "Prefix for libHttpClient's Objective-C class names")
+endif()
 
 add_definitions(-D_NO_ASYNCRTIMP -D_NO_PPLXIMP -D_NO_XSAPIIMP -DXSAPI_BUILD -DHC_LINK_STATIC=1)
 
 if(HC_WEBSOCKETS)
     message(STATUS "websockets usage is on")
+    if(NOT HC_OPENSSL_INCLUDE_DIR)
+        message(FATAL_ERROR "HC_WEBSOCKETS requires HC_OPENSSL_INCLUDE_DIR")
+    endif()
 else()
     message(STATUS "websockets usage is off")
     add_definitions(-DHC_NOWEBSOCKETS)
+endif()
+
+if(HC_OBJC_CLASS_PREFIX)
+    if(NOT HC_OBJC_CLASS_PREFIX MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+        message(FATAL_ERROR "HC_OBJC_CLASS_PREFIX must be a valid identifier prefix: '${HC_OBJC_CLASS_PREFIX}'")
+    endif()
+    message(STATUS "Objective-C class prefix: ${HC_OBJC_CLASS_PREFIX}")
+    add_definitions(-DHC_OBJC_CLASS_PREFIX=${HC_OBJC_CLASS_PREFIX})
 endif()
 
 ###########################################
@@ -51,15 +72,18 @@ set(COMMON_SOURCE_FILES
 set(IOS_SOURCE_FILES
     # Task
     "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
+    # Only the STL wait timer, as in the Xcode project. iOS/ios_WaitTimer.mm defines the same
+    # OS::WaitTimer, so building both gives duplicate symbols.
     "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
-    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer.mm"
-    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer_target.mm"
-    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer_target.h"
-    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimerImpl.h"
     # HTTP
     "${PATH_TO_ROOT}/Source/HTTP/Apple/http_apple.mm"
     "${PATH_TO_ROOT}/Source/HTTP/Apple/http_apple.h"
+    "${PATH_TO_ROOT}/Source/HTTP/Apple/request_body_stream.mm"
+    "${PATH_TO_ROOT}/Source/HTTP/Apple/request_body_stream.h"
+    "${PATH_TO_ROOT}/Source/HTTP/Apple/session_delegate.mm"
+    "${PATH_TO_ROOT}/Source/HTTP/Apple/session_delegate.h"
     # Common
+    "${PATH_TO_ROOT}/Source/Common/Apple/objc_class_prefix_apple.h"
     "${PATH_TO_ROOT}/Source/Common/Apple/utils_apple.mm"
     "${PATH_TO_ROOT}/Source/Common/Apple/utils_apple.h"
     # Platform
@@ -80,6 +104,18 @@ set(COMMON_INCLUDE_DIRS
     "${PATH_TO_ROOT}/Include/httpClient"
     )
 
+if(HC_WEBSOCKETS)
+    list(APPEND IOS_SOURCE_FILES
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.cpp"
+        "${PATH_TO_ROOT}/Source/WebSocket/Websocketpp/websocketpp_websocket.h"
+        )
+    list(APPEND COMMON_INCLUDE_DIRS
+        "${PATH_TO_ROOT}/External/asio/asio/include"
+        "${PATH_TO_ROOT}/External/websocketpp"
+        "${HC_OPENSSL_INCLUDE_DIR}"
+        )
+endif()
+
 #########################
 ### Set up static lib ###
 #########################
@@ -98,6 +134,20 @@ target_include_directories(
     "${COMMON_INCLUDE_DIRS}"
     )
 
+# System frameworks and libraries the library calls into, so CMake consumers link them
+# automatically. zlib is the SDK's copy (compression.cpp includes the system <zlib.h>).
+# WebSockets also needs Security for certificate validation.
+target_link_libraries(
+    "${PROJECT_NAME}"
+    INTERFACE
+    "-framework Foundation"
+    "-framework CFNetwork"
+    z
+    )
+if (HC_WEBSOCKETS)
+    target_link_libraries("${PROJECT_NAME}" INTERFACE "-framework Security")
+endif()
+
 set_target_properties(
     "${PROJECT_NAME}"
     PROPERTIES
@@ -106,9 +156,9 @@ set_target_properties(
     )
 
 set(IOS_MM_SOURCE_FILES
-    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer.mm"
-    "${PATH_TO_ROOT}/Source/Task/iOS/ios_WaitTimer_target.mm"
     "${PATH_TO_ROOT}/Source/HTTP/Apple/http_apple.mm"
+    "${PATH_TO_ROOT}/Source/HTTP/Apple/request_body_stream.mm"
+    "${PATH_TO_ROOT}/Source/HTTP/Apple/session_delegate.mm"
     "${PATH_TO_ROOT}/Source/Common/Apple/utils_apple.mm"
     )
 set_source_files_properties(${IOS_MM_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-fobjc-arc")

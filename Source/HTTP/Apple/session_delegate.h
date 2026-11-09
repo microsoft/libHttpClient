@@ -3,6 +3,7 @@
 
 #pragma once
 #import <Foundation/Foundation.h>
+#include "Common/Apple/objc_class_prefix_apple.h"
 
 @interface SessionDelegate : NSObject<NSURLSessionTaskDelegate, NSURLSessionDelegate, NSURLSessionDataDelegate>
 

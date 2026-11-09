@@ -418,6 +418,7 @@
 		5DC334502B9A4D4D0047B20C /* types_generic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types_generic.h; sourceTree = "<group>"; };
 		637064EE2B92BC4500DBF1E5 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		67EE817E2362599C00A5F3DE /* libSSL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSL.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		6E51AB9C03FBD7E75C8FC297 /* objc_class_prefix_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = objc_class_prefix_apple.h; sourceTree = "<group>"; };
 		727977162A4E2FCF00EB7079 /* websocketpp_websocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = websocketpp_websocket.h; sourceTree = "<group>"; };
 		727978E72A4E32A800EB7079 /* PlatformComponents_Apple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformComponents_Apple.cpp; sourceTree = "<group>"; };
 		727978E82A4E32A800EB7079 /* PlatformTrace_Apple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformTrace_Apple.cpp; sourceTree = "<group>"; };
@@ -906,6 +907,7 @@
 		A23D0BA32B925EAF00624E90 /* Apple */ = {
 			isa = PBXGroup;
 			children = (
+				6E51AB9C03FBD7E75C8FC297 /* objc_class_prefix_apple.h */,
 				A23D0BA52B925EC900624E90 /* utils_apple.h */,
 				A23D0BA42B925EC900624E90 /* utils_apple.mm */,
 			);
@@ -1969,7 +1971,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2028,7 +2030,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = "-fembed-bitcode";
@@ -2067,7 +2069,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -2107,7 +2109,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
@@ -2185,7 +2187,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2213,7 +2215,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2265,7 +2267,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
@@ -2308,7 +2310,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				KEEP_PRIVATE_EXTERNS = NO;
 				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/openssl/lib";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
@@ -2326,7 +2328,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2355,7 +2357,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2398,7 +2400,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -2434,7 +2436,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -2540,7 +2542,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -2577,7 +2579,7 @@
 					"$(SRCROOT)/../../Source/**",
 					"$(SRCROOT)/../../Source/Global",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_CPLUSPLUSFLAGS = (
