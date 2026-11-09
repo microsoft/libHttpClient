@@ -117,6 +117,10 @@ For Linux CMake builds, `HC_ENABLE_WEBSOCKET_COMPRESSION` is enabled by default.
 
 For Apple Xcode builds, the websocket-enabled `libHttpClient_iOS` and `libHttpClient_macOS` targets define `HC_ENABLE_WEBSOCKET_COMPRESSION` and include the vendored `External/zlib` headers by default, so built-in compression support is enabled on iOS and macOS as well. To compile it out, set the `HC_ENABLE_WEBSOCKET_COMPRESSION` build setting to `NO` (for example `xcodebuild ... HC_ENABLE_WEBSOCKET_COMPRESSION=NO`, or in an `.xcconfig`).
 
+The iOS CMake build (`Build/libHttpClient.iOS.CMake`) builds without WebSockets by default. Set `-DHC_WEBSOCKETS=ON` to build the websocketpp provider, and `-DHC_OPENSSL_INCLUDE_DIR=<dir>` to point it at your OpenSSL headers; the app then links that OpenSSL's `libssl` and `libcrypto`.
+
+Objective-C class names are global to a process, so an app that links two copies of libHttpClient (for example, one inside another framework) gets duplicate classes. To give one copy unique class names, define `HC_OBJC_CLASS_PREFIX` when building it: `-DHC_OBJC_CLASS_PREFIX=Contoso_` for the iOS CMake build, or `GCC_PREPROCESSOR_DEFINITIONS='$(inherited) HC_OBJC_CLASS_PREFIX=Contoso_'` for Xcode. The classes are then named `Contoso_SessionDelegate` and so on. When it is not defined, the names are unchanged. See `Source/Common/Apple/objc_class_prefix_apple.h`.
+
 An example customization file hc_settings.props.example can be found at the root of the repository.
 
 ## How to clone repo

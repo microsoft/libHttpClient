@@ -3,6 +3,7 @@
 
 #import <CFNetwork/CFNetwork.h>
 #import <Foundation/Foundation.h>
+#include "Common/Apple/objc_class_prefix_apple.h"
 
 @interface ProxyConfiguration : NSObject
 + (instancetype) withHost:(NSString* _Nonnull) host
