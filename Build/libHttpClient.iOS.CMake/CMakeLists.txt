@@ -134,6 +134,20 @@ target_include_directories(
     "${COMMON_INCLUDE_DIRS}"
     )
 
+# System frameworks and libraries the library calls into, so CMake consumers link them
+# automatically. zlib is the SDK's copy (compression.cpp includes the system <zlib.h>).
+# WebSockets also needs Security for certificate validation.
+target_link_libraries(
+    "${PROJECT_NAME}"
+    INTERFACE
+    "-framework Foundation"
+    "-framework CFNetwork"
+    z
+    )
+if (HC_WEBSOCKETS)
+    target_link_libraries("${PROJECT_NAME}" INTERFACE "-framework Security")
+endif()
+
 set_target_properties(
     "${PROJECT_NAME}"
     PROPERTIES
