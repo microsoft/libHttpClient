@@ -159,6 +159,20 @@ HRESULT http_singleton::create(
     return singleton_access(singleton_access_mode::create, args, singleton);
 }
 
+#ifdef HC_UNITTEST_API
+namespace
+{
+std::atomic<http_singleton::CleanupProviderCleanupTestHook> g_cleanupProviderCleanupTestHook{ nullptr };
+std::atomic<void*> g_cleanupProviderCleanupTestHookContext{ nullptr };
+}
+
+void http_singleton::SetCleanupProviderCleanupTestHook(CleanupProviderCleanupTestHook hook, void* context) noexcept
+{
+    g_cleanupProviderCleanupTestHookContext.store(context, std::memory_order_release);
+    g_cleanupProviderCleanupTestHook.store(hook, std::memory_order_release);
+}
+#endif
+
 HRESULT http_singleton::cleanup_async(
     _In_ XAsyncBlock* async
 ) noexcept
@@ -245,6 +259,16 @@ HRESULT CALLBACK http_singleton::CleanupAsyncProvider(XAsyncOp op, const XAsyncP
         XAsyncComplete(data->async, S_OK, 0);
         return S_OK;
     }
+#ifdef HC_UNITTEST_API
+    case XAsyncOp::Cleanup:
+    {
+        if (auto hook = g_cleanupProviderCleanupTestHook.load(std::memory_order_acquire))
+        {
+            hook(g_cleanupProviderCleanupTestHookContext.load(std::memory_order_acquire));
+        }
+        return S_OK;
+    }
+#endif
     default:
     {
         return S_OK;

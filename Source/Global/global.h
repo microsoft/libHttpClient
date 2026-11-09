@@ -51,6 +51,13 @@ public:
     static HRESULT create(_In_opt_ HCInitArgs* args) noexcept;
     static HRESULT cleanup_async(_In_ XAsyncBlock* async) noexcept;
 
+#ifdef HC_UNITTEST_API
+    // Test seam: invoked on the cleanup worker by CleanupAsyncProvider's Cleanup op, which runs
+    // after the cleanup has signaled completion but while the worker still holds its async state.
+    using CleanupProviderCleanupTestHook = void(CALLBACK*)(void* context);
+    static void SetCleanupProviderCleanupTestHook(CleanupProviderCleanupTestHook hook, void* context) noexcept;
+#endif
+
     http_singleton(const http_singleton&) = delete;
     http_singleton& operator=(http_singleton) = delete;
     ~http_singleton();
