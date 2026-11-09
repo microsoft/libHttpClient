@@ -168,6 +168,7 @@ TestEnvironment::ResetResult TestEnvironment::ResetLibraryState(uint32_t cleanup
         HC_CALL::SetPerformStartTestHook(nullptr, nullptr);
         NetworkState::SetHttpPerformAdmittedTestHook(nullptr, nullptr);
         NetworkState::SetCleanupSnapshotTestHook(nullptr, nullptr);
+        http_singleton::SetCleanupProviderCleanupTestHook(nullptr, nullptr);
 #ifndef HC_NOWEBSOCKETS
         WebSocket::SetProviderCallTestHook(nullptr, nullptr);
 #endif

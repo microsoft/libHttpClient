@@ -55,6 +55,11 @@ try
         {
             XAsyncGetStatus(&async, true);
         }
+
+        // Completion wakes the wait above before the cleanup worker has returned and released
+        // its async state, which still holds a reference to this queue. Terminate and wait so
+        // HCCleanup does not return until every callback on the queue has fully unwound.
+        XTaskQueueTerminate(queue, true, nullptr, nullptr);
         XTaskQueueCloseHandle(queue);
     }
 }

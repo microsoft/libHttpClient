@@ -36,6 +36,9 @@ private:
 using namespace xbox::httpclient;
 static bool g_gotCall = false;
 
+// Live AsyncState count maintained by AsyncLib.cpp for leak checks.
+extern std::atomic<uint32_t> s_AsyncLibGlobalStateCount;
+
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_BEGIN
 
 // The default request limit is device-dependent: 12 on Xbox consoles, unlimited everywhere else.
@@ -77,6 +80,48 @@ public:
         VERIFY_SUCCEEDED(HCCleanupAsync(&cleanupAsyncBlock));
 
         VERIFY_SUCCEEDED(XAsyncGetStatus(&cleanupAsyncBlock, true));
+    }
+
+    // HCCleanup must not return while its cleanup worker still owns the cleanup AsyncState.
+    // XAsyncComplete wakes the HCCleanup waiter before the worker callback runs the provider's
+    // Cleanup op and drops its state reference. The hook holds the worker in that window, so a
+    // build without a worker-quiescence barrier returns from HCCleanup with the state alive.
+    DEFINE_TEST_CASE(TestCleanupWaitsForCleanupWorkerToReleaseAsyncState)
+    {
+        struct HookState
+        {
+            std::atomic<bool> entered{ false };
+            std::atomic<bool> returned{ false };
+        } hookState;
+
+        http_singleton::SetCleanupProviderCleanupTestHook([](void* context)
+        {
+            auto state = static_cast<HookState*>(context);
+            state->entered = true;
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            state->returned = true;
+        }, &hookState);
+
+        uint32_t baselineStateCount = s_AsyncLibGlobalStateCount.load();
+
+        VERIFY_SUCCEEDED(HCInitialize(nullptr));
+        HCCleanup();
+
+        bool workerDoneAtReturn = hookState.returned.load();
+        uint32_t stateCountAtReturn = s_AsyncLibGlobalStateCount.load();
+        bool initializedAtReturn = HCIsInitialized();
+
+        // Let a stalled worker finish before asserting so it never outlives hookState.
+        for (int i = 0; i < 500 && !hookState.returned; ++i)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        http_singleton::SetCleanupProviderCleanupTestHook(nullptr, nullptr);
+
+        VERIFY_IS_FALSE(initializedAtReturn);
+        VERIFY_IS_TRUE(hookState.entered.load());
+        VERIFY_IS_TRUE(workerDoneAtReturn);
+        VERIFY_ARE_EQUAL(baselineStateCount, stateCountAtReturn);
     }
 
     DEFINE_TEST_CASE(TestAsyncCleanupWithHttpCall)

@@ -147,6 +147,9 @@ STDAPI_(bool) HCIsInitialized() noexcept;
 /// Initialization is reference counted.  Each call to HCInitialize must be balanced with a
 /// corresponding call to HCCleanup or HCCleanupAsync.  Resources are not fully released until
 /// the last reference is closed.
+///
+/// HCCleanup does not return until the internal cleanup work has fully unwound, including the
+/// release of its async state.
 /// </remarks>
 /// <returns></returns>
 STDAPI_(void) HCCleanup() noexcept;
@@ -161,6 +164,10 @@ STDAPI_(void) HCCleanup() noexcept;
 /// Initialization is reference counted.  Each call to HCInitialize must be balanced with a
 /// corresponding call to HCCleanup or HCCleanupAsync.  Resources are not fully released until
 /// the last reference is closed.
+///
+/// Completion of the async block signals that cleanup is done, but the queue callback that
+/// completed it may still be unwinding and releasing its async state. To wait for that as
+/// well, terminate the queue with XTaskQueueTerminate(queue, true, ...) after completion.
 /// </remarks>
 STDAPI HCCleanupAsync(XAsyncBlock* async) noexcept;
 
