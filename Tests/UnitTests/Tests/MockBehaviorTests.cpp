@@ -178,6 +178,20 @@ void CALLBACK RecordMockMatched(
     }
 }
 
+// Request body read function that copies the requested bytes but reports one byte more than it was given.
+HRESULT CALLBACK OverReportingBodyRead(
+    HCCallHandle /*call*/,
+    size_t /*offset*/,
+    size_t bytesAvailable,
+    void* /*context*/,
+    uint8_t* destination,
+    size_t* bytesWritten)
+{
+    memset(destination, 'x', bytesAvailable);
+    *bytesWritten = bytesAvailable + 1;
+    return S_OK;
+}
+
 } // namespace
 
 DEFINE_TEST_CLASS(MockBehaviorTests)
@@ -434,6 +448,33 @@ public:
         VERIFY_ARE_EQUAL(2u, record.invocations);
 
         VERIFY_ARE_EQUAL(E_INVALIDARG, HCMockSetMockMatchedCallback(nullptr, &RecordMockMatched, nullptr));
+    }
+
+    DEFINE_TEST_CASE(TestMockMatchedCallbackRejectsOverReportedBodyRead)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestMockMatchedCallbackRejectsOverReportedBodyRead);
+        MockBehaviorScope scope;
+        scope.VerifyInitialized();
+
+        HCMockCallHandle mock = AddMock("mocked", "POST", "https://example.com/items", nullptr, 200);
+        MatchedCallbackRecord record{};
+        VERIFY_ARE_EQUAL(S_OK, HCMockSetMockMatchedCallback(mock, &RecordMockMatched, &record));
+
+        HCCallHandle call = nullptr;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCreate(&call));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRetryAllowed(call, false));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetUrl(call, "POST", "https://example.com/items"));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyReadFunction(call, &OverReportingBodyRead, 16, nullptr));
+        XAsyncBlock asyncBlock{};
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallPerformAsync(call, &asyncBlock));
+        VERIFY_ARE_EQUAL(S_OK, XAsyncGetStatus(&asyncBlock, true));
+
+        // The invalid body read stops the mock from matching, so the matched callback never sees the body.
+        VERIFY_ARE_EQUAL(0u, record.invocations);
+        uint32_t status = 0;
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &status));
+        VERIFY_ARE_EQUAL(c_unmockedStatus, status);
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallCloseHandle(call));
     }
 
     DEFINE_TEST_CASE(TestMockedResponseSurfacesOnCall)

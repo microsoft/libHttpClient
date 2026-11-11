@@ -176,6 +176,7 @@ HRESULT Mock_Internal_ReadRequestBodyIntoMemory(
             tempBodyBytes.data() + offset,
             &bytesWritten
         ));
+        RETURN_IF_FAILED(ValidateRequestBodyBytesWritten(originalCall, bodySize - offset, bytesWritten));
 
         offset += bytesWritten;
     }

@@ -322,6 +322,13 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
             return;
         }
 
+        hr = ValidateRequestBodyBytesWritten(call, requestBodySize, bytesWritten);
+        if (FAILED(hr))
+        {
+            XAsyncComplete(context->asyncBlock, hr, 0);
+            return;
+        }
+
         // Return error if client provides less bytes than expected.
         if (bytesWritten < requestBodySize)
         {
@@ -597,6 +604,21 @@ HRESULT CALLBACK HC_CALL::ReadRequestBody(
 
     *bytesWritten = bytesToWrite;
 
+    return S_OK;
+}
+
+HRESULT ValidateRequestBodyBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ size_t bytesAvailable,
+    _In_ size_t bytesWritten
+) noexcept
+{
+    if (bytesWritten > bytesAvailable)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: request body read callback reported %llu bytes written but only %llu were available",
+            TO_ULL(call ? call->id : 0), TO_ULL(bytesWritten), TO_ULL(bytesAvailable));
+        return E_INVALIDARG;
+    }
     return S_OK;
 }
 

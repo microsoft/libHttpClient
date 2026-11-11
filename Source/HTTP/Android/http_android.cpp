@@ -254,6 +254,11 @@ HC_JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Na
                 destination.reset();
                 return ThrowIOException(env, "Read function failed");
             }
+            if (FAILED(ValidateRequestBodyBytesWritten(call, static_cast<size_t>(bytesAvailable), bytesWritten)))
+            {
+                destination.reset();
+                return ThrowIOException(env, "Read function reported more bytes than were available");
+            }
         }
         catch (...)
         {

@@ -306,6 +306,7 @@ struct BodySource
     Bytes data;
     HRESULT failWith{ S_OK };
     size_t shortBy{ 0 };
+    size_t overReportBy{ 0 };
     uint32_t reads{ 0 };
 };
 
@@ -335,7 +336,7 @@ HRESULT CALLBACK ReadFromBodySource(
     {
         memcpy(destination, source->data.data() + offset, n);
     }
-    *bytesWritten = n;
+    *bytesWritten = n + source->overReportBy;
     return S_OK;
 }
 
@@ -595,6 +596,19 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyReadFunction(call, &ReadFromBodySource, source.data.size(), &source));
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Low));
             VERIFY_ARE_EQUAL(E_FAIL, env.Perform(call));
+        }
+
+        // A read function that reports more bytes than the buffer it was given fails with E_INVALIDARG.
+        {
+            BodySource source;
+            source.data = ToBytes(MakeText(1024));
+            source.overReportBy = 1;
+            HCCallHandle call = env.NewCall();
+            VERIFY_IS_NOT_NULL(call);
+            VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyReadFunction(call, &ReadFromBodySource, source.data.size(), &source));
+            VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Low));
+            VERIFY_ARE_EQUAL(E_INVALIDARG, env.Perform(call));
+            VERIFY_ARE_EQUAL_UINT(1u, source.reads);
         }
 
         VERIFY_ARE_EQUAL_UINT(0u, env.provider.performCount);

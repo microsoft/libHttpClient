@@ -67,6 +67,10 @@
         {
             return 0;
         }
+        if (FAILED(ValidateRequestBodyBytesWritten(_call, static_cast<size_t>(len), bytesWritten)))
+        {
+            return 0;
+        }
     }
     catch (...)
     {

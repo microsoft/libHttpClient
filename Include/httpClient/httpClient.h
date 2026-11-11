@@ -512,7 +512,8 @@ STDAPI HCHttpCallResponseSetGzipCompressed(
 /// <param name="bytesAvailable">The maximum number of bytes that can be written to the destination.</param>
 /// <param name="context">The context associated with this read function.</param>
 /// <param name="destination">The destination where data may be written to.</param>
-/// <param name="bytesWritten">The number of bytes that were actually written to destination.</param>
+/// <param name="bytesWritten">The number of bytes that were actually written to destination. This must not exceed
+/// bytesAvailable; if it does, the HTTP call fails.</param>
 /// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCHttpCallRequestBodyReadFunction)(
