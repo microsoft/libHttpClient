@@ -270,8 +270,8 @@ E2E_TEST(http_request_body_read_function)
 
 E2E_TEST(http_request_body_read_function_overreports)
 {
-    // A read function that reports more bytes than the buffer it was given is rejected with
-    // E_INVALIDARG before any of its data is sent.
+    // A read function that reports more bytes than the buffer it was given is rejected and the
+    // request fails instead of being sent.
     struct Source
     {
         static HRESULT CALLBACK Read(HCCallHandle, size_t, size_t bytesAvailable, void*, uint8_t* destination, size_t* bytesWritten)
@@ -286,7 +286,13 @@ E2E_TEST(http_request_body_read_function_overreports)
     call.Url("PUT", HttpUrl("/echo")).NoRetry();
     E2E_CHECK_HR(HCHttpCallRequestSetRequestBodyReadFunction(call, Source::Read, 1024, nullptr));
     HRESULT hr = call.Perform();
+#if defined(E2E_HTTP_WINHTTP)
+    // WinHTTP completes the call with the validation error itself.
     E2E_CHECK_MSG(hr == E_INVALIDARG || call.NetworkError() == E_INVALIDARG, "an over-reporting read function was not rejected: hr=%s %s", HrToString(hr).c_str(), call.Describe().c_str());
+#else
+    // Other providers abort the transfer and report it as a network error (curl: E_FAIL).
+    E2E_CHECK_MSG(FAILED(hr) || FAILED(call.NetworkError()), "an over-reporting read function was not rejected: hr=%s %s", HrToString(hr).c_str(), call.Describe().c_str());
+#endif
     E2E_CHECK_MSG(call.Status() != 200, "an over-reporting read function was sent: %s", call.Describe().c_str());
 }
 
