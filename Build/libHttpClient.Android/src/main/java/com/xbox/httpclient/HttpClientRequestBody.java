@@ -39,7 +39,7 @@ public final class HttpClientRequestBody extends RequestBody
                 throw new NullPointerException();
             }
 
-            if (destinationOffset < 0 || length < 0 || (destinationOffset + length) > destination.length) {
+            if (destinationOffset < 0 || length < 0 || length > destination.length - destinationOffset) {
                 throw new IndexOutOfBoundsException();
             }
 
