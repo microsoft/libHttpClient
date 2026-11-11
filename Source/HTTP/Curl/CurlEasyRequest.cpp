@@ -254,6 +254,10 @@ size_t CurlEasyRequest::ReadCallback(char* buffer, size_t size, size_t nitems, v
             HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlEasyRequest::ReadCallback: client RequestBodyRead callback failed");
             return CURL_READFUNC_ABORT;
         }
+        if (FAILED(ValidateRequestBodyBytesWritten(request->m_hcCallHandle, bufferSize, bytesWritten)))
+        {
+            return CURL_READFUNC_ABORT;
+        }
         request->m_bodyCopied += bytesWritten;
     }
     catch (...)

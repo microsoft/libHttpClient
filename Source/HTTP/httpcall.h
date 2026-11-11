@@ -163,3 +163,11 @@ private:
 
     xbox::httpclient::IHttpProvider& m_provider;
 };
+
+// Checks the byte count returned by a request body read callback. Returns E_INVALIDARG if the callback
+// reported writing more bytes than the destination buffer could hold.
+HRESULT ValidateRequestBodyBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ size_t bytesAvailable,
+    _In_ size_t bytesWritten
+) noexcept;

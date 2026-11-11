@@ -598,11 +598,19 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR)
 }
 
 // complete_task is used to complete the XAsync operation associated with either the HttpCallPerformAsync call (for pure HTTP WinHttpConnections)
-// or the WebSocketConnectAsync call (for WebSocket WinHttpConnections). In either case, XAsyncComplete should be called
-// exactly once. We reset m_asyncBlock after completing it so it doesn't get completed again.
+// or the WebSocketConnectAsync call (for WebSocket WinHttpConnections). In either case, XAsyncComplete must be called
+// exactly once. WinHttp callbacks and the thread that started the request can both reach this function, so the caller
+// takes ownership of m_asyncBlock under m_lock and clears it before completing. Only that caller completes the operation.
 void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platformSpecificError)
 {
-    if (m_asyncBlock != nullptr)
+    XAsyncBlock* asyncBlock{ nullptr };
+    {
+        win32_cs_autolock autoCriticalSection(&m_lock);
+        asyncBlock = m_asyncBlock;
+        m_asyncBlock = nullptr;
+    }
+
+    if (asyncBlock != nullptr)
     {
         // WebSocket Connect XAyncProvider will pull connect result from m_call
         HCHttpCallResponseSetNetworkErrorCode(m_call, translatedHR, platformSpecificError);
@@ -614,8 +622,7 @@ void WinHttpConnection::complete_task(_In_ HRESULT translatedHR, uint32_t platfo
             resultSize = sizeof(WebSocketCompletionResult);
         }
 #endif
-        XAsyncComplete(m_asyncBlock, S_OK, resultSize);
-        m_asyncBlock = nullptr;
+        XAsyncComplete(asyncBlock, S_OK, resultSize);
     }
     else
     {
@@ -760,6 +767,13 @@ void WinHttpConnection::_multiple_segment_write_data(_In_ WinHttpConnection* pRe
     catch (...)
     {
         pRequestContext->complete_task(E_FAIL, static_cast<uint32_t>(E_FAIL));
+        return;
+    }
+
+    hr = ValidateRequestBodyBytesWritten(pRequestContext->m_call, safeSize, bytesWritten);
+    if (FAILED(hr))
+    {
+        pRequestContext->complete_task(hr);
         return;
     }
 
