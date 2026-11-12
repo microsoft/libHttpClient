@@ -609,11 +609,6 @@ CATCH_RETURN()
 
 Result<XPlatSecurityInformation> WinHttpProvider::GetSecurityInformation(const char* url)
 {
-    constexpr uint32_t defaultSecurityProtocolFlags =
-        WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
-        WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 |
-        WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
-
 #if HC_PLATFORM == HC_PLATFORM_GDK
     bool useXNetworking = XGameRuntimeIsFeatureAvailable(XGameRuntimeFeature::XNetworking);
     if (useXNetworking)
@@ -646,8 +641,8 @@ Result<XPlatSecurityInformation> WinHttpProvider::GetSecurityInformation(const c
     UNREFERENCED_PARAMETER(url);
 #endif
 
-    // Fallback to default security protocol flags
-    return XPlatSecurityInformation{ defaultSecurityProtocolFlags };
+    // Leave protocol selection to WINHTTP_FLAG_SECURE_DEFAULTS (or the downlevel fallback)
+    return XPlatSecurityInformation{ 0 };
 }
 
 Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, const char* url)
@@ -670,7 +665,7 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
 #endif
     
     std::lock_guard<std::mutex> lock(m_lock);
-    SessionKey const sessionKey{ securityProtocolFlags, isHttps };
+    SessionKey const sessionKey{ isHttps ? securityProtocolFlags : 0u, isHttps };
     auto iter = m_hSessions.find(sessionKey);
     if (iter != m_hSessions.end())
     {
@@ -710,12 +705,13 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
     {
         // WINHTTP_FLAG_SECURE_DEFAULTS exists only on newer Windows versions;
         // on earlier OS releases we will receive ERROR_INVALID_PARAMETER and should continue without it.
+        openFlags = (openFlags & ~WINHTTP_FLAG_SECURE_DEFAULTS) | WINHTTP_FLAG_ASYNC;
         hSession = WinHttpOpen(
             nullptr,
             accessType,
             wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
             WINHTTP_NO_PROXY_BYPASS,
-            WINHTTP_FLAG_ASYNC);
+            openFlags);
     }
 
     if (hSession == nullptr)
@@ -726,62 +722,25 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
         return hr;
     }
 
-    // Only set secure protocols for HTTPS requests
-    // For HTTP requests, ignore the security protocol settings as they don't apply
-    if (isHttps)
+    // Only set secure protocols for HTTPS requests when specific protocol flags are requested
+    // (e.g. from XNetworkingQuerySecurityInformationForUrlAsync) or when WINHTTP_FLAG_SECURE_DEFAULTS
+    // was not supported by the OS. When WINHTTP_FLAG_SECURE_DEFAULTS is active and no per-URL override
+    // is present, let the OS manage protocol selection.
+    if (isHttps && (securityProtocolFlags != 0 || (openFlags & WINHTTP_FLAG_SECURE_DEFAULTS) != WINHTTP_FLAG_SECURE_DEFAULTS))
     {
+        uint32_t protocolFlagsToSet = securityProtocolFlags != 0 ? securityProtocolFlags : WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
         auto result = WinHttpSetOption(
             hSession,
             WINHTTP_OPTION_SECURE_PROTOCOLS,
-            &securityProtocolFlags,
-            sizeof(securityProtocolFlags));
+            &protocolFlagsToSet,
+            sizeof(protocolFlagsToSet));
         if (!result)
         {
             DWORD lastErr = GetLastError();
-            // Occasionally WinHttpSetOption(WINHTTP_OPTION_SECURE_PROTOCOLS) can fail on some
-            // platforms / configurations (e.g. older OS versions or when specific protocol
-            // flags are already implicitly enabled). The caller requested that we treat this
-            // as non-fatal: emit a warning and proceed with the session using WinHTTP defaults.
-            // If GetLastError() returned 0 (no extended error), fabricate a generic failure
-            // HRESULT just for logging purposes.
             HRESULT hr = lastErr != 0 ? HRESULT_FROM_WIN32(lastErr) : E_FAIL;
-            HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS failed; retrying with WinHttpOpen WINHTTP_FLAG_ASYNC session");
-
-            // Retry strategy: Some platforms may not allow modifying secure protocols after
-            // opening the session with WINHTTP_FLAG_SECURE_DEFAULTS. Re-open a plain ASYNC
-            // session (no secure defaults) and try setting the option again.
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "WinHttpProvider WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS");
             WinHttpCloseHandle(hSession);
-            hSession = WinHttpOpen(
-                nullptr,
-                accessType,
-                wProxyName.length() > 0 ? wProxyName.c_str() : WINHTTP_NO_PROXY_NAME,
-                WINHTTP_NO_PROXY_BYPASS,
-                WINHTTP_FLAG_ASYNC);
-            if (hSession == nullptr)
-            {
-                DWORD openErr = GetLastError();
-                HRESULT openHr = openErr != 0 ? HRESULT_FROM_WIN32(openErr) : E_FAIL;
-                HC_TRACE_ERROR_HR(HTTPCLIENT, openHr, "WinHttpProvider fallback WinHttpOpen with WINHTTP_FLAG_ASYNC failed");
-                return openHr;
-            }
-            else
-            {
-                auto retryResult = WinHttpSetOption(
-                    hSession,
-                    WINHTTP_OPTION_SECURE_PROTOCOLS,
-                    &securityProtocolFlags,
-                    sizeof(securityProtocolFlags));
-                if (!retryResult)
-                {
-                    DWORD retryErr = GetLastError();
-                    HRESULT retryHr = retryErr != 0 ? HRESULT_FROM_WIN32(retryErr) : E_FAIL;
-                    HC_TRACE_WARNING_HR(HTTPCLIENT, retryHr, "WinHttpProvider retry WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS still failed; proceeding with WinHTTP defaults");
-                }
-                else
-                {
-                    HC_TRACE_INFORMATION(HTTPCLIENT, "WinHttpProvider retry WinHttpSetOption WINHTTP_OPTION_SECURE_PROTOCOLS succeeded after reopening session");
-                }
-            }
+            return hr;
         }
     }
 
