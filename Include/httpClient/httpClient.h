@@ -497,7 +497,11 @@ STDAPI HCHttpCallRequestEnableGzipCompression(
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="level">Boolean denoting whether a compressed response is expected.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_HC_NOT_INITIALISED.</returns>
-/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.
+/// When enabled, a response with a "Content-Encoding: gzip" header is decompressed before the call completes.
+/// If the body cannot be decompressed, the call completes with a failed network error code and an empty response
+/// body. This happens if the body is not valid gzip data, or if it would decompress to more than 100 times its
+/// compressed size and more than 64 MB.</remarks>
 STDAPI HCHttpCallResponseSetGzipCompressed(
     _In_ HCCallHandle call,
     _In_ bool compress
