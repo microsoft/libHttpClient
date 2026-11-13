@@ -1742,10 +1742,11 @@ void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionStatu
 
         if (wasProcessing == 0)
         {
-            while (DrainOneItem(status));
+            // Only the owner consumes notifications, and only after an empty
+            // drain. Skipped workers leave their wakes counted so queued work
+            // cannot be stranded. Decrementing to zero releases ownership.
+            while (DrainOneItem(status) || --m_processingSerializedTbCallback != 0);
         }
-
-        m_processingSerializedTbCallback--;
     }
     else
     {
