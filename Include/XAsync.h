@@ -15,6 +15,16 @@ extern "C"
 /// An XAsyncBlock defines a piece of asynchronous work.  An async block can be used
 /// to poll for an async call's status and retrieve call results.  An XAsyncBlock
 /// needs to remain valid for the lifetime of an async call.
+///
+/// If a completion callback is set, the lifetime of the call extends until that
+/// callback has returned, because the callback receives this XAsyncBlock pointer.
+/// The call's status can stop being E_PENDING before the callback runs (for
+/// example, when the completion port of the queue has not been dispatched yet).
+/// Do not reuse, modify, or free the XAsyncBlock until the completion callback
+/// has been invoked; reusing it from within the completion callback is allowed.
+/// If no completion callback is set, the block may be reused or freed once
+/// XAsyncGetStatus no longer returns E_PENDING and any result has been
+/// retrieved.
 /// </summary>
 struct XAsyncBlock;
 
@@ -22,6 +32,12 @@ struct XAsyncBlock;
 /// Callback routine that is invoked when an async call completes. Use XAsyncGetStatus
 /// or the async call's Get*Result method to obtain the results of the call.  If the
 /// call was canceled these methods will return E_ABORT.
+///
+/// The completion callback marks the end of the async call. Until it has been
+/// invoked, the XAsyncBlock must not be reused for another call or freed, even if
+/// XAsyncGetStatus(asyncBlock, false) has already returned a completed status.
+/// When a completion callback is set, use the callback (not polling
+/// XAsyncGetStatus) to determine when the call has finished.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to the async call.</param>
 /// <seealso cref='XAsyncBlock' />
@@ -49,7 +65,9 @@ struct XAsyncBlock
     void* context;
 
     /// <summary>
-    /// Optional callback that will be invoked when the call completes
+    /// Optional callback that will be invoked when the call completes. If set,
+    /// this XAsyncBlock must remain valid and unused by other calls until the
+    /// callback has been invoked.
     /// </summary>
     XAsyncCompletionRoutine* callback;
 
@@ -61,11 +79,18 @@ struct XAsyncBlock
 
 /// <summary>
 /// Returns the status of the asynchronous operation, optionally waiting
-/// for it to complete.  Once complete, you may call theh api's get result
+/// for it to complete.  Once complete, you may call the api's get result
 /// api if the async call has a resulting data payload. If it doesn't, calling
 /// a get result method is unneeded.  If a completion callback was set into
 /// the asyncBlock, a wait will wait until the completion callback has
 /// returned.
+///
+/// Without a wait, the status reflects the result of the call and can stop
+/// being E_PENDING before the completion callback has been invoked (the callback
+/// is queued to the completion port of the task queue). A completed status from
+/// a non-waiting call therefore does not mean the XAsyncBlock can be reused or
+/// freed when a completion callback is set; wait for the callback to be invoked
+/// first. Avoid mixing polling and a completion callback for the same call.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to the async call.</param>
 /// <param name='wait'>If true, XAsyncGetStatus waits until the async call either completes or is canceled.</param>
