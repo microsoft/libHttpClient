@@ -543,12 +543,26 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
                 {
                     http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
 
-                    Compression::DecompressFromGzip(
+                    HRESULT decompressHr = Compression::DecompressFromGzip(
                         call->responseBodyBytes.data(),
                         call->responseBodyBytes.size(),
+                        Compression::MaxDecompressedSize(call->responseBodyBytes.size()),
                         uncompressedResponseBodyBuffer);
 
-                    call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
+                    if (FAILED(decompressHr))
+                    {
+                        // The body could not be decoded (corrupt, truncated, or larger than the decompression limit).
+                        // Report it as a network error rather than returning an empty body as if it were valid.
+                        if (call->traceCall)
+                        {
+                            HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::PerformSingleRequestComplete [ID %llu] Failed to decompress gzip response body (hr=0x%08x)", TO_ULL(call->id), decompressHr);
+                        }
+                        if (SUCCEEDED(call->networkErrorCode))
+                        {
+                            call->networkErrorCode = decompressHr;
+                        }
+                    }
+
                     call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
                     // Drop any response string cached from the compressed bytes (e.g. by a routed handler)
                     call->responseString.clear();
