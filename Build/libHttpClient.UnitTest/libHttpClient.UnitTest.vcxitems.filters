@@ -59,6 +59,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Source\HTTP\Curl\CurlMulti.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Tests\CurlMultiTests.cpp">
+      <Filter>Source\UnitTests\Tests</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Tests\UnitTests\Support\iso8601.cpp">
       <Filter>Source\UnitTests\Support</Filter>
     </ClCompile>

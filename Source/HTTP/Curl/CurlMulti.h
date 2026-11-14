@@ -43,6 +43,7 @@ private:
     XTaskQueueHandle m_queue{ nullptr };
     std::mutex m_mutex;
     http_internal_map<CURL*, HC_UNIQUE_PTR<CurlEasyRequest>> m_easyRequests;
+    bool m_performScheduled{ false };
     uint32_t m_taskQueueCallbacksPending{ 0 };
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr };
 };

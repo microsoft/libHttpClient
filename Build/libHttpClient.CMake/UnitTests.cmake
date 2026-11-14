@@ -57,6 +57,7 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
         "${PATH_TO_ROOT}/Source/Platform/Generic/PlatformTrace_Generic.cpp"
         "${PATH_TO_ROOT}/Source/Task/ThreadPool_stl.cpp"
         "${PATH_TO_ROOT}/Source/Task/WaitTimer_stl.cpp"
+        "${PATH_TO_ROOT}/Source/HTTP/Curl/CurlMulti.cpp"
         "${PATH_TO_ROOT}/Tests/UnitTests/Support/Portable/UnitTestMain_Portable.cpp"
         "${PATH_TO_ROOT}/Tests/UnitTests/Support/TestEnvironment.cpp"
         ${UT_TEST_SOURCE_FILES}
@@ -75,6 +76,7 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
         "${PATH_TO_ROOT}/Tests/UnitTests/Support"
         "${PATH_TO_ROOT}/Tests/UnitTests"
         "${PATH_TO_ROOT}/Tests/Shared"
+        "${PATH_TO_ROOT}/External/curl/include"
         )
 
     # Same defines as libHttpClient.UnitTest.vcxitems + the TE project. Like those projects (and the
@@ -84,6 +86,8 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
         "${UT_TARGET}"
         PRIVATE
         HC_UNITTEST_API
+        # CurlMultiTests supplies fake curl entry points; no libcurl is linked.
+        CURL_STATICLIB
         UNITTEST_PORTABLE
         # The sources are compiled straight into the test binary (no framework); on Apple async.h
         # otherwise includes <httpClient/XAsync.h> from the framework. Harmless elsewhere.

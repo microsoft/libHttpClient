@@ -68,8 +68,12 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest)
 
     m_easyRequests.emplace(easyRequest->Handle(), std::move(easyRequest));
 
-    // Schedule the perform callback immediately
-    ScheduleTaskQueueCallback(std::move(lock), 0);
+    // A queued/running driver will pick up new requests within PERFORM_DELAY_MS.
+    if (!m_performScheduled)
+    {
+        m_performScheduled = true;
+        ScheduleTaskQueueCallback(std::move(lock), 0);
+    }
 
     return S_OK;
 }
@@ -268,6 +272,11 @@ HRESULT CurlMulti::Perform() noexcept
         uint32_t delay = workAvailable ? 0 : PERFORM_DELAY_MS;
         ScheduleTaskQueueCallback(std::move(lock), delay);
     }
+    else
+    {
+        // Retire under the same lock as AddRequest so an idle-to-active transition cannot lose its wakeup.
+        m_performScheduled = false;
+    }
 
     return S_OK;
 }
@@ -275,6 +284,7 @@ HRESULT CurlMulti::Perform() noexcept
 void CurlMulti::FailAllRequests(HRESULT hr) noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
+    m_performScheduled = false;
 
     if (!m_easyRequests.empty())
     {
