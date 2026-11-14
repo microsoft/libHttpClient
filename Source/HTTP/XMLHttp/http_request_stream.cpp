@@ -81,6 +81,10 @@ HRESULT STDMETHODCALLTYPE http_request_stream::Read(
         {
             return STG_E_READFAULT;
         }
+        if (FAILED(ValidateRequestBodyBytesWritten(m_call, cb, bytesWritten)))
+        {
+            return STG_E_READFAULT;
+        }
     }
     catch (...)
     {

@@ -129,7 +129,10 @@ STDAPI XAsyncSchedule(
 /// <summary>
 /// Called when async work is completed and the results can be returned.
 /// The caller should supply the resulting data payload size.  If the call
-/// has no data payload, pass zero.
+/// has no data payload, pass zero.  This sets the call's status immediately,
+/// but any completion callback is queued to the completion port of the task
+/// queue and runs later; the XAsyncBlock remains in use until that callback
+/// has been invoked.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to XAsyncBegin.</param>
 /// <param name='result'>The resut of the call.  This should not be E_PENDING as that result is reserved for an incomplete call. If you are canceling this call you should pass E_ABORT.</param>
@@ -144,7 +147,8 @@ STDAPI_(void) XAsyncComplete(
 /// Returns the result data for the asynchronous operation.  After this call
 /// the async block is completed and no longer associated with the 
 /// operation. The token parameter should match the token passed into
-/// XAsyncBegin.
+/// XAsyncBegin.  If a completion callback was set, the async block still
+/// must not be reused or freed until that callback has been invoked.
 /// </summary>
 /// <param name='asyncBlock'>A pointer to the XAsyncBlock that was passed to XAsyncBegin.</param>
 /// <param name='identity'>An optional pointer used to match this result call with a prior XAsyncBegin call. If an identity pointer was passed to XAsyncBegin, the same pointer must be passed here.</param>

@@ -27,7 +27,7 @@ class HttpClientResponse
                 throw new NullPointerException();
             }
 
-            if (sourceOffset < 0 || sourceLength < 0 || (sourceOffset + sourceLength) > source.length) {
+            if (sourceOffset < 0 || sourceLength < 0 || sourceLength > source.length - sourceOffset) {
                 throw new IndexOutOfBoundsException();
             }
 

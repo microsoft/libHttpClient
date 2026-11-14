@@ -322,6 +322,13 @@ void CALLBACK HC_CALL::CompressRequestBody(void* c, bool canceled)
             return;
         }
 
+        hr = ValidateRequestBodyBytesWritten(call, requestBodySize, bytesWritten);
+        if (FAILED(hr))
+        {
+            XAsyncComplete(context->asyncBlock, hr, 0);
+            return;
+        }
+
         // Return error if client provides less bytes than expected.
         if (bytesWritten < requestBodySize)
         {
@@ -536,12 +543,26 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
                 {
                     http_internal_vector<uint8_t> uncompressedResponseBodyBuffer;
 
-                    Compression::DecompressFromGzip(
+                    HRESULT decompressHr = Compression::DecompressFromGzip(
                         call->responseBodyBytes.data(),
                         call->responseBodyBytes.size(),
+                        Compression::MaxDecompressedSize(call->responseBodyBytes.size()),
                         uncompressedResponseBodyBuffer);
 
-                    call->responseBodyBytes.resize(uncompressedResponseBodyBuffer.size());
+                    if (FAILED(decompressHr))
+                    {
+                        // The body could not be decoded (corrupt, truncated, or larger than the decompression limit).
+                        // Report it as a network error rather than returning an empty body as if it were valid.
+                        if (call->traceCall)
+                        {
+                            HC_TRACE_ERROR(HTTPCLIENT, "HC_CALL::PerformSingleRequestComplete [ID %llu] Failed to decompress gzip response body (hr=0x%08x)", TO_ULL(call->id), decompressHr);
+                        }
+                        if (SUCCEEDED(call->networkErrorCode))
+                        {
+                            call->networkErrorCode = decompressHr;
+                        }
+                    }
+
                     call->responseBodyBytes = std::move(uncompressedResponseBodyBuffer);
                     // Drop any response string cached from the compressed bytes (e.g. by a routed handler)
                     call->responseString.clear();
@@ -597,6 +618,21 @@ HRESULT CALLBACK HC_CALL::ReadRequestBody(
 
     *bytesWritten = bytesToWrite;
 
+    return S_OK;
+}
+
+HRESULT ValidateRequestBodyBytesWritten(
+    _In_ HCCallHandle call,
+    _In_ size_t bytesAvailable,
+    _In_ size_t bytesWritten
+) noexcept
+{
+    if (bytesWritten > bytesAvailable)
+    {
+        HC_TRACE_ERROR(HTTPCLIENT, "HCHttpCallPerform [ID %llu]: request body read callback reported %llu bytes written but only %llu were available",
+            TO_ULL(call ? call->id : 0), TO_ULL(bytesWritten), TO_ULL(bytesAvailable));
+        return E_INVALIDARG;
+    }
     return S_OK;
 }
 

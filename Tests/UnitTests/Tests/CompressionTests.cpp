@@ -10,6 +10,7 @@
 #include "Platform/ExternalHttpProvider.h"
 #include <httpClient/httpProvider.h>
 #include <algorithm>
+#include <limits>
 #include <random>
 #include <string>
 #include <vector>
@@ -306,6 +307,7 @@ struct BodySource
     Bytes data;
     HRESULT failWith{ S_OK };
     size_t shortBy{ 0 };
+    size_t overReportBy{ 0 };
     uint32_t reads{ 0 };
 };
 
@@ -335,7 +337,7 @@ HRESULT CALLBACK ReadFromBodySource(
     {
         memcpy(destination, source->data.data() + offset, n);
     }
-    *bytesWritten = n;
+    *bytesWritten = n + source->overReportBy;
     return S_OK;
 }
 
@@ -597,6 +599,19 @@ public:
             VERIFY_ARE_EQUAL(E_FAIL, env.Perform(call));
         }
 
+        // A read function that reports more bytes than the buffer it was given fails with E_INVALIDARG.
+        {
+            BodySource source;
+            source.data = ToBytes(MakeText(1024));
+            source.overReportBy = 1;
+            HCCallHandle call = env.NewCall();
+            VERIFY_IS_NOT_NULL(call);
+            VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestSetRequestBodyReadFunction(call, &ReadFromBodySource, source.data.size(), &source));
+            VERIFY_ARE_EQUAL(S_OK, HCHttpCallRequestEnableGzipCompression(call, HCCompressionLevel::Low));
+            VERIFY_ARE_EQUAL(E_INVALIDARG, env.Perform(call));
+            VERIFY_ARE_EQUAL_UINT(1u, source.reads);
+        }
+
         VERIFY_ARE_EQUAL_UINT(0u, env.provider.performCount);
     }
 
@@ -700,8 +715,8 @@ public:
         // without bound), because Z_BUF_ERROR was treated as "keep going".
         Bytes truncated(compressed.begin(), compressed.begin() + compressed.size() / 2);
 
-        // Current behaviour: a gzip body that fails to decode does not fail the call. The perform succeeds with the
-        // provider's status code and no network error, and the response body is empty.
+        // A gzip body that fails to decode fails the call with a network error, keeps the provider's status code, and
+        // leaves the response body empty.
         for (Bytes const* body : { &garbage, &badCrc, &truncated })
         {
             env.provider.responseBody = *body;
@@ -711,10 +726,10 @@ public:
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetGzipCompressed(call, true));
             VERIFY_ARE_EQUAL(S_OK, env.Perform(call));
 
-            HRESULT networkError{ E_FAIL };
+            HRESULT networkError{ S_OK };
             uint32_t platformError{ 1 };
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &networkError, &platformError));
-            VERIFY_ARE_EQUAL(S_OK, networkError);
+            VERIFY_ARE_EQUAL(E_FAIL, networkError);
             uint32_t status{ 0 };
             VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetStatusCode(call, &status));
             VERIFY_ARE_EQUAL_UINT(200u, status);
@@ -818,6 +833,67 @@ public:
 
             VERIFY_IS_TRUE(GetResponseBytes(call) == payload);
         }
+    }
+
+    DEFINE_TEST_CASE(TestGzipDecompressLimit)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGzipDecompressLimit);
+
+        size_t const mb = 1024 * 1024;
+        VERIFY_ARE_EQUAL_UINT(64 * mb, Compression::MaxDecompressedSize(0));
+        VERIFY_ARE_EQUAL_UINT(64 * mb, Compression::MaxDecompressedSize(64 * 1024));
+        VERIFY_ARE_EQUAL_UINT(100 * mb, Compression::MaxDecompressedSize(mb));
+        // Huge inputs must not overflow the limit back to a small value.
+        VERIFY_IS_TRUE(Compression::MaxDecompressedSize((std::numeric_limits<size_t>::max)()) > (std::numeric_limits<size_t>::max)() / 2);
+
+        // Output exactly at the limit succeeds; one byte over fails without returning partial data. 100000 bytes is
+        // not a multiple of the 16 KB inflate chunk, so the limit falls inside a chunk.
+        Bytes const original = ToBytes(MakeText(100000));
+        Bytes compressed = Gzip(original);
+
+        http_internal_vector<uint8_t> out;
+        VERIFY_ARE_EQUAL(S_OK, Compression::DecompressFromGzip(compressed.data(), compressed.size(), original.size(), out));
+        VERIFY_IS_TRUE(Bytes(out.begin(), out.end()) == original);
+
+        VERIFY_ARE_EQUAL(E_BOUNDS, Compression::DecompressFromGzip(compressed.data(), compressed.size(), original.size() - 1, out));
+        VERIFY_ARE_EQUAL_UINT(0u, out.size());
+
+        // A limit that is an exact multiple of the chunk size, with more data after it.
+        VERIFY_ARE_EQUAL(E_BOUNDS, Compression::DecompressFromGzip(compressed.data(), compressed.size(), 16384, out));
+        VERIFY_ARE_EQUAL_UINT(0u, out.size());
+
+        // An empty limit still decodes an empty body.
+        Bytes emptyCompressed = Gzip(Bytes{});
+        VERIFY_ARE_EQUAL(S_OK, Compression::DecompressFromGzip(emptyCompressed.data(), emptyCompressed.size(), 0, out));
+        VERIFY_ARE_EQUAL_UINT(0u, out.size());
+    }
+
+    DEFINE_TEST_CASE(TestGzipResponseOverDecompressLimit)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestGzipResponseOverDecompressLimit);
+
+        CompressionTestEnvironment env;
+        VERIFY_ARE_EQUAL(S_OK, env.InitResult());
+
+        // 80 MB of zeros compresses to well under 1 MB, so it is over both the 64 MB floor and 100x its compressed size.
+        Bytes const compressed = Gzip(Bytes(80 * 1024 * 1024, 0), Z_BEST_COMPRESSION);
+        VERIFY_IS_TRUE(compressed.size() * 100 < 64 * 1024 * 1024);
+
+        WriteSink sink;
+        env.provider.responseBody = compressed;
+        env.provider.responseContentEncoding = "gzip";
+        HCCallHandle call = env.NewCall();
+        VERIFY_IS_NOT_NULL(call);
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetResponseBodyWriteFunction(call, &WriteToSink, &sink));
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseSetGzipCompressed(call, true));
+        VERIFY_ARE_EQUAL(S_OK, env.Perform(call));
+
+        HRESULT networkError{ S_OK };
+        uint32_t platformError{ 0 };
+        VERIFY_ARE_EQUAL(S_OK, HCHttpCallResponseGetNetworkErrorCode(call, &networkError, &platformError));
+        VERIFY_ARE_EQUAL(E_BOUNDS, networkError);
+        VERIFY_ARE_EQUAL_UINT(0u, GetResponseBytes(call).size());
+        VERIFY_IS_TRUE(sink.data.empty());
     }
 
 #endif // !HC_NOZLIB

@@ -195,11 +195,23 @@ HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientRequest_ReportProgr
     }
 }
 
-jint ThrowIOException(JNIEnv* env, char const* message) {
-    if (jclass exClass = env->FindClass("java/io/IOException")) {
+jint ThrowJavaException(JNIEnv* env, char const* className, char const* message) {
+    if (jclass exClass = env->FindClass(className)) {
         return env->ThrowNew(exClass, message);
     }
     return -1;
+}
+
+jint ThrowIOException(JNIEnv* env, char const* message) {
+    return ThrowJavaException(env, "java/io/IOException", message);
+}
+
+// Returns true if [offset, offset + count) lies within the Java array. The Java callers check this too, but the
+// native code must not trust them: a bad range here would read or write past the end of the array.
+bool IsValidArrayRange(JNIEnv* env, jbyteArray array, jlong offset, jlong count)
+{
+    jlong const length = env->GetArrayLength(array);
+    return offset >= 0 && count >= 0 && offset <= length && count <= length - offset;
 }
 
 HC_JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead(
@@ -217,6 +229,21 @@ HC_JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Na
     if (call == nullptr)
     {
         return ThrowIOException(env, "Invalid call handle");
+    }
+
+    if (dst == nullptr)
+    {
+        return ThrowJavaException(env, "java/lang/NullPointerException", "Destination buffer was null");
+    }
+
+    if (srcOffset < 0 || !IsValidArrayRange(env, dst, dstOffset, bytesAvailable))
+    {
+        return ThrowJavaException(env, "java/lang/IndexOutOfBoundsException", "Invalid read range");
+    }
+
+    if (bytesAvailable == 0)
+    {
+        return 0;
     }
 
     // get read function
@@ -254,6 +281,11 @@ HC_JNIEXPORT jint JNICALL Java_com_xbox_httpclient_HttpClientRequestBody_00024Na
                 destination.reset();
                 return ThrowIOException(env, "Read function failed");
             }
+            if (FAILED(ValidateRequestBodyBytesWritten(call, static_cast<size_t>(bytesAvailable), bytesWritten)))
+            {
+                destination.reset();
+                return ThrowIOException(env, "Read function reported more bytes than were available");
+            }
         }
         catch (...)
         {
@@ -288,6 +320,18 @@ HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024Nativ
         return;
     }
 
+    if (src == nullptr)
+    {
+        ThrowJavaException(env, "java/lang/NullPointerException", "Source buffer was null");
+        return;
+    }
+
+    if (!IsValidArrayRange(env, src, sourceOffset, sourceLength))
+    {
+        ThrowJavaException(env, "java/lang/IndexOutOfBoundsException", "Invalid write range");
+        return;
+    }
+
     // get write function
     HCHttpCallResponseBodyWriteFunction writeFunction = nullptr;
     void* context = nullptr;
@@ -301,6 +345,12 @@ HC_JNIEXPORT void JNICALL Java_com_xbox_httpclient_HttpClientResponse_00024Nativ
     // perform write
     {
         ByteArray source = GetBytesFromJByteArray(env, src, false /* copyBack */);
+
+        if (source == nullptr)
+        {
+            ThrowIOException(env, "Buffer was null");
+            return;
+        }
 
         try
         {

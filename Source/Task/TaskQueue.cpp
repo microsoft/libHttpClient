@@ -1742,10 +1742,13 @@ void TaskQueuePortImpl::ProcessThreadPoolCallback(_In_ OS::ThreadPoolActionStatu
 
         if (wasProcessing == 0)
         {
-            while (DrainOneItem(status));
+            // Skipped workers leave their notifications counted for the owner.
+            // Short-circuiting decrements the count only after an empty drain.
+            // Decrementing to zero atomically releases ownership: a notification
+            // before release forces another drain; one after release acquires
+            // ownership.
+            while (DrainOneItem(status) || --m_processingSerializedTbCallback != 0);
         }
-
-        m_processingSerializedTbCallback--;
     }
     else
     {

@@ -497,7 +497,13 @@ STDAPI HCHttpCallRequestEnableGzipCompression(
 /// <param name="call">The handle of the HTTP call.</param>
 /// <param name="level">Boolean denoting whether a compressed response is expected.</param>
 /// <returns>Result code for this API operation. Possible values are S_OK, E_INVALIDARG, or E_HC_NOT_INITIALISED.</returns>
-/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.</remarks>
+/// <remarks>This must be called prior to calling HCHttpCallPerformAsync.
+/// When enabled, a response with a "Content-Encoding: gzip" header whose body starts with the gzip signature
+/// (0x1f 0x8b) is decompressed before the call completes. Any other body, such as one the platform HTTP stack
+/// has already decompressed, is returned unchanged. Only the first gzip member of the body is decoded.
+/// If a body that starts with the gzip signature cannot be decompressed, the call completes with a failed network
+/// error code and an empty response body. This happens if the gzip data is corrupt or truncated, or if it would
+/// decompress to more than 100 times its compressed size and more than 64 MB.</remarks>
 STDAPI HCHttpCallResponseSetGzipCompressed(
     _In_ HCCallHandle call,
     _In_ bool compress
@@ -512,7 +518,8 @@ STDAPI HCHttpCallResponseSetGzipCompressed(
 /// <param name="bytesAvailable">The maximum number of bytes that can be written to the destination.</param>
 /// <param name="context">The context associated with this read function.</param>
 /// <param name="destination">The destination where data may be written to.</param>
-/// <param name="bytesWritten">The number of bytes that were actually written to destination.</param>
+/// <param name="bytesWritten">The number of bytes that were actually written to destination. This must not exceed
+/// bytesAvailable; if it does, the HTTP call fails.</param>
 /// <returns>Result code for this callback. Possible values are S_OK, E_INVALIDARG, or E_FAIL.</returns>
 typedef HRESULT
 (CALLBACK* HCHttpCallRequestBodyReadFunction)(

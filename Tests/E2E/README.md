@@ -181,6 +181,7 @@ E2E_TEST(http_example)
 | `http_redirect_*` | Redirects are followed | The curl provider doesn't set `CURLOPT_FOLLOWLOCATION`: the 302 and its `Location` are returned to the caller (asserted) |
 | `http_progress_callbacks` | First report is > 0 | curl's first report is 0 (before any bytes move) |
 | `http_request_header_outside_latin1` | Header sent as ISO-8859-1; above U+00FF → `E_INVALIDARG` | Header sent as raw UTF-8 |
+| `http_request_body_read_function_overreports` | Call fails with `E_INVALIDARG` | The curl provider aborts the transfer: `S_OK` with a failed network error (`E_FAIL`) |
 | `https_ssl_validation_disabled` | Runs | Skipped: `HCHttpCallRequestSetSSLValidation` is Windows-only |
 | `wss_self_signed_rejected_by_default`, `wss_ssl_validation_disabled` | Run; the second covers the WinHTTP WebSocket and, when compression is compiled in, the websocketpp + wintls client | Not built: `HCWebSocketSetSSLValidation` is Windows-only |
 | `http_global_request_limit_queues` | Runs | Skipped: `HCSettingsSetGlobalRequestLimit` is `E_NOTIMPL` off WinHTTP (by design) |
