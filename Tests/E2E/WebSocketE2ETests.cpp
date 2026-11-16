@@ -525,6 +525,81 @@ E2E_TEST_ISOLATED(ws_compression_connect_racing_cleanup)
     E2E_CHECK_HR(cleanupHr);
 }
 
+namespace
+{
+
+std::atomic<int64_t> g_liveAllocations{ 0 };
+
+_Ret_maybenull_ void* STDAPIVCALLTYPE CountingAlloc(size_t size, HCMemoryType) noexcept
+{
+    void* pointer = malloc(size);
+    if (pointer != nullptr)
+    {
+        ++g_liveAllocations;
+    }
+    return pointer;
+}
+
+void STDAPIVCALLTYPE CountingFree(_Post_invalid_ void* pointer, HCMemoryType) noexcept
+{
+    if (pointer != nullptr)
+    {
+        --g_liveAllocations;
+        free(pointer);
+    }
+}
+
+} // namespace
+
+E2E_TEST_ISOLATED(ws_invalid_uri_connect_failure_releases_websocket)
+{
+    // Issue #1071. websocketpp's connect installed handlers that own the connection object, then
+    // returned E_FAIL when get_connection rejected the URI without dropping them. The object owned
+    // itself through its own client, so it outlived every handle and HCCleanupAsync.
+    E2E_CHECK_HR(HCMemSetFunctions(CountingAlloc, CountingFree));
+
+    for (const char* uri : { "", "unsupported://invalid" })
+    {
+        E2E_CHECK_HR(HCInitialize(nullptr));
+        {
+            WebSocket ws;
+            // RequestCompression selects websocketpp on Win32; it is the only provider elsewhere.
+            SetOptionsOrSkip(ws, HCWebSocketOptions::RequestCompression, "RequestCompression");
+
+            auto* connectAsync = new XAsyncBlock{};
+            HRESULT hr = HCWebSocketConnectAsync(uri, "", ws, connectAsync);
+            if (SUCCEEDED(hr))
+            {
+                hr = WaitAsync(connectAsync, std::chrono::seconds{ 15 });
+                if (hr == E_PENDING)
+                {
+                    PoisonProcess("a WebSocket connect to an invalid URI never completed");
+                    Fail(__FILE__, __LINE__, "HCWebSocketConnectAsync to an invalid URI did not complete");
+                }
+                WebSocketCompletionResult result{};
+                if (SUCCEEDED(hr) && SUCCEEDED(HCGetWebSocketConnectResult(connectAsync, &result)))
+                {
+                    hr = result.errorCode;
+                }
+            }
+            delete connectAsync;
+            Info("uri='%s' connect: %s", uri, HrToString(hr).c_str());
+            E2E_CHECK_MSG(FAILED(hr), "connect to invalid URI '%s' succeeded", uri);
+        }
+
+        HRESULT cleanupHr = CleanupWithTimeout(std::chrono::seconds{ 10 });
+        if (cleanupHr == E_PENDING)
+        {
+            PoisonProcess("HCCleanupAsync hung after a failed WebSocket connect");
+            Fail(__FILE__, __LINE__, "HCCleanupAsync did not complete");
+        }
+        E2E_CHECK_HR(cleanupHr);
+
+        int64_t const live = g_liveAllocations.load();
+        E2E_CHECK_MSG(live == 0, "uri='%s': %lld libHttpClient allocation(s) still live after the handle was closed and HCCleanupAsync completed", uri, static_cast<long long>(live));
+    }
+}
+
 #if defined(E2E_HTTP_WINHTTP)
 E2E_TEST(ws_inflight_send_completes_on_disconnect)
 {
