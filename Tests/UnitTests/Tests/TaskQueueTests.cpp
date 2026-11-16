@@ -9,6 +9,7 @@
 #include "CompositeQueueStarvationScenario.h"
 #include "SingleQueueDelayedPollStrandScenario.h"
 #include "LocklessQueuePushParker.h"
+#include <memory>
 
 #define TEST_CLASS_OWNER L"brianpe"
 
@@ -738,19 +739,29 @@ public:
         AutoQueueHandle queue;
         VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::SerializedThreadPool, XTaskQueueDispatchMode::SerializedThreadPool, &queue));
 
-        AutoHandle called = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        VERIFY_IS_NOT_NULL(called.Handle());
+        // Each submitted callback owns a reference to the event, so a callback
+        // that runs after a timeout failure still signals a live event.
+        auto called = std::make_shared<AutoHandle>(CreateEvent(nullptr, FALSE, FALSE, nullptr));
+        VERIFY_IS_NOT_NULL(called->Handle());
 
         auto callback = [](void* context, bool)
         {
-            SetEvent(static_cast<HANDLE>(context));
+            std::unique_ptr<std::shared_ptr<AutoHandle>> event(static_cast<std::shared_ptr<AutoHandle>*>(context));
+            SetEvent((*event)->Handle());
         };
 
         const uint32_t rounds = 20000;
         for (uint32_t round = 0; round < rounds; round++)
         {
-            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Completion, called.Handle(), callback));
-            DWORD waitResult = WaitForSingleObject(called.Handle(), 5000);
+            auto event = new std::shared_ptr<AutoHandle>(called);
+            HRESULT hr = XTaskQueueSubmitCallback(queue, XTaskQueuePort::Completion, event, callback);
+            if (FAILED(hr))
+            {
+                delete event;
+            }
+            VERIFY_SUCCEEDED(hr);
+
+            DWORD waitResult = WaitForSingleObject(called->Handle(), 5000);
             if (waitResult != WAIT_OBJECT_0)
             {
                 LOG_COMMENT(L"Item %u was not dispatched", round);
@@ -1102,15 +1113,18 @@ public:
         {
             Data* data = (Data*)cxt;
 
-            if (data->serialized && !cancel)
+            if (data->serialized)
             {
                 // The very first work item may come in when we first start
                 // the pump threads, before termination begins. Hold it until
                 // the work port starts terminating, which is when submits
                 // begin failing with E_ABORT. Both ports are canceled before
                 // that point, so every later work and completion callback
-                // must see cancel == true.
-                if (data->workCount != 0)
+                // must see cancel == true. Hold the item even if it is
+                // already canceled: termination cancels the work port before
+                // the completion port, so a completion submitted in between
+                // would still run uncanceled.
+                if (!cancel && data->workCount != 0)
                 {
                     data->RecordFailure(__LINE__, E_UNEXPECTED);
                 }
