@@ -730,6 +730,35 @@ public:
         }
     }
 
+    DEFINE_TEST_CASE(VerifySerializedThreadPoolDoesNotStrandItems)
+    {
+        // Submits each item as soon as the previous callback signals, so the
+        // new thread pool callback often arrives while the previous one is
+        // still finishing its drain. Every item must still be dispatched.
+        AutoQueueHandle queue;
+        VERIFY_SUCCEEDED(XTaskQueueCreate(XTaskQueueDispatchMode::SerializedThreadPool, XTaskQueueDispatchMode::SerializedThreadPool, &queue));
+
+        AutoHandle called = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        VERIFY_IS_NOT_NULL(called.Handle());
+
+        auto callback = [](void* context, bool)
+        {
+            SetEvent(static_cast<HANDLE>(context));
+        };
+
+        const uint32_t rounds = 20000;
+        for (uint32_t round = 0; round < rounds; round++)
+        {
+            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(queue, XTaskQueuePort::Completion, called.Handle(), callback));
+            DWORD waitResult = WaitForSingleObject(called.Handle(), 5000);
+            if (waitResult != WAIT_OBJECT_0)
+            {
+                LOG_COMMENT(L"Item %u was not dispatched", round);
+            }
+            VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, waitResult);
+        }
+    }
+
     DEFINE_TEST_CASE(VerifyMultithreadManualDispatch)
     {
         AutoQueueHandle queue;
@@ -1050,6 +1079,23 @@ public:
             bool serialized;
             XTaskQueueHandle queue;
             XTaskQueueCallback* completionCallback;
+
+            // Callbacks run on queue threads, where a failed VERIFY would throw
+            // out of the dispatcher and terminate the process. They record the
+            // first failure here and the test thread verifies it at the end.
+            std::mutex failureLock;
+            int failureLine = 0;
+            HRESULT failureHr = S_OK;
+
+            void RecordFailure(int line, HRESULT hr)
+            {
+                std::lock_guard<std::mutex> lock(failureLock);
+                if (failureLine == 0)
+                {
+                    failureLine = line;
+                    failureHr = hr;
+                }
+            }
         };
 
         auto workCb = [](void* cxt, bool cancel)
@@ -1058,21 +1104,45 @@ public:
 
             if (data->serialized && !cancel)
             {
-                // The very first work item may come in when we first start 
-                // the pump threads.  Sleep so we have a chance to enter
-                // the termination code.
-                VERIFY_ARE_EQUAL(0u, data->workCount);
-                Sleep(1000);
+                // The very first work item may come in when we first start
+                // the pump threads, before termination begins. Hold it until
+                // the work port starts terminating, which is when submits
+                // begin failing with E_ABORT. Both ports are canceled before
+                // that point, so every later work and completion callback
+                // must see cancel == true.
+                if (data->workCount != 0)
+                {
+                    data->RecordFailure(__LINE__, E_UNEXPECTED);
+                }
+
+                auto noopCb = [](void*, bool) {};
+                UINT64 ticks = GetTickCount64();
+                while (XTaskQueueSubmitCallback(data->queue, XTaskQueuePort::Work, nullptr, noopCb) != E_ABORT)
+                {
+                    if (GetTickCount64() - ticks > 30000)
+                    {
+                        data->RecordFailure(__LINE__, E_UNEXPECTED);
+                        break;
+                    }
+                    Sleep(10);
+                }
             }
 
             data->workCount++;
-            VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(data->queue, XTaskQueuePort::Completion, data, data->completionCallback));
+            HRESULT hr = XTaskQueueSubmitCallback(data->queue, XTaskQueuePort::Completion, data, data->completionCallback);
+            if (FAILED(hr))
+            {
+                data->RecordFailure(__LINE__, hr);
+            }
         };
 
         auto completionCb = [](void* cxt, bool cancel)
         {
             Data* data = (Data*)cxt;
-            VERIFY_IS_TRUE(!data->serialized || cancel);
+            if (data->serialized && !cancel)
+            {
+                data->RecordFailure(__LINE__, E_UNEXPECTED);
+            }
             data->completionCount++;
         };
 
@@ -1161,6 +1231,14 @@ public:
                 Sleep(10);
             }
         }
+
+        {
+            // failureLine is the line in this file of the first callback check that failed.
+            std::lock_guard<std::mutex> lock(data.failureLock);
+            VERIFY_ARE_EQUAL(0, data.failureLine);
+            VERIFY_SUCCEEDED(data.failureHr);
+        }
+
         VERIFY_ARE_EQUAL(expectedCount, data.workCount.load());
         VERIFY_ARE_EQUAL(expectedCount, data.completionCount.load());
     }
@@ -1233,17 +1311,21 @@ public:
         
         // And termination of the composite should have no affect on the global queue.
         
-        bool called = false;
-        auto cb = [](void* context, bool) 
+        // The global queue dispatches on the thread pool, so the callback may
+        // already be running on a pool thread when this thread looks for work.
+        // Wait for the callback to signal instead of dispatching manually. The
+        // event handle is the callback context so nothing on this stack frame
+        // is touched by the pool thread.
+        HANDLE called = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        VERIFY_IS_NOT_NULL(called);
+        auto cb = [](void* context, bool)
         {
-            bool* called = static_cast<bool*>(context);
-            *called = true;
+            SetEvent(static_cast<HANDLE>(context));
         };
 
-        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, &called, cb));
-        while (XTaskQueueDispatch(globalQueue, XTaskQueuePort::Work, 0)) {}
-
-        VERIFY_IS_TRUE(called);
+        VERIFY_SUCCEEDED(XTaskQueueSubmitCallback(globalQueue, XTaskQueuePort::Work, called, cb));
+        VERIFY_ARE_EQUAL((DWORD)WAIT_OBJECT_0, WaitForSingleObject(called, 5000));
+        CloseHandle(called);
     }
 
     DEFINE_TEST_CASE(VerifyCloseInTerminationForThreadPool)
