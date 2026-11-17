@@ -51,7 +51,6 @@ public class HttpClientRequest {
 
     static {
         OK_CLIENT = new OkHttpClient.Builder()
-                    .fastFallback(true) // Race resolved IPv6/IPv4 addresses before sending the request.
                     .retryOnConnectionFailure(false) // Explicitly disable retries; retry logic will be managed by native code in libHttpClient
                     .build();
     }

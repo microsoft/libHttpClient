@@ -17,9 +17,10 @@ Command-line builds (and CI) need:
   (the SDK command-line tools themselves require JDK 17 to run).
 
 OkHttp 5.5.1 requires compile SDK 37 and Java 8 bytecode. The library's minimum
-runtime remains Android 5.0 (API 21), and its target SDK remains 34. Both HTTP and
-WebSocket clients enable TCP Happy Eyeballs; HTTP request retries remain disabled
-in OkHttp so libHttpClient continues to own request retry policy.
+runtime remains Android 5.0 (API 21), and its target SDK remains 34. OkHttp 5 enables
+TCP Happy Eyeballs by default for HTTP and WebSocket connections; no explicit
+enablement is needed. HTTP request retries remain disabled in OkHttp so
+libHttpClient continues to own request retry policy.
 
 ## Outputs
 

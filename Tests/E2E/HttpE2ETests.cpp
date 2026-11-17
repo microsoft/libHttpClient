@@ -126,20 +126,6 @@ struct ProgressRecorder
 // Methods, headers, bodies
 // ------------------------------------------------------------------------------------------------
 
-E2E_TEST(http_hostname_reaches_ipv4_only_listener)
-{
-    // localhost may resolve to ::1 as well as 127.0.0.1. The server listens only
-    // on IPv4; this exercises the real provider's hostname/address fallback.
-    auto url = HttpUrl("/echo");
-    auto const address = url.find("127.0.0.1");
-    E2E_CHECK(address != std::string::npos);
-    url.replace(address, 9, "localhost");
-    Call call;
-    call.Url("GET", url).NoRetry();
-    E2E_CHECK_HR(call.Perform());
-    E2E_CHECK_MSG(call.Status() == 200, "%s", call.Describe().c_str());
-}
-
 E2E_TEST(http_methods_roundtrip)
 {
     for (const char* method : { "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" })

@@ -14,9 +14,7 @@ public final class HttpClientWebSocket extends WebSocketListener {
     private final static OkHttpClient OK_CLIENT;
 
     static {
-        OK_CLIENT = new OkHttpClient.Builder()
-                .fastFallback(true)
-                .build();
+        OK_CLIENT = new OkHttpClient();
     }
 
     HttpClientWebSocket(long owner) {

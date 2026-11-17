@@ -57,7 +57,7 @@ android {
 }
 
 dependencies {
-    // OkHttp 5 supplies TCP Happy Eyeballs, including when HTTP retries are disabled.
+    // OkHttp 5 enables TCP Happy Eyeballs by default, including when HTTP retries are disabled.
     implementation "com.squareup.okhttp3:okhttp:5.5.1"
 
     androidTestImplementation "androidx.test:runner:1.5.2"

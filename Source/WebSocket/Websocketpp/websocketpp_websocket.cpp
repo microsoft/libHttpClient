@@ -45,7 +45,6 @@
 #include <websocketpp/config/asio_client.hpp>
 #endif
 #include <websocketpp/client.hpp>
-#include "happy_eyeballs_endpoint.hpp"
 #include <websocketpp/logger/levels.hpp>
 #include <websocketpp/logger/stub.hpp>
 #include <websocketpp/processors/base.hpp>
@@ -486,7 +485,7 @@ struct httpclient_config : base_config
         using socket_type = typename base_config::transport_config::socket_type;
     };
 
-    using transport_type = xbox::httpclient::HappyEyeballsEndpoint<transport_config, http_stl_allocator>;
+    using transport_type = websocketpp::transport::asio::endpoint<transport_config>;
 };
 
 using ws = httpclient_config<websocketpp::config::asio_client>;

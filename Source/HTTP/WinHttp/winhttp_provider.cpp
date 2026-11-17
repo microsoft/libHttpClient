@@ -785,9 +785,6 @@ Result<HINTERNET> WinHttpProvider::GetHSession(uint32_t securityProtocolFlags, c
         }
     }
 
-    // Apply to every session, including HTTP and reopened HTTPS sessions. WinHTTP
-    // before Windows 10 1903 can reject this option; retain its native address
-    // fallback rather than failing initialization on older Windows / console OSes.
     BOOL enableFallback = TRUE;
     auto result = WinHttpSetOption(
         hSession,

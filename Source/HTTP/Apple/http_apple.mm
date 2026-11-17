@@ -89,8 +89,6 @@ void AppleHttpSessionManager::StartTaskOnSession(HCCallHandle call, XAsyncBlock*
         auto httpSessionIter = m_httpSessions.find(timeoutInSeconds);
         if (httpSessionIter == m_httpSessions.end())
         {
-            // NSURLSession owns DNS and Happy Eyeballs. Keep the hostname intact
-            // so CFNetwork can race address families and support DNS64/NAT64.
             NSURLSessionConfiguration* configuration = NSURLSessionConfiguration.ephemeralSessionConfiguration;
             [configuration setTimeoutIntervalForRequest:(NSTimeInterval)timeoutInSeconds];
             [configuration setTimeoutIntervalForResource:(NSTimeInterval)timeoutInSeconds];

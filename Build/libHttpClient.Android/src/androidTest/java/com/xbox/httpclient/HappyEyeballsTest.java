@@ -33,7 +33,8 @@ import okhttp3.mockwebserver.MockWebServer;
 
 import static org.junit.Assert.*;
 
-/** Tests the production clients' policy with a deterministic IPv6 black hole.
+/** Verifies OkHttp's default fast fallback on the unchanged production clients.
+ * Uses a deterministic IPv6 black hole to exercise native IPv4 fallback.
  * Runs as instrumentation or as a host JUnit test with the Android API jar.
  */
 public class HappyEyeballsTest {
@@ -86,7 +87,7 @@ public class HappyEyeballsTest {
 
     private OkHttpClient blackHoleClient(Class<?> provider, BlackHoleSocketFactory sockets) throws Exception {
         OkHttpClient client = productionClient(provider);
-        assertTrue(client.fastFallback());
+        assertTrue("OkHttp should enable fast fallback by default", client.fastFallback());
         return client.newBuilder()
                 .dispatcher(new Dispatcher())
                 .connectionPool(new ConnectionPool())

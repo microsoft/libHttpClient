@@ -13,7 +13,6 @@ cmake_minimum_required(VERSION 3.6)
 # Registers the executable with ctest as "libHttpClient.UnitTests" (label "unit"). Run a subset
 # directly with: libHttpClient.UnitTests --filter=HttpTests::*,-*Slow*   (or --list)
 function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
-    add_subdirectory("${PATH_TO_ROOT}/Tests/HappyEyeballs" "${CMAKE_CURRENT_BINARY_DIR}/HappyEyeballs")
     include("${PATH_TO_ROOT}/Build/libHttpClient.CMake/GetCommonHCSourceFiles.cmake")
     get_common_hc_source_files(
         UT_PUBLIC_SOURCE_FILES
