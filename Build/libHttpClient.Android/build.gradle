@@ -1,12 +1,15 @@
 apply plugin: "com.android.library"
 
 android {
-    compileSdkVersion 34
+    namespace "com.xbox.httpclient"
+    testNamespace "com.xbox.httpclient.test"
+    compileSdk 37
     ndkVersion "27.2.12479018"
+    buildFeatures { buildConfig true }
 
     defaultConfig {
-        targetSdkVersion 34
-        minSdkVersion 21
+        targetSdk 34
+        minSdk 21
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -34,31 +37,32 @@ android {
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
-            // AGP 4.1's default CMake 3.10.2 can't configure with NDK r27; 3.18.1 is the newest version AGP 4.1 supports.
+            // Keep the native tool version reproducible across local and CI builds.
             version "3.18.1"
             buildStagingDirectory "${project.buildDir.getParentFile().getAbsolutePath()}/.cxx/${project.name}"
         }
     }
 
     compileOptions {
-        sourceCompatibility=JavaVersion.VERSION_1_7
-        targetCompatibility=JavaVersion.VERSION_1_7
+        sourceCompatibility=JavaVersion.VERSION_1_8
+        targetCompatibility=JavaVersion.VERSION_1_8
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile("proguard-android.txt")
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt")
         }
     }
 }
 
 dependencies {
-    implementation "com.squareup.okhttp3:okhttp:4.9.2"
+    // OkHttp 5 supplies TCP Happy Eyeballs, including when HTTP retries are disabled.
+    implementation "com.squareup.okhttp3:okhttp:5.5.1"
 
     androidTestImplementation "androidx.test:runner:1.5.2"
     androidTestImplementation "androidx.test:rules:1.5.0"
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
     androidTestImplementation "junit:junit:4.13.2"
-    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:5.5.1"
 }

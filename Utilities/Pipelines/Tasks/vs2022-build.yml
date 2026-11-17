@@ -7,6 +7,19 @@ parameters:
 steps:
   - template: checkout.yml
 
+  - task: PowerShell@2
+    displayName: Run Happy Eyeballs transport tests (${{ parameters.configuration }})
+    condition: and(succeeded(), eq('${{ parameters.platform }}', 'x64'))
+    inputs:
+      targetType: inline
+      script: |
+        cmake -S Tests/HappyEyeballs -B Int/CMake/HappyEyeballs -A x64
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        cmake --build Int/CMake/HappyEyeballs --config ${{ parameters.configuration }} --parallel
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        ctest --test-dir Int/CMake/HappyEyeballs -C ${{ parameters.configuration }} --output-on-failure
+        exit $LASTEXITCODE
+
   - task: NuGetToolInstaller@1
     displayName: 'Use NuGet 5.8'
     inputs:

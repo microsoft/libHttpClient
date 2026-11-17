@@ -34,6 +34,13 @@ Result<HC_UNIQUE_PTR<CurlEasyRequest>> CurlEasyRequest::Initialize(HCCallHandle 
     http_stl_allocator<CurlEasyRequest> a{};
     HC_UNIQUE_PTR<CurlEasyRequest> easyRequest{ new (a.allocate(1)) CurlEasyRequest{ curlEasyHandle, hcCall, async } };
 
+    // Keep both address families eligible and race IPv4 after a short IPv6
+    // head start. This is TCP connection fallback, independent of HTTP retries.
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER));
+#if LIBCURL_VERSION_NUM >= 0x073b00 // 7.59.0 added the configurable delay
+    RETURN_IF_FAILED(easyRequest->SetOpt<long>(CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS, 250L));
+#endif
+
     // body (first so we can override things curl "helpfully" sets for us)
     HCHttpCallRequestBodyReadFunction clientRequestBodyReadCallback{};
     size_t bodySize{};

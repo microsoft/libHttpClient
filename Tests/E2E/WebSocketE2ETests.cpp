@@ -71,6 +71,24 @@ void SetOptionsOrSkip(WebSocket& ws, HCWebSocketOptions options, const char* wha
 
 } // namespace
 
+E2E_TEST(ws_hostname_reaches_ipv4_only_listener)
+{
+    auto url = WsUrl("/ws/echo");
+    auto const address = url.find("127.0.0.1");
+    E2E_CHECK(address != std::string::npos);
+    url.replace(address, 9, "localhost");
+    for (bool compression : {false, true})
+    {
+        WebSocket ws;
+        if (compression) SetOptionsOrSkip(ws, HCWebSocketOptions::RequestCompression, "RequestCompression");
+        E2E_CHECK_HR(ws.Connect(url));
+        E2E_CHECK_HR(ws.SendText("IPv4 fallback"));
+        E2E_CHECK(ws.WaitForText(1));
+        E2E_CHECK_EQ(std::string{"IPv4 fallback"}, ws.Texts()[0]);
+        ws.DisconnectAndWait();
+    }
+}
+
 E2E_TEST(ws_text_echo)
 {
     WebSocket ws;

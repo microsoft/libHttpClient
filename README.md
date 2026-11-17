@@ -96,6 +96,19 @@ On Win32 and GDK, `HCWebSocketSetProxyUri()` applies the explicit proxy URI to b
 
 `HCWebSocketSetSSLValidation(websocket, false)` disables TLS server certificate validation without requiring a proxy, for example to connect directly to a development server with a self-signed certificate. It is the WebSocket counterpart of `HCHttpCallRequestSetSSLValidation()`, must be called before connect, and has the same restrictions: development only, available on Win32 and GDK, and ignored on GDK console, where TLS validation is always enforced.
 
+## IPv6 / IPv4 connection fallback
+
+Built-in providers keep IPv6 and IPv4 eligible. Curl explicitly enables a 250 ms
+Happy Eyeballs delay; Android uses OkHttp 5.5.1 fast fallback for HTTP and
+WebSockets; websocketpp races TCP connections with a 250 ms stagger. WinHTTP
+enables its native IPv6 fast fallback on every session when the OS supports it.
+Apple HTTP keeps NSURLSession's native address selection.
+
+This happens before sending application data and does not require enabling HTTP
+request retries. No public API or application opt-in is required. Older native
+Windows stacks, UWP/WinRT, and custom providers have platform-specific limits;
+see the [provider coverage and regression tests](Tests/HappyEyeballs/README.md).
+
 ## Behavior control
 
 * On GDK, XDK ERA, UWP, iOS, and Android, HCHttpCallPerform() will call native platform APIs
