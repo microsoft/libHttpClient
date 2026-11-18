@@ -556,6 +556,13 @@ E2E_TEST_ISOLATED(ws_invalid_uri_connect_failure_releases_websocket)
     // Issue #1071. websocketpp's connect installed handlers that own the connection object, then
     // returned E_FAIL when get_connection rejected the URI without dropping them. The object owned
     // itself through its own client, so it outlived every handle and HCCleanupAsync.
+
+    // The default process queue outlives HCCleanupAsync. Create its STL timer state before
+    // counting allocations so process-lifetime resources are not mistaken for WebSocket leaks.
+    XTaskQueueHandle processQueue{};
+    E2E_CHECK(XTaskQueueGetCurrentProcessTaskQueue(&processQueue));
+    XTaskQueueCloseHandle(processQueue);
+
     E2E_CHECK_HR(HCMemSetFunctions(CountingAlloc, CountingFree));
 
     for (const char* uri : { "", "unsupported://invalid" })
@@ -598,6 +605,8 @@ E2E_TEST_ISOLATED(ws_invalid_uri_connect_failure_releases_websocket)
         int64_t const live = g_liveAllocations.load();
         E2E_CHECK_MSG(live == 0, "uri='%s': %lld libHttpClient allocation(s) still live after the handle was closed and HCCleanupAsync completed", uri, static_cast<long long>(live));
     }
+
+    E2E_CHECK_HR(HCMemSetFunctions(nullptr, nullptr));
 }
 
 #if defined(E2E_HTTP_WINHTTP)
