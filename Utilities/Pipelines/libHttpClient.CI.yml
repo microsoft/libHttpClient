@@ -206,3 +206,14 @@ jobs:
         parameters:
           configuration: Debug
           sanitizers: true
+
+  - job: LinuxThreadSanitizer
+    displayName: libHttpClient Linux TSan (Debug)
+    pool:
+      vmImage: ubuntu-22.04
+    timeoutInMinutes: 180
+    steps:
+      - template: Tasks/linux-build.yml
+        parameters:
+          configuration: Debug
+          tsan: true

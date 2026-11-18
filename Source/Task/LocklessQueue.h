@@ -2,12 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
+#include <atomic>
+#include <cstring>
+#include <type_traits>
 #include "SpinLock.h"
 
 /*****************************************************************************
  
- LocklessQueue is a lock free queue that can take any type as a payload.
- Internally it maintains a demand-allocated block of contiguous nodes that
+ LocklessQueue is a lock free queue that can take any trivially copyable type as a
+ payload. Internally it maintains a demand-allocated block of contiguous nodes that
  are used as the nodes of a linked list.  Data pushed into the queue uses a
  copy, and popping data copies that same data out to your variable.
  
@@ -237,8 +240,8 @@ public:
         
         if (node != nullptr)
         {
-            data = std::move(node->data);
-            node->data = TData {};
+            data = node->data.load();
+            node->data.store(TData {});
             m_heap.free(node, address);
             return true;
         }
@@ -262,8 +265,8 @@ public:
         
         if (node != nullptr)
         {
-            data = std::move(node->data);
-            node->data = TData {};
+            data = node->data.load();
+            node->data.store(TData {});
             address = a;
             return true;
         }
@@ -375,6 +378,57 @@ private:
     static_assert(std::atomic<Address>::is_always_lock_free, "LocklessQueue requires atomic<Address> to be lock free");
 #endif
 
+    // Payload - the TData stored in a node, held as an array of atomic words.
+    // List::pop copies a node's payload before it knows whether its head
+    // compare-exchange will succeed, and a stale popper can read a node that
+    // another thread has already popped and is overwriting or reusing. The value
+    // read in that case is discarded, but plain (non-atomic) accesses would still
+    // be a data race (#1072). Relaxed atomics make those accesses well defined;
+    // ordering comes from the atomic next/head/tail links, as before.
+    class Payload
+    {
+    public:
+        static_assert(std::is_trivially_copyable<TData>::value, "LocklessQueue payloads must be trivially copyable");
+
+        Payload() noexcept
+        {
+            for (auto& word : m_words)
+            {
+                word.store(0, std::memory_order_relaxed);
+            }
+        }
+
+        Payload(const Payload&) = delete;
+        Payload& operator=(const Payload&) = delete;
+
+        TData load() const noexcept
+        {
+            uintptr_t words[c_wordCount];
+            for (size_t i = 0; i < c_wordCount; i++)
+            {
+                words[i] = m_words[i].load(std::memory_order_relaxed);
+            }
+
+            TData data;
+            memcpy(&data, words, sizeof(TData));
+            return data;
+        }
+
+        void store(_In_ const TData& data) noexcept
+        {
+            uintptr_t words[c_wordCount]{};
+            memcpy(words, &data, sizeof(TData));
+            for (size_t i = 0; i < c_wordCount; i++)
+            {
+                m_words[i].store(words[i], std::memory_order_relaxed);
+            }
+        }
+
+    private:
+        static constexpr size_t c_wordCount = (sizeof(TData) + sizeof(uintptr_t) - 1) / sizeof(uintptr_t);
+        std::atomic<uintptr_t> m_words[c_wordCount];
+    };
+
     // Node - each entry in a list is backed by a node,
     // which contains a single 64 bit value representing
     // the next node of a singly linked list and
@@ -384,7 +438,7 @@ private:
     struct alignas(8) Node
     {
         std::atomic<Address> next;
-        TData data;
+        Payload data;
     };
 
     // Block - Represents a contiguous block of nodes. Blocks are
@@ -554,11 +608,11 @@ private:
                         // data out of the next node, save it off, and then
                         // put it into the head node once we safely detach it.
 
-                        TData data = m_owner.to_node(next)->data;
+                        TData data = m_owner.to_node(next)->data.load();
 
                         if (m_head.compare_exchange_strong(head, next))
                         {
-                            headNode->data = std::move(data);
+                            headNode->data.store(data);
                             address = head;
                             return headNode;
                         }
@@ -806,7 +860,7 @@ private:
 
         if (node != nullptr)
         {
-            node->data = std::move(data);
+            node->data.store(data);
             m_activeList.push(node, address);
             return true;
         }
@@ -821,7 +875,7 @@ private:
         Address a;
         a = address;
         Node* n = to_node(a);
-        n->data = std::move(data);
+        n->data.store(data);
         m_activeList.push(n, a);
     }
 
