@@ -6,6 +6,12 @@ parameters:
   - name: sanitizers
     type: boolean
     default: false
+  # Debug-only test leg: build every target with ThreadSanitizer (HC_ENABLE_TSAN) and run the
+  # taskqueue tests under it (the unit and E2E suites still have unrelated TSan findings).
+  # Skips the shared build. Not combinable with sanitizers.
+  - name: tsan
+    type: boolean
+    default: false
 
 steps:
   - template: checkout.yml
@@ -30,44 +36,63 @@ steps:
   - task: Bash@3
     ${{ if parameters.sanitizers }}:
       displayName: 'Build libHttpClient Static (ASan + UBSan)'
+    ${{ elseif parameters.tsan }}:
+      displayName: 'Build libHttpClient Static (TSan)'
     ${{ else }}:
       displayName: 'Build libHttpClient Static'
     inputs:
       filePath: './Build/libHttpClient.Linux/libHttpClient_Linux.bash'
       ${{ if parameters.sanitizers }}:
         arguments: '-c ${{ parameters.configuration }} -nc -ns -st -t -san'
+      ${{ elseif parameters.tsan }}:
+        arguments: '-c ${{ parameters.configuration }} -nc -ns -st -t -tsan'
       ${{ else }}:
         arguments: '-c ${{ parameters.configuration }} -nc -ns -st -t'
 
-  - task: Bash@3
-    ${{ if parameters.sanitizers }}:
-      displayName: 'Run libHttpClient Linux tests under ASan + UBSan (ctest)'
-    ${{ else }}:
-      displayName: 'Run libHttpClient Linux tests (ctest)'
-    inputs:
-      targetType: 'inline'
-      script: |
-        set -e
-        cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
-        if [ "${{ parameters.sanitizers }}" = "True" ]; then
-          # clang 14's ASan runtime intermittently segfaults at startup when the kernel uses
-          # 32 bits of mmap ASLR entropy (the default on current hosted images); 28 bits is safe.
+  - ${{ if parameters.tsan }}:
+    - task: Bash@3
+      displayName: 'Run libHttpClient Linux taskqueue tests under TSan (ctest)'
+      inputs:
+        targetType: 'inline'
+        script: |
+          set -e
+          cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
+          # clang 14's sanitizer runtimes can fail at startup with 32 bits of mmap ASLR entropy.
           sudo sysctl -w vm.mmap_rnd_bits=28
-          export ASAN_OPTIONS=detect_leaks=1:strict_init_order=1
-          export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
-          export ASAN_SYMBOLIZER_PATH="$(command -v llvm-symbolizer || ls /usr/bin/llvm-symbolizer-* 2>/dev/null | head -n 1 || true)"
-        fi
-        # "unit" is the portable unit-test executable (Tests/UnitTests, libHttpClient.UnitTests);
-        # "taskqueue" are the standalone TaskQueue/WaitTimer regression repros; "e2e" is the Tests/E2E
-        # suite against this build's curl + websocketpp providers and a Python 3 (stdlib-only) loopback
-        # server that libHttpClient.E2E starts itself on 127.0.0.1 (python3 and the openssl CLI are on
-        # the hosted image). Labels let new tests be picked
-        # up just by labelling them in CMake (no pipeline change needed). LHC_E2E_REQUIRE_HTTPS makes the
-        # HTTPS tests fail rather than skip if openssl is missing, so that coverage can't vanish quietly.
-        export LHC_E2E_REQUIRE_HTTPS=1
-        ctest --output-on-failure -L "unit|taskqueue|e2e"
+          # Any TSan report fails the test (TSan exits 66 at the end of a run that reported races).
+          export TSAN_OPTIONS=halt_on_error=0:exitcode=66:second_deadlock_stack=1
+          ctest --output-on-failure -L taskqueue
 
-  - ${{ if not(parameters.sanitizers) }}:
+  - ${{ if not(parameters.tsan) }}:
+    - task: Bash@3
+      ${{ if parameters.sanitizers }}:
+        displayName: 'Run libHttpClient Linux tests under ASan + UBSan (ctest)'
+      ${{ else }}:
+        displayName: 'Run libHttpClient Linux tests (ctest)'
+      inputs:
+        targetType: 'inline'
+        script: |
+          set -e
+          cd "$(Build.SourcesDirectory)/Int/CMake/libHttpClient.Linux"
+          if [ "${{ parameters.sanitizers }}" = "True" ]; then
+            # clang 14's ASan runtime intermittently segfaults at startup when the kernel uses
+            # 32 bits of mmap ASLR entropy (the default on current hosted images); 28 bits is safe.
+            sudo sysctl -w vm.mmap_rnd_bits=28
+            export ASAN_OPTIONS=detect_leaks=1:strict_init_order=1
+            export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
+            export ASAN_SYMBOLIZER_PATH="$(command -v llvm-symbolizer || ls /usr/bin/llvm-symbolizer-* 2>/dev/null | head -n 1 || true)"
+          fi
+          # "unit" is the portable unit-test executable (Tests/UnitTests, libHttpClient.UnitTests);
+          # "taskqueue" are the standalone TaskQueue/WaitTimer regression repros; "e2e" is the Tests/E2E
+          # suite against this build's curl + websocketpp providers and a Python 3 (stdlib-only) loopback
+          # server that libHttpClient.E2E starts itself on 127.0.0.1 (python3 and the openssl CLI are on
+          # the hosted image). Labels let new tests be picked
+          # up just by labelling them in CMake (no pipeline change needed). LHC_E2E_REQUIRE_HTTPS makes the
+          # HTTPS tests fail rather than skip if openssl is missing, so that coverage can't vanish quietly.
+          export LHC_E2E_REQUIRE_HTTPS=1
+          ctest --output-on-failure -L "unit|taskqueue|e2e"
+
+  - ${{ if and(not(parameters.sanitizers), not(parameters.tsan)) }}:
     - task: Bash@3
       displayName: 'Build libHttpClient Shared'
       inputs:
