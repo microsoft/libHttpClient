@@ -626,34 +626,12 @@ public:
 
     HRESULT connect(XAsyncBlock* async)
     {
-        bool const enableCompression = ShouldUseCompression(m_hcWebsocketHandle);
-        auto const compressionClientPolicy = GetCompressionClientPolicy(m_hcWebsocketHandle);
-        // "Proxy decrypts HTTPS" and HCWebSocketSetSSLValidation(false) both mean: skip TLS server
-        // validation. The variable keeps its historical name.
-        bool allowProxyToDecryptHttps = m_hcWebsocketHandle->websocket->SkipsTlsServerValidation();
-        RETURN_IF_FAILED(ResolveEffectiveProxyDecryptsHttpsSetting(
-            m_hcWebsocketHandle,
-            m_hcWebsocketHandle->websocket->SkipsTlsServerValidation(),
-            allowProxyToDecryptHttps));
-
-        bool const isTlsClient = m_uri.Scheme() == "wss";
-
-        if (enableCompression)
+        HRESULT hr = start_connect(async);
+        if (FAILED(hr))
         {
-            if (isTlsClient)
-            {
-                return create_compression_client<true>(compressionClientPolicy, async, allowProxyToDecryptHttps);
-            }
-
-            return create_compression_client<false>(compressionClientPolicy, async, allowProxyToDecryptHttps);
+            release_client_after_connect_start_failure();
         }
-
-        if (isTlsClient)
-        {
-            return create_client<wss, true, false>(async, allowProxyToDecryptHttps);
-        }
-
-        return create_client<ws, false, false>(async, allowProxyToDecryptHttps);
+        return hr;
     }
 
     HRESULT send(XAsyncBlock* async, const char* payloadPtr)
@@ -750,6 +728,59 @@ public:
     }
 
 private:
+    HRESULT start_connect(XAsyncBlock* async)
+    {
+        bool const enableCompression = ShouldUseCompression(m_hcWebsocketHandle);
+        auto const compressionClientPolicy = GetCompressionClientPolicy(m_hcWebsocketHandle);
+        // "Proxy decrypts HTTPS" and HCWebSocketSetSSLValidation(false) both mean: skip TLS server
+        // validation. The variable keeps its historical name.
+        bool allowProxyToDecryptHttps = m_hcWebsocketHandle->websocket->SkipsTlsServerValidation();
+        RETURN_IF_FAILED(ResolveEffectiveProxyDecryptsHttpsSetting(
+            m_hcWebsocketHandle,
+            m_hcWebsocketHandle->websocket->SkipsTlsServerValidation(),
+            allowProxyToDecryptHttps));
+
+        bool const isTlsClient = m_uri.Scheme() == "wss";
+
+        if (enableCompression)
+        {
+            if (isTlsClient)
+            {
+                return create_compression_client<true>(compressionClientPolicy, async, allowProxyToDecryptHttps);
+            }
+
+            return create_compression_client<false>(compressionClientPolicy, async, allowProxyToDecryptHttps);
+        }
+
+        if (isTlsClient)
+        {
+            return create_client<wss, true, false>(async, allowProxyToDecryptHttps);
+        }
+
+        return create_client<ws, false, false>(async, allowProxyToDecryptHttps);
+    }
+
+    // The handlers installed on m_client hold shared_ptrs to this object, so a connect that fails
+    // before the I/O thread starts must drop the client or this object owns itself (#1071). No
+    // handler can run yet, and the state is still DISCONNECTED.
+    void release_client_after_connect_start_failure() noexcept
+    {
+        std::lock_guard<std::recursive_mutex> lock{ m_wsppClientLock };
+        if (m_state != DISCONNECTED)
+        {
+            return;
+        }
+
+        m_client.reset();
+        m_con.reset();
+
+        if (m_backgroundQueue)
+        {
+            XTaskQueueCloseHandle(m_backgroundQueue);
+            m_backgroundQueue = nullptr;
+        }
+    }
+
     template<typename WebsocketConfigType, bool IsTlsClient, bool UsesCompression>
     HRESULT create_client(XAsyncBlock* async, bool allowProxyToDecryptHttps)
     {
