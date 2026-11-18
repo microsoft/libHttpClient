@@ -194,7 +194,7 @@ Real providers (WinHTTP, websocketpp) against a Python 3 stdlib-only loopback se
 Azure DevOps pipeline at `Utilities/Pipelines/libHttpClient.CI.yml`:
 - **Triggers:** Push to `main`, PRs to `main`/`releases/*`, nightly at 8am UTC
 - **Win32/UWP VS2022** (x86/x64/ARM64 × Debug/Release): builds; runs the TE unit tests on x64/x86 (code coverage published from x64 Debug, report only), and the E2E suite plus `WinHttpProviderLockStallRepro` on x64.
-- **Linux** (Debug/Release): builds; `ctest -L "unit|taskqueue"`. **LinuxSanitizers** (Debug): ASan + UBSan build running the same tests.
+- **Linux** (Debug/Release): builds; `ctest -L "unit|taskqueue"`. **LinuxSanitizers** (Debug): ASan + UBSan build running the same tests. **LinuxThreadSanitizer** (Debug): TSan build running `ctest -L taskqueue`.
 - **macOS**: Xcode build plus the unit tests via host CMake (`ctest -L unit`). **iOS**: build only.
 - **Android** (Debug/Release): Gradle build only; instrumentation tests are manual.
 - **Win32 CMake** (x64/ARM64): build only.

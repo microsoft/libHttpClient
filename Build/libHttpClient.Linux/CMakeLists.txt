@@ -27,6 +27,20 @@ if (HC_ENABLE_SANITIZERS)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${HC_SANITIZER_LINK_FLAGS}")
 endif()
 
+option(HC_ENABLE_TSAN "Build every target with ThreadSanitizer (test builds only)" OFF)
+
+if (HC_ENABLE_TSAN)
+    if (HC_ENABLE_SANITIZERS)
+        message(FATAL_ERROR "HC_ENABLE_TSAN cannot be combined with HC_ENABLE_SANITIZERS (ASan + UBSan)")
+    endif()
+    # Applied directory-wide like HC_ENABLE_SANITIZERS so the library and its tests are instrumented.
+    set(HC_TSAN_FLAGS -fsanitize=thread -fno-omit-frame-pointer)
+    add_compile_options(${HC_TSAN_FLAGS})
+    string(REPLACE ";" " " HC_TSAN_LINK_FLAGS "${HC_TSAN_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${HC_TSAN_LINK_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${HC_TSAN_LINK_FLAGS}")
+endif()
+
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
@@ -389,6 +403,58 @@ add_test(
 )
 set_tests_properties(
     taskqueue-poll-strand-linux
+    PROPERTIES
+    LABELS "taskqueue"
+)
+
+#################################################
+### TaskQueue concurrent submit test (#1072)  ###
+#################################################
+# Concurrent XTaskQueueSubmitCallback from several producers. Checks delivery in
+# every build; under HC_ENABLE_TSAN it also fails on LocklessQueue data races.
+add_executable(
+    "TaskQueueConcurrentSubmitTests.Linux"
+    "${PATH_TO_ROOT}/Tests/StandaloneTests/TaskQueueConcurrentSubmitRepro.cpp"
+)
+
+target_include_directories(
+    "TaskQueueConcurrentSubmitTests.Linux"
+    PRIVATE
+    "${COMMON_INCLUDE_DIRS}"
+    "${LINUX_INCLUDE_DIRS}"
+)
+
+target_link_libraries(
+    "TaskQueueConcurrentSubmitTests.Linux"
+    PRIVATE
+    "${PROJECT_NAME}"
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_link_libraries(
+        "TaskQueueConcurrentSubmitTests.Linux"
+        PRIVATE
+        "${LIBCURL_BINARY_PATH}"
+        "${LIBSSL_BINARY_PATH}"
+        "${LIBCRYPTO_BINARY_PATH}"
+    )
+endif()
+
+target_set_flags(
+    "TaskQueueConcurrentSubmitTests.Linux"
+    "${FLAGS}"
+    "${FLAGS_DEBUG}"
+    "${FLAGS_RELEASE}"
+)
+
+add_test(
+    NAME taskqueue-concurrent-submit-linux
+    COMMAND "TaskQueueConcurrentSubmitTests.Linux"
+)
+set_tests_properties(
+    taskqueue-concurrent-submit-linux
     PROPERTIES
     LABELS "taskqueue"
 )
