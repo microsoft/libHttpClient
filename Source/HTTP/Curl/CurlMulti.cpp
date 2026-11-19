@@ -68,11 +68,16 @@ HRESULT CurlMulti::AddRequest(HC_UNIQUE_PTR<CurlEasyRequest> easyRequest)
 
     m_easyRequests.emplace(easyRequest->Handle(), std::move(easyRequest));
 
-    // A queued/running driver will pick up new requests within PERFORM_DELAY_MS.
     if (!m_performScheduled)
     {
         m_performScheduled = true;
         ScheduleTaskQueueCallback(std::move(lock), 0);
+    }
+    else if (!m_kickScheduled)
+    {
+        // Start new transfers promptly without creating another recurring polling chain.
+        m_kickScheduled = true;
+        ScheduleTaskQueueCallback(std::move(lock), 0, true);
     }
 
     return S_OK;
@@ -138,18 +143,19 @@ HRESULT CALLBACK CurlMulti::CleanupAsyncProvider(XAsyncOp op, const XAsyncProvid
     }
 }
 
-void CurlMulti::ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, uint32_t delay)
+void CurlMulti::ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, uint32_t delay, bool isKick)
 {
     assert(lock.owns_lock());
     m_taskQueueCallbacksPending++;
     lock.unlock();
 
-    HRESULT hr = XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, delay, this, CurlMulti::TaskQueueCallback);
+    auto callback = isKick ? CurlMulti::KickTaskQueueCallback : CurlMulti::TaskQueueCallback;
+    HRESULT hr = XTaskQueueSubmitDelayedCallback(m_queue, XTaskQueuePort::Work, delay, this, callback);
     if (FAILED(hr))
     {
         // Treat errors scheduling the callback as cancellations by synchronously calling 'TaskQueueCallback' with canceled=true.
         // Pending requests will be completed with an E_ABORT failure and m_taskQueueCallbacksPending will be appropriatly updated.
-        TaskQueueCallback(this, true);
+        callback(this, true);
 
         HC_TRACE_WARNING_HR(HTTPCLIENT, hr, "CurlMulti::ScheduleTaskQueueCallback: XTaskQueueSubmitDelayedCallback failed");
     }
@@ -157,25 +163,23 @@ void CurlMulti::ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, u
 
 void CALLBACK CurlMulti::TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
 {
+    RunTaskQueueCallback(context, canceled, false);
+}
+
+void CALLBACK CurlMulti::KickTaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept
+{
+    RunTaskQueueCallback(context, canceled, true);
+}
+
+void CurlMulti::RunTaskQueueCallback(void* context, bool canceled, bool isKick) noexcept
+{
     assert(context);
     XAsyncBlock* cleanupAsyncBlock{ nullptr };
 
     {
         auto multi = static_cast<CurlMulti*>(context);
 
-        if (!canceled)
-        {
-            HRESULT hr = multi->Perform();
-            if (FAILED(hr))
-            {
-                HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::Perform failed. Failing all active requests.");
-                multi->FailAllRequests(hr);
-            }
-        }
-        else
-        {
-            multi->FailAllRequests(E_ABORT);
-        }
+        multi->Perform(canceled, isKick);
 
         std::unique_lock<std::mutex> lock{ multi->m_mutex };
         if (--multi->m_taskQueueCallbacksPending == 0 && multi->m_cleanupAsyncBlock)
@@ -248,12 +252,31 @@ HRESULT CurlMulti::PerformStepLocked(int& runningRequests) noexcept
     return S_OK;
 }
 
-HRESULT CurlMulti::Perform() noexcept
+void CurlMulti::Perform(bool canceled, bool isKick) noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
+    if (isKick)
+    {
+        m_kickScheduled = false;
+    }
 
     int runningRequests{ 0 };
-    RETURN_IF_FAILED(PerformStepLocked(runningRequests));
+    HRESULT hr = canceled ? E_ABORT : PerformStepLocked(runningRequests);
+    if (FAILED(hr))
+    {
+        if (!canceled)
+        {
+            HC_TRACE_ERROR_HR(HTTPCLIENT, hr, "CurlMulti::Perform failed. Failing all active requests.");
+        }
+        FailAllRequestsLocked(hr);
+        runningRequests = 0;
+    }
+
+    // A kick never replaces or retires the recurring driver, even on failure.
+    if (isKick)
+    {
+        return;
+    }
 
     if (runningRequests)
     {
@@ -277,15 +300,16 @@ HRESULT CurlMulti::Perform() noexcept
         // Retire under the same lock as AddRequest so an idle-to-active transition cannot lose its wakeup.
         m_performScheduled = false;
     }
-
-    return S_OK;
 }
 
 void CurlMulti::FailAllRequests(HRESULT hr) noexcept
 {
     std::unique_lock<std::mutex> lock{ m_mutex };
-    m_performScheduled = false;
+    FailAllRequestsLocked(hr);
+}
 
+void CurlMulti::FailAllRequestsLocked(HRESULT hr) noexcept
+{
     if (!m_easyRequests.empty())
     {
         for (auto& pair : m_easyRequests)

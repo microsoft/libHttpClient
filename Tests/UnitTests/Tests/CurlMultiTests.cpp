@@ -6,6 +6,7 @@
 #define TEST_CLASS_OWNER L"libHttpClient"
 #include "DefineTestMacros.h"
 #include "HTTP/Curl/CurlMulti.h"
+#include "XTaskQueuePriv.h"
 
 using namespace xbox::httpclient;
 
@@ -30,6 +31,7 @@ struct FakeMulti
 {
     http_internal_vector<FakeEasy*> requests;
     unsigned performs{ 0 };
+    unsigned polls{ 0 };
     bool failPerform{ false };
     std::function<void()> beforePerform;
     CURLMsg message{};
@@ -112,8 +114,9 @@ CURLMsg* curl_multi_info_read(CURLM* multi, int* remaining)
     return nullptr;
 }
 
-CURLMcode curl_multi_wait(CURLM*, struct curl_waitfd*, unsigned int, int, int* ready)
+CURLMcode curl_multi_wait(CURLM* multi, struct curl_waitfd*, unsigned int, int, int* ready)
 {
+    ++static_cast<FakeMulti*>(multi)->polls;
     *ready = 0;
     return CURLM_OK;
 }
@@ -194,6 +197,10 @@ public:
     ~MultiHarness()
     {
         Cleanup();
+        // CurlMulti cleanup can complete before its composite queue finishes
+        // termination. Drain the shared work port before releasing its owner.
+        while (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0)) {}
+        while (XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0)) {}
         XTaskQueueCloseHandle(queue);
     }
 
@@ -298,6 +305,44 @@ public:
         }
     }
 
+    DEFINE_TEST_CASE(NewRequestsKickDelayedDriverImmediatelyAndCoalesce)
+    {
+        MultiHarness harness;
+        auto& stalled = harness.Add(true);
+        harness.Poll();
+
+        for (unsigned round = 0; round < 16; ++round)
+        {
+            const unsigned performsBefore = harness.backend->performs;
+            for (unsigned request = 0; request < 8; ++request)
+            {
+                harness.Add();
+            }
+            VERIFY_IS_TRUE(XTaskQueueDispatch(harness.queue, XTaskQueuePort::Work, 0));
+            VERIFY_ARE_EQUAL(performsBefore + 1, harness.backend->performs);
+            unsigned extraCallbacks = 0;
+            while (extraCallbacks < 2 && XTaskQueueDispatch(harness.queue, XTaskQueuePort::Work, 0))
+            {
+                ++extraCallbacks;
+            }
+            // At most the delayed driver can also have become due.
+            VERIFY_IS_TRUE(extraCallbacks <= 1);
+            for (auto& state : harness.requests)
+            {
+                if (!state.stalled)
+                {
+                    VERIFY_ARE_EQUAL(1u, state.completions);
+                    VERIFY_SUCCEEDED(state.result);
+                }
+            }
+        }
+
+        // Once the last kick has run, cleanup only has the recurring driver to cancel.
+        harness.Cleanup();
+        VERIFY_ARE_EQUAL(1u, stalled.completions);
+        VERIFY_ARE_EQUAL(E_ABORT, stalled.result);
+    }
+
     DEFINE_TEST_CASE(CleanupCancelsInitialAndDelayedDriver)
     {
         for (bool dispatchFirst : { false, true })
@@ -319,6 +364,18 @@ public:
         }
     }
 
+    DEFINE_TEST_CASE(CleanupDrainsCompositeQueueTermination)
+    {
+        {
+            MultiHarness harness;
+            harness.Add(true);
+            harness.Poll();
+            harness.Add();
+            harness.Cleanup();
+        }
+        VERIFY_IS_TRUE(XTaskQueueUninitialize(250));
+    }
+
     DEFINE_TEST_CASE(PerformFailureRetiresDriverAndAllowsRestart)
     {
         MultiHarness harness;
@@ -330,12 +387,62 @@ public:
         VERIFY_ARE_EQUAL(E_FAIL, stalled.result);
         VERIFY_ARE_EQUAL(1u, shortRequest.completions);
         VERIFY_ARE_EQUAL(E_FAIL, shortRequest.result);
+        // The coalesced kick was queued behind the failed initial driver.
+        harness.Poll();
         VERIFY_IS_FALSE(XTaskQueueDispatch(harness.queue, XTaskQueuePort::Work, 0));
 
         auto& restarted = harness.Add();
         harness.Poll();
         VERIFY_ARE_EQUAL(1u, restarted.completions);
         VERIFY_SUCCEEDED(restarted.result);
+    }
+
+    DEFINE_TEST_CASE(KickFailureDoesNotCreateAnotherRecurringDriver)
+    {
+        MultiHarness harness;
+        auto& stalled = harness.Add(true);
+        harness.Poll();
+        const unsigned pollsBefore = harness.backend->polls;
+        auto& failedRequest = harness.Add();
+        harness.backend->failPerform = true;
+        harness.Poll();
+        VERIFY_ARE_EQUAL(1u, stalled.completions);
+        VERIFY_ARE_EQUAL(E_FAIL, stalled.result);
+        VERIFY_ARE_EQUAL(1u, failedRequest.completions);
+        VERIFY_ARE_EQUAL(E_FAIL, failedRequest.result);
+
+        // The delayed driver is still outstanding. Restart must use a kick,
+        // rather than spawning another recurring polling chain.
+        auto& restarted = harness.Add(true);
+        harness.Poll();
+        VERIFY_ARE_EQUAL(pollsBefore, harness.backend->polls);
+        harness.Poll();
+        VERIFY_ARE_EQUAL(pollsBefore + 1, harness.backend->polls);
+        harness.Cleanup();
+        VERIFY_ARE_EQUAL(1u, restarted.completions);
+        VERIFY_ARE_EQUAL(E_ABORT, restarted.result);
+    }
+
+    DEFINE_TEST_CASE(KickCompletingAllTransfersDoesNotRetireDelayedDriver)
+    {
+        MultiHarness harness;
+        auto& first = harness.Add(true);
+        harness.Poll();
+        const unsigned pollsBefore = harness.backend->polls;
+        first.stalled = false;
+        auto& second = harness.Add();
+        harness.Poll();
+        VERIFY_ARE_EQUAL(1u, first.completions);
+        VERIFY_ARE_EQUAL(1u, second.completions);
+
+        auto& third = harness.Add(true);
+        harness.Poll();
+        VERIFY_ARE_EQUAL(pollsBefore, harness.backend->polls);
+        harness.Poll();
+        VERIFY_ARE_EQUAL(pollsBefore + 1, harness.backend->polls);
+        harness.Cleanup();
+        VERIFY_ARE_EQUAL(1u, third.completions);
+        VERIFY_ARE_EQUAL(E_ABORT, third.result);
     }
 
     DEFINE_TEST_CASE(InlineDriverCanCompleteAndRestartBeforeSubmitReturns)

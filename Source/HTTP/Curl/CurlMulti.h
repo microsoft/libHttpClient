@@ -26,9 +26,11 @@ public:
 private:
     CurlMulti() = default;
 
-    void ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, uint32_t delay);
+    void ScheduleTaskQueueCallback(std::unique_lock<std::mutex>&& lock, uint32_t delay, bool isKick = false);
     static void CALLBACK TaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept;
-    HRESULT Perform() noexcept;
+    static void CALLBACK KickTaskQueueCallback(_In_opt_ void* context, _In_ bool canceled) noexcept;
+    static void RunTaskQueueCallback(void* context, bool canceled, bool isKick) noexcept;
+    void Perform(bool canceled, bool isKick) noexcept;
 
     // Core curl_multi_perform + message-drain step. Requires m_mutex to be held. Does not
     // schedule any task queue work, so it is safe to call directly from a suspend handler.
@@ -36,6 +38,7 @@ private:
 
     // Fail all active requests due to unexpected CURLM or platform error
     void FailAllRequests(HRESULT hr) noexcept;
+    void FailAllRequestsLocked(HRESULT hr) noexcept;
 
     static HRESULT CALLBACK CleanupAsyncProvider(XAsyncOp op, const XAsyncProviderData* data);
 
@@ -44,6 +47,7 @@ private:
     std::mutex m_mutex;
     http_internal_map<CURL*, HC_UNIQUE_PTR<CurlEasyRequest>> m_easyRequests;
     bool m_performScheduled{ false };
+    bool m_kickScheduled{ false };
     uint32_t m_taskQueueCallbacksPending{ 0 };
     XAsyncBlock* m_cleanupAsyncBlock{ nullptr };
 };
