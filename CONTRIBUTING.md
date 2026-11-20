@@ -19,6 +19,8 @@ Issues and feature requests are submitted through the project's [issue tracker](
 
 Please submit any changes as a Pull Request against the development branch. Make sure to write a detailed message describing the changes in the Pull Request. This will help us quickly determine what changes (if any) need to be made for it to be ready for integration.
 
+Pull requests must originate from a branch in `microsoft/libHttpClient`, not from a fork. This project's CI security policy prevents builds from running for fork-based pull requests, so they cannot complete the required validation and cannot be merged. Contributors with write access should create their feature branches in this repository. If you do not have write access, please open an issue describing your proposed change so the maintainers can coordinate a contribution that can be built and validated.
+
 _Note: Please keep in mind that not all requests will be approved. Requests are reviewed by the team on a regular basis and will be updated with the status at each review. If your request is accepted you will receive information about the next steps and when the request will be integrated in the development branch. If your request is rejected you will receive information about the reasons why it was rejected._  
 
 ### Contribution guidelines

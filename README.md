@@ -165,6 +165,12 @@ Is there a feature missing that you'd like to see, or have you found a bug that 
 
 Big or small we'd like to take your contributions back to help improve the libHttpClient for game devs.
 
+### Pull request requirements
+
+Pull requests must originate from a branch in `microsoft/libHttpClient`, not from a fork. This project's CI security policy prevents builds from running for fork-based pull requests. As a result, those pull requests cannot complete the required validation and cannot be merged.
+
+If you have write access to this repository, create your feature branch here rather than in a fork. If you do not have write access, please [open an issue](../../issues) describing your proposed change so the maintainers can coordinate a contribution that can be built and validated. See [CONTRIBUTING.md](CONTRIBUTING.md) for additional contribution guidelines.
+
 ## Having Trouble?
 
 We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a an issue in our [issue tracker](../../issues).  

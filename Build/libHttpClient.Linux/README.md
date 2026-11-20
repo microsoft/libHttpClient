@@ -95,6 +95,14 @@ and UndefinedBehaviorSanitizer; CI runs `ctest -L "unit|taskqueue"` on such a De
 clang 14 on kernels that use 32 bits of mmap ASLR entropy the ASan runtime can crash at startup;
 run the tests with `setarch $(uname -m) -R ctest ...` (or `sysctl vm.mmap_rnd_bits=28`).
 
+```
+./libHttpClient_Linux.bash -c Debug -st -t -tsan
+```
+
+`-tsan|--thread-sanitizer` (CMake `-DHC_ENABLE_TSAN=ON`) builds every target with ThreadSanitizer
+instead; it can't be combined with `-san`. CI runs `ctest -L taskqueue` on such a Debug build
+(the unit and E2E suites still have unrelated TSan findings). The same mmap ASLR workaround applies.
+
 If the bash script fails to run and produces the error:
 ```
 /bin/bash^M: bad interpreter
