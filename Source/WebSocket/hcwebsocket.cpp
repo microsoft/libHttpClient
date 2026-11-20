@@ -304,7 +304,20 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
 
     assert(ws->m_state == State::Connecting || bIsDisconnected);
     assert(context->observer.get() == context->result.websocket || FAILED(hr) || bIsDisconnected);
-    if (SUCCEEDED(hr) && SUCCEEDED(context->result.errorCode))
+
+    // Frames the provider reported before this point are delivered below, once the outcome of the connect is
+    // known (so a handler replying to the server's first frame can send). Until delivery finishes, newer frames
+    // are held behind them to preserve order. The retained observer keeps the WebSocket alive throughout.
+    ObserverPtr heldEventsObserver;
+    if (!ws->m_heldEvents.empty())
+    {
+        ws->m_deliveringHeldEvents = true;
+        context->observer->AddRef();
+        heldEventsObserver = ObserverPtr{ context->observer.get() };
+    }
+
+    bool const connected = SUCCEEDED(hr) && SUCCEEDED(context->result.errorCode);
+    if (connected)
     {
         // Connect was sucessful. Allocate ProviderContext to ensure WebSocket lifetime until it is reclaimed in WebSocket::CloseFunc
         ws->m_state = State::Connected;
@@ -318,6 +331,25 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
         ws->m_state = State::Disconnected;
     }
     lock.unlock();
+
+    if (heldEventsObserver)
+    {
+        auto& websocket{ heldEventsObserver->websocket };
+        DeliverHeldEvents(heldEventsObserver.get());
+
+        // The client's connect has not completed yet, so a close reported while the held frames were being
+        // delivered is handled like any other close before the connect completes: the connect fails.
+        if (connected)
+        {
+            std::lock_guard<DefaultUnnamedMutex> stateLock{ websocket->m_stateMutex };
+            if (websocket->m_state == State::Disconnected)
+            {
+                HC_TRACE_WARNING(WEBSOCKET, "WebSocket::ConnectComplete [ID %llu] the connection closed while delivering messages received during connect", TO_ULL(websocket->id));
+                hr = E_FAIL;
+            }
+        }
+        heldEventsObserver.reset();
+    }
 
     XAsyncComplete(context->clientAsyncBlock, hr, sizeof(WebSocketCompletionResult));
 }
@@ -692,6 +724,158 @@ void CALLBACK WebSocket::MessageFunc(
     void* /*context*/
 )
 {
+    if (!handle->websocket->HoldEventIfNotReady(HeldEvent::Type::Message, message, nullptr, 0, false))
+    {
+        InvokeMessageHandlers(handle, message);
+    }
+}
+
+void CALLBACK WebSocket::BinaryMessageFunc(
+    HCWebsocketHandle handle,
+    const uint8_t* bytes,
+    uint32_t payloadSize,
+    void* /*context*/
+)
+{
+    if (!handle->websocket->HoldEventIfNotReady(HeldEvent::Type::BinaryMessage, nullptr, bytes, payloadSize, false))
+    {
+        InvokeBinaryMessageHandlers(handle, bytes, payloadSize);
+    }
+}
+
+void CALLBACK WebSocket::BinaryMessageFragmentFunc(
+    HCWebsocketHandle handle,
+    const uint8_t* bytes,
+    uint32_t payloadSize,
+    bool isLastFragment,
+    void* /*context*/
+)
+{
+    if (!handle->websocket->HoldEventIfNotReady(HeldEvent::Type::BinaryMessageFragment, nullptr, bytes, payloadSize, isLastFragment))
+    {
+        InvokeBinaryMessageFragmentHandlers(handle, bytes, payloadSize, isLastFragment);
+    }
+}
+
+void CALLBACK WebSocket::CloseFunc(
+    HCWebsocketHandle handle,
+    HCWebSocketCloseStatus status,
+    void* /*context*/
+)
+{
+    HC_TRACE_INFORMATION(WEBSOCKET, __FUNCTION__);
+
+    auto websocket{ handle->websocket };
+
+    std::unique_lock<DefaultUnnamedMutex> stateLock{ websocket->m_stateMutex };
+    if (!websocket->m_providerContext)
+    {
+        // It's possible for our websocket to get closed before we finish connecting. m_providerContext only gets populated when the connection process is 100% completed.
+        // If we're still in the process of connecting, mark as disconnected and let ConnectComplete handle the cleanup.
+        HC_TRACE_WARNING(WEBSOCKET, "Call to WebSocket::CloseFunc without providerContext.  This means that we're aborting the connection process unexpectedly.");
+        websocket->m_state = State::Disconnected;
+        return;
+    }
+
+    // We no longer expect callbacks from Provider at this point, so cleanup m_providerContext. If there are no other
+    // observers of websocket, it may be destroyed now. Clear the pointer under the lock as well: Send/Disconnect check
+    // it under the same lock and retain the observer they hand to the provider.
+    HC_UNIQUE_PTR<ProviderContext> reclaim{ websocket->m_providerContext };
+    websocket->m_providerContext = nullptr;
+    websocket->m_state = State::Disconnected;
+
+    if (websocket->m_deliveringHeldEvents)
+    {
+        // ConnectComplete is still delivering messages received during connect, so the client's connect has not
+        // completed yet. As with any close before then, ConnectComplete fails the connect instead of reporting a close.
+        HC_TRACE_WARNING(WEBSOCKET, "Call to WebSocket::CloseFunc while delivering messages received during connect; the connect will fail.");
+        stateLock.unlock();
+        return;
+    }
+    stateLock.unlock();
+
+    InvokeCloseHandlers(handle, status);
+}
+
+bool WebSocket::HoldEventIfNotReady(
+    _In_ HeldEvent::Type type,
+    _In_opt_z_ const char* message,
+    _In_reads_bytes_opt_(payloadSize) const uint8_t* payloadBytes,
+    _In_ size_t payloadSize,
+    _In_ bool isLastFragment
+) noexcept
+{
+    // The connect's internal completion, which moves the WebSocket to Connected, runs a Work port hop after the
+    // provider completes the connect, and providers may report the server's first frames before or meanwhile.
+    // Hold those frames so client handlers don't run (and fail to send) before the WebSocket is Connected.
+    std::lock_guard<DefaultUnnamedMutex> lock{ m_stateMutex };
+    if (m_state != State::Connecting && !m_deliveringHeldEvents)
+    {
+        return false;
+    }
+
+    try
+    {
+        HeldEvent event{};
+        event.type = type;
+        if (message)
+        {
+            event.message = message;
+        }
+        if (payloadBytes && payloadSize > 0)
+        {
+            event.payload.assign(payloadBytes, payloadBytes + payloadSize);
+        }
+        event.isLastFragment = isLastFragment;
+        m_heldEvents.push_back(std::move(event));
+    }
+    catch (...)
+    {
+        HC_TRACE_ERROR(WEBSOCKET, "WebSocket [ID %llu] failed to hold a message received before the connect completed; dropping it", TO_ULL(id));
+    }
+    return true;
+}
+
+void WebSocket::DeliverHeldEvents(_In_ HCWebsocketHandle handle)
+{
+    auto& websocket{ handle->websocket };
+
+    for (;;)
+    {
+        http_internal_vector<HeldEvent> events;
+        {
+            std::lock_guard<DefaultUnnamedMutex> lock{ websocket->m_stateMutex };
+            if (websocket->m_heldEvents.empty())
+            {
+                websocket->m_deliveringHeldEvents = false;
+                return;
+            }
+            events.swap(websocket->m_heldEvents);
+        }
+
+        for (auto const& event : events)
+        {
+            switch (event.type)
+            {
+            case HeldEvent::Type::Message:
+                InvokeMessageHandlers(handle, event.message.c_str());
+                break;
+            case HeldEvent::Type::BinaryMessage:
+                InvokeBinaryMessageHandlers(handle, event.payload.data(), static_cast<uint32_t>(event.payload.size()));
+                break;
+            case HeldEvent::Type::BinaryMessageFragment:
+                InvokeBinaryMessageFragmentHandlers(handle, event.payload.data(), static_cast<uint32_t>(event.payload.size()), event.isLastFragment);
+                break;
+            }
+        }
+    }
+}
+
+void WebSocket::InvokeMessageHandlers(
+    HCWebsocketHandle handle,
+    const char* message
+)
+{
     auto& websocket{ handle->websocket };
 
     NotifyWebSocketRoutedHandlers(handle, true, message, nullptr, 0);
@@ -716,11 +900,10 @@ void CALLBACK WebSocket::MessageFunc(
     }  
 }
 
-void CALLBACK WebSocket::BinaryMessageFunc(
+void WebSocket::InvokeBinaryMessageHandlers(
     HCWebsocketHandle handle,
     const uint8_t* bytes,
-    uint32_t payloadSize,
-    void* /*context*/
+    uint32_t payloadSize
 )
 {
     auto& websocket{ handle->websocket };
@@ -746,12 +929,11 @@ void CALLBACK WebSocket::BinaryMessageFunc(
     }
 }
 
-void CALLBACK WebSocket::BinaryMessageFragmentFunc(
+void WebSocket::InvokeBinaryMessageFragmentHandlers(
     HCWebsocketHandle handle,
     const uint8_t* bytes,
     uint32_t payloadSize,
-    bool isLastFragment,
-    void* /*context*/
+    bool isLastFragment
 )
 {
     auto& websocket{ handle->websocket };
@@ -782,34 +964,13 @@ void CALLBACK WebSocket::BinaryMessageFragmentFunc(
     }
 }
 
-void CALLBACK WebSocket::CloseFunc(
+void WebSocket::InvokeCloseHandlers(
     HCWebsocketHandle handle,
-    HCWebSocketCloseStatus status,
-    void* /*context*/
+    HCWebSocketCloseStatus status
 )
 {
-    HC_TRACE_INFORMATION(WEBSOCKET, __FUNCTION__);
+    auto& websocket{ handle->websocket };
 
-    auto websocket{ handle->websocket };
-
-    std::unique_lock<DefaultUnnamedMutex> stateLock{ websocket->m_stateMutex };
-    if (!websocket->m_providerContext)
-    {
-        // It's possible for our websocket to get closed before we finish connecting. m_providerContext only gets populated when the connection process is 100% completed.
-        // If we're still in the process of connecting, mark as disconnected and let ConnectComplete handle the cleanup.
-        HC_TRACE_WARNING(WEBSOCKET, "Call to WebSocket::CloseFunc without providerContext.  This means that we're aborting the connection process unexpectedly.");
-        websocket->m_state = State::Disconnected;
-        return;
-    }
-
-    // We no longer expect callbacks from Provider at this point, so cleanup m_providerContext. If there are no other
-    // observers of websocket, it may be destroyed now. Clear the pointer under the lock as well: Send/Disconnect check
-    // it under the same lock and retain the observer they hand to the provider.
-    HC_UNIQUE_PTR<ProviderContext> reclaim{ websocket->m_providerContext };
-    websocket->m_providerContext = nullptr;
-    websocket->m_state = State::Disconnected;
-    stateLock.unlock();    
-    
     std::unique_lock<std::recursive_mutex> callbackLock{ websocket->m_eventCallbacksMutex };
     auto callbacks{ websocket->m_eventCallbacks };
 

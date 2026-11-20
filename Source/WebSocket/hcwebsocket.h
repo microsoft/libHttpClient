@@ -182,6 +182,32 @@ public:
 private:
     static HRESULT CALLBACK ConnectAsyncProvider(XAsyncOp op, XAsyncProviderData const* data);
     static void CALLBACK ConnectComplete(XAsyncBlock* async);
+
+    // A frame received while the connect is still completing, or while earlier held frames are being
+    // delivered. Held so that client handlers only run once the connect's outcome is known (and can send).
+    struct HeldEvent
+    {
+        enum class Type { Message, BinaryMessage, BinaryMessageFragment } type;
+        http_internal_string message;
+        http_internal_vector<uint8_t> payload;
+        bool isLastFragment{ false };
+    };
+
+    // Returns true if the event was held (or dropped) rather than left for the caller to dispatch.
+    bool HoldEventIfNotReady(
+        _In_ HeldEvent::Type type,
+        _In_opt_z_ const char* message,
+        _In_reads_bytes_opt_(payloadSize) const uint8_t* payloadBytes,
+        _In_ size_t payloadSize,
+        _In_ bool isLastFragment
+    ) noexcept;
+    static void DeliverHeldEvents(_In_ HCWebsocketHandle handle);
+
+    static void InvokeMessageHandlers(HCWebsocketHandle handle, const char* message);
+    static void InvokeBinaryMessageHandlers(HCWebsocketHandle handle, const uint8_t* bytes, uint32_t payloadSize);
+    static void InvokeBinaryMessageFragmentHandlers(HCWebsocketHandle handle, const uint8_t* bytes, uint32_t payloadSize, bool isLastFragment);
+    static void InvokeCloseHandlers(HCWebsocketHandle handle, HCWebSocketCloseStatus status);
+
     void ClearResponseHeadersLockHeld() noexcept;
     bool HasBinaryMessageFragmentHandlers() const noexcept;
 
@@ -235,6 +261,9 @@ private:
     uint32_t m_nextToken{ 1 };
 
     ProviderContext* m_providerContext{ nullptr }; // guarded by m_stateMutex
+
+    http_internal_vector<HeldEvent> m_heldEvents; // guarded by m_stateMutex
+    bool m_deliveringHeldEvents{ false }; // guarded by m_stateMutex
 
     // Stable routing provider for this WebSocket. Hybrid providers may delegate internally,
     // but the WebSocket does not keep per-connection active-provider state.
