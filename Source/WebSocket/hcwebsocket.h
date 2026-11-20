@@ -177,6 +177,10 @@ public:
     // admitted (the WebSocket was connected) and just before it is handed to the provider.
     using ProviderCallTestHook = void(CALLBACK*)(void* context);
     static void SetProviderCallTestHook(ProviderCallTestHook hook, void* context) noexcept;
+
+    // Test seam: invoked by ConnectComplete after it finishes delivering frames held during connect, and
+    // before it completes the connect.
+    static void SetHeldEventsDeliveredTestHook(ProviderCallTestHook hook, void* context) noexcept;
 #endif
 
 private:
@@ -201,7 +205,9 @@ private:
         _In_ size_t payloadSize,
         _In_ bool isLastFragment
     ) noexcept;
-    static void DeliverHeldEvents(_In_ HCWebsocketHandle handle);
+    // Returns whether the WebSocket was Disconnected when delivery finished, decided under the same lock
+    // that stops holding newer events (a close after that point raises a close event as usual).
+    static bool DeliverHeldEvents(_In_ HCWebsocketHandle handle);
 
     static void InvokeMessageHandlers(HCWebsocketHandle handle, const char* message);
     static void InvokeBinaryMessageHandlers(HCWebsocketHandle handle, const uint8_t* bytes, uint32_t payloadSize);

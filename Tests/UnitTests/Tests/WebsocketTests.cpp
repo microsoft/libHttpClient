@@ -482,6 +482,7 @@ struct EarlyFrameTestState
     bool disconnectFromFirstHandler{ false };
     HRESULT connectResultHr{ S_OK };
     XTaskQueueHandle queue{ nullptr };
+    HCWebsocketHandle providerHandle{ nullptr };
     std::string events;
     uint32_t framesReceived{ 0 };
     HRESULT replyHr[4]{ E_PENDING, E_PENDING, E_PENDING, E_PENDING };
@@ -525,6 +526,7 @@ HRESULT CALLBACK EarlyFrameConnectAsync(
             switch (op)
             {
             case XAsyncOp::Begin:
+                g_earlyFrame.providerHandle = websocket;
                 if (g_earlyFrame.timing == EarlyFrameTiming::BeforeConnectComplete)
                 {
                     DeliverEarlyFrames(websocket);
@@ -1495,6 +1497,51 @@ public:
         VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[0]);
         VERIFY_ARE_EQUAL(E_UNEXPECTED, g_earlyFrame.replyHr[1]);
         VERIFY_IS_TRUE(g_HCWebSocketDisconnect_Called);
+    }
+
+    // A close reported just after the held frames have been delivered (once ConnectComplete stops
+    // holding newer events) takes the normal path: the client gets a close event and the connect
+    // completes with its own result, as when no frames were held. It must not also fail the connect.
+    // Drives the WebSocket directly, without NetworkState, so the close can't race its tracking.
+    DEFINE_TEST_CASE(TestCloseRightAfterHeldFramesDeliveredRaisesCloseAndConnectSucceeds)
+    {
+        g_earlyFrame = EarlyFrameTestState{};
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(EarlyFrameConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &g_earlyFrame.queue));
+
+        auto websocket = http_allocate_shared<WebSocket>(1, ExternalWebSocketProvider::Get());
+        auto observer = HC_WEBSOCKET_OBSERVER::Initialize(websocket, EarlyFrameClientMessage, EarlyFrameClientBinaryMessage, nullptr, EarlyFrameClientClose, nullptr);
+
+        WebSocket::SetHeldEventsDeliveredTestHook([](void*)
+        {
+            HCWebSocketCloseEventFunction closeFunc = nullptr;
+            void* closeContext = nullptr;
+            VERIFY_SUCCEEDED(HCWebSocketGetEventFunctions(g_earlyFrame.providerHandle, nullptr, nullptr, &closeFunc, &closeContext));
+            closeFunc(g_earlyFrame.providerHandle, HCWebSocketCloseStatus::GoingAway, closeContext);
+        }, nullptr);
+
+        XAsyncBlock connectAsync{};
+        connectAsync.queue = g_earlyFrame.queue;
+        VERIFY_ARE_EQUAL(S_OK, websocket->ConnectAsync(http_internal_string{ "wss://example.com" }, http_internal_string{}, &connectAsync));
+        DrainQueue(g_earlyFrame.queue);
+        WebSocket::SetHeldEventsDeliveredTestHook(nullptr, nullptr);
+
+        HRESULT connectHr = XAsyncGetStatus(&connectAsync, false);
+        WebSocketCompletionResult result{};
+        HRESULT resultHr = HCGetWebSocketConnectResult(&connectAsync, &result);
+
+        observer.reset();
+        websocket.reset();
+        DrainQueue(g_earlyFrame.queue);
+        XTaskQueueCloseHandle(g_earlyFrame.queue);
+        g_earlyFrame.queue = nullptr;
+        xbox::httpclient::ExternalWebSocketProvider::Get().ClearCallbacks();
+
+        VERIFY_ARE_EQUAL_STR("text:1;close;", g_earlyFrame.events.c_str());
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[0]);
+        VERIFY_ARE_EQUAL(S_OK, connectHr);
+        VERIFY_ARE_EQUAL(S_OK, resultHr);
+        VERIFY_ARE_EQUAL(S_OK, result.errorCode);
     }
 };
 

@@ -147,12 +147,29 @@ void InvokeProviderCallTestHook() noexcept
         hook(g_providerCallTestHookContext.load(std::memory_order_acquire));
     }
 }
+
+std::atomic<WebSocket::ProviderCallTestHook> g_heldEventsDeliveredTestHook{ nullptr };
+std::atomic<void*> g_heldEventsDeliveredTestHookContext{ nullptr };
+
+void InvokeHeldEventsDeliveredTestHook() noexcept
+{
+    if (auto hook = g_heldEventsDeliveredTestHook.load(std::memory_order_acquire))
+    {
+        hook(g_heldEventsDeliveredTestHookContext.load(std::memory_order_acquire));
+    }
+}
 }
 
 void WebSocket::SetProviderCallTestHook(ProviderCallTestHook hook, void* context) noexcept
 {
     g_providerCallTestHookContext.store(context, std::memory_order_release);
     g_providerCallTestHook.store(hook, std::memory_order_release);
+}
+
+void WebSocket::SetHeldEventsDeliveredTestHook(ProviderCallTestHook hook, void* context) noexcept
+{
+    g_heldEventsDeliveredTestHookContext.store(context, std::memory_order_release);
+    g_heldEventsDeliveredTestHook.store(hook, std::memory_order_release);
 }
 #endif
 
@@ -335,18 +352,19 @@ void CALLBACK WebSocket::ConnectComplete(XAsyncBlock* async)
     if (heldEventsObserver)
     {
         auto& websocket{ heldEventsObserver->websocket };
-        DeliverHeldEvents(heldEventsObserver.get());
+        bool const closedDuringDelivery = DeliverHeldEvents(heldEventsObserver.get());
+
+#ifdef HC_UNITTEST_API
+        InvokeHeldEventsDeliveredTestHook();
+#endif
 
         // The client's connect has not completed yet, so a close reported while the held frames were being
-        // delivered is handled like any other close before the connect completes: the connect fails.
-        if (connected)
+        // delivered is handled like any other close before the connect completes: the connect fails. This is
+        // decided where delivery stopped holding events, so a later close instead takes the normal path.
+        if (connected && closedDuringDelivery)
         {
-            std::lock_guard<DefaultUnnamedMutex> stateLock{ websocket->m_stateMutex };
-            if (websocket->m_state == State::Disconnected)
-            {
-                HC_TRACE_WARNING(WEBSOCKET, "WebSocket::ConnectComplete [ID %llu] the connection closed while delivering messages received during connect", TO_ULL(websocket->id));
-                hr = E_FAIL;
-            }
+            HC_TRACE_WARNING(WEBSOCKET, "WebSocket::ConnectComplete [ID %llu] the connection closed while delivering messages received during connect", TO_ULL(websocket->id));
+            hr = E_FAIL;
         }
         heldEventsObserver.reset();
     }
@@ -836,7 +854,7 @@ bool WebSocket::HoldEventIfNotReady(
     return true;
 }
 
-void WebSocket::DeliverHeldEvents(_In_ HCWebsocketHandle handle)
+bool WebSocket::DeliverHeldEvents(_In_ HCWebsocketHandle handle)
 {
     auto& websocket{ handle->websocket };
 
@@ -848,7 +866,7 @@ void WebSocket::DeliverHeldEvents(_In_ HCWebsocketHandle handle)
             if (websocket->m_heldEvents.empty())
             {
                 websocket->m_deliveringHeldEvents = false;
-                return;
+                return websocket->m_state == State::Disconnected;
             }
             events.swap(websocket->m_heldEvents);
         }
