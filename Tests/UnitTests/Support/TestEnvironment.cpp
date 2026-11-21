@@ -171,6 +171,7 @@ TestEnvironment::ResetResult TestEnvironment::ResetLibraryState(uint32_t cleanup
         http_singleton::SetCleanupProviderCleanupTestHook(nullptr, nullptr);
 #ifndef HC_NOWEBSOCKETS
         WebSocket::SetProviderCallTestHook(nullptr, nullptr);
+        WebSocket::SetHeldEventsDeliveredTestHook(nullptr, nullptr);
 #endif
         // RetryTests' clock and retry-delay seams (decision 3): a test that fails before restoring
         // them must not leave later tests with a fake clock or intercepted retry delays.

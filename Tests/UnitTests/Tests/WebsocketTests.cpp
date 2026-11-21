@@ -466,6 +466,185 @@ HRESULT CALLBACK Test_Internal_HCWebSocketDisconnect(
     return S_OK;
 }
 
+// A provider that hands the client frames from inside its connect operation, either just before or
+// just after it calls XAsyncComplete, so they arrive while the WebSocket is still Connecting.
+// The client's message handler replies with a send, as clients commonly do on the server's first frame.
+namespace
+{
+enum class EarlyFrameTiming { BeforeConnectComplete, AfterConnectComplete };
+enum class EarlyFrameKind { Text, Binary };
+
+struct EarlyFrameTestState
+{
+    EarlyFrameTiming timing{ EarlyFrameTiming::BeforeConnectComplete };
+    EarlyFrameKind kind{ EarlyFrameKind::Text };
+    uint32_t frameCount{ 1 };
+    bool disconnectFromFirstHandler{ false };
+    HRESULT connectResultHr{ S_OK };
+    XTaskQueueHandle queue{ nullptr };
+    HCWebsocketHandle providerHandle{ nullptr };
+    std::string events;
+    uint32_t framesReceived{ 0 };
+    HRESULT replyHr[4]{ E_PENDING, E_PENDING, E_PENDING, E_PENDING };
+    XAsyncBlock replyAsync[4]{};
+};
+EarlyFrameTestState g_earlyFrame{};
+
+void DeliverEarlyFrames(HCWebsocketHandle providerHandle)
+{
+    HCWebSocketMessageFunction messageFunc = nullptr;
+    HCWebSocketBinaryMessageFunction binaryMessageFunc = nullptr;
+    void* eventContext = nullptr;
+    VERIFY_SUCCEEDED(HCWebSocketGetEventFunctions(providerHandle, &messageFunc, &binaryMessageFunc, nullptr, &eventContext));
+    for (uint32_t i = 0; i < g_earlyFrame.frameCount; ++i)
+    {
+        if (g_earlyFrame.kind == EarlyFrameKind::Text)
+        {
+            std::string message = std::to_string(i + 1);
+            messageFunc(providerHandle, message.c_str(), eventContext);
+        }
+        else
+        {
+            std::vector<uint8_t> frame(i + 1, static_cast<uint8_t>(i));
+            binaryMessageFunc(providerHandle, frame.data(), static_cast<uint32_t>(frame.size()), eventContext);
+        }
+    }
+}
+
+HRESULT CALLBACK EarlyFrameConnectAsync(
+    _In_z_ PCSTR /*uri*/,
+    _In_z_ PCSTR /*subProtocol*/,
+    _In_ HCWebsocketHandle websocket,
+    _Inout_ XAsyncBlock* asyncBlock,
+    _In_opt_ void* /*context*/,
+    _In_ HCPerformEnv /*env*/)
+{
+    return XAsyncBegin(asyncBlock, websocket, reinterpret_cast<void*>(HCWebSocketConnectAsync), __FUNCTION__,
+        [](XAsyncOp op, const XAsyncProviderData* data)
+        {
+            auto websocket = static_cast<HCWebsocketHandle>(data->context);
+            switch (op)
+            {
+            case XAsyncOp::Begin:
+                g_earlyFrame.providerHandle = websocket;
+                if (g_earlyFrame.timing == EarlyFrameTiming::BeforeConnectComplete)
+                {
+                    DeliverEarlyFrames(websocket);
+                    XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                }
+                else
+                {
+                    XAsyncComplete(data->async, S_OK, sizeof(WebSocketCompletionResult));
+                    DeliverEarlyFrames(websocket);
+                }
+                return S_OK;
+            case XAsyncOp::GetResult:
+            {
+                RETURN_HR_IF(E_NOT_SUFFICIENT_BUFFER, data->bufferSize < sizeof(WebSocketCompletionResult));
+                auto result = static_cast<WebSocketCompletionResult*>(data->buffer);
+                *result = WebSocketCompletionResult{};
+                result->errorCode = g_earlyFrame.connectResultHr;
+                result->websocket = websocket;
+                return S_OK;
+            }
+            default:
+                return S_OK;
+            }
+        });
+}
+
+void ReplyToEarlyFrame(HCWebsocketHandle websocket)
+{
+    uint32_t const index = g_earlyFrame.framesReceived++;
+    VERIFY_IS_TRUE(index < std::size(g_earlyFrame.replyAsync));
+    if (index == 0 && g_earlyFrame.disconnectFromFirstHandler)
+    {
+        g_earlyFrame.replyHr[index] = HCWebSocketDisconnect(websocket);
+        return;
+    }
+
+    XAsyncBlock& replyAsync = g_earlyFrame.replyAsync[index];
+    replyAsync.queue = g_earlyFrame.queue;
+    if (g_earlyFrame.kind == EarlyFrameKind::Text)
+    {
+        g_earlyFrame.replyHr[index] = HCWebSocketSendMessageAsync(websocket, "subscribe", &replyAsync);
+    }
+    else
+    {
+        uint8_t const reply[] = { 0x04 };
+        g_earlyFrame.replyHr[index] = HCWebSocketSendBinaryMessageAsync(websocket, reply, sizeof(reply), &replyAsync);
+    }
+}
+
+void CALLBACK EarlyFrameClientMessage(HCWebsocketHandle websocket, const char* message, void* /*context*/)
+{
+    g_earlyFrame.events += std::string{ "text:" } + message + ";";
+    ReplyToEarlyFrame(websocket);
+}
+
+void CALLBACK EarlyFrameClientBinaryMessage(HCWebsocketHandle websocket, const uint8_t* /*bytes*/, uint32_t size, void* /*context*/)
+{
+    g_earlyFrame.events += "binary:" + std::to_string(size) + ";";
+    ReplyToEarlyFrame(websocket);
+}
+
+void CALLBACK EarlyFrameClientClose(HCWebsocketHandle /*websocket*/, HCWebSocketCloseStatus /*status*/, void* /*context*/)
+{
+    g_earlyFrame.events += "close;";
+}
+
+void DrainQueue(XTaskQueueHandle queue)
+{
+    bool dispatched = true;
+    while (dispatched)
+    {
+        bool work = XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0);
+        bool completion = XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0);
+        dispatched = work || completion;
+    }
+}
+
+// Connects through EarlyFrameConnectAsync on a Manual/Manual queue (g_earlyFrame configures the
+// provider and client) and returns the client connect status.
+HRESULT RunEarlyFrameConnect()
+{
+    g_HCWebSocketSendMessage_Called = false;
+    g_HCWebSocketSendBinaryMessage_Called = false;
+    g_HCWebSocketDisconnect_Called = false;
+
+    VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(EarlyFrameConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+    VERIFY_ARE_EQUAL(S_OK, HCInitialize(nullptr));
+    VERIFY_ARE_EQUAL(S_OK, XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &g_earlyFrame.queue));
+
+    HCWebsocketHandle websocket = nullptr;
+    VERIFY_ARE_EQUAL(S_OK, HCWebSocketCreate(&websocket, EarlyFrameClientMessage, EarlyFrameClientBinaryMessage, EarlyFrameClientClose, nullptr));
+
+    XAsyncBlock connectAsync{};
+    connectAsync.queue = g_earlyFrame.queue;
+    VERIFY_ARE_EQUAL(S_OK, HCWebSocketConnectAsync("wss://example.com", "", websocket, &connectAsync));
+    DrainQueue(g_earlyFrame.queue);
+
+    HRESULT connectHr = XAsyncGetStatus(&connectAsync, false);
+    if (SUCCEEDED(connectHr))
+    {
+        WebSocketCompletionResult result{};
+        VERIFY_ARE_EQUAL(S_OK, HCGetWebSocketConnectResult(&connectAsync, &result));
+        connectHr = result.errorCode;
+    }
+    if (SUCCEEDED(connectHr) && !g_earlyFrame.disconnectFromFirstHandler)
+    {
+        VERIFY_ARE_EQUAL(S_OK, HCWebSocketDisconnect(websocket));
+    }
+
+    VERIFY_ARE_EQUAL(S_OK, HCWebSocketCloseHandle(websocket));
+    DrainQueue(g_earlyFrame.queue);
+    XTaskQueueCloseHandle(g_earlyFrame.queue);
+    g_earlyFrame.queue = nullptr;
+    HCCleanup();
+    return connectHr;
+}
+} // namespace
+
 class UnsupportedOptionsTestProvider final : public IWebSocketProvider
 {
 public:
@@ -1253,6 +1432,117 @@ public:
         HCCleanup();
     }
 
+    // A provider may deliver the server's first frame before the internal connect completion has
+    // moved the WebSocket to Connected (it runs one Work-port hop after the provider's XAsyncComplete).
+    // Such frames are held until the WebSocket is Connected, so a client that replies from its
+    // message handler must not get E_UNEXPECTED.
+    DEFINE_TEST_CASE(TestSendFromMessageHandlerWhenFrameArrivesBeforeConnectComplete)
+    {
+        g_earlyFrame = EarlyFrameTestState{};
+        g_earlyFrame.timing = EarlyFrameTiming::BeforeConnectComplete;
+        VERIFY_ARE_EQUAL(S_OK, RunEarlyFrameConnect());
+        VERIFY_ARE_EQUAL_STR("text:1;close;", g_earlyFrame.events.c_str());
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[0]);
+        VERIFY_IS_TRUE(g_HCWebSocketSendMessage_Called);
+    }
+
+    DEFINE_TEST_CASE(TestSendFromMessageHandlerWhenFrameArrivesAfterConnectComplete)
+    {
+        g_earlyFrame = EarlyFrameTestState{};
+        g_earlyFrame.timing = EarlyFrameTiming::AfterConnectComplete;
+        VERIFY_ARE_EQUAL(S_OK, RunEarlyFrameConnect());
+        VERIFY_ARE_EQUAL_STR("text:1;close;", g_earlyFrame.events.c_str());
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[0]);
+        VERIFY_IS_TRUE(g_HCWebSocketSendMessage_Called);
+    }
+
+    DEFINE_TEST_CASE(TestSendFromBinaryMessageHandlerWhenFramesArriveBeforeConnectComplete)
+    {
+        g_earlyFrame = EarlyFrameTestState{};
+        g_earlyFrame.kind = EarlyFrameKind::Binary;
+        g_earlyFrame.frameCount = 3;
+        VERIFY_ARE_EQUAL(S_OK, RunEarlyFrameConnect());
+        VERIFY_ARE_EQUAL_STR("binary:1;binary:2;binary:3;close;", g_earlyFrame.events.c_str());
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[0]);
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[1]);
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[2]);
+        VERIFY_IS_TRUE(g_HCWebSocketSendBinaryMessage_Called);
+    }
+
+    // Frames held during connect are still delivered if the connect fails (the client saw them before
+    // they were held, e.g. a server's error frame before it closes), but replies fail.
+    DEFINE_TEST_CASE(TestFramesArrivingBeforeFailedConnectAreStillDelivered)
+    {
+        g_earlyFrame = EarlyFrameTestState{};
+        g_earlyFrame.frameCount = 2;
+        g_earlyFrame.connectResultHr = E_ACCESSDENIED;
+        VERIFY_ARE_EQUAL(E_ACCESSDENIED, RunEarlyFrameConnect());
+        VERIFY_ARE_EQUAL_STR("text:1;text:2;", g_earlyFrame.events.c_str());
+        VERIFY_ARE_EQUAL(E_UNEXPECTED, g_earlyFrame.replyHr[0]);
+        VERIFY_ARE_EQUAL(E_UNEXPECTED, g_earlyFrame.replyHr[1]);
+        VERIFY_IS_FALSE(g_HCWebSocketSendMessage_Called);
+    }
+
+    // A close reported while held frames are being delivered (here, the client disconnects from the
+    // first frame's handler and the provider reports the close synchronously) lands before the client's
+    // connect has completed, so like any close during connect it fails the connect rather than raising
+    // a close event. The remaining held frames are still delivered, and cleanup must not hang.
+    DEFINE_TEST_CASE(TestCloseWhileDeliveringHeldFramesFailsConnect)
+    {
+        g_earlyFrame = EarlyFrameTestState{};
+        g_earlyFrame.frameCount = 2;
+        g_earlyFrame.disconnectFromFirstHandler = true;
+        VERIFY_ARE_EQUAL(E_FAIL, RunEarlyFrameConnect());
+        VERIFY_ARE_EQUAL_STR("text:1;text:2;", g_earlyFrame.events.c_str());
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[0]);
+        VERIFY_ARE_EQUAL(E_UNEXPECTED, g_earlyFrame.replyHr[1]);
+        VERIFY_IS_TRUE(g_HCWebSocketDisconnect_Called);
+    }
+
+    // A close reported just after the held frames have been delivered (once ConnectComplete stops
+    // holding newer events) takes the normal path: the client gets a close event and the connect
+    // completes with its own result, as when no frames were held. It must not also fail the connect.
+    // Drives the WebSocket directly, without NetworkState, so the close can't race its tracking.
+    DEFINE_TEST_CASE(TestCloseRightAfterHeldFramesDeliveredRaisesCloseAndConnectSucceeds)
+    {
+        g_earlyFrame = EarlyFrameTestState{};
+        VERIFY_ARE_EQUAL(S_OK, HCSetWebSocketFunctions(EarlyFrameConnectAsync, Test_Internal_HCWebSocketSendMessageAsync, Test_Internal_HCWebSocketSendBinaryMessageAsync, Test_Internal_HCWebSocketDisconnect, nullptr));
+        VERIFY_ARE_EQUAL(S_OK, XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &g_earlyFrame.queue));
+
+        auto websocket = http_allocate_shared<WebSocket>(1, ExternalWebSocketProvider::Get());
+        auto observer = HC_WEBSOCKET_OBSERVER::Initialize(websocket, EarlyFrameClientMessage, EarlyFrameClientBinaryMessage, nullptr, EarlyFrameClientClose, nullptr);
+
+        WebSocket::SetHeldEventsDeliveredTestHook([](void*)
+        {
+            HCWebSocketCloseEventFunction closeFunc = nullptr;
+            void* closeContext = nullptr;
+            VERIFY_SUCCEEDED(HCWebSocketGetEventFunctions(g_earlyFrame.providerHandle, nullptr, nullptr, &closeFunc, &closeContext));
+            closeFunc(g_earlyFrame.providerHandle, HCWebSocketCloseStatus::GoingAway, closeContext);
+        }, nullptr);
+
+        XAsyncBlock connectAsync{};
+        connectAsync.queue = g_earlyFrame.queue;
+        VERIFY_ARE_EQUAL(S_OK, websocket->ConnectAsync(http_internal_string{ "wss://example.com" }, http_internal_string{}, &connectAsync));
+        DrainQueue(g_earlyFrame.queue);
+        WebSocket::SetHeldEventsDeliveredTestHook(nullptr, nullptr);
+
+        HRESULT connectHr = XAsyncGetStatus(&connectAsync, false);
+        WebSocketCompletionResult result{};
+        HRESULT resultHr = HCGetWebSocketConnectResult(&connectAsync, &result);
+
+        observer.reset();
+        websocket.reset();
+        DrainQueue(g_earlyFrame.queue);
+        XTaskQueueCloseHandle(g_earlyFrame.queue);
+        g_earlyFrame.queue = nullptr;
+        xbox::httpclient::ExternalWebSocketProvider::Get().ClearCallbacks();
+
+        VERIFY_ARE_EQUAL_STR("text:1;close;", g_earlyFrame.events.c_str());
+        VERIFY_ARE_EQUAL(S_OK, g_earlyFrame.replyHr[0]);
+        VERIFY_ARE_EQUAL(S_OK, connectHr);
+        VERIFY_ARE_EQUAL(S_OK, resultHr);
+        VERIFY_ARE_EQUAL(S_OK, result.errorCode);
+    }
 };
 
 NAMESPACE_XBOX_HTTP_CLIENT_TEST_END
