@@ -10,7 +10,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.2'
+        // SDK 37 is required by OkHttp 5.5.1's Android AAR (runtime min SDK stays 21).
+        classpath 'com.android.tools.build:gradle:9.2.1'
     }
 }
 

@@ -11,10 +11,16 @@ installation of the right required components.
 
 Command-line builds (and CI) need:
 
-- JDK 11 (Android Gradle Plugin 4.1 / Gradle 6.6)
-- Android SDK platform 34, NDK `27.2.12479018` and CMake `3.18.1`, e.g.
-  `sdkmanager --install "ndk;27.2.12479018" "cmake;3.18.1" "platforms;android-34"`
+- JDK 17 (Android Gradle Plugin 9.2.1 / Gradle 9.4.1)
+- Android SDK platform 37, build tools `36.0.0`, NDK `27.2.12479018` and CMake `3.18.1`, e.g.
+  `sdkmanager --install "ndk;27.2.12479018" "cmake;3.18.1" "platforms;android-37.0" "build-tools;36.0.0"`
   (the SDK command-line tools themselves require JDK 17 to run).
+
+OkHttp 5.5.1 requires compile SDK 37 and Java 8 bytecode. The library's minimum
+runtime remains Android 5.0 (API 21), and its target SDK remains 34. OkHttp 5 enables
+TCP Happy Eyeballs by default for HTTP and WebSocket connections; no explicit
+enablement is needed. HTTP request retries remain disabled in OkHttp so
+libHttpClient continues to own request retry policy.
 
 ## Outputs
 
