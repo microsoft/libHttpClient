@@ -206,6 +206,10 @@ STDAPI_(int32_t) HCAddCallRoutedHandler(
 /// </summary>
 /// <param name="handlerId">Id returned from the HCAddCallRoutedHandler call.</param>
 /// <returns></returns>
+/// <remarks>
+/// May be called from inside a routed handler, including the handler being removed. Once this
+/// returns, the removed handler is not called again.
+/// </remarks>
 STDAPI_(void) HCRemoveCallRoutedHandler(
     _In_ int32_t handlerId
     ) noexcept;
@@ -1579,6 +1583,10 @@ STDAPI_(int32_t) HCAddWebSocketRoutedHandler(
 /// </summary>
 /// <param name="handlerId">Id returned from the HCAddWebSocketRoutedHandler call.</param>
 /// <returns></returns>
+/// <remarks>
+/// May be called from inside a routed handler, including the handler being removed. Once this
+/// returns, the removed handler is not called again.
+/// </remarks>
 STDAPI_(void) HCRemoveWebSocketRoutedHandler(
     _In_ int32_t handlerId
     ) noexcept;

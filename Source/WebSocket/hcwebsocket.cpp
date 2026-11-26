@@ -1019,11 +1019,10 @@ void WebSocket::NotifyWebSocketRoutedHandlers(
     auto httpSingleton = get_http_singleton();
     if (httpSingleton)
     {
-        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
-        for (const auto& pair : httpSingleton->m_webSocketRoutedHandlers)
+        httpSingleton->invoke_routed_handlers(httpSingleton->m_webSocketRoutedHandlers, [&](HCWebSocketRoutedHandler handler, void* handlerContext)
         {
-            pair.second.first(websocket, receiving, message, payloadBytes, payloadSize, pair.second.second);
-        }
+            handler(websocket, receiving, message, payloadBytes, payloadSize, handlerContext);
+        });
     }
 }
 

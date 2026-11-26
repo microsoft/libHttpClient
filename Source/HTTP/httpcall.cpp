@@ -467,11 +467,10 @@ void HC_CALL::PerformSingleRequestComplete(XAsyncBlock* async)
     auto httpSingleton = get_http_singleton();
     if (httpSingleton)
     {
-        std::lock_guard<std::recursive_mutex> lock(httpSingleton->m_callRoutedHandlersLock);
-        for (const auto& pair : httpSingleton->m_callRoutedHandlers)
+        httpSingleton->invoke_routed_handlers(httpSingleton->m_callRoutedHandlers, [call](HCCallRoutedHandler handler, void* handlerContext)
         {
-            pair.second.first(call, pair.second.second);
-        }
+            handler(call, handlerContext);
+        });
     }
 
     HRESULT hr = XAsyncGetStatus(async, false);

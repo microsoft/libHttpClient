@@ -194,6 +194,47 @@ void STDAPIVCALLTYPE RecordCallRoute(
     recorder->routes.push_back(CallRoute{ call, HCHttpCallGetId(call), status, context });
 }
 
+// Routed handler that removes the handler with id removeId (possibly itself) each time it runs.
+struct RemovingHandler
+{
+    std::atomic<int32_t> removeId{ -1 };
+    std::atomic<uint32_t> calls{ 0 };
+};
+
+void STDAPIVCALLTYPE RemoveCallHandlerWhenRouted(
+    _In_ HCCallHandle /*call*/,
+    _In_opt_ void* context
+)
+{
+    auto handler = static_cast<RemovingHandler*>(context);
+    ++handler->calls;
+    HCRemoveCallRoutedHandler(handler->removeId);
+}
+
+// Routed handler that registers more handlers the first time it runs.
+struct AddingCallHandler
+{
+    CallRouteRecorder* recorder{ nullptr };
+    uint32_t addCount{ 0 };
+    std::atomic<uint32_t> calls{ 0 };
+    std::vector<int32_t> addedIds;
+};
+
+void STDAPIVCALLTYPE AddCallHandlersWhenRouted(
+    _In_ HCCallHandle /*call*/,
+    _In_opt_ void* context
+)
+{
+    auto handler = static_cast<AddingCallHandler*>(context);
+    if (handler->calls++ == 0)
+    {
+        for (uint32_t i = 0; i < handler->addCount; ++i)
+        {
+            handler->addedIds.push_back(HCAddCallRoutedHandler(RecordCallRoute, handler->recorder));
+        }
+    }
+}
+
 #ifndef HC_NOWEBSOCKETS
 
 struct WebSocketRoute
@@ -243,6 +284,20 @@ void STDAPIVCALLTYPE RecordWebSocketRoute(
 
     std::lock_guard<std::mutex> guard{ recorder->lock };
     recorder->routes.push_back(std::move(route));
+}
+
+void STDAPIVCALLTYPE RemoveWebSocketHandlerWhenRouted(
+    _In_ HCWebsocketHandle /*websocket*/,
+    _In_ bool /*receiving*/,
+    _In_opt_z_ const char* /*message*/,
+    _In_opt_ const uint8_t* /*payloadBytes*/,
+    _In_ size_t /*payloadSize*/,
+    _In_opt_ void* context
+)
+{
+    auto handler = static_cast<RemovingHandler*>(context);
+    ++handler->calls;
+    HCRemoveWebSocketRoutedHandler(handler->removeId);
 }
 
 struct FakeWebSocketServer
@@ -631,7 +686,140 @@ public:
         VERIFY_ARE_EQUAL(1u, recorder.Count());
     }
 
+    DEFINE_TEST_CASE(TestCallRoutedHandlerCanRemoveHandlersFromCallback)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestCallRoutedHandlerCanRemoveHandlersFromCallback);
+
+        ScriptedServer server;
+        RoutedProviderScope scope{ ScriptedPerform, &server };
+        VERIFY_SUCCEEDED(scope.Initialize());
+
+        CallRouteRecorder before;
+        CallRouteRecorder after;
+        RemovingHandler self;
+        RemovingHandler first;
+        RemovingHandler second;
+        int32_t beforeId = HCAddCallRoutedHandler(RecordCallRoute, &before);
+        self.removeId = HCAddCallRoutedHandler(RemoveCallHandlerWhenRouted, &self);
+        int32_t firstId = HCAddCallRoutedHandler(RemoveCallHandlerWhenRouted, &first);
+        int32_t secondId = HCAddCallRoutedHandler(RemoveCallHandlerWhenRouted, &second);
+        int32_t afterId = HCAddCallRoutedHandler(RecordCallRoute, &after);
+        first.removeId = secondId;
+        second.removeId = firstId;
+
+        auto performOne = [&]()
+        {
+            RoutedScopedCall call;
+            VERIFY_SUCCEEDED(HCHttpCallCreate(&call.handle));
+            VERIFY_SUCCEEDED(HCHttpCallRequestSetUrl(call.handle, "GET", "https://example.test/"));
+            VERIFY_SUCCEEDED(RoutedPerformAndWait(call.handle));
+        };
+
+        // A handler may remove itself from inside its callback, and a handler removed by an earlier
+        // handler in the same pass is not called. Handlers around them are unaffected.
+        performOne();
+        VERIFY_ARE_EQUAL(1u, self.calls.load());
+        VERIFY_ARE_EQUAL(1u, first.calls.load() + second.calls.load());
+        VERIFY_ARE_EQUAL(1u, before.Count());
+        VERIFY_ARE_EQUAL(1u, after.Count());
+
+        // The removed handlers stay removed; the survivor of the pair keeps running.
+        performOne();
+        VERIFY_ARE_EQUAL(1u, self.calls.load());
+        VERIFY_ARE_EQUAL(2u, first.calls.load() + second.calls.load());
+        VERIFY_IS_TRUE(first.calls.load() == 0 || second.calls.load() == 0);
+        VERIFY_ARE_EQUAL(2u, before.Count());
+        VERIFY_ARE_EQUAL(2u, after.Count());
+
+        HCRemoveCallRoutedHandler(beforeId);
+        HCRemoveCallRoutedHandler(firstId);
+        HCRemoveCallRoutedHandler(secondId);
+        HCRemoveCallRoutedHandler(afterId);
+    }
+
+    DEFINE_TEST_CASE(TestCallRoutedHandlerCanAddHandlersFromCallback)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestCallRoutedHandlerCanAddHandlersFromCallback);
+
+        ScriptedServer server;
+        RoutedProviderScope scope{ ScriptedPerform, &server };
+        VERIFY_SUCCEEDED(scope.Initialize());
+
+        // Enough additions to grow the handler table while it is being walked.
+        CallRouteRecorder recorder;
+        AddingCallHandler adder;
+        adder.recorder = &recorder;
+        adder.addCount = 64;
+        int32_t adderId = HCAddCallRoutedHandler(AddCallHandlersWhenRouted, &adder);
+
+        auto performOne = [&]()
+        {
+            RoutedScopedCall call;
+            VERIFY_SUCCEEDED(HCHttpCallCreate(&call.handle));
+            VERIFY_SUCCEEDED(HCHttpCallRequestSetUrl(call.handle, "GET", "https://example.test/"));
+            VERIFY_SUCCEEDED(RoutedPerformAndWait(call.handle));
+        };
+
+        // Handlers added during a pass are first called on the next routed call.
+        performOne();
+        VERIFY_ARE_EQUAL(1u, adder.calls.load());
+        VERIFY_ARE_EQUAL(64u, static_cast<uint32_t>(adder.addedIds.size()));
+        VERIFY_ARE_EQUAL(0u, recorder.Count());
+
+        performOne();
+        VERIFY_ARE_EQUAL(2u, adder.calls.load());
+        VERIFY_ARE_EQUAL(64u, recorder.Count());
+
+        HCRemoveCallRoutedHandler(adderId);
+        for (int32_t id : adder.addedIds)
+        {
+            HCRemoveCallRoutedHandler(id);
+        }
+    }
+
 #ifndef HC_NOWEBSOCKETS
+    DEFINE_TEST_CASE(TestWebSocketRoutedHandlerCanRemoveItself)
+    {
+        DEFINE_TEST_CASE_PROPERTIES(TestWebSocketRoutedHandlerCanRemoveItself);
+
+        FakeWebSocketServer wsServer;
+        RoutedProviderScope scope{ nullptr, nullptr };
+        VERIFY_SUCCEEDED(HCSetWebSocketFunctions(FakeWebSocketConnect, FakeWebSocketSend, FakeWebSocketSendBinary, FakeWebSocketDisconnect, &wsServer));
+        VERIFY_SUCCEEDED(scope.Initialize());
+
+        WebSocketRouteRecorder before;
+        WebSocketRouteRecorder after;
+        RemovingHandler self;
+        int32_t beforeId = HCAddWebSocketRoutedHandler(RecordWebSocketRoute, &before);
+        self.removeId = HCAddWebSocketRoutedHandler(RemoveWebSocketHandlerWhenRouted, &self);
+        int32_t afterId = HCAddWebSocketRoutedHandler(RecordWebSocketRoute, &after);
+
+        ClientWebSocketEvents events;
+        HCWebsocketHandle websocket{ nullptr };
+        VERIFY_SUCCEEDED(HCWebSocketCreate(&websocket, ClientMessage, ClientBinaryMessage, ClientClose, &events));
+        XAsyncBlock connectBlock{};
+        VERIFY_SUCCEEDED(HCWebSocketConnectAsync("wss://example.test/socket", "", websocket, &connectBlock));
+        VERIFY_SUCCEEDED(XAsyncGetStatus(&connectBlock, true));
+        WebSocketCompletionResult connectResult{};
+        VERIFY_SUCCEEDED(HCGetWebSocketConnectResult(&connectBlock, &connectResult));
+        VERIFY_SUCCEEDED(connectResult.errorCode);
+
+        VERIFY_SUCCEEDED(SendTextAndWait(websocket, "first"));
+        VERIFY_ARE_EQUAL(1u, self.calls.load());
+        VERIFY_ARE_EQUAL(1u, before.Count());
+        VERIFY_ARE_EQUAL(1u, after.Count());
+
+        VERIFY_SUCCEEDED(SendTextAndWait(websocket, "second"));
+        VERIFY_ARE_EQUAL(1u, self.calls.load());
+        VERIFY_ARE_EQUAL(2u, before.Count());
+        VERIFY_ARE_EQUAL(2u, after.Count());
+
+        VERIFY_SUCCEEDED(HCWebSocketDisconnect(websocket));
+        HCRemoveWebSocketRoutedHandler(beforeId);
+        HCRemoveWebSocketRoutedHandler(afterId);
+        VERIFY_SUCCEEDED(HCWebSocketCloseHandle(websocket));
+    }
+
     DEFINE_TEST_CASE(TestWebSocketRoutedHandlers)
     {
         DEFINE_TEST_CASE_PROPERTIES(TestWebSocketRoutedHandlers);

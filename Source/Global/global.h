@@ -72,10 +72,32 @@ public:
 
     DefaultUnnamedRecursiveMutex m_callRoutedHandlersLock;
     std::atomic<int32_t> m_callRoutedHandlersContext{ 0 };
-    http_internal_unordered_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
+    // Ordered by id, which is registration order; see invoke_routed_handlers.
+    http_internal_map<int32_t, std::pair<HCCallRoutedHandler, void*>> m_callRoutedHandlers;
 #ifndef HC_NOWEBSOCKETS
-    http_internal_unordered_map<int32_t, std::pair<HCWebSocketRoutedHandler, void*>> m_webSocketRoutedHandlers;
+    http_internal_map<int32_t, std::pair<HCWebSocketRoutedHandler, void*>> m_webSocketRoutedHandlers;
 #endif
+
+    // Calls invoke(handler, context) for each routed handler in `handlers` that was registered when
+    // the pass started, in registration order. A handler may add or remove routed handlers,
+    // including itself: a handler removed during the pass is not called, and one added during the
+    // pass is first called on the next pass. The lock is held for the whole pass, so a removal on
+    // another thread returns only after a pass in progress has finished.
+    template<typename THandlers, typename TInvoke>
+    void invoke_routed_handlers(_In_ THandlers& handlers, _In_ TInvoke&& invoke)
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_callRoutedHandlersLock);
+        const int32_t endId = m_callRoutedHandlersContext;
+        for (auto it = handlers.begin(); it != handlers.end() && it->first < endId;)
+        {
+            // Copy the entry and re-find the next one afterwards: the callback may erase this entry
+            // or insert others, which would invalidate a held iterator.
+            const int32_t id = it->first;
+            const auto handler = it->second;
+            invoke(handler.first, handler.second);
+            it = handlers.upper_bound(id);
+        }
+    }
 
 public:
     UniquePtr<NetworkState> m_networkState;
