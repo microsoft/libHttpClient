@@ -135,7 +135,7 @@ void FormatTrace(
     uint32_t     fractionMSec = static_cast<uint32_t>(timestamp % 1000);
     std::tm      fmtTime = {};
 
-#if _WIN32
+#if defined(_WIN32)
     localtime_s(&fmtTime, &timeTInSec);
 #elif HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4 || HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_5
     localtime_s(&timeTInSec, &fmtTime);

@@ -49,7 +49,7 @@ struct AsyncState
     DefaultUnnamedConditionVariable waitCondition;
     bool waitSatisfied = false;
 
-#if _WIN32
+#if defined(_WIN32)
     HANDLE waitEvent = nullptr;
 #endif
 
@@ -103,7 +103,7 @@ private:
             XTaskQueueCloseHandle(queue);
         }
 
-#if _WIN32
+#if defined(_WIN32)
         if (waitEvent != nullptr)
         {
             CloseHandle(waitEvent);
@@ -449,7 +449,7 @@ static HRESULT AllocStateNoCompletion(_Inout_ XAsyncBlock* asyncBlock, _Inout_ A
     state->userAsyncBlock = asyncBlock;
     state->providerData.async = &state->providerAsyncBlock;
 
-#if _WIN32
+#if defined(_WIN32)
     state->waitEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
     RETURN_LAST_ERROR_IF(state->waitEvent == nullptr);
 #endif
@@ -570,7 +570,7 @@ static void SignalWait(_In_ AsyncStateRef const& state)
         state->waitSatisfied = true;
         state->waitCondition.notify_all();
     }
-#if _WIN32
+#if defined(_WIN32)
     SetEvent(state->waitEvent);
 #endif
 
@@ -703,7 +703,7 @@ STDAPI XAsyncGetStatus(
         {
 // This codebase compiles for multiple platforms on GitHub.  This is only
 // supported on win32 desktop platforms.  It is enabled for Windows builds.
-#if _WIN32
+#if defined(_WIN32)
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
             // If we're being asked to wait from a STA thread, use a CoWait to ensure we
