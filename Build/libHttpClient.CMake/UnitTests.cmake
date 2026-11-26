@@ -124,4 +124,29 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
 
     add_test(NAME libHttpClient.UnitTests COMMAND "${UT_TARGET}")
     set_tests_properties(libHttpClient.UnitTests PROPERTIES LABELS "unit" TIMEOUT 1200)
+
+    # Public header check: compile a consumer TU that includes every public header with the
+    # warnings below as errors, once for the native platform and once for HC_PLATFORM_GENERIC
+    # (stand-in for console platforms built with non-MSVC compilers). Compile-only; part of ALL.
+    if (NOT MSVC)
+        set(HC_HEADER_CHECK_OPTIONS -Werror=unknown-pragmas)
+        if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+            set(HC_HEADER_CHECK_DATAMODEL HC_DATAMODEL_LP64)
+        else()
+            set(HC_HEADER_CHECK_DATAMODEL HC_DATAMODEL_ILP32)
+        endif()
+        foreach(variant Native Generic)
+            set(HC_HEADER_CHECK_TARGET "libHttpClient.PublicHeaderCheck.${variant}")
+            add_library("${HC_HEADER_CHECK_TARGET}" OBJECT "${PATH_TO_ROOT}/Tests/UnitTests/Support/PublicHeaderCheck.cpp")
+            target_include_directories("${HC_HEADER_CHECK_TARGET}" PRIVATE "${PATH_TO_ROOT}/Include")
+            target_compile_definitions("${HC_HEADER_CHECK_TARGET}" PRIVATE HC_LINK_STATIC=1)
+            if (variant STREQUAL "Generic")
+                target_compile_definitions("${HC_HEADER_CHECK_TARGET}" PRIVATE
+                    HC_PLATFORM=HC_PLATFORM_GENERIC
+                    HC_DATAMODEL=${HC_HEADER_CHECK_DATAMODEL})
+            endif()
+            target_compile_options("${HC_HEADER_CHECK_TARGET}" PRIVATE ${HC_HEADER_CHECK_OPTIONS})
+            set_target_properties("${HC_HEADER_CHECK_TARGET}" PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+        endforeach()
+    endif()
 endfunction()

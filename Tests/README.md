@@ -34,6 +34,12 @@ cmake --build Int/CMake/ut --parallel && (cd Int/CMake/ut && ctest --output-on-f
 
 `libHttpClient_Linux.bash -t -san` builds the tests with AddressSanitizer + UndefinedBehaviorSanitizer.
 
+These CMake builds also compile `libHttpClient.PublicHeaderCheck.Native` / `.Generic`: compile-only
+targets that include every public header in a consumer translation unit with selected warnings as
+errors, for the native platform and for `HC_PLATFORM_GENERIC` (standing in for console platforms
+built with non-MSVC compilers). A header change that would break consumers building with `-Werror`
+fails the build.
+
 ## Writing a unit test
 
 - Add a `.cpp` under `Tests/UnitTests/Tests/` and list it in
