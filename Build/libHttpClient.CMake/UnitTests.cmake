@@ -129,7 +129,7 @@ function(HC_ADD_UNIT_TESTS PATH_TO_ROOT FLAGS FLAGS_DEBUG FLAGS_RELEASE)
     # warnings below as errors, once for the native platform and once for HC_PLATFORM_GENERIC
     # (stand-in for console platforms built with non-MSVC compilers). Compile-only; part of ALL.
     if (NOT MSVC)
-        set(HC_HEADER_CHECK_OPTIONS -Werror=unknown-pragmas)
+        set(HC_HEADER_CHECK_OPTIONS -Werror=unknown-pragmas -Werror=undef)
         if (CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(HC_HEADER_CHECK_DATAMODEL HC_DATAMODEL_LP64)
         else()

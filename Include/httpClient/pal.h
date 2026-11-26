@@ -18,7 +18,7 @@
 
 #include <httpClient/config.h>
 
-#if _WIN32
+#if defined(_WIN32)
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
